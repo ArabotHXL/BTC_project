@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin Mining Profitability Calculator</title>
+    <!-- Bootstrap CSS from Replit CDN -->
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container-fluid">
+        <header class="py-3 mb-4 border-bottom">
+            <div class="container d-flex align-items-center justify-content-between">
+                <h1 class="fs-4">Bitcoin Mining Profitability Calculator</h1>
+                <div id="network-stats-container" class="d-flex gap-3 text-center">
+                    <div class="stats-item">
+                        <span class="badge bg-warning">BTC Price</span>
+                        <span id="btc-price" class="stats-value">$0</span>
+                    </div>
+                    <div class="stats-item">
+                        <span class="badge bg-info">Difficulty</span>
+                        <span id="network-difficulty" class="stats-value">0T</span>
+                    </div>
+                    <div class="stats-item">
+                        <span class="badge bg-success">Block Reward</span>
+                        <span id="block-reward" class="stats-value">0 BTC</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="container mb-5">
+            <div class="row g-4">
+                <!-- Left side: Input form -->
+                <div class="col-lg-5">
+                    <div class="card shadow">
+                        <div class="card-header bg-primary bg-opacity-10">
+                            <h5 class="mb-0">Mining Parameters</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="mining-calculator-form">
+                                <!-- Mining hardware selection -->
+                                <div class="mb-3">
+                                    <label for="miner-model" class="form-label">Mining Hardware</label>
+                                    <select class="form-select" id="miner-model" name="miner_model">
+                                        <option value="">Select a miner model</option>
+                                        <!-- Miner options will be loaded dynamically -->
+                                    </select>
+                                </div>
+
+                                <!-- Miner count for mining farm calculation -->
+                                <div class="mb-3">
+                                    <label for="miner-count" class="form-label">Number of Miners</label>
+                                    <input type="number" class="form-control" id="miner-count" name="miner_count" value="1" min="1">
+                                    <div class="form-text">Calculate for multiple miners (mining farm)</div>
+                                </div>
+
+                                <!-- Hashrate input -->
+                                <div class="mb-3">
+                                    <label for="hashrate" class="form-label">Hashrate</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="hashrate" name="hashrate" value="100" min="0" step="0.01">
+                                        <select class="form-select" id="hashrate-unit" name="hashrate_unit" style="max-width: 100px;">
+                                            <option value="TH/s">TH/s</option>
+                                            <option value="PH/s">PH/s</option>
+                                            <option value="EH/s">EH/s</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-text">Total hashrate will be calculated automatically if miner model is selected</div>
+                                </div>
+
+                                <!-- Power consumption -->
+                                <div class="mb-3">
+                                    <label for="power-consumption" class="form-label">Power Consumption (W)</label>
+                                    <input type="number" class="form-control" id="power-consumption" name="power_consumption" value="3000" min="0">
+                                    <div class="form-text">Total power will be calculated automatically if miner model is selected</div>
+                                </div>
+
+                                <!-- Electricity cost -->
+                                <div class="mb-3">
+                                    <label for="electricity-cost" class="form-label">Electricity Cost ($/kWh)</label>
+                                    <input type="number" class="form-control" id="electricity-cost" name="electricity_cost" value="0.05" min="0" step="0.001">
+                                </div>
+
+                                <!-- Pool fee -->
+                                <div class="mb-3">
+                                    <label for="pool-fee" class="form-label">Pool Fee (%)</label>
+                                    <input type="number" class="form-control" id="pool-fee" name="pool_fee" value="1" min="0" max="100" step="0.1">
+                                </div>
+
+                                <!-- BTC price -->
+                                <div class="mb-3">
+                                    <label for="btc-price-input" class="form-label">Bitcoin Price (USD)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="btc-price-input" name="btc_price" value="80000" min="0">
+                                    </div>
+                                </div>
+
+                                <!-- Real-time data option -->
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="use-real-time" name="use_real_time" checked>
+                                    <label class="form-check-label" for="use-real-time">Use real-time network data</label>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100">Calculate Profitability</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right side: Results and visualization -->
+                <div class="col-lg-7">
+                    <!-- Results summary -->
+                    <div class="card shadow mb-4" id="results-card" style="display: none;">
+                        <div class="card-header bg-success bg-opacity-10 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Profitability Results</h5>
+                            <span id="results-timestamp" class="text-muted small"></span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-4 text-center">
+                                <!-- BTC mined -->
+                                <div class="col-md-4">
+                                    <div class="p-3 rounded bg-primary bg-opacity-10">
+                                        <h6>BTC Mined (Daily)</h6>
+                                        <h3 id="btc-mined-daily">0.00000000</h3>
+                                    </div>
+                                </div>
+                                <!-- Daily profit -->
+                                <div class="col-md-4">
+                                    <div class="p-3 rounded bg-success bg-opacity-10">
+                                        <h6>Daily Profit</h6>
+                                        <h3 id="daily-profit">$0.00</h3>
+                                    </div>
+                                </div>
+                                <!-- Monthly profit -->
+                                <div class="col-md-4">
+                                    <div class="p-3 rounded bg-warning bg-opacity-10">
+                                        <h6>Monthly Profit</h6>
+                                        <h3 id="monthly-profit">$0.00</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <td>Yearly Profit</td>
+                                                <td id="yearly-profit" class="text-end">$0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Monthly BTC</td>
+                                                <td id="monthly-btc" class="text-end">0.00000000</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Monthly Revenue</td>
+                                                <td id="monthly-revenue" class="text-end">$0.00</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <td>Monthly Electricity Cost</td>
+                                                <td id="monthly-electricity" class="text-end">$0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Break-even Electricity Cost</td>
+                                                <td id="break-even-electricity" class="text-end">$0.00/kWh</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Optimal Curtailment</td>
+                                                <td id="optimal-curtailment" class="text-end">0.00%</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profit chart -->
+                    <div class="card shadow" id="chart-card" style="display: none;">
+                        <div class="card-header bg-info bg-opacity-10">
+                            <h5 class="mb-0">Profitability Heatmap</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="profit-heatmap"></canvas>
+                            <div class="mt-3 small text-muted">
+                                This chart shows how monthly profits change with different BTC prices and electricity costs.
+                                The optimal electricity rate at current BTC price is marked on the chart.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="py-3 mt-auto border-top">
+            <div class="container text-center text-muted">
+                <p class="mb-0">Bitcoin Mining Profitability Calculator &copy; 2025</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

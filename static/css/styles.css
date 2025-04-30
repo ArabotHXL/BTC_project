@@ -1,0 +1,88 @@
+/* Main styles for Bitcoin Mining Calculator */
+
+/* Network stats styling */
+#network-stats-container {
+    display: flex;
+    gap: 1rem;
+}
+
+.stats-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stats-value {
+    font-weight: bold;
+    margin-top: 0.25rem;
+    font-size: 0.9rem;
+}
+
+/* Dashboard cards with consistent heights */
+.dashboard-card {
+    height: 100%;
+    transition: all 0.2s ease;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Profit results styling */
+.profit-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.profit-positive {
+    color: var(--bs-success);
+}
+
+.profit-negative {
+    color: var(--bs-danger);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #network-stats-container {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .stats-item {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+    
+    .stats-value {
+        margin-top: 0;
+        margin-left: 0.5rem;
+    }
+}
+
+/* Loading indicator */
+.loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Custom form elements styling */
+.form-control:focus, .form-select:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+/* Chart container */
+#profit-heatmap {
+    min-height: 300px;
+}
