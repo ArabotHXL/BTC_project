@@ -1,7 +1,13 @@
 import os
 import logging
 from flask import Flask, render_template, request, jsonify
-from mining_calculator import calculate_mining_profitability
+from mining_calculator import (
+    calculate_mining_profitability, 
+    get_real_time_btc_price, 
+    get_real_time_difficulty,
+    get_real_time_block_reward,
+    MINER_DATA
+)
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -26,6 +32,8 @@ def calculate():
         electricity_cost = float(request.form.get('electricity_cost', 0))
         pool_fee = float(request.form.get('pool_fee', 0))
         btc_price = float(request.form.get('btc_price', 0))
+        use_real_time = request.form.get('use_real_time', 'false').lower() == 'true'
+        miner_model = request.form.get('miner_model')
         
         # Convert hashrate to TH/s for calculation
         if hashrate_unit == 'PH/s':
@@ -39,7 +47,9 @@ def calculate():
             power_consumption=power_consumption,
             electricity_cost=electricity_cost,
             pool_fee=pool_fee,
-            btc_price=btc_price
+            btc_price=btc_price if not use_real_time else None,
+            use_real_time_data=use_real_time,
+            miner_model=miner_model if miner_model else None
         )
         
         # Return results as JSON
@@ -58,16 +68,11 @@ def calculate():
             'error': 'An error occurred during calculation. Please try again.'
         }), 500
 
-# Add endpoint to get current BTC price (in a real app, this would connect to an API)
 @app.route('/btc_price', methods=['GET'])
 def get_btc_price():
-    """
-    In a real application, this would fetch the current BTC price from an API.
-    For now, we'll return a fixed value.
-    """
+    """Get the current Bitcoin price from API"""
     try:
-        # In a real app, you would fetch this from an API like CoinGecko or Binance
-        current_btc_price = 65000  # Sample price in USD
+        current_btc_price = get_real_time_btc_price()
         return jsonify({
             'success': True,
             'price': current_btc_price
@@ -77,4 +82,49 @@ def get_btc_price():
         return jsonify({
             'success': False,
             'error': 'Could not fetch BTC price.'
+        }), 500
+
+@app.route('/network_stats', methods=['GET'])
+def get_network_stats():
+    """Get current Bitcoin network statistics"""
+    try:
+        price = get_real_time_btc_price()
+        difficulty = get_real_time_difficulty()
+        block_reward = get_real_time_block_reward()
+        
+        return jsonify({
+            'success': True,
+            'price': price,
+            'difficulty': difficulty / 10**12,  # Convert to T for readability
+            'block_reward': block_reward
+        })
+    except Exception as e:
+        logging.error(f"Error fetching network stats: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Could not fetch Bitcoin network statistics.'
+        }), 500
+
+@app.route('/miners', methods=['GET'])
+def get_miners():
+    """Get the list of available miner models and their specifications"""
+    try:
+        miners_list = []
+        for name, specs in MINER_DATA.items():
+            miners_list.append({
+                'name': name,
+                'hashrate': specs['hashrate'],
+                'power_watt': specs['power_watt'],
+                'efficiency': round(specs['power_watt'] / specs['hashrate'], 2) # W/TH
+            })
+        
+        return jsonify({
+            'success': True,
+            'miners': miners_list
+        })
+    except Exception as e:
+        logging.error(f"Error fetching miners data: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Could not fetch miners data.'
         }), 500

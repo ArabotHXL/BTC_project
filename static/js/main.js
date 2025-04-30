@@ -7,18 +7,115 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadingIndicator = document.getElementById('loading');
     const errorMessage = document.getElementById('error-message');
     const errorText = document.getElementById('error-text');
+    const minerModelSelect = document.getElementById('miner_model');
+    const hashrateInput = document.getElementById('hashrate');
+    const powerConsumptionInput = document.getElementById('power_consumption');
+    const useRealTimeCheckbox = document.getElementById('use_real_time');
     
-    // Set default BTC price on page load
-    fetchBtcPrice();
+    // Initialize the application
+    initializeApp();
     
-    // Event listener for fetch price button
+    // Event listeners
     fetchPriceBtn.addEventListener('click', fetchBtcPrice);
     
-    // Event listener for form submission
     miningForm.addEventListener('submit', function(e) {
         e.preventDefault();
         calculateProfitability();
     });
+    
+    minerModelSelect.addEventListener('change', function() {
+        updateMinerSpecifications();
+    });
+    
+    useRealTimeCheckbox.addEventListener('change', function() {
+        // If real-time data is enabled, fetch the latest price
+        if (this.checked) {
+            fetchBtcPrice();
+            btcPriceInput.disabled = true;
+        } else {
+            btcPriceInput.disabled = false;
+        }
+    });
+    
+    /**
+     * Initialize the application
+     */
+    function initializeApp() {
+        // Fetch miners data and populate the dropdown
+        fetchMiners();
+        
+        // Fetch and display network stats
+        fetchNetworkStats();
+        
+        // Set default BTC price on page load
+        fetchBtcPrice();
+    }
+    
+    /**
+     * Fetch miners data and populate the dropdown
+     */
+    function fetchMiners() {
+        fetch('/miners')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Clear existing options except the first one
+                    while (minerModelSelect.options.length > 1) {
+                        minerModelSelect.remove(1);
+                    }
+                    
+                    // Add miner options
+                    data.miners.forEach(miner => {
+                        const option = document.createElement('option');
+                        option.value = miner.name;
+                        option.textContent = `${miner.name} (${miner.hashrate} TH/s, ${miner.power_watt}W)`;
+                        // Store miner data as attributes
+                        option.dataset.hashrate = miner.hashrate;
+                        option.dataset.powerWatt = miner.power_watt;
+                        minerModelSelect.appendChild(option);
+                    });
+                } else {
+                    console.error('Failed to fetch miners data:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching miners data:', error);
+            });
+    }
+    
+    /**
+     * Fetch and display network stats
+     */
+    function fetchNetworkStats() {
+        fetch('/network_stats')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update network stats display
+                    document.getElementById('network-btc-price').textContent = formatCurrency(data.price);
+                    document.getElementById('network-difficulty').textContent = data.difficulty.toFixed(2) + ' T';
+                    document.getElementById('network-block-reward').textContent = data.block_reward.toFixed(3) + ' BTC';
+                } else {
+                    console.error('Failed to fetch network stats:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching network stats:', error);
+            });
+    }
+    
+    /**
+     * Update miner specifications based on selected model
+     */
+    function updateMinerSpecifications() {
+        const selectedOption = minerModelSelect.options[minerModelSelect.selectedIndex];
+        
+        if (selectedOption.value && selectedOption.dataset.hashrate && selectedOption.dataset.powerWatt) {
+            // Update form fields with selected miner specs
+            hashrateInput.value = selectedOption.dataset.hashrate;
+            powerConsumptionInput.value = selectedOption.dataset.powerWatt;
+        }
+    }
     
     /**
      * Fetch BTC price from the server
@@ -33,6 +130,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     btcPriceInput.value = data.price.toFixed(2);
+                    // Update network stats display
+                    document.getElementById('network-btc-price').textContent = formatCurrency(data.price);
                 } else {
                     showError(data.error || 'Failed to fetch Bitcoin price');
                 }
@@ -123,11 +222,22 @@ document.addEventListener('DOMContentLoaded', function() {
             </tr>
         `;
         
-        // Update break-even cost
+        // Update break-even cost and curtailment
         document.getElementById('break-even-cost').textContent = formatCurrency(data.break_even.electricity_cost);
+        document.getElementById('optimal-curtailment').textContent = 
+            data.optimization && data.optimization.optimal_curtailment !== undefined 
+                ? data.optimization.optimal_curtailment.toFixed(2) + '%' 
+                : '0%';
         
         // Update chart
         updateProfitChart(data);
+        
+        // Update network stats if using real-time data
+        if (data.network_data) {
+            document.getElementById('network-btc-price').textContent = formatCurrency(data.network_data.btc_price);
+            document.getElementById('network-difficulty').textContent = data.network_data.network_difficulty.toFixed(2) + ' T';
+            document.getElementById('network-block-reward').textContent = data.network_data.block_reward.toFixed(3) + ' BTC';
+        }
         
         // Scroll to results if on mobile
         if (window.innerWidth < 768) {
@@ -195,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
             window.profitChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['Revenue', 'Electricity Cost', 'Net Profit'],
+                    labels: ['Revenue', 'Electricity Cost', 'Net Loss'],
                     datasets: [{
                         data: [revenue, electricityCost, Math.abs(profit)],
                         backgroundColor: [revenueColor, costColor, costColor],

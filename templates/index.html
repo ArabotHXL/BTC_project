@@ -26,6 +26,32 @@
         </div>
     </header>
 
+    <!-- Network Stats Bar -->
+    <div class="bg-dark bg-opacity-75 py-2 mb-4 border-top border-bottom border-secondary">
+        <div class="container">
+            <div class="row text-center" id="network-stats">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="fas fa-coins text-warning me-2"></i>
+                        <span>BTC Price: <strong id="network-btc-price">$0.00</strong></span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="fas fa-sitemap text-info me-2"></i>
+                        <span>Network Difficulty: <strong id="network-difficulty">0 T</strong></span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="fas fa-cubes text-success me-2"></i>
+                        <span>Block Reward: <strong id="network-block-reward">0 BTC</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <main class="container my-4">
         <div class="row g-4">
             <!-- Input Form -->
@@ -36,6 +62,13 @@
                     </div>
                     <div class="card-body">
                         <form id="mining-form">
+                            <!-- Real-time data toggle -->
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="use_real_time" name="use_real_time" value="true">
+                                <label class="form-check-label" for="use_real_time">Use real-time network data</label>
+                            </div>
+                            
+                            <!-- Price section -->
                             <div class="mb-3">
                                 <label for="btc_price" class="form-label">Bitcoin Price (USD)</label>
                                 <div class="input-group">
@@ -45,6 +78,15 @@
                                         <i class="fas fa-sync-alt"></i>
                                     </button>
                                 </div>
+                            </div>
+                            
+                            <!-- Miner selection -->
+                            <div class="mb-3">
+                                <label for="miner_model" class="form-label">Miner Model (Optional)</label>
+                                <select class="form-select" id="miner_model" name="miner_model">
+                                    <option value="">Custom specifications</option>
+                                    <!-- Options will be loaded via JavaScript -->
+                                </select>
                             </div>
                             
                             <div class="mb-3">
@@ -171,7 +213,14 @@
                             </div>
                             
                             <div class="mt-3">
-                                <p class="mb-1"><strong>Break-even electricity cost:</strong> <span id="break-even-cost">$0.00</span>/kWh</p>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Break-even electricity cost:</strong> <span id="break-even-cost">$0.00</span>/kWh</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Optimal curtailment:</strong> <span id="optimal-curtailment">0%</span></p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -198,7 +247,7 @@
     <footer class="bg-dark py-3 mt-4">
         <div class="container text-center">
             <p class="text-muted mb-0">
-                <small>Bitcoin Mining Profitability Calculator | Prices and calculations based on current network difficulty and BTC price</small>
+                <small>Bitcoin Mining Profitability Calculator | Data fetched in real-time from blockchain.info and CoinGecko APIs</small>
             </p>
         </div>
     </footer>
