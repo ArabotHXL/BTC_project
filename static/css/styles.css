@@ -1,0 +1,91 @@
+/* Custom styles to supplement the Bootstrap theme */
+
+/* Add a subtle gradient background to the page */
+body {
+    background: linear-gradient(145deg, #222, #1a1a1a);
+    min-height: 100vh;
+}
+
+/* Custom form input focus */
+.form-control:focus, .form-select:focus {
+    border-color: rgba(13, 110, 253, 0.4);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+}
+
+/* Card styling */
+.card {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Make profit displays more prominent */
+#daily-profit, #monthly-profit {
+    font-weight: 600;
+    text-shadow: 0 0 10px rgba(40, 167, 69, 0.3);
+}
+
+/* Table styling */
+.table {
+    background-color: rgba(33, 37, 41, 0.3);
+    margin-bottom: 0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Custom border radius for input groups */
+.input-group {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Add a subtle shine effect to buttons */
+.btn-primary {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        to bottom right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(45deg);
+    transition: all 0.3s;
+    opacity: 0;
+}
+
+.btn-primary:hover::after {
+    opacity: 1;
+}
+
+/* Break-even cost highlight */
+#break-even-cost {
+    font-weight: bold;
+    color: var(--bs-info);
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .display-6 {
+        font-size: 1.75rem;
+    }
+}
