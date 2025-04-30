@@ -80,35 +80,50 @@
                                 </div>
                             </div>
                             
-                            <!-- Miner selection -->
+                            <!-- Miner selection and count -->
                             <div class="mb-3">
-                                <label for="miner_model" class="form-label">Miner Model (Optional)</label>
+                                <label for="miner_model" class="form-label">Miner Model</label>
                                 <select class="form-select" id="miner_model" name="miner_model">
                                     <option value="">Custom specifications</option>
                                     <!-- Options will be loaded via JavaScript -->
                                 </select>
                             </div>
                             
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="miner_count" class="form-label">Number of Miners</label>
+                                    <input type="number" class="form-control" id="miner_count" name="miner_count" placeholder="Number of units" min="1" value="1" step="1">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="power_per_mw" class="form-label">Site Power (Optional)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="power_per_mw" name="power_per_mw" placeholder="Mining site power" step="0.1">
+                                        <span class="input-group-text">MW</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <div class="mb-3">
-                                <label for="hashrate" class="form-label">Hashrate</label>
+                                <label for="hashrate" class="form-label">Total Hashrate</label>
                                 <div class="input-group">
-                                    <input type="number" class="form-control" id="hashrate" name="hashrate" placeholder="Your mining hashrate" step="any" required>
+                                    <input type="number" class="form-control" id="hashrate" name="hashrate" placeholder="Total mining hashrate" step="any" required>
                                     <select class="form-select" id="hashrate_unit" name="hashrate_unit">
                                         <option value="TH/s">TH/s</option>
                                         <option value="PH/s">PH/s</option>
                                         <option value="EH/s">EH/s</option>
                                     </select>
                                 </div>
-                                <div class="form-text">1 PH/s = 1,000 TH/s, 1 EH/s = 1,000,000 TH/s</div>
+                                <div class="form-text">Calculated automatically based on miner model and count</div>
                             </div>
                             
                             <div class="mb-3">
-                                <label for="power_consumption" class="form-label">Power Consumption (Watts)</label>
+                                <label for="power_consumption" class="form-label">Total Power Consumption</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-bolt"></i></span>
-                                    <input type="number" class="form-control" id="power_consumption" name="power_consumption" placeholder="Power consumption in watts" step="any" required>
+                                    <input type="number" class="form-control" id="power_consumption" name="power_consumption" placeholder="Total power consumption" step="any" required>
                                     <span class="input-group-text">W</span>
                                 </div>
+                                <div class="form-text">Calculated automatically based on miner model and count</div>
                             </div>
                             
                             <div class="mb-3">

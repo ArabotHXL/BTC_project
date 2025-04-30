@@ -8,7 +8,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const errorMessage = document.getElementById('error-message');
     const errorText = document.getElementById('error-text');
     const minerModelSelect = document.getElementById('miner_model');
+    const minerCountInput = document.getElementById('miner_count');
+    const sitePowerInput = document.getElementById('power_per_mw');
     const hashrateInput = document.getElementById('hashrate');
+    const hashrateUnitSelect = document.getElementById('hashrate_unit');
     const powerConsumptionInput = document.getElementById('power_consumption');
     const useRealTimeCheckbox = document.getElementById('use_real_time');
     
@@ -24,7 +27,28 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     minerModelSelect.addEventListener('change', function() {
-        updateMinerSpecifications();
+        calculateMiningSpecifications();
+    });
+    
+    minerCountInput.addEventListener('change', function() {
+        calculateMiningSpecifications();
+    });
+    
+    sitePowerInput.addEventListener('input', function() {
+        if (this.value) {
+            // Calculate max miners based on site power
+            const selectedOption = minerModelSelect.options[minerModelSelect.selectedIndex];
+            if (selectedOption.value && selectedOption.dataset.powerWatt) {
+                const powerWatt = parseFloat(selectedOption.dataset.powerWatt);
+                const sitePowerWatt = parseFloat(this.value) * 1000000; // MW to W
+                const estimatedMiners = Math.floor(sitePowerWatt / powerWatt);
+                
+                if (estimatedMiners > 0) {
+                    minerCountInput.value = estimatedMiners;
+                    calculateMiningSpecifications();
+                }
+            }
+        }
     });
     
     useRealTimeCheckbox.addEventListener('change', function() {
@@ -105,15 +129,42 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     /**
-     * Update miner specifications based on selected model
+     * Calculate and update mining specifications based on selected model and count
      */
-    function updateMinerSpecifications() {
+    function calculateMiningSpecifications() {
         const selectedOption = minerModelSelect.options[minerModelSelect.selectedIndex];
+        const minerCount = parseInt(minerCountInput.value) || 1;
         
         if (selectedOption.value && selectedOption.dataset.hashrate && selectedOption.dataset.powerWatt) {
-            // Update form fields with selected miner specs
-            hashrateInput.value = selectedOption.dataset.hashrate;
-            powerConsumptionInput.value = selectedOption.dataset.powerWatt;
+            // Get single miner specs
+            const singleHashrate = parseFloat(selectedOption.dataset.hashrate);
+            const singlePower = parseFloat(selectedOption.dataset.powerWatt);
+            
+            // Calculate total specs based on number of miners
+            const totalHashrate = singleHashrate * minerCount;
+            const totalPower = singlePower * minerCount;
+            
+            // Update displayed hashrate based on appropriate unit
+            let displayHashrate = totalHashrate;
+            if (totalHashrate >= 1000000) {
+                displayHashrate = totalHashrate / 1000000;
+                hashrateUnitSelect.value = 'EH/s';
+            } else if (totalHashrate >= 1000) {
+                displayHashrate = totalHashrate / 1000;
+                hashrateUnitSelect.value = 'PH/s';
+            } else {
+                hashrateUnitSelect.value = 'TH/s';
+            }
+            
+            // Update form fields with calculated specs
+            hashrateInput.value = displayHashrate.toFixed(2);
+            powerConsumptionInput.value = totalPower.toFixed(0);
+            
+            // Update site power if not set
+            if (!sitePowerInput.value && totalPower > 0) {
+                const sitePowerMW = totalPower / 1000000; // W to MW
+                sitePowerInput.value = sitePowerMW.toFixed(2);
+            }
         }
     }
     

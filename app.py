@@ -34,12 +34,24 @@ def calculate():
         btc_price = float(request.form.get('btc_price', 0))
         use_real_time = request.form.get('use_real_time', 'false').lower() == 'true'
         miner_model = request.form.get('miner_model')
+        miner_count = int(request.form.get('miner_count', 1))
         
         # Convert hashrate to TH/s for calculation
         if hashrate_unit == 'PH/s':
             hashrate = hashrate * 1000
         elif hashrate_unit == 'EH/s':
             hashrate = hashrate * 1000000
+        
+        # For the backend calculation, we calculate based on the miner model and count,
+        # or use the manual hashrate if no model is selected
+        selected_miner_model = None
+        if miner_model and miner_model in MINER_DATA:
+            selected_miner_model = miner_model
+            
+            # We only need to pass the miner model name if we're using it
+            # The calculator will handle getting the hashrate and power consumption
+            # If we're using a manual entry, we'll pass the values explicitly
+            logging.debug(f"Using miner model: {miner_model}, count: {miner_count}")
         
         # Calculate mining profitability
         result = calculate_mining_profitability(
@@ -49,8 +61,12 @@ def calculate():
             pool_fee=pool_fee,
             btc_price=btc_price if not use_real_time else None,
             use_real_time_data=use_real_time,
-            miner_model=miner_model if miner_model else None
+            miner_model=selected_miner_model,
+            miner_count=miner_count
         )
+        
+        # Add miner count to the result for display
+        result['inputs']['miner_count'] = miner_count
         
         # Return results as JSON
         return jsonify(result)

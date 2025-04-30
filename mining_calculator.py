@@ -85,7 +85,7 @@ def get_real_time_block_reward():
         logging.error(f"Failed to get real-time block reward: {e}")
         return BLOCK_REWARD
 
-def calculate_mining_profitability(hashrate, power_consumption, electricity_cost, pool_fee, btc_price=None, difficulty=None, use_real_time_data=False, miner_model=None):
+def calculate_mining_profitability(hashrate, power_consumption, electricity_cost, pool_fee, btc_price=None, difficulty=None, use_real_time_data=False, miner_model=None, miner_count=1):
     """
     Calculate Bitcoin mining profitability
     
@@ -98,6 +98,7 @@ def calculate_mining_profitability(hashrate, power_consumption, electricity_cost
     - difficulty: Network difficulty (optional if use_real_time_data=True)
     - use_real_time_data: Whether to fetch real-time data from APIs
     - miner_model: Optional miner model name to use pre-defined values
+    - miner_count: Number of miners (default is 1)
     
     Returns:
     - Dictionary containing profitability metrics
@@ -105,8 +106,13 @@ def calculate_mining_profitability(hashrate, power_consumption, electricity_cost
     try:
         # Get values from miner model if provided
         if miner_model and miner_model in MINER_DATA:
-            hashrate = MINER_DATA[miner_model]["hashrate"]
-            power_consumption = MINER_DATA[miner_model]["power_watt"]
+            # Get single miner specs
+            single_hashrate = MINER_DATA[miner_model]["hashrate"]
+            single_power_watt = MINER_DATA[miner_model]["power_watt"]
+            
+            # Apply miner count to get total specs
+            hashrate = single_hashrate * miner_count
+            power_consumption = single_power_watt * miner_count
             
         # Get real-time data if requested
         if use_real_time_data:
