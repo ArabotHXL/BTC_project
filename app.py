@@ -101,11 +101,13 @@ def get_network_stats():
         price = get_real_time_btc_price()
         difficulty = get_real_time_difficulty()
         block_reward = get_real_time_block_reward()
+        hashrate = get_real_time_btc_hashrate()
         
         return jsonify({
             'success': True,
             'price': price,
             'difficulty': difficulty / 10**12,  # Convert to T for readability
+            'hashrate': hashrate,  # EH/s
             'block_reward': block_reward
         })
     except Exception as e:

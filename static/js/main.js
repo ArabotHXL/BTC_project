@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Elements for network stats
     const btcPriceEl = document.getElementById('btc-price');
     const networkDifficultyEl = document.getElementById('network-difficulty');
+    const networkHashrateEl = document.getElementById('network-hashrate');
     const blockRewardEl = document.getElementById('block-reward');
     
     // Form elements
@@ -185,6 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Update the UI with network stats
                 btcPriceEl.textContent = formatCurrency(data.price);
                 networkDifficultyEl.textContent = formatNumber(data.difficulty) + 'T';
+                networkHashrateEl.textContent = formatNumber(data.hashrate) + ' EH/s';
                 blockRewardEl.textContent = formatNumber(data.block_reward) + ' BTC';
                 
                 // Update the BTC price input as well if real-time is checked
