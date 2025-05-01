@@ -387,7 +387,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (clientProfitCardEl) clientProfitCardEl.textContent = formatCurrency(data.client_profit.monthly);
             }
             
-            // 其他值的更新... (Update other values...)
+            // 更新矿场收入计算 (Update mining site revenue)
+            var hostTotalIncomeEl = document.getElementById('host-total-income');
+            var siteRevenueEl = document.getElementById('site-total-revenue');
+            var hostSelfProfitEl = document.getElementById('host-self-profit');
+            
+            if (hostTotalIncomeEl && data.client_electricity_cost && data.electricity_cost) {
+                // 计算电费差收益
+                var hostElectricProfit = data.client_electricity_cost.monthly - data.electricity_cost.monthly;
+                
+                // 获取运营收益（可能来自其他来源，这里假设为0）
+                var hostSelfProfit = 0; 
+                if (hostSelfProfitEl) {
+                    hostSelfProfitEl.textContent = formatCurrency(hostSelfProfit);
+                }
+                
+                // 电费差 + 运营收益 = 总站点收入
+                var siteTotalRevenue = hostElectricProfit + hostSelfProfit;
+                if (siteRevenueEl) {
+                    siteRevenueEl.textContent = formatCurrency(siteTotalRevenue);
+                }
+                
+                // 总收入 = 总站点收入
+                hostTotalIncomeEl.textContent = formatCurrency(siteTotalRevenue);
+            }
         } catch (error) {
             console.error('显示结果时出错:', error);
             showError('显示计算结果时发生错误。(Error displaying calculation results.)');
