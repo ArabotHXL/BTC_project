@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTC Mining Profitability Heatmap</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        body { padding: 20px; }
+        #chartContainer { 
+            height: 500px; 
+            margin-top: 20px; 
+            position: relative;
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>BTC Mining Profitability Heatmap</h1>
+        
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="mb-0">Configure Chart</h5>
+            </div>
+            <div class="card-body">
+                <form id="chartForm" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="miner_model" class="form-label">Miner Model</label>
+                        <select id="miner_model" name="miner_model" class="form-select" required>
+                            <option value="">Select miner model...</option>
+                            <option value="Antminer S19" selected>Antminer S19</option>
+                            <option value="Antminer S21 XP">Antminer S21 XP</option>
+                            <option value="Whatsminer M50S">Whatsminer M50S</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="miner_count" class="form-label">Miner Count</label>
+                        <input type="number" id="miner_count" name="miner_count" class="form-control" value="100" min="1" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="client_electricity_cost" class="form-label">Client Electricity Cost ($/kWh)</label>
+                        <input type="number" id="client_electricity_cost" name="client_electricity_cost" class="form-control" value="0.06" step="0.01" min="0">
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary">Generate Chart</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Profitability Heatmap</h5>
+            </div>
+            <div class="card-body">
+                <div id="chartContainer">
+                    <div class="text-center text-muted pt-5">
+                        Submit the form above to generate the chart.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Chart Data</h5>
+            </div>
+            <div class="card-body">
+                <pre id="chartData" class="bg-dark p-3 rounded small">No data yet</pre>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let chart = null;
+            const form = document.getElementById('chartForm');
+            const chartContainer = document.getElementById('chartContainer');
+            const chartDataDisplay = document.getElementById('chartData');
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Show loading state
+                chartContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span class="ms-3">Generating chart data...</span>
+                    </div>
+                `;
+                
+                // Get form values
+                const formData = new FormData(form);
+                const params = new URLSearchParams();
+                
+                for (let [key, value] of formData.entries()) {
+                    params.append(key, value);
+                }
+                
+                // If chart exists, destroy it
+                if (chart) {
+                    chart.destroy();
+                    chart = null;
+                }
+                
+                try {
+                    // Fetch chart data
+                    const response = await fetch('/profit_chart_data', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: params
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Server returned error: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Display raw JSON data for debugging
+                    chartDataDisplay.textContent = JSON.stringify(data, null, 2);
+                    
+                    if (!data.success) {
+                        throw new Error(data.error || 'Unknown error');
+                    }
+                    
+                    if (!data.profit_data || !Array.isArray(data.profit_data) || data.profit_data.length === 0) {
+                        throw new Error('No valid profit data returned');
+                    }
+                    
+                    // Create chart
+                    chartContainer.innerHTML = '<canvas id="heatmap"></canvas>';
+                    const ctx = document.getElementById('heatmap').getContext('2d');
+                    
+                    // Convert data to chart format
+                    const scatterData = data.profit_data.map(item => ({
+                        x: item.electricity_cost,
+                        y: item.btc_price,
+                        profit: item.monthly_profit
+                    }));
+                    
+                    // Create chart
+                    chart = new Chart(ctx, {
+                        type: 'scatter',
+                        data: {
+                            datasets: [{
+                                label: 'Monthly Profit',
+                                data: scatterData,
+                                pointBackgroundColor: function(context) {
+                                    if (!context.raw) return 'rgba(128, 128, 128, 0.7)';
+                                    
+                                    const profit = context.raw.profit;
+                                    // Simple color assignment - red for negative, green for positive
+                                    return profit >= 0 ? 'rgba(40, 167, 69, 0.7)' : 'rgba(220, 53, 69, 0.7)';
+                                },
+                                pointRadius: 15,
+                                pointHoverRadius: 20
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        title: function(items) {
+                                            const item = items[0];
+                                            return `BTC: $${item.raw.y.toLocaleString()}, Electricity: $${item.raw.x.toFixed(3)}/kWh`;
+                                        },
+                                        label: function(context) {
+                                            const formatter = new Intl.NumberFormat('en-US', {
+                                                style: 'currency',
+                                                currency: 'USD'
+                                            });
+                                            return `Monthly Profit: ${formatter.format(context.raw.profit)}`;
+                                        }
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: formData.get('client_electricity_cost') > 0 ? 
+                                        'Customer Profit Heatmap' : 'Mining Site Profit Heatmap',
+                                    font: {
+                                        size: 16
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Electricity Cost ($/kWh)'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Bitcoin Price ($)'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    
+                } catch (error) {
+                    console.error('Chart error:', error);
+                    chartContainer.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h5>Error generating chart</h5>
+                            <p>${error.message}</p>
+                        </div>
+                    `;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
