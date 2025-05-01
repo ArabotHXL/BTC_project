@@ -83,6 +83,12 @@ def calculate():
         except ValueError as e:
             logging.error(f"Invalid curtailment value: {request.form.get('curtailment')} - {str(e)}")
             curtailment = 0
+            
+        try:
+            maintenance_fee = float(request.form.get('maintenance_fee', 0))
+        except ValueError as e:
+            logging.error(f"Invalid maintenance fee value: {request.form.get('maintenance_fee')} - {str(e)}")
+            maintenance_fee = 0
         
         logging.info(f"Calculate request: model={miner_model}, count={miner_count}, real_time={use_real_time}, "
                      f"site_power={site_power_mw}MW, curtailment={curtailment}%")
@@ -106,6 +112,14 @@ def calculate():
             site_power_mw=site_power_mw,
             curtailment=curtailment
         )
+        
+        # Add maintenance fee to the result
+        if maintenance_fee > 0:
+            result['maintenance_fee'] = {
+                'monthly': maintenance_fee,
+                'daily': maintenance_fee / 30.5,
+                'yearly': maintenance_fee * 12
+            }
         
         # Return results as JSON
         return jsonify(result)

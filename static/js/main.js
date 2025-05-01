@@ -448,8 +448,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const hostTotalExpensesEl = document.getElementById('host-total-expenses');
                 const operationCostEl = document.getElementById('operation-cost');
                 
-                // 设置运维费用为0（可以之后更新为实际数据） (Set operation cost to 0, can be updated with real data later)
-                const operationCost = 0;
+                // 设置运维费用（从表单获取或用后端返回的数据） (Set operation cost from form or backend data)
+                let operationCost = 0;
+                if (data.maintenance_fee && data.maintenance_fee.monthly) {
+                    // 使用后端返回的维护费用
+                    operationCost = data.maintenance_fee.monthly;
+                }
                 if (operationCostEl) {
                     operationCostEl.textContent = formatCurrency(operationCost);
                 }
