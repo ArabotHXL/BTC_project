@@ -726,16 +726,36 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         
                         // 创建图表 (Create chart)
-                        // 创建图表注释
-                        var chartInfoHTML = '<div class="mt-3 text-muted small"><p>' + 
+                        // 清空容器
+                        chartContainer.innerHTML = '';
+                        
+                        // 添加Canvas
+                        var canvasElement = document.createElement('canvas');
+                        canvasElement.id = 'heatmap-canvas';
+                        canvasElement.width = '100%';
+                        canvasElement.height = '400';
+                        chartContainer.appendChild(canvasElement);
+                        
+                        // 添加说明区域
+                        var descriptionCard = document.createElement('div');
+                        descriptionCard.className = 'mt-3 mb-2 text-center card p-3 bg-dark text-light border-secondary';
+                        descriptionCard.style.fontSize = '0.9rem';
+                        descriptionCard.innerHTML = '<p class="mb-1">' + 
                             '此热力图显示不同BTC价格和电价组合下的月度利润变化情况。点的颜色表示盈利状况：深绿色表示高盈利，浅绿色表示低盈利，红色表示亏损。' + 
                             '点的大小与盈利金额成正比。将鼠标悬停在点上可查看详细信息。</p>' +
-                            '<p>This chart shows how monthly profits change with different BTC prices and electricity costs. ' +
+                            '<p class="mb-0">' + 
+                            'This chart shows how monthly profits change with different BTC prices and electricity costs. ' +
                             'Point colors indicate profitability: dark green for high profits, light green for low profits, red for losses. ' +
-                            'Point sizes are proportional to profit amount. Hover over points for details.</p></div>';
-                            
-                        // 添加图表下方的注释
-                        chartContainer.insertAdjacentHTML('beforeend', chartInfoHTML);
+                            'Point sizes are proportional to profit amount. Hover over points for details.</p>';
+                        chartContainer.appendChild(descriptionCard);
+                        
+                        // 添加版权信息
+                        var copyrightElement = document.createElement('div');
+                        copyrightElement.className = 'text-center text-muted small mt-1 mb-3';
+                        copyrightElement.innerText = 'Bitcoin Mining Profitability Calculator © 2025';
+                        chartContainer.appendChild(copyrightElement);
+                        
+                        var canvas = document.getElementById('heatmap-canvas');
                         
                         new Chart(canvas, {
                             type: 'scatter',
