@@ -89,7 +89,7 @@ def get_real_time_btc_hashrate():
         logging.warning(f"Unable to get real-time BTC hashrate: {e}")
         return DEFAULT_NETWORK_HASHRATE
 
-def calculate_mining_profitability(hashrate=None, power_consumption=None, electricity_cost=0.05, client_electricity_cost=None, 
+def calculate_mining_profitability(hashrate=0, power_consumption=0, electricity_cost=0.05, client_electricity_cost=None, 
                              btc_price=None, difficulty=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0):
     """
     Calculate Bitcoin mining profitability using the exact calculation method from the original code
@@ -146,16 +146,21 @@ def calculate_mining_profitability(hashrate=None, power_consumption=None, electr
         # === PERFORM EXACT CALCULATION FROM ORIGINAL CODE ===
         
         # === 矿机数量 & 总算力计算 (Miner Count & Total Hashrate Calculation) ===
-        network_TH = real_time_btc_hashrate * 1e6  # Convert from EH/s to TH/s
+        # Ensure we always have a valid network hashrate (never zero)
+        network_TH = max(1e6, real_time_btc_hashrate * 1e6)  # Convert from EH/s to TH/s and ensure minimum value
         curtailment_factor = max(0, min(1, (100 - curtailment) / 100))
-        site_total_hashrate = hashrate * curtailment_factor
+        site_total_hashrate = hashrate * curtailment_factor if hashrate is not None else 0
         
         # === BTC 产出计算 (BTC Output Calculation) ===
         # Method 1: Network Hashrate Based
         btc_per_th = (current_block_reward * BLOCKS_PER_DAY) / network_TH
         site_daily_btc_output = site_total_hashrate * btc_per_th
         site_monthly_btc_output = site_daily_btc_output * 30.5
-        daily_btc_per_miner = btc_per_th * (single_hashrate if miner_model else hashrate / miner_count)
+        # Calculate daily BTC per miner - handle both miner model and manual entry cases safely
+        single_miner_hashrate = None
+        if miner_model and miner_model in MINER_DATA:
+            single_miner_hashrate = MINER_DATA[miner_model]["hashrate"]
+        daily_btc_per_miner = btc_per_th * (single_miner_hashrate if single_miner_hashrate else (hashrate / max(1, miner_count)))
         
         # Method 2: Difficulty Based
         site_total_hashrate_Hs = site_total_hashrate * 1e12  # TH/s → H/s

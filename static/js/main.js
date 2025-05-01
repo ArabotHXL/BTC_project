@@ -262,8 +262,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Network and mining details
         if (data.network_data) {
             networkDifficultyValueEl.textContent = formatNumber(data.network_data.network_difficulty) + ' T';
-            // Estimate network hashrate from difficulty
-            const networkHashrateEH = (data.network_data.network_difficulty * 2**32 / 600) / 10**18;
+            // Use network hashrate from the API if available, otherwise estimate it
+            const networkHashrateEH = data.network_data.network_hashrate || 
+                                    ((data.network_data.network_difficulty * 2**32 / 600) / 10**18);
             networkHashrateValueEl.textContent = formatNumber(networkHashrateEH, 2) + ' EH/s';
             currentBtcPriceValueEl.textContent = formatCurrency(data.network_data.btc_price);
             blockRewardValueEl.textContent = formatNumber(data.network_data.block_reward, 3) + ' BTC';
@@ -273,8 +274,10 @@ document.addEventListener('DOMContentLoaded', () => {
         dailyBtcValueEl.textContent = formatNumber(data.btc_mined.daily, 8);
         optimalElectricityRateEl.textContent = formatCurrency(data.break_even.electricity_cost) + '/kWh';
         
-        // Calculate BTC per TH per day
-        if (data.inputs.hashrate && data.btc_mined.daily) {
+        // Calculate or use provided BTC per TH per day
+        if (data.btc_mined.per_th_daily) {
+            btcPerThDailyEl.textContent = formatNumber(data.btc_mined.per_th_daily, 8);
+        } else if (data.inputs.hashrate && data.btc_mined.daily) {
             const btcPerTh = data.btc_mined.daily / data.inputs.hashrate;
             btcPerThDailyEl.textContent = formatNumber(btcPerTh, 8);
         }
