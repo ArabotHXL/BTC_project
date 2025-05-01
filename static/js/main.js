@@ -358,7 +358,31 @@ document.addEventListener('DOMContentLoaded', () => {
             if (resultsTimestamp) resultsTimestamp.textContent = `Calculated at ${timestamp.toLocaleString()}`;
             
             // ===== 更新主要显示数据 (Update main display data) =====
-            if (btcMinedDailyEl) btcMinedDailyEl.textContent = formatNumber(data.btc_mined.daily, 8);
+            if (btcMinedDailyEl) {
+                // 更新主卡片中的BTC日产量
+                btcMinedDailyEl.textContent = formatNumber(data.btc_mined.daily, 8);
+                
+                // 如果主卡片中存在算法显示区，添加算法1和算法2的值
+                const method1 = data.btc_mined.method1 ? formatNumber(data.btc_mined.method1.daily, 8) : "0.00000000";
+                const method2 = data.btc_mined.method2 ? formatNumber(data.btc_mined.method2.daily, 8) : "0.00000000";
+                
+                // 创建算法1和算法2的显示
+                const algoDiv = document.createElement('div');
+                algoDiv.className = 'd-flex justify-content-between mt-2 small';
+                algoDiv.innerHTML = `
+                    <div><span class="badge bg-secondary">算法1</span> <span id="btc-method1-daily-card">${method1}</span></div>
+                    <div><span class="badge bg-primary">算法2</span> <span id="btc-method2-daily-card" class="text-info">${method2}</span></div>
+                `;
+                
+                // 清除旧的显示
+                const existingAlgoDiv = btcMinedDailyEl.parentNode.querySelector('.d-flex.justify-content-between');
+                if (existingAlgoDiv) {
+                    existingAlgoDiv.remove();
+                }
+                
+                // 添加到主卡片
+                btcMinedDailyEl.insertAdjacentElement('afterend', algoDiv);
+            }
             if (dailyProfitEl) dailyProfitEl.textContent = formatCurrency(data.profit.daily);
             if (monthlyProfitEl) monthlyProfitEl.textContent = formatCurrency(data.profit.monthly);
         
