@@ -447,10 +447,19 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (btcMethod1El && data.btc_mined.method1) {
             btcMethod1El.textContent = formatNumber(data.btc_mined.method1.daily, 8);
+            // 添加月产出提示
+            const monthlyOutput1 = data.btc_mined.method1.daily * 30.5;
+            btcMethod1El.title = `每月约: ${formatNumber(monthlyOutput1, 8)} BTC`;
         }
         
         if (btcMethod2El && data.btc_mined.method2) {
-            btcMethod2El.textContent = formatNumber(data.btc_mined.method2.daily, 8);
+            // 创建有颜色的显示
+            const btcValue = data.btc_mined.method2.daily;
+            const monthlyOutput2 = btcValue * 30.5;
+            
+            // 添加带颜色的显示
+            btcMethod2El.innerHTML = `<span class="text-info">${formatNumber(btcValue, 8)}</span>`;
+            btcMethod2El.title = `每月约: ${formatNumber(monthlyOutput2, 8)} BTC`;
         }
         if (optimalElectricityRateEl && data.break_even) 
             optimalElectricityRateEl.textContent = formatCurrency(data.break_even.electricity_cost) + '/kWh';

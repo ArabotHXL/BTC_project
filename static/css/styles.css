@@ -43,6 +43,21 @@
     color: var(--bs-danger);
 }
 
+/* Algorithm outputs styling */
+#btc-method1-daily {
+    color: var(--bs-secondary);
+    font-weight: 500;
+}
+
+#btc-method2-daily {
+    /* 算法2 使用更明显的颜色 */
+    font-weight: 700;
+}
+
+#btc-method2-daily .text-info {
+    color: #5bc0de !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     #network-stats-container {
