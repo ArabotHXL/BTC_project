@@ -377,33 +377,42 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
                     miner_count=miner_count
                 )
                 
-                # 热力图需要正确处理不同模式下的利润数据
-                if client_electricity_cost and client_electricity_cost > 0:
-                    # 客户模式下，我们需要单独处理每个电价点和BTC价格点组合
-                    # 客户的电费是固定的，所以我们需要为每个电价点重新计算客户利润
-                    
-                    # 1. 计算电费差价作为站点收入（现在不影响客户利润，只是记录用）
-                    site_electricity_profit = (client_electricity_cost - cost) * result['inputs']['power_consumption'] * 24 * 30.5 / 1000
-                    
-                    # 2. 使用客户电费和当前循环的BTC价格重新计算客户利润
-                    # 客户利润 = BTC产出 * BTC价格 - 电力消耗 * 客户电费
-                    monthly_btc = result['btc_mined']['monthly']
-                    monthly_power = result['inputs']['power_consumption'] * 24 * 30.5 / 1000  # kWh
-                    customer_monthly_revenue = monthly_btc * price  # 使用当前循环的BTC价格
-                    customer_monthly_cost = monthly_power * client_electricity_cost  # 使用固定的客户电费
-                    monthly_profit = customer_monthly_revenue - customer_monthly_cost
-                    
-                    # 记录日志帮助调试
-                    if price == btc_prices[0] and cost == electricity_costs[0]:  # 只记录一次以避免日志过多
-                        print(f"客户模式热力图 - BTC价格: ${price}, 电费差价: ${client_electricity_cost - cost}/kWh, 月利润: ${monthly_profit}")
-                else:
-                    # 矿场主模式：显示矿场主在不同电费和BTC价格下的利润
-                    # 直接使用计算函数返回的利润（因为它已经使用了循环中的电费和BTC价格）
-                    monthly_profit = result['profit']['monthly']
-                    
-                    # 记录日志帮助调试
-                    if price == btc_prices[0] and cost == electricity_costs[0]:  # 只为第一个组合记录以避免日志过多
-                        print(f"矿场主模式热力图 - BTC价格: ${price}, 电费: ${cost}/kWh, 月利润: ${monthly_profit}")
+                # 热力图需要根据当前模式选择正确的利润数据处理方式
+                try:
+                    if client_electricity_cost and client_electricity_cost > 0:
+                        # === 客户模式 ===
+                        # 在客户模式下，电费是固定的（客户电费），但BTC价格变化
+                        # 在热力图X轴(电费)上，虽然我们使用不同的电费点，但这只影响矿场利润，不影响客户
+                        # 所以我们需要计算客户在不同BTC价格下的利润，但电费保持固定
+                        
+                        # 1. 计算客户在当前BTC价格下的利润
+                        monthly_btc = result['btc_mined']['monthly']
+                        monthly_power = result['inputs']['power_consumption'] * 24 * 30.5 / 1000  # kWh
+                        customer_monthly_revenue = monthly_btc * price  # 收入：BTC产出 * 当前BTC价格
+                        customer_monthly_cost = monthly_power * client_electricity_cost  # 成本：电力消耗 * 固定客户电费
+                        
+                        # 2. 计算客户利润
+                        monthly_profit = customer_monthly_revenue - customer_monthly_cost
+                        
+                        # 记录日志帮助调试（仅在第一个点记录）
+                        if price == btc_prices[0] and cost == electricity_costs[0]:
+                            print(f"客户模式热力图 - BTC价格: ${price}, 客户电费: ${client_electricity_cost}/kWh, 月利润: ${monthly_profit}, BTC产出: {monthly_btc}")
+                    else:
+                        # === 矿场主模式 ===
+                        # 在矿场主模式下，我们展示不同电费和BTC价格组合下的矿场利润
+                        # 直接使用计算函数返回的矿场利润（因为它已经考虑了当前循环中的电费和BTC价格）
+                        
+                        # 1. 获取站点利润
+                        monthly_profit = result['profit']['monthly']
+                        
+                        # 记录日志帮助调试（仅在第一个点记录）
+                        if price == btc_prices[0] and cost == electricity_costs[0]:
+                            print(f"矿场主模式热力图 - BTC价格: ${price}, 矿场电费: ${cost}/kWh, 月利润: ${monthly_profit}, BTC产出: {result['btc_mined']['monthly']}")
+                except Exception as e:
+                    # 捕获计算过程中的任何错误
+                    logging.error(f"热力图数据点计算错误 - BTC价格: ${price}, 电费: ${cost}/kWh, 错误: {str(e)}")
+                    # 使用默认利润以便继续生成图表
+                    monthly_profit = 0
                 
                 profit_data.append({
                     'btc_price': price,

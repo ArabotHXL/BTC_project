@@ -735,24 +735,72 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 // 检查数据中是否有不同的利润值
-                const uniqueProfits = new Set(profitData.map(item => item.monthly_profit));
-                console.log("热力图中不同的利润值数量:", uniqueProfits.size);
+                const uniqueProfits = new Set();
+                // 四舍五入到整数以便更好地检测差异
+                profitData.forEach(item => {
+                    if (item && typeof item.monthly_profit === 'number') {
+                        uniqueProfits.add(Math.round(item.monthly_profit));
+                    }
+                });
                 
-                if (uniqueProfits.size <= 1) {
-                    console.warn("热力图中所有利润值都相同:", profitData[0].monthly_profit);
+                console.log("热力图中不同的利润值数量:", uniqueProfits.size);
+                console.log("不同利润值:", Array.from(uniqueProfits).slice(0, 10)); // 显示前10个不同值
+                
+                // 查找不同BTC价格和电费组合的利润变化
+                const profitByBtcPrice = {};
+                const profitByElectricity = {};
+                
+                // 收集不同BTC价格和电费下的利润数据
+                profitData.forEach(item => {
+                    if (!profitByBtcPrice[item.btc_price]) {
+                        profitByBtcPrice[item.btc_price] = [];
+                    }
+                    if (!profitByElectricity[item.electricity_cost]) {
+                        profitByElectricity[item.electricity_cost] = [];
+                    }
                     
-                    // 如果所有利润值都相同，显示一个警告但仍然继续显示图表
+                    profitByBtcPrice[item.btc_price].push(item.monthly_profit);
+                    profitByElectricity[item.electricity_cost].push(item.monthly_profit);
+                });
+                
+                // 检查BTC价格和电费变化是否引起利润变化
+                const btcPriceChangesProfit = Object.keys(profitByBtcPrice).length > 1 && 
+                    Object.values(profitByBtcPrice).some(profits => 
+                        new Set(profits.map(p => Math.round(p))).size > 1
+                    );
+                    
+                const electricityChangesProfit = Object.keys(profitByElectricity).length > 1 && 
+                    Object.values(profitByElectricity).some(profits => 
+                        new Set(profits.map(p => Math.round(p))).size > 1
+                    );
+                
+                console.log("BTC价格变化影响利润:", btcPriceChangesProfit);
+                console.log("电费变化影响利润:", electricityChangesProfit);
+                
+                // 创建数据统计信息以帮助调试
+                const stats = {
+                    min: Math.min(...profitData.map(d => d.monthly_profit)),
+                    max: Math.max(...profitData.map(d => d.monthly_profit)),
+                    avg: profitData.reduce((sum, d) => sum + d.monthly_profit, 0) / profitData.length
+                };
+                console.log("利润统计:", stats);
+                
+                // 如果数据中所有利润值相同或几乎相同，显示警告
+                if (uniqueProfits.size <= 2 || (!btcPriceChangesProfit && !electricityChangesProfit)) {
+                    console.warn("热力图中所有利润值都很相似:", stats);
+                    
+                    // 显示警告但仍然继续显示图表
                     const warningDiv = document.createElement('div');
                     warningDiv.className = 'alert alert-warning text-center mb-3';
-                    warningDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>警告：所有利润值都相同，这可能是由于计算错误或参数设置问题导致的。<br>Warning: All profit values are identical, which may be due to calculation errors or parameter settings.';
+                    warningDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>警告：热力图中的利润值变化不明显，这可能是由于计算错误或参数设置导致的。<br>Warning: Profit values in the heatmap show little variation, which may be due to calculation errors or parameter settings.';
                     
                     if (chartContainer && chartContainer.parentNode) {
                         chartContainer.parentNode.insertBefore(warningDiv, chartContainer);
                     }
                 }
                 
-                // 打印一些示例数据进行调试
-                console.log("热力图数据样本(前3个):", profitData.slice(0, 3));
+                // 打印数据样本进行调试
+                console.log("热力图数据样本:", profitData.slice(0, 5));
                 
                 // 创建散点图数据（用于热力图式可视化）
                 const scatterData = [];
@@ -781,15 +829,41 @@ document.addEventListener('DOMContentLoaded', () => {
                                 if (!context.raw) return 'rgba(128, 128, 128, 0.7)';
                                 const profit = context.raw.profit || 0;
                                 
+                                // 找出数据集中的利润范围
+                                const allProfits = scatterData.map(d => d.profit || 0);
+                                // 计算正利润和负利润的最大值和最小值
+                                const positiveProfits = allProfits.filter(p => p > 0);
+                                const negativeProfits = allProfits.filter(p => p < 0);
+                                
+                                const maxPositiveProfit = positiveProfits.length ? Math.max(...positiveProfits) : 10000;
+                                const maxNegativeProfit = negativeProfits.length ? Math.abs(Math.min(...negativeProfits)) : 10000;
+                                
+                                // 计算差异范围，用于缩放颜色强度
+                                const profitRange = Math.max(maxPositiveProfit, maxNegativeProfit);
+                                
+                                // 根据数据集动态设置强度因子，避免所有点颜色相似
+                                // 如果值差异较小，就使用更小的因子来放大差异
+                                const varianceThreshold = 5000; // 如果范围小于这个值，使用更敏感的缩放
+                                let scaleFactor;
+                                
+                                if (profitRange < varianceThreshold) {
+                                    // 小范围，使用更敏感的缩放
+                                    scaleFactor = Math.max(1000, profitRange / 2);
+                                } else {
+                                    // 大范围，使用正常缩放
+                                    scaleFactor = Math.max(10000, profitRange / 3);
+                                }
+                                
                                 // 根据利润值确定颜色显示
                                 if (profit < 0) {
                                     // 负利润 - 红色，亏损程度越大颜色越深
-                                    const intensity = Math.min(0.9, Math.max(0.3, Math.abs(profit) / 10000));
+                                    // 确保即使是小的负值也有可见的颜色
+                                    const intensity = Math.min(0.9, Math.max(0.3, Math.abs(profit) / scaleFactor));
                                     return `rgba(220, 53, 69, ${intensity})`;
                                 } else {
                                     // 正利润 - 绿色，利润越高颜色越深
-                                    // 根据整个数据集调整比例尺，让颜色变化更明显
-                                    const intensity = Math.min(0.9, Math.max(0.3, profit / 50000));
+                                    // 确保即使是小的正值也有可见的颜色
+                                    const intensity = Math.min(0.9, Math.max(0.3, profit / scaleFactor));
                                     return `rgba(25, 135, 84, ${intensity})`;
                                 }
                             },
