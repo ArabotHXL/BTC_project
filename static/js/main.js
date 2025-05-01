@@ -455,14 +455,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const hostTotalExpensesEl = document.getElementById('host-total-expenses');
                 const operationCostEl = document.getElementById('operation-cost');
                 
-                // 设置运维费用（从表单获取或用后端返回的数据） (Set operation cost from form or backend data)
-                let operationCost = 0;
+                // 设置运维费用（使用前面定义的变量） (Set operation cost using previously defined variable)
+                // 重新设置operationCostValue，确保与前面定义的值一致
                 if (data.maintenance_fee && data.maintenance_fee.monthly) {
                     // 使用后端返回的维护费用
-                    operationCost = data.maintenance_fee.monthly;
+                    operationCostValue = data.maintenance_fee.monthly;
                 }
                 if (operationCostEl) {
-                    operationCostEl.textContent = formatCurrency(operationCost);
+                    operationCostEl.textContent = formatCurrency(operationCostValue);
                 }
                 
                 // 计算总收入（仅电费差收益，BTC收入已移到客户信息） (Calculate total income: only electricity profit as BTC revenue moved to customer info)
@@ -472,7 +472,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 // 计算月度和年度净收益 (Calculate monthly and yearly net profit)
-                monthlyNetProfit = hostProfit - operationCost;
+                monthlyNetProfit = hostProfit - operationCostValue;
                 yearlyNetProfit = monthlyNetProfit * 12;
                 
                 // 更新净收益显示 (Update net profit display)
@@ -480,7 +480,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (hostMonthlyProfitDisplayEl) hostMonthlyProfitDisplayEl.textContent = formatCurrency(monthlyNetProfit);
                 
                 // 计算总支出（月度电费 + 运维费用） (Calculate total expenses: monthly electricity cost + operation cost)
-                const totalExpenses = data.electricity_cost.monthly + operationCost;
+                const totalExpenses = data.electricity_cost.monthly + operationCostValue;
                 if (hostTotalExpensesEl) {
                     hostTotalExpensesEl.textContent = formatCurrency(totalExpenses);
                 }
