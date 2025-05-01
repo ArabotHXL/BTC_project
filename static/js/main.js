@@ -336,6 +336,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         try {
+            console.log('收到计算结果数据:', data);
+            
             // 显示结果卡片 (Show results card)
             if (resultsCard) resultsCard.style.display = 'block';
             
@@ -360,44 +362,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 btcMethod2CardEl.title = '每月约: ' + formatNumber(monthlyOutput2, 8) + ' BTC';
             }
             
-            // 矿场主收益
+            // 矿场主收益相关元素
             var hostProfitCardEl = document.getElementById('host-profit-card');
             var hostMonthlyProfitEl = document.getElementById('host-monthly-profit');
-            
-            // 客户收益
-            var clientProfitCardEl = document.getElementById('client-profit-card');
-            var clientMonthlyProfitEl = document.getElementById('client-monthly-profit');
-            
-            // 电费差计算 (Electricity differential)
-            if (data.client_electricity_cost && data.electricity_cost) {
-                var hostElectricProfit = data.client_electricity_cost.monthly - data.electricity_cost.monthly;
-                if (hostMonthlyProfitEl) hostMonthlyProfitEl.textContent = formatCurrency(hostElectricProfit);
-            
-                // 更新主卡片
-                if (hostProfitCardEl && data.client_profit) {
-                    var operationCostValue = data.maintenance_fee && data.maintenance_fee.monthly ? data.maintenance_fee.monthly : 0;
-                    var hostMonthlyNetProfit = hostElectricProfit - operationCostValue;
-                    hostProfitCardEl.textContent = formatCurrency(hostMonthlyNetProfit);
-                }
-            }
-            
-            // 客户收益信息
-            if (clientMonthlyProfitEl && data.client_profit) {
-                clientMonthlyProfitEl.textContent = formatCurrency(data.client_profit.monthly);
-                if (clientProfitCardEl) clientProfitCardEl.textContent = formatCurrency(data.client_profit.monthly);
-            }
-            
-            // 更新矿场收入计算 (Update mining site revenue)
+            var hostMonthlyProfitDisplayEl = document.getElementById('host-monthly-profit-display');
             var hostTotalIncomeEl = document.getElementById('host-total-income');
             var siteRevenueEl = document.getElementById('site-total-revenue');
             var hostSelfProfitEl = document.getElementById('host-self-profit');
             
-            if (hostTotalIncomeEl && data.client_electricity_cost && data.electricity_cost) {
-                // 计算电费差收益
+            // 客户收益相关元素
+            var clientProfitCardEl = document.getElementById('client-profit-card');
+            var clientMonthlyProfitEl = document.getElementById('client-monthly-profit');
+            var clientTotalIncomeEl = document.getElementById('client-total-income');
+            
+            // 月度BTC产出和收入
+            var monthlyBtcOutput = data.btc_mined.monthly || 0;
+            var monthlyIncome = data.revenue.monthly || 0;
+            
+            // 更新客户总收入 - 这是矿机挖出的BTC产生的全部收入
+            if (clientTotalIncomeEl && data.revenue) {
+                clientTotalIncomeEl.textContent = formatCurrency(monthlyIncome);
+            }
+            
+            // 电费差计算 (Electricity differential)
+            if (data.client_electricity_cost && data.electricity_cost) {
+                // 计算电费差收益 - 客户电费减去实际电费
                 var hostElectricProfit = data.client_electricity_cost.monthly - data.electricity_cost.monthly;
                 
-                // 获取运营收益（可能来自其他来源，这里假设为0）
-                var hostSelfProfit = 0; 
+                // 更新矿场主电费差收益显示
+                if (hostMonthlyProfitEl) {
+                    hostMonthlyProfitEl.textContent = formatCurrency(hostElectricProfit);
+                }
+                if (hostMonthlyProfitDisplayEl) {
+                    hostMonthlyProfitDisplayEl.textContent = formatCurrency(hostElectricProfit);
+                }
+                
+                // 获取运营收益和运维成本
+                var operationCostValue = data.maintenance_fee && data.maintenance_fee.monthly ? data.maintenance_fee.monthly : 0;
+                var hostSelfProfit = 0; // 这里假设为0，根据需要调整
+                
+                // 更新运营收益
                 if (hostSelfProfitEl) {
                     hostSelfProfitEl.textContent = formatCurrency(hostSelfProfit);
                 }
@@ -409,7 +413,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 // 总收入 = 总站点收入
-                hostTotalIncomeEl.textContent = formatCurrency(siteTotalRevenue);
+                if (hostTotalIncomeEl) {
+                    hostTotalIncomeEl.textContent = formatCurrency(siteTotalRevenue);
+                }
+                
+                // 更新主卡片 - 净利润 = 电费差收益 - 运维成本
+                var hostMonthlyNetProfit = hostElectricProfit - operationCostValue;
+                if (hostProfitCardEl) {
+                    hostProfitCardEl.textContent = formatCurrency(hostMonthlyNetProfit);
+                }
+            }
+            
+            // 客户收益信息
+            if (clientMonthlyProfitEl && data.client_profit) {
+                var clientMonthlyProfitValue = data.client_profit.monthly;
+                
+                // 更新客户月收益
+                if (clientMonthlyProfitEl) {
+                    clientMonthlyProfitEl.textContent = formatCurrency(clientMonthlyProfitValue);
+                }
+                
+                // 更新主卡片
+                if (clientProfitCardEl) {
+                    clientProfitCardEl.textContent = formatCurrency(clientMonthlyProfitValue);
+                }
             }
         } catch (error) {
             console.error('显示结果时出错:', error);
