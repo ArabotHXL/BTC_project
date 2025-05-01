@@ -90,7 +90,7 @@ def get_real_time_btc_hashrate():
         return DEFAULT_NETWORK_HASHRATE
 
 def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electricity_cost=0.05, client_electricity_cost=None, 
-                             btc_price=None, difficulty=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0.0):
+                             btc_price=None, difficulty=None, block_reward=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0.0):
     """
     Calculate Bitcoin mining profitability using the exact calculation method from the original code
     
@@ -142,6 +142,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         # Use provided values if given
         btc_price = btc_price or real_time_btc_price
         difficulty = difficulty_raw
+        block_reward_to_use = block_reward or current_block_reward
         
         # === PERFORM EXACT CALCULATION FROM ORIGINAL CODE ===
         
@@ -153,7 +154,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         
         # === BTC 产出计算 (BTC Output Calculation) ===
         # Method 1: Network Hashrate Based
-        btc_per_th = (current_block_reward * BLOCKS_PER_DAY) / network_TH
+        btc_per_th = (block_reward_to_use * BLOCKS_PER_DAY) / network_TH
         site_daily_btc_output = site_total_hashrate * btc_per_th
         site_monthly_btc_output = site_daily_btc_output * 30.5
         # Calculate daily BTC per miner - handle both miner model and manual entry cases safely
@@ -166,7 +167,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         site_total_hashrate_Hs = site_total_hashrate * 1e12  # TH/s → H/s
         difficulty_factor = 2 ** 32
         # 确保使用正确的时间计算（86400秒/天）
-        site_daily_btc_output_difficulty = (site_total_hashrate_Hs * current_block_reward * 86400) / (difficulty_raw * difficulty_factor)
+        site_daily_btc_output_difficulty = (site_total_hashrate_Hs * block_reward_to_use * 86400) / (difficulty_raw * difficulty_factor)
         site_monthly_btc_output_difficulty = site_daily_btc_output_difficulty * 30.5
         
         # 打印两种算法的结果，方便调试
@@ -219,7 +220,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
                 'btc_price': btc_price,
                 'network_difficulty': difficulty / 10**12,  # Convert to more readable format (T)
                 'network_hashrate': real_time_btc_hashrate,  # EH/s
-                'block_reward': current_block_reward
+                'block_reward': block_reward_to_use
             },
             'inputs': {
                 'hashrate': hashrate,
@@ -381,7 +382,7 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
             'current_network_data': {
                 'btc_price': current_btc_price,
                 'difficulty': current_difficulty / 10**12,  # Convert to more readable format (T)
-                'block_reward': current_block_reward
+                'block_reward': fixed_network_stats['block_reward']
             },
             'optimal_electricity_rate': optimal_electricity_rate
         }
