@@ -368,14 +368,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // 创建算法1和算法2的显示
                 const algoDiv = document.createElement('div');
-                algoDiv.className = 'd-flex justify-content-between mt-2 small';
+                algoDiv.className = 'd-flex justify-content-between align-items-center mt-1 small';
                 algoDiv.innerHTML = `
-                    <div><span class="badge bg-secondary">算法1</span> <span id="btc-method1-daily-card">${method1}</span></div>
-                    <div><span class="badge bg-primary">算法2</span> <span id="btc-method2-daily-card" class="text-info">${method2}</span></div>
+                    <div class="text-center flex-grow-1 px-1"><span class="badge bg-secondary">算法1</span><br><span id="btc-method1-daily-card">${method1}</span></div>
+                    <div class="text-center flex-grow-1 px-1"><span class="badge bg-primary">算法2</span><br><span id="btc-method2-daily-card" class="text-info">${method2}</span></div>
                 `;
                 
                 // 清除旧的显示
-                const existingAlgoDiv = btcMinedDailyEl.parentNode.querySelector('.d-flex.justify-content-between');
+                const existingAlgoDiv = btcMinedDailyEl.parentNode.querySelector('.d-flex');
                 if (existingAlgoDiv) {
                     existingAlgoDiv.remove();
                 }
