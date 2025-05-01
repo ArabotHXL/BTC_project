@@ -358,32 +358,25 @@ document.addEventListener('DOMContentLoaded', () => {
             if (resultsTimestamp) resultsTimestamp.textContent = `Calculated at ${timestamp.toLocaleString()}`;
             
             // ===== 更新主要显示数据 (Update main display data) =====
-            if (btcMinedDailyEl) {
-                // 更新主卡片中的BTC日产量
-                btcMinedDailyEl.textContent = formatNumber(data.btc_mined.daily, 8);
-                
-                // 如果主卡片中存在算法显示区，添加算法1和算法2的值
-                const method1 = data.btc_mined.method1 ? formatNumber(data.btc_mined.method1.daily, 8) : "0.00000000";
-                const method2 = data.btc_mined.method2 ? formatNumber(data.btc_mined.method2.daily, 8) : "0.00000000";
-                
-                // 创建算法1和算法2的显示
-                const algoDiv = document.createElement('div');
-                algoDiv.className = 'text-center small mt-2';
-                algoDiv.innerHTML = `
-                    <div class="d-flex justify-content-center">
-                        <div class="me-2"><span class="badge bg-secondary">算法1</span> ${method1}</div>
-                        <div class="ms-2"><span class="badge bg-primary">算法2</span> <span class="text-info">${method2}</span></div>
-                    </div>
-                `;
-                
-                // 清除旧的显示
-                const existingAlgoDiv = btcMinedDailyEl.parentNode.querySelector('.text-center.small.mt-2');
-                if (existingAlgoDiv) {
-                    existingAlgoDiv.remove();
-                }
-                
-                // 添加到主卡片
-                btcMinedDailyEl.insertAdjacentElement('afterend', algoDiv);
+            // 直接更新主卡片中的算法1和算法2值
+            const btcMethod1CardEl = document.getElementById('btc-method1-daily-card');
+            const btcMethod2CardEl = document.getElementById('btc-method2-daily-card');
+            
+            if (btcMethod1CardEl && data.btc_mined.method1) {
+                const method1Value = formatNumber(data.btc_mined.method1.daily, 8);
+                btcMethod1CardEl.textContent = method1Value;
+                // 添加月产出提示
+                const monthlyOutput1 = data.btc_mined.method1.daily * 30.5;
+                btcMethod1CardEl.title = `每月约: ${formatNumber(monthlyOutput1, 8)} BTC`;
+            }
+            
+            if (btcMethod2CardEl && data.btc_mined.method2) {
+                const method2Value = formatNumber(data.btc_mined.method2.daily, 8);
+                btcMethod2CardEl.textContent = method2Value;
+                btcMethod2CardEl.className = "text-info";
+                // 添加月产出提示
+                const monthlyOutput2 = data.btc_mined.method2.daily * 30.5;
+                btcMethod2CardEl.title = `每月约: ${formatNumber(monthlyOutput2, 8)} BTC`;
             }
             if (dailyProfitEl) dailyProfitEl.textContent = formatCurrency(data.profit.daily);
             if (monthlyProfitEl) monthlyProfitEl.textContent = formatCurrency(data.profit.monthly);
@@ -471,24 +464,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const btcMethod1El = document.getElementById('btc-method1-daily');
         const btcMethod2El = document.getElementById('btc-method2-daily');
         
-        // 获取主卡片中的算法1和算法2显示元素
-        const btcMethod1CardEl = document.getElementById('btc-method1-daily-card');
-        
+        // 获取算法显示元素
         if (btcMethod1El && data.btc_mined.method1) {
             const method1Value = formatNumber(data.btc_mined.method1.daily, 8);
             btcMethod1El.textContent = method1Value;
             // 添加月产出提示
             const monthlyOutput1 = data.btc_mined.method1.daily * 30.5;
             btcMethod1El.title = `每月约: ${formatNumber(monthlyOutput1, 8)} BTC`;
-            
-            // 同时更新主卡片中的算法1值
-            if (btcMethod1CardEl) {
-                btcMethod1CardEl.textContent = method1Value;
-                btcMethod1CardEl.title = btcMethod1El.title;
-            }
         }
-        
-        const btcMethod2CardEl = document.getElementById('btc-method2-daily-card');
         
         if (btcMethod2El && data.btc_mined.method2) {
             // 创建有颜色的显示
@@ -499,12 +482,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // 添加带颜色的显示
             btcMethod2El.innerHTML = `<span class="text-info">${formattedValue}</span>`;
             btcMethod2El.title = `每月约: ${formatNumber(monthlyOutput2, 8)} BTC`;
-            
-            // 同时更新主卡片中的算法2值
-            if (btcMethod2CardEl) {
-                btcMethod2CardEl.innerHTML = `<span class="text-info">${formattedValue}</span>`;
-                btcMethod2CardEl.title = btcMethod2El.title;
-            }
         }
         if (optimalElectricityRateEl && data.break_even) 
             optimalElectricityRateEl.textContent = formatCurrency(data.break_even.electricity_cost) + '/kWh';
