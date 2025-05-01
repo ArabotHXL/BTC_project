@@ -503,15 +503,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 hostProfitCardEl.textContent = formatCurrency(hostMonthlyNetProfit);
             }
             
-            // 更新矿场主利润详情
-            if (hostDailyProfitEl && data.electricity_cost) {
-                var dailyProfit = hostElectricProfit / 30.5;
-                hostDailyProfitEl.textContent = formatCurrency(dailyProfit);
-            }
-            
-            if (hostYearlyProfitEl) {
-                var yearlyProfit = hostElectricProfit * 12;
-                hostYearlyProfitEl.textContent = formatCurrency(yearlyProfit);
+            // 矿场主月度净收益 = 电费差收益 - 运维成本
+            var hostMonthlyNetProfit = hostElectricProfit - operationCostValue;
+            if (hostMonthlyProfitDisplayEl) {
+                hostMonthlyProfitDisplayEl.textContent = formatCurrency(hostMonthlyNetProfit);
             }
             
             // 更新矿场主成本
