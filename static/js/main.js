@@ -31,10 +31,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const monthlyElectricityEl = document.getElementById('monthly-electricity');
     const breakEvenElectricityEl = document.getElementById('break-even-electricity');
     const optimalCurtailmentEl = document.getElementById('optimal-curtailment');
+    
+    // 客户相关元素 (Customer-related elements)
     const clientMonthlyProfitEl = document.getElementById('client-monthly-profit');
+    const clientYearlyProfitEl = document.getElementById('client-yearly-profit');
     const hostMonthlyProfitEl = document.getElementById('host-monthly-profit');
     const clientMonthlyRevenueEl = document.getElementById('client-monthly-revenue');
     const clientMonthlyElectricityEl = document.getElementById('client-monthly-electricity');
+    const clientBreakEvenElectricityEl = document.getElementById('client-break-even-electricity');
+    const clientBreakEvenBtcEl = document.getElementById('client-break-even-btc');
+    
+    // 通用和网络相关元素 (Common and network-related elements)
     const breakEvenBtcEl = document.getElementById('break-even-btc');
     const networkDifficultyValueEl = document.getElementById('network-difficulty-value');
     const networkHashrateValueEl = document.getElementById('network-hashrate-value');
@@ -226,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const timestamp = new Date(data.timestamp);
         resultsTimestamp.textContent = `Calculated at ${timestamp.toLocaleString()}`;
         
-        // Update results values
+        // ===== 更新矿场主相关信息 (Update mining site/host information) =====
         btcMinedDailyEl.textContent = formatNumber(data.btc_mined.daily, 8);
         dailyProfitEl.textContent = formatCurrency(data.profit.daily);
         monthlyProfitEl.textContent = formatCurrency(data.profit.monthly);
@@ -237,26 +244,36 @@ document.addEventListener('DOMContentLoaded', () => {
         breakEvenElectricityEl.textContent = formatCurrency(data.break_even.electricity_cost) + '/kWh';
         optimalCurtailmentEl.textContent = formatNumber(data.optimization.optimal_curtailment, 2) + '%';
         
-        // Update client profit and additional metrics
+        // Break-even BTC price for host (at what BTC price mining becomes profitable)
+        if (data.break_even && data.btc_mined.monthly > 0) {
+            breakEvenBtcEl.textContent = formatCurrency(data.break_even.btc_price);
+        }
+        
+        // ===== 更新客户相关信息 (Update customer information) =====
         if (data.client_profit) {
-            // Client profit metrics
+            // 客户收益 (Customer profit metrics)
             clientMonthlyProfitEl.textContent = formatCurrency(data.client_profit.monthly);
+            clientYearlyProfitEl.textContent = formatCurrency(data.client_profit.yearly);
             clientMonthlyRevenueEl.textContent = formatCurrency(data.revenue.monthly);
             
-            // Customer electricity cost
+            // 客户电费 (Customer electricity cost)
             if (data.client_electricity_cost) {
                 clientMonthlyElectricityEl.textContent = formatCurrency(data.client_electricity_cost.monthly);
                 
-                // Host profit (difference between client electricity cost and actual electricity cost)
-                const hostProfit = data.client_electricity_cost.monthly - data.electricity_cost.monthly;
+                // 矿场主收益 (计算电费差) (Host profit - the difference between customer electricity cost and actual electricity cost)
+                const hostProfit = data.client_electricity_cost.monthly - data.electricity_cost.monthly + data.profit.monthly;
                 hostMonthlyProfitEl.textContent = formatCurrency(hostProfit);
+                
+                // 客户的盈亏平衡电价和BTC价格 (Customer break-even electricity cost and BTC price)
+                if (data.btc_mined.monthly > 0) {
+                    // 客户盈亏平衡BTC价格是基于客户电费计算的 (Customer break-even BTC price is based on customer electricity cost)
+                    const clientBreakEvenBtc = (data.client_electricity_cost.monthly / data.btc_mined.monthly);
+                    clientBreakEvenBtcEl.textContent = formatCurrency(clientBreakEvenBtc);
+                    
+                    // 客户盈亏平衡电价与矿场主相同 (Customer break-even electricity cost is the same as host's)
+                    clientBreakEvenElectricityEl.textContent = formatCurrency(data.break_even.electricity_cost) + '/kWh';
+                }
             }
-        }
-        
-        // Break-even BTC price (at what BTC price mining becomes profitable)
-        if (data.break_even && data.revenue && data.revenue.monthly > 0) {
-            const breakEvenPrice = (data.electricity_cost.monthly / data.btc_mined.monthly);
-            breakEvenBtcEl.textContent = formatCurrency(breakEvenPrice);
         }
         
         // Network and mining details

@@ -156,32 +156,79 @@
                             
                             <hr>
                             
+                            <!-- 矿场主信息 (Mining Site/Host Information) -->
+                            <h6 class="mb-3 mt-4 bg-dark bg-opacity-10 p-2 rounded">矿场主信息 (Mining Site Information)</h6>
                             <div class="row">
                                 <div class="col-md-6">
                                     <table class="table table-sm">
                                         <tbody>
                                             <tr>
-                                                <td>Yearly Profit</td>
+                                                <td>年度收益 (Yearly Profit)</td>
                                                 <td id="yearly-profit" class="text-end">$0.00</td>
                                             </tr>
                                             <tr>
-                                                <td>Monthly BTC</td>
+                                                <td>月度收益 (Monthly Profit)</td>
+                                                <td id="monthly-profit" class="text-end">$0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td>月度BTC产出 (Monthly BTC)</td>
                                                 <td id="monthly-btc" class="text-end">0.00000000</td>
                                             </tr>
                                             <tr>
-                                                <td>Monthly Revenue</td>
+                                                <td>月度收入 (Monthly Revenue)</td>
                                                 <td id="monthly-revenue" class="text-end">$0.00</td>
                                             </tr>
                                             <tr>
-                                                <td>Customer Monthly Profit</td>
+                                                <td>矿场主月度收益 (Host Monthly Profit)</td>
+                                                <td id="host-monthly-profit" class="text-end">$0.00</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <td>月度电费 (Monthly Electricity Cost)</td>
+                                                <td id="monthly-electricity" class="text-end">$0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td>盈亏平衡电价 (Break-even Electricity)</td>
+                                                <td id="break-even-electricity" class="text-end">$0.00/kWh</td>
+                                            </tr>
+                                            <tr>
+                                                <td>盈亏平衡BTC价格 (Break-even BTC)</td>
+                                                <td id="break-even-btc" class="text-end">$0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td>最优削减比例 (Optimal Curtailment)</td>
+                                                <td id="optimal-curtailment" class="text-end">0.00%</td>
+                                            </tr>
+                                            <tr>
+                                                <td>矿机数量 (Miner Count)</td>
+                                                <td id="miner-count-result" class="text-end">0</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- 客户信息 (Customer Information) -->
+                            <h6 class="mb-3 mt-4 bg-info bg-opacity-10 p-2 rounded">客户信息 (Customer Information)</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <td>客户月度收益 (Customer Monthly Profit)</td>
                                                 <td id="client-monthly-profit" class="text-end">$0.00</td>
                                             </tr>
                                             <tr>
-                                                <td>Host Monthly Profit</td>
-                                                <td id="host-monthly-profit" class="text-end">$0.00</td>
+                                                <td>客户年度收益 (Customer Yearly Profit)</td>
+                                                <td id="client-yearly-profit" class="text-end">$0.00</td>
                                             </tr>
                                             <tr>
-                                                <td>Customer Monthly Revenue</td>
+                                                <td>客户月度收入 (Customer Monthly Revenue)</td>
                                                 <td id="client-monthly-revenue" class="text-end">$0.00</td>
                                             </tr>
                                         </tbody>
@@ -191,28 +238,16 @@
                                     <table class="table table-sm">
                                         <tbody>
                                             <tr>
-                                                <td>Monthly Electricity Cost</td>
-                                                <td id="monthly-electricity" class="text-end">$0.00</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Customer Monthly Electricity</td>
+                                                <td>客户月度电费 (Customer Monthly Electricity)</td>
                                                 <td id="client-monthly-electricity" class="text-end">$0.00</td>
                                             </tr>
                                             <tr>
-                                                <td>Break-even Electricity Cost</td>
-                                                <td id="break-even-electricity" class="text-end">$0.00/kWh</td>
+                                                <td>客户盈亏平衡电价 (Customer Break-even Electricity)</td>
+                                                <td id="client-break-even-electricity" class="text-end">$0.00/kWh</td>
                                             </tr>
                                             <tr>
-                                                <td>Break-even BTC Price</td>
-                                                <td id="break-even-btc" class="text-end">$0.00</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Optimal Curtailment</td>
-                                                <td id="optimal-curtailment" class="text-end">0.00%</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Miner Count</td>
-                                                <td id="miner-count-result" class="text-end">0</td>
+                                                <td>客户盈亏平衡BTC价格 (Customer Break-even BTC)</td>
+                                                <td id="client-break-even-btc" class="text-end">$0.00</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -221,7 +256,8 @@
                             
                             <hr>
                             
-                            <h6 class="mb-3">Network and Mining Details</h6>
+                            <!-- 网络和挖矿详情 (Network and Mining Details) -->
+                            <h6 class="mb-3 bg-secondary bg-opacity-10 p-2 rounded">网络和挖矿详情 (Network and Mining Details)</h6>
                             <div class="row">
                                 <div class="col-md-6">
                                     <table class="table table-sm">
