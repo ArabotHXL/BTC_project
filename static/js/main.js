@@ -637,11 +637,12 @@ document.addEventListener('DOMContentLoaded', function() {
             clientBreakEvenBtcEl.textContent = formatCurrency(data.break_even.btc_price);
         }
     }
-        } catch (error) {
-            console.error('显示结果时出错:', error);
-            showError('显示计算结果时发生错误。(Error displaying calculation results.)');
-        }
+    
+    } catch (error) {
+        console.error('显示结果时出错:', error);
+        showError('显示计算结果时发生错误。(Error displaying calculation results.)');
     }
+}
     
     // 生成利润热力图 (Generate profit heatmap)
     function generateProfitChart(minerModel, minerCount, clientElectricityCost) {
