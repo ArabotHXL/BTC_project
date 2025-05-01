@@ -377,10 +377,33 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
                     miner_count=miner_count
                 )
                 
-                # 热力图需要展示不同电价下的利润变化
-                # 对于热力图数据，我们始终使用当前循环中的电费成本(cost)计算的利润
-                # 这样才能正确显示不同电费成本对盈利能力的影响
-                monthly_profit = result['profit']['monthly']
+                # 热力图需要正确处理不同模式下的利润数据
+                if client_electricity_cost and client_electricity_cost > 0:
+                    # 客户模式下，我们需要单独处理每个电价点和BTC价格点组合
+                    # 客户的电费是固定的，所以我们需要为每个电价点重新计算客户利润
+                    
+                    # 1. 计算电费差价作为站点收入（现在不影响客户利润，只是记录用）
+                    site_electricity_profit = (client_electricity_cost - cost) * result['inputs']['power_consumption'] * 24 * 30.5 / 1000
+                    
+                    # 2. 使用客户电费和当前循环的BTC价格重新计算客户利润
+                    # 客户利润 = BTC产出 * BTC价格 - 电力消耗 * 客户电费
+                    monthly_btc = result['btc_mined']['monthly']
+                    monthly_power = result['inputs']['power_consumption'] * 24 * 30.5 / 1000  # kWh
+                    customer_monthly_revenue = monthly_btc * price  # 使用当前循环的BTC价格
+                    customer_monthly_cost = monthly_power * client_electricity_cost  # 使用固定的客户电费
+                    monthly_profit = customer_monthly_revenue - customer_monthly_cost
+                    
+                    # 记录日志帮助调试
+                    if price == btc_prices[0] and cost == electricity_costs[0]:  # 只记录一次以避免日志过多
+                        print(f"客户模式热力图 - BTC价格: ${price}, 电费差价: ${client_electricity_cost - cost}/kWh, 月利润: ${monthly_profit}")
+                else:
+                    # 矿场主模式：显示矿场主在不同电费和BTC价格下的利润
+                    # 直接使用计算函数返回的利润（因为它已经使用了循环中的电费和BTC价格）
+                    monthly_profit = result['profit']['monthly']
+                    
+                    # 记录日志帮助调试
+                    if price == btc_prices[0] and cost == electricity_costs[0]:  # 只为第一个组合记录以避免日志过多
+                        print(f"矿场主模式热力图 - BTC价格: ${price}, 电费: ${cost}/kWh, 月利润: ${monthly_profit}")
                 
                 profit_data.append({
                     'btc_price': price,

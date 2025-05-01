@@ -736,9 +736,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // 检查数据中是否有不同的利润值
                 const uniqueProfits = new Set(profitData.map(item => item.monthly_profit));
+                console.log("热力图中不同的利润值数量:", uniqueProfits.size);
+                
                 if (uniqueProfits.size <= 1) {
-                    console.warn("热力图中所有利润值都相同，这可能是个问题:", profitData[0].monthly_profit);
+                    console.warn("热力图中所有利润值都相同:", profitData[0].monthly_profit);
+                    
+                    // 如果所有利润值都相同，显示一个警告但仍然继续显示图表
+                    const warningDiv = document.createElement('div');
+                    warningDiv.className = 'alert alert-warning text-center mb-3';
+                    warningDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>警告：所有利润值都相同，这可能是由于计算错误或参数设置问题导致的。<br>Warning: All profit values are identical, which may be due to calculation errors or parameter settings.';
+                    
+                    if (chartContainer && chartContainer.parentNode) {
+                        chartContainer.parentNode.insertBefore(warningDiv, chartContainer);
+                    }
                 }
+                
+                // 打印一些示例数据进行调试
+                console.log("热力图数据样本(前3个):", profitData.slice(0, 3));
                 
                 // 创建散点图数据（用于热力图式可视化）
                 const scatterData = [];

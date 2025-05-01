@@ -204,7 +204,7 @@ def get_miners():
 def get_profit_chart_data():
     """Generate profit chart data for visualization"""
     try:
-        # 添加防重复调用锁，防止前端重复请求同一数据
+        # 添加详细日志以帮助调试
         import time
         start_time = time.time()
         
@@ -247,28 +247,16 @@ def get_profit_chart_data():
             logging.error(f"Error parsing client electricity cost: {request.form.get('client_electricity_cost')} - {str(e)}")
             client_electricity_cost = 0
         
-        # 生成缓存键，用于检查是否为重复请求
-        cache_key = f"{miner_model}_{miner_count}_{client_electricity_cost}"
-        
-        # 检查是否有静态缓存数据（简单示例）
-        import os
-        cache_file = f".chart_cache_{cache_key.replace('.', '_')}.json"
-        
-        if os.path.exists(cache_file) and os.path.getsize(cache_file) > 0:
-            try:
-                with open(cache_file, 'r') as f:
-                    import json
-                    cached_data = json.load(f)
-                    logging.info(f"Using cached chart data for {miner_model} with {miner_count} miners")
-                    return jsonify(cached_data)
-            except Exception as e:
-                logging.error(f"Error reading cache: {str(e)}")
-                # 继续执行，重新生成数据
-        
-        # Generate price and electricity cost ranges
-        current_btc_price = get_real_time_btc_price()
-        
-        # Create a simplified set of price and electricity points (5x5 grid)
+        # 禁用缓存以避免使用旧的数据（此前的缓存可能包含错误数据）
+        # 生成新的价格和电费成本范围
+        try:
+            current_btc_price = get_real_time_btc_price()
+            logging.info(f"Current BTC price fetched: ${current_btc_price}")
+        except Exception as e:
+            logging.error(f"Error getting real-time BTC price: {str(e)}, using default")
+            current_btc_price = 50000  # 使用默认值
+            
+        # 创建价格和电费点的网格(5x5)
         btc_price_factors = [0.5, 0.75, 1.0, 1.25, 1.5]
         btc_prices = [round(current_btc_price * factor) for factor in btc_price_factors]
         electricity_costs = [0.02, 0.04, 0.06, 0.08, 0.10]
@@ -277,33 +265,60 @@ def get_profit_chart_data():
         logging.info(f"Using BTC prices: {btc_prices}")
         logging.info(f"Using electricity costs: {electricity_costs}")
         
-        # Get profit chart data
-        chart_data = generate_profit_chart_data(
-            miner_model=miner_model,
-            electricity_costs=electricity_costs,
-            btc_prices=btc_prices,
-            miner_count=miner_count,
-            client_electricity_cost=client_electricity_cost if client_electricity_cost > 0 else None
-        )
-        
-        # 缓存结果，避免重复计算
+        # 获取热力图数据
         try:
-            with open(cache_file, 'w') as f:
-                import json
-                json.dump(chart_data, f)
+            # 尝试生成热力图数据
+            chart_data = generate_profit_chart_data(
+                miner_model=miner_model,
+                electricity_costs=electricity_costs,
+                btc_prices=btc_prices,
+                miner_count=miner_count,
+                client_electricity_cost=client_electricity_cost if client_electricity_cost > 0 else None
+            )
+            
+            # 验证返回的数据结构
+            if not chart_data.get('success', False):
+                error_msg = chart_data.get('error', 'Unknown error in chart data generation')
+                logging.error(f"Chart data generation failed: {error_msg}")
+                return jsonify({
+                    'success': False,
+                    'error': error_msg
+                }), 400
+                
+            # 验证profit_data是否为数组且非空
+            profit_data = chart_data.get('profit_data', [])
+            if not isinstance(profit_data, list) or len(profit_data) == 0:
+                logging.error("Generated chart data has empty or invalid profit_data")
+                return jsonify({
+                    'success': False,
+                    'error': 'Generated chart data is invalid (empty profit data)'
+                }), 500
+                
+            # 验证利润值是否有变化
+            unique_profits = set(item.get('monthly_profit', 0) for item in profit_data)
+            if len(unique_profits) <= 1:
+                logging.warning(f"All profit values are identical ({list(unique_profits)[0] if unique_profits else 'N/A'}), data may be incorrect")
+                
+            elapsed_time = time.time() - start_time
+            logging.info(f"Chart data generated in {elapsed_time:.2f} seconds with {len(profit_data)} data points")
+            
+            return jsonify(chart_data)
+            
         except Exception as e:
-            logging.error(f"Error caching chart data: {str(e)}")
-        
-        elapsed_time = time.time() - start_time
-        logging.info(f"Chart data generated in {elapsed_time:.2f} seconds")
-        
-        return jsonify(chart_data)
-        
+            logging.error(f"Error generating chart data: {str(e)}")
+            import traceback
+            logging.error(traceback.format_exc())
+            return jsonify({
+                'success': False,
+                'error': f'Error generating chart data: {str(e)}'
+            }), 500
     except Exception as e:
-        logging.error(f"Error generating profit chart data: {str(e)}")
+        logging.error(f"Unhandled exception in profit chart data generation: {str(e)}")
+        import traceback
+        logging.error(traceback.format_exc())
         return jsonify({
             'success': False,
-            'error': 'An error occurred while generating chart data.'
+            'error': f'Server error: {str(e)}'
         }), 500
 
 if __name__ == '__main__':
