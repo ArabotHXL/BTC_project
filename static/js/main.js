@@ -402,8 +402,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const hostYearlyProfitEl = document.getElementById('host-yearly-profit');
         const hostMonthlyProfitDisplayEl = document.getElementById('host-monthly-profit-display');
         
-        if (hostYearlyProfitEl) hostYearlyProfitEl.textContent = formatCurrency(data.profit.yearly);
-        if (hostMonthlyProfitDisplayEl) hostMonthlyProfitDisplayEl.textContent = formatCurrency(data.profit.monthly);
+        // 初始化变量 (Initialize variables)
+        let operationCostValue = data.maintenance_fee && data.maintenance_fee.monthly ? data.maintenance_fee.monthly : 0;
+        
+        // 这里先定义变量，稍后在有了hostProfit后再计算净收益 (Just define variables here, will calculate net profit later after hostProfit is available)
+        let monthlyNetProfit = 0;
+        let yearlyNetProfit = 0;
+        
+        if (hostYearlyProfitEl) hostYearlyProfitEl.textContent = formatCurrency(yearlyNetProfit);
+        if (hostMonthlyProfitDisplayEl) hostMonthlyProfitDisplayEl.textContent = formatCurrency(monthlyNetProfit);
         if (monthlyBtcEl) monthlyBtcEl.textContent = formatNumber(data.btc_mined.monthly, 8);
         if (monthlyRevenueEl) monthlyRevenueEl.textContent = formatCurrency(data.revenue.monthly);
         if (monthlyElectricityEl) monthlyElectricityEl.textContent = formatCurrency(data.electricity_cost.monthly);
@@ -458,11 +465,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     operationCostEl.textContent = formatCurrency(operationCost);
                 }
                 
-                // 计算总收入（月度挖矿收入 + 电费差收益） (Calculate total income: monthly mining revenue + electricity profit)
-                const totalIncome = data.revenue.monthly + hostProfit;
+                // 计算总收入（仅电费差收益，BTC收入已移到客户信息） (Calculate total income: only electricity profit as BTC revenue moved to customer info)
+                const totalIncome = hostProfit;
                 if (hostTotalIncomeEl) {
                     hostTotalIncomeEl.textContent = formatCurrency(totalIncome);
                 }
+                
+                // 计算月度和年度净收益 (Calculate monthly and yearly net profit)
+                monthlyNetProfit = hostProfit - operationCost;
+                yearlyNetProfit = monthlyNetProfit * 12;
+                
+                // 更新净收益显示 (Update net profit display)
+                if (hostYearlyProfitEl) hostYearlyProfitEl.textContent = formatCurrency(yearlyNetProfit);
+                if (hostMonthlyProfitDisplayEl) hostMonthlyProfitDisplayEl.textContent = formatCurrency(monthlyNetProfit);
                 
                 // 计算总支出（月度电费 + 运维费用） (Calculate total expenses: monthly electricity cost + operation cost)
                 const totalExpenses = data.electricity_cost.monthly + operationCost;
