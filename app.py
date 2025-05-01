@@ -23,11 +23,6 @@ def index():
     """Render the main page of the BTC mining calculator"""
     return render_template('index.html')
 
-@app.route('/heatmap')
-def heatmap():
-    """Render the standalone heatmap page"""
-    return render_template('heatmap.html')
-
 @app.route('/calculate', methods=['POST'])
 def calculate():
     """Handle the calculation request and return results as JSON"""
