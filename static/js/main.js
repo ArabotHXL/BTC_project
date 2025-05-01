@@ -308,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         if (lastBlockReward) {
-            blockRewardEl.textContent = formatNumber(parseFloat(lastBlockReward), 3) + ' BTC';
+            blockRewardEl.textContent = formatNumber(parseFloat(lastBlockReward), 4) + ' BTC';
         } else {
             blockRewardEl.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
         }
@@ -434,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentBtcPriceValueEl) 
                 currentBtcPriceValueEl.textContent = formatCurrency(data.network_data.btc_price);
             if (blockRewardValueEl) 
-                blockRewardValueEl.textContent = formatNumber(data.network_data.block_reward, 3) + ' BTC';
+                blockRewardValueEl.textContent = formatNumber(data.network_data.block_reward, 4) + ' BTC';
         }
         
         // Mining details
