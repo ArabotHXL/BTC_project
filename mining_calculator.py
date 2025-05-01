@@ -292,6 +292,7 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
         hashrate=hashrate,
         power_consumption=power_consumption,
         electricity_cost=0.05,  # Dummy value, not used for this calculation
+        client_electricity_cost=client_electricity_cost,
         btc_price=current_btc_price,
         difficulty=current_difficulty,
         use_real_time_data=False
