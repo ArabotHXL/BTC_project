@@ -462,8 +462,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const hostElectricProfit = data.client_electricity_cost.monthly - data.electricity_cost.monthly;
                 if (hostMonthlyProfitEl) hostMonthlyProfitEl.textContent = formatCurrency(hostElectricProfit);
                 
-                // 矿场主自身挖矿收益（通常为0，已移给客户） (Host mining profit - usually 0, moved to customer)
-                const miningSelfProfit = 0; // 此处设为0，因为挖矿收益已经算到客户那里了
+                // 矿场主没有挖矿收益，所有BTC产出归客户所有 (Host has no mining profit, all BTC output belongs to customer)
+                const miningSelfProfit = 0; // 挖矿收益全部归客户
                 const hostSelfProfitEl = document.getElementById('host-self-profit');
                 if (hostSelfProfitEl) hostSelfProfitEl.textContent = formatCurrency(miningSelfProfit);
                 
