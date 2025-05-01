@@ -726,39 +726,70 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         
                         // 创建图表 (Create chart)
+                        // 创建图表注释
+                        var chartInfoHTML = '<div class="mt-3 text-muted small"><p>' + 
+                            '此热力图显示不同BTC价格和电价组合下的月度利润变化情况。点的颜色表示盈利状况：深绿色表示高盈利，浅绿色表示低盈利，红色表示亏损。' + 
+                            '点的大小与盈利金额成正比。将鼠标悬停在点上可查看详细信息。</p>' +
+                            '<p>This chart shows how monthly profits change with different BTC prices and electricity costs. ' +
+                            'Point colors indicate profitability: dark green for high profits, light green for low profits, red for losses. ' +
+                            'Point sizes are proportional to profit amount. Hover over points for details.</p></div>';
+                            
+                        // 添加图表下方的注释
+                        chartContainer.insertAdjacentHTML('beforeend', chartInfoHTML);
+                        
                         new Chart(canvas, {
                             type: 'scatter',
                             data: {
                                 datasets: [{
-                                    label: '月利润 (Monthly Profit)',
+                                    label: '月利润 (Monthly Profit) $',
                                     data: scatterData,
                                     backgroundColor: function(context) {
                                         if (!context.raw) return 'rgba(128, 128, 128, 0.7)';
                                         
                                         var profit = context.raw.profit;
-                                        // 使用颜色梯度表示盈利程度而不是简单的红绿区分
-                                        if (profit > 10000) {
-                                            return 'rgba(0, 128, 0, 0.8)';  // 深绿色 (Dark green - high profit)
-                                        } else if (profit > 5000) {
-                                            return 'rgba(40, 167, 69, 0.8)';  // 中绿色 (Medium green - medium profit)
-                                        } else if (profit > 1000) {
-                                            return 'rgba(92, 184, 92, 0.8)';  // 浅绿色 (Light green - slight profit)
+                                        // 使用更显著的颜色梯度表示盈利程度
+                                        if (profit > 500000) {
+                                            return 'rgba(0, 100, 0, 0.9)';  // 非常深绿色 (Very dark green - extremely high profit)
+                                        } else if (profit > 300000) {
+                                            return 'rgba(0, 128, 0, 0.9)';  // 深绿色 (Dark green - very high profit)
+                                        } else if (profit > 200000) {
+                                            return 'rgba(34, 139, 34, 0.9)';  // 森林绿 (Forest green - high profit)
+                                        } else if (profit > 100000) {
+                                            return 'rgba(50, 168, 82, 0.9)';  // 中绿色 (Medium green - good profit)
+                                        } else if (profit > 50000) {
+                                            return 'rgba(60, 179, 113, 0.9)';  // 中绿色 (Medium green - decent profit)
+                                        } else if (profit > 10000) {
+                                            return 'rgba(92, 184, 92, 0.9)';  // 浅绿色 (Light green - moderate profit)
                                         } else if (profit > 0) {
-                                            return 'rgba(152, 217, 152, 0.8)';  // 非常浅绿色 (Very light green - marginal profit)
-                                        } else if (profit > -1000) {
-                                            return 'rgba(255, 204, 204, 0.8)';  // 浅红色 (Light red - small loss)
-                                        } else if (profit > -5000) {
-                                            return 'rgba(240, 100, 100, 0.8)';  // 中红色 (Medium red - moderate loss)
+                                            return 'rgba(144, 238, 144, 0.9)';  // 非常浅绿色 (Very light green - small profit)
+                                        } else if (profit > -10000) {
+                                            return 'rgba(255, 182, 193, 0.9)';  // 浅红色 (Light red - small loss)
+                                        } else if (profit > -50000) {
+                                            return 'rgba(255, 105, 97, 0.9)';  // 中红色 (Medium red - moderate loss)
+                                        } else if (profit > -100000) {
+                                            return 'rgba(220, 20, 60, 0.9)';  // 暗红色 (Crimson - significant loss)
                                         } else {
-                                            return 'rgba(220, 53, 69, 0.8)';  // 深红色 (Deep red - significant loss)
+                                            return 'rgba(139, 0, 0, 0.9)';  // 深红色 (Dark red - severe loss)
                                         }
                                     },
                                     pointRadius: function(context) {
                                         // 让更盈利的点显示得大一些，强调盈利状况
                                         if (!context.raw) return 8;
                                         var profit = Math.abs(context.raw.profit);
-                                        return Math.min(Math.max(5 + profit/2000, 5), 15); // 点大小范围在5到15之间
+                                        // 对于大额利润或损失，点的大小更大以突出显示关键数据点
+                                        return Math.min(Math.max(6 + profit/50000, 6), 20); // 点大小范围在6到20之间
                                     },
+                                    borderColor: function(context) {
+                                        // 添加边框使点更明显
+                                        if (!context.raw) return 'rgba(0, 0, 0, 0.5)';
+                                        var profit = context.raw.profit;
+                                        if (profit >= 0) {
+                                            return 'rgba(0, 70, 0, 1)'; // 深绿色边框
+                                        } else {
+                                            return 'rgba(70, 0, 0, 1)'; // 深红色边框
+                                        }
+                                    },
+                                    borderWidth: 1,
                                     pointHoverRadius: 18
                                 }]
                             },
@@ -769,13 +800,29 @@ document.addEventListener('DOMContentLoaded', function() {
                                     x: {
                                         title: {
                                             display: true,
-                                            text: '电价 ($/kWh)'
+                                            text: '电价 ($/kWh)',
+                                            font: {
+                                                weight: 'bold'
+                                            }
+                                        },
+                                        ticks: {
+                                            callback: function(value) {
+                                                return '$' + value.toFixed(2);
+                                            }
                                         }
                                     },
                                     y: {
                                         title: {
                                             display: true,
-                                            text: '比特币价格 ($)'
+                                            text: '比特币价格 ($)',
+                                            font: {
+                                                weight: 'bold'
+                                            }
+                                        },
+                                        ticks: {
+                                            callback: function(value) {
+                                                return '$' + value.toLocaleString();
+                                            }
                                         }
                                     }
                                 },

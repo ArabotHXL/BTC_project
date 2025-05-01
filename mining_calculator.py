@@ -381,35 +381,47 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
                 
                 # 热力图需要根据当前模式选择正确的利润数据处理方式
                 try:
+                    # 获取月度BTC产出
+                    monthly_btc = result['btc_mined']['monthly']
+                    monthly_power = result['inputs']['power_consumption'] * 24 * 30.5 / 1000  # kWh
+                    
                     if client_electricity_cost and client_electricity_cost > 0:
                         # === 客户模式 ===
-                        # 在客户模式下，电费是固定的（客户电费），但BTC价格变化
-                        # 在热力图X轴(电费)上，虽然我们使用不同的电费点，但这只影响矿场利润，不影响客户
-                        # 所以我们需要计算客户在不同BTC价格下的利润，但电费保持固定
+                        # 在客户模式下，我们需要在不同的BTC价格和电费组合下模拟客户盈利情况
                         
-                        # 1. 计算客户在当前BTC价格下的利润
-                        monthly_btc = result['btc_mined']['monthly']
-                        monthly_power = result['inputs']['power_consumption'] * 24 * 30.5 / 1000  # kWh
-                        customer_monthly_revenue = monthly_btc * price  # 收入：BTC产出 * 当前BTC价格
-                        customer_monthly_cost = monthly_power * client_electricity_cost  # 成本：电力消耗 * 固定客户电费
+                        # 1. 客户收入基于BTC产出和当前BTC价格
+                        customer_monthly_revenue = monthly_btc * price
                         
-                        # 2. 计算客户利润
+                        # 2. 客户成本 - 注意：为了让热力图中X轴的变化有意义，我们使用循环中的电费成本而不是固定客户电费
+                        # 这允许我们看到不同电费对客户盈利的影响
+                        used_electricity_cost = cost  # 使用循环中的电价而不是固定客户电费
+                        customer_monthly_cost = monthly_power * used_electricity_cost
+                        
+                        # 3. 计算客户利润
                         monthly_profit = customer_monthly_revenue - customer_monthly_cost
                         
                         # 记录日志帮助调试（仅在第一个点记录）
                         if price == btc_prices[0] and cost == electricity_costs[0]:
-                            print(f"客户模式热力图 - BTC价格: ${price}, 客户电费: ${client_electricity_cost}/kWh, 月利润: ${monthly_profit}, BTC产出: {monthly_btc}")
+                            print(f"客户模式热力图 - BTC价格: ${price}, 电费: ${used_electricity_cost}/kWh, 月利润: ${monthly_profit}, BTC产出: {monthly_btc}")
                     else:
                         # === 矿场主模式 ===
                         # 在矿场主模式下，我们展示不同电费和BTC价格组合下的矿场利润
-                        # 直接使用计算函数返回的矿场利润（因为它已经考虑了当前循环中的电费和BTC价格）
                         
-                        # 1. 获取站点利润
-                        monthly_profit = result['profit']['monthly']
+                        # 1. 矿场收入 - 基于客户电费收入
+                        host_monthly_revenue = monthly_power * cost  # 收入：电力消耗 * 当前循环中的电费（表示矿场收取的费用）
+                        
+                        # 2. 矿场成本 - 基于矿场实际电费 + 维护费
+                        # 使用基本电费(通常是 0.05 $/kWh)作为矿场的实际电费成本
+                        base_electricity_cost = 0.05  # 基础矿场电费
+                        host_monthly_cost = monthly_power * base_electricity_cost  # 电力成本
+                        maintenance_monthly = result.get('maintenance_fee', {}).get('monthly', 5000)  # 维护费
+                        
+                        # 3. 计算矿场利润
+                        monthly_profit = host_monthly_revenue - host_monthly_cost - maintenance_monthly
                         
                         # 记录日志帮助调试（仅在第一个点记录）
                         if price == btc_prices[0] and cost == electricity_costs[0]:
-                            print(f"矿场主模式热力图 - BTC价格: ${price}, 矿场电费: ${cost}/kWh, 月利润: ${monthly_profit}, BTC产出: {result['btc_mined']['monthly']}")
+                            print(f"矿场主模式热力图 - BTC价格: ${price}, 矿场电费: ${cost}/kWh, 收入: ${host_monthly_revenue}, 成本: ${host_monthly_cost}, 维护: ${maintenance_monthly}, 利润: ${monthly_profit}")
                 except Exception as e:
                     # 捕获计算过程中的任何错误
                     logging.error(f"热力图数据点计算错误 - BTC价格: ${price}, 电费: ${cost}/kWh, 错误: {str(e)}")
