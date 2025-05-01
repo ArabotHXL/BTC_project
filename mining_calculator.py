@@ -77,17 +77,16 @@ def get_real_time_block_reward():
         return BLOCK_REWARD
         
 def get_real_time_btc_hashrate():
-    """Get the current Bitcoin network hashrate in EH/s"""
     try:
-        response = requests.get('https://blockchain.info/q/hashrate', timeout=10)
+        response = requests.get('https://blockchain.info/q/hashrate')
         if response.status_code == 200:
-            hashrate_th = float(response.text.strip())  # Original data is in TH/s
-            return hashrate_th / 1e9  # Convert to EH/s
+            hashrate_th = float(response.text.strip())  # 原始数据为 TH/s
+            return hashrate_th / 1e9  # 转换为 EH/s
         else:
-            raise Exception(f"API returned status code {response.status_code}")
+            raise Exception("API 响应异常")
     except Exception as e:
-        logging.warning(f"Unable to get real-time BTC hashrate: {e}")
-        return DEFAULT_NETWORK_HASHRATE
+        print(f"⚠️ 无法获取实时BTC算力，使用默认值 700 EH/s: {e}")
+        return 700
 
 def calculate_mining_profitability(hashrate=0, power_consumption=0, electricity_cost=0.05, client_electricity_cost=None, 
                              btc_price=None, difficulty=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0):
@@ -285,67 +284,85 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
     Returns:
     - Dictionary with data for the chart
     """
-    if miner_model not in MINER_DATA:
-        return {'error': 'Invalid miner model'}
-    
-    # Get real-time network data once to reuse in all calculations
-    current_btc_price = get_real_time_btc_price()
-    current_difficulty = get_real_time_difficulty()
-    current_block_reward = get_real_time_block_reward()
-    
-    # Get miner specs
-    single_hashrate = MINER_DATA[miner_model]["hashrate"]
-    single_power_watt = MINER_DATA[miner_model]["power_watt"]
-    
-    # Apply miner count
-    hashrate = single_hashrate * miner_count
-    power_consumption = single_power_watt * miner_count
-    
-    # Generate profit matrix
-    profit_data = []
-    
-    for btc_price in btc_prices:
-        for electricity_cost in electricity_costs:
-            # Calculate profit for this combination
-            result = calculate_mining_profitability(
+    try:
+        if miner_model not in MINER_DATA:
+            return {'error': 'Invalid miner model'}
+        
+        # Get real-time network data once to reuse in all calculations
+        current_btc_price = get_real_time_btc_price()
+        current_difficulty = get_real_time_difficulty()
+        current_block_reward = get_real_time_block_reward()
+        
+        # Get miner specs
+        single_hashrate = MINER_DATA[miner_model]["hashrate"]
+        single_power_watt = MINER_DATA[miner_model]["power_watt"]
+        
+        # Apply miner count
+        hashrate = single_hashrate * miner_count
+        power_consumption = single_power_watt * miner_count
+        
+        # Generate profit matrix
+        profit_data = []
+        
+        # Calculate profit for each combination of BTC price and electricity cost
+        for price in btc_prices:
+            for cost in electricity_costs:
+                # Calculate profit for this combination
+                result = calculate_mining_profitability(
+                    hashrate=hashrate,
+                    power_consumption=power_consumption,
+                    electricity_cost=cost,
+                    client_electricity_cost=client_electricity_cost,
+                    btc_price=price,
+                    use_real_time_data=False,
+                    miner_model=miner_model,
+                    miner_count=miner_count
+                )
+                
+                # Use client profit if available, otherwise use regular profit
+                if client_electricity_cost and result.get('client_profit'):
+                    monthly_profit = result['client_profit']['monthly']
+                else:
+                    monthly_profit = result['profit']['monthly']
+                
+                profit_data.append({
+                    'btc_price': price,
+                    'electricity_cost': cost,
+                    'monthly_profit': monthly_profit
+                })
+        
+        # Calculate optimal electricity rate at current BTC price
+        optimal_electricity_rate = 0
+        try:
+            base_result = calculate_mining_profitability(
                 hashrate=hashrate,
                 power_consumption=power_consumption,
-                electricity_cost=electricity_cost,
-                client_electricity_cost=client_electricity_cost,
-                btc_price=btc_price,
-                difficulty=current_difficulty,
-                use_real_time_data=False
+                electricity_cost=0.05,  # Dummy value, not used for this calculation
+                btc_price=current_btc_price,
+                use_real_time_data=False,
+                miner_model=miner_model,
+                miner_count=miner_count
             )
             
-            # Use client profit if available, otherwise use regular profit
-            monthly_profit = result['client_profit']['monthly'] if client_electricity_cost and 'client_profit' in result else result['profit']['monthly']
-            
-            profit_data.append({
-                'btc_price': btc_price,
-                'electricity_cost': electricity_cost,
-                'monthly_profit': monthly_profit
-            })
-    
-    # Calculate optimal electricity rate at current BTC price
-    optimal_result = calculate_mining_profitability(
-        hashrate=hashrate,
-        power_consumption=power_consumption,
-        electricity_cost=0.05,  # Dummy value, not used for this calculation
-        client_electricity_cost=client_electricity_cost,
-        btc_price=current_btc_price,
-        difficulty=current_difficulty,
-        use_real_time_data=False
-    )
-    
-    optimal_electricity_rate = optimal_result['break_even']['electricity_cost']
-    
-    return {
-        'success': True,
-        'profit_data': profit_data,
-        'current_network_data': {
-            'btc_price': current_btc_price,
-            'difficulty': current_difficulty / 10**12,  # Convert to more readable format (T)
-            'block_reward': current_block_reward
-        },
-        'optimal_electricity_rate': optimal_electricity_rate
-    }
+            if 'break_even' in base_result and 'electricity_cost' in base_result['break_even']:
+                optimal_electricity_rate = base_result['break_even']['electricity_cost']
+        except Exception as e:
+            logging.error(f"Error calculating optimal electricity rate: {str(e)}")
+            optimal_electricity_rate = 0
+        
+        return {
+            'success': True,
+            'profit_data': profit_data,
+            'current_network_data': {
+                'btc_price': current_btc_price,
+                'difficulty': current_difficulty / 10**12,  # Convert to more readable format (T)
+                'block_reward': current_block_reward
+            },
+            'optimal_electricity_rate': optimal_electricity_rate
+        }
+    except Exception as e:
+        logging.error(f"Error generating profit chart data: {str(e)}")
+        return {
+            'success': False,
+            'error': str(e)
+        }
