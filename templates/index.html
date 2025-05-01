@@ -368,42 +368,60 @@
                             <!-- 网络和挖矿详情 (Network and Mining Details) -->
                             <h6 class="mb-3 bg-secondary bg-opacity-10 p-2 rounded">网络和挖矿详情 (Network and Mining Details)</h6>
                             <div class="row">
-                                <div class="col-md-6">
-                                    <table class="table table-sm">
+                                <!-- 比特币网络信息 -->
+                                <div class="col-md-4">
+                                    <h6 class="text-muted mb-2">比特币网络信息 (Bitcoin Network)</h6>
+                                    <table class="table table-sm table-bordered">
                                         <tbody>
                                             <tr>
-                                                <td>Bitcoin Network Difficulty</td>
+                                                <td>网络难度 (Network Difficulty)</td>
                                                 <td id="network-difficulty-value" class="text-end">0 T</td>
                                             </tr>
                                             <tr>
-                                                <td>Bitcoin Network Hashrate</td>
+                                                <td>网络算力 (Network Hashrate)</td>
                                                 <td id="network-hashrate-value" class="text-end">0 EH/s</td>
                                             </tr>
                                             <tr>
-                                                <td>Total Site Hashrate</td>
-                                                <td id="total-hashrate-result" class="text-end">0 TH/s</td>
+                                                <td>BTC当前价格 (BTC Price)</td>
+                                                <td id="current-btc-price-value" class="text-end">$0.00</td>
                                             </tr>
                                             <tr>
-                                                <td>BTC per TH Daily</td>
-                                                <td id="btc-per-th-daily" class="text-end">0.00000000</td>
+                                                <td>区块奖励 (Block Reward)</td>
+                                                <td id="block-reward-value" class="text-end">0 BTC</td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
-                                <div class="col-md-6">
-                                    <table class="table table-sm">
+                                
+                                <!-- 挖矿场信息 -->
+                                <div class="col-md-4">
+                                    <h6 class="text-muted mb-2">挖矿场信息 (Mining Site)</h6>
+                                    <table class="table table-sm table-bordered">
                                         <tbody>
                                             <tr>
-                                                <td>Current BTC Price</td>
-                                                <td id="current-btc-price-value" class="text-end">$0.00</td>
+                                                <td>场地总算力 (Total Site Hashrate)</td>
+                                                <td id="total-hashrate-result" class="text-end">0 TH/s</td>
                                             </tr>
                                             <tr>
-                                                <td>Current Block Reward</td>
-                                                <td id="block-reward-value" class="text-end">0 BTC</td>
+                                                <td>每TH日产BTC (BTC per TH Daily)</td>
+                                                <td id="btc-per-th-daily" class="text-end">0.00000000</td>
                                             </tr>
                                             <tr>
-                                                <td>Daily BTC Mined</td>
-                                                <td id="daily-btc-value" class="text-end">0.00000000</td>
+                                                <td>最优电费 (Optimal Electricity Rate)</td>
+                                                <td id="optimal-electricity-rate" class="text-end">$0.00/kWh</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- BTC产出算法 -->
+                                <div class="col-md-4">
+                                    <h6 class="text-muted mb-2">BTC产出算法 (BTC Output Algorithms)</h6>
+                                    <table class="table table-sm table-bordered">
+                                        <tbody>
+                                            <tr class="bg-light">
+                                                <td>日产BTC总量 (Daily BTC Total)</td>
+                                                <td id="daily-btc-value" class="text-end fw-bold">0.00000000</td>
                                             </tr>
                                             <tr>
                                                 <td><span class="badge bg-secondary">算法1</span> 按算力占比 (By Hashrate)</td>
@@ -412,10 +430,6 @@
                                             <tr>
                                                 <td><span class="badge bg-primary">算法2</span> 按难度公式 (By Difficulty)</td>
                                                 <td id="btc-method2-daily" class="text-end">0.00000000</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Optimal Electricity Rate</td>
-                                                <td id="optimal-electricity-rate" class="text-end">$0.00/kWh</td>
                                             </tr>
                                         </tbody>
                                     </table>
