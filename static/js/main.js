@@ -683,8 +683,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         datasets: [{
                             label: 'Monthly Profit ($)',
                             data: scatterData,
-                            pointBackgroundColor: (context) => {
-                                const profit = context.raw?.profit || 0;
+                            pointBackgroundColor: function(context) {
+                                const profit = context.raw ? context.raw.profit || 0 : 0;
                                 if (profit < 0) return 'rgba(220, 53, 69, 0.7)'; // Negative: red
                                 const intensity = Math.min(0.9, Math.max(0.2, profit / 20000)); // Normalize between 0.2 and 0.9
                                 return `rgba(25, 135, 84, ${intensity})`;  // Positive: green with intensity
@@ -729,12 +729,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     plugins: {
                         tooltip: {
                             callbacks: {
-                                title: (items) => {
+                                title: function(items) {
                                     const item = items[0];
-                                    return `BTC: $${item.raw.y.toLocaleString()}, Electricity: $${item.raw.x.toFixed(3)}/kWh`;
+                                    if (item && item.raw) {
+                                        return `BTC: $${item.raw.y.toLocaleString()}, Electricity: $${item.raw.x.toFixed(3)}/kWh`;
+                                    }
+                                    return 'Unknown point';
                                 },
-                                label: (context) => {
-                                    return `Monthly Profit: ${formatCurrency(context.raw.profit)}`;
+                                label: function(context) {
+                                    if (context && context.raw) {
+                                        return `Monthly Profit: ${formatCurrency(context.raw.profit)}`;
+                                    }
+                                    return 'Monthly Profit: $0.00';
                                 }
                             }
                         },
@@ -747,10 +753,16 @@ document.addEventListener('DOMContentLoaded', () => {
                             font: {
                                 size: 16
                             },
-                            text: [
-                                clientElectricityCost > 0 ? '客户收益图表 / Customer Profit Chart' : '矿场主收益图表 / Host Profit Chart',
-                                `BTC价格: ${formatCurrency(chartData.current_network_data.btc_price)}, 最优电价: ${formatCurrency(chartData.optimal_electricity_rate)}/kWh`
-                            ]
+                            text: function() {
+                                let titleText = [];
+                                titleText.push(clientElectricityCost > 0 ? '客户收益图表 / Customer Profit Chart' : '矿场主收益图表 / Host Profit Chart');
+                                
+                                if (chartData && chartData.current_network_data && chartData.optimal_electricity_rate) {
+                                    titleText.push(`BTC价格: ${formatCurrency(chartData.current_network_data.btc_price)}, 最优电价: ${formatCurrency(chartData.optimal_electricity_rate)}/kWh`);
+                                }
+                                
+                                return titleText;
+                            }()
                         }
                     },
                     animation: {
