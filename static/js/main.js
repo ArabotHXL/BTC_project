@@ -315,28 +315,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Fetch available miner models
-    async function fetchMiners() {
+    function fetchMiners() {
         try {
-            const response = await fetch('/miners');
-            const data = await response.json();
-            
-            if (data.success && data.miners) {
-                // Store miners data in localStorage for later use
-                localStorage.setItem('miners', JSON.stringify(data.miners));
-                
-                // Clear existing options
-                minerModelSelect.innerHTML = '<option value="">Select a miner model</option>';
-                
-                // Add miner options to the select
-                data.miners.forEach(miner => {
-                    const option = document.createElement('option');
-                    option.value = miner.name;
-                    option.textContent = `${miner.name} (${miner.hashrate} TH/s, ${miner.power_watt}W)`;
-                    minerModelSelect.appendChild(option);
+            fetch('/miners')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.miners) {
+                        // Store miners data in localStorage for later use
+                        localStorage.setItem('miners', JSON.stringify(data.miners));
+                        
+                        // Clear existing options
+                        minerModelSelect.innerHTML = '<option value="">Select a miner model</option>';
+                        
+                        // Add miner options to the select
+                        data.miners.forEach(miner => {
+                            const option = document.createElement('option');
+                            option.value = miner.name;
+                            option.textContent = `${miner.name} (${miner.hashrate} TH/s, ${miner.power_watt}W)`;
+                            minerModelSelect.appendChild(option);
+                        });
+                        
+                        console.log("Miners loaded successfully:", data.miners.length);
+                    } else {
+                        console.error("Failed to get miner data:", data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Failed to fetch miners:', error);
                 });
-            }
         } catch (error) {
-            console.error('Failed to fetch miners:', error);
+            console.error('Exception in fetchMiners:', error);
         }
     }
     
