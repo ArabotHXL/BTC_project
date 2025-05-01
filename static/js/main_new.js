@@ -361,10 +361,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 更新BTC产出显示
     function updateBtcOutputDisplay(data) {
-        // 算法1和算法2的BTC产出
+        // 算法1和算法2的BTC产出 - 详细表格中的元素
         var btcMethod1CardEl = document.getElementById('btc-method1-daily');
         var btcMethod2CardEl = document.getElementById('btc-method2-daily');
         var dailyBtcTotalEl = document.getElementById('daily-btc-value');
+        
+        // 主卡片中的元素
+        var btcMethod1CardMainEl = document.getElementById('btc-method1-daily-card');
+        var btcMethod2CardMainEl = document.getElementById('btc-method2-daily-card');
         
         console.log("更新BTC产出显示:", data.btc_mined);
         
@@ -376,29 +380,51 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("无法更新日产BTC总量", dailyBtcTotalEl, data.btc_mined);
         }
         
-        // 算法1: 按算力占比
-        if (btcMethod1CardEl && data.btc_mined && data.btc_mined.method1) {
+        // 算法1: 按算力占比 - 同时更新详情和主卡片
+        if (data.btc_mined && data.btc_mined.method1) {
             var method1Value = formatNumber(data.btc_mined.method1.daily, 8);
-            btcMethod1CardEl.textContent = method1Value;
-            console.log("已更新算法1产出:", method1Value);
-            // 月产出提示
             var monthlyOutput1 = data.btc_mined.method1.daily * 30.5;
-            btcMethod1CardEl.title = '每月约: ' + formatNumber(monthlyOutput1, 8) + ' BTC';
+            var tooltipText = '每月约: ' + formatNumber(monthlyOutput1, 8) + ' BTC';
+            
+            // 更新详情表格中的元素
+            if (btcMethod1CardEl) {
+                btcMethod1CardEl.textContent = method1Value;
+                btcMethod1CardEl.title = tooltipText;
+                console.log("已更新详情表格算法1产出:", method1Value);
+            }
+            
+            // 更新主卡片中的元素
+            if (btcMethod1CardMainEl) {
+                btcMethod1CardMainEl.textContent = method1Value;
+                btcMethod1CardMainEl.title = tooltipText;
+                console.log("已更新主卡片算法1产出:", method1Value);
+            }
         } else {
-            console.error("无法更新算法1产出", btcMethod1CardEl, data.btc_mined);
+            console.error("无法更新算法1产出，数据缺失", data.btc_mined);
         }
         
-        // 算法2: 按难度公式
-        if (btcMethod2CardEl && data.btc_mined && data.btc_mined.method2) {
+        // 算法2: 按难度公式 - 同时更新详情和主卡片
+        if (data.btc_mined && data.btc_mined.method2) {
             var method2Value = formatNumber(data.btc_mined.method2.daily, 8);
-            btcMethod2CardEl.textContent = method2Value;
-            btcMethod2CardEl.className = "text-end text-info";
-            console.log("已更新算法2产出:", method2Value);
-            // 月产出提示
             var monthlyOutput2 = data.btc_mined.method2.daily * 30.5;
-            btcMethod2CardEl.title = '每月约: ' + formatNumber(monthlyOutput2, 8) + ' BTC';
+            var tooltipText = '每月约: ' + formatNumber(monthlyOutput2, 8) + ' BTC';
+            
+            // 更新详情表格中的元素
+            if (btcMethod2CardEl) {
+                btcMethod2CardEl.textContent = method2Value;
+                btcMethod2CardEl.className = "text-end text-info";
+                btcMethod2CardEl.title = tooltipText;
+                console.log("已更新详情表格算法2产出:", method2Value);
+            }
+            
+            // 更新主卡片中的元素
+            if (btcMethod2CardMainEl) {
+                btcMethod2CardMainEl.textContent = method2Value;
+                btcMethod2CardMainEl.title = tooltipText;
+                console.log("已更新主卡片算法2产出:", method2Value);
+            }
         } else {
-            console.error("无法更新算法2产出", btcMethod2CardEl, data.btc_mined);
+            console.error("无法更新算法2产出，数据缺失", data.btc_mined);
         }
     }
     
