@@ -176,6 +176,14 @@
                                                 <td>Customer Monthly Profit</td>
                                                 <td id="client-monthly-profit" class="text-end">$0.00</td>
                                             </tr>
+                                            <tr>
+                                                <td>Host Monthly Profit</td>
+                                                <td id="host-monthly-profit" class="text-end">$0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Customer Monthly Revenue</td>
+                                                <td id="client-monthly-revenue" class="text-end">$0.00</td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -187,8 +195,16 @@
                                                 <td id="monthly-electricity" class="text-end">$0.00</td>
                                             </tr>
                                             <tr>
+                                                <td>Customer Monthly Electricity</td>
+                                                <td id="client-monthly-electricity" class="text-end">$0.00</td>
+                                            </tr>
+                                            <tr>
                                                 <td>Break-even Electricity Cost</td>
                                                 <td id="break-even-electricity" class="text-end">$0.00/kWh</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Break-even BTC Price</td>
+                                                <td id="break-even-btc" class="text-end">$0.00</td>
                                             </tr>
                                             <tr>
                                                 <td>Optimal Curtailment</td>
@@ -198,9 +214,55 @@
                                                 <td>Miner Count</td>
                                                 <td id="miner-count-result" class="text-end">0</td>
                                             </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <h6 class="mb-3">Network and Mining Details</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <table class="table table-sm">
+                                        <tbody>
                                             <tr>
-                                                <td>Total Hashrate</td>
+                                                <td>Bitcoin Network Difficulty</td>
+                                                <td id="network-difficulty-value" class="text-end">0 T</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Bitcoin Network Hashrate</td>
+                                                <td id="network-hashrate-value" class="text-end">0 EH/s</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Total Site Hashrate</td>
                                                 <td id="total-hashrate-result" class="text-end">0 TH/s</td>
+                                            </tr>
+                                            <tr>
+                                                <td>BTC per TH Daily</td>
+                                                <td id="btc-per-th-daily" class="text-end">0.00000000</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <td>Current BTC Price</td>
+                                                <td id="current-btc-price-value" class="text-end">$0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Current Block Reward</td>
+                                                <td id="block-reward-value" class="text-end">0 BTC</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Daily BTC Mined</td>
+                                                <td id="daily-btc-value" class="text-end">0.00000000</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Optimal Electricity Rate</td>
+                                                <td id="optimal-electricity-rate" class="text-end">$0.00/kWh</td>
                                             </tr>
                                         </tbody>
                                     </table>

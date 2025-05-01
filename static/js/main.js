@@ -32,6 +32,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const breakEvenElectricityEl = document.getElementById('break-even-electricity');
     const optimalCurtailmentEl = document.getElementById('optimal-curtailment');
     const clientMonthlyProfitEl = document.getElementById('client-monthly-profit');
+    const hostMonthlyProfitEl = document.getElementById('host-monthly-profit');
+    const clientMonthlyRevenueEl = document.getElementById('client-monthly-revenue');
+    const clientMonthlyElectricityEl = document.getElementById('client-monthly-electricity');
+    const breakEvenBtcEl = document.getElementById('break-even-btc');
+    const networkDifficultyValueEl = document.getElementById('network-difficulty-value');
+    const networkHashrateValueEl = document.getElementById('network-hashrate-value');
+    const btcPerThDailyEl = document.getElementById('btc-per-th-daily');
+    const currentBtcPriceValueEl = document.getElementById('current-btc-price-value');
+    const blockRewardValueEl = document.getElementById('block-reward-value');
+    const dailyBtcValueEl = document.getElementById('daily-btc-value');
+    const optimalElectricityRateEl = document.getElementById('optimal-electricity-rate');
     const minerCountResultEl = document.getElementById('miner-count-result');
     const totalHashrateResultEl = document.getElementById('total-hashrate-result');
     
@@ -226,11 +237,49 @@ document.addEventListener('DOMContentLoaded', () => {
         breakEvenElectricityEl.textContent = formatCurrency(data.break_even.electricity_cost) + '/kWh';
         optimalCurtailmentEl.textContent = formatNumber(data.optimization.optimal_curtailment, 2) + '%';
         
-        // Update client profit and miner count
+        // Update client profit and additional metrics
         if (data.client_profit) {
+            // Client profit metrics
             clientMonthlyProfitEl.textContent = formatCurrency(data.client_profit.monthly);
+            clientMonthlyRevenueEl.textContent = formatCurrency(data.revenue.monthly);
+            
+            // Customer electricity cost
+            if (data.client_electricity_cost) {
+                clientMonthlyElectricityEl.textContent = formatCurrency(data.client_electricity_cost.monthly);
+                
+                // Host profit (difference between client electricity cost and actual electricity cost)
+                const hostProfit = data.client_electricity_cost.monthly - data.electricity_cost.monthly;
+                hostMonthlyProfitEl.textContent = formatCurrency(hostProfit);
+            }
         }
         
+        // Break-even BTC price (at what BTC price mining becomes profitable)
+        if (data.break_even && data.revenue && data.revenue.monthly > 0) {
+            const breakEvenPrice = (data.electricity_cost.monthly / data.btc_mined.monthly);
+            breakEvenBtcEl.textContent = formatCurrency(breakEvenPrice);
+        }
+        
+        // Network and mining details
+        if (data.network_data) {
+            networkDifficultyValueEl.textContent = formatNumber(data.network_data.network_difficulty) + ' T';
+            // Estimate network hashrate from difficulty
+            const networkHashrateEH = (data.network_data.network_difficulty * 2**32 / 600) / 10**18;
+            networkHashrateValueEl.textContent = formatNumber(networkHashrateEH, 2) + ' EH/s';
+            currentBtcPriceValueEl.textContent = formatCurrency(data.network_data.btc_price);
+            blockRewardValueEl.textContent = formatNumber(data.network_data.block_reward, 3) + ' BTC';
+        }
+        
+        // Mining details
+        dailyBtcValueEl.textContent = formatNumber(data.btc_mined.daily, 8);
+        optimalElectricityRateEl.textContent = formatCurrency(data.break_even.electricity_cost) + '/kWh';
+        
+        // Calculate BTC per TH per day
+        if (data.inputs.hashrate && data.btc_mined.daily) {
+            const btcPerTh = data.btc_mined.daily / data.inputs.hashrate;
+            btcPerThDailyEl.textContent = formatNumber(btcPerTh, 8);
+        }
+        
+        // Miner count and hashrate
         if (data.inputs.miner_count) {
             minerCountResultEl.textContent = data.inputs.miner_count.toLocaleString();
             
