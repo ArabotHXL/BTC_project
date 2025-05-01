@@ -72,10 +72,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (selectedMiner) {
                 // Calculate miner count based on site power (MW) and miner power (W)
-                // Convert site power from MW to W: sitePowerMW * 1,000,000
-                // Calculate how many miners can fit into that power budget
+                // Formula from original code: site_miner_count = int((site_power_mw * 1000) / (power_watt / 1000))
+                // Convert megawatts to kilowatts, and watts to kilowatts, then divide
                 const singleMinerPower = selectedMiner.power_watt;
-                const calculatedMinerCount = Math.floor((sitePowerMW * 1000000) / singleMinerPower);
+                const calculatedMinerCount = Math.floor((sitePowerMW * 1000) / (singleMinerPower / 1000));
                 
                 // Update the miner count field
                 minerCountInput.value = calculatedMinerCount;

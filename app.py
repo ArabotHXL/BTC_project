@@ -53,7 +53,8 @@ def calculate():
             # Calculate miner count based on site power if we have a valid site power and miner model
             if site_power_mw > 0:
                 single_power_watt = MINER_DATA[miner_model]["power_watt"]
-                calculated_miner_count = int((site_power_mw * 1000000) / single_power_watt)
+                # Formula from original code: site_miner_count = int((input_values['site_power_mw'] * 1000) / (input_values['power_watt'] / 1000))
+                calculated_miner_count = int((site_power_mw * 1000) / (single_power_watt / 1000))
                 miner_count = calculated_miner_count
                 logging.debug(f"Calculated {miner_count} miners for {site_power_mw} MW using {miner_model}")
             
