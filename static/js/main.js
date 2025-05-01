@@ -480,6 +480,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     operationCostEl.textContent = formatCurrency(operationCostValue);
                 }
                 
+                // 矿场总收入（客户电费 + BTC挖矿收入） (Total site revenue: customer electricity fee + BTC mining revenue)
+                const siteTotalRevenue = data.client_electricity_cost.monthly + data.revenue.monthly;
+                const siteTotalRevenueEl = document.getElementById('site-total-revenue');
+                if (siteTotalRevenueEl) {
+                    siteTotalRevenueEl.textContent = formatCurrency(siteTotalRevenue);
+                }
+                
                 // 计算矿场主总收入 (Calculate host total income)
                 const hostTotalIncome = hostElectricProfit + miningSelfProfit;
                 if (hostTotalIncomeEl) {
