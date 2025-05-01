@@ -293,11 +293,50 @@ def get_profit_chart_data():
                     'success': False,
                     'error': 'Generated chart data is invalid (empty profit data)'
                 }), 500
+            
+            # 验证和清理数据
+            cleaned_data = []
+            for point in profit_data:
+                # 验证数据点结构完整性
+                if not isinstance(point, dict):
+                    logging.warning(f"Skipping invalid data point (not a dict): {point}")
+                    continue
                 
+                # 验证所有字段存在且为数字
+                try:
+                    if (isinstance(point.get('btc_price'), (int, float)) and 
+                        isinstance(point.get('electricity_cost'), (int, float)) and 
+                        isinstance(point.get('monthly_profit'), (int, float))):
+                        
+                        # 添加有效数据点
+                        cleaned_data.append({
+                            'btc_price': float(point['btc_price']),
+                            'electricity_cost': float(point['electricity_cost']),
+                            'monthly_profit': float(point['monthly_profit'])
+                        })
+                    else:
+                        logging.warning(f"Skipping data point with invalid field types: {point}")
+                except Exception as e:
+                    logging.error(f"Error processing data point {point}: {str(e)}")
+            
+            # 如果没有有效数据点
+            if len(cleaned_data) == 0:
+                logging.error("No valid data points after validation")
+                return jsonify({
+                    'success': False,
+                    'error': 'No valid profit data points could be generated'
+                }), 500
+                
+            # 替换清理后的数据
+            chart_data['profit_data'] = cleaned_data
+            
             # 验证利润值是否有变化
-            unique_profits = set(item.get('monthly_profit', 0) for item in profit_data)
+            unique_profits = set(round(item['monthly_profit'], 2) for item in cleaned_data)
             if len(unique_profits) <= 1:
                 logging.warning(f"All profit values are identical ({list(unique_profits)[0] if unique_profits else 'N/A'}), data may be incorrect")
+                
+            # 记录最终有效数据点数量
+            logging.info(f"Validated profit chart data: {len(cleaned_data)} valid points out of {len(profit_data)} original points")
                 
             elapsed_time = time.time() - start_time
             logging.info(f"Chart data generated in {elapsed_time:.2f} seconds with {len(profit_data)} data points")

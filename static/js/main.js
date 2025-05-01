@@ -805,11 +805,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 创建散点图数据（用于热力图式可视化）
                 const scatterData = [];
                 for (let i = 0; i < profitData.length; i++) {
-                    scatterData.push({
-                        x: profitData[i].electricity_cost,
-                        y: profitData[i].btc_price,
-                        profit: profitData[i].monthly_profit
-                    });
+                    try {
+                        // 检查数据有效性
+                        if (profitData[i] && 
+                            typeof profitData[i].electricity_cost === 'number' && 
+                            typeof profitData[i].btc_price === 'number' && 
+                            typeof profitData[i].monthly_profit === 'number') {
+                            
+                            scatterData.push({
+                                x: profitData[i].electricity_cost,
+                                y: profitData[i].btc_price,
+                                profit: profitData[i].monthly_profit
+                            });
+                        } else {
+                            console.warn("跳过无效数据点:", profitData[i]);
+                        }
+                    } catch (e) {
+                        console.error("处理数据点时出错:", e, profitData[i]);
+                    }
+                }
+                
+                // 确保至少有一个有效数据点
+                if (scatterData.length === 0) {
+                    console.error("没有有效的散点图数据点");
+                    if (chartContainer) {
+                        chartContainer.innerHTML = '<div class="alert alert-warning text-center p-3"><i class="bi bi-exclamation-triangle me-2"></i>无法生成热力图：没有有效的数据点。<br>Cannot generate heatmap: No valid data points.</div>';
+                    }
+                    return;
                 }
                 
                 // Ensure canvas element exists
@@ -827,44 +849,24 @@ document.addEventListener('DOMContentLoaded', () => {
                             data: scatterData,
                             pointBackgroundColor: function(context) {
                                 if (!context.raw) return 'rgba(128, 128, 128, 0.7)';
-                                const profit = context.raw.profit || 0;
                                 
-                                // 找出数据集中的利润范围
-                                const allProfits = scatterData.map(d => d.profit || 0);
-                                // 计算正利润和负利润的最大值和最小值
-                                const positiveProfits = allProfits.filter(p => p > 0);
-                                const negativeProfits = allProfits.filter(p => p < 0);
-                                
-                                const maxPositiveProfit = positiveProfits.length ? Math.max(...positiveProfits) : 10000;
-                                const maxNegativeProfit = negativeProfits.length ? Math.abs(Math.min(...negativeProfits)) : 10000;
-                                
-                                // 计算差异范围，用于缩放颜色强度
-                                const profitRange = Math.max(maxPositiveProfit, maxNegativeProfit);
-                                
-                                // 根据数据集动态设置强度因子，避免所有点颜色相似
-                                // 如果值差异较小，就使用更小的因子来放大差异
-                                const varianceThreshold = 5000; // 如果范围小于这个值，使用更敏感的缩放
-                                let scaleFactor;
-                                
-                                if (profitRange < varianceThreshold) {
-                                    // 小范围，使用更敏感的缩放
-                                    scaleFactor = Math.max(1000, profitRange / 2);
-                                } else {
-                                    // 大范围，使用正常缩放
-                                    scaleFactor = Math.max(10000, profitRange / 3);
-                                }
-                                
-                                // 根据利润值确定颜色显示
-                                if (profit < 0) {
-                                    // 负利润 - 红色，亏损程度越大颜色越深
-                                    // 确保即使是小的负值也有可见的颜色
-                                    const intensity = Math.min(0.9, Math.max(0.3, Math.abs(profit) / scaleFactor));
-                                    return `rgba(220, 53, 69, ${intensity})`;
-                                } else {
-                                    // 正利润 - 绿色，利润越高颜色越深
-                                    // 确保即使是小的正值也有可见的颜色
-                                    const intensity = Math.min(0.9, Math.max(0.3, profit / scaleFactor));
-                                    return `rgba(25, 135, 84, ${intensity})`;
+                                try {
+                                    const profit = context.raw.profit || 0;
+                                    
+                                    // 使用固定的颜色比例尺，避免复杂计算可能导致的错误
+                                    if (profit < 0) {
+                                        // 负利润 - 红色，亏损程度越大颜色越深
+                                        const intensity = Math.min(0.9, Math.max(0.3, Math.abs(profit) / 20000));
+                                        return `rgba(220, 53, 69, ${intensity})`;
+                                    } else {
+                                        // 正利润 - 绿色，利润越高颜色越深
+                                        const intensity = Math.min(0.9, Math.max(0.3, profit / 50000));
+                                        return `rgba(25, 135, 84, ${intensity})`;
+                                    }
+                                } catch (err) {
+                                    console.error("Error in point color calculation:", err);
+                                    // 如果有错误，返回默认颜色
+                                    return 'rgba(128, 128, 128, 0.7)';
                                 }
                             },
                             pointRadius: 15,
