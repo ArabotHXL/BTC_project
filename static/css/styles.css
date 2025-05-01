@@ -54,7 +54,8 @@
     font-weight: 700;
 }
 
-#btc-method2-daily .text-info {
+#btc-method2-daily .text-info,
+#btc-method2-daily-card .text-info {
     color: #5bc0de !important;
 }
 

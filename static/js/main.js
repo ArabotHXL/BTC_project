@@ -445,21 +445,40 @@ document.addEventListener('DOMContentLoaded', () => {
         const btcMethod1El = document.getElementById('btc-method1-daily');
         const btcMethod2El = document.getElementById('btc-method2-daily');
         
+        // 获取主卡片中的算法1和算法2显示元素
+        const btcMethod1CardEl = document.getElementById('btc-method1-daily-card');
+        
         if (btcMethod1El && data.btc_mined.method1) {
-            btcMethod1El.textContent = formatNumber(data.btc_mined.method1.daily, 8);
+            const method1Value = formatNumber(data.btc_mined.method1.daily, 8);
+            btcMethod1El.textContent = method1Value;
             // 添加月产出提示
             const monthlyOutput1 = data.btc_mined.method1.daily * 30.5;
             btcMethod1El.title = `每月约: ${formatNumber(monthlyOutput1, 8)} BTC`;
+            
+            // 同时更新主卡片中的算法1值
+            if (btcMethod1CardEl) {
+                btcMethod1CardEl.textContent = method1Value;
+                btcMethod1CardEl.title = btcMethod1El.title;
+            }
         }
+        
+        const btcMethod2CardEl = document.getElementById('btc-method2-daily-card');
         
         if (btcMethod2El && data.btc_mined.method2) {
             // 创建有颜色的显示
             const btcValue = data.btc_mined.method2.daily;
             const monthlyOutput2 = btcValue * 30.5;
+            const formattedValue = formatNumber(btcValue, 8);
             
             // 添加带颜色的显示
-            btcMethod2El.innerHTML = `<span class="text-info">${formatNumber(btcValue, 8)}</span>`;
+            btcMethod2El.innerHTML = `<span class="text-info">${formattedValue}</span>`;
             btcMethod2El.title = `每月约: ${formatNumber(monthlyOutput2, 8)} BTC`;
+            
+            // 同时更新主卡片中的算法2值
+            if (btcMethod2CardEl) {
+                btcMethod2CardEl.innerHTML = `<span class="text-info">${formattedValue}</span>`;
+                btcMethod2CardEl.title = btcMethod2El.title;
+            }
         }
         if (optimalElectricityRateEl && data.break_even) 
             optimalElectricityRateEl.textContent = formatCurrency(data.break_even.electricity_cost) + '/kWh';
