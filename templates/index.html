@@ -6,6 +6,10 @@
     <title>Bitcoin Mining Profitability Calculator</title>
     <!-- Bootstrap CSS from Replit CDN -->
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@1.1.1/dist/chartjs-chart-matrix.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/static/css/styles.css">
     <!-- Chart.js for data visualization -->
@@ -164,11 +168,11 @@
                                         <tbody>
                                             <tr>
                                                 <td>年度收益 (Yearly Profit)</td>
-                                                <td id="yearly-profit" class="text-end">$0.00</td>
+                                                <td id="host-yearly-profit" class="text-end">$0.00</td>
                                             </tr>
                                             <tr>
                                                 <td>月度收益 (Monthly Profit)</td>
-                                                <td id="monthly-profit" class="text-end">$0.00</td>
+                                                <td id="host-monthly-profit-display" class="text-end">$0.00</td>
                                             </tr>
                                             <tr>
                                                 <td>月度BTC产出 (Monthly BTC)</td>
@@ -179,7 +183,7 @@
                                                 <td id="monthly-revenue" class="text-end">$0.00</td>
                                             </tr>
                                             <tr>
-                                                <td>矿场主月度收益 (Host Monthly Profit)</td>
+                                                <td>矿场主实际收益 (Host True Profit)</td>
                                                 <td id="host-monthly-profit" class="text-end">$0.00</td>
                                             </tr>
                                         </tbody>
@@ -217,7 +221,7 @@
                             <h6 class="mb-3 mt-4 bg-info bg-opacity-10 p-2 rounded">客户信息 (Customer Information)</h6>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <table class="table table-sm">
+                                    <table class="table table-sm table-bordered border-info border-opacity-25">
                                         <tbody>
                                             <tr>
                                                 <td>客户月度收益 (Customer Monthly Profit)</td>
@@ -228,14 +232,14 @@
                                                 <td id="client-yearly-profit" class="text-end">$0.00</td>
                                             </tr>
                                             <tr>
-                                                <td>客户月度收入 (Customer Monthly Revenue)</td>
-                                                <td id="client-monthly-revenue" class="text-end">$0.00</td>
+                                                <td>客户日度收益 (Customer Daily Profit)</td>
+                                                <td id="client-daily-profit" class="text-end">$0.00</td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
                                 <div class="col-md-6">
-                                    <table class="table table-sm">
+                                    <table class="table table-sm table-bordered border-info border-opacity-25">
                                         <tbody>
                                             <tr>
                                                 <td>客户月度电费 (Customer Monthly Electricity)</td>

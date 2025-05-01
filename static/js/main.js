@@ -233,14 +233,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const timestamp = new Date(data.timestamp);
         resultsTimestamp.textContent = `Calculated at ${timestamp.toLocaleString()}`;
         
-        // ===== 更新矿场主相关信息 (Update mining site/host information) =====
+        // ===== 更新主要显示数据 (Update main display data) =====
         btcMinedDailyEl.textContent = formatNumber(data.btc_mined.daily, 8);
         dailyProfitEl.textContent = formatCurrency(data.profit.daily);
         monthlyProfitEl.textContent = formatCurrency(data.profit.monthly);
-        yearlyProfitEl.textContent = formatCurrency(data.profit.yearly);
+        
+        // ===== 更新矿场主相关信息 (Update mining site/host information) =====
+        
+        // 设置年度/月度/日度收益和产出 (Set yearly/monthly/daily profit and output)
+        document.getElementById('host-yearly-profit').textContent = formatCurrency(data.profit.yearly);
+        document.getElementById('host-monthly-profit-display').textContent = formatCurrency(data.profit.monthly);
         monthlyBtcEl.textContent = formatNumber(data.btc_mined.monthly, 8);
         monthlyRevenueEl.textContent = formatCurrency(data.revenue.monthly);
         monthlyElectricityEl.textContent = formatCurrency(data.electricity_cost.monthly);
+        
+        // 设置盈亏平衡和其他信息 (Set break-even and other info)
         breakEvenElectricityEl.textContent = formatCurrency(data.break_even.electricity_cost) + '/kWh';
         optimalCurtailmentEl.textContent = formatNumber(data.optimization.optimal_curtailment, 2) + '%';
         
@@ -254,15 +261,17 @@ document.addEventListener('DOMContentLoaded', () => {
             // 客户收益 (Customer profit metrics)
             clientMonthlyProfitEl.textContent = formatCurrency(data.client_profit.monthly);
             clientYearlyProfitEl.textContent = formatCurrency(data.client_profit.yearly);
-            clientMonthlyRevenueEl.textContent = formatCurrency(data.revenue.monthly);
+            
+            // 添加客户日度收益 (Add customer daily profit)
+            document.getElementById('client-daily-profit').textContent = formatCurrency(data.client_profit.daily);
             
             // 客户电费 (Customer electricity cost)
             if (data.client_electricity_cost) {
                 clientMonthlyElectricityEl.textContent = formatCurrency(data.client_electricity_cost.monthly);
                 
-                // 矿场主收益 (计算电费差) (Host profit - the difference between customer electricity cost and actual electricity cost)
-                const hostProfit = data.client_electricity_cost.monthly - data.electricity_cost.monthly + data.profit.monthly;
-                hostMonthlyProfitEl.textContent = formatCurrency(hostProfit);
+                // 矿场主实际收益 = 客户电费 - 实际电费 + 挖矿收益 (Host true profit = customer electricity cost - actual electricity cost + mining profit)
+                const hostTrueProfit = data.client_electricity_cost.monthly - data.electricity_cost.monthly + data.profit.monthly;
+                hostMonthlyProfitEl.textContent = formatCurrency(hostTrueProfit);
                 
                 // 客户的盈亏平衡电价和BTC价格 (Customer break-even electricity cost and BTC price)
                 if (data.btc_mined.monthly > 0) {
@@ -336,6 +345,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Generate profit heatmap chart
     async function generateProfitChart(minerModel, minerCount, clientElectricityCost = 0) {
         try {
+            console.log(`Generating profit chart for ${minerModel} with ${minerCount} miners and client electricity cost ${clientElectricityCost}`);
+            
             // Create form data with miner model and count
             const formData = new FormData();
             formData.append('miner_model', minerModel);
@@ -348,116 +359,132 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: formData
             });
             
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+            
             const chartData = await response.json();
             
-            if (chartData.success) {
-                // Show chart card
-                chartCard.style.display = 'block';
-                
-                // Process data for heatmap
-                const profitData = chartData.profit_data;
-                
-                // Get unique BTC prices and electricity costs
-                const btcPrices = [...new Set(profitData.map(item => item.btc_price))];
-                const electricityCosts = [...new Set(profitData.map(item => item.electricity_cost))];
-                
-                // Create a 2D array for heatmap data
-                const profitValues = [];
-                btcPrices.forEach(price => {
-                    const row = [];
-                    electricityCosts.forEach(cost => {
-                        const item = profitData.find(data => data.btc_price === price && data.electricity_cost === cost);
-                        row.push(item ? item.monthly_profit : 0);
-                    });
-                    profitValues.push(row);
-                });
-                
-                // Destroy previous chart if it exists
-                if (profitHeatmapChart) {
-                    profitHeatmapChart.destroy();
-                }
-                
-                // Create new chart
-                profitHeatmapChart = new Chart(profitHeatmapCanvas, {
-                    type: 'heatmap',
-                    data: {
-                        datasets: [{
-                            label: 'Monthly Profit ($)',
-                            data: profitData.map(item => ({
-                                x: '$' + item.electricity_cost.toFixed(2) + '/kWh',
-                                y: '$' + item.btc_price.toFixed(0),
-                                v: item.monthly_profit
-                            })),
-                            backgroundColor: ({ raw }) => {
-                                // Color based on profit value
-                                if (raw?.v < 0) return 'rgba(220, 53, 69, 0.8)'; // Negative: red
-                                const intensity = Math.min(1, raw?.v / 10000); // Normalize between 0 and 1
-                                return `rgba(25, 135, 84, ${intensity})`;  // Positive: green with intensity
-                            },
-                            borderWidth: 1,
-                            borderColor: 'rgba(0, 0, 0, 0.2)'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Electricity Cost ($/kWh)'
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: 'Bitcoin Price ($)'
-                                }
-                            }
+            if (!chartData.success) {
+                console.error("Chart data API returned error:", chartData.error || "Unknown error");
+                return;
+            }
+            
+            // Show chart card
+            chartCard.style.display = 'block';
+            
+            // Process data for heatmap
+            const profitData = chartData.profit_data;
+            
+            if (!profitData || !Array.isArray(profitData) || profitData.length === 0) {
+                console.error("Invalid profit data returned from server");
+                return;
+            }
+            
+            // Get unique BTC prices and electricity costs
+            const btcPrices = [...new Set(profitData.map(item => item.btc_price))].sort((a, b) => a - b);
+            const electricityCosts = [...new Set(profitData.map(item => item.electricity_cost))].sort((a, b) => a - b);
+            
+            // Create simple scatter data for a heatmap-like visualization
+            const scatterData = profitData.map(item => ({
+                x: item.electricity_cost,
+                y: item.btc_price,
+                profit: item.monthly_profit
+            }));
+            
+            // Destroy previous chart if it exists
+            if (profitHeatmapChart) {
+                profitHeatmapChart.destroy();
+            }
+            
+            // Create the chart
+            profitHeatmapChart = new Chart(profitHeatmapCanvas, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Monthly Profit ($)',
+                        data: scatterData,
+                        pointBackgroundColor: (context) => {
+                            const profit = context.raw?.profit || 0;
+                            if (profit < 0) return 'rgba(220, 53, 69, 0.7)'; // Negative: red
+                            const intensity = Math.min(0.9, Math.max(0.2, profit / 20000)); // Normalize between 0.2 and 0.9
+                            return `rgba(25, 135, 84, ${intensity})`;  // Positive: green with intensity
                         },
-                        plugins: {
-                            tooltip: {
-                                callbacks: {
-                                    title: (items) => {
-                                        const item = items[0];
-                                        return `BTC Price: ${item.label}`;
-                                    },
-                                    label: (item) => {
-                                        const electricity = item.dataset.data[item.dataIndex].x;
-                                        const profit = formatCurrency(item.dataset.data[item.dataIndex].v);
-                                        return [`Electricity: ${electricity}`, `Monthly Profit: ${profit}`];
-                                    }
-                                }
-                            },
-                            legend: {
-                                display: false
-                            },
+                        pointRadius: 15,
+                        pointHoverRadius: 18,
+                        borderWidth: 1,
+                        borderColor: 'rgba(255, 255, 255, 0.2)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
                             title: {
                                 display: true,
-                                text: [
-                                    clientElectricityCost > 0 ? 'Customer Profitability Heatmap' : 'Host Profitability Heatmap',
-                                    `Current BTC Price: ${formatCurrency(chartData.current_network_data.btc_price)}, Optimal Electricity Rate: ${formatCurrency(chartData.optimal_electricity_rate)}/kWh`
-                                ]
+                                text: '电价 ($/kWh) / Electricity Cost',
+                                color: '#ffffff'
+                            },
+                            ticks: {
+                                color: '#dddddd'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
                             }
                         },
-                        animation: {
-                            duration: 500
+                        y: {
+                            title: {
+                                display: true,
+                                text: '比特币价格 ($) / Bitcoin Price',
+                                color: '#ffffff'
+                            },
+                            ticks: {
+                                color: '#dddddd'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
                         }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => {
+                                    const item = items[0];
+                                    return `BTC: $${item.raw.y.toLocaleString()}, Electricity: $${item.raw.x.toFixed(3)}/kWh`;
+                                },
+                                label: (context) => {
+                                    return `Monthly Profit: ${formatCurrency(context.raw.profit)}`;
+                                }
+                            }
+                        },
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            color: '#ffffff',
+                            font: {
+                                size: 16
+                            },
+                            text: [
+                                clientElectricityCost > 0 ? '客户收益图表 / Customer Profit Chart' : '矿场主收益图表 / Host Profit Chart',
+                                `BTC价格: ${formatCurrency(chartData.current_network_data.btc_price)}, 最优电价: ${formatCurrency(chartData.optimal_electricity_rate)}/kWh`
+                            ]
+                        }
+                    },
+                    animation: {
+                        duration: 800
                     }
-                });
-                
-                // Add annotation line for optimal electricity rate
-                const optimalRateIndex = electricityCosts.findIndex(cost => 
-                    Math.abs(cost - chartData.optimal_electricity_rate) === 
-                    Math.min(...electricityCosts.map(c => Math.abs(c - chartData.optimal_electricity_rate)))
-                );
-                
-                if (optimalRateIndex >= 0) {
-                    // Add annotation in the future if needed
                 }
-            }
+            });
+            
+            console.log("Chart generated successfully");
+            
         } catch (error) {
             console.error('Failed to generate profit chart:', error);
+            chartCard.style.display = 'none';
         }
     }
     

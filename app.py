@@ -156,8 +156,15 @@ def get_profit_chart_data():
         
         # Generate price and electricity cost ranges
         current_btc_price = get_real_time_btc_price()
-        btc_prices = np.linspace(current_btc_price * 0.8, current_btc_price * 1.2, 10).tolist()
-        electricity_costs = np.around(np.linspace(0.02, 0.10, 5), 2).tolist()
+        
+        # Create a simplified set of price and electricity points (5x5 grid)
+        btc_price_factors = [0.5, 0.75, 1.0, 1.25, 1.5]
+        btc_prices = [round(current_btc_price * factor) for factor in btc_price_factors]
+        electricity_costs = [0.02, 0.04, 0.06, 0.08, 0.10]
+        
+        logging.info(f"Generating profit chart for {miner_model} with {miner_count} miners")
+        logging.info(f"Using BTC prices: {btc_prices}")
+        logging.info(f"Using electricity costs: {electricity_costs}")
         
         # Get profit chart data
         chart_data = generate_profit_chart_data(
