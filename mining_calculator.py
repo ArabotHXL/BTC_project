@@ -162,11 +162,16 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             single_miner_hashrate = MINER_DATA[miner_model]["hashrate"]
         daily_btc_per_miner = btc_per_th * (single_miner_hashrate if single_miner_hashrate else (hashrate / max(1, miner_count)))
         
-        # Method 2: Difficulty Based
+        # Method 2: Difficulty Based (从原始代码中完全复制的算法)
         site_total_hashrate_Hs = site_total_hashrate * 1e12  # TH/s → H/s
         difficulty_factor = 2 ** 32
+        # 确保使用正确的时间计算（86400秒/天）
         site_daily_btc_output_difficulty = (site_total_hashrate_Hs * current_block_reward * 86400) / (difficulty_raw * difficulty_factor)
         site_monthly_btc_output_difficulty = site_daily_btc_output_difficulty * 30.5
+        
+        # 打印两种算法的结果，方便调试
+        print(f"Algorithm 1 (Network Based) - Daily BTC: {site_daily_btc_output:.8f}")
+        print(f"Algorithm 2 (Difficulty Based) - Daily BTC: {site_daily_btc_output_difficulty:.8f}")
         
         # Take the average of both methods or use the difficulty method if network hashrate is missing
         daily_btc = site_daily_btc_output if real_time_btc_hashrate else site_daily_btc_output_difficulty
