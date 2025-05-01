@@ -315,19 +315,28 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
         hashrate = single_hashrate * miner_count
         power_consumption = single_power_watt * miner_count
         
+        # 设置固定的网络状态，避免重复计算导致无限循环
+        fixed_network_stats = {
+            'btc_price': current_btc_price,
+            'difficulty': current_difficulty,
+            'block_reward': current_block_reward
+        }
+        
         # Generate profit matrix
         profit_data = []
         
         # Calculate profit for each combination of BTC price and electricity cost
         for price in btc_prices:
             for cost in electricity_costs:
-                # Calculate profit for this combination
+                # Calculate profit for this combination, 不再使用额外API调用，直接使用上述固定数据
                 result = calculate_mining_profitability(
                     hashrate=hashrate,
                     power_consumption=power_consumption,
                     electricity_cost=cost,
                     client_electricity_cost=client_electricity_cost,
                     btc_price=price,
+                    difficulty=fixed_network_stats['difficulty'],
+                    block_reward=fixed_network_stats['block_reward'],
                     use_real_time_data=False,
                     miner_model=miner_model,
                     miner_count=miner_count
@@ -353,6 +362,8 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
                 power_consumption=power_consumption,
                 electricity_cost=0.05,  # Dummy value, not used for this calculation
                 btc_price=current_btc_price,
+                difficulty=fixed_network_stats['difficulty'],
+                block_reward=fixed_network_stats['block_reward'],
                 use_real_time_data=False,
                 miner_model=miner_model,
                 miner_count=miner_count
