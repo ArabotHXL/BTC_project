@@ -570,7 +570,12 @@ document.addEventListener('DOMContentLoaded', () => {
             chartCard.style.display = 'block';
             const loadingDiv = document.createElement('div');
             loadingDiv.className = 'text-center p-5';
-            loadingDiv.innerHTML = '<div class="spinner-border text-info" role="status"><span class="visually-hidden">Loading chart data...</span></div><p class="mt-2">Generating profit heatmap...</p>';
+            loadingDiv.innerHTML = `
+                <div class="spinner-border text-info" role="status">
+                    <span class="visually-hidden">Loading chart data...</span>
+                </div>
+                <p class="mt-2">Generating profit heatmap...</p>
+            `;
             
             // Clear previous chart
             if (profitHeatmapChart) {
@@ -585,83 +590,93 @@ document.addEventListener('DOMContentLoaded', () => {
                 chartContainer.appendChild(loadingDiv);
             }
             
-            console.log("Generating profit chart for " + minerModel + " with " + minerCount + " miners and client electricity cost " + clientElectricityCost);
+            console.log(`Generating profit chart for ${minerModel} with ${minerCount} miners and client electricity cost ${clientElectricityCost}`);
             
+            // Create form data with miner model and count
+            const formData = new FormData();
+            formData.append('miner_model', minerModel);
+            formData.append('miner_count', minerCount);
+            formData.append('client_electricity_cost', clientElectricityCost);
+            
+            // Set timeout for the request
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+            
+            // Fetch chart data with timeout
+            const response = await fetch('/profit_chart_data', {
+                method: 'POST',
+                body: formData,
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            
+            // Reset chart container to prepare for new chart
+            if (chartContainer) {
+                chartContainer.innerHTML = '';
+                const canvas = document.createElement('canvas');
+                canvas.id = 'profit-heatmap';
+                chartContainer.appendChild(canvas);
+                profitHeatmapCanvas = canvas;
+            }
+            
+            if (!response.ok) {
+                const errorText = `Server returned ${response.status}: ${response.statusText}`;
+                console.error(errorText);
+                showError(`Failed to generate chart: ${errorText}`);
+                chartCard.style.display = 'none';
+                return;
+            }
+            
+            const chartData = await response.json();
+            
+            if (!chartData.success) {
+                const errorMsg = chartData.error || "Unknown error generating chart data";
+                console.error("Chart data API returned error:", errorMsg);
+                showError(`Failed to generate chart: ${errorMsg}`);
+                chartCard.style.display = 'none';
+                return;
+            }
+            
+            // Show chart card
+            chartCard.style.display = 'block';
+            
+            // Process data for heatmap
+            const profitData = chartData.profit_data;
+            
+            if (!profitData || !Array.isArray(profitData) || profitData.length === 0) {
+                console.error("Invalid profit data returned from server");
+                return;
+            }
+            
+            // Get unique BTC prices and electricity costs
+            const btcPrices = [...new Set(profitData.map(item => item.btc_price))].sort((a, b) => a - b);
+            const electricityCosts = [...new Set(profitData.map(item => item.electricity_cost))].sort((a, b) => a - b);
+            
+            // Create simple scatter data for a heatmap-like visualization
+            const scatterData = profitData.map(item => ({
+                x: item.electricity_cost,
+                y: item.btc_price,
+                profit: item.monthly_profit
+            }));
+            
+            // Destroy previous chart if it exists
+            if (profitHeatmapChart) {
+                profitHeatmapChart.destroy();
+            }
+            
+            // 添加调试信息确保Chart对象正确初始化
+            console.log("Canvas element exists:", !!profitHeatmapCanvas);
+            console.log("Scatter data points:", scatterData.length);
+            
+            // 确保canvas元素存在
+            if (!profitHeatmapCanvas) {
+                console.error("Chart canvas element not found");
+                return;
+            }
+            
+            // 创建新的Chart对象
             try {
-                // Create form data with miner model and count
-                const formData = new FormData();
-                formData.append('miner_model', minerModel);
-                formData.append('miner_count', minerCount);
-                formData.append('client_electricity_cost', clientElectricityCost);
-                
-                // Set timeout for the request
-                const controller = new AbortController();
-                const timeoutId = setTimeout(function() { controller.abort(); }, 30000); // 30 second timeout
-                
-                // Fetch chart data with timeout
-                const response = await fetch('/profit_chart_data', {
-                    method: 'POST',
-                    body: formData,
-                    signal: controller.signal
-                });
-                
-                clearTimeout(timeoutId);
-                
-                // Reset chart container to prepare for new chart
-                if (chartContainer) {
-                    chartContainer.innerHTML = '';
-                    const canvas = document.createElement('canvas');
-                    canvas.id = 'profit-heatmap';
-                    chartContainer.appendChild(canvas);
-                    profitHeatmapCanvas = canvas;
-                }
-                
-                if (!response.ok) {
-                    const errorText = "Server returned " + response.status + ": " + response.statusText;
-                    console.error(errorText);
-                    showError("Failed to generate chart: " + errorText);
-                    chartCard.style.display = 'none';
-                    return;
-                }
-                
-                const chartData = await response.json();
-                
-                if (!chartData.success) {
-                    const errorMsg = chartData.error || "Unknown error generating chart data";
-                    console.error("Chart data API returned error:", errorMsg);
-                    showError("Failed to generate chart: " + errorMsg);
-                    chartCard.style.display = 'none';
-                    return;
-                }
-                
-                // Show chart card
-                chartCard.style.display = 'block';
-                
-                // Process data for heatmap
-                const profitData = chartData.profit_data;
-                
-                if (!profitData || !Array.isArray(profitData) || profitData.length === 0) {
-                    console.error("Invalid profit data returned from server");
-                    return;
-                }
-                
-                // Create simple scatter data for a heatmap-like visualization
-                const scatterData = [];
-                for (let i = 0; i < profitData.length; i++) {
-                    scatterData.push({
-                        x: profitData[i].electricity_cost,
-                        y: profitData[i].btc_price,
-                        profit: profitData[i].monthly_profit
-                    });
-                }
-                
-                // Ensure canvas element exists
-                if (!profitHeatmapCanvas) {
-                    console.error("Chart canvas element not found");
-                    return;
-                }
-                
-                // Create new Chart object
                 profitHeatmapChart = new Chart(profitHeatmapCanvas, {
                     type: 'scatter',
                     data: {
@@ -669,11 +684,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             label: 'Monthly Profit ($)',
                             data: scatterData,
                             pointBackgroundColor: function(context) {
-                                if (!context.raw) return 'rgba(128, 128, 128, 0.7)';
-                                const profit = context.raw.profit || 0;
+                                const profit = context.raw ? context.raw.profit || 0 : 0;
                                 if (profit < 0) return 'rgba(220, 53, 69, 0.7)'; // Negative: red
-                                const intensity = Math.min(0.9, Math.max(0.2, profit / 20000)); // Normalize
-                                return "rgba(25, 135, 84, " + intensity + ")";  // Positive: green with intensity
+                                const intensity = Math.min(0.9, Math.max(0.2, profit / 20000)); // Normalize between 0.2 and 0.9
+                                return `rgba(25, 135, 84, ${intensity})`;  // Positive: green with intensity
                             },
                             pointRadius: 15,
                             pointHoverRadius: 18,
@@ -681,92 +695,100 @@ document.addEventListener('DOMContentLoaded', () => {
                             borderColor: 'rgba(255, 255, 255, 0.2)'
                         }]
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: '电价 ($/kWh) / Electricity Cost',
-                                    color: '#ffffff'
-                                },
-                                ticks: {
-                                    color: '#dddddd'
-                                },
-                                grid: {
-                                    color: 'rgba(255, 255, 255, 0.1)'
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: '比特币价格 ($) / Bitcoin Price',
-                                    color: '#ffffff'
-                                },
-                                ticks: {
-                                    color: '#dddddd'
-                                },
-                                grid: {
-                                    color: 'rgba(255, 255, 255, 0.1)'
-                                }
-                            }
-                        },
-                        plugins: {
-                            tooltip: {
-                                callbacks: {
-                                    title: function(items) {
-                                        if (!items || !items[0] || !items[0].raw) return 'Unknown point';
-                                        const item = items[0];
-                                        return "BTC: $" + item.raw.y.toLocaleString() + ", Electricity: $" + item.raw.x.toFixed(3) + "/kWh";
-                                    },
-                                    label: function(context) {
-                                        if (!context || !context.raw) return 'Monthly Profit: $0.00';
-                                        return "Monthly Profit: " + formatCurrency(context.raw.profit);
-                                    }
-                                }
-                            },
-                            legend: {
-                                display: false
-                            },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
                             title: {
                                 display: true,
-                                color: '#ffffff',
-                                font: {
-                                    size: 16
-                                },
-                                text: (function() {
-                                    const titleText = [];
-                                    titleText.push(clientElectricityCost > 0 ? '客户收益图表 / Customer Profit Chart' : '矿场主收益图表 / Host Profit Chart');
-                                    
-                                    if (chartData && chartData.current_network_data && chartData.optimal_electricity_rate) {
-                                        titleText.push("BTC价格: " + formatCurrency(chartData.current_network_data.btc_price) + ", 最优电价: " + formatCurrency(chartData.optimal_electricity_rate) + "/kWh");
-                                    }
-                                    
-                                    return titleText;
-                                })()
+                                text: '电价 ($/kWh) / Electricity Cost',
+                                color: '#ffffff'
+                            },
+                            ticks: {
+                                color: '#dddddd'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
                             }
                         },
-                        animation: {
-                            duration: 800
+                        y: {
+                            title: {
+                                display: true,
+                                text: '比特币价格 ($) / Bitcoin Price',
+                                color: '#ffffff'
+                            },
+                            ticks: {
+                                color: '#dddddd'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
                         }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                title: function(items) {
+                                    const item = items[0];
+                                    if (item && item.raw) {
+                                        return `BTC: $${item.raw.y.toLocaleString()}, Electricity: $${item.raw.x.toFixed(3)}/kWh`;
+                                    }
+                                    return 'Unknown point';
+                                },
+                                label: function(context) {
+                                    if (context && context.raw) {
+                                        return `Monthly Profit: ${formatCurrency(context.raw.profit)}`;
+                                    }
+                                    return 'Monthly Profit: $0.00';
+                                }
+                            }
+                        },
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            color: '#ffffff',
+                            font: {
+                                size: 16
+                            },
+                            text: function() {
+                                let titleText = [];
+                                titleText.push(clientElectricityCost > 0 ? '客户收益图表 / Customer Profit Chart' : '矿场主收益图表 / Host Profit Chart');
+                                
+                                if (chartData && chartData.current_network_data && chartData.optimal_electricity_rate) {
+                                    titleText.push(`BTC价格: ${formatCurrency(chartData.current_network_data.btc_price)}, 最优电价: ${formatCurrency(chartData.optimal_electricity_rate)}/kWh`);
+                                }
+                                
+                                return titleText;
+                            }()
+                        }
+                    },
+                    animation: {
+                        duration: 800
                     }
-                });
-                
-                console.log("Chart generated successfully");
-                
-            } catch (error) {
-                console.error('Failed to generate profit chart:', error);
-                showError("热力图生成失败，请重试。(Chart generation failed, please try again.): " + (error.message || 'Unknown error'));
-                
-                // Reset chart card and container
-                if (chartContainer) {
-                    chartContainer.innerHTML = '<div class="alert alert-warning text-center p-3"><i class="bi bi-exclamation-triangle me-2"></i>热力图加载失败。请重新计算或刷新页面后再试。<br>Chart loading failed. Please recalculate or refresh the page and try again.</div><canvas id="profit-heatmap" style="display:none;"></canvas>';
                 }
-            }
+            });
+            
+            console.log("Chart generated successfully");
+            
         } catch (error) {
-            console.error('Fatal error in chart generation:', error);
-            showError("热力图功能发生致命错误，请刷新页面或联系管理员。(Fatal error in chart function, please refresh the page or contact admin).");
+            console.error('Failed to generate profit chart:', error);
+            showError(`热力图生成失败，请重试。(Chart generation failed, please try again.): ${error.message || 'Unknown error'}`);
+            
+            // Reset chart card and container
+            const chartContainer = document.getElementById('chart-container');
+            if (chartContainer) {
+                chartContainer.innerHTML = `
+                    <div class="alert alert-warning text-center p-3">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        热力图加载失败。请重新计算或刷新页面后再试。<br>
+                        Chart loading failed. Please recalculate or refresh the page and try again.
+                    </div>
+                    <canvas id="profit-heatmap" style="display:none;"></canvas>
+                `;
+            }
         }
     }
     
