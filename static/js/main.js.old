@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Handle form submission for calculation
-    async function handleCalculateSubmit(event) {
+    function handleCalculateSubmit(event) {
         event.preventDefault();
         
         // Validate inputs before submission
@@ -181,28 +181,27 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show loading state
         setLoadingState(true);
         
-        try {
-            // Collect form data
-            const formData = new FormData(calculatorForm);
-            
-            // Log the calculation request for debugging
-            console.log('Calculation request:');
-            for (const [key, value] of formData.entries()) {
-                console.log(`${key}: ${value}`);
-            }
-            
-            // Send request to calculate endpoint
-            const response = await fetch('/calculate', {
-                method: 'POST',
-                body: formData
-            });
-            
+        // Collect form data
+        const formData = new FormData(calculatorForm);
+        
+        // Log the calculation request for debugging
+        console.log('Calculation request:');
+        for (const [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`);
+        }
+        
+        // Send request to calculate endpoint
+        fetch('/calculate', {
+            method: 'POST',
+            body: formData
+        })
+        .then(function(response) {
             if (!response.ok) {
                 throw new Error(`Server responded with status: ${response.status}`);
             }
-            
-            const data = await response.json();
-            
+            return response.json();
+        })
+        .then(function(data) {
             if (data.success) {
                 // Display results
                 displayResults(data);
@@ -216,7 +215,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 showError(data.error || 'An error occurred during calculation.');
                 console.error('Server returned error:', data.error);
             }
-        } catch (error) {
+        })
+        .catch(function(error) {
             console.error('Calculation error:', error);
             showError('Failed to calculate mining profitability. Please try again.' + 
                      (error.message ? ` (${error.message})` : ''));
@@ -227,53 +227,53 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Fetch current Bitcoin network statistics
-    async function fetchNetworkStats() {
+    function fetchNetworkStats() {
         // Create loading indicators for network stats
         const networkStatsElements = [btcPriceEl, networkDifficultyEl, networkHashrateEl, blockRewardEl];
         networkStatsElements.forEach(el => {
             el.innerHTML = '<small class="text-muted">Loading...</small>';
         });
         
-        try {
-            const response = await fetch('/network_stats', { timeout: 10000 });
-            
-            if (!response.ok) {
-                throw new Error(`Server responded with status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                // Update the UI with network stats
-                btcPriceEl.textContent = formatCurrency(data.price);
-                networkDifficultyEl.textContent = formatNumber(data.difficulty) + 'T';
-                networkHashrateEl.textContent = formatNumber(data.hashrate) + ' EH/s';
-                blockRewardEl.textContent = formatNumber(data.block_reward) + ' BTC';
-                
-                // Update the BTC price input as well if real-time is checked
-                if (useRealTimeCheckbox.checked) {
-                    btcPriceInput.value = data.price.toFixed(2);
-                    btcPriceInput.disabled = true;
+        fetch('/network_stats')
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
                 }
-                
-                // Store successful values in localStorage as fallback for future failures
-                localStorage.setItem('last_btc_price', data.price);
-                localStorage.setItem('last_network_difficulty', data.difficulty);
-                localStorage.setItem('last_network_hashrate', data.hashrate);
-                localStorage.setItem('last_block_reward', data.block_reward);
-            } else {
-                // Use fallback values from localStorage if available, otherwise show error
+                return response.json();
+            })
+            .then(function(data) {
+                if (data.success) {
+                    // Update the UI with network stats
+                    btcPriceEl.textContent = formatCurrency(data.price);
+                    networkDifficultyEl.textContent = formatNumber(data.difficulty) + 'T';
+                    networkHashrateEl.textContent = formatNumber(data.hashrate) + ' EH/s';
+                    blockRewardEl.textContent = formatNumber(data.block_reward) + ' BTC';
+                    
+                    // Update the BTC price input as well if real-time is checked
+                    if (useRealTimeCheckbox.checked) {
+                        btcPriceInput.value = data.price.toFixed(2);
+                        btcPriceInput.disabled = true;
+                    }
+                    
+                    // Store successful values in localStorage as fallback for future failures
+                    localStorage.setItem('last_btc_price', data.price);
+                    localStorage.setItem('last_network_difficulty', data.difficulty);
+                    localStorage.setItem('last_network_hashrate', data.hashrate);
+                    localStorage.setItem('last_block_reward', data.block_reward);
+                } else {
+                    // Use fallback values from localStorage if available, otherwise show error
+                    useFallbackNetworkStats();
+                    console.error('Server returned error when fetching network stats:', data.error);
+                }
+            })
+            .catch(function(error) {
+                console.error('Failed to fetch network stats:', error);
+                // Use fallback values from localStorage if available
                 useFallbackNetworkStats();
-                console.error('Server returned error when fetching network stats:', data.error);
-            }
-        } catch (error) {
-            console.error('Failed to fetch network stats:', error);
-            // Use fallback values from localStorage if available
-            useFallbackNetworkStats();
-            
-            // Retry after 30 seconds
-            setTimeout(fetchNetworkStats, 30000);
-        }
+                
+                // Retry after 30 seconds
+                setTimeout(fetchNetworkStats, 30000);
+            });
     }
     
     // Helper function to use fallback network stats
@@ -315,28 +315,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Fetch available miner models
-    async function fetchMiners() {
+    function fetchMiners() {
         try {
-            const response = await fetch('/miners');
-            const data = await response.json();
-            
-            if (data.success && data.miners) {
-                // Store miners data in localStorage for later use
-                localStorage.setItem('miners', JSON.stringify(data.miners));
-                
-                // Clear existing options
-                minerModelSelect.innerHTML = '<option value="">Select a miner model</option>';
-                
-                // Add miner options to the select
-                data.miners.forEach(miner => {
-                    const option = document.createElement('option');
-                    option.value = miner.name;
-                    option.textContent = `${miner.name} (${miner.hashrate} TH/s, ${miner.power_watt}W)`;
-                    minerModelSelect.appendChild(option);
+            fetch('/miners')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.miners) {
+                        // Store miners data in localStorage for later use
+                        localStorage.setItem('miners', JSON.stringify(data.miners));
+                        
+                        // Clear existing options
+                        minerModelSelect.innerHTML = '<option value="">Select a miner model</option>';
+                        
+                        // Add miner options to the select
+                        data.miners.forEach(miner => {
+                            const option = document.createElement('option');
+                            option.value = miner.name;
+                            option.textContent = `${miner.name} (${miner.hashrate} TH/s, ${miner.power_watt}W)`;
+                            minerModelSelect.appendChild(option);
+                        });
+                        
+                        console.log("Miners loaded successfully:", data.miners.length);
+                    } else {
+                        console.error("Failed to get miner data:", data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Failed to fetch miners:', error);
                 });
-            }
         } catch (error) {
-            console.error('Failed to fetch miners:', error);
+            console.error('Exception in fetchMiners:', error);
         }
     }
     
@@ -624,42 +632,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // 生成盈利热力图
-    async function generateProfitChart(minerModel, minerCount, clientElectricityCost = 0) {
-        // 一个非常简化的版本，专注于可靠性而不是复杂的功能
-        try {
-            console.log(`Generating minimal profit chart: model=${minerModel}, count=${minerCount}, client_cost=${clientElectricityCost}`);
+    function generateProfitChart(minerModel, minerCount, clientElectricityCost = 0) {
+        // 一个非常简化的版本，就显示一个提示，让用户手动点击生成热力图按钮
+        console.log(`Profit chart generation redirect: model=${minerModel}, count=${minerCount}, client_cost=${clientElectricityCost}`);
+        
+        // 显示图表区域
+        const chartCard = document.getElementById('chart-card');
+        if (chartCard) {
+            chartCard.style.display = 'block';
             
-            // 显示图表区域
-            const chartCard = document.getElementById('profit-chart-card');
-            if (chartCard) {
-                chartCard.style.display = 'block';
-            }
-            
-            // 获取图表容器并显示加载状态
+            // 获取图表容器
             const chartContainer = document.getElementById('chart-container');
-            if (!chartContainer) {
-                console.error("Chart container not found");
-                return;
+            if (chartContainer) {
+                chartContainer.innerHTML = `
+                    <div class="alert alert-info text-center">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>要查看热力图，请点击上方的"生成热力图"按钮</strong><br>
+                        请选择矿机型号后，使用"生成热力图"按钮查看不同BTC价格和电费下的盈利情况。
+                    </div>
+                `;
             }
-            
-            // 显示加载中
-            chartContainer.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div><p class="mt-3">正在生成热力图...<br>Generating chart...</p></div>';
-            
-            // 重置图表实例
-            if (window.profitHeatmapChart) {
-                window.profitHeatmapChart.destroy();
-                window.profitHeatmapChart = null;
-            }
-            
-            // 创建新的表单数据
-            const params = new URLSearchParams();
-            params.append('miner_model', minerModel);
-            params.append('miner_count', minerCount);
-            params.append('client_electricity_cost', clientElectricityCost);
-            
-            // 发送请求
-            const response = await fetch('/profit_chart_data', {
-                method: 'POST',
+        }
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
