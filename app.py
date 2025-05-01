@@ -7,6 +7,7 @@ from mining_calculator import (
     get_real_time_btc_price,
     get_real_time_difficulty,
     get_real_time_block_reward,
+    get_real_time_btc_hashrate,
     calculate_mining_profitability,
     generate_profit_chart_data
 )
