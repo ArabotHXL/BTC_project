@@ -358,31 +358,40 @@ document.addEventListener('DOMContentLoaded', () => {
             if (resultsTimestamp) resultsTimestamp.textContent = `Calculated at ${timestamp.toLocaleString()}`;
             
             // ===== 更新主要显示数据 (Update main display data) =====
-            // 直接更新主卡片中的算法1和算法2值
+            // 更新主卡片中的算法1和算法2值
             const btcMethod1CardEl = document.getElementById('btc-method1-daily-card');
             const btcMethod2CardEl = document.getElementById('btc-method2-daily-card');
             
-            // 添加日志记录查看数据是否正确
-            console.log("Algorithm 1 value:", data.btc_mined.method1?.daily);
-            console.log("Algorithm 2 value:", data.btc_mined.method2?.daily);
+            // 调试输出
+            console.log("全部数据:", JSON.stringify(data, null, 2));
+            console.log("Algorithm 1 value:", data.btc_mined?.method1?.daily);
+            console.log("Algorithm 2 value:", data.btc_mined?.method2?.daily);
             
-            if (btcMethod1CardEl && data.btc_mined && data.btc_mined.method1) {
-                const method1Value = formatNumber(data.btc_mined.method1.daily, 8);
-                btcMethod1CardEl.textContent = method1Value;
-                console.log("Setting Algorithm 1 value to:", method1Value);
-                // 添加月产出提示
-                const monthlyOutput1 = data.btc_mined.method1.daily * 30.5;
-                btcMethod1CardEl.title = `每月约: ${formatNumber(monthlyOutput1, 8)} BTC`;
-            }
-            
-            if (btcMethod2CardEl && data.btc_mined && data.btc_mined.method2) {
-                const method2Value = formatNumber(data.btc_mined.method2.daily, 8);
-                btcMethod2CardEl.textContent = method2Value;
-                console.log("Setting Algorithm 2 value to:", method2Value);
-                btcMethod2CardEl.className = "text-info";
-                // 添加月产出提示
-                const monthlyOutput2 = data.btc_mined.method2.daily * 30.5;
-                btcMethod2CardEl.title = `每月约: ${formatNumber(monthlyOutput2, 8)} BTC`;
+            try {
+                if (btcMethod1CardEl && data.btc_mined && data.btc_mined.method1) {
+                    const method1Value = formatNumber(data.btc_mined.method1.daily, 8);
+                    console.log("正在设置算法1:", method1Value);
+                    btcMethod1CardEl.textContent = method1Value;
+                    // 添加月产出提示
+                    const monthlyOutput1 = data.btc_mined.method1.daily * 30.5;
+                    btcMethod1CardEl.title = `每月约: ${formatNumber(monthlyOutput1, 8)} BTC`;
+                } else {
+                    console.warn("无法更新算法1:", btcMethod1CardEl, data.btc_mined?.method1);
+                }
+                
+                if (btcMethod2CardEl && data.btc_mined && data.btc_mined.method2) {
+                    const method2Value = formatNumber(data.btc_mined.method2.daily, 8);
+                    console.log("正在设置算法2:", method2Value);
+                    btcMethod2CardEl.textContent = method2Value;
+                    btcMethod2CardEl.className = "text-info";
+                    // 添加月产出提示
+                    const monthlyOutput2 = data.btc_mined.method2.daily * 30.5;
+                    btcMethod2CardEl.title = `每月约: ${formatNumber(monthlyOutput2, 8)} BTC`;
+                } else {
+                    console.warn("无法更新算法2:", btcMethod2CardEl, data.btc_mined?.method2);
+                }
+            } catch (error) {
+                console.error("更新算法显示时出错:", error);
             }
             if (dailyProfitEl) dailyProfitEl.textContent = formatCurrency(data.profit.daily);
             if (monthlyProfitEl) monthlyProfitEl.textContent = formatCurrency(data.profit.monthly);
