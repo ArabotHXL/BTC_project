@@ -619,13 +619,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 clientProfitCardEl.textContent = formatCurrency(clientMonthlyProfitValue);
             }
             
-            // 更新客户日收益和年收益
-            if (clientDailyProfitEl && data.client_profit.daily) {
-                clientDailyProfitEl.textContent = formatCurrency(data.client_profit.daily);
-            }
-            
-            if (clientYearlyProfitEl && data.client_profit.yearly) {
-                clientYearlyProfitEl.textContent = formatCurrency(data.client_profit.yearly);
+            // 更新客户年度收益 = 月度收益 * 12
+            if (clientYearlyProfitEl) {
+                var clientYearlyProfit = clientMonthlyProfitValue * 12;
+                clientYearlyProfitEl.textContent = formatCurrency(clientYearlyProfit);
             }
         }
         
