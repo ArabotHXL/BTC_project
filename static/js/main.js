@@ -362,17 +362,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const btcMethod1CardEl = document.getElementById('btc-method1-daily-card');
             const btcMethod2CardEl = document.getElementById('btc-method2-daily-card');
             
-            if (btcMethod1CardEl && data.btc_mined.method1) {
+            // 添加日志记录查看数据是否正确
+            console.log("Algorithm 1 value:", data.btc_mined.method1?.daily);
+            console.log("Algorithm 2 value:", data.btc_mined.method2?.daily);
+            
+            if (btcMethod1CardEl && data.btc_mined && data.btc_mined.method1) {
                 const method1Value = formatNumber(data.btc_mined.method1.daily, 8);
                 btcMethod1CardEl.textContent = method1Value;
+                console.log("Setting Algorithm 1 value to:", method1Value);
                 // 添加月产出提示
                 const monthlyOutput1 = data.btc_mined.method1.daily * 30.5;
                 btcMethod1CardEl.title = `每月约: ${formatNumber(monthlyOutput1, 8)} BTC`;
             }
             
-            if (btcMethod2CardEl && data.btc_mined.method2) {
+            if (btcMethod2CardEl && data.btc_mined && data.btc_mined.method2) {
                 const method2Value = formatNumber(data.btc_mined.method2.daily, 8);
                 btcMethod2CardEl.textContent = method2Value;
+                console.log("Setting Algorithm 2 value to:", method2Value);
                 btcMethod2CardEl.className = "text-info";
                 // 添加月产出提示
                 const monthlyOutput2 = data.btc_mined.method2.daily * 30.5;
