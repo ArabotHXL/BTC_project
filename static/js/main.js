@@ -440,6 +440,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // Mining details
         if (dailyBtcValueEl) 
             dailyBtcValueEl.textContent = formatNumber(data.btc_mined.daily, 8);
+            
+        // 显示两种算法的BTC产出
+        const btcMethod1El = document.getElementById('btc-method1-daily');
+        const btcMethod2El = document.getElementById('btc-method2-daily');
+        
+        if (btcMethod1El && data.btc_mined.method1) {
+            btcMethod1El.textContent = formatNumber(data.btc_mined.method1.daily, 8);
+        }
+        
+        if (btcMethod2El && data.btc_mined.method2) {
+            btcMethod2El.textContent = formatNumber(data.btc_mined.method2.daily, 8);
+        }
         if (optimalElectricityRateEl && data.break_even) 
             optimalElectricityRateEl.textContent = formatCurrency(data.break_even.electricity_cost) + '/kWh';
         
