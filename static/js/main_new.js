@@ -366,28 +366,39 @@ document.addEventListener('DOMContentLoaded', function() {
         var btcMethod2CardEl = document.getElementById('btc-method2-daily');
         var dailyBtcTotalEl = document.getElementById('daily-btc-value');
         
+        console.log("更新BTC产出显示:", data.btc_mined);
+        
         // 日产BTC总量
         if (dailyBtcTotalEl && data.btc_mined) {
             dailyBtcTotalEl.textContent = formatNumber(data.btc_mined.daily, 8);
+            console.log("已更新日产BTC总量:", data.btc_mined.daily);
+        } else {
+            console.error("无法更新日产BTC总量", dailyBtcTotalEl, data.btc_mined);
         }
         
         // 算法1: 按算力占比
         if (btcMethod1CardEl && data.btc_mined && data.btc_mined.method1) {
             var method1Value = formatNumber(data.btc_mined.method1.daily, 8);
             btcMethod1CardEl.textContent = method1Value;
+            console.log("已更新算法1产出:", method1Value);
             // 月产出提示
             var monthlyOutput1 = data.btc_mined.method1.daily * 30.5;
             btcMethod1CardEl.title = '每月约: ' + formatNumber(monthlyOutput1, 8) + ' BTC';
+        } else {
+            console.error("无法更新算法1产出", btcMethod1CardEl, data.btc_mined);
         }
         
         // 算法2: 按难度公式
         if (btcMethod2CardEl && data.btc_mined && data.btc_mined.method2) {
             var method2Value = formatNumber(data.btc_mined.method2.daily, 8);
             btcMethod2CardEl.textContent = method2Value;
-            btcMethod2CardEl.className = "text-info";
+            btcMethod2CardEl.className = "text-end text-info";
+            console.log("已更新算法2产出:", method2Value);
             // 月产出提示
             var monthlyOutput2 = data.btc_mined.method2.daily * 30.5;
             btcMethod2CardEl.title = '每月约: ' + formatNumber(monthlyOutput2, 8) + ' BTC';
+        } else {
+            console.error("无法更新算法2产出", btcMethod2CardEl, data.btc_mined);
         }
     }
     
@@ -559,7 +570,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 客户利润详情
         var clientMonthlyProfitEl = document.getElementById('client-monthly-profit');
-        var clientDailyProfitEl = document.getElementById('client-daily-profit');
         var clientYearlyProfitEl = document.getElementById('client-yearly-profit');
         
         // 客户盈亏平衡点
