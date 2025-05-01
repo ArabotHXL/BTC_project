@@ -78,15 +78,16 @@ def get_real_time_block_reward():
         
 def get_real_time_btc_hashrate():
     try:
-        response = requests.get('https://blockchain.info/q/hashrate')
+        response = requests.get('https://blockchain.info/q/hashrate', timeout=10)
         if response.status_code == 200:
             hashrate_th = float(response.text.strip())  # 原始数据为 TH/s
             return hashrate_th / 1e9  # 转换为 EH/s
         else:
-            raise Exception("API 响应异常")
+            logging.warning(f"API返回非200状态码: {response.status_code}")
+            return DEFAULT_NETWORK_HASHRATE
     except Exception as e:
-        print(f"⚠️ 无法获取实时BTC算力，使用默认值 700 EH/s: {e}")
-        return 700
+        logging.warning(f"无法获取实时BTC算力，使用默认值 {DEFAULT_NETWORK_HASHRATE} EH/s: {e}")
+        return DEFAULT_NETWORK_HASHRATE
 
 def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electricity_cost=0.05, client_electricity_cost=None, 
                              btc_price=None, difficulty=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0.0):
