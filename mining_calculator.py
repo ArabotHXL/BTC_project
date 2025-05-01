@@ -362,16 +362,17 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
         # Calculate profit for each combination of BTC price and electricity cost
         for price in btc_prices:
             for cost in electricity_costs:
-                # Calculate profit for this combination, 不再使用额外API调用，直接使用上述固定数据
+                # 计算这个BTC价格和电费成本组合下的利润
+                # 特别注意：必须将当前循环的电费成本'cost'传递给函数
                 result = calculate_mining_profitability(
                     hashrate=hashrate,
                     power_consumption=power_consumption,
-                    electricity_cost=cost,
+                    electricity_cost=cost,  # 确保使用循环中的电费成本
                     client_electricity_cost=client_electricity_cost,
-                    btc_price=price,
+                    btc_price=price,  # 确保使用循环中的BTC价格
                     difficulty=fixed_network_stats['difficulty'],
                     block_reward=fixed_network_stats['block_reward'],
-                    use_real_time_data=False,
+                    use_real_time_data=False,  # 不使用实时数据，避免API调用
                     miner_model=miner_model,
                     miner_count=miner_count
                 )
