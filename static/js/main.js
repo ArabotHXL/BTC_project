@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const optimalCurtailmentEl = document.getElementById('optimal-curtailment');
     const clientMonthlyProfitEl = document.getElementById('client-monthly-profit');
     const minerCountResultEl = document.getElementById('miner-count-result');
+    const totalHashrateResultEl = document.getElementById('total-hashrate-result');
     
     // Chart element
     const profitHeatmapCanvas = document.getElementById('profit-heatmap');
@@ -232,6 +233,23 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (data.inputs.miner_count) {
             minerCountResultEl.textContent = data.inputs.miner_count.toLocaleString();
+            
+            // Display total hashrate
+            if (data.inputs.hashrate) {
+                // Convert hashrate to appropriate unit
+                let displayHashrate = data.inputs.hashrate;
+                let displayUnit = 'TH/s';
+                
+                if (displayHashrate >= 1000000) {
+                    displayHashrate = displayHashrate / 1000000;
+                    displayUnit = 'EH/s';
+                } else if (displayHashrate >= 1000) {
+                    displayHashrate = displayHashrate / 1000;
+                    displayUnit = 'PH/s';
+                }
+                
+                totalHashrateResultEl.textContent = formatNumber(displayHashrate, 2) + ' ' + displayUnit;
+            }
         }
         
         // Color the profit values based on whether they're positive or negative

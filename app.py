@@ -78,6 +78,7 @@ def calculate():
         # Add additional information to the result for display
         result['inputs']['miner_count'] = miner_count
         result['inputs']['site_power_mw'] = site_power_mw
+        result['inputs']['hashrate'] = hashrate
         
         # Return results as JSON
         return jsonify(result)
