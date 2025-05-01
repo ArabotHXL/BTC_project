@@ -455,7 +455,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var hostYearlyProfitEl = document.getElementById('host-yearly-profit');
         
         // 矿场主电费和成本
-        var hostMonthlyCostEl = document.getElementById('host-monthly-cost');
+        var hostMonthlyCostEl = document.getElementById('monthly-electricity');
         var operationCostEl = document.getElementById('operation-cost');
         var totalExpensesEl = document.getElementById('host-total-expenses');
         
@@ -549,8 +549,8 @@ document.addEventListener('DOMContentLoaded', function() {
         var clientProfitCardEl = document.getElementById('client-profit-card');
         
         // 收入和支出项
-        var clientMonthlyBtcEl = document.getElementById('client-monthly-btc');
-        var clientMonthlyBtcRevenueEl = document.getElementById('client-monthly-btc-revenue');
+        var clientMonthlyBtcEl = document.getElementById('monthly-btc');
+        var clientMonthlyBtcRevenueEl = document.getElementById('monthly-revenue');
         var clientTotalIncomeEl = document.getElementById('client-total-income');
         
         // 客户电费和成本
