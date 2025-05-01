@@ -27,18 +27,62 @@ def index():
 def calculate():
     """Handle the calculation request and return results as JSON"""
     try:
-        # Get values from the form submission
-        hashrate = float(request.form.get('hashrate', 0))
+        # Log full form data for debugging
+        logging.info(f"Received calculate request form data: {request.form}")
+        
+        # Get values from the form submission with detailed error handling
+        try:
+            hashrate = float(request.form.get('hashrate', 0))
+        except ValueError as e:
+            logging.error(f"Invalid hashrate value: {request.form.get('hashrate')} - {str(e)}")
+            hashrate = 0
+            
         hashrate_unit = request.form.get('hashrate_unit', 'TH/s')
-        power_consumption = float(request.form.get('power_consumption', 0))
-        electricity_cost = float(request.form.get('electricity_cost', 0))
-        client_electricity_cost = float(request.form.get('client_electricity_cost', 0))
-        btc_price = float(request.form.get('btc_price', 0))
+        
+        try:
+            power_consumption = float(request.form.get('power_consumption', 0))
+        except ValueError as e:
+            logging.error(f"Invalid power consumption value: {request.form.get('power_consumption')} - {str(e)}")
+            power_consumption = 0
+            
+        try:
+            electricity_cost = float(request.form.get('electricity_cost', 0))
+        except ValueError as e:
+            logging.error(f"Invalid electricity cost value: {request.form.get('electricity_cost')} - {str(e)}")
+            electricity_cost = 0.05  # Default value
+            
+        try:
+            client_electricity_cost = float(request.form.get('client_electricity_cost', 0))
+        except ValueError as e:
+            logging.error(f"Invalid client electricity cost value: {request.form.get('client_electricity_cost')} - {str(e)}")
+            client_electricity_cost = 0
+            
+        try:
+            btc_price = float(request.form.get('btc_price', 0))
+        except ValueError as e:
+            logging.error(f"Invalid BTC price value: {request.form.get('btc_price')} - {str(e)}")
+            btc_price = 0
+            
         use_real_time = request.form.get('use_real_time') == 'on'
         miner_model = request.form.get('miner_model')
-        miner_count = int(request.form.get('miner_count', 1))
-        site_power_mw = float(request.form.get('site_power_mw', 1.0))
-        curtailment = float(request.form.get('curtailment', 0))
+        
+        try:
+            miner_count = int(request.form.get('miner_count', 1))
+        except ValueError as e:
+            logging.error(f"Invalid miner count value: {request.form.get('miner_count')} - {str(e)}")
+            miner_count = 1
+            
+        try:
+            site_power_mw = float(request.form.get('site_power_mw', 1.0))
+        except ValueError as e:
+            logging.error(f"Invalid site power value: {request.form.get('site_power_mw')} - {str(e)}")
+            site_power_mw = 1.0
+            
+        try:
+            curtailment = float(request.form.get('curtailment', 0))
+        except ValueError as e:
+            logging.error(f"Invalid curtailment value: {request.form.get('curtailment')} - {str(e)}")
+            curtailment = 0
         
         logging.info(f"Calculate request: model={miner_model}, count={miner_count}, real_time={use_real_time}, "
                      f"site_power={site_power_mw}MW, curtailment={curtailment}%")
@@ -150,16 +194,44 @@ def get_profit_chart_data():
         import time
         start_time = time.time()
         
-        # Get parameters from request
-        miner_model = request.form.get('miner_model')
-        miner_count = int(request.form.get('miner_count', 1))
-        client_electricity_cost = float(request.form.get('client_electricity_cost', 0))
+        # 记录完整的请求数据
+        logging.info(f"Profit chart data request received with data: {request.form}")
         
-        if not miner_model or miner_model not in MINER_DATA:
+        # Get parameters from request with detailed error handling
+        miner_model = request.form.get('miner_model')
+        logging.info(f"Miner model from request: {miner_model}")
+        
+        # Validate miner model
+        if not miner_model:
+            logging.error("No miner model provided in request")
             return jsonify({
                 'success': False,
-                'error': 'Please select a valid miner model.'
+                'error': 'Please select a miner model.'
             }), 400
+            
+        if miner_model not in MINER_DATA:
+            logging.error(f"Invalid miner model: {miner_model} not in available models: {list(MINER_DATA.keys())}")
+            return jsonify({
+                'success': False,
+                'error': f"Selected miner model '{miner_model}' is not valid. Please select from available models."
+            }), 400
+        
+        # Parse miner count with error handling
+        try:
+            miner_count = int(request.form.get('miner_count', 1))
+            if miner_count <= 0:
+                logging.warning(f"Invalid miner count: {miner_count}, using default of 1")
+                miner_count = 1
+        except (ValueError, TypeError) as e:
+            logging.error(f"Error parsing miner count: {request.form.get('miner_count')} - {str(e)}")
+            miner_count = 1
+            
+        # Parse client electricity cost with error handling
+        try:
+            client_electricity_cost = float(request.form.get('client_electricity_cost', 0))
+        except (ValueError, TypeError) as e:
+            logging.error(f"Error parsing client electricity cost: {request.form.get('client_electricity_cost')} - {str(e)}")
+            client_electricity_cost = 0
         
         # 生成缓存键，用于检查是否为重复请求
         cache_key = f"{miner_model}_{miner_count}_{client_electricity_cost}"
