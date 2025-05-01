@@ -232,7 +232,7 @@ def calculate_mining_profitability(hashrate, power_consumption, electricity_cost
         logging.error(f"Error in calculation: {str(e)}")
         raise
 
-def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner_count=1):
+def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner_count=1, client_electricity_cost=None):
     """
     Generate data for the profit chart
     
@@ -241,6 +241,7 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
     - electricity_costs: List of electricity costs to analyze
     - btc_prices: List of BTC prices to analyze
     - miner_count: Number of miners
+    - client_electricity_cost: Optional client electricity cost
     
     Returns:
     - Dictionary with data for the chart
@@ -271,15 +272,19 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
                 hashrate=hashrate,
                 power_consumption=power_consumption,
                 electricity_cost=electricity_cost,
+                client_electricity_cost=client_electricity_cost,
                 btc_price=btc_price,
                 difficulty=current_difficulty,
                 use_real_time_data=False
             )
             
+            # Use client profit if available, otherwise use regular profit
+            monthly_profit = result['client_profit']['monthly'] if client_electricity_cost and 'client_profit' in result else result['profit']['monthly']
+            
             profit_data.append({
                 'btc_price': btc_price,
                 'electricity_cost': electricity_cost,
-                'monthly_profit': result['profit']['monthly']
+                'monthly_profit': monthly_profit
             })
     
     # Calculate optimal electricity rate at current BTC price

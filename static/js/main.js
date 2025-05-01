@@ -31,6 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const monthlyElectricityEl = document.getElementById('monthly-electricity');
     const breakEvenElectricityEl = document.getElementById('break-even-electricity');
     const optimalCurtailmentEl = document.getElementById('optimal-curtailment');
+    const clientMonthlyProfitEl = document.getElementById('client-monthly-profit');
+    const minerCountResultEl = document.getElementById('miner-count-result');
     
     // Chart element
     const profitHeatmapCanvas = document.getElementById('profit-heatmap');
@@ -139,7 +141,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Generate and display chart
                 if (minerModelSelect.value) {
-                    generateProfitChart(minerModelSelect.value, parseInt(minerCountInput.value) || 1);
+                    const clientElectricityCost = parseFloat(clientElectricityInput.value) || 0;
+                    generateProfitChart(minerModelSelect.value, parseInt(minerCountInput.value) || 1, clientElectricityCost);
                 }
             } else {
                 showError(data.error || 'An error occurred during calculation.');
@@ -221,6 +224,15 @@ document.addEventListener('DOMContentLoaded', () => {
         monthlyElectricityEl.textContent = formatCurrency(data.electricity_cost.monthly);
         breakEvenElectricityEl.textContent = formatCurrency(data.break_even.electricity_cost) + '/kWh';
         optimalCurtailmentEl.textContent = formatNumber(data.optimization.optimal_curtailment, 2) + '%';
+        
+        // Update client profit and miner count
+        if (data.client_profit) {
+            clientMonthlyProfitEl.textContent = formatCurrency(data.client_profit.monthly);
+        }
+        
+        if (data.inputs.miner_count) {
+            minerCountResultEl.textContent = data.inputs.miner_count.toLocaleString();
+        }
         
         // Color the profit values based on whether they're positive or negative
         [dailyProfitEl, monthlyProfitEl, yearlyProfitEl].forEach(el => {

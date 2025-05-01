@@ -31,11 +31,12 @@ def calculate():
         hashrate_unit = request.form.get('hashrate_unit', 'TH/s')
         power_consumption = float(request.form.get('power_consumption', 0))
         electricity_cost = float(request.form.get('electricity_cost', 0))
-        pool_fee = float(request.form.get('pool_fee', 0))
+        client_electricity_cost = float(request.form.get('client_electricity_cost', 0))
         btc_price = float(request.form.get('btc_price', 0))
         use_real_time = request.form.get('use_real_time', 'false').lower() == 'true'
         miner_model = request.form.get('miner_model')
         miner_count = int(request.form.get('miner_count', 1))
+        site_power_mw = float(request.form.get('site_power_mw', 1.0))
         
         # Convert hashrate to TH/s for calculation
         if hashrate_unit == 'PH/s':
@@ -49,6 +50,13 @@ def calculate():
         if miner_model and miner_model in MINER_DATA:
             selected_miner_model = miner_model
             
+            # Calculate miner count based on site power if we have a valid site power and miner model
+            if site_power_mw > 0:
+                single_power_watt = MINER_DATA[miner_model]["power_watt"]
+                calculated_miner_count = int((site_power_mw * 1000000) / single_power_watt)
+                miner_count = calculated_miner_count
+                logging.debug(f"Calculated {miner_count} miners for {site_power_mw} MW using {miner_model}")
+            
             # We only need to pass the miner model name if we're using it
             # The calculator will handle getting the hashrate and power consumption
             # If we're using a manual entry, we'll pass the values explicitly
@@ -59,15 +67,16 @@ def calculate():
             hashrate=hashrate,
             power_consumption=power_consumption,
             electricity_cost=electricity_cost,
-            pool_fee=pool_fee,
+            client_electricity_cost=client_electricity_cost,
             btc_price=btc_price if not use_real_time else None,
             use_real_time_data=use_real_time,
             miner_model=selected_miner_model,
             miner_count=miner_count
         )
         
-        # Add miner count to the result for display
+        # Add additional information to the result for display
         result['inputs']['miner_count'] = miner_count
+        result['inputs']['site_power_mw'] = site_power_mw
         
         # Return results as JSON
         return jsonify(result)
@@ -153,6 +162,7 @@ def get_profit_chart_data():
         # Get parameters from request
         miner_model = request.form.get('miner_model')
         miner_count = int(request.form.get('miner_count', 1))
+        client_electricity_cost = float(request.form.get('client_electricity_cost', 0))
         
         if not miner_model or miner_model not in MINER_DATA:
             return jsonify({
@@ -170,7 +180,8 @@ def get_profit_chart_data():
             miner_model=miner_model,
             electricity_costs=electricity_costs,
             btc_prices=btc_prices,
-            miner_count=miner_count
+            miner_count=miner_count,
+            client_electricity_cost=client_electricity_cost if client_electricity_cost > 0 else None
         )
         
         return jsonify(chart_data)
