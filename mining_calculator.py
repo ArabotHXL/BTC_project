@@ -1,5 +1,5 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 import requests
 import logging
 import json
@@ -12,6 +12,7 @@ logging.basicConfig(level=logging.INFO)
 BLOCKS_PER_DAY = 144
 DEFAULT_BTC_PRICE = 80000  # USD
 DEFAULT_NETWORK_DIFFICULTY = 56000000000000  # ~56T
+DEFAULT_NETWORK_HASHRATE = 700  # EH/s
 BLOCK_REWARD = 3.125  # BTC
 
 # Fixed miner data including hashrate and power consumption for each model
@@ -74,10 +75,24 @@ def get_real_time_block_reward():
     except Exception as e:
         logging.warning(f"Unable to get real-time BTC block reward: {e}")
         return BLOCK_REWARD
+        
+def get_real_time_btc_hashrate():
+    """Get the current Bitcoin network hashrate in EH/s"""
+    try:
+        response = requests.get('https://blockchain.info/q/hashrate', timeout=10)
+        if response.status_code == 200:
+            hashrate_th = float(response.text.strip())  # Original data is in TH/s
+            return hashrate_th / 1e9  # Convert to EH/s
+        else:
+            raise Exception(f"API returned status code {response.status_code}")
+    except Exception as e:
+        logging.warning(f"Unable to get real-time BTC hashrate: {e}")
+        return DEFAULT_NETWORK_HASHRATE
 
-def calculate_mining_profitability(hashrate, power_consumption, electricity_cost, client_electricity_cost=None, btc_price=None, difficulty=None, use_real_time_data=False, miner_model=None, miner_count=1):
+def calculate_mining_profitability(hashrate=None, power_consumption=None, electricity_cost=0.05, client_electricity_cost=None, 
+                             btc_price=None, difficulty=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0):
     """
-    Calculate Bitcoin mining profitability
+    Calculate Bitcoin mining profitability using the exact calculation method from the original code
     
     Parameters:
     - hashrate: Mining hashrate in TH/s
@@ -89,6 +104,8 @@ def calculate_mining_profitability(hashrate, power_consumption, electricity_cost
     - use_real_time_data: Whether to fetch real-time data from APIs
     - miner_model: Optional miner model name to use pre-defined values
     - miner_count: Number of miners (default is 1)
+    - site_power_mw: Site power in megawatts - will override miner count if provided with miner_model
+    - curtailment: Power curtailment percentage (0-100)
     
     Returns:
     - Dictionary containing profitability metrics
@@ -100,136 +117,153 @@ def calculate_mining_profitability(hashrate, power_consumption, electricity_cost
             single_hashrate = MINER_DATA[miner_model]["hashrate"]
             single_power_watt = MINER_DATA[miner_model]["power_watt"]
             
+            # Calculate miner count from site power if provided
+            if site_power_mw and site_power_mw > 0:
+                # Formula from original code: site_miner_count = int((site_power_mw * 1000) / (power_watt / 1000))
+                miner_count = int((site_power_mw * 1000) / (single_power_watt / 1000))
+                logging.info(f"Calculated {miner_count} miners for {site_power_mw} MW using {miner_model}")
+            
             # Apply miner count to get total specs
             hashrate = single_hashrate * miner_count
             power_consumption = single_power_watt * miner_count
-            
+        
         # Get real-time data if requested
         if use_real_time_data:
-            current_btc_price = get_real_time_btc_price()
-            current_difficulty = get_real_time_difficulty()
+            real_time_btc_price = get_real_time_btc_price()
+            difficulty_raw = get_real_time_difficulty()
+            real_time_btc_hashrate = get_real_time_btc_hashrate() or DEFAULT_NETWORK_HASHRATE  # EH/s
             current_block_reward = get_real_time_block_reward()
         else:
-            current_btc_price = btc_price or DEFAULT_BTC_PRICE
-            current_difficulty = difficulty or DEFAULT_NETWORK_DIFFICULTY
+            real_time_btc_price = btc_price or DEFAULT_BTC_PRICE
+            difficulty_raw = difficulty or DEFAULT_NETWORK_DIFFICULTY
+            real_time_btc_hashrate = DEFAULT_NETWORK_HASHRATE  # EH/s
             current_block_reward = BLOCK_REWARD
         
         # Use provided values if given
-        btc_price = btc_price or current_btc_price
-        difficulty = difficulty or current_difficulty
-            
-        # Convert from TH/s to H/s for calculation
-        hashrate_in_h = hashrate * 10**12
+        btc_price = btc_price or real_time_btc_price
+        difficulty = difficulty_raw
         
-        # Calculate expected BTC mined per day
-        network_hashrate = difficulty * 2**32 / 600  # Estimated network hashrate
-        btc_per_day = (hashrate_in_h / network_hashrate) * current_block_reward * BLOCKS_PER_DAY
+        # === PERFORM EXACT CALCULATION FROM ORIGINAL CODE ===
         
-        # No pool fee anymore
-        btc_per_day_after_fee = btc_per_day
+        # === 矿机数量 & 总算力计算 (Miner Count & Total Hashrate Calculation) ===
+        network_TH = real_time_btc_hashrate * 1e6  # Convert from EH/s to TH/s
+        curtailment_factor = max(0, min(1, (100 - curtailment) / 100))
+        site_total_hashrate = hashrate * curtailment_factor
         
-        # Calculate revenue
-        daily_revenue_usd = btc_per_day_after_fee * btc_price
-        monthly_revenue_usd = daily_revenue_usd * 30
-        yearly_revenue_usd = daily_revenue_usd * 365
+        # === BTC 产出计算 (BTC Output Calculation) ===
+        # Method 1: Network Hashrate Based
+        btc_per_th = (current_block_reward * BLOCKS_PER_DAY) / network_TH
+        site_daily_btc_output = site_total_hashrate * btc_per_th
+        site_monthly_btc_output = site_daily_btc_output * 30.5
+        daily_btc_per_miner = btc_per_th * (single_hashrate if miner_model else hashrate / miner_count)
         
-        # Calculate electricity cost
-        daily_power_kwh = power_consumption * 24 / 1000  # kWh per day
-        daily_electricity_cost = daily_power_kwh * electricity_cost
-        monthly_electricity_cost = daily_electricity_cost * 30
-        yearly_electricity_cost = daily_electricity_cost * 365
+        # Method 2: Difficulty Based
+        site_total_hashrate_Hs = site_total_hashrate * 1e12  # TH/s → H/s
+        difficulty_factor = 2 ** 32
+        site_daily_btc_output_difficulty = (site_total_hashrate_Hs * current_block_reward * 86400) / (difficulty_raw * difficulty_factor)
+        site_monthly_btc_output_difficulty = site_daily_btc_output_difficulty * 30.5
         
-        # Calculate mining site profit
-        daily_profit_usd = daily_revenue_usd - daily_electricity_cost
-        monthly_profit_usd = monthly_revenue_usd - monthly_electricity_cost
-        yearly_profit_usd = yearly_revenue_usd - yearly_electricity_cost
+        # Take the average of both methods or use the difficulty method if network hashrate is missing
+        daily_btc = site_daily_btc_output if real_time_btc_hashrate else site_daily_btc_output_difficulty
+        monthly_btc = site_monthly_btc_output if real_time_btc_hashrate else site_monthly_btc_output_difficulty
         
-        # Calculate client profit (if client electricity cost is provided)
-        if client_electricity_cost and client_electricity_cost > 0:
-            client_daily_electricity_cost = daily_power_kwh * client_electricity_cost
-            client_monthly_electricity_cost = client_daily_electricity_cost * 30
-            client_yearly_electricity_cost = client_daily_electricity_cost * 365
-            
-            client_daily_profit_usd = daily_revenue_usd - client_daily_electricity_cost
-            client_monthly_profit_usd = monthly_revenue_usd - client_monthly_electricity_cost
-            client_yearly_profit_usd = yearly_revenue_usd - client_yearly_electricity_cost
-        else:
-            # If no client electricity cost provided, use the same as the site
-            client_daily_electricity_cost = daily_electricity_cost
-            client_monthly_electricity_cost = monthly_electricity_cost
-            client_yearly_electricity_cost = yearly_electricity_cost
-            
-            client_daily_profit_usd = daily_profit_usd
-            client_monthly_profit_usd = monthly_profit_usd
-            client_yearly_profit_usd = yearly_profit_usd
+        # === 成本计算 (Cost Calculation) ===
+        # Calculate using the operating time after curtailment
+        monthly_power_consumption = power_consumption * 24 * 30.5 * curtailment_factor / 1000  # kWh
+        electricity_expense = monthly_power_consumption * electricity_cost
+        client_electricity_expense = monthly_power_consumption * (client_electricity_cost or electricity_cost)
         
-        # Calculate break-even electricity cost
-        if btc_per_day_after_fee > 0:
-            break_even_electricity = (daily_revenue_usd / daily_power_kwh) if daily_power_kwh > 0 else 0
-        else:
-            break_even_electricity = 0
-            
-        # Calculate optimal curtailment (% of power to reduce when electricity is too expensive)
-        if electricity_cost > break_even_electricity and break_even_electricity > 0:
-            optimal_curtailment = max(0, min(100, 100 * (1 - (break_even_electricity / electricity_cost))))
+        # === 收入 & 利润计算 (Revenue & Profit Calculation) ===
+        monthly_revenue = monthly_btc * btc_price
+        monthly_profit = monthly_revenue - electricity_expense
+        client_monthly_profit = monthly_revenue - client_electricity_expense
+        
+        # === 最优电价 (Optimal Electricity Rate) 计算 ===
+        optimal_electricity_rate = (monthly_btc * btc_price) / monthly_power_consumption if monthly_power_consumption > 0 else 0
+        
+        # === 最优削减比例 (Optimal Curtailment) 计算 ===
+        if electricity_cost > optimal_electricity_rate and optimal_electricity_rate > 0:
+            optimal_curtailment = max(0, min(100, 100 * (1 - (optimal_electricity_rate / electricity_cost))))
         else:
             optimal_curtailment = 0
+        
+        # Scale back to get daily values
+        daily_revenue = monthly_revenue / 30.5
+        daily_profit = monthly_profit / 30.5
+        daily_electricity_expense = electricity_expense / 30.5
+        client_daily_profit = client_monthly_profit / 30.5
+        client_daily_electricity_expense = client_electricity_expense / 30.5
+        
+        # Scale to get yearly values
+        yearly_revenue = monthly_revenue * 12
+        yearly_profit = monthly_profit * 12
+        yearly_electricity_expense = electricity_expense * 12
+        client_yearly_profit = client_monthly_profit * 12
+        client_yearly_electricity_expense = client_electricity_expense * 12
             
-        # Return results
+        # Return results in a consistent format with our previous implementation
         return {
             'success': True,
             'timestamp': datetime.now().isoformat(),
             'network_data': {
                 'btc_price': btc_price,
                 'network_difficulty': difficulty / 10**12,  # Convert to more readable format (T)
+                'network_hashrate': real_time_btc_hashrate,  # EH/s
                 'block_reward': current_block_reward
             },
             'inputs': {
                 'hashrate': hashrate,
                 'power_consumption': power_consumption,
                 'electricity_cost': electricity_cost,
-                'client_electricity_cost': client_electricity_cost or electricity_cost
+                'client_electricity_cost': client_electricity_cost or electricity_cost,
+                'miner_count': miner_count,
+                'site_power_mw': site_power_mw,
+                'curtailment': curtailment
             },
             'btc_mined': {
-                'daily': btc_per_day_after_fee,
-                'monthly': btc_per_day_after_fee * 30,
-                'yearly': btc_per_day_after_fee * 365
+                'daily': daily_btc,
+                'monthly': monthly_btc,
+                'yearly': monthly_btc * 12,
+                'per_th_daily': btc_per_th
             },
             'revenue': {
-                'daily': daily_revenue_usd,
-                'monthly': monthly_revenue_usd,
-                'yearly': yearly_revenue_usd
+                'daily': daily_revenue,
+                'monthly': monthly_revenue,
+                'yearly': yearly_revenue
             },
             'electricity_cost': {
-                'daily': daily_electricity_cost,
-                'monthly': monthly_electricity_cost,
-                'yearly': yearly_electricity_cost
+                'daily': daily_electricity_expense,
+                'monthly': electricity_expense,
+                'yearly': yearly_electricity_expense
             },
             'profit': {
-                'daily': daily_profit_usd,
-                'monthly': monthly_profit_usd,
-                'yearly': yearly_profit_usd
+                'daily': daily_profit,
+                'monthly': monthly_profit,
+                'yearly': yearly_profit
             },
             'client_profit': {
-                'daily': client_daily_profit_usd,
-                'monthly': client_monthly_profit_usd,
-                'yearly': client_yearly_profit_usd
+                'daily': client_daily_profit,
+                'monthly': client_monthly_profit,
+                'yearly': client_yearly_profit
             },
             'client_electricity_cost': {
-                'daily': client_daily_electricity_cost,
-                'monthly': client_monthly_electricity_cost,
-                'yearly': client_yearly_electricity_cost
+                'daily': client_daily_electricity_expense,
+                'monthly': client_electricity_expense,
+                'yearly': client_yearly_electricity_expense
             },
             'break_even': {
-                'electricity_cost': break_even_electricity
+                'electricity_cost': optimal_electricity_rate,
+                'btc_price': (electricity_expense / monthly_btc) if monthly_btc > 0 else 0
             },
             'optimization': {
-                'optimal_curtailment': optimal_curtailment
+                'optimal_curtailment': optimal_curtailment,
+                'shutdown_miner_count': int(miner_count * (curtailment / 100))
             }
         }
         
     except Exception as e:
         logging.error(f"Error in calculation: {str(e)}")
+        logging.error(f"Arguments: hashrate={hashrate}, power_consumption={power_consumption}, electricity_cost={electricity_cost}, miner_model={miner_model}, miner_count={miner_count}")
         raise
 
 def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner_count=1, client_electricity_cost=None):
