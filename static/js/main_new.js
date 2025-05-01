@@ -362,9 +362,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // 更新BTC产出显示
     function updateBtcOutputDisplay(data) {
         // 算法1和算法2的BTC产出
-        var btcMethod1CardEl = document.getElementById('btc-method1-daily-card');
-        var btcMethod2CardEl = document.getElementById('btc-method2-daily-card');
-        var dailyBtcTotalEl = document.getElementById('daily-btc-total');
+        var btcMethod1CardEl = document.getElementById('btc-method1-daily');
+        var btcMethod2CardEl = document.getElementById('btc-method2-daily');
+        var dailyBtcTotalEl = document.getElementById('daily-btc-value');
         
         // 日产BTC总量
         if (dailyBtcTotalEl && data.btc_mined) {
@@ -400,7 +400,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var blockRewardEl = document.getElementById('block-reward-value');
         
         // 挖矿场信息
-        var siteTotalHashrateEl = document.getElementById('site-total-hashrate');
+        var siteTotalHashrateEl = document.getElementById('total-hashrate-result');
         var btcPerThDailyEl = document.getElementById('btc-per-th-daily');
         var optimalElectricityRateEl = document.getElementById('optimal-electricity-rate');
         
@@ -432,7 +432,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // 其他挖矿信息
-        var minerCountEl = document.getElementById('site-miner-count');
+        var minerCountEl = document.getElementById('miner-count-result');
         if (minerCountEl && data.inputs) {
             minerCountEl.textContent = formatNumber(data.inputs.miner_count, 0);
         }
@@ -460,8 +460,8 @@ document.addEventListener('DOMContentLoaded', function() {
         var totalExpensesEl = document.getElementById('host-total-expenses');
         
         // 矿场主盈亏平衡点
-        var hostBreakEvenElectricityEl = document.getElementById('host-break-even-electricity');
-        var hostBreakEvenBtcEl = document.getElementById('host-break-even-btc');
+        var hostBreakEvenElectricityEl = document.getElementById('break-even-electricity');
+        var hostBreakEvenBtcEl = document.getElementById('break-even-btc');
         var optimalCurtailmentEl = document.getElementById('optimal-curtailment');
         
         // 电费差计算 (Electricity differential)
