@@ -74,7 +74,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleRealTimeToggle() {
         if (useRealTimeCheckbox.checked) {
             btcPriceInput.disabled = true;
-            btcPriceInput.value = btcPriceEl.textContent.replace('$', '').trim();
+            // 安全获取BTC价格，避免null错误
+            if (btcPriceEl && btcPriceEl.textContent) {
+                btcPriceInput.value = btcPriceEl.textContent.replace('$', '').trim();
+            } else {
+                // 如果尚未加载价格，则使用默认或从localStorage获取
+                const lastBtcPrice = localStorage.getItem('last_btc_price');
+                btcPriceInput.value = lastBtcPrice ? parseFloat(lastBtcPrice).toFixed(2) : "90000.00";
+            }
         } else {
             btcPriceInput.disabled = false;
         }
@@ -335,98 +342,123 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Display calculation results
     function displayResults(data) {
-        // Show results card
-        resultsCard.style.display = 'block';
+        // 添加安全检查，确保所有需要的数据都存在
+        if (!data || !data.btc_mined || !data.profit) {
+            showError('Invalid data received from server. Missing required fields.');
+            console.error('Invalid data structure:', data);
+            return;
+        }
         
-        // Format and display the timestamp
-        const timestamp = new Date(data.timestamp);
-        resultsTimestamp.textContent = `Calculated at ${timestamp.toLocaleString()}`;
-        
-        // ===== 更新主要显示数据 (Update main display data) =====
-        btcMinedDailyEl.textContent = formatNumber(data.btc_mined.daily, 8);
-        dailyProfitEl.textContent = formatCurrency(data.profit.daily);
-        monthlyProfitEl.textContent = formatCurrency(data.profit.monthly);
+        try {
+            // Show results card
+            if (resultsCard) resultsCard.style.display = 'block';
+            
+            // Format and display the timestamp
+            const timestamp = new Date(data.timestamp);
+            if (resultsTimestamp) resultsTimestamp.textContent = `Calculated at ${timestamp.toLocaleString()}`;
+            
+            // ===== 更新主要显示数据 (Update main display data) =====
+            if (btcMinedDailyEl) btcMinedDailyEl.textContent = formatNumber(data.btc_mined.daily, 8);
+            if (dailyProfitEl) dailyProfitEl.textContent = formatCurrency(data.profit.daily);
+            if (monthlyProfitEl) monthlyProfitEl.textContent = formatCurrency(data.profit.monthly);
         
         // ===== 更新矿场主相关信息 (Update mining site/host information) =====
         
         // 设置年度/月度/日度收益和产出 (Set yearly/monthly/daily profit and output)
-        document.getElementById('host-yearly-profit').textContent = formatCurrency(data.profit.yearly);
-        document.getElementById('host-monthly-profit-display').textContent = formatCurrency(data.profit.monthly);
-        monthlyBtcEl.textContent = formatNumber(data.btc_mined.monthly, 8);
-        monthlyRevenueEl.textContent = formatCurrency(data.revenue.monthly);
-        monthlyElectricityEl.textContent = formatCurrency(data.electricity_cost.monthly);
+        const hostYearlyProfitEl = document.getElementById('host-yearly-profit');
+        const hostMonthlyProfitDisplayEl = document.getElementById('host-monthly-profit-display');
+        
+        if (hostYearlyProfitEl) hostYearlyProfitEl.textContent = formatCurrency(data.profit.yearly);
+        if (hostMonthlyProfitDisplayEl) hostMonthlyProfitDisplayEl.textContent = formatCurrency(data.profit.monthly);
+        if (monthlyBtcEl) monthlyBtcEl.textContent = formatNumber(data.btc_mined.monthly, 8);
+        if (monthlyRevenueEl) monthlyRevenueEl.textContent = formatCurrency(data.revenue.monthly);
+        if (monthlyElectricityEl) monthlyElectricityEl.textContent = formatCurrency(data.electricity_cost.monthly);
         
         // 设置盈亏平衡和其他信息 (Set break-even and other info)
-        breakEvenElectricityEl.textContent = formatCurrency(data.break_even.electricity_cost) + '/kWh';
-        optimalCurtailmentEl.textContent = formatNumber(data.optimization.optimal_curtailment, 2) + '%';
+        if (breakEvenElectricityEl && data.break_even) 
+            breakEvenElectricityEl.textContent = formatCurrency(data.break_even.electricity_cost) + '/kWh';
+        if (optimalCurtailmentEl && data.optimization) 
+            optimalCurtailmentEl.textContent = formatNumber(data.optimization.optimal_curtailment, 2) + '%';
         
         // Break-even BTC price for host (at what BTC price mining becomes profitable)
-        if (data.break_even && data.btc_mined.monthly > 0) {
+        if (breakEvenBtcEl && data.break_even && data.btc_mined.monthly > 0) {
             breakEvenBtcEl.textContent = formatCurrency(data.break_even.btc_price);
         }
         
         // ===== 更新客户相关信息 (Update customer information) =====
         if (data.client_profit) {
             // 客户收益 (Customer profit metrics)
-            clientMonthlyProfitEl.textContent = formatCurrency(data.client_profit.monthly);
-            clientYearlyProfitEl.textContent = formatCurrency(data.client_profit.yearly);
+            if (clientMonthlyProfitEl) clientMonthlyProfitEl.textContent = formatCurrency(data.client_profit.monthly);
+            if (clientYearlyProfitEl) clientYearlyProfitEl.textContent = formatCurrency(data.client_profit.yearly);
             
             // 添加客户日度收益 (Add customer daily profit)
-            document.getElementById('client-daily-profit').textContent = formatCurrency(data.client_profit.daily);
+            const clientDailyProfitEl = document.getElementById('client-daily-profit');
+            if (clientDailyProfitEl) clientDailyProfitEl.textContent = formatCurrency(data.client_profit.daily);
             
             // 客户电费 (Customer electricity cost)
             if (data.client_electricity_cost) {
-                clientMonthlyElectricityEl.textContent = formatCurrency(data.client_electricity_cost.monthly);
+                if (clientMonthlyElectricityEl) 
+                    clientMonthlyElectricityEl.textContent = formatCurrency(data.client_electricity_cost.monthly);
                 
                 // 矿场主收益 = 客户电费 - 实际电费 (Host profit = customer electricity cost - actual electricity cost)
                 const hostProfit = data.client_electricity_cost.monthly - data.electricity_cost.monthly;
-                hostMonthlyProfitEl.textContent = formatCurrency(hostProfit);
+                if (hostMonthlyProfitEl) hostMonthlyProfitEl.textContent = formatCurrency(hostProfit);
                 
                 // 如果需要显示矿场挖矿自身的收益，可以计算
                 const miningSelfProfit = data.revenue.monthly - data.electricity_cost.monthly;
-                document.getElementById('host-self-profit').textContent = formatCurrency(miningSelfProfit);
+                const hostSelfProfitEl = document.getElementById('host-self-profit');
+                if (hostSelfProfitEl) hostSelfProfitEl.textContent = formatCurrency(miningSelfProfit);
                 
                 // 客户的盈亏平衡电价和BTC价格 (Customer break-even electricity cost and BTC price)
                 if (data.btc_mined.monthly > 0) {
                     // 客户盈亏平衡BTC价格是基于客户电费计算的 (Customer break-even BTC price is based on customer electricity cost)
                     const clientBreakEvenBtc = (data.client_electricity_cost.monthly / data.btc_mined.monthly);
-                    clientBreakEvenBtcEl.textContent = formatCurrency(clientBreakEvenBtc);
+                    if (clientBreakEvenBtcEl) clientBreakEvenBtcEl.textContent = formatCurrency(clientBreakEvenBtc);
                     
                     // 客户盈亏平衡电价与矿场主相同 (Customer break-even electricity cost is the same as host's)
-                    clientBreakEvenElectricityEl.textContent = formatCurrency(data.break_even.electricity_cost) + '/kWh';
+                    if (clientBreakEvenElectricityEl && data.break_even) 
+                        clientBreakEvenElectricityEl.textContent = formatCurrency(data.break_even.electricity_cost) + '/kWh';
                 }
             }
         }
         
         // Network and mining details
         if (data.network_data) {
-            networkDifficultyValueEl.textContent = formatNumber(data.network_data.network_difficulty) + ' T';
+            if (networkDifficultyValueEl) 
+                networkDifficultyValueEl.textContent = formatNumber(data.network_data.network_difficulty) + ' T';
             // Use network hashrate from the API if available, otherwise estimate it
             const networkHashrateEH = data.network_data.network_hashrate || 
                                     ((data.network_data.network_difficulty * 2**32 / 600) / 10**18);
-            networkHashrateValueEl.textContent = formatNumber(networkHashrateEH, 2) + ' EH/s';
-            currentBtcPriceValueEl.textContent = formatCurrency(data.network_data.btc_price);
-            blockRewardValueEl.textContent = formatNumber(data.network_data.block_reward, 3) + ' BTC';
+            if (networkHashrateValueEl) 
+                networkHashrateValueEl.textContent = formatNumber(networkHashrateEH, 2) + ' EH/s';
+            if (currentBtcPriceValueEl) 
+                currentBtcPriceValueEl.textContent = formatCurrency(data.network_data.btc_price);
+            if (blockRewardValueEl) 
+                blockRewardValueEl.textContent = formatNumber(data.network_data.block_reward, 3) + ' BTC';
         }
         
         // Mining details
-        dailyBtcValueEl.textContent = formatNumber(data.btc_mined.daily, 8);
-        optimalElectricityRateEl.textContent = formatCurrency(data.break_even.electricity_cost) + '/kWh';
+        if (dailyBtcValueEl) 
+            dailyBtcValueEl.textContent = formatNumber(data.btc_mined.daily, 8);
+        if (optimalElectricityRateEl && data.break_even) 
+            optimalElectricityRateEl.textContent = formatCurrency(data.break_even.electricity_cost) + '/kWh';
         
         // Calculate or use provided BTC per TH per day
-        if (data.btc_mined.per_th_daily) {
-            btcPerThDailyEl.textContent = formatNumber(data.btc_mined.per_th_daily, 8);
-        } else if (data.inputs.hashrate && data.btc_mined.daily) {
-            const btcPerTh = data.btc_mined.daily / data.inputs.hashrate;
-            btcPerThDailyEl.textContent = formatNumber(btcPerTh, 8);
+        if (btcPerThDailyEl) {
+            if (data.btc_mined.per_th_daily) {
+                btcPerThDailyEl.textContent = formatNumber(data.btc_mined.per_th_daily, 8);
+            } else if (data.inputs.hashrate && data.btc_mined.daily) {
+                const btcPerTh = data.btc_mined.daily / data.inputs.hashrate;
+                btcPerThDailyEl.textContent = formatNumber(btcPerTh, 8);
+            }
         }
         
         // Miner count and hashrate
-        if (data.inputs.miner_count) {
+        if (data.inputs.miner_count && minerCountResultEl) {
             minerCountResultEl.textContent = data.inputs.miner_count.toLocaleString();
             
             // Display total hashrate
-            if (data.inputs.hashrate) {
+            if (data.inputs.hashrate && totalHashrateResultEl) {
                 // Convert hashrate to appropriate unit
                 let displayHashrate = data.inputs.hashrate;
                 let displayUnit = 'TH/s';
@@ -445,14 +477,25 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Color the profit values based on whether they're positive or negative
         [dailyProfitEl, monthlyProfitEl, yearlyProfitEl].forEach(el => {
-            if (parseFloat(el.textContent.replace(/[^0-9.-]+/g, '')) >= 0) {
-                el.classList.add('profit-positive');
-                el.classList.remove('profit-negative');
-            } else {
-                el.classList.add('profit-negative');
-                el.classList.remove('profit-positive');
+            if (el && el.textContent) {
+                try {
+                    if (parseFloat(el.textContent.replace(/[^0-9.-]+/g, '')) >= 0) {
+                        el.classList.add('profit-positive');
+                        el.classList.remove('profit-negative');
+                    } else {
+                        el.classList.add('profit-negative');
+                        el.classList.remove('profit-positive');
+                    }
+                } catch (error) {
+                    console.error('Error formatting profit element:', error);
+                }
             }
         });
+        
+        } catch (error) {
+            console.error('Error displaying results:', error);
+            showError('Failed to display calculation results. Please try again.');
+        }
     }
     
     // Generate profit heatmap chart
