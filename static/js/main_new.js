@@ -497,16 +497,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 hostTotalIncomeEl.textContent = formatCurrency(siteTotalRevenue);
             }
             
-            // 更新主卡片 - 净利润 = 电费差收益 - 运维成本
+            // 矿场主月度净收益 = 电费差收益 - 运维成本
             var hostMonthlyNetProfit = hostElectricProfit - operationCostValue;
             if (hostProfitCardEl) {
                 hostProfitCardEl.textContent = formatCurrency(hostMonthlyNetProfit);
             }
             
-            // 矿场主月度净收益 = 电费差收益 - 运维成本
-            var hostMonthlyNetProfit = hostElectricProfit - operationCostValue;
+            // 更新月度净收益显示
             if (hostMonthlyProfitDisplayEl) {
                 hostMonthlyProfitDisplayEl.textContent = formatCurrency(hostMonthlyNetProfit);
+            }
+            
+            // 矿场主年度收益 = 月度净收益 * 12
+            if (hostYearlyProfitEl) {
+                var hostYearlyNetProfit = hostMonthlyNetProfit * 12;
+                hostYearlyProfitEl.textContent = formatCurrency(hostYearlyNetProfit);
             }
             
             // 更新矿场主成本
