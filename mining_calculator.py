@@ -314,12 +314,20 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
         if not isinstance(electricity_costs, list) or len(electricity_costs) == 0:
             logging.warning(f"Invalid electricity costs: {electricity_costs}, using defaults")
             # 使用更多数据点和更均匀分布的电价，覆盖更广范围
-            electricity_costs = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10]
+            # 增加更多电价点以形成更平滑的热力图
+            electricity_costs = [
+                0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10, 
+                0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20
+            ]
             
         if not isinstance(btc_prices, list) or len(btc_prices) == 0:
             logging.warning(f"Invalid BTC prices: {btc_prices}, using defaults")
             # 2025年的BTC价格范围更高，基于当前市场情况调整
-            btc_prices = [40000, 60000, 80000, 100000, 120000, 140000]
+            # 增加更多价格点以形成更平滑的热力图
+            btc_prices = [
+                20000, 30000, 40000, 50000, 60000, 70000, 80000, 
+                90000, 100000, 110000, 120000, 130000, 140000, 150000
+            ]
         
         # Validate miner count
         if not isinstance(miner_count, int) or miner_count <= 0:
