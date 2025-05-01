@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 生成热力图的函数
-    async function generateSimpleChart(minerModel, minerCount, clientElectricityCost) {
+    function generateSimpleChart(minerModel, minerCount, clientElectricityCost) {
         console.log(`Generating chart: model=${minerModel}, count=${minerCount}, client_cost=${clientElectricityCost}`);
         
         // 获取图表容器
@@ -29,41 +29,41 @@ document.addEventListener('DOMContentLoaded', function() {
         // 显示加载中
         chartContainer.innerHTML = '<div class="d-flex justify-content-center align-items-center" style="height:300px"><div class="spinner-border text-primary"></div><span class="ms-3">正在生成热力图...</span></div>';
         
-        try {
-            // 创建请求参数
-            const params = new URLSearchParams();
-            params.append('miner_model', minerModel);
-            params.append('miner_count', minerCount);
-            params.append('client_electricity_cost', clientElectricityCost);
-            
-            // 发送请求获取数据
-            const response = await fetch('/profit_chart_data', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: params
-            });
-            
+        // 创建请求参数
+        const params = new URLSearchParams();
+        params.append('miner_model', minerModel);
+        params.append('miner_count', minerCount);
+        params.append('client_electricity_cost', clientElectricityCost);
+        
+        // 发送请求获取数据
+        fetch('/profit_chart_data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: params
+        })
+        .then(function(response) {
             // 检查响应
             if (!response.ok) {
                 throw new Error(`服务器返回 ${response.status} ${response.statusText}`);
             }
-            
-            // 解析数据
-            const data = await response.json();
-            
+            return response.json();
+        })
+        .then(function(data) {
             // 检查数据
             if (!data.success || !data.profit_data || !Array.isArray(data.profit_data)) {
                 throw new Error("服务器返回的数据格式不正确");
             }
             
             // 创建图表数据
-            const chartData = data.profit_data.map(item => ({
-                x: item.electricity_cost,
-                y: item.btc_price,
-                profit: item.monthly_profit
-            }));
+            const chartData = data.profit_data.map(function(item) {
+                return {
+                    x: item.electricity_cost,
+                    y: item.btc_price,
+                    profit: item.monthly_profit
+                };
+            });
             
             // 准备Canvas
             chartContainer.innerHTML = '<canvas id="heatmap-canvas" width="100%" height="400"></canvas>';
@@ -123,8 +123,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             console.log("热力图生成成功");
-            
-        } catch (error) {
+        })
+        .catch(function(error) {
             console.error("热力图生成失败:", error);
             chartContainer.innerHTML = `
                 <div class="alert alert-danger text-center">
@@ -132,6 +132,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     ${error.message || '未知错误'}
                 </div>
             `;
-        }
+        });
     }
 });
