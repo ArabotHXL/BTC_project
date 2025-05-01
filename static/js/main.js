@@ -443,6 +443,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 const hostSelfProfitEl = document.getElementById('host-self-profit');
                 if (hostSelfProfitEl) hostSelfProfitEl.textContent = formatCurrency(miningSelfProfit);
                 
+                // 计算总收入和总支出 (Calculate total income and expenses)
+                const hostTotalIncomeEl = document.getElementById('host-total-income');
+                const hostTotalExpensesEl = document.getElementById('host-total-expenses');
+                const operationCostEl = document.getElementById('operation-cost');
+                
+                // 设置运维费用为0（可以之后更新为实际数据） (Set operation cost to 0, can be updated with real data later)
+                const operationCost = 0;
+                if (operationCostEl) {
+                    operationCostEl.textContent = formatCurrency(operationCost);
+                }
+                
+                // 计算总收入（月度挖矿收入 + 电费差收益） (Calculate total income: monthly mining revenue + electricity profit)
+                const totalIncome = data.revenue.monthly + hostProfit;
+                if (hostTotalIncomeEl) {
+                    hostTotalIncomeEl.textContent = formatCurrency(totalIncome);
+                }
+                
+                // 计算总支出（月度电费 + 运维费用） (Calculate total expenses: monthly electricity cost + operation cost)
+                const totalExpenses = data.electricity_cost.monthly + operationCost;
+                if (hostTotalExpensesEl) {
+                    hostTotalExpensesEl.textContent = formatCurrency(totalExpenses);
+                }
+                
                 // 客户的盈亏平衡电价和BTC价格 (Customer break-even electricity cost and BTC price)
                 if (data.btc_mined.monthly > 0) {
                     // 客户盈亏平衡BTC价格是基于客户电费计算的 (Customer break-even BTC price is based on customer electricity cost)
