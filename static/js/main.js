@@ -269,9 +269,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.client_electricity_cost) {
                 clientMonthlyElectricityEl.textContent = formatCurrency(data.client_electricity_cost.monthly);
                 
-                // 矿场主实际收益 = 客户电费 - 实际电费 + 挖矿收益 (Host true profit = customer electricity cost - actual electricity cost + mining profit)
-                const hostTrueProfit = data.client_electricity_cost.monthly - data.electricity_cost.monthly + data.profit.monthly;
+                // 矿场主实际收益 = 挖矿收益 - 实际电费 (Host true profit = mining revenue - actual electricity cost)
+                const hostTrueProfit = data.revenue.monthly - data.electricity_cost.monthly;
                 hostMonthlyProfitEl.textContent = formatCurrency(hostTrueProfit);
+                
+                // 如果存在客户电费，矿场主额外收益 = 客户电费 - 实际电费 (Host additional profit = customer electricity cost - actual electricity cost)
+                const hostAdditionalProfit = data.client_electricity_cost.monthly - data.electricity_cost.monthly;
+                document.getElementById('host-additional-profit').textContent = formatCurrency(hostAdditionalProfit);
                 
                 // 客户的盈亏平衡电价和BTC价格 (Customer break-even electricity cost and BTC price)
                 if (data.btc_mined.monthly > 0) {
