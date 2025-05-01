@@ -716,7 +716,20 @@ document.addEventListener('DOMContentLoaded', () => {
             
         } catch (error) {
             console.error('Failed to generate profit chart:', error);
-            chartCard.style.display = 'none';
+            showError(`热力图生成失败，请重试。(Chart generation failed, please try again.): ${error.message || 'Unknown error'}`);
+            
+            // Reset chart card and container
+            const chartContainer = document.getElementById('chart-container');
+            if (chartContainer) {
+                chartContainer.innerHTML = `
+                    <div class="alert alert-warning text-center p-3">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        热力图加载失败。请重新计算或刷新页面后再试。<br>
+                        Chart loading failed. Please recalculate or refresh the page and try again.
+                    </div>
+                    <canvas id="profit-heatmap" style="display:none;"></canvas>
+                `;
+            }
         }
     }
     
