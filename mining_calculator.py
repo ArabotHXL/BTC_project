@@ -88,8 +88,8 @@ def get_real_time_btc_hashrate():
         print(f"⚠️ 无法获取实时BTC算力，使用默认值 700 EH/s: {e}")
         return 700
 
-def calculate_mining_profitability(hashrate=0, power_consumption=0, electricity_cost=0.05, client_electricity_cost=None, 
-                             btc_price=None, difficulty=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0):
+def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electricity_cost=0.05, client_electricity_cost=None, 
+                             btc_price=None, difficulty=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0.0):
     """
     Calculate Bitcoin mining profitability using the exact calculation method from the original code
     
