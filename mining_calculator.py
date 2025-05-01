@@ -75,7 +75,7 @@ def get_real_time_block_reward():
         logging.warning(f"Unable to get real-time BTC block reward: {e}")
         return BLOCK_REWARD
 
-def calculate_mining_profitability(hashrate, power_consumption, electricity_cost, pool_fee, btc_price=None, difficulty=None, use_real_time_data=False, miner_model=None, miner_count=1):
+def calculate_mining_profitability(hashrate, power_consumption, electricity_cost, client_electricity_cost=None, btc_price=None, difficulty=None, use_real_time_data=False, miner_model=None, miner_count=1):
     """
     Calculate Bitcoin mining profitability
     
@@ -83,7 +83,7 @@ def calculate_mining_profitability(hashrate, power_consumption, electricity_cost
     - hashrate: Mining hashrate in TH/s
     - power_consumption: Power consumption in watts
     - electricity_cost: Electricity cost in USD per kWh
-    - pool_fee: Mining pool fee in percentage
+    - client_electricity_cost: Electricity cost charged to customers (USD per kWh)
     - btc_price: Current Bitcoin price in USD (optional if use_real_time_data=True)
     - difficulty: Network difficulty (optional if use_real_time_data=True)
     - use_real_time_data: Whether to fetch real-time data from APIs
@@ -125,8 +125,8 @@ def calculate_mining_profitability(hashrate, power_consumption, electricity_cost
         network_hashrate = difficulty * 2**32 / 600  # Estimated network hashrate
         btc_per_day = (hashrate_in_h / network_hashrate) * current_block_reward * BLOCKS_PER_DAY
         
-        # Apply pool fee
-        btc_per_day_after_fee = btc_per_day * (1 - pool_fee / 100)
+        # No pool fee anymore
+        btc_per_day_after_fee = btc_per_day
         
         # Calculate revenue
         daily_revenue_usd = btc_per_day_after_fee * btc_price
@@ -139,10 +139,29 @@ def calculate_mining_profitability(hashrate, power_consumption, electricity_cost
         monthly_electricity_cost = daily_electricity_cost * 30
         yearly_electricity_cost = daily_electricity_cost * 365
         
-        # Calculate profit
+        # Calculate mining site profit
         daily_profit_usd = daily_revenue_usd - daily_electricity_cost
         monthly_profit_usd = monthly_revenue_usd - monthly_electricity_cost
         yearly_profit_usd = yearly_revenue_usd - yearly_electricity_cost
+        
+        # Calculate client profit (if client electricity cost is provided)
+        if client_electricity_cost and client_electricity_cost > 0:
+            client_daily_electricity_cost = daily_power_kwh * client_electricity_cost
+            client_monthly_electricity_cost = client_daily_electricity_cost * 30
+            client_yearly_electricity_cost = client_daily_electricity_cost * 365
+            
+            client_daily_profit_usd = daily_revenue_usd - client_daily_electricity_cost
+            client_monthly_profit_usd = monthly_revenue_usd - client_monthly_electricity_cost
+            client_yearly_profit_usd = yearly_revenue_usd - client_yearly_electricity_cost
+        else:
+            # If no client electricity cost provided, use the same as the site
+            client_daily_electricity_cost = daily_electricity_cost
+            client_monthly_electricity_cost = monthly_electricity_cost
+            client_yearly_electricity_cost = yearly_electricity_cost
+            
+            client_daily_profit_usd = daily_profit_usd
+            client_monthly_profit_usd = monthly_profit_usd
+            client_yearly_profit_usd = yearly_profit_usd
         
         # Calculate break-even electricity cost
         if btc_per_day_after_fee > 0:
@@ -169,7 +188,7 @@ def calculate_mining_profitability(hashrate, power_consumption, electricity_cost
                 'hashrate': hashrate,
                 'power_consumption': power_consumption,
                 'electricity_cost': electricity_cost,
-                'pool_fee': pool_fee
+                'client_electricity_cost': client_electricity_cost or electricity_cost
             },
             'btc_mined': {
                 'daily': btc_per_day_after_fee,
@@ -190,6 +209,16 @@ def calculate_mining_profitability(hashrate, power_consumption, electricity_cost
                 'daily': daily_profit_usd,
                 'monthly': monthly_profit_usd,
                 'yearly': yearly_profit_usd
+            },
+            'client_profit': {
+                'daily': client_daily_profit_usd,
+                'monthly': client_monthly_profit_usd,
+                'yearly': client_yearly_profit_usd
+            },
+            'client_electricity_cost': {
+                'daily': client_daily_electricity_cost,
+                'monthly': client_monthly_electricity_cost,
+                'yearly': client_yearly_electricity_cost
             },
             'break_even': {
                 'electricity_cost': break_even_electricity
@@ -242,7 +271,6 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
                 hashrate=hashrate,
                 power_consumption=power_consumption,
                 electricity_cost=electricity_cost,
-                pool_fee=1.0,  # Default pool fee
                 btc_price=btc_price,
                 difficulty=current_difficulty,
                 use_real_time_data=False
@@ -259,7 +287,6 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
         hashrate=hashrate,
         power_consumption=power_consumption,
         electricity_cost=0.05,  # Dummy value, not used for this calculation
-        pool_fee=1.0,
         btc_price=current_btc_price,
         difficulty=current_difficulty,
         use_real_time_data=False

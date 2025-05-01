@@ -7,12 +7,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Form elements
     const minerModelSelect = document.getElementById('miner-model');
+    const sitePowerMwInput = document.getElementById('site-power-mw');
     const minerCountInput = document.getElementById('miner-count');
     const hashrateInput = document.getElementById('hashrate');
     const hashrateUnitSelect = document.getElementById('hashrate-unit');
     const powerConsumptionInput = document.getElementById('power-consumption');
     const electricityCostInput = document.getElementById('electricity-cost');
-    const poolFeeInput = document.getElementById('pool-fee');
+    const clientElectricityCostInput = document.getElementById('client-electricity-cost');
     const btcPriceInput = document.getElementById('btc-price-input');
     const useRealTimeCheckbox = document.getElementById('use-real-time');
     const calculatorForm = document.getElementById('mining-calculator-form');
@@ -44,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up event listeners
     useRealTimeCheckbox.addEventListener('change', handleRealTimeToggle);
     minerModelSelect.addEventListener('change', updateMinerSpecs);
-    minerCountInput.addEventListener('change', updateMinerSpecs);
+    sitePowerMwInput.addEventListener('change', updateMinerSpecs);
     calculatorForm.addEventListener('submit', handleCalculateSubmit);
     
     // Update BTC price input when real-time checkbox is toggled
@@ -57,10 +58,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Update hashrate and power consumption based on miner model
+    // Update hashrate and power consumption based on miner model and site power
     function updateMinerSpecs() {
         const selectedModel = minerModelSelect.value;
-        const minerCount = parseInt(minerCountInput.value) || 1;
+        const sitePowerMW = parseFloat(sitePowerMwInput.value) || 1;
         
         if (selectedModel) {
             // Find the selected miner in the loaded miners data
@@ -68,9 +69,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectedMiner = miners.find(miner => miner.name === selectedModel);
             
             if (selectedMiner) {
-                // Calculate total hashrate and power based on miner count
-                const totalHashrate = selectedMiner.hashrate * minerCount;
-                const totalPower = selectedMiner.power_watt * minerCount;
+                // Calculate miner count based on site power (MW) and miner power (W)
+                // Convert site power from MW to W: sitePowerMW * 1,000,000
+                // Calculate how many miners can fit into that power budget
+                const singleMinerPower = selectedMiner.power_watt;
+                const calculatedMinerCount = Math.floor((sitePowerMW * 1000000) / singleMinerPower);
+                
+                // Update the miner count field
+                minerCountInput.value = calculatedMinerCount;
+                
+                // Calculate total hashrate and power based on calculated miner count
+                const totalHashrate = selectedMiner.hashrate * calculatedMinerCount;
+                const totalPower = selectedMiner.power_watt * calculatedMinerCount;
                 
                 // Convert hashrate to appropriate unit
                 let displayHashrate = totalHashrate;
@@ -93,6 +103,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 hashrateInput.disabled = true;
                 hashrateUnitSelect.disabled = true;
                 powerConsumptionInput.disabled = true;
+                
+                console.log(`Calculated ${calculatedMinerCount} miners for ${sitePowerMW} MW using ${selectedMiner.name}`);
             }
         } else {
             // Enable manual input when no miner model is selected

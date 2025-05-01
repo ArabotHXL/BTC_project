@@ -52,11 +52,18 @@
                                     </select>
                                 </div>
 
-                                <!-- Miner count for mining farm calculation -->
+                                <!-- Site Power Consumption (MW) -->
+                                <div class="mb-3">
+                                    <label for="site-power-mw" class="form-label">Site Power Consumption (MW)</label>
+                                    <input type="number" class="form-control" id="site-power-mw" name="site_power_mw" value="1" min="0.1" step="0.1">
+                                    <div class="form-text">Total site power capacity in megawatts (MW)</div>
+                                </div>
+                                
+                                <!-- Miner count (calculated automatically) -->
                                 <div class="mb-3">
                                     <label for="miner-count" class="form-label">Number of Miners</label>
-                                    <input type="number" class="form-control" id="miner-count" name="miner_count" value="1" min="1">
-                                    <div class="form-text">Calculate for multiple miners (mining farm)</div>
+                                    <input type="number" class="form-control" id="miner-count" name="miner_count" value="1" min="1" readonly>
+                                    <div class="form-text">Calculated based on site power and miner model</div>
                                 </div>
 
                                 <!-- Hashrate input -->
@@ -86,10 +93,11 @@
                                     <input type="number" class="form-control" id="electricity-cost" name="electricity_cost" value="0.05" min="0" step="0.001">
                                 </div>
 
-                                <!-- Pool fee -->
+                                <!-- Customer Electricity Cost -->
                                 <div class="mb-3">
-                                    <label for="pool-fee" class="form-label">Pool Fee (%)</label>
-                                    <input type="number" class="form-control" id="pool-fee" name="pool_fee" value="1" min="0" max="100" step="0.1">
+                                    <label for="client-electricity-cost" class="form-label">Customer Electricity Cost ($/kWh)</label>
+                                    <input type="number" class="form-control" id="client-electricity-cost" name="client_electricity_cost" value="0.06" min="0" step="0.001">
+                                    <div class="form-text">Electricity cost charged to customers (for client profit calculation)</div>
                                 </div>
 
                                 <!-- BTC price -->
