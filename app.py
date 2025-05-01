@@ -146,6 +146,10 @@ def get_miners():
 def get_profit_chart_data():
     """Generate profit chart data for visualization"""
     try:
+        # 添加防重复调用锁，防止前端重复请求同一数据
+        import time
+        start_time = time.time()
+        
         # Get parameters from request
         miner_model = request.form.get('miner_model')
         miner_count = int(request.form.get('miner_count', 1))
@@ -156,6 +160,24 @@ def get_profit_chart_data():
                 'success': False,
                 'error': 'Please select a valid miner model.'
             }), 400
+        
+        # 生成缓存键，用于检查是否为重复请求
+        cache_key = f"{miner_model}_{miner_count}_{client_electricity_cost}"
+        
+        # 检查是否有静态缓存数据（简单示例）
+        import os
+        cache_file = f".chart_cache_{cache_key.replace('.', '_')}.json"
+        
+        if os.path.exists(cache_file) and os.path.getsize(cache_file) > 0:
+            try:
+                with open(cache_file, 'r') as f:
+                    import json
+                    cached_data = json.load(f)
+                    logging.info(f"Using cached chart data for {miner_model} with {miner_count} miners")
+                    return jsonify(cached_data)
+            except Exception as e:
+                logging.error(f"Error reading cache: {str(e)}")
+                # 继续执行，重新生成数据
         
         # Generate price and electricity cost ranges
         current_btc_price = get_real_time_btc_price()
@@ -177,6 +199,17 @@ def get_profit_chart_data():
             miner_count=miner_count,
             client_electricity_cost=client_electricity_cost if client_electricity_cost > 0 else None
         )
+        
+        # 缓存结果，避免重复计算
+        try:
+            with open(cache_file, 'w') as f:
+                import json
+                json.dump(chart_data, f)
+        except Exception as e:
+            logging.error(f"Error caching chart data: {str(e)}")
+        
+        elapsed_time = time.time() - start_time
+        logging.info(f"Chart data generated in {elapsed_time:.2f} seconds")
         
         return jsonify(chart_data)
         
