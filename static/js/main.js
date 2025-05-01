@@ -377,11 +377,17 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 月度BTC产出和收入
             var monthlyBtcOutput = data.btc_mined.monthly || 0;
-            var monthlyIncome = data.revenue.monthly || 0;
+            // 计算矿机挖出的BTC产生的月收入(使用BTC价格 * BTC数量)
+            var monthlyIncome = monthlyBtcOutput * data.network_data.btc_price;
+            
+            console.log('月度BTC产出:', monthlyBtcOutput, 'BTC价格:', data.network_data.btc_price, '计算得到月度收入:', monthlyIncome);
             
             // 更新客户总收入 - 这是矿机挖出的BTC产生的全部收入
-            if (clientTotalIncomeEl && data.revenue) {
+            if (clientTotalIncomeEl) {
                 clientTotalIncomeEl.textContent = formatCurrency(monthlyIncome);
+                console.log('已更新客户总收入:', monthlyIncome);
+            } else {
+                console.error('无法找到客户总收入元素ID:client-total-income');
             }
             
             // 电费差计算 (Electricity differential)
