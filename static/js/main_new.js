@@ -736,14 +736,30 @@ document.addEventListener('DOMContentLoaded', function() {
                                         if (!context.raw) return 'rgba(128, 128, 128, 0.7)';
                                         
                                         var profit = context.raw.profit;
-                                        if (profit >= 0) {
-                                            return 'rgba(40, 167, 69, 0.7)';  // 绿色 (Green - profit)
+                                        // 使用颜色梯度表示盈利程度而不是简单的红绿区分
+                                        if (profit > 10000) {
+                                            return 'rgba(0, 128, 0, 0.8)';  // 深绿色 (Dark green - high profit)
+                                        } else if (profit > 5000) {
+                                            return 'rgba(40, 167, 69, 0.8)';  // 中绿色 (Medium green - medium profit)
+                                        } else if (profit > 1000) {
+                                            return 'rgba(92, 184, 92, 0.8)';  // 浅绿色 (Light green - slight profit)
+                                        } else if (profit > 0) {
+                                            return 'rgba(152, 217, 152, 0.8)';  // 非常浅绿色 (Very light green - marginal profit)
+                                        } else if (profit > -1000) {
+                                            return 'rgba(255, 204, 204, 0.8)';  // 浅红色 (Light red - small loss)
+                                        } else if (profit > -5000) {
+                                            return 'rgba(240, 100, 100, 0.8)';  // 中红色 (Medium red - moderate loss)
                                         } else {
-                                            return 'rgba(220, 53, 69, 0.7)';  // 红色 (Red - loss)
+                                            return 'rgba(220, 53, 69, 0.8)';  // 深红色 (Deep red - significant loss)
                                         }
                                     },
-                                    pointRadius: 10,
-                                    pointHoverRadius: 15
+                                    pointRadius: function(context) {
+                                        // 让更盈利的点显示得大一些，强调盈利状况
+                                        if (!context.raw) return 8;
+                                        var profit = Math.abs(context.raw.profit);
+                                        return Math.min(Math.max(5 + profit/2000, 5), 15); // 点大小范围在5到15之间
+                                    },
+                                    pointHoverRadius: 18
                                 }]
                             },
                             options: {
@@ -768,9 +784,43 @@ document.addEventListener('DOMContentLoaded', function() {
                                         callbacks: {
                                             label: function(context) {
                                                 var profit = context.raw.profit;
-                                                return '月利润: $' + profit.toFixed(2);
+                                                var btcPrice = context.raw.y;
+                                                var electricityCost = context.raw.x;
+                                                
+                                                var lines = [
+                                                    '电价: $' + electricityCost.toFixed(3) + '/kWh',
+                                                    'BTC价格: $' + btcPrice.toLocaleString(),
+                                                    '月利润: $' + profit.toLocaleString(undefined, {
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2
+                                                    }),
+                                                    '年利润: $' + (profit * 12).toLocaleString(undefined, {
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2
+                                                    })
+                                                ];
+                                                
+                                                if (profit > 0) {
+                                                    return lines;
+                                                } else {
+                                                    // 添加标记表示亏损
+                                                    return ['⚠️ 亏损运营 / Loss Operation'].concat(lines);
+                                                }
+                                            },
+                                            title: function() {
+                                                // 清空标题，使用自定义标签替代
+                                                return '';
                                             }
-                                        }
+                                        },
+                                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                        titleFont: {
+                                            weight: 'bold',
+                                            size: 13
+                                        },
+                                        bodyFont: {
+                                            size: 12
+                                        },
+                                        padding: 10
                                     },
                                     title: {
                                         display: true,
