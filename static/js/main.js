@@ -569,29 +569,29 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Canvas element exists:", !!profitHeatmapCanvas);
             console.log("Scatter data points:", scatterData.length);
             
-            try {
-                // Create the chart - 使用更安全的初始化方式
-                if (profitHeatmapChart) {
-                    profitHeatmapChart.destroy();
-                }
-                
-                // 使用一个简单的图表配置进行测试
-                profitHeatmapChart = new Chart(profitHeatmapCanvas, {
-                    type: 'scatter',
-                    data: {
-                        datasets: [{
-                            label: 'Monthly Profit ($)',
-                            data: scatterData,
-                            pointBackgroundColor: (context) => {
-                                const profit = context.raw?.profit || 0;
-                                if (profit < 0) return 'rgba(220, 53, 69, 0.7)'; // Negative: red
-                                const intensity = Math.min(0.9, Math.max(0.2, profit / 20000)); // Normalize between 0.2 and 0.9
-                                return `rgba(25, 135, 84, ${intensity})`;  // Positive: green with intensity
-                            },
-                            pointRadius: 15,
-                            pointHoverRadius: 18,
-                            borderWidth: 1,
-                            borderColor: 'rgba(255, 255, 255, 0.2)'
+            // 确保canvas元素存在
+            if (!profitHeatmapCanvas) {
+                console.error("Chart canvas element not found");
+                return;
+            }
+            
+            // 创建新的Chart对象
+            profitHeatmapChart = new Chart(profitHeatmapCanvas, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Monthly Profit ($)',
+                        data: scatterData,
+                        pointBackgroundColor: (context) => {
+                            const profit = context.raw?.profit || 0;
+                            if (profit < 0) return 'rgba(220, 53, 69, 0.7)'; // Negative: red
+                            const intensity = Math.min(0.9, Math.max(0.2, profit / 20000)); // Normalize between 0.2 and 0.9
+                            return `rgba(25, 135, 84, ${intensity})`;  // Positive: green with intensity
+                        },
+                        pointRadius: 15,
+                        pointHoverRadius: 18,
+                        borderWidth: 1,
+                        borderColor: 'rgba(255, 255, 255, 0.2)'
                     }]
                 },
                 options: {
