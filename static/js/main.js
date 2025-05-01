@@ -398,21 +398,30 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // ===== 更新矿场主相关信息 (Update mining site/host information) =====
         
-        // 设置年度/月度/日度收益和产出 (Set yearly/monthly/daily profit and output)
+        // 获取矿场主相关元素 (Get host-related elements)
         const hostYearlyProfitEl = document.getElementById('host-yearly-profit');
         const hostMonthlyProfitDisplayEl = document.getElementById('host-monthly-profit-display');
+        const hostDailyProfitEl = document.getElementById('host-daily-profit');
+        const hostProfitCardEl = document.getElementById('host-profit-card');
+        
+        // 获取客户相关元素 (Get customer-related elements)
+        const clientProfitCardEl = document.getElementById('client-profit-card');
+        const clientTotalIncomeEl = document.getElementById('client-total-income');
+        const clientTotalExpensesEl = document.getElementById('client-total-expenses');
         
         // 初始化变量 (Initialize variables)
         let operationCostValue = data.maintenance_fee && data.maintenance_fee.monthly ? data.maintenance_fee.monthly : 0;
         
         // 这里先定义变量，稍后在有了hostProfit后再计算净收益 (Just define variables here, will calculate net profit later after hostProfit is available)
-        let monthlyNetProfit = 0;
-        let yearlyNetProfit = 0;
+        let hostMonthlyNetProfit = 0;
+        let hostYearlyNetProfit = 0;
+        let hostDailyNetProfit = 0;
         
-        if (hostYearlyProfitEl) hostYearlyProfitEl.textContent = formatCurrency(yearlyNetProfit);
-        if (hostMonthlyProfitDisplayEl) hostMonthlyProfitDisplayEl.textContent = formatCurrency(monthlyNetProfit);
+        // 设置月度BTC产出和收入（客户收入部分） (Set monthly BTC output and revenue - customer income part)
         if (monthlyBtcEl) monthlyBtcEl.textContent = formatNumber(data.btc_mined.monthly, 8);
         if (monthlyRevenueEl) monthlyRevenueEl.textContent = formatCurrency(data.revenue.monthly);
+        
+        // 设置矿场主的电费（支出部分） (Set host electricity cost - expense part)
         if (monthlyElectricityEl) monthlyElectricityEl.textContent = formatCurrency(data.electricity_cost.monthly);
         
         // 设置盈亏平衡和其他信息 (Set break-even and other info)
@@ -431,6 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 客户收益 (Customer profit metrics)
             if (clientMonthlyProfitEl) clientMonthlyProfitEl.textContent = formatCurrency(data.client_profit.monthly);
             if (clientYearlyProfitEl) clientYearlyProfitEl.textContent = formatCurrency(data.client_profit.yearly);
+            if (clientProfitCardEl) clientProfitCardEl.textContent = formatCurrency(data.client_profit.monthly);
             
             // 添加客户日度收益 (Add customer daily profit)
             const clientDailyProfitEl = document.getElementById('client-daily-profit');
@@ -441,48 +451,56 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (clientMonthlyElectricityEl) 
                     clientMonthlyElectricityEl.textContent = formatCurrency(data.client_electricity_cost.monthly);
                 
-                // 矿场主收益 = 客户电费 - 实际电费 (Host profit = customer electricity cost - actual electricity cost)
-                const hostProfit = data.client_electricity_cost.monthly - data.electricity_cost.monthly;
-                if (hostMonthlyProfitEl) hostMonthlyProfitEl.textContent = formatCurrency(hostProfit);
+                // 客户总收入和总支出 (Customer total income and expenses)
+                const clientTotalIncome = data.revenue.monthly;
+                const clientTotalExpenses = data.client_electricity_cost.monthly;
                 
-                // 如果需要显示矿场挖矿自身的收益，可以计算
-                const miningSelfProfit = data.revenue.monthly - data.electricity_cost.monthly;
+                if (clientTotalIncomeEl) clientTotalIncomeEl.textContent = formatCurrency(clientTotalIncome);
+                if (clientTotalExpensesEl) clientTotalExpensesEl.textContent = formatCurrency(clientTotalExpenses);
+                
+                // 矿场主收益 = 客户电费 - 实际电费 (Host profit = customer electricity cost - actual electricity cost)
+                const hostElectricProfit = data.client_electricity_cost.monthly - data.electricity_cost.monthly;
+                if (hostMonthlyProfitEl) hostMonthlyProfitEl.textContent = formatCurrency(hostElectricProfit);
+                
+                // 矿场主自身挖矿收益（通常为0，已移给客户） (Host mining profit - usually 0, moved to customer)
+                const miningSelfProfit = 0; // 此处设为0，因为挖矿收益已经算到客户那里了
                 const hostSelfProfitEl = document.getElementById('host-self-profit');
                 if (hostSelfProfitEl) hostSelfProfitEl.textContent = formatCurrency(miningSelfProfit);
                 
-                // 计算总收入和总支出 (Calculate total income and expenses)
+                // 计算矿场主总收入和总支出 (Calculate host total income and expenses)
                 const hostTotalIncomeEl = document.getElementById('host-total-income');
                 const hostTotalExpensesEl = document.getElementById('host-total-expenses');
                 const operationCostEl = document.getElementById('operation-cost');
                 
-                // 设置运维费用（使用前面定义的变量） (Set operation cost using previously defined variable)
-                // 重新设置operationCostValue，确保与前面定义的值一致
+                // 设置运维费用 (Set operation cost)
                 if (data.maintenance_fee && data.maintenance_fee.monthly) {
-                    // 使用后端返回的维护费用
                     operationCostValue = data.maintenance_fee.monthly;
                 }
                 if (operationCostEl) {
                     operationCostEl.textContent = formatCurrency(operationCostValue);
                 }
                 
-                // 计算总收入（仅电费差收益，BTC收入已移到客户信息） (Calculate total income: only electricity profit as BTC revenue moved to customer info)
-                const totalIncome = hostProfit;
+                // 计算矿场主总收入 (Calculate host total income)
+                const hostTotalIncome = hostElectricProfit + miningSelfProfit;
                 if (hostTotalIncomeEl) {
-                    hostTotalIncomeEl.textContent = formatCurrency(totalIncome);
+                    hostTotalIncomeEl.textContent = formatCurrency(hostTotalIncome);
                 }
                 
-                // 计算月度和年度净收益 (Calculate monthly and yearly net profit)
-                monthlyNetProfit = hostProfit - operationCostValue;
-                yearlyNetProfit = monthlyNetProfit * 12;
+                // 计算矿场主净收益 (Calculate host net profit)
+                hostMonthlyNetProfit = hostTotalIncome - operationCostValue;
+                hostYearlyNetProfit = hostMonthlyNetProfit * 12;
+                hostDailyNetProfit = hostMonthlyNetProfit / 30.5;
                 
-                // 更新净收益显示 (Update net profit display)
-                if (hostYearlyProfitEl) hostYearlyProfitEl.textContent = formatCurrency(yearlyNetProfit);
-                if (hostMonthlyProfitDisplayEl) hostMonthlyProfitDisplayEl.textContent = formatCurrency(monthlyNetProfit);
+                // 更新矿场主净收益显示 (Update host net profit display)
+                if (hostYearlyProfitEl) hostYearlyProfitEl.textContent = formatCurrency(hostYearlyNetProfit);
+                if (hostMonthlyProfitDisplayEl) hostMonthlyProfitDisplayEl.textContent = formatCurrency(hostMonthlyNetProfit);
+                if (hostDailyProfitEl) hostDailyProfitEl.textContent = formatCurrency(hostDailyNetProfit);
+                if (hostProfitCardEl) hostProfitCardEl.textContent = formatCurrency(hostMonthlyNetProfit);
                 
-                // 计算总支出（月度电费 + 运维费用） (Calculate total expenses: monthly electricity cost + operation cost)
-                const totalExpenses = data.electricity_cost.monthly + operationCostValue;
+                // 计算矿场主总支出 (Calculate host total expenses)
+                const hostTotalExpenses = data.electricity_cost.monthly + operationCostValue;
                 if (hostTotalExpensesEl) {
-                    hostTotalExpensesEl.textContent = formatCurrency(totalExpenses);
+                    hostTotalExpensesEl.textContent = formatCurrency(hostTotalExpenses);
                 }
                 
                 // 客户的盈亏平衡电价和BTC价格 (Customer break-even electricity cost and BTC price)

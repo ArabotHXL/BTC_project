@@ -163,18 +163,18 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- Daily profit -->
+                                <!-- Host profit -->
                                 <div class="col-md-4">
-                                    <div class="p-3 rounded bg-success bg-opacity-10">
-                                        <h6>Daily Profit</h6>
-                                        <h3 id="daily-profit">$0.00</h3>
+                                    <div class="p-3 rounded bg-dark bg-opacity-10">
+                                        <h6>矿场主月度收益 (Host Monthly)</h6>
+                                        <h3 id="host-profit-card">$0.00</h3>
                                     </div>
                                 </div>
-                                <!-- Monthly profit -->
+                                <!-- Customer profit -->
                                 <div class="col-md-4">
-                                    <div class="p-3 rounded bg-warning bg-opacity-10">
-                                        <h6>Monthly Profit</h6>
-                                        <h3 id="monthly-profit">$0.00</h3>
+                                    <div class="p-3 rounded bg-info bg-opacity-10">
+                                        <h6>客户月度收益 (Client Monthly)</h6>
+                                        <h3 id="client-profit-card">$0.00</h3>
                                     </div>
                                 </div>
                             </div>
@@ -184,14 +184,18 @@
                             <!-- 矿场主信息 (Mining Site/Host Information) -->
                             <h6 class="mb-3 mt-4 bg-dark bg-opacity-10 p-2 rounded">矿场主信息 (Mining Site Information)</h6>
                             <div class="row">
-                                <!-- 收入列 -->
+                                <!-- 矿场主收入列 -->
                                 <div class="col-md-6">
-                                    <h6 class="text-success mb-2">收入 (Income)</h6>
+                                    <h6 class="text-success mb-2">矿场主收入 (Host Income)</h6>
                                     <table class="table table-sm table-bordered border-success border-opacity-25">
                                         <tbody>
                                             <tr>
                                                 <td>矿场主电费差收益 (Host Electric Profit)</td>
                                                 <td id="host-monthly-profit" class="text-end">$0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td>矿场挖矿自身收益 (Mining Self Profit)</td>
+                                                <td id="host-self-profit" class="text-end">$0.00</td>
                                             </tr>
                                             <tr class="table-success bg-opacity-25">
                                                 <td><strong>总收入 (Total Income)</strong></td>
@@ -200,9 +204,9 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                <!-- 支出列 -->
+                                <!-- 矿场主支出列 -->
                                 <div class="col-md-6">
-                                    <h6 class="text-danger mb-2">支出 (Expenses)</h6>
+                                    <h6 class="text-danger mb-2">矿场主支出 (Host Expenses)</h6>
                                     <table class="table table-sm table-bordered border-danger border-opacity-25">
                                         <tbody>
                                             <tr>
@@ -222,15 +226,17 @@
                                 </div>
                             </div>
                             
-                            <!-- 收益汇总 -->
+                            <!-- 矿场主收益汇总 -->
                             <div class="row mt-3">
                                 <div class="col-md-12">
                                     <table class="table table-sm table-bordered">
                                         <tbody>
-                                            <tr class="bg-primary bg-opacity-10">
-                                                <td>月度净收益 (Monthly Net Profit)</td>
+                                            <tr class="bg-dark bg-opacity-10">
+                                                <td>矿场主日度收益 (Host Daily Profit)</td>
+                                                <td id="host-daily-profit" class="text-end">$0.00</td>
+                                                <td>矿场主月度收益 (Host Monthly Profit)</td>
                                                 <td id="host-monthly-profit-display" class="text-end">$0.00</td>
-                                                <td>年度净收益 (Yearly Net Profit)</td>
+                                                <td>矿场主年度收益 (Host Yearly Profit)</td>
                                                 <td id="host-yearly-profit" class="text-end">$0.00</td>
                                             </tr>
                                         </tbody>
@@ -238,18 +244,18 @@
                                 </div>
                             </div>
                             
-                            <!-- 其他信息 -->
+                            <!-- 矿场主其他信息 -->
                             <div class="row mt-3">
                                 <div class="col-md-6">
                                     <table class="table table-sm">
                                         <tbody>
                                             <tr>
-                                                <td>矿场挖矿自身收益 (Mining Self Profit)</td>
-                                                <td id="host-self-profit" class="text-end">$0.00</td>
-                                            </tr>
-                                            <tr>
                                                 <td>矿机数量 (Miner Count)</td>
                                                 <td id="miner-count-result" class="text-end">0</td>
+                                            </tr>
+                                            <tr>
+                                                <td>盈亏平衡电价 (Break-even Electricity)</td>
+                                                <td id="break-even-electricity" class="text-end">$0.00/kWh</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -257,10 +263,6 @@
                                 <div class="col-md-6">
                                     <table class="table table-sm">
                                         <tbody>
-                                            <tr>
-                                                <td>盈亏平衡电价 (Break-even Electricity)</td>
-                                                <td id="break-even-electricity" class="text-end">$0.00/kWh</td>
-                                            </tr>
                                             <tr>
                                                 <td>盈亏平衡BTC价格 (Break-even BTC)</td>
                                                 <td id="break-even-btc" class="text-end">$0.00</td>
@@ -277,8 +279,10 @@
                             <!-- 客户信息 (Customer Information) -->
                             <h6 class="mb-3 mt-4 bg-info bg-opacity-10 p-2 rounded">客户信息 (Customer Information)</h6>
                             <div class="row">
+                                <!-- 客户收入列 -->
                                 <div class="col-md-6">
-                                    <table class="table table-sm table-bordered border-info border-opacity-25">
+                                    <h6 class="text-success mb-2">客户收入 (Customer Income)</h6>
+                                    <table class="table table-sm table-bordered border-success border-opacity-25">
                                         <tbody>
                                             <tr>
                                                 <td>月度BTC产出 (Monthly BTC)</td>
@@ -288,32 +292,64 @@
                                                 <td>月度BTC收入 (Monthly BTC Revenue)</td>
                                                 <td id="monthly-revenue" class="text-end">$0.00</td>
                                             </tr>
-                                            <tr>
-                                                <td>客户月度收益 (Customer Monthly Profit)</td>
-                                                <td id="client-monthly-profit" class="text-end">$0.00</td>
-                                            </tr>
-                                            <tr>
-                                                <td>客户年度收益 (Customer Yearly Profit)</td>
-                                                <td id="client-yearly-profit" class="text-end">$0.00</td>
-                                            </tr>
-                                            <tr>
-                                                <td>客户日度收益 (Customer Daily Profit)</td>
-                                                <td id="client-daily-profit" class="text-end">$0.00</td>
+                                            <tr class="table-success bg-opacity-25">
+                                                <td><strong>总收入 (Total Income)</strong></td>
+                                                <td id="client-total-income" class="text-end fw-bold">$0.00</td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
+                                <!-- 客户支出列 -->
                                 <div class="col-md-6">
-                                    <table class="table table-sm table-bordered border-info border-opacity-25">
+                                    <h6 class="text-danger mb-2">客户支出 (Customer Expenses)</h6>
+                                    <table class="table table-sm table-bordered border-danger border-opacity-25">
                                         <tbody>
                                             <tr>
                                                 <td>客户月度电费 (Customer Monthly Electricity)</td>
                                                 <td id="client-monthly-electricity" class="text-end">$0.00</td>
                                             </tr>
+                                            <tr class="table-danger bg-opacity-25">
+                                                <td><strong>总支出 (Total Expenses)</strong></td>
+                                                <td id="client-total-expenses" class="text-end fw-bold">$0.00</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- 客户收益汇总 -->
+                            <div class="row mt-3">
+                                <div class="col-md-12">
+                                    <table class="table table-sm table-bordered">
+                                        <tbody>
+                                            <tr class="bg-info bg-opacity-10">
+                                                <td>客户日度收益 (Customer Daily Profit)</td>
+                                                <td id="client-daily-profit" class="text-end">$0.00</td>
+                                                <td>客户月度收益 (Customer Monthly Profit)</td>
+                                                <td id="client-monthly-profit" class="text-end">$0.00</td>
+                                                <td>客户年度收益 (Customer Yearly Profit)</td>
+                                                <td id="client-yearly-profit" class="text-end">$0.00</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- 客户其他信息 -->
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <table class="table table-sm">
+                                        <tbody>
                                             <tr>
                                                 <td>客户盈亏平衡电价 (Customer Break-even Electricity)</td>
                                                 <td id="client-break-even-electricity" class="text-end">$0.00/kWh</td>
                                             </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <table class="table table-sm">
+                                        <tbody>
                                             <tr>
                                                 <td>客户盈亏平衡BTC价格 (Customer Break-even BTC)</td>
                                                 <td id="client-break-even-btc" class="text-end">$0.00</td>
