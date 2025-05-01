@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Generate and display chart
                 if (minerModelSelect.value) {
-                    const clientElectricityCost = parseFloat(clientElectricityInput.value) || 0;
+                    const clientElectricityCost = parseFloat(clientElectricityCostInput.value) || 0;
                     generateProfitChart(minerModelSelect.value, parseInt(minerCountInput.value) || 1, clientElectricityCost);
                 }
             } else {
@@ -247,12 +247,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Generate profit heatmap chart
-    async function generateProfitChart(minerModel, minerCount) {
+    async function generateProfitChart(minerModel, minerCount, clientElectricityCost = 0) {
         try {
             // Create form data with miner model and count
             const formData = new FormData();
             formData.append('miner_model', minerModel);
             formData.append('miner_count', minerCount);
+            formData.append('client_electricity_cost', clientElectricityCost);
             
             // Fetch chart data
             const response = await fetch('/profit_chart_data', {
@@ -347,7 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             title: {
                                 display: true,
                                 text: [
-                                    'Profitability Heatmap',
+                                    clientElectricityCost > 0 ? 'Customer Profitability Heatmap' : 'Host Profitability Heatmap',
                                     `Current BTC Price: ${formatCurrency(chartData.current_network_data.btc_price)}, Optimal Electricity Rate: ${formatCurrency(chartData.optimal_electricity_rate)}/kWh`
                                 ]
                             }
