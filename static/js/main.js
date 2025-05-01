@@ -140,6 +140,37 @@ document.addEventListener('DOMContentLoaded', () => {
     async function handleCalculateSubmit(event) {
         event.preventDefault();
         
+        // Validate inputs before submission
+        let hasErrors = false;
+        
+        // Basic input validation
+        if (minerModelSelect.value === "") {
+            // If no miner model is selected, validate manual inputs
+            if (!hashrateInput.value || parseFloat(hashrateInput.value) <= 0) {
+                showError('Please enter a valid hashrate greater than 0.');
+                hasErrors = true;
+            }
+            
+            if (!powerConsumptionInput.value || parseFloat(powerConsumptionInput.value) <= 0) {
+                showError('Please enter a valid power consumption greater than 0.');
+                hasErrors = true;
+            }
+        }
+        
+        if (!electricityCostInput.value || parseFloat(electricityCostInput.value) < 0) {
+            showError('Please enter a valid electricity cost (must be 0 or greater).');
+            hasErrors = true;
+        }
+        
+        if (!useRealTimeCheckbox.checked && (!btcPriceInput.value || parseFloat(btcPriceInput.value) <= 0)) {
+            showError('Please enter a valid Bitcoin price greater than 0.');
+            hasErrors = true;
+        }
+        
+        if (hasErrors) {
+            return;
+        }
+        
         // Show loading state
         setLoadingState(true);
         
@@ -147,11 +178,21 @@ document.addEventListener('DOMContentLoaded', () => {
             // Collect form data
             const formData = new FormData(calculatorForm);
             
+            // Log the calculation request for debugging
+            console.log('Calculation request:');
+            for (const [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+            
             // Send request to calculate endpoint
             const response = await fetch('/calculate', {
                 method: 'POST',
                 body: formData
             });
+            
+            if (!response.ok) {
+                throw new Error(`Server responded with status: ${response.status}`);
+            }
             
             const data = await response.json();
             
@@ -166,10 +207,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else {
                 showError(data.error || 'An error occurred during calculation.');
+                console.error('Server returned error:', data.error);
             }
         } catch (error) {
             console.error('Calculation error:', error);
-            showError('Failed to calculate mining profitability. Please try again.');
+            showError('Failed to calculate mining profitability. Please try again.' + 
+                     (error.message ? ` (${error.message})` : ''));
         } finally {
             // Hide loading state
             setLoadingState(false);
@@ -178,8 +221,19 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Fetch current Bitcoin network statistics
     async function fetchNetworkStats() {
+        // Create loading indicators for network stats
+        const networkStatsElements = [btcPriceEl, networkDifficultyEl, networkHashrateEl, blockRewardEl];
+        networkStatsElements.forEach(el => {
+            el.innerHTML = '<small class="text-muted">Loading...</small>';
+        });
+        
         try {
-            const response = await fetch('/network_stats');
+            const response = await fetch('/network_stats', { timeout: 10000 });
+            
+            if (!response.ok) {
+                throw new Error(`Server responded with status: ${response.status}`);
+            }
+            
             const data = await response.json();
             
             if (data.success) {
@@ -194,9 +248,62 @@ document.addEventListener('DOMContentLoaded', () => {
                     btcPriceInput.value = data.price.toFixed(2);
                     btcPriceInput.disabled = true;
                 }
+                
+                // Store successful values in localStorage as fallback for future failures
+                localStorage.setItem('last_btc_price', data.price);
+                localStorage.setItem('last_network_difficulty', data.difficulty);
+                localStorage.setItem('last_network_hashrate', data.hashrate);
+                localStorage.setItem('last_block_reward', data.block_reward);
+            } else {
+                // Use fallback values from localStorage if available, otherwise show error
+                useFallbackNetworkStats();
+                console.error('Server returned error when fetching network stats:', data.error);
             }
         } catch (error) {
             console.error('Failed to fetch network stats:', error);
+            // Use fallback values from localStorage if available
+            useFallbackNetworkStats();
+            
+            // Retry after 30 seconds
+            setTimeout(fetchNetworkStats, 30000);
+        }
+    }
+    
+    // Helper function to use fallback network stats
+    function useFallbackNetworkStats() {
+        // Check if we have values in localStorage
+        const lastBtcPrice = localStorage.getItem('last_btc_price');
+        const lastDifficulty = localStorage.getItem('last_network_difficulty');
+        const lastHashrate = localStorage.getItem('last_network_hashrate');
+        const lastBlockReward = localStorage.getItem('last_block_reward');
+        
+        // Use last known values if available
+        if (lastBtcPrice) {
+            btcPriceEl.textContent = formatCurrency(parseFloat(lastBtcPrice));
+            if (useRealTimeCheckbox.checked) {
+                btcPriceInput.value = parseFloat(lastBtcPrice).toFixed(2);
+                btcPriceInput.disabled = true;
+            }
+        } else {
+            btcPriceEl.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
+        }
+        
+        if (lastDifficulty) {
+            networkDifficultyEl.textContent = formatNumber(parseFloat(lastDifficulty)) + 'T';
+        } else {
+            networkDifficultyEl.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
+        }
+        
+        if (lastHashrate) {
+            networkHashrateEl.textContent = formatNumber(parseFloat(lastHashrate)) + ' EH/s';
+        } else {
+            networkHashrateEl.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
+        }
+        
+        if (lastBlockReward) {
+            blockRewardEl.textContent = formatNumber(parseFloat(lastBlockReward), 3) + ' BTC';
+        } else {
+            blockRewardEl.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
         }
     }
     
@@ -509,7 +616,40 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Helper function to show error
     function showError(message) {
-        alert(message);
+        // Create or get error message container
+        let errorContainer = document.getElementById('error-container');
+        if (!errorContainer) {
+            errorContainer = document.createElement('div');
+            errorContainer.id = 'error-container';
+            errorContainer.className = 'alert alert-danger alert-dismissible fade show my-3';
+            errorContainer.setAttribute('role', 'alert');
+            
+            // Add dismiss button
+            const dismissButton = document.createElement('button');
+            dismissButton.type = 'button';
+            dismissButton.className = 'btn-close';
+            dismissButton.setAttribute('data-bs-dismiss', 'alert');
+            dismissButton.setAttribute('aria-label', 'Close');
+            
+            errorContainer.appendChild(dismissButton);
+            
+            // Insert at top of form
+            calculatorForm.insertBefore(errorContainer, calculatorForm.firstChild);
+        }
+        
+        // Set error message
+        errorContainer.innerHTML = `<strong>Error:</strong> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+        
+        // Scroll to error
+        errorContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Auto-hide after 10 seconds
+        setTimeout(() => {
+            if (errorContainer && errorContainer.parentNode) {
+                errorContainer.parentNode.removeChild(errorContainer);
+            }
+        }, 10000);
     }
     
     // Helper function to format currency
