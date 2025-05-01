@@ -623,29 +623,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Generate profit heatmap chart
+    // 生成盈利热力图
     async function generateProfitChart(minerModel, minerCount, clientElectricityCost = 0) {
         try {
-            // Input validation
+            // 输入验证
             if (!minerModel) {
-                console.error("Missing miner model for chart generation");
-                showError("Please select a miner model before generating the chart.");
+                console.error("缺少矿机型号");
+                showError("请先选择一个矿机型号再生成热力图。(Please select a miner model first.)");
                 return;
             }
             
-            // Show a loading indicator in the chart area
+            // 显示图表区域和加载指示器
             chartCard.style.display = 'block';
             const loadingDiv = document.createElement('div');
             loadingDiv.className = 'text-center p-5';
-            loadingDiv.innerHTML = '<div class="spinner-border text-info" role="status"><span class="visually-hidden">Loading chart data...</span></div><p class="mt-2">Generating profit heatmap...</p>';
+            loadingDiv.innerHTML = '<div class="spinner-border text-info" role="status"><span class="visually-hidden">Loading chart data...</span></div><p class="mt-2">正在生成热力图...<br>Generating profit heatmap...</p>';
             
-            // Clear previous chart
+            // 清除之前的图表
             if (profitHeatmapChart) {
                 profitHeatmapChart.destroy();
                 profitHeatmapChart = null;
             }
             
-            // Add loading indicator
+            // 添加加载指示器
             const chartContainer = document.getElementById('chart-container');
             if (chartContainer) {
                 chartContainer.innerHTML = '';
@@ -655,17 +655,25 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Generating profit chart for " + minerModel + " with " + minerCount + " miners and client electricity cost " + clientElectricityCost);
             
             try {
-                // Create form data with miner model and count
+                // 创建表单数据
                 const formData = new FormData();
                 formData.append('miner_model', minerModel);
                 formData.append('miner_count', minerCount);
                 formData.append('client_electricity_cost', clientElectricityCost);
                 
-                // Set timeout for the request
+                // 设置请求超时
                 const controller = new AbortController();
-                const timeoutId = setTimeout(function() { controller.abort(); }, 30000); // 30 second timeout
+                const timeoutId = setTimeout(() => { 
+                    controller.abort(); 
+                    console.log("Chart data request timed out after 30 seconds");
+                    showError("热力图数据请求超时，请重试。(Chart data request timed out, please try again.)");
+                    
+                    if (chartContainer) {
+                        chartContainer.innerHTML = '<div class="alert alert-warning text-center p-3"><i class="bi bi-exclamation-triangle me-2"></i>请求超时。请重新计算或刷新页面后再试。<br>Request timed out. Please try again.</div>';
+                    }
+                }, 30000); // 30秒超时
                 
-                // Fetch chart data with timeout
+                // 请求热力图数据
                 const response = await fetch('/profit_chart_data', {
                     method: 'POST',
                     body: formData,
@@ -674,7 +682,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 clearTimeout(timeoutId);
                 
-                // Reset chart container to prepare for new chart
+                // 重置图表容器，准备新图表
                 if (chartContainer) {
                     chartContainer.innerHTML = '';
                     const canvas = document.createElement('canvas');
@@ -683,36 +691,56 @@ document.addEventListener('DOMContentLoaded', () => {
                     profitHeatmapCanvas = canvas;
                 }
                 
+                // 检查响应状态
                 if (!response.ok) {
-                    const errorText = "Server returned " + response.status + ": " + response.statusText;
+                    const errorText = "服务器返回错误：" + response.status + ": " + response.statusText;
                     console.error(errorText);
-                    showError("Failed to generate chart: " + errorText);
-                    chartCard.style.display = 'none';
+                    showError("无法生成热力图: " + errorText);
+                    
+                    if (chartContainer) {
+                        chartContainer.innerHTML = '<div class="alert alert-danger text-center p-3"><i class="bi bi-exclamation-triangle me-2"></i>服务器错误。请稍后再试。<br>Server error. Please try again later.</div>';
+                    }
                     return;
                 }
                 
+                // 解析响应数据
                 const chartData = await response.json();
                 
+                // 检查API返回的成功状态
                 if (!chartData.success) {
-                    const errorMsg = chartData.error || "Unknown error generating chart data";
+                    const errorMsg = chartData.error || "生成图表数据时出现未知错误";
                     console.error("Chart data API returned error:", errorMsg);
-                    showError("Failed to generate chart: " + errorMsg);
-                    chartCard.style.display = 'none';
+                    showError("无法生成热力图: " + errorMsg);
+                    
+                    if (chartContainer) {
+                        chartContainer.innerHTML = '<div class="alert alert-warning text-center p-3"><i class="bi bi-exclamation-triangle me-2"></i>服务器无法生成热力图数据。请重试。<br>Server could not generate chart data. Please try again.</div>';
+                    }
                     return;
                 }
                 
-                // Show chart card
+                // 显示图表卡片
                 chartCard.style.display = 'block';
                 
-                // Process data for heatmap
+                // 处理热力图数据
                 const profitData = chartData.profit_data;
                 
+                // 验证数据有效性
                 if (!profitData || !Array.isArray(profitData) || profitData.length === 0) {
-                    console.error("Invalid profit data returned from server");
+                    console.error("服务器返回的利润数据无效");
+                    
+                    if (chartContainer) {
+                        chartContainer.innerHTML = '<div class="alert alert-warning text-center p-3"><i class="bi bi-exclamation-triangle me-2"></i>返回的数据格式无效。请重试。<br>Invalid data format returned. Please try again.</div>';
+                    }
                     return;
                 }
                 
-                // Create simple scatter data for a heatmap-like visualization
+                // 检查数据中是否有不同的利润值
+                const uniqueProfits = new Set(profitData.map(item => item.monthly_profit));
+                if (uniqueProfits.size <= 1) {
+                    console.warn("热力图中所有利润值都相同，这可能是个问题:", profitData[0].monthly_profit);
+                }
+                
+                // 创建散点图数据（用于热力图式可视化）
                 const scatterData = [];
                 for (let i = 0; i < profitData.length; i++) {
                     scatterData.push({
@@ -738,9 +766,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             pointBackgroundColor: function(context) {
                                 if (!context.raw) return 'rgba(128, 128, 128, 0.7)';
                                 const profit = context.raw.profit || 0;
-                                if (profit < 0) return 'rgba(220, 53, 69, 0.7)'; // Negative: red
-                                const intensity = Math.min(0.9, Math.max(0.2, profit / 20000)); // Normalize
-                                return "rgba(25, 135, 84, " + intensity + ")";  // Positive: green with intensity
+                                
+                                // 根据利润值确定颜色显示
+                                if (profit < 0) {
+                                    // 负利润 - 红色，亏损程度越大颜色越深
+                                    const intensity = Math.min(0.9, Math.max(0.3, Math.abs(profit) / 10000));
+                                    return `rgba(220, 53, 69, ${intensity})`;
+                                } else {
+                                    // 正利润 - 绿色，利润越高颜色越深
+                                    // 根据整个数据集调整比例尺，让颜色变化更明显
+                                    const intensity = Math.min(0.9, Math.max(0.3, profit / 50000));
+                                    return `rgba(25, 135, 84, ${intensity})`;
+                                }
                             },
                             pointRadius: 15,
                             pointHoverRadius: 18,

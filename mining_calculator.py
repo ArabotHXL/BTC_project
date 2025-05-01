@@ -377,11 +377,10 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
                     miner_count=miner_count
                 )
                 
-                # Use client profit if available, otherwise use regular profit
-                if client_electricity_cost and result.get('client_profit'):
-                    monthly_profit = result['client_profit']['monthly']
-                else:
-                    monthly_profit = result['profit']['monthly']
+                # 热力图需要展示不同电价下的利润变化
+                # 对于热力图数据，我们始终使用当前循环中的电费成本(cost)计算的利润
+                # 这样才能正确显示不同电费成本对盈利能力的影响
+                monthly_profit = result['profit']['monthly']
                 
                 profit_data.append({
                     'btc_price': price,
