@@ -229,7 +229,15 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
                 'daily': daily_btc,
                 'monthly': monthly_btc,
                 'yearly': monthly_btc * 12,
-                'per_th_daily': btc_per_th
+                'per_th_daily': btc_per_th,
+                'method1': {
+                    'daily': site_daily_btc_output,
+                    'monthly': site_monthly_btc_output
+                },
+                'method2': {
+                    'daily': site_daily_btc_output_difficulty,
+                    'monthly': site_monthly_btc_output_difficulty
+                }
             },
             'revenue': {
                 'daily': daily_revenue,
