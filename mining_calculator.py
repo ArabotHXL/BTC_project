@@ -300,13 +300,44 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
     - Dictionary with data for the chart
     """
     try:
-        if miner_model not in MINER_DATA:
-            return {'error': 'Invalid miner model'}
+        logging.info(f"Starting profit chart generation for model: {miner_model}, count: {miner_count}")
         
-        # Get real-time network data once to reuse in all calculations
-        current_btc_price = get_real_time_btc_price()
-        current_difficulty = get_real_time_difficulty()
-        current_block_reward = get_real_time_block_reward()
+        # Input validation
+        if not miner_model:
+            logging.error("No miner model provided for chart generation")
+            return {'success': False, 'error': 'No miner model provided'}
+            
+        if miner_model not in MINER_DATA:
+            logging.error(f"Invalid miner model: {miner_model}, available models: {list(MINER_DATA.keys())}")
+            return {'success': False, 'error': f"Miner model '{miner_model}' not found in available models"}
+        
+        if not isinstance(electricity_costs, list) or len(electricity_costs) == 0:
+            logging.warning(f"Invalid electricity costs: {electricity_costs}, using defaults")
+            electricity_costs = [0.02, 0.04, 0.06, 0.08, 0.10]
+            
+        if not isinstance(btc_prices, list) or len(btc_prices) == 0:
+            logging.warning(f"Invalid BTC prices: {btc_prices}, using defaults")
+            btc_prices = [30000, 45000, 60000, 75000, 90000]
+        
+        # Validate miner count
+        if not isinstance(miner_count, int) or miner_count <= 0:
+            logging.warning(f"Invalid miner count: {miner_count}, using default of 1")
+            miner_count = 1
+            
+        # Get real-time network data with exception handling
+        try:
+            logging.info("Fetching real-time network data for chart generation")
+            current_btc_price = get_real_time_btc_price()
+            current_difficulty = get_real_time_difficulty()
+            current_block_reward = get_real_time_block_reward()
+            
+            logging.info(f"Network data: BTC price=${current_btc_price}, difficulty={current_difficulty/10**12}T, reward={current_block_reward}BTC")
+        except Exception as e:
+            logging.error(f"Error fetching real-time data for chart: {str(e)}")
+            current_btc_price = DEFAULT_BTC_PRICE
+            current_difficulty = DEFAULT_NETWORK_DIFFICULTY
+            current_block_reward = BLOCK_REWARD
+            logging.info(f"Using default values: BTC price=${current_btc_price}, difficulty={current_difficulty/10**12}T, reward={current_block_reward}BTC")
         
         # Get miner specs
         single_hashrate = MINER_DATA[miner_model]["hashrate"]
@@ -315,6 +346,8 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
         # Apply miner count
         hashrate = single_hashrate * miner_count
         power_consumption = single_power_watt * miner_count
+        
+        logging.info(f"Total hashrate: {hashrate} TH/s, power: {power_consumption} watts for {miner_count} miners")
         
         # 设置固定的网络状态，避免重复计算导致无限循环
         fixed_network_stats = {

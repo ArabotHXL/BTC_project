@@ -513,6 +513,37 @@ document.addEventListener('DOMContentLoaded', () => {
     // Generate profit heatmap chart
     async function generateProfitChart(minerModel, minerCount, clientElectricityCost = 0) {
         try {
+            // Input validation
+            if (!minerModel) {
+                console.error("Missing miner model for chart generation");
+                showError("Please select a miner model before generating the chart.");
+                return;
+            }
+            
+            // Show a loading indicator in the chart area
+            chartCard.style.display = 'block';
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'text-center p-5';
+            loadingDiv.innerHTML = `
+                <div class="spinner-border text-info" role="status">
+                    <span class="visually-hidden">Loading chart data...</span>
+                </div>
+                <p class="mt-2">Generating profit heatmap...</p>
+            `;
+            
+            // Clear previous chart
+            if (profitHeatmapChart) {
+                profitHeatmapChart.destroy();
+                profitHeatmapChart = null;
+            }
+            
+            // Add loading indicator
+            const chartContainer = document.getElementById('chart-container');
+            if (chartContainer) {
+                chartContainer.innerHTML = '';
+                chartContainer.appendChild(loadingDiv);
+            }
+            
             console.log(`Generating profit chart for ${minerModel} with ${minerCount} miners and client electricity cost ${clientElectricityCost}`);
             
             // Create form data with miner model and count
@@ -521,20 +552,43 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('miner_count', minerCount);
             formData.append('client_electricity_cost', clientElectricityCost);
             
-            // Fetch chart data
+            // Set timeout for the request
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+            
+            // Fetch chart data with timeout
             const response = await fetch('/profit_chart_data', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                signal: controller.signal
             });
             
+            clearTimeout(timeoutId);
+            
+            // Reset chart container to prepare for new chart
+            if (chartContainer) {
+                chartContainer.innerHTML = '';
+                const canvas = document.createElement('canvas');
+                canvas.id = 'profit-heatmap';
+                chartContainer.appendChild(canvas);
+                profitHeatmapCanvas = canvas;
+            }
+            
             if (!response.ok) {
-                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                const errorText = `Server returned ${response.status}: ${response.statusText}`;
+                console.error(errorText);
+                showError(`Failed to generate chart: ${errorText}`);
+                chartCard.style.display = 'none';
+                return;
             }
             
             const chartData = await response.json();
             
             if (!chartData.success) {
-                console.error("Chart data API returned error:", chartData.error || "Unknown error");
+                const errorMsg = chartData.error || "Unknown error generating chart data";
+                console.error("Chart data API returned error:", errorMsg);
+                showError(`Failed to generate chart: ${errorMsg}`);
+                chartCard.style.display = 'none';
                 return;
             }
             

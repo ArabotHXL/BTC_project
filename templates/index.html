@@ -329,7 +329,9 @@
                             <h5 class="mb-0">Profitability Heatmap</h5>
                         </div>
                         <div class="card-body">
-                            <canvas id="profit-heatmap"></canvas>
+                            <div id="chart-container" style="height: 400px; position: relative;">
+                                <canvas id="profit-heatmap"></canvas>
+                            </div>
                             <div class="mt-3 small text-muted">
                                 This chart shows how monthly profits change with different BTC prices and electricity costs.
                                 The optimal electricity rate at current BTC price is marked on the chart.
