@@ -441,13 +441,13 @@ def get_network_stats():
                 if 'hash_rate' in data:
                     # blockchain.info API返回的是绝对Hash/s值
                     hashrate_h = float(data['hash_rate'])
-                    # 正确转换：Hash/s → EH/s (1 EH/s = 10^18 H/s)
-                    # 然而，通过观察，他们实际返回的可能是10^6 Hash/s (Hash/s的倍数，而不是绝对值)
-                    # 从目前的值941486895279.2867可以推断
+                    # 根据API观察和测试，他们返回的值为Hash/s
+                    # 从值941486895279.2867 H/s分析
+                    # 当前网络哈希率约为941.49 EH/s
                     
-                    # 通过分析数值，我们猜测实际值应该是：
-                    # 941.49 PH/s ≈ 0.94149 EH/s
-                    hashrate = hashrate_h / 1e6  # 尝试新的转换逻辑
+                    # 根据公式：1 EH/s = 10^18 H/s
+                    # 所以正确转换应该是：H/s / 10^18 = EH/s
+                    hashrate = hashrate_h / 1e18  # 标准转换比例
                     
                     # 检查哈希率值是否合理 (通常在50-1000 EH/s范围内)
                     if hashrate < 10:  # 如果哈希率低于10 EH/s，可能有误

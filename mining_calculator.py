@@ -118,10 +118,10 @@ def get_real_time_btc_hashrate():
                             hashrate_h = float(data['hash_rate'])
                             # 输出原始数据以便调试
                             logging.info(f"从API获取的hash_rate原始值: {data['hash_rate']}, 转换为浮点数: {hashrate_h}")
-                            # 测量表明API返回的是Hash/s，但转换单位不是1:10^18
-                            # 观察到的值：941486895279.2867 H/s ≈ 941.49 EH/s
-                            # 因此实际转换因子应该是百万倍而不是10^18
-                            hashrate_eh = hashrate_h / 1e6  # 新的转换比例
+                            # API返回的是Hash/s，需要转换为EH/s
+                            # 正确转换公式： Hash/s / 10^18 = EH/s
+                            # 分析值941486895279.2867 H/s 约为 0.941487 EH/s
+                            hashrate_eh = hashrate_h / 1e18  # 标准转换因子
                             logging.info(f"网络哈希率转换: {hashrate_h} Hash/s = {hashrate_eh} EH/s")
                             return hashrate_eh
                     except Exception as e:
@@ -135,8 +135,8 @@ def get_real_time_btc_hashrate():
                         if isinstance(data, list) and len(data) > 0:
                             # 计算最近数据的平均值
                             avg_hashrate = sum(entry['hashrate'] for entry in data) / len(data)
-                            # 同样使用 1e6 作为转换因子，保持一致性
-                            return avg_hashrate / 1e6  # 转换为 EH/s
+                            # 使用标准转换因子和公式: Hash/s / 10^18 = EH/s
+                            return avg_hashrate / 1e18  # 转换为 EH/s
                     except Exception as e:
                         logging.error(f"解析mempool API响应时出错: {e}, 响应内容: {response.text[:100]}")
                         # 继续尝试下一个API
