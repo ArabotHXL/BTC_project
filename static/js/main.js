@@ -159,17 +159,25 @@ document.addEventListener('DOMContentLoaded', function() {
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '/calculate', true);
         
+        // 设置30秒超时
+        xhr.timeout = 30000;
+        
         xhr.onload = function() {
             try {
                 if (xhr.status === 200) {
+                    // 确保响应不为空
+                    if (!xhr.responseText || xhr.responseText.trim() === '') {
+                        throw new Error('服务器返回空响应');
+                    }
+                    
                     var data = JSON.parse(xhr.responseText);
                     
-                    if (data.success) {
+                    if (data && data.success) {
                         // 显示结果 (Display results)
                         displayResults(data);
                     } else {
-                        showError(data.error || '计算过程中发生错误。(An error occurred during calculation.)');
-                        console.error('服务器返回错误:', data.error);
+                        showError(data && data.error ? data.error : '计算过程中发生错误。(An error occurred during calculation.)');
+                        console.error('服务器返回错误:', data && data.error ? data.error : null);
                     }
                 } else {
                     throw new Error('服务器返回状态码: ' + xhr.status);
@@ -189,6 +197,12 @@ document.addEventListener('DOMContentLoaded', function() {
             setLoadingState(false);
         };
         
+        xhr.ontimeout = function() {
+            console.error('请求超时');
+            showError('请求超时，这可能是由于服务器繁忙。请稍后再试。(Request timed out. The server might be busy. Please try again later.)');
+            setLoadingState(false);
+        };
+        
         xhr.send(formData);
     }
     
@@ -203,12 +217,20 @@ document.addEventListener('DOMContentLoaded', function() {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', '/network_stats', true);
         
+        // 设置15秒超时
+        xhr.timeout = 15000;
+        
         xhr.onload = function() {
             try {
                 if (xhr.status === 200) {
+                    // 确保响应不为空
+                    if (!xhr.responseText || xhr.responseText.trim() === '') {
+                        throw new Error('服务器返回空响应');
+                    }
+                    
                     var data = JSON.parse(xhr.responseText);
                     
-                    if (data.success) {
+                    if (data && data.success) {
                         // 更新UI (Update UI)
                         if (btcPriceEl) btcPriceEl.textContent = formatCurrency(data.price);
                         if (networkDifficultyEl) networkDifficultyEl.textContent = formatNumber(data.difficulty) + 'T';
@@ -216,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (blockRewardEl) blockRewardEl.textContent = formatNumber(data.block_reward) + ' BTC';
                         
                         // 更新BTC价格输入框 (Update BTC price input)
-                        if (useRealTimeCheckbox && useRealTimeCheckbox.checked) {
+                        if (useRealTimeCheckbox && useRealTimeCheckbox.checked && btcPriceInput) {
                             btcPriceInput.value = data.price.toFixed(2);
                             btcPriceInput.disabled = true;
                         }
@@ -228,7 +250,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         localStorage.setItem('last_block_reward', data.block_reward);
                     } else {
                         useFallbackNetworkStats();
-                        console.error('获取网络状态时服务器返回错误:', data.error);
+                        console.error('获取网络状态时服务器返回错误:', data && data.error ? data.error : null);
                     }
                 } else {
                     throw new Error('服务器返回状态码: ' + xhr.status);
@@ -241,6 +263,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         xhr.onerror = function() {
             console.error('网络状态请求失败');
+            useFallbackNetworkStats();
+        };
+        
+        xhr.ontimeout = function() {
+            console.error('网络状态请求超时');
             useFallbackNetworkStats();
         };
         
@@ -288,12 +315,20 @@ document.addEventListener('DOMContentLoaded', function() {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', '/miners', true);
         
+        // 设置10秒超时
+        xhr.timeout = 10000;
+        
         xhr.onload = function() {
             try {
                 if (xhr.status === 200) {
+                    // 确保响应不为空
+                    if (!xhr.responseText || xhr.responseText.trim() === '') {
+                        throw new Error('服务器返回空响应');
+                    }
+                    
                     var data = JSON.parse(xhr.responseText);
                     
-                    if (data.success && data.miners) {
+                    if (data && data.success && data.miners) {
                         // 保存到localStorage (Save to localStorage)
                         localStorage.setItem('miners', JSON.stringify(data.miners));
                         
@@ -311,20 +346,57 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.log('矿机列表加载成功:', data.miners.length);
                     } else {
                         console.error('获取矿机数据失败:', data);
+                        useCachedMiners();
                     }
                 } else {
                     throw new Error('服务器返回状态码: ' + xhr.status);
                 }
             } catch (error) {
                 console.error('获取矿机列表失败:', error);
+                useCachedMiners();
             }
         };
         
         xhr.onerror = function() {
             console.error('矿机列表请求失败');
+            useCachedMiners();
+        };
+        
+        xhr.ontimeout = function() {
+            console.error('矿机列表请求超时');
+            useCachedMiners();
         };
         
         xhr.send();
+    }
+    
+    // 使用本地缓存的矿机列表
+    function useCachedMiners() {
+        var cachedMiners = localStorage.getItem('miners');
+        
+        if (cachedMiners) {
+            try {
+                var miners = JSON.parse(cachedMiners);
+                
+                // 清空选项
+                minerModelSelect.innerHTML = '<option value="">选择矿机型号 (Select a miner model)</option>';
+                
+                // 添加矿机选项
+                miners.forEach(function(miner) {
+                    var option = document.createElement('option');
+                    option.value = miner.name;
+                    option.textContent = miner.name + ' (' + miner.hashrate + ' TH/s, ' + miner.power_watt + 'W)';
+                    minerModelSelect.appendChild(option);
+                });
+                
+                console.log('使用缓存的矿机列表:', miners.length);
+            } catch (error) {
+                console.error('解析缓存的矿机列表失败:', error);
+                showError('加载矿机列表失败。(Failed to load miner list.)');
+            }
+        } else {
+            showError('无法加载矿机列表。(Unable to load miner list.)');
+        }
     }
     
     // 显示计算结果 (Display calculation results)

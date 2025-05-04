@@ -201,11 +201,16 @@ def calculate():
         # Log full form data for debugging
         logging.info(f"Received calculate request form data: {request.form}")
         
+        # 初始化错误收集列表
+        input_errors = []
+        
         # Get values from the form submission with detailed error handling
         try:
             hashrate = float(request.form.get('hashrate', 0))
         except ValueError as e:
-            logging.error(f"Invalid hashrate value: {request.form.get('hashrate')} - {str(e)}")
+            error_msg = f"无效的算力值: {request.form.get('hashrate')}"
+            logging.error(f"{error_msg} - {str(e)}")
+            input_errors.append(error_msg)
             hashrate = 0
             
         hashrate_unit = request.form.get('hashrate_unit', 'TH/s')
@@ -213,25 +218,33 @@ def calculate():
         try:
             power_consumption = float(request.form.get('power_consumption', 0))
         except ValueError as e:
-            logging.error(f"Invalid power consumption value: {request.form.get('power_consumption')} - {str(e)}")
+            error_msg = f"无效的功耗值: {request.form.get('power_consumption')}"
+            logging.error(f"{error_msg} - {str(e)}")
+            input_errors.append(error_msg)
             power_consumption = 0
             
         try:
             electricity_cost = float(request.form.get('electricity_cost', 0))
         except ValueError as e:
-            logging.error(f"Invalid electricity cost value: {request.form.get('electricity_cost')} - {str(e)}")
+            error_msg = f"无效的电费值: {request.form.get('electricity_cost')}"
+            logging.error(f"{error_msg} - {str(e)}")
+            input_errors.append(error_msg)
             electricity_cost = 0.05  # Default value
             
         try:
             client_electricity_cost = float(request.form.get('client_electricity_cost', 0))
         except ValueError as e:
-            logging.error(f"Invalid client electricity cost value: {request.form.get('client_electricity_cost')} - {str(e)}")
+            error_msg = f"无效的客户电费值: {request.form.get('client_electricity_cost')}"
+            logging.error(f"{error_msg} - {str(e)}")
+            input_errors.append(error_msg)
             client_electricity_cost = 0
             
         try:
             btc_price = float(request.form.get('btc_price', 0))
         except ValueError as e:
-            logging.error(f"Invalid BTC price value: {request.form.get('btc_price')} - {str(e)}")
+            error_msg = f"无效的BTC价格值: {request.form.get('btc_price')}"
+            logging.error(f"{error_msg} - {str(e)}")
+            input_errors.append(error_msg)
             btc_price = 0
             
         use_real_time = request.form.get('use_real_time') == 'on'
@@ -240,14 +253,27 @@ def calculate():
         try:
             miner_count = int(request.form.get('miner_count', 1))
         except ValueError as e:
-            logging.error(f"Invalid miner count value: {request.form.get('miner_count')} - {str(e)}")
+            error_msg = f"无效的矿机数量: {request.form.get('miner_count')}"
+            logging.error(f"{error_msg} - {str(e)}")
+            input_errors.append(error_msg)
             miner_count = 1
             
         try:
             site_power_mw = float(request.form.get('site_power_mw', 1.0))
         except ValueError as e:
-            logging.error(f"Invalid site power value: {request.form.get('site_power_mw')} - {str(e)}")
+            error_msg = f"无效的站点功率值: {request.form.get('site_power_mw')}"
+            logging.error(f"{error_msg} - {str(e)}")
+            input_errors.append(error_msg)
             site_power_mw = 1.0
+            
+        # 如果有输入错误，返回具体的错误信息
+        if input_errors:
+            error_message = "输入参数无效: " + ", ".join(input_errors)
+            logging.error(error_message)
+            return jsonify({
+                'success': False,
+                'error': error_message
+            }), 400
             
         try:
             curtailment = float(request.form.get('curtailment', 0))
