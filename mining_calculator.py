@@ -193,26 +193,32 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         # === PERFORM EXACT CALCULATION FROM ORIGINAL CODE ===
         
         # === 矿机数量 & 总算力计算 (Miner Count & Total Hashrate Calculation) ===
-        # Ensure we always have a valid network hashrate (never zero)
-        network_TH = max(1e6, real_time_btc_hashrate * 1e6)  # Convert from EH/s to TH/s and ensure minimum value
+        # 确保我们有有效的网络哈希率（确保从未为零）
         curtailment_factor = max(0, min(1, (100 - curtailment) / 100))
         site_total_hashrate = hashrate * curtailment_factor if hashrate is not None else 0
         
         # === BTC 产出计算 (BTC Output Calculation) ===
-        # Method 1: Network Hashrate Based
-        btc_per_th = (block_reward_to_use * BLOCKS_PER_DAY) / network_TH
+        # Method 1: Network Hashrate Based (算法1：基于网络算力)
+        # 确保网络哈希率值合理 (EH/s -> TH/s)
+        network_TH = max(1000, real_time_btc_hashrate * 1000)  # 从EH/s转换为TH/s，确保最小值为1000 TH/s
+        # 全网日产出 = 区块奖励 * 每日区块数
+        network_daily_btc = block_reward_to_use * BLOCKS_PER_DAY
+        # 每TH每日产出 = 全网日产出 / 全网TH
+        btc_per_th = network_daily_btc / network_TH
+        # 矿场每日产出 = 矿场TH * 每TH产出
         site_daily_btc_output = site_total_hashrate * btc_per_th
         site_monthly_btc_output = site_daily_btc_output * 30.5
-        # Calculate daily BTC per miner - handle both miner model and manual entry cases safely
+        
+        # 计算单个矿机每日BTC产出
         single_miner_hashrate = None
         if miner_model and miner_model in MINER_DATA:
             single_miner_hashrate = MINER_DATA[miner_model]["hashrate"]
         daily_btc_per_miner = btc_per_th * (single_miner_hashrate if single_miner_hashrate else (hashrate / max(1, miner_count)))
         
-        # Method 2: Difficulty Based (从原始代码中完全复制的算法)
+        # Method 2: Difficulty Based (算法2：基于难度)
+        # 矿场H/s = 矿场TH/s * 1万亿
         site_total_hashrate_Hs = site_total_hashrate * 1e12  # TH/s → H/s
         difficulty_factor = 2 ** 32
-        # 确保使用正确的时间计算（86400秒/天）
         site_daily_btc_output_difficulty = (site_total_hashrate_Hs * block_reward_to_use * 86400) / (difficulty_raw * difficulty_factor)
         site_monthly_btc_output_difficulty = site_daily_btc_output_difficulty * 30.5
         
@@ -220,9 +226,18 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         print(f"Algorithm 1 (Network Based) - Daily BTC: {site_daily_btc_output:.8f}")
         print(f"Algorithm 2 (Difficulty Based) - Daily BTC: {site_daily_btc_output_difficulty:.8f}")
         
-        # Take the average of both methods or use the difficulty method if network hashrate is missing
-        daily_btc = site_daily_btc_output if real_time_btc_hashrate else site_daily_btc_output_difficulty
-        monthly_btc = site_monthly_btc_output if real_time_btc_hashrate else site_monthly_btc_output_difficulty
+        # 使用难度方法的结果作为最终结果（更准确）
+        # 如果两种方法差异过大(>100%)，使用算法2
+        algo1_algo2_ratio = site_daily_btc_output / site_daily_btc_output_difficulty if site_daily_btc_output_difficulty > 0 else float('inf')
+        
+        if algo1_algo2_ratio > 2 or algo1_algo2_ratio < 0.5:
+            print(f"警告: 算法1和算法2结果相差过大 (比率: {algo1_algo2_ratio:.2f})，使用算法2(基于难度)的结果")
+            daily_btc = site_daily_btc_output_difficulty
+            monthly_btc = site_monthly_btc_output_difficulty
+        else:
+            # 差异在允许范围内，两种方法平均值
+            daily_btc = (site_daily_btc_output + site_daily_btc_output_difficulty) / 2
+            monthly_btc = (site_monthly_btc_output + site_monthly_btc_output_difficulty) / 2
         
         # === 成本计算 (Cost Calculation) ===
         # Calculate using the operating time after curtailment
