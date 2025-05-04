@@ -286,9 +286,23 @@ def calculate():
         except ValueError as e:
             logging.error(f"Invalid maintenance fee value: {request.form.get('maintenance_fee')} - {str(e)}")
             maintenance_fee = 0
+            
+        # 获取投资金额参数
+        try:
+            host_investment = float(request.form.get('host_investment', 0))
+        except ValueError as e:
+            logging.error(f"Invalid host investment value: {request.form.get('host_investment')} - {str(e)}")
+            host_investment = 0
+            
+        try:
+            client_investment = float(request.form.get('client_investment', 0))
+        except ValueError as e:
+            logging.error(f"Invalid client investment value: {request.form.get('client_investment')} - {str(e)}")
+            client_investment = 0
         
         logging.info(f"Calculate request: model={miner_model}, count={miner_count}, real_time={use_real_time}, "
-                     f"site_power={site_power_mw}MW, curtailment={curtailment}%")
+                     f"site_power={site_power_mw}MW, curtailment={curtailment}%, "
+                     f"host_investment=${host_investment}, client_investment=${client_investment}")
         
         # Convert hashrate to TH/s for calculation
         if hashrate_unit == 'PH/s':
@@ -309,7 +323,9 @@ def calculate():
                 miner_model=miner_model,
                 miner_count=miner_count,
                 site_power_mw=site_power_mw,
-                curtailment=curtailment
+                curtailment=curtailment,
+                host_investment=host_investment,
+                client_investment=client_investment
             )
         except Exception as calc_error:
             # 如果计算过程中出错，使用基本估算

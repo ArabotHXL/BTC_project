@@ -29,6 +29,70 @@ MINER_DATA = {
     "Antminer S19 Pro+ Hyd": {"hashrate": 198, "power_watt": 5445}
 }
 
+def calculate_roi(investment, yearly_profit, monthly_profit, btc_price, forecast_months=36):
+    """
+    Calculate ROI metrics and forecast data for investment analysis
+    
+    Parameters:
+    - investment: Initial investment amount in USD
+    - yearly_profit: Annual profit in USD
+    - monthly_profit: Monthly profit in USD
+    - btc_price: Current BTC price in USD
+    - forecast_months: Number of months to include in the forecast (default: 36 months/3 years)
+    
+    Returns:
+    - Dictionary containing ROI metrics and forecast data
+    """
+    # Calculate basic ROI metrics
+    if investment <= 0 or yearly_profit <= 0:
+        return {
+            "roi_percent_annual": 0,
+            "payback_period_months": float('inf'),
+            "payback_period_years": float('inf'),
+            "forecast": []
+        }
+    
+    # Annual ROI percentage
+    roi_percent_annual = (yearly_profit / investment) * 100
+    
+    # Payback period (in months and years)
+    payback_period_months = investment / monthly_profit if monthly_profit > 0 else float('inf')
+    payback_period_years = payback_period_months / 12 if monthly_profit > 0 else float('inf')
+    
+    # Generate forecast data for ROI chart
+    forecast = []
+    cumulative_profit = 0
+    roi_reached = False
+    
+    for month in range(1, forecast_months + 1):
+        cumulative_profit += monthly_profit
+        investment_balance = max(0, investment - cumulative_profit)
+        
+        # ROI percentage at this point
+        roi_percent = (cumulative_profit / investment) * 100
+        
+        # Flag if this is the month when investment is recovered
+        if not roi_reached and cumulative_profit >= investment:
+            roi_reached = True
+            break_even = True
+        else:
+            break_even = False
+        
+        forecast.append({
+            "month": month,
+            "cumulative_profit": cumulative_profit,
+            "investment_balance": investment_balance,
+            "roi_percent": roi_percent,
+            "break_even": break_even
+        })
+    
+    return {
+        "roi_percent_annual": roi_percent_annual,
+        "payback_period_months": payback_period_months,
+        "payback_period_years": payback_period_years,
+        "forecast": forecast
+    }
+
 def get_real_time_btc_price():
     """Get the current Bitcoin price from CoinGecko API"""
     try:
@@ -111,7 +175,8 @@ def get_real_time_btc_hashrate():
         return DEFAULT_NETWORK_HASHRATE
 
 def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electricity_cost=0.05, client_electricity_cost=None, 
-                             btc_price=None, difficulty=None, block_reward=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0.0):
+                             btc_price=None, difficulty=None, block_reward=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0.0, 
+                             host_investment=0.0, client_investment=0.0):
     """
     Calculate Bitcoin mining profitability using the exact calculation method from the original code
     
@@ -127,9 +192,11 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
     - miner_count: Number of miners (default is 1)
     - site_power_mw: Site power in megawatts - will override miner count if provided with miner_model
     - curtailment: Power curtailment percentage (0-100)
+    - host_investment: Total investment made by mining site owner (USD)
+    - client_investment: Total investment made by client (USD)
     
     Returns:
-    - Dictionary containing profitability metrics
+    - Dictionary containing profitability metrics including ROI calculations
     """
     try:
         # Get values from miner model if provided
@@ -272,6 +339,16 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         yearly_electricity_expense = electricity_expense * 12
         client_yearly_profit = client_monthly_profit * 12
         client_yearly_electricity_expense = client_electricity_expense * 12
+        
+        # Calculate ROI if investment values are provided
+        host_roi_data = None
+        client_roi_data = None
+        
+        if host_investment > 0:
+            host_roi_data = calculate_roi(host_investment, yearly_profit, monthly_profit, btc_price)
+            
+        if client_investment > 0:
+            client_roi_data = calculate_roi(client_investment, client_yearly_profit, client_monthly_profit, btc_price)
             
         # Return results in a consistent format with our previous implementation
         return {
@@ -290,7 +367,9 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
                 'client_electricity_cost': client_electricity_cost or electricity_cost,
                 'miner_count': miner_count,
                 'site_power_mw': site_power_mw,
-                'curtailment': curtailment
+                'curtailment': curtailment,
+                'host_investment': host_investment,
+                'client_investment': client_investment
             },
             'btc_mined': {
                 'daily': daily_btc,
@@ -338,6 +417,10 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             'optimization': {
                 'optimal_curtailment': optimal_curtailment,
                 'shutdown_miner_count': int(miner_count * (curtailment / 100))
+            },
+            'roi': {
+                'host': host_roi_data,
+                'client': client_roi_data
             }
         }
         
