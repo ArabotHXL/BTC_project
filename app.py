@@ -21,7 +21,7 @@ from mining_calculator import (
 logging.basicConfig(level=logging.DEBUG)
 
 # 默认网络参数
-DEFAULT_HASHRATE_EH = 700  # 默认哈希率，单位: EH/s
+DEFAULT_HASHRATE_EH = 900  # 默认哈希率，单位: EH/s
 DEFAULT_BTC_PRICE = 80000  # 默认比特币价格，单位: USD
 DEFAULT_DIFFICULTY = 119.12  # 默认难度，单位: T
 DEFAULT_BLOCK_REWARD = 3.125  # 默认区块奖励，单位: BTC
