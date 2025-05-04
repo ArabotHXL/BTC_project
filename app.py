@@ -44,14 +44,20 @@ def login():
         login_successful = verify_email(email)
         
         # 记录登录尝试
-        login_record = LoginRecord(
-            email=email,
-            successful=login_successful,
-            ip_address=request.remote_addr,
-            user_agent=request.user_agent.string if request.user_agent else None
-        )
-        db.session.add(login_record)
-        db.session.commit()
+        try:
+            login_record = LoginRecord(
+                email=email,
+                successful=login_successful,
+                ip_address=request.remote_addr,
+                user_agent=request.user_agent.string if request.user_agent else None
+            )
+            logging.info(f"创建登录记录: {email}, 状态: {'成功' if login_successful else '失败'}")
+            db.session.add(login_record)
+            db.session.commit()
+            logging.info("登录记录已保存到数据库")
+        except Exception as e:
+            logging.error(f"保存登录记录时发生错误: {str(e)}")
+            db.session.rollback()
         
         if login_successful:
             # 登录成功，设置会话
