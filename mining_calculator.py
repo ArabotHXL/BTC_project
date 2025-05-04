@@ -319,8 +319,8 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         # 矿场主收益需要减去电费和维护费
         monthly_profit = monthly_revenue - electricity_expense - maintenance_fee
         
-        # 客户收益仅减去电费
-        client_monthly_profit = monthly_revenue - client_electricity_expense
+        # 客户收益需要减去电费和维护费（与矿场主一样）
+        client_monthly_profit = monthly_revenue - client_electricity_expense - maintenance_fee
         
         # === 最优电价 (Optimal Electricity Rate) 计算 ===
         optimal_electricity_rate = (monthly_btc * btc_price) / monthly_power_consumption if monthly_power_consumption > 0 else 0
