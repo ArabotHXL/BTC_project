@@ -1,7 +1,10 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
 import logging
 import json
 import numpy as np
+import os
+import secrets
+from auth import verify_email, login_required
 from mining_calculator import (
     MINER_DATA,
     get_real_time_btc_price,
@@ -17,6 +20,9 @@ logging.basicConfig(level=logging.DEBUG)
 
 # Initialize Flask app
 app = Flask(__name__)
+
+# 设置安全的会话密钥
+app.secret_key = os.environ.get("SESSION_SECRET", secrets.token_hex(32))
 
 @app.route('/')
 def index():
