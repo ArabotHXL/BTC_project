@@ -439,6 +439,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 更新矿场主数据
     function updateHostData(data) {
+        // 检查用户角色权限 - 从页面元数据中获取
+        var userRole = document.querySelector('meta[name="user-role"]')?.getAttribute('content');
+        var allowedRoles = ['owner', 'admin', 'mining_site'];
+        var hasAccess = allowedRoles.includes(userRole);
+        
+        // 如果用户没有权限，直接返回，不更新矿场主数据
+        if (!hasAccess) {
+            console.log("用户角色没有查看矿场主数据的权限");
+            return;
+        }
+        
         // 主要指标
         var hostProfitCardEl = document.getElementById('host-profit-card');
         
