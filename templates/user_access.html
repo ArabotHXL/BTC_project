@@ -76,8 +76,12 @@
                             <select class="form-select" id="role" name="role" required>
                                 <option value="guest">矿场客人</option>
                                 <option value="mining_site">矿场管理</option>
+                                {% if session.get('role') == 'owner' %}
                                 <option value="admin">管理员</option>
                                 <option value="owner">拥有者</option>
+                                {% elif session.get('role') == 'admin' %}
+                                <option value="admin">管理员</option>
+                                {% endif %}
                             </select>
                         </div>
                         <div class="col-md-6">

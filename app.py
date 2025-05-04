@@ -128,6 +128,10 @@ def login():
             session['authenticated'] = True
             session['email'] = email
             
+            # 获取并保存用户角色到会话
+            user_role = get_user_role(email)
+            session['role'] = user_role
+            
             # 记录成功登录
             logging.info(f"用户成功登录: {email}")
             
@@ -405,6 +409,13 @@ def add_user_access():
         valid_roles = ['owner', 'admin', 'mining_site', 'guest']
         if role not in valid_roles:
             role = 'guest'  # 如果不是有效角色，默认为矿场客人
+            
+        # 根据当前用户角色限制可以创建的角色
+        current_user_role = get_user_role(session.get('email'))
+        # 如果当前用户是管理员，不能创建owner角色
+        if current_user_role == 'admin' and role == 'owner':
+            flash('管理员不能创建拥有者角色用户', 'warning')
+            role = 'admin'  # 将角色降级为管理员
             
         # 检查邮箱是否已存在
         existing_user = UserAccess.query.filter_by(email=email).first()
