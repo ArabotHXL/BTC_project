@@ -417,19 +417,16 @@ document.addEventListener('DOMContentLoaded', function() {
             // ===== 1. 基本BTC挖矿产出 =====
             updateBtcOutputDisplay(data);
             
-            // ===== 2. 计算和显示ROI相关指标 =====
-            calculateAndDisplayROI(data);
-            
-            // ===== 3. 网络和挖矿信息 =====
+            // ===== 2. 网络和挖矿信息 =====
             updateNetworkAndMiningInfo(data);
             
-            // ===== 4. 矿场主(Host)数据 - 仅当有相关权限和数据时显示 =====
+            // ===== 3. 矿场主(Host)数据 - 仅当有相关权限和数据时显示 =====
             // 如果数据中有profit字段，说明用户有权限查看矿场主数据
             if (data.profit) {
                 updateHostData(data);
             }
             
-            // ===== 5. 客户(Customer)数据 =====
+            // ===== 4. 客户(Customer)数据 =====
             // 对于client_profit进行同样的检查
             if (data.client_profit) {
                 updateCustomerData(data);
@@ -919,96 +916,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         return formatter.format(value);
-    }
-    
-    // 计算和显示ROI相关指标
-    function calculateAndDisplayROI(data) {
-        // 获取ROI相关的DOM元素
-        var annualRoiEl = document.getElementById('annual-roi');
-        var paybackPeriodEl = document.getElementById('payback-period');
-        
-        if (!annualRoiEl || !paybackPeriodEl) {
-            // ROI元素不存在，可能页面结构有变化
-            console.log('ROI元素未找到，跳过ROI计算显示');
-            return;
-        }
-        
-        try {
-            // 估算初始投资资本(CAPEX)
-            // 假设每台矿机成本约8000美元，包含基础设施成本
-            let minerCount = data.inputs.miner_count || 1;
-            let minerModel = data.inputs.miner_model || '';
-            let perMinerCost = 8000; // 美元/台
-            let capex = minerCount * perMinerCost;
-            
-            // 月度收入
-            let monthlyRevenue = 0;
-            if (data.client_profit && data.client_profit.monthly) {
-                // 使用客户月度利润
-                monthlyRevenue = data.client_profit.monthly;
-            } else if (data.profit && data.profit.monthly) {
-                // 使用矿场主月度利润
-                monthlyRevenue = data.profit.monthly;
-            } else if (data.btc_mined && data.network_data) {
-                // 根据BTC产量和价格估算
-                monthlyRevenue = data.btc_mined.monthly * data.network_data.btc_price;
-            }
-            
-            // 月度运营成本(OPEX)
-            let monthlyOpex = 0;
-            if (data.electricity_cost && data.electricity_cost.monthly) {
-                monthlyOpex += data.electricity_cost.monthly;
-            }
-            if (data.maintenance_fee && data.maintenance_fee.monthly) {
-                monthlyOpex += data.maintenance_fee.monthly;
-            }
-            
-            // 月度利润
-            let monthlyProfit = monthlyRevenue - monthlyOpex;
-            
-            // 计算年化ROI
-            let annualProfit = monthlyProfit * 12;
-            let annualRoi = (annualProfit / capex) * 100;
-            
-            // 计算回本周期（月）
-            let paybackPeriodMonths = capex / monthlyProfit;
-            
-            // 显示ROI相关指标
-            if (annualRoiEl) {
-                annualRoiEl.textContent = formatNumber(annualRoi, 2) + '%';
-                // 设置颜色：正值为绿色，负值为红色
-                annualRoiEl.className = annualRoi > 0 ? 'text-success' : 'text-danger';
-            }
-            
-            if (paybackPeriodEl) {
-                if (monthlyProfit <= 0) {
-                    paybackPeriodEl.textContent = '无法回本';
-                    paybackPeriodEl.className = 'text-danger';
-                } else {
-                    let years = Math.floor(paybackPeriodMonths / 12);
-                    let months = Math.round(paybackPeriodMonths % 12);
-                    let displayText = '';
-                    
-                    if (years > 0) {
-                        displayText = years + '年';
-                        if (months > 0) {
-                            displayText += months + '个月';
-                        }
-                    } else {
-                        displayText = months + '个月';
-                    }
-                    
-                    paybackPeriodEl.textContent = displayText;
-                    paybackPeriodEl.className = paybackPeriodMonths < 24 ? 'text-success' : 'text-warning';
-                }
-            }
-            
-            console.log('ROI计算完成 - 年化ROI:', annualRoi, '%, 回本周期:', paybackPeriodMonths, '个月');
-        } catch (error) {
-            console.error('计算ROI时出错:', error);
-            if (annualRoiEl) annualRoiEl.textContent = 'N/A';
-            if (paybackPeriodEl) paybackPeriodEl.textContent = 'N/A';
-        }
     }
     
     // 调用初始化函数 (Call init function)

@@ -77,8 +77,6 @@
                                     </a></li>
                                     {% endif %}
                                     
-                                    <!-- ROI计算器已直接集成到主页面 -->
-                                    
                                     <!-- 显示当前用户角色 -->
                                     <li><span class="dropdown-item-text">
                                         <i class="bi bi-person-badge me-1"></i> 
@@ -244,24 +242,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                
-                                <!-- ROI & Payback Period -->
-                                <div class="col-md-4">
-                                    <div class="p-3 rounded bg-warning bg-opacity-10">
-                                        <h6>ROI Analysis</h6>
-                                        <div class="mt-1 mb-1">
-                                            <div>
-                                                <div class="d-inline-block badge bg-secondary mb-1" style="font-size: 0.7rem;">年化ROI</div>
-                                                <div id="annual-roi" style="font-size: 1.2rem; font-weight: bold; margin-top: 0.1rem;">0%</div>
-                                            </div>
-                                            <div class="mt-1">
-                                                <div class="d-inline-block badge bg-warning mb-1" style="font-size: 0.7rem;">回本周期</div>
-                                                <div id="payback-period" class="text-warning" style="font-size: 1.2rem; font-weight: bold; margin-top: 0.1rem;">0个月</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
                                 <!-- Host profit - 只对特定角色显示 -->
                                 {% if session.role in ['owner', 'admin', 'mining_site'] %}
                                 <div class="col-md-4">
