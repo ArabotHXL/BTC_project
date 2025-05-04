@@ -31,9 +31,9 @@ class UserAccess(db.Model):
     expires_at = db.Column(db.DateTime, nullable=False)
     notes = db.Column(db.Text, nullable=True)
     last_login = db.Column(db.DateTime, nullable=True)
-    role = db.Column(db.String(20), default="customer", nullable=False)
+    role = db.Column(db.String(20), default="guest", nullable=False)
     
-    def __init__(self, name, email, access_days=30, company=None, position=None, notes=None, role="customer"):
+    def __init__(self, name, email, access_days=30, company=None, position=None, notes=None, role="guest"):
         self.name = name
         self.email = email
         self.company = company

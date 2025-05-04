@@ -74,9 +74,10 @@
                         <div class="col-md-2">
                             <label for="role" class="form-label">用户角色</label>
                             <select class="form-select" id="role" name="role" required>
-                                <option value="customer">客户</option>
+                                <option value="guest">矿场客人</option>
                                 <option value="mining_site">矿场管理</option>
                                 <option value="admin">管理员</option>
+                                <option value="owner">拥有者</option>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -132,12 +133,14 @@
                                             <td>{{ user.email }}</td>
                                             <td>{{ user.company or '-' }}</td>
                                             <td>
-                                                {% if user.role == 'admin' %}
-                                                    <span class="badge bg-danger">管理员</span>
+                                                {% if user.role == 'owner' %}
+                                                    <span class="badge bg-danger">拥有者</span>
+                                                {% elif user.role == 'admin' %}
+                                                    <span class="badge bg-warning">管理员</span>
                                                 {% elif user.role == 'mining_site' %}
-                                                    <span class="badge bg-warning">矿场管理</span>
+                                                    <span class="badge bg-info">矿场管理</span>
                                                 {% else %}
-                                                    <span class="badge bg-primary">客户</span>
+                                                    <span class="badge bg-primary">矿场客人</span>
                                                 {% endif %}
                                             </td>
                                             <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
@@ -233,12 +236,14 @@
                                                                     <tr>
                                                                         <th>用户角色</th>
                                                                         <td>
-                                                                            {% if user.role == 'admin' %}
-                                                                                <span class="badge bg-danger">管理员</span>
+                                                                            {% if user.role == 'owner' %}
+                                                                                <span class="badge bg-danger">拥有者</span>
+                                                                            {% elif user.role == 'admin' %}
+                                                                                <span class="badge bg-warning">管理员</span>
                                                                             {% elif user.role == 'mining_site' %}
-                                                                                <span class="badge bg-warning">矿场管理</span>
+                                                                                <span class="badge bg-info">矿场管理</span>
                                                                             {% else %}
-                                                                                <span class="badge bg-primary">客户</span>
+                                                                                <span class="badge bg-primary">矿场客人</span>
                                                                             {% endif %}
                                                                         </td>
                                                                     </tr>
