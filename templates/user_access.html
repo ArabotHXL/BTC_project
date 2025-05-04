@@ -74,13 +74,14 @@
                         <div class="col-md-2">
                             <label for="role" class="form-label">用户角色</label>
                             <select class="form-select" id="role" name="role" required>
+                                <!-- 基本角色 - 所有人都可以创建 -->
                                 <option value="guest">矿场客人</option>
                                 <option value="mining_site">矿场管理</option>
+                                
+                                <!-- 高级角色 - 只有特定角色可以创建 -->
+                                <option value="admin">管理员</option>
                                 {% if session.get('role') == 'owner' %}
-                                <option value="admin">管理员</option>
                                 <option value="owner">拥有者</option>
-                                {% elif session.get('role') == 'admin' %}
-                                <option value="admin">管理员</option>
                                 {% endif %}
                             </select>
                         </div>

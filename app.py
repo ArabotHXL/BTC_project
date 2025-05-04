@@ -379,6 +379,12 @@ def user_access():
     
     # 获取所有用户
     users = UserAccess.query.order_by(UserAccess.created_at.desc()).all()
+    
+    # 记录当前用户角色（用于调试）
+    current_user_role = session.get('role', '未设置')
+    logging.info(f"当前用户角色: {current_user_role}")
+    logging.info(f"所有session数据: {session}")
+    
     return render_template('user_access.html', users=users)
 
 @app.route('/admin/user_access/add', methods=['POST'])
