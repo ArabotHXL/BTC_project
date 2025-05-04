@@ -285,7 +285,30 @@ def calculate():
                 'yearly': maintenance_fee * 12
             }
         
-        # Return results as JSON
+        # 根据用户角色过滤返回数据
+        user_role = session.get('role')
+        logging.info(f"计算请求的用户角色: {user_role}")
+        
+        # 如果不是允许的角色（owner、admin或mining_site），则移除矿场主相关敏感数据
+        if user_role not in ['owner', 'admin', 'mining_site']:
+            logging.info("用户没有矿场主权限，过滤敏感数据")
+            
+            # 保留必要数据，移除敏感数据
+            filtered_result = {
+                'btc_mined': result.get('btc_mined', {}),
+                'client_electricity_cost': result.get('client_electricity_cost', {}),
+                'client_profit': result.get('client_profit', {}),
+                'inputs': result.get('inputs', {}),
+                'network_data': result.get('network_data', {}),
+                'break_even': {
+                    'btc_price': result.get('break_even', {}).get('btc_price', 0)
+                }
+            }
+            
+            # 返回过滤后的结果
+            return jsonify(filtered_result)
+            
+        # 对于有权限的用户，返回完整结果
         return jsonify(result)
         
     except ValueError as e:
