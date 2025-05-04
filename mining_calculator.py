@@ -173,15 +173,30 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         site_total_hashrate = hashrate * curtailment_factor if hashrate is not None else 0
         
         # === BTC 产出计算 (BTC Output Calculation) ===
-        # Method 1: Network Hashrate Based (算法1：基于网络算力和难度的混合算法)
-        # 使用难度推导网络算力，而不是直接使用API返回的网络算力（可能不准确）
-        # 难度推导算力公式: 网络哈希率(H/s) = 难度 * 2^32 / 600
+        # Method 1: Network Hashrate Based (算法1：基于网络实际哈希率)
+        # 使用API返回的实际网络哈希率进行计算，但增加合理性检查
         difficulty_factor = 2 ** 32
+        
+        # 计算基于难度的参考哈希率，用于合理性检查
         network_hashrate_from_difficulty = (difficulty_raw * difficulty_factor) / 600  # H/s
         network_TH_from_difficulty = network_hashrate_from_difficulty / 1e12  # 从H/s转换为TH/s
         
-        # 使用难度推导的网络算力，而不是API返回的值
-        network_TH = max(1000, network_TH_from_difficulty)  # 确保最小值为1000 TH/s
+        # 将API返回的哈希率从EH/s转换为TH/s
+        api_network_TH = real_time_btc_hashrate * 1000000  # 从EH/s转换为TH/s
+        
+        # 比较API哈希率和难度推导哈希率的差异
+        hashrate_ratio = api_network_TH / max(1, network_TH_from_difficulty)
+        
+        # 如果API哈希率与难度推导哈希率相差过大(>50%)，使用加权平均值
+        if hashrate_ratio > 1.5 or hashrate_ratio < 0.67:
+            print(f"API哈希率与难度推导哈希率差异过大 (比率: {hashrate_ratio:.2f})，使用加权平均值")
+            network_TH = (api_network_TH * 0.4 + network_TH_from_difficulty * 0.6)  # 偏向难度推导值，因为更稳定
+        else:
+            # 差异在合理范围内，直接使用API返回的哈希率
+            network_TH = api_network_TH
+            
+        # 确保最小值
+        network_TH = max(1000, network_TH)  # 确保最小值为1000 TH/s
         
         # 全网日产出 = 区块奖励 * 每日区块数
         network_daily_btc = block_reward_to_use * BLOCKS_PER_DAY
