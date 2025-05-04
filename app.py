@@ -439,8 +439,8 @@ def get_network_stats():
             if response.status_code == 200:
                 # 该API直接返回TH/s单位的哈希率
                 hashrate_th = float(response.text.strip())
-                # 转换为EH/s (1 EH/s = 1,000,000 TH/s)
-                hashrate = hashrate_th / 1e6
+                # 转换为EH/s (1 EH/s = 1,000,000,000 TH/s)
+                hashrate = hashrate_th / 1e9
                 logging.info(f"成功获取网络哈希率: {hashrate_th} TH/s → {hashrate} EH/s")
                 
                 # 如果哈希率不合理，使用默认值

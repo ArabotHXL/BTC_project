@@ -100,7 +100,7 @@ def get_real_time_btc_hashrate():
         response = requests.get('https://blockchain.info/q/hashrate', timeout=5)
         if response.status_code == 200:
             hashrate_th = float(response.text.strip())  # 原始数据为 TH/s
-            hashrate_eh = hashrate_th / 1e6  # 转换为 EH/s (1 EH/s = 1,000,000 TH/s)
+            hashrate_eh = hashrate_th / 1e9  # 转换为 EH/s (1 EH/s = 1,000,000,000 TH/s)
             logging.info(f"成功获取网络哈希率: {hashrate_th} TH/s = {hashrate_eh} EH/s")
             return hashrate_eh
         else:
@@ -175,8 +175,8 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         # === BTC 产出计算 (BTC Output Calculation) ===
         # Method 1: Network Hashrate Based (算法1：基于网络算力)
         # 确保网络哈希率值合理 (EH/s -> TH/s)
-        # 现在API返回的网络哈希率已经正确单位为EH/s，转换为TH/s需要乘以1,000,000
-        network_TH = max(1000, real_time_btc_hashrate * 1000000)  # 从EH/s转换为TH/s，确保最小值为1000 TH/s
+        # 现在API返回的网络哈希率已经正确单位为EH/s，转换为TH/s需要乘以1,000,000,000
+        network_TH = max(1000, real_time_btc_hashrate * 1000000000)  # 从EH/s转换为TH/s，确保最小值为1000 TH/s
         # 全网日产出 = 区块奖励 * 每日区块数
         network_daily_btc = block_reward_to_use * BLOCKS_PER_DAY
         # 每TH每日产出 = 全网日产出 / 全网TH
