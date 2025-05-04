@@ -41,17 +41,35 @@ def get_real_time_btc_price():
         return DEFAULT_BTC_PRICE
 
 def get_real_time_difficulty():
-    """Get the current Bitcoin network difficulty"""
-    try:
-        response = requests.get('https://blockchain.info/q/getdifficulty', timeout=10)
-        if response.status_code == 200:
-            difficulty = float(response.text.strip())
-            return difficulty
-        else:
-            raise Exception(f"API returned status code {response.status_code}")
-    except Exception as e:
-        logging.warning(f"Unable to get real-time BTC difficulty: {e}")
-        return DEFAULT_NETWORK_DIFFICULTY
+    """Get the current Bitcoin network difficulty with fallback options"""
+    # 尝试多个API源以增加可靠性
+    apis = [
+        'https://blockchain.info/q/getdifficulty',
+        'https://api.blockchain.info/stats'  # 备用API提供一个包含difficulty的JSON
+    ]
+    
+    for api_url in apis:
+        try:
+            response = requests.get(api_url, timeout=5)  # 减少超时时间以避免长时间等待
+            
+            if response.status_code == 200:
+                if 'stats' in api_url:  # 处理JSON格式的响应
+                    data = response.json()
+                    if 'difficulty' in data:
+                        return float(data['difficulty'])
+                else:  # 处理纯文本响应
+                    return float(response.text.strip())
+            else:
+                logging.warning(f"API {api_url} 返回状态码 {response.status_code}")
+                # 继续尝试下一个API
+                
+        except Exception as e:
+            logging.warning(f"尝试从 {api_url} 获取难度时出错: {e}")
+            # 继续尝试下一个API
+    
+    # 所有API都失败时，使用默认值
+    logging.warning(f"无法从任何API获取实时BTC难度，使用默认值 {DEFAULT_NETWORK_DIFFICULTY}")
+    return DEFAULT_NETWORK_DIFFICULTY
 
 def get_real_time_block_reward():
     """Get the current Bitcoin block reward based on block height"""
@@ -77,17 +95,45 @@ def get_real_time_block_reward():
         return BLOCK_REWARD
         
 def get_real_time_btc_hashrate():
-    try:
-        response = requests.get('https://blockchain.info/q/hashrate', timeout=10)
-        if response.status_code == 200:
-            hashrate_th = float(response.text.strip())  # 原始数据为 TH/s
-            return hashrate_th / 1e9  # 转换为 EH/s
-        else:
-            logging.warning(f"API返回非200状态码: {response.status_code}")
-            return DEFAULT_NETWORK_HASHRATE
-    except Exception as e:
-        logging.warning(f"无法获取实时BTC算力，使用默认值 {DEFAULT_NETWORK_HASHRATE} EH/s: {e}")
-        return DEFAULT_NETWORK_HASHRATE
+    """获取实时比特币网络哈希率，带有多个备用API选项"""
+    apis = [
+        'https://blockchain.info/q/hashrate',  # 返回TH/s
+        'https://api.blockchain.info/stats',   # 返回包含hashrate的JSON (Hash/s)
+        'https://mempool.space/api/v1/mining/hashrate/3d'  # 备用API - 3天平均哈希率
+    ]
+    
+    for api_url in apis:
+        try:
+            response = requests.get(api_url, timeout=5)
+            
+            if response.status_code == 200:
+                if 'stats' in api_url:  # 处理blockchain.info/stats JSON响应
+                    data = response.json()
+                    if 'hash_rate' in data:
+                        # 该API返回的是每秒哈希数 (Hash/s)，需要转换为EH/s
+                        hashrate_h = float(data['hash_rate'])
+                        return hashrate_h / 1e18  # 转换为 EH/s
+                elif 'mempool.space' in api_url:  # 处理mempool.space API响应
+                    data = response.json()
+                    # mempool返回的是每秒平均哈希数 (Hash/s)，需要计算平均值并转换为EH/s
+                    if isinstance(data, list) and len(data) > 0:
+                        # 计算最近数据的平均值
+                        avg_hashrate = sum(entry['hashrate'] for entry in data) / len(data)
+                        return avg_hashrate / 1e18  # 转换为 EH/s
+                else:  # 处理blockchain.info/q/hashrate的纯文本响应
+                    hashrate_th = float(response.text.strip())  # 该API返回的是TH/s
+                    return hashrate_th / 1e3  # 转换为 EH/s (1000 TH/s = 1 EH/s)
+            else:
+                logging.warning(f"API {api_url} 返回状态码 {response.status_code}")
+                # 继续尝试下一个API
+                
+        except Exception as e:
+            logging.warning(f"尝试从 {api_url} 获取网络哈希率时出错: {e}")
+            # 继续尝试下一个API
+    
+    # 所有API都失败时，使用默认值
+    logging.warning(f"无法从任何API获取实时BTC网络哈希率，使用默认值 {DEFAULT_NETWORK_HASHRATE} EH/s")
+    return DEFAULT_NETWORK_HASHRATE
 
 def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electricity_cost=0.05, client_electricity_cost=None, 
                              btc_price=None, difficulty=None, block_reward=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0.0):
