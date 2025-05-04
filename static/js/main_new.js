@@ -350,8 +350,28 @@ document.addEventListener('DOMContentLoaded', function() {
             // ===== 3. 矿场主(Host)数据 =====
             updateHostData(data);
             
+            // 生成矿场主ROI图表
+            if (data.roi && data.roi.host && data.roi.host.cumulative_roi && data.inputs && data.inputs.host_investment) {
+                generateRoiChart(
+                    data.roi.host.cumulative_roi, 
+                    'host-roi-chart', 
+                    '矿场主投资回报分析 (Host ROI Analysis)', 
+                    data.inputs.host_investment
+                );
+            }
+            
             // ===== 4. 客户(Customer)数据 =====
             updateCustomerData(data);
+            
+            // 生成客户ROI图表
+            if (data.roi && data.roi.client && data.roi.client.cumulative_roi && data.inputs && data.inputs.client_investment) {
+                generateRoiChart(
+                    data.roi.client.cumulative_roi, 
+                    'client-roi-chart', 
+                    '客户投资回报分析 (Client ROI Analysis)', 
+                    data.inputs.client_investment
+                );
+            }
             
         } catch (error) {
             console.error('显示结果时出错:', error);
