@@ -17,7 +17,8 @@ files_to_include = [
     "models.py",
     "pyproject.toml",
     "requirements-local.txt",
-    "local_run_guide.md"
+    "local_run_guide.md",
+    "README.md"
 ]
 
 # 要包含的目录
