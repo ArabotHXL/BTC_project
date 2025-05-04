@@ -10,7 +10,7 @@ class LoginRecord(db.Model):
     login_time = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     successful = db.Column(db.Boolean, default=True, nullable=False)
     ip_address = db.Column(db.String(50), nullable=True)
-    user_agent = db.Column(db.String(512), nullable=True)
+    login_location = db.Column(db.String(512), nullable=True)
     
     def __repr__(self):
         """格式化模型的字符串表示"""

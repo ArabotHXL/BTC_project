@@ -46,11 +46,25 @@ def login():
         
         # 记录登录尝试
         try:
+            # 获取大致位置信息（基于IP地址）
+            location = "未知位置"
+            try:
+                # 这里可以使用IP地理位置API，但为简单起见，使用一个基本判断
+                if request.remote_addr:
+                    if request.remote_addr.startswith('127.') or request.remote_addr == '::1':
+                        location = "本地连接"
+                    elif request.remote_addr.startswith('192.168.') or request.remote_addr.startswith('10.'):
+                        location = "内部网络"
+                    else:
+                        location = f"外部网络 ({request.remote_addr})"
+            except Exception as e:
+                logging.error(f"获取位置信息时出错: {str(e)}")
+                
             login_record = LoginRecord(
                 email=email,
                 successful=login_successful,
                 ip_address=request.remote_addr,
-                user_agent=request.user_agent.string if request.user_agent else None
+                login_location=location
             )
             logging.info(f"创建登录记录: {email}, 状态: {'成功' if login_successful else '失败'}")
             db.session.add(login_record)

@@ -62,7 +62,7 @@
                                     <th>登录时间</th>
                                     <th>状态</th>
                                     <th>IP地址</th>
-                                    <th>用户代理</th>
+                                    <th>登录位置</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -83,7 +83,7 @@
                                             <td>
                                                 <button type="button" class="btn btn-sm btn-outline-info" 
                                                         data-bs-toggle="tooltip" data-bs-placement="top" 
-                                                        title="{{ record.user_agent or '未知' }}">
+                                                        title="{{ record.login_location or '未知位置' }}">
                                                     查看
                                                 </button>
                                             </td>
