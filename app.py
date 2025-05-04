@@ -384,15 +384,22 @@ def calculate():
             
             # 保留必要数据，移除敏感数据
             filtered_result = {
+                'success': True,  # 确保添加成功标志
+                'timestamp': result.get('timestamp', datetime.now().isoformat()),
                 'btc_mined': result.get('btc_mined', {}),
                 'client_electricity_cost': result.get('client_electricity_cost', {}),
                 'client_profit': result.get('client_profit', {}),
                 'inputs': result.get('inputs', {}),
                 'network_data': result.get('network_data', {}),
+                'revenue': result.get('revenue', {}),  # 添加收入信息
                 'break_even': {
                     'btc_price': result.get('break_even', {}).get('btc_price', 0)
                 }
             }
+            
+            # 如果结果中有估算注释，也添加到过滤结果中
+            if 'estimation_note' in result:
+                filtered_result['estimation_note'] = result['estimation_note']
             
             # 返回过滤后的结果
             return jsonify(filtered_result)

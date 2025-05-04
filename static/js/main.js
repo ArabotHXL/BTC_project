@@ -401,9 +401,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 显示计算结果 (Display calculation results)
     function displayResults(data) {
-        if (!data || !data.btc_mined || !data.profit) {
-            showError('服务器返回的数据无效。(Invalid data received from server.)');
-            console.error('数据结构无效:', data);
+        // 检查数据有效性 - 更加灵活，适应不同角色的权限
+        if (!data || !data.btc_mined) {
+            showError('服务器返回的数据无效或不完整。(Invalid or incomplete data received from server.)');
+            console.error('数据结构无效 - 缺少btc_mined字段:', data);
             return;
         }
         
@@ -419,11 +420,22 @@ document.addEventListener('DOMContentLoaded', function() {
             // ===== 2. 网络和挖矿信息 =====
             updateNetworkAndMiningInfo(data);
             
-            // ===== 3. 矿场主(Host)数据 =====
-            updateHostData(data);
+            // ===== 3. 矿场主(Host)数据 - 仅当有相关权限和数据时显示 =====
+            // 如果数据中有profit字段，说明用户有权限查看矿场主数据
+            if (data.profit) {
+                updateHostData(data);
+            }
             
             // ===== 4. 客户(Customer)数据 =====
-            updateCustomerData(data);
+            // 对于client_profit进行同样的检查
+            if (data.client_profit) {
+                updateCustomerData(data);
+            }
+            
+            // 如果有估算提示，显示给用户
+            if (data.estimation_note) {
+                showError(data.estimation_note, 'warning');
+            }
         } catch (error) {
             console.error('显示结果时出错:', error);
             showError('显示计算结果时发生错误。(Error displaying calculation results.)');
@@ -720,12 +732,6 @@ document.addEventListener('DOMContentLoaded', function() {
             clientBreakEvenBtcEl.textContent = formatCurrency(data.break_even.btc_price);
         }
     }
-    
-    } catch (error) {
-        console.error('显示结果时出错:', error);
-        showError('显示计算结果时发生错误。(Error displaying calculation results.)');
-    }
-}
     
     // 生成利润热力图 (Generate profit heatmap)
     function generateProfitChart(minerModel, minerCount, clientElectricityCost) {
