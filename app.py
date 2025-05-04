@@ -4,6 +4,7 @@ import json
 import numpy as np
 import os
 import secrets
+from datetime import datetime
 from auth import verify_email, login_required
 from mining_calculator import (
     MINER_DATA,
@@ -24,9 +25,9 @@ app = Flask(__name__)
 # 设置安全的会话密钥
 app.secret_key = os.environ.get("SESSION_SECRET", secrets.token_hex(32))
 
-# 导入数据库和用户登录记录模型
+# 导入数据库和用户模型
 from db import db
-from models import LoginRecord
+from models import LoginRecord, UserAccess
 
 # 登录页面
 @app.route('/login', methods=['GET', 'POST'])
@@ -298,6 +299,121 @@ def get_miners():
             'success': False,
             'error': 'Could not fetch miners data.'
         }), 500
+
+# 用户访问管理系统路由
+@app.route('/admin/user_access')
+@login_required
+def user_access():
+    """管理员管理用户访问权限"""
+    # 只允许特定用户（例如 admin@example.com）访问
+    if session.get('email') != 'admin@example.com':
+        flash('您没有权限访问此页面', 'danger')
+        return redirect(url_for('index'))
+    
+    # 获取所有用户
+    users = UserAccess.query.order_by(UserAccess.created_at.desc()).all()
+    return render_template('user_access.html', users=users)
+
+@app.route('/admin/user_access/add', methods=['POST'])
+@login_required
+def add_user_access():
+    """添加新用户访问权限"""
+    # 只允许特定用户（例如 admin@example.com）访问
+    if session.get('email') != 'admin@example.com':
+        flash('您没有权限访问此页面', 'danger')
+        return redirect(url_for('index'))
+    
+    try:
+        # 获取表单数据
+        name = request.form['name']
+        email = request.form['email']
+        
+        try:
+            access_days = int(request.form['access_days'])
+        except (ValueError, KeyError):
+            access_days = 30  # 默认30天
+            
+        company = request.form.get('company')
+        position = request.form.get('position')
+        notes = request.form.get('notes')
+        
+        # 检查邮箱是否已存在
+        existing_user = UserAccess.query.filter_by(email=email).first()
+        if existing_user:
+            flash(f'邮箱 {email} 已存在，请使用其他邮箱', 'warning')
+            return redirect(url_for('user_access'))
+        
+        # 创建新用户
+        new_user = UserAccess(
+            name=name,
+            email=email,
+            access_days=access_days,
+            company=company,
+            position=position,
+            notes=notes
+        )
+        
+        # 保存到数据库
+        db.session.add(new_user)
+        db.session.commit()
+        
+        flash(f'用户 {name} ({email}) 已成功添加，访问权限 {access_days} 天', 'success')
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"添加用户访问权限时出错: {str(e)}")
+        flash(f'添加用户失败: {str(e)}', 'danger')
+    
+    return redirect(url_for('user_access'))
+
+@app.route('/admin/user_access/extend/<int:user_id>/<int:days>', methods=['POST'])
+@login_required
+def extend_user_access(user_id, days):
+    """延长用户访问权限"""
+    # 只允许特定用户（例如 admin@example.com）访问
+    if session.get('email') != 'admin@example.com':
+        flash('您没有权限访问此页面', 'danger')
+        return redirect(url_for('index'))
+    
+    try:
+        # 查找用户
+        user = UserAccess.query.get_or_404(user_id)
+        
+        # 延长权限
+        user.extend_access(days)
+        db.session.commit()
+        
+        flash(f'用户 {user.name} 的访问权限已延长 {days} 天', 'success')
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"延长用户访问权限时出错: {str(e)}")
+        flash(f'延长用户访问权限失败: {str(e)}', 'danger')
+    
+    return redirect(url_for('user_access'))
+
+@app.route('/admin/user_access/revoke/<int:user_id>', methods=['POST'])
+@login_required
+def revoke_user_access(user_id):
+    """撤销用户访问权限"""
+    # 只允许特定用户（例如 admin@example.com）访问
+    if session.get('email') != 'admin@example.com':
+        flash('您没有权限访问此页面', 'danger')
+        return redirect(url_for('index'))
+    
+    try:
+        # 查找用户
+        user = UserAccess.query.get_or_404(user_id)
+        
+        # 撤销权限
+        user.revoke_access()
+        db.session.commit()
+        
+        flash(f'用户 {user.name} 的访问权限已撤销', 'warning')
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"撤销用户访问权限时出错: {str(e)}")
+        flash(f'撤销用户访问权限失败: {str(e)}', 'danger')
+    
+    return redirect(url_for('user_access'))
 
 @app.route('/profit_chart_data', methods=['POST'])
 @login_required

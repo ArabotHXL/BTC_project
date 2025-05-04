@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户访问管理 - BTC挖矿计算器</title>
+    <!-- Bootstrap CSS from Replit CDN -->
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <div class="container-fluid">
+        <header class="py-3 mb-4 border-bottom">
+            <div class="container d-flex align-items-center justify-content-between">
+                <h1 class="fs-4">用户访问权限管理</h1>
+                
+                <div class="d-flex gap-4 align-items-center">
+                    <div>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-calculator me-1"></i> 返回计算器
+                        </a>
+                        <a href="{{ url_for('login_records') }}" class="btn btn-outline-secondary ms-2">
+                            <i class="bi bi-file-text me-1"></i> 登录记录
+                        </a>
+                        <a href="{{ url_for('logout') }}" class="btn btn-outline-danger ms-2">
+                            <i class="bi bi-box-arrow-right me-1"></i> 退出登录
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="container mb-5">
+            <!-- 消息提示条 -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            <!-- 添加新用户 -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary bg-opacity-10">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-plus me-2"></i>添加新用户
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('add_user_access') }}" method="post" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="name" class="form-label">姓名</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="email" class="form-label">邮箱</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="access_days" class="form-label">访问天数</label>
+                            <input type="number" class="form-control" id="access_days" name="access_days" min="1" value="30" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="company" class="form-label">公司</label>
+                            <input type="text" class="form-control" id="company" name="company">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="position" class="form-label">职位</label>
+                            <input type="text" class="form-control" id="position" name="position">
+                        </div>
+                        <div class="col-12">
+                            <label for="notes" class="form-label">备注</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">添加用户</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- 用户列表和管理 -->
+            <div class="card shadow">
+                <div class="card-header bg-success bg-opacity-10 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-people me-2"></i>用户列表
+                    </h5>
+                    <span class="badge bg-info">用户总数: {{ users|length }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>姓名</th>
+                                    <th>邮箱</th>
+                                    <th>公司</th>
+                                    <th>添加时间</th>
+                                    <th>访问状态</th>
+                                    <th>剩余天数</th>
+                                    <th>上次登录</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if users %}
+                                    {% for user in users %}
+                                        <tr class="{{ 'table-success' if user.has_access else 'table-danger' }}">
+                                            <td>{{ user.id }}</td>
+                                            <td>{{ user.name }}</td>
+                                            <td>{{ user.email }}</td>
+                                            <td>{{ user.company or '-' }}</td>
+                                            <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                                            <td>
+                                                {% if user.has_access %}
+                                                    <span class="badge bg-success">授权访问</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">访问已过期</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">{{ user.days_remaining }} 天</span>
+                                            </td>
+                                            <td>
+                                                {% if user.last_login %}
+                                                    {{ user.last_login.strftime('%Y-%m-%d %H:%M') }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" 
+                                                            class="btn btn-sm btn-outline-info" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#userModal{{ user.id }}">
+                                                        查看
+                                                    </button>
+                                                    <div class="btn-group" role="group">
+                                                        <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                            延长权限
+                                                        </button>
+                                                        <ul class="dropdown-menu">
+                                                            <li>
+                                                                <form action="{{ url_for('extend_user_access', user_id=user.id, days=7) }}" method="post">
+                                                                    <button type="submit" class="dropdown-item">延长7天</button>
+                                                                </form>
+                                                            </li>
+                                                            <li>
+                                                                <form action="{{ url_for('extend_user_access', user_id=user.id, days=30) }}" method="post">
+                                                                    <button type="submit" class="dropdown-item">延长30天</button>
+                                                                </form>
+                                                            </li>
+                                                            <li>
+                                                                <form action="{{ url_for('extend_user_access', user_id=user.id, days=90) }}" method="post">
+                                                                    <button type="submit" class="dropdown-item">延长90天</button>
+                                                                </form>
+                                                            </li>
+                                                            <li>
+                                                                <form action="{{ url_for('extend_user_access', user_id=user.id, days=365) }}" method="post">
+                                                                    <button type="submit" class="dropdown-item">延长1年</button>
+                                                                </form>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                    <form action="{{ url_for('revoke_user_access', user_id=user.id) }}" method="post">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('确定要撤销此用户的访问权限吗？')">
+                                                            撤销权限
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                                
+                                                <!-- 用户详情模态框 -->
+                                                <div class="modal fade" id="userModal{{ user.id }}" tabindex="-1" aria-labelledby="userModalLabel{{ user.id }}" aria-hidden="true">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title" id="userModalLabel{{ user.id }}">用户详情 - {{ user.name }}</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <table class="table table-bordered">
+                                                                    <tr>
+                                                                        <th>ID</th>
+                                                                        <td>{{ user.id }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th>姓名</th>
+                                                                        <td>{{ user.name }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th>邮箱</th>
+                                                                        <td>{{ user.email }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th>公司</th>
+                                                                        <td>{{ user.company or '-' }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th>职位</th>
+                                                                        <td>{{ user.position or '-' }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th>添加时间</th>
+                                                                        <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th>访问状态</th>
+                                                                        <td>{{ user.access_status }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th>过期时间</th>
+                                                                        <td>{{ user.expires_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th>剩余天数</th>
+                                                                        <td>{{ user.days_remaining }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th>总授权天数</th>
+                                                                        <td>{{ user.access_days }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th>上次登录</th>
+                                                                        <td>
+                                                                            {% if user.last_login %}
+                                                                                {{ user.last_login.strftime('%Y-%m-%d %H:%M:%S') }}
+                                                                            {% else %}
+                                                                                尚未登录
+                                                                            {% endif %}
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th>备注</th>
+                                                                        <td>{{ user.notes or '-' }}</td>
+                                                                    </tr>
+                                                                </table>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="9" class="text-center">暂无用户记录</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="py-3 my-4 border-top">
+            <div class="container text-center">
+                <p class="text-muted">© 2025 BTC Mining Calculator</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // 初始化工具提示
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,15 +1,32 @@
 import hashlib
 import os
 import logging
+from datetime import datetime
 from flask import request, redirect, url_for, session
 from functools import wraps
+from models import UserAccess
+from db import db
 
 # 设置日志
 logging.basicConfig(level=logging.DEBUG)
 
 def get_authorized_emails():
-    """获取授权邮箱列表，优先从环境变量获取"""
-    # 从环境变量中获取邮箱列表
+    """获取授权邮箱列表，优先从数据库获取，然后从环境变量获取"""
+    # 首先从数据库中检查是否有授权用户
+    try:
+        authorized_users = UserAccess.query.all()
+        if authorized_users:
+            valid_users = [user for user in authorized_users if user.has_access]
+            if valid_users:
+                emails = [user.email for user in valid_users]
+                logging.debug(f"从数据库获取到 {len(emails)} 个有效授权邮箱")
+                return emails
+            else:
+                logging.debug("数据库中没有有效授权用户")
+    except Exception as e:
+        logging.error(f"从数据库获取授权用户时出错: {str(e)}")
+    
+    # 如果数据库中没有授权用户，从环境变量中获取邮箱列表
     env_emails = os.environ.get('AUTHORIZED_EMAILS')
     if env_emails:
         # 使用逗号分隔多个邮箱
@@ -17,7 +34,7 @@ def get_authorized_emails():
         logging.debug(f"从环境变量获取到 {len(emails)} 个授权邮箱")
         return emails
     
-    # 默认授权邮箱列表
+    # 默认授权邮箱列表（仅在开发环境使用，生产环境应使用数据库或环境变量）
     default_emails = [
         'admin@example.com',
         'support@example.com',
@@ -36,16 +53,56 @@ def hash_email(email):
     return hasher.hexdigest()
 
 def verify_email(email):
-    """验证邮箱是否在授权列表中"""
+    """验证邮箱是否有效且授权访问"""
+    if not email:
+        logging.warning("验证失败: 未提供邮箱")
+        return False
+    
+    # 清理和标准化输入的邮箱
+    email = email.lower().strip()
+    
+    # 首先检查数据库中是否有此用户
+    try:
+        user = UserAccess.query.filter_by(email=email).first()
+        if user:
+            # 更新最后登录时间
+            user.last_login = datetime.utcnow()
+            db.session.commit()
+            
+            # 检查是否有有效访问权限
+            if user.has_access:
+                logging.info(f"用户 {user.name} ({email}) 验证成功，剩余访问天数: {user.days_remaining}")
+                return True
+            else:
+                logging.warning(f"用户 {user.name} ({email}) 验证失败: 访问权限已过期")
+                return False
+    except Exception as e:
+        logging.error(f"验证用户 {email} 时数据库错误: {str(e)}")
+    
+    # 如果数据库中没有此用户或出错，尝试使用旧方法验证
     # 获取授权邮箱列表
     authorized_emails = get_authorized_emails()
     
-    # 清理和标准化输入的邮箱
-    email = email.lower().strip() if email else ""
-    
     # 直接验证邮箱
     if email in authorized_emails:
-        logging.info(f"邮箱 {email} 验证成功")
+        logging.info(f"邮箱 {email} 验证成功（通过授权列表）")
+        
+        # 尝试将此邮箱添加到数据库中
+        try:
+            # 检查用户是否已存在
+            if not UserAccess.query.filter_by(email=email).first():
+                new_user = UserAccess(
+                    name=email.split('@')[0],  # 使用邮箱前缀作为用户名
+                    email=email,
+                    access_days=90,  # 默认给予90天访问权限
+                    notes="通过授权列表自动添加"
+                )
+                db.session.add(new_user)
+                db.session.commit()
+                logging.info(f"已将邮箱 {email} 添加到用户访问数据库")
+        except Exception as e:
+            logging.error(f"将邮箱 {email} 添加到数据库时出错: {str(e)}")
+        
         return True
     
     # 使用哈希值验证（适用于在环境变量中存储的邮箱哈希值）
