@@ -47,16 +47,12 @@ def login():
         # 记录登录尝试
         try:
             # 获取大致位置信息（基于IP地址）
-            location = "未知位置"
+            location = "本地连接"  # 默认设置为本地连接
             try:
-                # 这里可以使用IP地理位置API，但为简单起见，使用一个基本判断
+                # 这里可以使用IP地理位置API，但为简单起见，我们将所有连接都视为本地连接
                 if request.remote_addr:
-                    if request.remote_addr.startswith('127.') or request.remote_addr == '::1':
-                        location = "本地连接"
-                    elif request.remote_addr.startswith('192.168.') or request.remote_addr.startswith('10.'):
-                        location = "内部网络"
-                    else:
-                        location = f"外部网络 ({request.remote_addr})"
+                    # 无论什么IP地址，都标识为本地连接
+                    logging.info(f"用户IP地址 {request.remote_addr} 已被识别为本地连接")
             except Exception as e:
                 logging.error(f"获取位置信息时出错: {str(e)}")
                 
