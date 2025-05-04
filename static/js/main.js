@@ -417,16 +417,19 @@ document.addEventListener('DOMContentLoaded', function() {
             // ===== 1. 基本BTC挖矿产出 =====
             updateBtcOutputDisplay(data);
             
-            // ===== 2. 网络和挖矿信息 =====
+            // ===== 2. 计算和显示ROI相关指标 =====
+            calculateAndDisplayROI(data);
+            
+            // ===== 3. 网络和挖矿信息 =====
             updateNetworkAndMiningInfo(data);
             
-            // ===== 3. 矿场主(Host)数据 - 仅当有相关权限和数据时显示 =====
+            // ===== 4. 矿场主(Host)数据 - 仅当有相关权限和数据时显示 =====
             // 如果数据中有profit字段，说明用户有权限查看矿场主数据
             if (data.profit) {
                 updateHostData(data);
             }
             
-            // ===== 4. 客户(Customer)数据 =====
+            // ===== 5. 客户(Customer)数据 =====
             // 对于client_profit进行同样的检查
             if (data.client_profit) {
                 updateCustomerData(data);
