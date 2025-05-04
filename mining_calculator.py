@@ -173,10 +173,16 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         site_total_hashrate = hashrate * curtailment_factor if hashrate is not None else 0
         
         # === BTC 产出计算 (BTC Output Calculation) ===
-        # Method 1: Network Hashrate Based (算法1：基于网络算力)
-        # 确保网络哈希率值合理 (EH/s -> TH/s)
-        # 现在API返回的网络哈希率已经正确单位为EH/s，转换为TH/s需要乘以1,000,000,000
-        network_TH = max(1000, real_time_btc_hashrate * 1000000000)  # 从EH/s转换为TH/s，确保最小值为1000 TH/s
+        # Method 1: Network Hashrate Based (算法1：基于网络算力和难度的混合算法)
+        # 使用难度推导网络算力，而不是直接使用API返回的网络算力（可能不准确）
+        # 难度推导算力公式: 网络哈希率(H/s) = 难度 * 2^32 / 600
+        difficulty_factor = 2 ** 32
+        network_hashrate_from_difficulty = (difficulty_raw * difficulty_factor) / 600  # H/s
+        network_TH_from_difficulty = network_hashrate_from_difficulty / 1e12  # 从H/s转换为TH/s
+        
+        # 使用难度推导的网络算力，而不是API返回的值
+        network_TH = max(1000, network_TH_from_difficulty)  # 确保最小值为1000 TH/s
+        
         # 全网日产出 = 区块奖励 * 每日区块数
         network_daily_btc = block_reward_to_use * BLOCKS_PER_DAY
         # 每TH每日产出 = 全网日产出 / 全网TH
@@ -184,6 +190,9 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         # 矿场每日产出 = 矿场TH * 每TH产出
         site_daily_btc_output = site_total_hashrate * btc_per_th
         site_monthly_btc_output = site_daily_btc_output * 30.5
+        
+        # 打印推导的网络哈希率与API返回的对比，便于调试
+        print(f"API Network Hashrate: {real_time_btc_hashrate:.2f} EH/s vs Derived from Difficulty: {network_TH_from_difficulty/1e6:.2f} EH/s")
         
         # 计算单个矿机每日BTC产出
         single_miner_hashrate = None
