@@ -578,6 +578,55 @@ document.addEventListener('DOMContentLoaded', function() {
         if (optimalCurtailmentEl && data.optimization) {
             optimalCurtailmentEl.textContent = formatNumber(data.optimization.optimal_curtailment, 2) + '%';
         }
+        
+        // 处理ROI数据
+        var hostInvestmentAmountEl = document.getElementById('host-investment-amount');
+        var hostAnnualRoiEl = document.getElementById('host-annual-roi');
+        var hostPaybackMonthsEl = document.getElementById('host-payback-months');
+        var hostPaybackYearsEl = document.getElementById('host-payback-years');
+        
+        // 如果存在ROI数据并且有矿场主ROI数据
+        if (data.roi && data.roi.host) {
+            var hostRoi = data.roi.host;
+            
+            // 显示投资金额
+            if (hostInvestmentAmountEl && data.inputs && data.inputs.host_investment) {
+                hostInvestmentAmountEl.textContent = formatCurrency(data.inputs.host_investment);
+            }
+            
+            // 显示年化ROI百分比
+            if (hostAnnualRoiEl && hostRoi.roi_percent_annual) {
+                hostAnnualRoiEl.textContent = formatNumber(hostRoi.roi_percent_annual, 2) + '%';
+            }
+            
+            // 显示回收期（月）
+            if (hostPaybackMonthsEl && hostRoi.payback_period_months) {
+                var months = hostRoi.payback_period_months;
+                // 处理无限回收期的情况
+                if (months === Infinity || months > 9999) {
+                    hostPaybackMonthsEl.textContent = 'N/A';
+                } else {
+                    hostPaybackMonthsEl.textContent = formatNumber(months, 1) + ' months';
+                }
+            }
+            
+            // 显示回收期（年）
+            if (hostPaybackYearsEl && hostRoi.payback_period_years) {
+                var years = hostRoi.payback_period_years;
+                // 处理无限回收期的情况
+                if (years === Infinity || years > 999) {
+                    hostPaybackYearsEl.textContent = 'N/A';
+                } else {
+                    hostPaybackYearsEl.textContent = formatNumber(years, 2) + ' years';
+                }
+            }
+        } else {
+            // 如果没有ROI数据，显示默认值
+            if (hostInvestmentAmountEl) hostInvestmentAmountEl.textContent = '$0.00';
+            if (hostAnnualRoiEl) hostAnnualRoiEl.textContent = '0.00%';
+            if (hostPaybackMonthsEl) hostPaybackMonthsEl.textContent = 'N/A';
+            if (hostPaybackYearsEl) hostPaybackYearsEl.textContent = 'N/A';
+        }
     }
     
     // 更新客户数据
@@ -669,6 +718,61 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (clientBreakEvenBtcEl && data.break_even) {
             clientBreakEvenBtcEl.textContent = formatCurrency(data.break_even.btc_price);
+        }
+        
+        // 处理客户ROI数据
+        var clientInvestmentAmountEl = document.getElementById('client-investment-amount');
+        var clientAnnualRoiEl = document.getElementById('client-annual-roi');
+        var clientPaybackMonthsEl = document.getElementById('client-payback-months');
+        var clientPaybackYearsEl = document.getElementById('client-payback-years');
+        
+        // 如果存在ROI数据并且有客户ROI数据
+        if (data.roi && data.roi.client) {
+            var clientRoi = data.roi.client;
+            
+            // 显示投资金额
+            if (clientInvestmentAmountEl && data.inputs && data.inputs.client_investment) {
+                clientInvestmentAmountEl.textContent = formatCurrency(data.inputs.client_investment);
+            }
+            
+            // 显示年化ROI百分比
+            if (clientAnnualRoiEl && clientRoi.roi_percent_annual) {
+                clientAnnualRoiEl.textContent = formatNumber(clientRoi.roi_percent_annual, 2) + '%';
+            }
+            
+            // 显示回收期（月）
+            if (clientPaybackMonthsEl && clientRoi.payback_period_months) {
+                var months = clientRoi.payback_period_months;
+                // 处理无限回收期的情况
+                if (months === Infinity || months > 9999) {
+                    clientPaybackMonthsEl.textContent = 'N/A';
+                } else {
+                    clientPaybackMonthsEl.textContent = formatNumber(months, 1) + ' months';
+                }
+            }
+            
+            // 显示回收期（年）
+            if (clientPaybackYearsEl && clientRoi.payback_period_years) {
+                var years = clientRoi.payback_period_years;
+                // 处理无限回收期的情况
+                if (years === Infinity || years > 999) {
+                    clientPaybackYearsEl.textContent = 'N/A';
+                } else {
+                    clientPaybackYearsEl.textContent = formatNumber(years, 2) + ' years';
+                }
+            }
+            
+            // 如果有累积ROI数据，可以在这里添加图表生成代码
+            if (clientRoi.cumulative_roi && Array.isArray(clientRoi.cumulative_roi)) {
+                console.log('客户累积ROI数据可用，可用于生成图表', clientRoi.cumulative_roi.length, '个数据点');
+                // 注意：实际的图表代码会在单独的图表生成函数中实现
+            }
+        } else {
+            // 如果没有ROI数据，显示默认值
+            if (clientInvestmentAmountEl) clientInvestmentAmountEl.textContent = '$0.00';
+            if (clientAnnualRoiEl) clientAnnualRoiEl.textContent = '0.00%';
+            if (clientPaybackMonthsEl) clientPaybackMonthsEl.textContent = 'N/A';
+            if (clientPaybackYearsEl) clientPaybackYearsEl.textContent = 'N/A';
         }
     }
     
@@ -992,6 +1096,205 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         return formatter.format(value);
+    }
+    
+    // 生成ROI图表函数
+    function generateRoiChart(roiData, elementId, title, investmentAmount) {
+        // 判断是否有ROI数据
+        if (!roiData || !Array.isArray(roiData) || roiData.length === 0) {
+            console.error('没有有效的ROI数据用于生成图表');
+            var container = document.getElementById(elementId);
+            if (container) {
+                container.innerHTML = '<div class="alert alert-warning text-center">没有有效的ROI数据可显示。(No valid ROI data to display.)</div>';
+            }
+            return;
+        }
+        
+        var container = document.getElementById(elementId);
+        if (!container) {
+            console.error('找不到ROI图表容器:', elementId);
+            return;
+        }
+        
+        // 准备画布
+        container.innerHTML = '<canvas id="' + elementId + '-canvas" width="100%" height="300"></canvas>';
+        var canvas = document.getElementById(elementId + '-canvas');
+        
+        // 分离月度和累积ROI数据
+        var labels = [];
+        var cumulativeRoiValues = [];
+        var cumulativeProfitValues = [];
+        var breakEvenPoint = null;
+        
+        // 准备图表数据
+        roiData.forEach(function(point, index) {
+            labels.push(point.month);
+            cumulativeRoiValues.push(point.roi_percent);
+            cumulativeProfitValues.push(point.cumulative_profit);
+            
+            // 查找回收期点
+            if (breakEvenPoint === null && point.cumulative_profit >= investmentAmount) {
+                breakEvenPoint = index;
+            }
+        });
+        
+        // 创建图表
+        var ctx = canvas.getContext('2d');
+        var chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'ROI (%)',
+                        data: cumulativeRoiValues,
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 1,
+                        pointHoverRadius: 5,
+                        fill: true,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: '累积利润 / Cumulative Profit ($)',
+                        data: cumulativeProfitValues,
+                        borderColor: 'rgba(46, 204, 113, 1)',
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 1,
+                        pointHoverRadius: 5,
+                        fill: true,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: title,
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var label = context.dataset.label || '';
+                                var value = context.raw;
+                                
+                                if (label.includes('ROI')) {
+                                    return label + ': ' + formatNumber(value, 2) + '%';
+                                } else if (label.includes('Profit')) {
+                                    return label + ': $' + formatNumber(value, 2);
+                                }
+                                return label + ': ' + value;
+                            }
+                        }
+                    },
+                    annotation: {
+                        annotations: breakEvenPoint !== null ? {
+                            breakEven: {
+                                type: 'line',
+                                xMin: breakEvenPoint,
+                                xMax: breakEvenPoint,
+                                borderColor: 'rgba(255, 99, 132, 0.8)',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                label: {
+                                    content: '回收期 / Payback',
+                                    enabled: true,
+                                    position: 'top',
+                                    backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                                    color: 'white',
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            },
+                            investment: {
+                                type: 'line',
+                                yMin: investmentAmount,
+                                yMax: investmentAmount,
+                                borderColor: 'rgba(255, 159, 64, 0.8)',
+                                borderWidth: 2,
+                                borderDash: [3, 3],
+                                yScaleID: 'y1',
+                                label: {
+                                    content: '投资金额 / Investment: $' + formatNumber(investmentAmount),
+                                    enabled: true,
+                                    position: 'left',
+                                    backgroundColor: 'rgba(255, 159, 64, 0.8)',
+                                    color: 'white',
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            }
+                        } : {}
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: '月份 / Month',
+                            font: {
+                                weight: 'bold'
+                            }
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: '累计ROI (%) / Cumulative ROI (%)',
+                            font: {
+                                weight: 'bold'
+                            }
+                        },
+                        beginAtZero: true,
+                        position: 'left',
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    },
+                    y1: {
+                        title: {
+                            display: true,
+                            text: '累计利润 ($) / Cumulative Profit ($)',
+                            font: {
+                                weight: 'bold'
+                            }
+                        },
+                        beginAtZero: true,
+                        position: 'right',
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + formatNumber(value, 0);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 添加图表描述
+        var description = document.createElement('div');
+        description.className = 'roi-chart-description small text-center mt-2 mb-3 text-muted';
+        description.innerHTML = '此图表显示了投资回报随时间的变化情况。蓝线表示累计ROI百分比，绿线表示累计利润金额。' +
+                              '<br>This chart shows how ROI changes over time. Blue line represents cumulative ROI percentage, green line shows cumulative profit.';
+        container.appendChild(description);
+        
+        return chart;
     }
     
     // 调用初始化函数 (Call init function)
