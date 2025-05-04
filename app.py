@@ -29,6 +29,30 @@ app.secret_key = os.environ.get("SESSION_SECRET", secrets.token_hex(32))
 from db import db
 from models import LoginRecord, UserAccess
 
+def get_user_role(email):
+    """根据用户邮箱获取角色"""
+    user = UserAccess.query.filter_by(email=email).first()
+    if user and user.has_access:
+        return user.role
+    return None
+    
+def has_role(required_roles):
+    """检查当前用户是否拥有指定角色之一"""
+    email = session.get('email')
+    if not email:
+        return False
+    
+    user_role = get_user_role(email)
+    if not user_role:
+        return False
+        
+    # 如果用户是 owner，那么拥有所有权限
+    if user_role == 'owner':
+        return True
+        
+    # 检查用户角色是否在所需角色列表中
+    return user_role in required_roles
+
 # 登录页面
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -148,11 +172,10 @@ def index():
 @app.route('/admin/login_records')
 @login_required
 def login_records():
-    """管理员查看登录记录"""
-    # 只允许特定用户（例如 admin@example.com 或 hxl2022hao@gmail.com）访问
-    admin_emails = ['admin@example.com', 'hxl2022hao@gmail.com']
-    if session.get('email') not in admin_emails:
-        flash('您没有权限访问此页面', 'danger')
+    """拥有者查看登录记录"""
+    # 只允许拥有者角色访问
+    if not has_role(['owner']):
+        flash('您没有权限访问此页面，需要拥有者权限', 'danger')
         return redirect(url_for('index'))
     
     # 获取登录记录
@@ -345,10 +368,9 @@ def get_miners():
 @login_required
 def user_access():
     """管理员管理用户访问权限"""
-    # 只允许特定用户（例如 admin@example.com 或 hxl2022hao@gmail.com）访问
-    admin_emails = ['admin@example.com', 'hxl2022hao@gmail.com']
-    if session.get('email') not in admin_emails:
-        flash('您没有权限访问此页面', 'danger')
+    # 只允许owner或admin角色访问
+    if not has_role(['owner', 'admin']):
+        flash('您没有权限访问此页面，需要管理员或拥有者权限', 'danger')
         return redirect(url_for('index'))
     
     # 获取所有用户
@@ -359,10 +381,9 @@ def user_access():
 @login_required
 def add_user_access():
     """添加新用户访问权限"""
-    # 只允许特定用户（例如 admin@example.com 或 hxl2022hao@gmail.com）访问
-    admin_emails = ['admin@example.com', 'hxl2022hao@gmail.com']
-    if session.get('email') not in admin_emails:
-        flash('您没有权限访问此页面', 'danger')
+    # 只允许owner或admin角色访问
+    if not has_role(['owner', 'admin']):
+        flash('您没有权限访问此页面，需要管理员或拥有者权限', 'danger')
         return redirect(url_for('index'))
     
     try:
@@ -378,12 +399,12 @@ def add_user_access():
         company = request.form.get('company')
         position = request.form.get('position')
         notes = request.form.get('notes')
-        role = request.form.get('role', 'customer')  # 获取角色参数，默认为客户
+        role = request.form.get('role', 'guest')  # 获取角色参数，默认为矿场客人
         
         # 检查角色是否有效
-        valid_roles = ['admin', 'mining_site', 'customer']
+        valid_roles = ['owner', 'admin', 'mining_site', 'guest']
         if role not in valid_roles:
-            role = 'customer'  # 如果不是有效角色，默认为客户
+            role = 'guest'  # 如果不是有效角色，默认为矿场客人
             
         # 检查邮箱是否已存在
         existing_user = UserAccess.query.filter_by(email=email).first()
@@ -407,7 +428,14 @@ def add_user_access():
         db.session.commit()
         
         # 获取角色的中文名称
-        role_name = "管理员" if role == "admin" else "矿场管理" if role == "mining_site" else "客户"
+        if role == "owner":
+            role_name = "拥有者"
+        elif role == "admin":
+            role_name = "管理员"
+        elif role == "mining_site":
+            role_name = "矿场管理"
+        else:
+            role_name = "矿场客人"
         flash(f'用户 {name} ({email}) 已成功添加，角色为"{role_name}"，访问权限 {access_days} 天', 'success')
     except Exception as e:
         db.session.rollback()
@@ -420,10 +448,9 @@ def add_user_access():
 @login_required
 def extend_user_access(user_id, days):
     """延长用户访问权限"""
-    # 只允许特定用户（例如 admin@example.com 或 hxl2022hao@gmail.com）访问
-    admin_emails = ['admin@example.com', 'hxl2022hao@gmail.com']
-    if session.get('email') not in admin_emails:
-        flash('您没有权限访问此页面', 'danger')
+    # 只允许owner或admin角色访问
+    if not has_role(['owner', 'admin']):
+        flash('您没有权限访问此页面，需要管理员或拥有者权限', 'danger')
         return redirect(url_for('index'))
     
     try:
@@ -446,10 +473,9 @@ def extend_user_access(user_id, days):
 @login_required
 def revoke_user_access(user_id):
     """撤销用户访问权限"""
-    # 只允许特定用户（例如 admin@example.com 或 hxl2022hao@gmail.com）访问
-    admin_emails = ['admin@example.com', 'hxl2022hao@gmail.com']
-    if session.get('email') not in admin_emails:
-        flash('您没有权限访问此页面', 'danger')
+    # 只允许owner或admin角色访问
+    if not has_role(['owner', 'admin']):
+        flash('您没有权限访问此页面，需要管理员或拥有者权限', 'danger')
         return redirect(url_for('index'))
     
     try:
