@@ -378,7 +378,13 @@ def add_user_access():
         company = request.form.get('company')
         position = request.form.get('position')
         notes = request.form.get('notes')
+        role = request.form.get('role', 'customer')  # 获取角色参数，默认为客户
         
+        # 检查角色是否有效
+        valid_roles = ['admin', 'mining_site', 'customer']
+        if role not in valid_roles:
+            role = 'customer'  # 如果不是有效角色，默认为客户
+            
         # 检查邮箱是否已存在
         existing_user = UserAccess.query.filter_by(email=email).first()
         if existing_user:
@@ -392,14 +398,17 @@ def add_user_access():
             access_days=access_days,
             company=company,
             position=position,
-            notes=notes
+            notes=notes,
+            role=role
         )
         
         # 保存到数据库
         db.session.add(new_user)
         db.session.commit()
         
-        flash(f'用户 {name} ({email}) 已成功添加，访问权限 {access_days} 天', 'success')
+        # 获取角色的中文名称
+        role_name = "管理员" if role == "admin" else "矿场管理" if role == "mining_site" else "客户"
+        flash(f'用户 {name} ({email}) 已成功添加，角色为"{role_name}"，访问权限 {access_days} 天', 'success')
     except Exception as e:
         db.session.rollback()
         logging.error(f"添加用户访问权限时出错: {str(e)}")

@@ -71,7 +71,9 @@ def verify_email(email):
             
             # 检查是否有有效访问权限
             if user.has_access:
-                logging.info(f"用户 {user.name} ({email}) 验证成功，剩余访问天数: {user.days_remaining}")
+                # 将用户角色存储在会话中
+                session['role'] = user.role
+                logging.info(f"用户 {user.name} ({email}) 验证成功，角色: {user.role}，剩余访问天数: {user.days_remaining}")
                 return True
             else:
                 logging.warning(f"用户 {user.name} ({email}) 验证失败: 访问权限已过期")

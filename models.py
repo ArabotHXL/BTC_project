@@ -31,8 +31,9 @@ class UserAccess(db.Model):
     expires_at = db.Column(db.DateTime, nullable=False)
     notes = db.Column(db.Text, nullable=True)
     last_login = db.Column(db.DateTime, nullable=True)
+    role = db.Column(db.String(20), default="customer", nullable=False)
     
-    def __init__(self, name, email, access_days=30, company=None, position=None, notes=None):
+    def __init__(self, name, email, access_days=30, company=None, position=None, notes=None, role="customer"):
         self.name = name
         self.email = email
         self.company = company
@@ -40,6 +41,7 @@ class UserAccess(db.Model):
         self.access_days = access_days
         self.expires_at = datetime.utcnow() + timedelta(days=access_days)
         self.notes = notes
+        self.role = role
     
     @property
     def has_access(self):
