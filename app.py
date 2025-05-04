@@ -24,6 +24,10 @@ app = Flask(__name__)
 # 设置安全的会话密钥
 app.secret_key = os.environ.get("SESSION_SECRET", secrets.token_hex(32))
 
+# 导入数据库和用户登录记录模型
+from db import db
+from models import LoginRecord
+
 # 登录页面
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -37,7 +41,19 @@ def login():
         email = request.form.get('email')
         
         # 验证邮箱
-        if verify_email(email):
+        login_successful = verify_email(email)
+        
+        # 记录登录尝试
+        login_record = LoginRecord(
+            email=email,
+            successful=login_successful,
+            ip_address=request.remote_addr,
+            user_agent=request.user_agent.string if request.user_agent else None
+        )
+        db.session.add(login_record)
+        db.session.commit()
+        
+        if login_successful:
             # 登录成功，设置会话
             session['authenticated'] = True
             session['email'] = email
@@ -82,6 +98,19 @@ def logout():
 def index():
     """渲染BTC挖矿计算器主页"""
     return render_template('index.html')
+
+@app.route('/admin/login_records')
+@login_required
+def login_records():
+    """管理员查看登录记录"""
+    # 只允许特定用户（例如 admin@example.com）访问
+    if session.get('email') != 'admin@example.com':
+        flash('您没有权限访问此页面', 'danger')
+        return redirect(url_for('index'))
+    
+    # 获取登录记录
+    records = LoginRecord.query.order_by(LoginRecord.login_time.desc()).limit(100).all()
+    return render_template('login_records.html', records=records)
 
 @app.route('/calculate', methods=['POST'])
 @login_required
