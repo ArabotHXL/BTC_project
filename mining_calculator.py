@@ -176,7 +176,7 @@ def get_real_time_btc_hashrate():
 
 def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electricity_cost=0.05, client_electricity_cost=None, 
                              btc_price=None, difficulty=None, block_reward=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0.0, 
-                             host_investment=0.0, client_investment=0.0):
+                             host_investment=0.0, client_investment=0.0, maintenance_fee=0.0):
     """
     Calculate Bitcoin mining profitability using the exact calculation method from the original code
     
@@ -194,6 +194,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
     - curtailment: Power curtailment percentage (0-100)
     - host_investment: Total investment made by mining site owner (USD)
     - client_investment: Total investment made by client (USD)
+    - maintenance_fee: Monthly maintenance fee in USD (default is 0)
     
     Returns:
     - Dictionary containing profitability metrics including ROI calculations
@@ -381,6 +382,11 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
                 'host_investment': host_investment,
                 'client_investment': client_investment
             },
+            'maintenance_fee': {
+                'daily': daily_maintenance_fee,
+                'monthly': maintenance_fee,
+                'yearly': yearly_maintenance_fee
+            },
             'btc_mined': {
                 'daily': daily_btc,
                 'monthly': monthly_btc,
@@ -528,6 +534,7 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
             for cost in electricity_costs:
                 # 计算这个BTC价格和电费成本组合下的利润
                 # 特别注意：必须将当前循环的电费成本'cost'传递给函数
+                # 为热力图计算添加维护费 - 默认每月5000USD
                 result = calculate_mining_profitability(
                     hashrate=hashrate,
                     power_consumption=power_consumption,
@@ -538,7 +545,8 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
                     block_reward=fixed_network_stats['block_reward'],
                     use_real_time_data=False,  # 不使用实时数据，避免API调用
                     miner_model=miner_model,
-                    miner_count=miner_count
+                    miner_count=miner_count,
+                    maintenance_fee=5000  # 添加默认维护费用
                 )
                 
                 # 热力图需要根据当前模式选择正确的利润数据处理方式
@@ -608,7 +616,8 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
                 block_reward=fixed_network_stats['block_reward'],
                 use_real_time_data=False,
                 miner_model=miner_model,
-                miner_count=miner_count
+                miner_count=miner_count,
+                maintenance_fee=5000  # 一致添加维护费
             )
             
             if 'break_even' in base_result and 'electricity_cost' in base_result['break_even']:
