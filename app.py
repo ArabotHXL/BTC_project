@@ -840,11 +840,12 @@ def get_profit_chart_data():
             'error': f'Server error: {str(e)}'
         }), 500
 
-@app.route('/roi_calculator')
-@login_required
-def roi_calculator():
-    """显示ROI计算器页面"""
-    return render_template('roi_calculator.html', miners=MINER_DATA)
+# 已将ROI计算器直接集成到主页面，不再需要单独的路由
+# @app.route('/roi_calculator')
+# @login_required
+# def roi_calculator():
+#     """显示ROI计算器页面"""
+#     return render_template('roi_calculator.html', miners=MINER_DATA)
 
 @app.route('/api/calculate_roi', methods=['POST'])
 @login_required
