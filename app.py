@@ -110,8 +110,9 @@ def index():
 @login_required
 def login_records():
     """管理员查看登录记录"""
-    # 只允许特定用户（例如 admin@example.com）访问
-    if session.get('email') != 'admin@example.com':
+    # 只允许特定用户（例如 admin@example.com 或 hxl2022hao@gmail.com）访问
+    admin_emails = ['admin@example.com', 'hxl2022hao@gmail.com']
+    if session.get('email') not in admin_emails:
         flash('您没有权限访问此页面', 'danger')
         return redirect(url_for('index'))
     
@@ -305,8 +306,9 @@ def get_miners():
 @login_required
 def user_access():
     """管理员管理用户访问权限"""
-    # 只允许特定用户（例如 admin@example.com）访问
-    if session.get('email') != 'admin@example.com':
+    # 只允许特定用户（例如 admin@example.com 或 hxl2022hao@gmail.com）访问
+    admin_emails = ['admin@example.com', 'hxl2022hao@gmail.com']
+    if session.get('email') not in admin_emails:
         flash('您没有权限访问此页面', 'danger')
         return redirect(url_for('index'))
     
@@ -318,8 +320,9 @@ def user_access():
 @login_required
 def add_user_access():
     """添加新用户访问权限"""
-    # 只允许特定用户（例如 admin@example.com）访问
-    if session.get('email') != 'admin@example.com':
+    # 只允许特定用户（例如 admin@example.com 或 hxl2022hao@gmail.com）访问
+    admin_emails = ['admin@example.com', 'hxl2022hao@gmail.com']
+    if session.get('email') not in admin_emails:
         flash('您没有权限访问此页面', 'danger')
         return redirect(url_for('index'))
     
@@ -369,8 +372,9 @@ def add_user_access():
 @login_required
 def extend_user_access(user_id, days):
     """延长用户访问权限"""
-    # 只允许特定用户（例如 admin@example.com）访问
-    if session.get('email') != 'admin@example.com':
+    # 只允许特定用户（例如 admin@example.com 或 hxl2022hao@gmail.com）访问
+    admin_emails = ['admin@example.com', 'hxl2022hao@gmail.com']
+    if session.get('email') not in admin_emails:
         flash('您没有权限访问此页面', 'danger')
         return redirect(url_for('index'))
     
@@ -394,8 +398,9 @@ def extend_user_access(user_id, days):
 @login_required
 def revoke_user_access(user_id):
     """撤销用户访问权限"""
-    # 只允许特定用户（例如 admin@example.com）访问
-    if session.get('email') != 'admin@example.com':
+    # 只允许特定用户（例如 admin@example.com 或 hxl2022hao@gmail.com）访问
+    admin_emails = ['admin@example.com', 'hxl2022hao@gmail.com']
+    if session.get('email') not in admin_emails:
         flash('您没有权限访问此页面', 'danger')
         return redirect(url_for('index'))
     
