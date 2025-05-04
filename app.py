@@ -20,6 +20,12 @@ from mining_calculator import (
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
+# 默认网络参数
+DEFAULT_HASHRATE_EH = 700  # 默认哈希率，单位: EH/s
+DEFAULT_BTC_PRICE = 80000  # 默认比特币价格，单位: USD
+DEFAULT_DIFFICULTY = 119.12  # 默认难度，单位: T
+DEFAULT_BLOCK_REWARD = 3.125  # 默认区块奖励，单位: BTC
+
 # Initialize Flask app
 app = Flask(__name__)
 
@@ -403,8 +409,7 @@ def get_btc_price():
 def get_network_stats():
     """Get current Bitcoin network statistics"""
     try:
-        # 用一个可能成功的默认值
-        DEFAULT_HASHRATE_EH = 700  # 默认哈希率，单位: EH/s
+        # 使用定义的默认值
         
         # 获取实时数据，如果有任何错误使用默认值
         try:
@@ -434,9 +439,41 @@ def get_network_stats():
             if response.status_code == 200:
                 data = response.json()
                 if 'hash_rate' in data:
+                    # 注意：此API返回的是Hash/s (H/s)，需要转换为EH/s (10^18 H/s)
                     hashrate_h = float(data['hash_rate'])
+                    # 修正转换：网络哈希率通常在百E范围，确保正确计算
                     hashrate = hashrate_h / 1e18  # 转换为 EH/s
-                    logging.info(f"成功获取网络哈希率原始值: {hashrate_h} Hash/s = {hashrate} EH/s")
+                    
+                    # 检查哈希率值是否合理 (通常在50-1000 EH/s范围内)
+                    if hashrate < 10:  # 如果哈希率低于10 EH/s，可能有误
+                        # 检查是否是科学计数法表示问题
+                        hashrate_str = str(data['hash_rate'])
+                        if 'e+' in hashrate_str:
+                            try:
+                                # 如果是科学计数法格式(例如：9.41e+17)，直接解析
+                                base, exponent = hashrate_str.split('e+')
+                                base = float(base)
+                                exponent = int(exponent)
+                                # 计算实际哈希率值(EH/s)
+                                hashrate = base * (10 ** (exponent - 18))
+                                logging.info(f"科学计数法格式修正：{hashrate_str} → {hashrate} EH/s")
+                            except Exception as parse_err:
+                                logging.error(f"解析科学计数法失败: {parse_err}")
+                        
+                        # 如果值仍然太小，检查是否需要反向计算
+                        if hashrate < 10:
+                            # 某些API返回的是PH/s而不是H/s
+                            possible_ph_value = hashrate_h * 1000  # 如果是PH/s，转换为EH/s
+                            if 10 <= possible_ph_value <= 2000:
+                                hashrate = possible_ph_value
+                                logging.info(f"可能是PH/s值，调整为: {hashrate} EH/s")
+                    
+                    # 如果哈希率仍然不合理，使用默认值
+                    if hashrate < 10 or hashrate > 2000:
+                        logging.warning(f"计算的哈希率值不合理: {hashrate} EH/s，使用默认值")
+                        hashrate = DEFAULT_HASHRATE_EH
+                    
+                    logging.info(f"成功获取网络哈希率: 原始值={hashrate_h} H/s → 转换值={hashrate} EH/s")
                 else:
                     logging.error("API响应中没有hash_rate字段")
                     hashrate = DEFAULT_HASHRATE_EH
@@ -462,10 +499,10 @@ def get_network_stats():
         # 返回默认值而不是错误，这样前端至少能显示一些内容
         return jsonify({
             'success': True,
-            'price': 80000,  # 默认价格
-            'difficulty': 119.12,  # 默认难度，单位T
-            'hashrate': 700,  # 默认哈希率，单位EH/s
-            'block_reward': 3.125  # 默认区块奖励
+            'price': DEFAULT_BTC_PRICE,  # 默认价格
+            'difficulty': DEFAULT_DIFFICULTY,  # 默认难度，单位T
+            'hashrate': DEFAULT_HASHRATE_EH,  # 默认哈希率，单位EH/s
+            'block_reward': DEFAULT_BLOCK_REWARD  # 默认区块奖励
         })
 
 @app.route('/miners', methods=['GET'])
