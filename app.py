@@ -52,9 +52,9 @@ def login():
                 if request.remote_addr:
                     # 如果是本地或内部网络IP
                     if request.remote_addr.startswith('127.') or request.remote_addr == '::1':
-                        location = "本地连接 (localhost)"
+                        location = "本地, 开发环境, localhost"
                     elif request.remote_addr.startswith('192.168.') or request.remote_addr.startswith('10.'):
-                        location = "内部网络 (局域网)"
+                        location = "中国, 内部网络, 局域网"
                     else:
                         # 使用IP-API获取地理位置信息
                         import requests
@@ -73,7 +73,11 @@ def login():
                             else:
                                 error_msg = data.get('message', '未知错误')
                                 logging.warning(f"IP-API返回错误: {error_msg}")
-                                location = f"外部网络 ({request.remote_addr})"
+                                # 对于私有IP范围，使用更友好的显示
+                                if error_msg == 'private range':
+                                    location = f"Replit服务器, 数据中心"
+                                else:
+                                    location = f"外部网络 ({request.remote_addr})"
                         else:
                             logging.warning(f"IP-API请求失败，状态码: {response.status_code}")
                             location = f"外部网络 ({request.remote_addr})"
