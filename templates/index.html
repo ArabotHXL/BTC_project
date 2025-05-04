@@ -175,19 +175,26 @@
                                 </div>
 
                                 <!-- Electricity cost -->
+                                {% if session.role in ['owner', 'admin', 'mining_site'] %}
                                 <div class="mb-3">
                                     <label for="electricity-cost" class="form-label">Electricity Cost ($/kWh)</label>
                                     <input type="number" class="form-control" id="electricity-cost" name="electricity_cost" value="0.05" min="0" step="0.001">
+                                    <div class="form-text">矿场实际电费成本 (Actual electricity cost for the mining site)</div>
                                 </div>
+                                {% else %}
+                                <!-- 为普通用户隐藏字段，但提供默认值 -->
+                                <input type="hidden" id="electricity-cost" name="electricity_cost" value="0.05">
+                                {% endif %}
 
                                 <!-- Customer Electricity Cost -->
                                 <div class="mb-3">
-                                    <label for="client-electricity-cost" class="form-label">Customer Electricity Cost ($/kWh)</label>
+                                    <label for="client-electricity-cost" class="form-label">{% if session.role in ['owner', 'admin', 'mining_site'] %}Customer Electricity Cost{% else %}Electricity Cost{% endif %} ($/kWh)</label>
                                     <input type="number" class="form-control" id="client-electricity-cost" name="client_electricity_cost" value="0.06" min="0" step="0.001">
-                                    <div class="form-text">Electricity cost charged to customers (for client profit calculation)</div>
+                                    <div class="form-text">{% if session.role in ['owner', 'admin', 'mining_site'] %}收取客户的电费 (Electricity cost charged to customers){% else %}您支付的电费 (Electricity cost you are paying){% endif %}</div>
                                 </div>
                                 
-                                <!-- Maintenance Fee -->
+                                <!-- Maintenance Fee - 仅对矿场管理员显示 -->
+                                {% if session.role in ['owner', 'admin', 'mining_site'] %}
                                 <div class="mb-3">
                                     <label for="maintenance-fee" class="form-label">矿场维护费 (Maintenance Fee)</label>
                                     <div class="input-group">
@@ -206,15 +213,20 @@
                                     </div>
                                     <div class="form-text">矿场主的总投资金额，用于计算ROI (Total investment by mining site owner, for ROI calculation)</div>
                                 </div>
+                                {% else %}
+                                <!-- 为普通用户隐藏字段，但提供默认值 -->
+                                <input type="hidden" id="maintenance-fee" name="maintenance_fee" value="5000">
+                                <input type="hidden" id="host-investment" name="host_investment" value="800000">
+                                {% endif %}
                                 
                                 <!-- Client Investment Amount -->
                                 <div class="mb-3">
-                                    <label for="client-investment" class="form-label">客户投资金额 (Client Investment)</label>
+                                    <label for="client-investment" class="form-label">{% if session.role in ['owner', 'admin', 'mining_site'] %}客户投资金额 (Client Investment){% else %}投资金额 (Investment Amount){% endif %}</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="client-investment" name="client_investment" value="0" step="10000" min="0">
                                         <span class="input-group-text">$</span>
                                     </div>
-                                    <div class="form-text">客户的总投资金额，用于计算ROI (Total investment by client, for ROI calculation)</div>
+                                    <div class="form-text">{% if session.role in ['owner', 'admin', 'mining_site'] %}客户的总投资金额，用于计算ROI (Total investment by client, for ROI calculation){% else %}您的总投资金额，用于计算投资回报率 (Your total investment amount for ROI calculation){% endif %}</div>
                                 </div>
 
                                 <!-- BTC price -->
@@ -276,7 +288,7 @@
                                 <!-- Customer profit -->
                                 <div class="col-md-4">
                                     <div class="p-3 rounded bg-info bg-opacity-10">
-                                        <h6>客户月度收益 (Client Monthly)</h6>
+                                        <h6>{% if session.role in ['owner', 'admin', 'mining_site'] %}客户月度收益 (Client Monthly){% else %}月度收益 (Monthly Profit){% endif %}</h6>
                                         <h3 id="client-profit-card">$0.00</h3>
                                     </div>
                                 </div>
@@ -412,11 +424,11 @@
                             {% endif %}
                             
                             <!-- 客户信息 (Customer Information) -->
-                            <h6 class="mb-3 mt-4 bg-info bg-opacity-10 p-2 rounded">客户信息 (Customer Information)</h6>
+                            <h6 class="mb-3 mt-4 bg-info bg-opacity-10 p-2 rounded">{% if session.role in ['owner', 'admin', 'mining_site'] %}客户信息 (Customer Information){% else %}您的收益信息 (Your Profit Information){% endif %}</h6>
                             <div class="row">
                                 <!-- 客户收入列 -->
                                 <div class="col-md-6">
-                                    <h6 class="text-success mb-2">客户收入 (Customer Income)</h6>
+                                    <h6 class="text-success mb-2">{% if session.role in ['owner', 'admin', 'mining_site'] %}客户收入 (Customer Income){% else %}收入 (Income){% endif %}</h6>
                                     <table class="table table-sm table-bordered border-success border-opacity-25">
                                         <tbody>
                                             <tr>
@@ -436,7 +448,7 @@
                                 </div>
                                 <!-- 客户支出列 -->
                                 <div class="col-md-6">
-                                    <h6 class="text-danger mb-2">客户支出 (Customer Expenses)</h6>
+                                    <h6 class="text-danger mb-2">{% if session.role in ['owner', 'admin', 'mining_site'] %}客户支出 (Customer Expenses){% else %}支出 (Expenses){% endif %}</h6>
                                     <table class="table table-sm table-bordered border-danger border-opacity-25">
                                         <tbody>
                                             <tr>
