@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="user-role" content="{{ session.role }}">
+    <title>比特币挖矿ROI计算器</title>
+    <!-- Bootstrap CSS from Replit CDN -->
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js 3.x 版本，用于数据可视化 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        .roi-value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        .roi-positive {
+            color: var(--bs-success);
+        }
+        .roi-negative {
+            color: var(--bs-danger);
+        }
+        .payback-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .metric-card {
+            transition: all 0.3s ease;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        .mode-selector {
+            cursor: pointer;
+        }
+        .mode-selector.active {
+            border: 2px solid var(--bs-primary);
+            background-color: rgba(var(--bs-primary-rgb), 0.1);
+        }
+        #comparison-chart {
+            min-height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <header class="py-3 mb-4 border-bottom">
+            <div class="container d-flex align-items-center justify-content-between">
+                <h1 class="fs-4">比特币挖矿 ROI 计算器</h1>
+                
+                <div class="d-flex gap-4 align-items-center">
+                    <!-- Network Stats -->
+                    <div id="network-stats-container" class="d-flex gap-3 text-center">
+                        <div class="stats-item">
+                            <span class="badge bg-warning">BTC 价格</span>
+                            <span id="btc-price" class="stats-value">$0</span>
+                        </div>
+                        <div class="stats-item">
+                            <span class="badge bg-info">网络难度</span>
+                            <span id="network-difficulty" class="stats-value">0T</span>
+                        </div>
+                        <div class="stats-item">
+                            <span class="badge bg-danger">网络算力</span>
+                            <span id="network-hashrate" class="stats-value">0 EH/s</span>
+                        </div>
+                    </div>
+                    
+                    <!-- User Account Info -->
+                    <div class="dropdown">
+                        <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle me-1"></i>
+                            {% if session.email %}
+                                {{ session.email }}
+                            {% else %}
+                                用户
+                            {% endif %}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><h6 class="dropdown-header">账户信息</h6></li>
+                            {% if session.email %}
+                                <li><span class="dropdown-item-text">{{ session.email }}</span></li>
+                                
+                                <!-- 根据角色显示管理员选项 -->
+                                {% if session.role in ['owner', 'admin', 'mining_site'] %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header">管理功能</h6></li>
+                                    
+                                    <!-- 拥有者可以查看登录记录 -->
+                                    {% if session.role == 'owner' %}
+                                    <li><a class="dropdown-item" href="{{ url_for('login_records') }}">
+                                        <i class="bi bi-file-text me-1"></i> 查看登录记录
+                                    </a></li>
+                                    {% endif %}
+                                    
+                                    <!-- 拥有者和管理员可以管理用户访问权限 -->
+                                    {% if session.role in ['owner', 'admin'] %}
+                                    <li><a class="dropdown-item" href="{{ url_for('user_access') }}">
+                                        <i class="bi bi-people me-1"></i> 用户访问管理
+                                    </a></li>
+                                    {% endif %}
+                                    
+                                    <!-- 所有用户都可以使用ROI计算器 -->
+                                    <li><a class="dropdown-item" href="{{ url_for('roi_calculator') }}">
+                                        <i class="bi bi-calculator me-1"></i> ROI计算器
+                                    </a></li>
+                                    
+                                    <!-- 返回主计算器 -->
+                                    <li><a class="dropdown-item" href="{{ url_for('index') }}">
+                                        <i class="bi bi-arrow-left me-1"></i> 返回主计算器
+                                    </a></li>
+                                    
+                                    <!-- 显示当前用户角色 -->
+                                    <li><span class="dropdown-item-text">
+                                        <i class="bi bi-person-badge me-1"></i> 
+                                        角色: 
+                                        {% if session.role == 'owner' %}
+                                            <span class="badge bg-danger">拥有者</span>
+                                        {% elif session.role == 'admin' %}
+                                            <span class="badge bg-warning">管理员</span>
+                                        {% elif session.role == 'mining_site' %}
+                                            <span class="badge bg-info">矿场管理</span>
+                                        {% else %}
+                                            <span class="badge bg-primary">矿场客人</span>
+                                        {% endif %}
+                                    </span></li>
+                                {% endif %}
+                                
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('logout') }}">退出登录 <i class="bi bi-box-arrow-right ms-1"></i></a></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="container mb-5">
+            <!-- 消息提示条 -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            <!-- 模式选择 -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card shadow">
+                        <div class="card-header bg-primary bg-opacity-10">
+                            <h5 class="mb-0">选择计算模式</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row justify-content-center">
+                                <div class="col-md-6">
+                                    <div id="self-mining-mode" class="mode-selector active p-3 rounded border text-center mb-3 mb-md-0">
+                                        <i class="bi bi-person-gear display-4"></i>
+                                        <h5 class="mt-2">自己挖币模式</h5>
+                                        <p class="text-muted">适用于矿工自行购买设备、承担风险并获取全部挖矿收益</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div id="hosting-mode" class="mode-selector p-3 rounded border text-center">
+                                        <i class="bi bi-building-gear display-4"></i>
+                                        <h5 class="mt-2">托管模式</h5>
+                                        <p class="text-muted">适用于矿场托管客户设备，根据电费差价获取收益</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- 左侧：输入表单 -->
+                <div class="col-lg-5">
+                    <div class="card shadow">
+                        <div class="card-header bg-primary bg-opacity-10">
+                            <h5 class="mb-0">ROI 参数设置</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="roi-calculator-form">
+                                <!-- 隐藏的模式字段 -->
+                                <input type="hidden" id="calculation-mode" name="mode" value="self">
+                                
+                                <!-- 矿机型号选择 -->
+                                <div class="mb-3">
+                                    <label for="miner-model" class="form-label">矿机型号</label>
+                                    <select class="form-select" id="miner-model" name="miner_model" required>
+                                        <option value="">请选择矿机型号</option>
+                                        {% for miner, specs in miners.items() %}
+                                        <option value="{{ miner }}">{{ miner }} ({{ specs.hashrate }} TH/s, {{ specs.power_watt }} W)</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <!-- 矿机数量 -->
+                                <div class="mb-3">
+                                    <label for="miner-count" class="form-label">矿机数量</label>
+                                    <input type="number" class="form-control" id="miner-count" name="miner_count" value="100" min="1" step="1">
+                                </div>
+                                
+                                <!-- 或者使用站点功率 -->
+                                <div class="mb-3">
+                                    <label for="site-power-mw" class="form-label">站点功率 (MW)</label>
+                                    <input type="number" class="form-control" id="site-power-mw" name="site_power_mw" value="1" min="0.1" step="0.1">
+                                    <div class="form-text">输入矿场总电力容量(MW)，系统将自动计算矿机数量</div>
+                                </div>
+
+                                <!-- 电费成本 -->
+                                <div class="mb-3">
+                                    <label for="electricity-cost" class="form-label">电费成本 ($/kWh)</label>
+                                    <input type="number" class="form-control" id="electricity-cost" name="electricity_cost" value="0.05" min="0" step="0.001">
+                                </div>
+
+                                <!-- 客户电费（仅托管模式显示） -->
+                                <div class="mb-3 hosting-only" style="display: none;">
+                                    <label for="client-electricity-cost" class="form-label">客户电费 ($/kWh)</label>
+                                    <input type="number" class="form-control" id="client-electricity-cost" name="client_electricity_cost" value="0.07" min="0" step="0.001">
+                                    <div class="form-text">收取客户的电费价格，必须高于实际电费成本</div>
+                                </div>
+
+                                <!-- 初始投资成本 -->
+                                <div class="mb-3">
+                                    <label for="capex" class="form-label">初始投资 (CAPEX) (USD)</label>
+                                    <input type="number" class="form-control" id="capex" name="capex" placeholder="自动计算" step="1000">
+                                    <div class="form-text">留空将自动根据矿机数量估算（每台矿机约8000美元+基础设施成本）</div>
+                                </div>
+
+                                <!-- 月度维护成本 -->
+                                <div class="mb-3">
+                                    <label for="maintenance-cost" class="form-label">月度维护成本 (USD)</label>
+                                    <input type="number" class="form-control" id="maintenance-cost" name="monthly_maintenance_cost" value="5000" min="0" step="100">
+                                </div>
+
+                                <!-- 功率削减百分比 -->
+                                <div class="mb-3">
+                                    <label for="curtailment" class="form-label">功率削减百分比 (%)</label>
+                                    <input type="number" class="form-control" id="curtailment" name="curtailment" value="0" min="0" max="100" step="1">
+                                    <div class="form-text">设定功率削减百分比以模拟部分矿机关闭的情况</div>
+                                </div>
+
+                                <!-- 比特币价格 -->
+                                <div class="mb-3">
+                                    <label for="btc-price-input" class="form-label">比特币价格 (USD)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="btc-price-input" name="btc_price" placeholder="使用实时数据" min="0" step="1000">
+                                    </div>
+                                    <div class="form-text">留空将使用实时比特币价格</div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-calculator me-1"></i> 计算 ROI
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧：结果和可视化 -->
+                <div class="col-lg-7">
+                    <!-- 加载中提示 -->
+                    <div id="loading-indicator" class="text-center py-5" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">计算中...</span>
+                        </div>
+                        <p class="mt-2">正在计算 ROI 数据...</p>
+                    </div>
+                    
+                    <!-- 错误提示 -->
+                    <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+                    
+                    <!-- 结果摘要 -->
+                    <div id="results-card" class="card shadow mb-4" style="display: none;">
+                        <div class="card-header bg-success bg-opacity-10 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">ROI 计算结果</h5>
+                            <span id="results-timestamp" class="text-muted small"></span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-4">
+                                <!-- 年化 ROI -->
+                                <div class="col-md-6">
+                                    <div class="p-3 rounded bg-primary bg-opacity-10 text-center metric-card">
+                                        <h6>年化投资回报率 (ROI)</h6>
+                                        <div id="annual-roi" class="roi-value roi-positive">0%</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 回本周期 -->
+                                <div class="col-md-6">
+                                    <div class="p-3 rounded bg-warning bg-opacity-10 text-center metric-card">
+                                        <h6>回本周期</h6>
+                                        <div id="payback-period" class="payback-value">0个月</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 月度利润 -->
+                                <div class="col-md-6">
+                                    <div class="p-3 rounded bg-info bg-opacity-10 text-center metric-card">
+                                        <h6>月度利润</h6>
+                                        <div id="monthly-profit" class="roi-value roi-positive">$0</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 5年利润 -->
+                                <div class="col-md-6">
+                                    <div class="p-3 rounded bg-success bg-opacity-10 text-center metric-card">
+                                        <h6>5年总利润</h6>
+                                        <div id="five-year-profit" class="roi-value roi-positive">$0</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 详细数据 -->
+                            <div class="mt-4">
+                                <h6 class="border-bottom pb-2">详细数据</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <th>矿机型号:</th>
+                                                <td id="result-miner-model">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>矿机数量:</th>
+                                                <td id="result-miner-count">0</td>
+                                            </tr>
+                                            <tr>
+                                                <th>总算力:</th>
+                                                <td id="result-hashrate">0 TH/s</td>
+                                            </tr>
+                                            <tr>
+                                                <th>总功耗:</th>
+                                                <td id="result-power">0 W</td>
+                                            </tr>
+                                            <tr>
+                                                <th>电费成本:</th>
+                                                <td id="result-electricity-cost">$0/kWh</td>
+                                            </tr>
+                                            <tr>
+                                                <th>初始投资:</th>
+                                                <td id="result-capex">$0</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <th>月度收入:</th>
+                                                <td id="result-monthly-revenue">$0</td>
+                                            </tr>
+                                            <tr>
+                                                <th>月度电费成本:</th>
+                                                <td id="result-monthly-electricity">$0</td>
+                                            </tr>
+                                            <tr>
+                                                <th>月度维护成本:</th>
+                                                <td id="result-monthly-maintenance">$0</td>
+                                            </tr>
+                                            <tr>
+                                                <th>年度利润:</th>
+                                                <td id="result-yearly-profit">$0</td>
+                                            </tr>
+                                            <tr class="self-mining-only">
+                                                <th>月BTC产出:</th>
+                                                <td id="result-monthly-btc">0 BTC</td>
+                                            </tr>
+                                            <tr class="hosting-only" style="display: none;">
+                                                <th>客户电费:</th>
+                                                <td id="result-client-electricity-cost">$0/kWh</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 客户数据（仅在托管模式下显示） -->
+                            <div id="customer-data-section" class="mt-4 hosting-only" style="display: none;">
+                                <h6 class="border-bottom pb-2">客户数据</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <th>客户月度收入:</th>
+                                                <td id="customer-monthly-revenue">$0</td>
+                                            </tr>
+                                            <tr>
+                                                <th>客户月度电费:</th>
+                                                <td id="customer-monthly-cost">$0</td>
+                                            </tr>
+                                            <tr>
+                                                <th>客户月度利润:</th>
+                                                <td id="customer-monthly-profit">$0</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <th>客户年度利润:</th>
+                                                <td id="customer-yearly-profit">$0</td>
+                                            </tr>
+                                            <tr>
+                                                <th>客户月BTC产出:</th>
+                                                <td id="customer-monthly-btc">0 BTC</td>
+                                            </tr>
+                                            <tr>
+                                                <th>客户年BTC产出:</th>
+                                                <td id="customer-yearly-btc">0 BTC</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 比较分析按钮 -->
+                    <div class="text-center mb-4" id="comparison-btn-container" style="display: none;">
+                        <button id="show-comparison-btn" class="btn btn-outline-primary">
+                            <i class="bi bi-bar-chart-line me-1"></i> 显示ROI比较分析
+                        </button>
+                    </div>
+                    
+                    <!-- 比较分析图表 -->
+                    <div id="comparison-section" class="card shadow" style="display: none;">
+                        <div class="card-header bg-primary bg-opacity-10">
+                            <h5 class="mb-0">ROI 比较分析</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">选择对比矿机型号</label>
+                                <div class="row g-2" id="miners-comparison-selection">
+                                    {% for miner, specs in miners.items() %}
+                                    <div class="col-md-4 col-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input miner-comparison-checkbox" type="checkbox" value="{{ miner }}" id="miner-{{ loop.index }}">
+                                            <label class="form-check-label" for="miner-{{ loop.index }}">
+                                                {{ miner }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="text-center mb-3">
+                                <button id="generate-comparison-btn" class="btn btn-primary">
+                                    <i class="bi bi-bar-chart-line me-1"></i> 生成比较图表
+                                </button>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <canvas id="comparison-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript for ROI Calculator -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化
+            initROICalculator();
+            
+            // 获取网络数据
+            fetchNetworkStats();
+        });
+        
+        // 全局变量
+        let comparisonChart = null;
+        
+        // 初始化函数
+        function initROICalculator() {
+            // 模式选择
+            document.getElementById('self-mining-mode').addEventListener('click', function() {
+                switchMode('self');
+            });
+            
+            document.getElementById('hosting-mode').addEventListener('click', function() {
+                switchMode('hosting');
+            });
+            
+            // 表单提交
+            document.getElementById('roi-calculator-form').addEventListener('submit', handleROICalculate);
+            
+            // 矿机选择
+            document.getElementById('miner-model').addEventListener('change', updateMinerInfo);
+            
+            // 站点功率变化
+            document.getElementById('site-power-mw').addEventListener('input', updateMinerCount);
+            
+            // 比较按钮
+            document.getElementById('show-comparison-btn').addEventListener('click', function() {
+                document.getElementById('comparison-section').style.display = 'block';
+                this.style.display = 'none';
+            });
+            
+            // 生成比较图表
+            document.getElementById('generate-comparison-btn').addEventListener('click', generateComparisonChart);
+        }
+        
+        // 切换计算模式
+        function switchMode(mode) {
+            // 更新隐藏字段
+            document.getElementById('calculation-mode').value = mode;
+            
+            // 更新UI
+            if (mode === 'self') {
+                document.getElementById('self-mining-mode').classList.add('active');
+                document.getElementById('hosting-mode').classList.remove('active');
+                
+                // 隐藏托管相关字段
+                Array.from(document.getElementsByClassName('hosting-only')).forEach(element => {
+                    element.style.display = 'none';
+                });
+                
+                // 显示自己挖币相关字段
+                Array.from(document.getElementsByClassName('self-mining-only')).forEach(element => {
+                    element.style.display = '';
+                });
+            } else {
+                document.getElementById('hosting-mode').classList.add('active');
+                document.getElementById('self-mining-mode').classList.remove('active');
+                
+                // 显示托管相关字段
+                Array.from(document.getElementsByClassName('hosting-only')).forEach(element => {
+                    element.style.display = '';
+                });
+                
+                // 隐藏自己挖币相关字段
+                Array.from(document.getElementsByClassName('self-mining-only')).forEach(element => {
+                    element.style.display = 'none';
+                });
+            }
+        }
+        
+        // 更新矿机信息
+        function updateMinerInfo() {
+            // TODO: 实现根据选择的矿机更新算力和功耗
+        }
+        
+        // 根据站点功率更新矿机数量
+        function updateMinerCount() {
+            // TODO: 实现根据站点功率计算矿机数量
+        }
+        
+        // 获取网络状态
+        function fetchNetworkStats() {
+            fetch('/network_stats')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('btc-price').innerText = '$' + formatNumber(data.btc_price, 0);
+                        document.getElementById('network-difficulty').innerText = formatNumber(data.difficulty, 2) + 'T';
+                        document.getElementById('network-hashrate').innerText = formatNumber(data.hashrate, 0) + ' EH/s';
+                    }
+                })
+                .catch(error => {
+                    console.error('获取网络数据失败:', error);
+                });
+        }
+        
+        // 处理ROI计算
+        function handleROICalculate(event) {
+            event.preventDefault();
+            
+            // 显示加载指示器
+            document.getElementById('loading-indicator').style.display = 'block';
+            document.getElementById('results-card').style.display = 'none';
+            document.getElementById('error-message').style.display = 'none';
+            document.getElementById('comparison-btn-container').style.display = 'none';
+            
+            // 获取表单数据
+            const form = event.target;
+            const formData = new FormData(form);
+            const jsonData = {};
+            
+            // 转换为JSON
+            for (const [key, value] of formData.entries()) {
+                if (value === '') {
+                    jsonData[key] = null;
+                } else {
+                    // 数字转换
+                    if (key === 'miner_count' || key === 'curtailment') {
+                        jsonData[key] = parseInt(value);
+                    } else if (key === 'electricity_cost' || key === 'client_electricity_cost' || 
+                             key === 'site_power_mw' || key === 'btc_price' || 
+                             key === 'capex' || key === 'monthly_maintenance_cost') {
+                        jsonData[key] = parseFloat(value);
+                    } else {
+                        jsonData[key] = value;
+                    }
+                }
+            }
+            
+            // 发送API请求
+            fetch('/api/calculate_roi', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(jsonData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // 隐藏加载指示器
+                document.getElementById('loading-indicator').style.display = 'none';
+                
+                if (data.success) {
+                    displayROIResults(data);
+                    document.getElementById('comparison-btn-container').style.display = 'block';
+                } else {
+                    // 显示错误信息
+                    document.getElementById('error-message').style.display = 'block';
+                    document.getElementById('error-message').textContent = data.error || '计算ROI时出错';
+                }
+            })
+            .catch(error => {
+                console.error('ROI计算请求失败:', error);
+                document.getElementById('loading-indicator').style.display = 'none';
+                document.getElementById('error-message').style.display = 'block';
+                document.getElementById('error-message').textContent = '网络请求失败: ' + error.message;
+            });
+        }
+        
+        // 显示ROI计算结果
+        function displayROIResults(data) {
+            // 显示结果卡片
+            document.getElementById('results-card').style.display = 'block';
+            
+            // 主要指标
+            document.getElementById('annual-roi').textContent = formatNumber(data.roi_metrics.annual_roi_percentage, 2) + '%';
+            document.getElementById('annual-roi').className = data.roi_metrics.annual_roi_percentage > 0 ? 'roi-value roi-positive' : 'roi-value roi-negative';
+            
+            document.getElementById('payback-period').textContent = data.roi_metrics.payback_period_months > 600 ? '无法回本' : 
+                formatNumber(data.roi_metrics.payback_period_months, 1) + '个月 (' + 
+                formatNumber(data.roi_metrics.payback_period_years, 1) + '年)';
+            
+            document.getElementById('monthly-profit').textContent = '$' + formatNumber(data.financial_data.monthly_profit, 0);
+            document.getElementById('monthly-profit').className = data.financial_data.monthly_profit > 0 ? 'roi-value roi-positive' : 'roi-value roi-negative';
+            
+            document.getElementById('five-year-profit').textContent = '$' + formatNumber(data.financial_data.five_year_profit, 0);
+            document.getElementById('five-year-profit').className = data.financial_data.five_year_profit > 0 ? 'roi-value roi-positive' : 'roi-value roi-negative';
+            
+            // 详细数据
+            document.getElementById('result-miner-model').textContent = data.inputs.miner_model;
+            document.getElementById('result-miner-count').textContent = data.inputs.miner_count;
+            document.getElementById('result-hashrate').textContent = formatNumber(data.inputs.hashrate_th, 0) + ' TH/s';
+            document.getElementById('result-power').textContent = formatNumber(data.inputs.power_consumption_watts, 0) + ' W';
+            document.getElementById('result-electricity-cost').textContent = '$' + formatNumber(data.inputs.electricity_cost, 3) + '/kWh';
+            document.getElementById('result-capex').textContent = '$' + formatNumber(data.inputs.capex, 0);
+            
+            document.getElementById('result-monthly-revenue').textContent = '$' + formatNumber(data.financial_data.monthly_revenue, 0);
+            document.getElementById('result-monthly-electricity').textContent = '$' + formatNumber(data.financial_data.monthly_electricity_cost, 0);
+            document.getElementById('result-monthly-maintenance').textContent = '$' + formatNumber(data.financial_data.monthly_maintenance_cost, 0);
+            document.getElementById('result-yearly-profit').textContent = '$' + formatNumber(data.financial_data.yearly_profit, 0);
+            
+            // 根据模式显示不同数据
+            if (data.mode === 'self') {
+                document.getElementById('result-monthly-btc').textContent = formatNumber(data.mining_data.btc_mined_monthly, 6) + ' BTC';
+                
+                // 隐藏托管相关
+                Array.from(document.getElementsByClassName('hosting-only')).forEach(element => {
+                    element.style.display = 'none';
+                });
+                
+                // 显示自己挖币相关
+                Array.from(document.getElementsByClassName('self-mining-only')).forEach(element => {
+                    element.style.display = '';
+                });
+            } else {
+                document.getElementById('result-client-electricity-cost').textContent = '$' + formatNumber(data.inputs.client_electricity_cost, 3) + '/kWh';
+                
+                // 客户数据
+                if (data.customer_data) {
+                    document.getElementById('customer-monthly-revenue').textContent = '$' + formatNumber(data.customer_data.monthly_revenue, 0);
+                    document.getElementById('customer-monthly-cost').textContent = '$' + formatNumber(data.customer_data.monthly_cost, 0);
+                    document.getElementById('customer-monthly-profit').textContent = '$' + formatNumber(data.customer_data.monthly_profit, 0);
+                    document.getElementById('customer-yearly-profit').textContent = '$' + formatNumber(data.customer_data.yearly_profit, 0);
+                    document.getElementById('customer-monthly-btc').textContent = formatNumber(data.customer_data.btc_mined_monthly, 6) + ' BTC';
+                    document.getElementById('customer-yearly-btc').textContent = formatNumber(data.customer_data.btc_mined_yearly, 6) + ' BTC';
+                }
+                
+                // 显示托管相关
+                Array.from(document.getElementsByClassName('hosting-only')).forEach(element => {
+                    element.style.display = '';
+                });
+                
+                // 隐藏自己挖币相关
+                Array.from(document.getElementsByClassName('self-mining-only')).forEach(element => {
+                    element.style.display = 'none';
+                });
+            }
+            
+            // 时间戳
+            const now = new Date();
+            document.getElementById('results-timestamp').textContent = '计算时间: ' + now.toLocaleString();
+        }
+        
+        // 生成比较图表
+        function generateComparisonChart() {
+            // 获取选中的矿机型号
+            const selectedMiners = Array.from(document.getElementsByClassName('miner-comparison-checkbox'))
+                .filter(checkbox => checkbox.checked)
+                .map(checkbox => checkbox.value);
+            
+            if (selectedMiners.length === 0) {
+                alert('请至少选择一种矿机型号进行比较');
+                return;
+            }
+            
+            // 获取当前模式
+            const mode = document.getElementById('calculation-mode').value;
+            
+            // 获取客户电费（如果是托管模式）
+            let clientElectricityCost = null;
+            if (mode === 'hosting') {
+                clientElectricityCost = parseFloat(document.getElementById('client-electricity-cost').value) || 0.07;
+            }
+            
+            // 准备请求数据
+            const requestData = {
+                miner_models: selectedMiners,
+                mode: mode,
+                client_electricity_cost: clientElectricityCost,
+                miner_count: parseInt(document.getElementById('miner-count').value) || 100
+            };
+            
+            // 显示加载
+            document.getElementById('comparison-chart').innerHTML = '加载中...';
+            
+            // 发送请求
+            fetch('/api/roi_comparison', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    renderComparisonChart(data);
+                } else {
+                    alert('生成比较数据失败: ' + (data.error || '未知错误'));
+                }
+            })
+            .catch(error => {
+                console.error('比较数据请求失败:', error);
+                alert('网络请求失败: ' + error.message);
+            });
+        }
+        
+        // 渲染比较图表
+        function renderComparisonChart(data) {
+            const ctx = document.getElementById('comparison-chart').getContext('2d');
+            
+            // 先销毁旧图表（如果存在）
+            if (comparisonChart) {
+                comparisonChart.destroy();
+            }
+            
+            // 准备数据
+            const minerModels = [];
+            const annualROIs = [];
+            const paybackMonths = [];
+            const monthlyProfits = [];
+            
+            // 取第一个电费和BTC价格作为标签
+            const firstModel = data.comparison_data[0];
+            const firstScenario = firstModel.scenarios[0];
+            
+            const chartLabels = data.comparison_data.map(item => item.model);
+            
+            // 为每个矿机计算平均值
+            data.comparison_data.forEach(model => {
+                minerModels.push(model.model);
+                
+                // 计算平均值
+                let totalROI = 0;
+                let totalPayback = 0;
+                let totalProfit = 0;
+                const validScenarios = model.scenarios.length;
+                
+                model.scenarios.forEach(scenario => {
+                    totalROI += scenario.annual_roi;
+                    totalPayback += scenario.payback_months;
+                    totalProfit += scenario.monthly_profit;
+                });
+                
+                annualROIs.push(totalROI / validScenarios);
+                paybackMonths.push(totalPayback / validScenarios);
+                monthlyProfits.push(totalProfit / validScenarios);
+            });
+            
+            // 创建图表
+            comparisonChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartLabels,
+                    datasets: [
+                        {
+                            label: '年化ROI (%)',
+                            data: annualROIs,
+                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: '回本周期 (月)',
+                            data: paybackMonths,
+                            backgroundColor: 'rgba(255, 159, 64, 0.7)',
+                            borderColor: 'rgba(255, 159, 64, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: '月利润 ($)',
+                            data: monthlyProfits,
+                            backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y2'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '矿机ROI比较 (BTC价格: $' + formatNumber(data.current_btc_price, 0) + ', 模式: ' + (data.mode === 'self' ? '自己挖币' : '托管') + ')'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: '年化ROI (%)'
+                            },
+                            grid: {
+                                borderDash: [5, 5]
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: '回本周期 (月)'
+                            },
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y2: {
+                            type: 'linear',
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 格式化数字
+        function formatNumber(value, decimals) {
+            if (value === null || value === undefined || isNaN(value)) {
+                return "0";
+            }
+            
+            // 处理无限值
+            if (!isFinite(value)) {
+                return value > 0 ? "∞" : "-∞";
+            }
+            
+            let num = parseFloat(value);
+            
+            // 大数字简化
+            if (Math.abs(num) >= 1e9) {
+                return (num / 1e9).toFixed(2) + "B";
+            } else if (Math.abs(num) >= 1e6) {
+                return (num / 1e6).toFixed(2) + "M";
+            } else if (Math.abs(num) >= 1e3 && Math.abs(num) < 1e6) {
+                return (num / 1e3).toFixed(1) + "K";
+            }
+            
+            // 普通格式化
+            return num.toLocaleString(undefined, {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        }
+    </script>
+</body>
+</html>

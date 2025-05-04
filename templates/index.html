@@ -77,6 +77,11 @@
                                     </a></li>
                                     {% endif %}
                                     
+                                    <!-- 所有用户都可以使用ROI计算器 -->
+                                    <li><a class="dropdown-item" href="{{ url_for('roi_calculator') }}">
+                                        <i class="bi bi-calculator me-1"></i> ROI计算器
+                                    </a></li>
+                                    
                                     <!-- 显示当前用户角色 -->
                                     <li><span class="dropdown-item-text">
                                         <i class="bi bi-person-badge me-1"></i> 

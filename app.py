@@ -840,5 +840,109 @@ def get_profit_chart_data():
             'error': f'Server error: {str(e)}'
         }), 500
 
+@app.route('/roi_calculator')
+@login_required
+def roi_calculator():
+    """显示ROI计算器页面"""
+    return render_template('roi_calculator.html', miners=MINER_DATA)
+
+@app.route('/api/calculate_roi', methods=['POST'])
+@login_required
+def api_calculate_roi():
+    """计算挖矿ROI并返回结果"""
+    try:
+        # 获取并验证请求参数
+        data = request.json or {}
+        
+        # 必填参数：矿机型号
+        miner_model = data.get('miner_model')
+        if not miner_model or miner_model not in MINER_DATA:
+            return jsonify({'success': False, 'error': f'无效的矿机型号: {miner_model}'}), 400
+        
+        # 可选参数，带有默认值
+        miner_count = int(data.get('miner_count', 1))
+        electricity_cost = float(data.get('electricity_cost', 0.05))
+        client_electricity_cost = float(data.get('client_electricity_cost', 0)) or None
+        btc_price = float(data.get('btc_price', 0)) or None
+        capex = float(data.get('capex', 0)) or None
+        monthly_maintenance_cost = float(data.get('monthly_maintenance_cost', 5000))
+        site_power_mw = float(data.get('site_power_mw', 0)) or None
+        curtailment = float(data.get('curtailment', 0))
+        mode = data.get('mode', 'self')
+        
+        # 验证模式
+        if mode not in ['self', 'hosting']:
+            return jsonify({'success': False, 'error': f'无效的模式: {mode}，请使用 "self" 或 "hosting"'}), 400
+        
+        # 托管模式需要客户电费
+        if mode == 'hosting' and (not client_electricity_cost or client_electricity_cost <= electricity_cost):
+            return jsonify({'success': False, 'error': '托管模式下，客户电费必须高于实际电费'}), 400
+        
+        # 进行ROI计算
+        result = calculate_mining_roi(
+            miner_model=miner_model,
+            miner_count=miner_count,
+            electricity_cost=electricity_cost,
+            client_electricity_cost=client_electricity_cost,
+            btc_price=btc_price,
+            capex=capex,
+            monthly_maintenance_cost=monthly_maintenance_cost,
+            site_power_mw=site_power_mw,
+            curtailment=curtailment,
+            mode=mode
+        )
+        
+        if not result.get('success', False):
+            return jsonify({'success': False, 'error': result.get('error', '计算ROI时出错')}), 400
+        
+        return jsonify(result)
+    except Exception as e:
+        logging.error(f"计算ROI时出错: {str(e)}")
+        return jsonify({'success': False, 'error': f'计算ROI时出错: {str(e)}'}), 500
+
+@app.route('/api/roi_comparison', methods=['POST'])
+@login_required
+def api_roi_comparison():
+    """生成多个矿机型号的ROI比较数据"""
+    try:
+        data = request.json or {}
+        
+        # 获取矿机型号列表（必填）
+        miner_models = data.get('miner_models', [])
+        if not miner_models or not isinstance(miner_models, list):
+            return jsonify({'success': False, 'error': '必须提供矿机型号列表'}), 400
+        
+        # 验证矿机型号
+        for model in miner_models:
+            if model not in MINER_DATA:
+                return jsonify({'success': False, 'error': f'无效的矿机型号: {model}'}), 400
+        
+        # 获取其他参数
+        electricity_costs = data.get('electricity_costs')
+        btc_prices = data.get('btc_prices')
+        mode = data.get('mode', 'self')
+        client_electricity_cost = float(data.get('client_electricity_cost', 0)) or None
+        miner_count = int(data.get('miner_count', 1))
+        capex = float(data.get('capex', 0)) or None
+        
+        # 生成比较数据
+        result = generate_roi_comparison_data(
+            miner_models=miner_models,
+            electricity_costs=electricity_costs,
+            btc_prices=btc_prices,
+            mode=mode,
+            client_electricity_cost=client_electricity_cost,
+            miner_count=miner_count,
+            capex=capex
+        )
+        
+        if not result.get('success', False):
+            return jsonify({'success': False, 'error': result.get('error', '生成ROI比较数据时出错')}), 400
+        
+        return jsonify(result)
+    except Exception as e:
+        logging.error(f"生成ROI比较数据时出错: {str(e)}")
+        return jsonify({'success': False, 'error': f'生成ROI比较数据时出错: {str(e)}'}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
