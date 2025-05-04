@@ -434,52 +434,18 @@ def get_network_stats():
             block_reward = 3.125  # 默认区块奖励
             
         try:
-            # 手动使用API获取哈希率值
-            response = requests.get('https://api.blockchain.info/stats', timeout=5)
+            # 直接使用简单高效的API获取哈希率
+            response = requests.get('https://blockchain.info/q/hashrate', timeout=5)
             if response.status_code == 200:
-                data = response.json()
-                if 'hash_rate' in data:
-                    # blockchain.info API返回的是绝对Hash/s值
-                    hashrate_h = float(data['hash_rate'])
-                    # 根据API观察和测试，实际上941486895279.2867表示的是PH/s，不是H/s
-                    # 换算：941486.8952792868 PH/s = 941.49 EH/s
-                    
-                    # 因此，需要使用特殊转换因子：PH/s / 1000 = EH/s
-                    # 假设API返回的是PH/s（虽然文档标记为H/s）
-                    hashrate = hashrate_h / 1e3  # 特殊转换因子，假设API返回单位为PH/s
-                    
-                    # 检查哈希率值是否合理 (通常在50-1000 EH/s范围内)
-                    if hashrate < 10:  # 如果哈希率低于10 EH/s，可能有误
-                        # 检查是否是科学计数法表示问题
-                        hashrate_str = str(data['hash_rate'])
-                        if 'e+' in hashrate_str:
-                            try:
-                                # 如果是科学计数法格式(例如：9.41e+17)，直接解析
-                                base, exponent = hashrate_str.split('e+')
-                                base = float(base)
-                                exponent = int(exponent)
-                                # 计算实际哈希率值(EH/s)
-                                hashrate = base * (10 ** (exponent - 18))
-                                logging.info(f"科学计数法格式修正：{hashrate_str} → {hashrate} EH/s")
-                            except Exception as parse_err:
-                                logging.error(f"解析科学计数法失败: {parse_err}")
-                        
-                        # 如果值仍然太小，检查是否需要反向计算
-                        if hashrate < 10:
-                            # 某些API返回的是PH/s而不是H/s
-                            possible_ph_value = hashrate_h * 1000  # 如果是PH/s，转换为EH/s
-                            if 10 <= possible_ph_value <= 2000:
-                                hashrate = possible_ph_value
-                                logging.info(f"可能是PH/s值，调整为: {hashrate} EH/s")
-                    
-                    # 如果哈希率仍然不合理，使用默认值
-                    if hashrate < 10 or hashrate > 2000:
-                        logging.warning(f"计算的哈希率值不合理: {hashrate} EH/s，使用默认值")
-                        hashrate = DEFAULT_HASHRATE_EH
-                    
-                    logging.info(f"成功获取网络哈希率: 原始值={hashrate_h} H/s → 转换值={hashrate} EH/s")
-                else:
-                    logging.error("API响应中没有hash_rate字段")
+                # 该API直接返回TH/s单位的哈希率
+                hashrate_th = float(response.text.strip())
+                # 转换为EH/s (1 EH/s = 1,000,000 TH/s)
+                hashrate = hashrate_th / 1e6
+                logging.info(f"成功获取网络哈希率: {hashrate_th} TH/s → {hashrate} EH/s")
+                
+                # 如果哈希率不合理，使用默认值
+                if hashrate < 10 or hashrate > 2000:
+                    logging.warning(f"计算的哈希率值不合理: {hashrate} EH/s，使用默认值")
                     hashrate = DEFAULT_HASHRATE_EH
             else:
                 logging.error(f"获取网络哈希率API返回错误状态码: {response.status_code}")

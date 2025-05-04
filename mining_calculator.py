@@ -95,71 +95,20 @@ def get_real_time_block_reward():
         return BLOCK_REWARD
         
 def get_real_time_btc_hashrate():
-    """获取实时比特币网络哈希率，带有多个备用API选项"""
-    apis = [
-        'https://blockchain.info/q/hashrate',  # 返回TH/s
-        'https://api.blockchain.info/stats',   # 返回包含hash_rate的JSON (Hash/s)
-        'https://mempool.space/api/v1/mining/hashrate/3d'  # 备用API - 3天平均哈希率
-    ]
-    
-    for api_url in apis:
-        try:
-            response = requests.get(api_url, timeout=5)
-            
-            if response.status_code == 200:
-                if 'stats' in api_url:  # 处理blockchain.info/stats JSON响应
-                    try:
-                        data = response.json()
-                        # 打印API响应以便调试
-                        logging.debug(f"API响应数据: {data}")
-                        
-                        if 'hash_rate' in data:
-                            # 该API返回的是每秒哈希数 (Hash/s)，是科学计数法格式
-                            hashrate_h = float(data['hash_rate'])
-                            # 输出原始数据以便调试
-                            logging.info(f"从API获取的hash_rate原始值: {data['hash_rate']}, 转换为浮点数: {hashrate_h}")
-                            # 观察API返回的值941486895279.2867标记为H/s，但实际单位可能是PH/s
-                            # 如果是PH/s: 941486.8952792868 PH/s = 941.49 EH/s
-                            # 使用实际匹配的转换因子: PH/s / 1000 = EH/s
-                            hashrate_eh = hashrate_h / 1e3  # 假设单位是PH/s
-                            logging.info(f"网络哈希率转换: {hashrate_h} Hash/s = {hashrate_eh} EH/s")
-                            return hashrate_eh
-                    except Exception as e:
-                        logging.error(f"解析stats API响应时出错: {e}, 响应内容: {response.text[:100]}")
-                        # 继续尝试下一个API
-                        
-                elif 'mempool.space' in api_url:  # 处理mempool.space API响应
-                    try:
-                        data = response.json()
-                        # mempool返回的是每秒平均哈希数 (Hash/s)，需要计算平均值并转换为EH/s
-                        if isinstance(data, list) and len(data) > 0:
-                            # 计算最近数据的平均值
-                            avg_hashrate = sum(entry['hashrate'] for entry in data) / len(data)
-                            # 与其他API保持一致的转换因子: 值/1000 = EH/s
-                            # 假设返回的单位是PH/s
-                            return avg_hashrate / 1e3  # 转换为 EH/s
-                    except Exception as e:
-                        logging.error(f"解析mempool API响应时出错: {e}, 响应内容: {response.text[:100]}")
-                        # 继续尝试下一个API
-                        
-                else:  # 处理blockchain.info/q/hashrate的纯文本响应
-                    try:
-                        hashrate_th = float(response.text.strip())  # 该API返回的是TH/s
-                        return hashrate_th / 1e3  # 转换为 EH/s (1000 TH/s = 1 EH/s)
-                    except Exception as e:
-                        logging.error(f"解析hashrate API响应时出错: {e}, 响应内容: {response.text[:100]}")
-                        # 继续尝试下一个API
-            else:
-                logging.warning(f"API {api_url} 返回状态码 {response.status_code}")
-                # 继续尝试下一个API
-                
-        except Exception as e:
-            logging.warning(f"尝试从 {api_url} 获取网络哈希率时出错: {e}")
-            # 继续尝试下一个API
-    
-    # 所有API都失败时，使用默认值
-    logging.warning(f"无法从任何API获取实时BTC网络哈希率，使用默认值 {DEFAULT_NETWORK_HASHRATE} EH/s")
-    return DEFAULT_NETWORK_HASHRATE
+    """获取实时比特币网络哈希率"""
+    try:
+        response = requests.get('https://blockchain.info/q/hashrate', timeout=5)
+        if response.status_code == 200:
+            hashrate_th = float(response.text.strip())  # 原始数据为 TH/s
+            hashrate_eh = hashrate_th / 1e6  # 转换为 EH/s (1 EH/s = 1,000,000 TH/s)
+            logging.info(f"成功获取网络哈希率: {hashrate_th} TH/s = {hashrate_eh} EH/s")
+            return hashrate_eh
+        else:
+            logging.warning(f"获取哈希率API返回状态码: {response.status_code}")
+            return DEFAULT_NETWORK_HASHRATE
+    except Exception as e:
+        logging.warning(f"无法获取实时BTC网络哈希率，使用默认值 {DEFAULT_NETWORK_HASHRATE} EH/s: {e}")
+        return DEFAULT_NETWORK_HASHRATE
 
 def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electricity_cost=0.05, client_electricity_cost=None, 
                              btc_price=None, difficulty=None, block_reward=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0.0):
