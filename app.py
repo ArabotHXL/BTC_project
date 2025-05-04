@@ -4,6 +4,7 @@ import json
 import numpy as np
 import os
 import secrets
+import requests
 from datetime import datetime
 from auth import verify_email, login_required
 from mining_calculator import (
