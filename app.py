@@ -325,7 +325,8 @@ def calculate():
                 site_power_mw=site_power_mw,
                 curtailment=curtailment,
                 host_investment=host_investment,
-                client_investment=client_investment
+                client_investment=client_investment,
+                maintenance_fee=maintenance_fee
             )
         except Exception as calc_error:
             # 如果计算过程中出错，使用基本估算
@@ -347,7 +348,9 @@ def calculate():
                 price_to_use = btc_price if not use_real_time else 80000
                 monthly_revenue = monthly_btc * price_to_use
                 monthly_cost = monthly_power_kwh * electricity_cost
-                monthly_profit = monthly_revenue - monthly_cost
+                
+                # 确保维护费被考虑进利润计算
+                monthly_profit = monthly_revenue - monthly_cost - maintenance_fee
                 
                 result = {
                     'success': True,
