@@ -46,13 +46,33 @@ def login():
         
         # 记录登录尝试
         try:
-            # 获取大致位置信息（基于IP地址）
-            location = "本地连接"  # 默认设置为本地连接
+            # 获取地理位置信息（基于IP地址）
+            location = "未知位置"  # 默认设置
             try:
-                # 这里可以使用IP地理位置API，但为简单起见，我们将所有连接都视为本地连接
                 if request.remote_addr:
-                    # 无论什么IP地址，都标识为本地连接
-                    logging.info(f"用户IP地址 {request.remote_addr} 已被识别为本地连接")
+                    # 如果是本地或内部网络IP
+                    if request.remote_addr.startswith('127.') or request.remote_addr == '::1':
+                        location = "本地连接 (localhost)"
+                    elif request.remote_addr.startswith('192.168.') or request.remote_addr.startswith('10.'):
+                        location = "内部网络 (局域网)"
+                    else:
+                        # 使用IP-API获取地理位置信息
+                        import requests
+                        # 免费版的ip-api.com，不需要API密钥
+                        ip_api_url = f"http://ip-api.com/json/{request.remote_addr}"
+                        response = requests.get(ip_api_url, timeout=3)
+                        if response.status_code == 200:
+                            data = response.json()
+                            if data.get('status') == 'success':
+                                country = data.get('country', '未知国家')
+                                region = data.get('regionName', '未知地区')
+                                city = data.get('city', '未知城市')
+                                location = f"{country}, {region}, {city}"
+                            else:
+                                location = f"外部网络 ({request.remote_addr})"
+                        else:
+                            location = f"外部网络 ({request.remote_addr})"
+                    logging.info(f"用户IP地址 {request.remote_addr} 已被识别为 {location}")
             except Exception as e:
                 logging.error(f"获取位置信息时出错: {str(e)}")
                 

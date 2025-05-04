@@ -81,11 +81,17 @@
                                             </td>
                                             <td>{{ record.ip_address or 'N/A' }}</td>
                                             <td>
-                                                <button type="button" class="btn btn-sm btn-outline-info" 
-                                                        data-bs-toggle="tooltip" data-bs-placement="top" 
-                                                        title="{{ record.login_location or '未知位置' }}">
-                                                    查看
-                                                </button>
+                                                {% if record.login_location and record.login_location|length > 30 %}
+                                                    <!-- 如果位置信息较长，使用弹出框 -->
+                                                    <button type="button" class="btn btn-sm btn-outline-info" 
+                                                            data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                            title="{{ record.login_location }}">
+                                                        查看详情
+                                                    </button>
+                                                {% else %}
+                                                    <!-- 直接显示位置信息 -->
+                                                    {{ record.login_location or '未知位置' }}
+                                                {% endif %}
                                             </td>
                                         </tr>
                                     {% endfor %}
