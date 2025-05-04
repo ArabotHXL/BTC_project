@@ -14,7 +14,9 @@ from mining_calculator import (
     get_real_time_block_reward,
     get_real_time_btc_hashrate,
     calculate_mining_profitability,
-    generate_profit_chart_data
+    generate_profit_chart_data,
+    calculate_mining_roi,
+    generate_roi_comparison_data
 )
 
 # Set up logging
