@@ -82,25 +82,33 @@
                                             </td>
                                             <td>{{ record.ip_address or 'N/A' }}</td>
                                             <td>
-                                                {% if ',' in record.login_location %}
-                                                    {{ record.login_location.split(',')[0] }}
-                                                {% elif record.login_location and ('本地' in record.login_location or '内部' in record.login_location) %}
-                                                    {{ record.login_location.split(' ')[0] }}
+                                                {% if record.login_location %}
+                                                    {% if ',' in record.login_location %}
+                                                        {{ record.login_location.split(',')[0] }}
+                                                    {% elif '本地' in record.login_location or '内部' in record.login_location %}
+                                                        {{ record.login_location.split(' ')[0] }}
+                                                    {% else %}
+                                                        {{ record.login_location }}
+                                                    {% endif %}
                                                 {% else %}
                                                     未知国家
                                                 {% endif %}
                                             </td>
                                             <td>
-                                                {% if record.login_location and record.login_location|length > 15 %}
-                                                    <!-- 如果位置信息较长，使用弹出框 -->
-                                                    <button type="button" class="btn btn-sm btn-outline-info" 
-                                                            data-bs-toggle="tooltip" data-bs-placement="top" 
-                                                            title="{{ record.login_location }}">
-                                                        查看详情
-                                                    </button>
+                                                {% if record.login_location %}
+                                                    {% if record.login_location|length > 15 %}
+                                                        <!-- 如果位置信息较长，使用弹出框 -->
+                                                        <button type="button" class="btn btn-sm btn-outline-info" 
+                                                                data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                                title="{{ record.login_location }}">
+                                                            查看详情
+                                                        </button>
+                                                    {% else %}
+                                                        <!-- 直接显示位置信息 -->
+                                                        {{ record.login_location }}
+                                                    {% endif %}
                                                 {% else %}
-                                                    <!-- 直接显示位置信息 -->
-                                                    {{ record.login_location or '未知位置' }}
+                                                    未知位置
                                                 {% endif %}
                                             </td>
                                         </tr>
