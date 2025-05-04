@@ -98,7 +98,7 @@ def get_real_time_btc_hashrate():
     """获取实时比特币网络哈希率，带有多个备用API选项"""
     apis = [
         'https://blockchain.info/q/hashrate',  # 返回TH/s
-        'https://api.blockchain.info/stats',   # 返回包含hashrate的JSON (Hash/s)
+        'https://api.blockchain.info/stats',   # 返回包含hash_rate的JSON (Hash/s)
         'https://mempool.space/api/v1/mining/hashrate/3d'  # 备用API - 3天平均哈希率
     ]
     
@@ -108,21 +108,43 @@ def get_real_time_btc_hashrate():
             
             if response.status_code == 200:
                 if 'stats' in api_url:  # 处理blockchain.info/stats JSON响应
-                    data = response.json()
-                    if 'hash_rate' in data:
-                        # 该API返回的是每秒哈希数 (Hash/s)，需要转换为EH/s
-                        hashrate_h = float(data['hash_rate'])
-                        return hashrate_h / 1e18  # 转换为 EH/s
+                    try:
+                        data = response.json()
+                        # 打印API响应以便调试
+                        logging.debug(f"API响应数据: {data}")
+                        
+                        if 'hash_rate' in data:
+                            # 该API返回的是每秒哈希数 (Hash/s)，是科学计数法格式
+                            hashrate_h = float(data['hash_rate'])
+                            # 输出原始数据以便调试
+                            logging.info(f"从API获取的hash_rate原始值: {data['hash_rate']}, 转换为浮点数: {hashrate_h}")
+                            # 9.47E11 Hash/s = 947 PH/s ≈ 0.947 EH/s
+                            hashrate_eh = hashrate_h / 1e18  # 转换为 EH/s
+                            logging.info(f"网络哈希率转换: {hashrate_h} Hash/s = {hashrate_eh} EH/s")
+                            return hashrate_eh
+                    except Exception as e:
+                        logging.error(f"解析stats API响应时出错: {e}, 响应内容: {response.text[:100]}")
+                        # 继续尝试下一个API
+                        
                 elif 'mempool.space' in api_url:  # 处理mempool.space API响应
-                    data = response.json()
-                    # mempool返回的是每秒平均哈希数 (Hash/s)，需要计算平均值并转换为EH/s
-                    if isinstance(data, list) and len(data) > 0:
-                        # 计算最近数据的平均值
-                        avg_hashrate = sum(entry['hashrate'] for entry in data) / len(data)
-                        return avg_hashrate / 1e18  # 转换为 EH/s
+                    try:
+                        data = response.json()
+                        # mempool返回的是每秒平均哈希数 (Hash/s)，需要计算平均值并转换为EH/s
+                        if isinstance(data, list) and len(data) > 0:
+                            # 计算最近数据的平均值
+                            avg_hashrate = sum(entry['hashrate'] for entry in data) / len(data)
+                            return avg_hashrate / 1e18  # 转换为 EH/s
+                    except Exception as e:
+                        logging.error(f"解析mempool API响应时出错: {e}, 响应内容: {response.text[:100]}")
+                        # 继续尝试下一个API
+                        
                 else:  # 处理blockchain.info/q/hashrate的纯文本响应
-                    hashrate_th = float(response.text.strip())  # 该API返回的是TH/s
-                    return hashrate_th / 1e3  # 转换为 EH/s (1000 TH/s = 1 EH/s)
+                    try:
+                        hashrate_th = float(response.text.strip())  # 该API返回的是TH/s
+                        return hashrate_th / 1e3  # 转换为 EH/s (1000 TH/s = 1 EH/s)
+                    except Exception as e:
+                        logging.error(f"解析hashrate API响应时出错: {e}, 响应内容: {response.text[:100]}")
+                        # 继续尝试下一个API
             else:
                 logging.warning(f"API {api_url} 返回状态码 {response.status_code}")
                 # 继续尝试下一个API
