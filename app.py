@@ -59,7 +59,7 @@ def login():
                         # 使用IP-API获取地理位置信息
                         import requests
                         # 免费版的ip-api.com，不需要API密钥
-                        ip_api_url = f"http://ip-api.com/json/{request.remote_addr}"
+                        ip_api_url = f"http://ip-api.com/json/{request.remote_addr}?fields=status,message,country,regionName,city,query"
                         response = requests.get(ip_api_url, timeout=3)
                         if response.status_code == 200:
                             data = response.json()
@@ -67,10 +67,15 @@ def login():
                                 country = data.get('country', '未知国家')
                                 region = data.get('regionName', '未知地区')
                                 city = data.get('city', '未知城市')
+                                # 格式化为：国家, 地区, 城市
                                 location = f"{country}, {region}, {city}"
+                                logging.info(f"成功获取地理位置信息: {location}")
                             else:
+                                error_msg = data.get('message', '未知错误')
+                                logging.warning(f"IP-API返回错误: {error_msg}")
                                 location = f"外部网络 ({request.remote_addr})"
                         else:
+                            logging.warning(f"IP-API请求失败，状态码: {response.status_code}")
                             location = f"外部网络 ({request.remote_addr})"
                     logging.info(f"用户IP地址 {request.remote_addr} 已被识别为 {location}")
             except Exception as e:

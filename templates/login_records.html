@@ -62,7 +62,8 @@
                                     <th>登录时间</th>
                                     <th>状态</th>
                                     <th>IP地址</th>
-                                    <th>登录位置</th>
+                                    <th>国家/地区</th>
+                                    <th>详细位置</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -81,7 +82,16 @@
                                             </td>
                                             <td>{{ record.ip_address or 'N/A' }}</td>
                                             <td>
-                                                {% if record.login_location and record.login_location|length > 30 %}
+                                                {% if ',' in record.login_location %}
+                                                    {{ record.login_location.split(',')[0] }}
+                                                {% elif record.login_location and ('本地' in record.login_location or '内部' in record.login_location) %}
+                                                    {{ record.login_location.split(' ')[0] }}
+                                                {% else %}
+                                                    未知国家
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if record.login_location and record.login_location|length > 15 %}
                                                     <!-- 如果位置信息较长，使用弹出框 -->
                                                     <button type="button" class="btn btn-sm btn-outline-info" 
                                                             data-bs-toggle="tooltip" data-bs-placement="top" 
@@ -97,7 +107,7 @@
                                     {% endfor %}
                                 {% else %}
                                     <tr>
-                                        <td colspan="6" class="text-center">暂无登录记录</td>
+                                        <td colspan="7" class="text-center">暂无登录记录</td>
                                     </tr>
                                 {% endif %}
                             </tbody>
