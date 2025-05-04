@@ -24,12 +24,67 @@ app = Flask(__name__)
 # 设置安全的会话密钥
 app.secret_key = os.environ.get("SESSION_SECRET", secrets.token_hex(32))
 
+# 登录页面
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """处理用户登录"""
+    # 如果用户已经登录，重定向到主页
+    if session.get('authenticated'):
+        return redirect(url_for('index'))
+    
+    # 处理表单提交
+    if request.method == 'POST':
+        email = request.form.get('email')
+        
+        # 验证邮箱
+        if verify_email(email):
+            # 登录成功，设置会话
+            session['authenticated'] = True
+            session['email'] = email
+            
+            # 记录成功登录
+            logging.info(f"用户成功登录: {email}")
+            
+            # 闪现成功消息
+            flash('登录成功！欢迎使用BTC挖矿计算器', 'success')
+            
+            # 重定向到原始请求的URL或主页
+            next_url = session.pop('next_url', url_for('index'))
+            return redirect(next_url)
+        else:
+            # 登录失败
+            logging.warning(f"用户登录失败: {email}")
+            
+            # 闪现错误消息
+            flash('登录失败！您没有访问权限', 'danger')
+            
+            # 重定向到未授权页面
+            return redirect(url_for('unauthorized'))
+    
+    # 显示登录表单
+    return render_template('login.html')
+
+@app.route('/unauthorized')
+def unauthorized():
+    """显示未授权页面"""
+    return render_template('unauthorized.html')
+
+@app.route('/logout')
+def logout():
+    """处理用户登出"""
+    # 清除会话
+    session.clear()
+    flash('您已成功退出登录', 'info')
+    return redirect(url_for('login'))
+
 @app.route('/')
+@login_required
 def index():
-    """Render the main page of the BTC mining calculator"""
+    """渲染BTC挖矿计算器主页"""
     return render_template('index.html')
 
 @app.route('/calculate', methods=['POST'])
+@login_required
 def calculate():
     """Handle the calculation request and return results as JSON"""
     try:
@@ -144,6 +199,7 @@ def calculate():
         }), 500
 
 @app.route('/btc_price', methods=['GET'])
+@login_required
 def get_btc_price():
     """Get the current Bitcoin price from API"""
     try:
@@ -160,6 +216,7 @@ def get_btc_price():
         }), 500
 
 @app.route('/network_stats', methods=['GET'])
+@login_required
 def get_network_stats():
     """Get current Bitcoin network statistics"""
     try:
@@ -183,6 +240,7 @@ def get_network_stats():
         }), 500
 
 @app.route('/miners', methods=['GET'])
+@login_required
 def get_miners():
     """Get the list of available miner models and their specifications"""
     try:
@@ -207,6 +265,7 @@ def get_miners():
         }), 500
 
 @app.route('/profit_chart_data', methods=['POST'])
+@login_required
 def get_profit_chart_data():
     """Generate profit chart data for visualization"""
     try:

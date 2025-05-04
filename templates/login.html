@@ -1,91 +1,107 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BTC挖矿计算器 - 登录</title>
-    <!-- Bootstrap CSS -->
+    <title>登录 - BTC挖矿计算器</title>
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
-    <!-- 自定义CSS -->
     <style>
         body {
             background-color: #121212;
-            color: #e0e0e0;
-            padding-top: 40px;
+            color: #f8f9fa;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .login-container {
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-            background-color: #1e1e1e;
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem;
+            background-color: rgba(33, 37, 41, 0.9);
+            border-radius: 0.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
         }
-        .logo-container {
+        .login-logo {
             text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo {
-            width: 100px;
-            height: 100px;
-        }
-        .btn-bitcoin {
-            background-color: #f7931a;
-            border-color: #f7931a;
-            color: #000;
+            margin-bottom: 1.5rem;
+            color: #f8d000;
+            font-size: 2rem;
             font-weight: bold;
         }
-        .btn-bitcoin:hover {
-            background-color: #e67e10;
-            border-color: #e67e10;
-            color: #000;
+        .login-form .form-control {
+            background-color: #2b3035;
+            border-color: #495057;
+            color: #e9ecef;
         }
-        .error-message {
-            color: #dc3545;
-            margin-top: 15px;
+        .login-form .form-control:focus {
+            border-color: #f8d000;
+            box-shadow: 0 0 0 0.25rem rgba(248, 208, 0, 0.25);
         }
-        .success-message {
-            color: #28a745;
-            margin-top: 15px;
+        .login-form .btn-primary {
+            background-color: #f8d000;
+            border-color: #f8d000;
+            color: #212529;
+            font-weight: bold;
+        }
+        .login-form .btn-primary:hover {
+            background-color: #e6c400;
+            border-color: #e6c400;
+        }
+        .alert {
+            margin-bottom: 1.5rem;
+        }
+        .btc-icon {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            background-color: #f8d000;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 60px;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            transform: rotate(12deg);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="login-container">
-            <div class="logo-container">
-                <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                    <path fill="#f7931a" d="M257.62,512c141.15,0,254.9-113.75,254.9-254.9S398.76,2.2,257.62,2.2,2.71,115.95,2.71,257.1,116.47,512,257.62,512Z"/>
-                    <path fill="#fff" d="M335.8,171.03c3.01-20.01-12.21-30.75-33.19-37.98l6.82-27.12-16.6-4.11-6.58,26.39c-4.38-1.08-8.87-2.1-13.33-3.12l6.63-26.51-16.54-4.11-6.76,27.06c-3.61-.82-7.19-1.64-10.61-2.5l.02-.72-22.83-5.68-4.41,17.65s12.21,2.8,12,2.98c6.7,1.66,7.87,6.07,7.68,9.57l-7.74,30.77c.46,.12,.99,.29,1.64,.56-.53-.13-1.09-.27-1.68-.41l-10.77,43.18c-.82,2.03-2.9,5.03-7.53,3.9,.16,.24-12.01-2.97-12.01-2.97l-8.27,18.96,21.53,5.37c3.98,.99,7.95,2.02,11.79,3.01l-6.81,27.32,16.54,4.11,6.8-27.16c4.56,1.23,8.95,2.37,13.21,3.45l-6.77,27.01,16.6,4.11,6.81-27.23c28.43,5.36,49.83,3.21,58.87-22.46,7.3-20.79-.3-32.72-15.27-40.54,10.87-2.47,19.06-9.61,21.27-24.29Zm-38.1,52.98c-5.18,20.79-40.34,9.57-51.7,6.74l9.23-36.9c11.35,2.82,47.78,8.36,42.47,30.16Zm5.24-53.87c-4.76,18.91-33.97,9.31-43.46,6.97l8.32-33.54c9.49,2.34,40.09,6.73,35.14,26.57Z"/>
-                </svg>
-                <h2 class="mt-3">BTC挖矿计算器</h2>
-                <p class="text-muted">安全访问控制</p>
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="login-container">
+                    <div class="login-logo">
+                        <div class="btc-icon">₿</div>
+                        <div>BTC挖矿计算器</div>
+                    </div>
+                    
+                    <!-- 消息提示 -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}" role="alert">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <div class="card-body">
+                        <h5 class="card-title text-center mb-4">邮箱验证登录</h5>
+                        <form class="login-form" method="post" action="{{ url_for('login') }}">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">邮箱地址</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       placeholder="请输入授权邮箱" required autofocus>
+                                <div class="form-text text-muted">请使用已获授权的邮箱地址登录。</div>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">登录</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
-            
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-            
-            <form method="POST" action="{{ url_for('login') }}">
-                <div class="mb-4">
-                    <label for="email" class="form-label">电子邮箱</label>
-                    <input type="email" class="form-control" id="email" name="email" required 
-                           placeholder="请输入您的电子邮箱">
-                    <small class="form-text text-muted">输入授权的电子邮箱地址访问计算器</small>
-                </div>
-                
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-bitcoin">验证访问</button>
-                </div>
-                
-                <div class="mt-4 text-center">
-                    <p class="small text-muted">仅授权用户可以访问此工具。<br>如需访问权限，请联系管理员。</p>
-                </div>
-            </form>
         </div>
     </div>
 </body>

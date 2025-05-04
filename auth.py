@@ -1,62 +1,79 @@
-import os
 import hashlib
+import os
 import logging
-from flask import session, redirect, url_for, flash, request
+from flask import request, redirect, url_for, session
+from functools import wraps
 
-# 配置日志
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# 设置日志
+logging.basicConfig(level=logging.DEBUG)
 
-# 授权用户的邮箱列表 - 在实际应用中，这应该存储在数据库中并加密
-# 也可以使用环境变量存储此列表
 def get_authorized_emails():
     """获取授权邮箱列表，优先从环境变量获取"""
+    # 从环境变量中获取邮箱列表
     env_emails = os.environ.get('AUTHORIZED_EMAILS')
     if env_emails:
-        return [email.strip() for email in env_emails.split(',')]
+        # 使用逗号分隔多个邮箱
+        emails = [email.strip() for email in env_emails.split(',')]
+        logging.debug(f"从环境变量获取到 {len(emails)} 个授权邮箱")
+        return emails
     
-    # 默认授权邮箱列表（仅在没有环境变量时使用）
-    return [
-        'user1@example.com',
-        'user2@example.com',
-        # 添加您想要授权的电子邮件
+    # 默认授权邮箱列表
+    default_emails = [
+        'admin@example.com',
+        'support@example.com',
+        'btc@example.com'
     ]
+    logging.debug(f"使用默认的 {len(default_emails)} 个授权邮箱")
+    return default_emails
 
 def hash_email(email):
     """使用SHA-256哈希邮箱地址，增加安全性"""
-    return hashlib.sha256(email.lower().encode()).hexdigest()
+    # 创建哈希对象
+    hasher = hashlib.sha256()
+    # 使用邮箱地址更新哈希值（先转换为字节）
+    hasher.update(email.lower().strip().encode('utf-8'))
+    # 返回十六进制哈希值
+    return hasher.hexdigest()
 
 def verify_email(email):
     """验证邮箱是否在授权列表中"""
-    if not email:
-        return False
-        
-    # 规范化邮箱地址（转换为小写）
-    email = email.lower().strip()
-    
-    # 检查邮箱是否在授权列表中
+    # 获取授权邮箱列表
     authorized_emails = get_authorized_emails()
-    is_authorized = email in authorized_emails
     
-    # 记录身份验证尝试（不记录完整邮箱，仅记录哈希值以保护隐私）
+    # 清理和标准化输入的邮箱
+    email = email.lower().strip() if email else ""
+    
+    # 直接验证邮箱
+    if email in authorized_emails:
+        logging.info(f"邮箱 {email} 验证成功")
+        return True
+    
+    # 使用哈希值验证（适用于在环境变量中存储的邮箱哈希值）
     email_hash = hash_email(email)
-    if is_authorized:
-        logger.info(f"授权成功: {email_hash[:8]}...")
-    else:
-        logger.warning(f"授权失败: {email_hash[:8]}... 尝试访问")
+    for auth_email in authorized_emails:
+        # 如果授权邮箱已是哈希值（64位十六进制），则直接比较哈希值
+        if len(auth_email) == 64 and all(c in '0123456789abcdef' for c in auth_email.lower()):
+            if email_hash == auth_email.lower():
+                logging.info(f"邮箱哈希值 {email_hash} 验证成功")
+                return True
     
-    return is_authorized
+    # 验证失败
+    logging.warning(f"邮箱 {email} 验证失败")
+    return False
 
 def login_required(view_function):
     """装饰器：要求用户登录才能访问特定路由"""
+    @wraps(view_function)
     def wrapped_view(*args, **kwargs):
-        if 'authenticated' not in session or not session['authenticated']:
-            # 保存用户想要访问的原始URL
-            session['next_url'] = request.path
-            flash('请先登录以访问该页面', 'warning')
+        # 检查用户是否已经登录
+        if not session.get('authenticated'):
+            # 存储请求的URL，以便登录后重定向
+            session['next_url'] = request.url
+            # 未登录，重定向到登录页面
+            logging.warning(f"未授权访问: {request.path} 重定向到登录页面")
             return redirect(url_for('login'))
+        
+        # 已登录，继续正常访问
         return view_function(*args, **kwargs)
-    
-    # 必须为Flask路由装饰器
-    wrapped_view.__name__ = view_function.__name__
+        
     return wrapped_view
