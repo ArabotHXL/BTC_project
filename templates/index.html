@@ -56,6 +56,16 @@
                             <li><h6 class="dropdown-header">账户信息</h6></li>
                             {% if session.email %}
                                 <li><span class="dropdown-item-text">{{ session.email }}</span></li>
+                                
+                                <!-- 管理员选项 -->
+                                {% if session.email == "admin@example.com" %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header">管理功能</h6></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('login_records') }}">
+                                        <i class="bi bi-file-text me-1"></i> 查看登录记录
+                                    </a></li>
+                                {% endif %}
+                                
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="{{ url_for('logout') }}">退出登录 <i class="bi bi-box-arrow-right ms-1"></i></a></li>
                             {% endif %}
