@@ -23,6 +23,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 初始化 (Initialization)
     function init() {
+        // 获取当前语言设置 (Get current language setting)
+        const currentLang = document.querySelector('meta[name="language"]')?.content || 'zh';
+        console.log("当前语言设置 (Current language):", currentLang);
+        
         // 加载网络数据 (Load network data)
         fetchNetworkStats();
         
