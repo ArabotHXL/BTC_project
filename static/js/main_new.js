@@ -1328,9 +1328,28 @@ document.addEventListener('DOMContentLoaded', function() {
         // 添加图表描述
         var description = document.createElement('div');
         description.className = 'roi-chart-description small text-center mt-2 mb-3 text-muted';
-        description.innerHTML = '此图表显示了投资回报随时间的变化情况。蓝线表示累计ROI百分比，绿线表示累计利润金额。' +
-                              '<br>This chart shows how ROI changes over time. Blue line represents cumulative ROI percentage, green line shows cumulative profit.';
+        description.innerHTML = '<div class="card bg-dark bg-opacity-10 p-2 mb-2">' +
+                              '<p class="mb-0 small">此图表显示了投资回报随时间的变化情况。蓝线表示累计ROI百分比，绿线表示累计利润金额，红色虚线表示投资回收点。</p>' +
+                              '<p class="mb-0 small">This chart shows how ROI changes over time. Blue line represents cumulative ROI percentage, green line shows cumulative profit, red dashed line indicates break-even point.</p>' +
+                              '</div>';
         container.appendChild(description);
+        
+        // 获取对应的盈亏平衡数据元素ID
+        var breakEvenElectricityId = elementId.includes('host') ? 'break-even-electricity' : 'client-break-even-electricity';
+        var breakEvenBtcId = elementId.includes('host') ? 'break-even-btc' : 'client-break-even-btc';
+        
+        // 获取盈亏平衡值
+        var breakEvenElectricity = document.getElementById(breakEvenElectricityId)?.textContent || 'N/A';
+        var breakEvenBtc = document.getElementById(breakEvenBtcId)?.textContent || 'N/A';
+        
+        // 添加盈亏平衡点信息框
+        if (breakEvenElectricity !== 'N/A' || breakEvenBtc !== 'N/A') {
+            var breakEvenInfo = document.createElement('div');
+            breakEvenInfo.className = 'break-even-info d-flex justify-content-center mt-2';
+            breakEvenInfo.innerHTML = '<div class="badge bg-primary me-2 p-2">盈亏平衡电价 / Break-even Electricity: ' + breakEvenElectricity + '</div>' +
+                                      '<div class="badge bg-info p-2">盈亏平衡BTC价格 / Break-even BTC: ' + breakEvenBtc + '</div>';
+            container.appendChild(breakEvenInfo);
+        }
         
         return chart;
     }
