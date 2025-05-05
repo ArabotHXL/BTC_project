@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>登录 - BTC挖矿计算器</title>
+    <title>{{ t('login_title') }}</title>
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
     <style>
         body {
@@ -73,10 +73,18 @@
                 <div class="login-container">
                     <div class="login-logo">
                         <div class="btc-icon">₿</div>
-                        <div>BTC挖矿计算器</div>
+                        <div>{{ t('btc_mining_calculator') }}</div>
                     </div>
                     
-                    <!-- 消息提示 -->
+                    <!-- 语言切换 / Language Switcher -->
+                    <div class="text-center mb-3">
+                        <div class="btn-group btn-group-sm" role="group" aria-label="{{ t('language') }}">
+                            <a href="{{ url_for('login', lang='zh') }}" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
+                            <a href="{{ url_for('login', lang='en') }}" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}">English</a>
+                        </div>
+                    </div>
+                    
+                    <!-- 消息提示 / Flash Messages -->
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
                             {% for category, message in messages %}
@@ -88,16 +96,16 @@
                     {% endwith %}
                     
                     <div class="card-body">
-                        <h5 class="card-title text-center mb-4">邮箱验证登录</h5>
+                        <h5 class="card-title text-center mb-4">{{ t('email_verification_login') }}</h5>
                         <form class="login-form" method="post" action="{{ url_for('login') }}">
                             <div class="mb-3">
-                                <label for="email" class="form-label">邮箱地址</label>
+                                <label for="email" class="form-label">{{ t('email_address') }}</label>
                                 <input type="email" class="form-control" id="email" name="email" 
-                                       placeholder="请输入授权邮箱" required autofocus>
-                                <div class="form-text text-muted">请使用已获授权的邮箱地址登录。</div>
+                                       placeholder="{{ t('enter_authorized_email') }}" required autofocus>
+                                <div class="form-text text-muted">{{ t('use_authorized_email') }}</div>
                             </div>
                             <div class="d-grid">
-                                <button type="submit" class="btn btn-primary">登录</button>
+                                <button type="submit" class="btn btn-primary">{{ t('login') }}</button>
                             </div>
                         </form>
                     </div>

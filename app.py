@@ -166,8 +166,11 @@ def login():
             # 记录成功登录
             logging.info(f"用户成功登录: {email}")
             
-            # 闪现成功消息
-            flash('登录成功！欢迎使用BTC挖矿计算器', 'success')
+            # 设置闪现成功消息，基于当前语言
+            if g.language == 'en':
+                flash('Login successful! Welcome to BTC Mining Calculator', 'success')
+            else:
+                flash('登录成功！欢迎使用BTC挖矿计算器', 'success')
             
             # 重定向到原始请求的URL或主页
             next_url = session.pop('next_url', url_for('index'))
@@ -176,8 +179,11 @@ def login():
             # 登录失败
             logging.warning(f"用户登录失败: {email}")
             
-            # 闪现错误消息
-            flash('登录失败！您没有访问权限', 'danger')
+            # 设置闪现错误消息，基于当前语言
+            if g.language == 'en':
+                flash('Login failed! You do not have access permission', 'danger')
+            else:
+                flash('登录失败！您没有访问权限', 'danger')
             
             # 重定向到未授权页面
             return redirect(url_for('unauthorized'))
@@ -192,10 +198,20 @@ def unauthorized():
 
 @app.route('/logout')
 def logout():
-    """处理用户登出"""
-    # 清除会话
+    """处理用户登出 / Handle user logout"""
+    # 保存当前语言 / Save current language
+    current_lang = g.language
+    
+    # 清除会话但保留语言偏好 / Clear session but keep language preference
     session.clear()
-    flash('您已成功退出登录', 'info')
+    session['language'] = current_lang
+    
+    # 闪现消息，基于语言 / Flash message based on language
+    if current_lang == 'en':
+        flash('You have successfully logged out', 'info')
+    else:
+        flash('您已成功退出登录', 'info')
+        
     return redirect(url_for('login'))
 
 @app.route('/')

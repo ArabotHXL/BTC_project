@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="user-role" content="{{ session.role }}">
-    <title>Bitcoin Mining Profitability Calculator</title>
+    <meta name="language" content="{{ current_lang }}">
+    <title>{{ t('bitcoin_mining_profitability_calculator') }}</title>
     <!-- Bootstrap CSS from Replit CDN -->
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
     <!-- Bootstrap Icons -->
@@ -22,25 +23,33 @@
     <div class="container-fluid">
         <header class="py-3 mb-4 border-bottom">
             <div class="container d-flex align-items-center justify-content-between">
-                <h1 class="fs-4">Bitcoin Mining Profitability Calculator</h1>
+                <h1 class="fs-4">{{ t('bitcoin_mining_profitability_calculator') }}</h1>
                 
                 <div class="d-flex gap-4 align-items-center">
+                    <!-- 语言切换 / Language Switcher -->
+                    <div class="d-flex align-items-center">
+                        <div class="btn-group btn-group-sm me-3" role="group" aria-label="{{ t('language') }}">
+                            <a href="{{ url_for('index', lang='zh') }}" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
+                            <a href="{{ url_for('index', lang='en') }}" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}">English</a>
+                        </div>
+                    </div>
+                    
                     <!-- Network Stats -->
                     <div id="network-stats-container" class="d-flex gap-3 text-center">
                         <div class="stats-item">
-                            <span class="badge bg-warning">BTC Price</span>
+                            <span class="badge bg-warning">{{ t('btc_price') }}</span>
                             <span id="btc-price" class="stats-value">$0</span>
                         </div>
                         <div class="stats-item">
-                            <span class="badge bg-info">Difficulty</span>
+                            <span class="badge bg-info">{{ t('difficulty') }}</span>
                             <span id="network-difficulty" class="stats-value">0T</span>
                         </div>
                         <div class="stats-item">
-                            <span class="badge bg-danger">Network Hashrate</span>
+                            <span class="badge bg-danger">{{ t('network_hashrate') }}</span>
                             <span id="network-hashrate" class="stats-value">0 EH/s</span>
                         </div>
                         <div class="stats-item">
-                            <span class="badge bg-success">Block Reward</span>
+                            <span class="badge bg-success">{{ t('block_reward') }}</span>
                             <span id="block-reward" class="stats-value">0 BTC</span>
                         </div>
                     </div>
@@ -52,51 +61,55 @@
                             {% if session.email %}
                                 {{ session.email }}
                             {% else %}
-                                用户
+                                {{ t('guest') }}
                             {% endif %}
                         </button>
                         <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><h6 class="dropdown-header">账户信息</h6></li>
+                            <li><h6 class="dropdown-header">{% if current_lang == 'en' %}Account Info{% else %}账户信息{% endif %}</h6></li>
                             {% if session.email %}
                                 <li><span class="dropdown-item-text">{{ session.email }}</span></li>
                                 
                                 <!-- 根据角色显示管理员选项 -->
                                 {% if session.role in ['owner', 'admin', 'mining_site'] %}
                                     <li><hr class="dropdown-divider"></li>
-                                    <li><h6 class="dropdown-header">管理功能</h6></li>
+                                    <li><h6 class="dropdown-header">{% if current_lang == 'en' %}Admin Functions{% else %}管理功能{% endif %}</h6></li>
                                     
                                     <!-- 拥有者可以查看登录记录 -->
                                     {% if session.role == 'owner' %}
                                     <li><a class="dropdown-item" href="{{ url_for('login_records') }}">
-                                        <i class="bi bi-file-text me-1"></i> 查看登录记录
+                                        <i class="bi bi-file-text me-1"></i> 
+                                        {% if current_lang == 'en' %}View Login Records{% else %}查看登录记录{% endif %}
                                     </a></li>
                                     {% endif %}
                                     
                                     <!-- 拥有者和管理员可以管理用户访问权限 -->
                                     {% if session.role in ['owner', 'admin'] %}
                                     <li><a class="dropdown-item" href="{{ url_for('user_access') }}">
-                                        <i class="bi bi-people me-1"></i> 用户访问管理
+                                        <i class="bi bi-people me-1"></i> 
+                                        {% if current_lang == 'en' %}User Access Management{% else %}用户访问管理{% endif %}
                                     </a></li>
                                     {% endif %}
                                     
                                     <!-- 显示当前用户角色 -->
                                     <li><span class="dropdown-item-text">
                                         <i class="bi bi-person-badge me-1"></i> 
-                                        角色: 
+                                        {% if current_lang == 'en' %}Role: {% else %}角色: {% endif %}
                                         {% if session.role == 'owner' %}
-                                            <span class="badge bg-danger">拥有者</span>
+                                            <span class="badge bg-danger">{{ t('owner') }}</span>
                                         {% elif session.role == 'admin' %}
-                                            <span class="badge bg-warning">管理员</span>
+                                            <span class="badge bg-warning">{{ t('admin') }}</span>
                                         {% elif session.role == 'mining_site' %}
-                                            <span class="badge bg-info">矿场管理</span>
+                                            <span class="badge bg-info">{{ t('mining_site') }}</span>
                                         {% else %}
-                                            <span class="badge bg-primary">矿场客人</span>
+                                            <span class="badge bg-primary">{{ t('customer') }}</span>
                                         {% endif %}
                                     </span></li>
                                 {% endif %}
                                 
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{{ url_for('logout') }}">退出登录 <i class="bi bi-box-arrow-right ms-1"></i></a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('logout') }}">
+                                    {{ t('logout') }} <i class="bi bi-box-arrow-right ms-1"></i>
+                                </a></li>
                             {% endif %}
                         </ul>
                     </div>
@@ -126,36 +139,36 @@
                 <div class="col-lg-5">
                     <div class="card shadow">
                         <div class="card-header bg-primary bg-opacity-10">
-                            <h5 class="mb-0">Mining Parameters</h5>
+                            <h5 class="mb-0">{{ t('miner_settings') }}</h5>
                         </div>
                         <div class="card-body">
                             <form id="mining-calculator-form">
                                 <!-- Mining hardware selection -->
                                 <div class="mb-3">
-                                    <label for="miner-model" class="form-label">Mining Hardware</label>
+                                    <label for="miner-model" class="form-label">{{ t('miner_model') }}</label>
                                     <select class="form-select" id="miner-model" name="miner_model">
-                                        <option value="">Select a miner model</option>
+                                        <option value="">{{ t('select_miner') }}</option>
                                         <!-- Miner options will be loaded dynamically -->
                                     </select>
                                 </div>
 
                                 <!-- Site Power Consumption (MW) -->
                                 <div class="mb-3">
-                                    <label for="site-power-mw" class="form-label">Site Power Capacity (MW)</label>
+                                    <label for="site-power-mw" class="form-label">{{ t('site_power_mw') }}</label>
                                     <input type="number" class="form-control" id="site-power-mw" name="site_power_mw" value="1" min="0.1" step="0.1">
-                                    <div class="form-text">Total site power capacity in megawatts (MW). This will automatically calculate the maximum number of miners.</div>
+                                    <div class="form-text">{% if current_lang == 'en' %}Total site power capacity in megawatts (MW). This will automatically calculate the maximum number of miners.{% else %}矿场总功率，单位为兆瓦特(MW)。系统将自动计算最大矿机数量。{% endif %}</div>
                                 </div>
                                 
                                 <!-- Miner count (calculated automatically) -->
                                 <div class="mb-3">
-                                    <label for="miner-count" class="form-label">Number of Miners</label>
+                                    <label for="miner-count" class="form-label">{{ t('miner_count') }}</label>
                                     <input type="number" class="form-control" id="miner-count" name="miner_count" value="1" min="1" readonly>
-                                    <div class="form-text">Calculated based on site power and miner model</div>
+                                    <div class="form-text">{% if current_lang == 'en' %}Calculated based on site power and miner model{% else %}基于矿场功率和矿机型号自动计算{% endif %}</div>
                                 </div>
 
                                 <!-- Hashrate input -->
                                 <div class="mb-3">
-                                    <label for="hashrate" class="form-label">Hashrate</label>
+                                    <label for="hashrate" class="form-label">{{ t('hashrate') }}</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="hashrate" name="hashrate" value="100" min="0" step="0.01">
                                         <select class="form-select" id="hashrate-unit" name="hashrate_unit" style="max-width: 100px;">
@@ -164,22 +177,22 @@
                                             <option value="EH/s">EH/s</option>
                                         </select>
                                     </div>
-                                    <div class="form-text">Total hashrate will be calculated automatically if miner model is selected</div>
+                                    <div class="form-text">{% if current_lang == 'en' %}Total hashrate will be calculated automatically if miner model is selected{% else %}如果选择了矿机型号，总算力将自动计算{% endif %}</div>
                                 </div>
 
                                 <!-- Power consumption -->
                                 <div class="mb-3">
-                                    <label for="power-consumption" class="form-label">Power Consumption (W)</label>
+                                    <label for="power-consumption" class="form-label">{{ t('power_consumption') }} (W)</label>
                                     <input type="number" class="form-control" id="power-consumption" name="power_consumption" value="3000" min="0">
-                                    <div class="form-text">Total power will be calculated automatically if miner model is selected</div>
+                                    <div class="form-text">{% if current_lang == 'en' %}Total power will be calculated automatically if miner model is selected{% else %}如果选择了矿机型号，总功耗将自动计算{% endif %}</div>
                                 </div>
 
                                 <!-- Electricity cost -->
                                 {% if session.role in ['owner', 'admin', 'mining_site'] %}
                                 <div class="mb-3">
-                                    <label for="electricity-cost" class="form-label">Electricity Cost ($/kWh)</label>
+                                    <label for="electricity-cost" class="form-label">{{ t('electricity_cost') }} ($/kWh)</label>
                                     <input type="number" class="form-control" id="electricity-cost" name="electricity_cost" value="0.05" min="0" step="0.001">
-                                    <div class="form-text">矿场实际电费成本 (Actual electricity cost for the mining site)</div>
+                                    <div class="form-text">{% if current_lang == 'en' %}Actual electricity cost for the mining site{% else %}矿场实际电费成本{% endif %}</div>
                                 </div>
                                 {% else %}
                                 <!-- 为普通用户隐藏字段，但提供默认值 -->
