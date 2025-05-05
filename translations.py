@@ -180,21 +180,34 @@ def get_translation(text, to_lang='zh'):
     :param to_lang: 目标语言 'zh' 或 'en' / Target language 'zh' or 'en'
     :return: 翻译后的文本 / Translated text
     """
+    # 添加日志记录
+    print(f"DEBUG: Translating '{text}' to '{to_lang}'")
+    
     if to_lang == 'en':
-        # 如果目标语言是英文，查找中文对应的英文
-        # If target language is English, find English for Chinese
+        # 如果目标语言是英文，首先检查是否是英文键
+        if text in translations:
+            # 对英文键进行格式化，使其更易读
+            formatted_key = format_english_key(text)
+            print(f"DEBUG: Formatted '{text}' to '{formatted_key}'")
+            return formatted_key
+        
+        # 查找中文对应的英文
         for en_text, zh_text in translations.items():
             if zh_text == text:
                 # 对英文键进行格式化，使其更易读
-                return format_english_key(en_text)
+                formatted_key = format_english_key(en_text)
+                print(f"DEBUG: Found en_key='{en_text}' for zh_text='{text}', formatted to '{formatted_key}'")
+                return formatted_key
+        
         # 如果没找到，返回原文
-        # If not found, return original text
+        print(f"DEBUG: No translation found for '{text}', returning as is")
         return text
     elif to_lang == 'zh':
         # 如果目标语言是中文，从字典中获取翻译
-        # If target language is Chinese, get translation from dictionary
-        return translations.get(text, text)
+        zh_text = translations.get(text, text)
+        print(f"DEBUG: Translated '{text}' to zh '{zh_text}'")
+        return zh_text
     else:
         # 不支持的语言，返回原文
-        # Unsupported language, return original text
+        print(f"DEBUG: Unsupported language '{to_lang}', returning original text")
         return text
