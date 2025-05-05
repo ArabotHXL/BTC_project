@@ -1138,59 +1138,59 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 生成ROI图表函数
     function generateRoiChart(roiData, elementId, title, investmentAmount) {
-        // 判断是否有ROI数据
-        if (!roiData || !Array.isArray(roiData) || roiData.length === 0) {
-            console.error('没有有效的ROI数据用于生成图表');
-            var container = document.getElementById(elementId);
-            if (container) {
-                container.innerHTML = '<div class="alert alert-warning text-center">没有有效的ROI数据可显示。(No valid ROI data to display.)</div>';
+        try {
+            // 判断是否有ROI数据
+            if (!roiData || !Array.isArray(roiData) || roiData.length === 0) {
+                console.error('没有有效的ROI数据用于生成图表');
+                var container = document.getElementById(elementId);
+                if (container) {
+                    container.innerHTML = '<div class="alert alert-warning text-center">没有有效的ROI数据可显示。(No valid ROI data to display.)</div>';
+                }
+                return;
             }
-            return;
-        }
-        
-        var container = document.getElementById(elementId);
-        if (!container) {
-            console.error('找不到ROI图表容器:', elementId);
-            return;
-        }
-        
-        // 清空容器内容
-        container.innerHTML = '';
-        
-        // 创建一个新的图表外容器，增加更多的底部间距
-        var chartOuterContainer = document.createElement('div');
-        chartOuterContainer.style.position = 'relative';
-        chartOuterContainer.style.marginBottom = '75px'; // 额外添加更多底部间距
-        container.appendChild(chartOuterContainer);
-        
-        // 准备画布
-        var canvas = document.createElement('canvas');
-        canvas.id = elementId + '-canvas';
-        canvas.width = '100%';
-        canvas.height = '300';
-        chartOuterContainer.appendChild(canvas);
-        
-        // 分离月度和累积ROI数据
-        var labels = [];
-        var cumulativeRoiValues = [];
-        var cumulativeProfitValues = [];
-        var breakEvenPoint = null;
-        
-        // 准备图表数据
-        roiData.forEach(function(point, index) {
-            labels.push(point.month);
-            cumulativeRoiValues.push(point.roi_percent);
-            cumulativeProfitValues.push(point.cumulative_profit);
             
-            // 查找回收期点
-            if (breakEvenPoint === null && point.cumulative_profit >= investmentAmount) {
-                breakEvenPoint = index;
+            // 查找容器
+            var container = document.getElementById(elementId);
+            if (!container) {
+                console.error('找不到ROI图表容器:', elementId);
+                return;
             }
-        });
-        
-        // 创建图表
-        var ctx = canvas.getContext('2d');
-        var chart = new Chart(ctx, {
+            
+            // 完全重置容器内容
+            container.innerHTML = '';
+            
+            // 创建图表区域，设置固定高度，避免内容溢出影响布局
+            var chartArea = document.createElement('div');
+            chartArea.style.width = '100%';
+            chartArea.style.height = '300px';
+            chartArea.style.position = 'relative';
+            container.appendChild(chartArea);
+            
+            // 创建画布元素
+            var canvasEl = document.createElement('canvas');
+            chartArea.appendChild(canvasEl);
+            
+            // 分离月度和累积ROI数据
+            var labels = [];
+            var cumulativeRoiValues = [];
+            var cumulativeProfitValues = [];
+            var breakEvenPoint = null;
+            
+            // 准备图表数据
+            roiData.forEach(function(point, index) {
+                labels.push(point.month);
+                cumulativeRoiValues.push(point.roi_percent);
+                cumulativeProfitValues.push(point.cumulative_profit);
+                
+                // 查找回收期点
+                if (breakEvenPoint === null && point.cumulative_profit >= investmentAmount) {
+                    breakEvenPoint = index;
+                }
+            });
+            
+            // 创建图表
+            var ctx = canvasEl.getContext('2d');
+            var chart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
@@ -1337,16 +1337,26 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // 添加图表描述
+        // 添加图表描述 - 放在容器最后，这样就不会与图表重叠
         var description = document.createElement('div');
-        description.className = 'roi-chart-description small text-center mt-2 text-muted';
+        description.className = 'roi-chart-description small text-center mt-5 pt-4 text-muted';
         description.style.marginBottom = '60px'; // 强制添加大间距
         description.style.paddingBottom = '30px'; // 额外填充
+        description.style.marginTop = '50px'; // 顶部额外空间
+        description.style.clear = 'both'; // 确保不会有浮动元素
         description.innerHTML = '此图表显示了投资回报随时间的变化情况。蓝线表示累计ROI百分比，绿线表示累计利润金额。' +
                               '<br>This chart shows how ROI changes over time. Blue line represents cumulative ROI percentage, green line shows cumulative profit.';
-        chartOuterContainer.appendChild(description);
+        container.appendChild(description);
         
         return chart;
+        } catch (error) {
+            console.error('生成ROI图表时出错:', error);
+            var container = document.getElementById(elementId);
+            if (container) {
+                container.innerHTML = '<div class="alert alert-danger text-center">生成投资回报图表时出错。(Error generating ROI chart.)</div>';
+            }
+            return null;
+        }
     }
     
     // 调用初始化函数 (Call init function)
