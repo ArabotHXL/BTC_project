@@ -167,9 +167,20 @@ def format_english_key(key):
     :param key: 带下划线的英文键，如 "network_hashrate"
     :return: 格式化的英文文本，如 "Network Hashrate"
     """
-    # 将下划线替换为空格，并使每个单词首字母大写
+    # 将下划线替换为空格
     words = key.split('_')
-    return ' '.join(word.capitalize() for word in words)
+    
+    # 特殊处理某些缩写词
+    formatted_words = []
+    for word in words:
+        if word.lower() == 'btc':
+            # BTC 应该全部大写
+            formatted_words.append('BTC')
+        else:
+            # 其他单词首字母大写
+            formatted_words.append(word.capitalize())
+    
+    return ' '.join(formatted_words)
 
 def get_translation(text, to_lang='zh'):
     """
