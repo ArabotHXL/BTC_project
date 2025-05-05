@@ -28,7 +28,18 @@ def get_login_records(limit=20):
                 print(f'ID: {r.id}, 用户: {r.email}')
                 print(f'时间: {r.login_time.strftime("%Y-%m-%d %H:%M:%S")}, 状态: {status}')
                 print(f'IP: {r.ip_address or "N/A"}')
-                print(f'位置: {r.login_location or "未知"}')
+                print(f'完整位置信息: {r.login_location or "未知"}')
+                
+                # 解析位置信息以更好地展示
+                if r.login_location and ',' in r.login_location:
+                    parts = r.login_location.split(',')
+                    country = parts[0].strip() if len(parts) > 0 else "未知国家"
+                    region = parts[1].strip() if len(parts) > 1 else "未知地区"
+                    city = parts[2].strip() if len(parts) > 2 else "未知城市"
+                    print(f'国家: {country}')
+                    print(f'地区: {region}')
+                    print(f'城市: {city}')
+                    
                 print('-' * 80)
         except Exception as e:
             print(f"查询数据库时出错: {str(e)}")
