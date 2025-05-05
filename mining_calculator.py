@@ -316,10 +316,22 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         # === 收入 & 利润计算 (Revenue & Profit Calculation) ===
         monthly_revenue = monthly_btc * btc_price
         
-        # 矿场主收益需要减去电费和维护费
-        monthly_profit = monthly_revenue - electricity_expense - maintenance_fee
+        # 矿场主的比特币挖矿收益，减去电费和维护费
+        monthly_mining_profit = monthly_revenue - electricity_expense - maintenance_fee
         
-        # 客户收益需要减去电费和维护费（与矿场主一样）
+        # 矿场主的电费差价收益（如果提供了客户电费且高于矿场电费）
+        monthly_electricity_markup = 0
+        if client_electricity_cost and client_electricity_cost > electricity_cost:
+            # 计算电费差价收益 = (客户电费 - 矿场电费) * 电力消耗
+            monthly_electricity_markup = (client_electricity_cost - electricity_cost) * monthly_power_consumption
+            logging.info(f"电费差价收益: ${monthly_electricity_markup} = (${client_electricity_cost} - ${electricity_cost}) * {monthly_power_consumption}kWh")
+        
+        # 矿场主总收益 = 挖矿收益 + 电费差价收益
+        monthly_profit = monthly_mining_profit
+        if client_electricity_cost:  # 如果是托管模式，使用电费差价作为收益
+            monthly_profit = monthly_electricity_markup
+        
+        # 客户收益需要减去电费和维护费（与矿场主挖矿收益计算方式一样）
         client_monthly_profit = monthly_revenue - client_electricity_expense - maintenance_fee
         
         # === 最优电价 (Optimal Electricity Rate) 计算 ===
@@ -355,11 +367,19 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         host_roi_data = None
         client_roi_data = None
         
+        # 添加调试日志，帮助排查ROI计算问题
+        logging.info(f"ROI计算输入数据 - 矿场主投资: ${host_investment}")
+        logging.info(f"ROI计算输入数据 - 矿场主月利润: ${monthly_profit}, 年利润: ${yearly_profit}")
+        logging.info(f"ROI计算输入数据 - 客户投资: ${client_investment}")
+        logging.info(f"ROI计算输入数据 - 客户月利润: ${client_monthly_profit}, 年利润: ${client_yearly_profit}")
+        
         if host_investment > 0:
             host_roi_data = calculate_roi(host_investment, yearly_profit, monthly_profit, btc_price)
+            logging.info(f"矿场主ROI计算结果 - 年化回报率: {host_roi_data['roi_percent_annual']}%, 回收期: {host_roi_data['payback_period_months']}月")
             
         if client_investment > 0:
             client_roi_data = calculate_roi(client_investment, client_yearly_profit, client_monthly_profit, btc_price)
+            logging.info(f"客户ROI计算结果 - 年化回报率: {client_roi_data['roi_percent_annual']}%, 回收期: {client_roi_data['payback_period_months']}月")
             
         # Return results in a consistent format with our previous implementation
         return {
@@ -575,23 +595,29 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
                             print(f"客户模式热力图 - BTC价格: ${price}, 电费: ${used_electricity_cost}/kWh, 月利润: ${monthly_profit}, BTC产出: {monthly_btc}")
                     else:
                         # === 矿场主模式 ===
-                        # 在矿场主模式下，我们展示不同电费和BTC价格组合下的矿场利润
+                        # 在矿场主模式下，有两种利润模式：
+                        # 1. 自营挖矿模式：利润 = 比特币产出收益 - 矿场电费 - 维护费
+                        # 2. 托管服务模式：利润 = 客户电费差价收入 = (客户电费 - 矿场电费) * 耗电量
                         
-                        # 1. 矿场收入 - 基于客户电费收入
-                        host_monthly_revenue = monthly_power * cost  # 收入：电力消耗 * 当前循环中的电费（表示矿场收取的费用）
-                        
-                        # 2. 矿场成本 - 基于矿场实际电费 + 维护费
-                        # 使用基本电费(通常是 0.05 $/kWh)作为矿场的实际电费成本
-                        base_electricity_cost = 0.05  # 基础矿场电费
-                        host_monthly_cost = monthly_power * base_electricity_cost  # 电力成本
                         maintenance_monthly = result.get('maintenance_fee', {}).get('monthly', 5000)  # 维护费
                         
-                        # 3. 计算矿场利润
-                        monthly_profit = host_monthly_revenue - host_monthly_cost - maintenance_monthly
+                        # 计算方式1：自营挖矿模式 - 基于比特币挖矿收益
+                        btc_revenue = monthly_btc * price  # 比特币产出收益
+                        mining_cost = monthly_power * cost  # 电力成本
+                        mining_profit = btc_revenue - mining_cost - maintenance_monthly  # 挖矿利润
+                        
+                        # 计算方式2：托管服务模式 - 基于电费差价
+                        # 使用基本电费(通常是 0.05 $/kWh)作为矿场的实际电费成本
+                        base_electricity_cost = 0.05  # 基础矿场电费
+                        client_electricity_rate = 0.07  # 假设的客户电费率
+                        markup_profit = monthly_power * (client_electricity_rate - base_electricity_cost)  # 电费差价利润
+                        
+                        # 默认使用挖矿利润，这将确保回收期计算准确
+                        monthly_profit = mining_profit
                         
                         # 记录日志帮助调试（仅在第一个点记录）
                         if price == btc_prices[0] and cost == electricity_costs[0]:
-                            print(f"矿场主模式热力图 - BTC价格: ${price}, 矿场电费: ${cost}/kWh, 收入: ${host_monthly_revenue}, 成本: ${host_monthly_cost}, 维护: ${maintenance_monthly}, 利润: ${monthly_profit}")
+                            print(f"矿场主模式热力图 - BTC价格: ${price}, 矿场电费: ${cost}/kWh, 比特币收入: ${btc_revenue}, 电费成本: ${mining_cost}, 维护: ${maintenance_monthly}, 利润: ${monthly_profit}")
                 except Exception as e:
                     # 捕获计算过程中的任何错误
                     logging.error(f"热力图数据点计算错误 - BTC价格: ${price}, 电费: ${cost}/kWh, 错误: {str(e)}")
