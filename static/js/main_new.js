@@ -1327,7 +1327,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 添加图表描述
         var description = document.createElement('div');
-        description.className = 'roi-chart-description small text-center mt-2 mb-3 text-muted';
+        description.className = 'roi-chart-description small text-center mt-2 mb-5 text-muted';
         description.innerHTML = '此图表显示了投资回报随时间的变化情况。蓝线表示累计ROI百分比，绿线表示累计利润金额。' +
                               '<br>This chart shows how ROI changes over time. Blue line represents cumulative ROI percentage, green line shows cumulative profit.';
         container.appendChild(description);
