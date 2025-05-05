@@ -159,6 +159,18 @@ translations = {
 
 # 获取翻译函数，如果没有找到对应翻译，返回原文
 # Function to get translation, returns original text if no translation found
+def format_english_key(key):
+    """
+    将带下划线的英文键转换为可读性更好的格式
+    Convert underscore English keys to more readable format
+    
+    :param key: 带下划线的英文键，如 "network_hashrate"
+    :return: 格式化的英文文本，如 "Network Hashrate"
+    """
+    # 将下划线替换为空格，并使每个单词首字母大写
+    words = key.split('_')
+    return ' '.join(word.capitalize() for word in words)
+
 def get_translation(text, to_lang='zh'):
     """
     获取文本翻译
@@ -173,7 +185,8 @@ def get_translation(text, to_lang='zh'):
         # If target language is English, find English for Chinese
         for en_text, zh_text in translations.items():
             if zh_text == text:
-                return en_text
+                # 对英文键进行格式化，使其更易读
+                return format_english_key(en_text)
         # 如果没找到，返回原文
         # If not found, return original text
         return text
