@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, g
 import logging
 import json
 import numpy as np
@@ -35,6 +35,30 @@ app.secret_key = os.environ.get("SESSION_SECRET", secrets.token_hex(32))
 # 导入数据库和用户模型
 from db import db
 from models import LoginRecord, UserAccess
+
+# 导入翻译模块
+from translations import get_translation
+
+# 默认语言 'en' 英文, 'zh' 中文
+DEFAULT_LANGUAGE = 'zh'
+
+# 在请求前处理设置语言
+@app.before_request
+def before_request():
+    # 优先从会话中获取语言设置，如果没有则从 URL 参数获取，如果都没有则使用默认值
+    g.language = session.get('language', request.args.get('lang', DEFAULT_LANGUAGE))
+    
+    # 如果有语言切换请求，保存到会话
+    if request.args.get('lang'):
+        session['language'] = request.args.get('lang')
+        g.language = session['language']
+
+# 添加翻译函数到模板上下文
+@app.context_processor
+def inject_translator():
+    def translate(text):
+        return get_translation(text, to_lang=g.language)
+    return dict(t=translate, current_lang=g.language)
 
 def get_user_role(email):
     """根据用户邮箱获取角色"""
