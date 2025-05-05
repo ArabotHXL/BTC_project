@@ -640,6 +640,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     hostPaybackYearsEl.textContent = formatNumber(years, 2) + ' years';
                 }
             }
+            
+            // 如果有forecast数据，生成矿场主ROI图表
+            if (hostRoi.forecast && Array.isArray(hostRoi.forecast)) {
+                console.log('矿场主ROI数据可用，生成图表', hostRoi.forecast.length, '个数据点');
+                // 调用生成ROI图表函数
+                generateRoiChart(
+                    hostRoi.forecast, 
+                    'host-roi-chart', 
+                    '矿场主投资回收曲线 / Host Investment Recovery', 
+                    data.inputs.host_investment
+                );
+            }
         } else {
             // 如果没有ROI数据，显示默认值
             if (hostInvestmentAmountEl) hostInvestmentAmountEl.textContent = '$0.00';
@@ -782,10 +794,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // 如果有累积ROI数据，可以在这里添加图表生成代码
-            if (clientRoi.cumulative_roi && Array.isArray(clientRoi.cumulative_roi)) {
-                console.log('客户累积ROI数据可用，可用于生成图表', clientRoi.cumulative_roi.length, '个数据点');
-                // 注意：实际的图表代码会在单独的图表生成函数中实现
+            // 如果有forecast数据，生成客户ROI图表
+            if (clientRoi.forecast && Array.isArray(clientRoi.forecast)) {
+                console.log('客户ROI数据可用，生成图表', clientRoi.forecast.length, '个数据点');
+                // 调用生成ROI图表函数
+                generateRoiChart(
+                    clientRoi.forecast, 
+                    'client-roi-chart', 
+                    '客户投资回收曲线 / Client Investment Recovery', 
+                    data.inputs.client_investment
+                );
             }
         } else {
             // 如果没有ROI数据，显示默认值
