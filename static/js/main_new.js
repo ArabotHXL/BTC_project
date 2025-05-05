@@ -1154,9 +1154,21 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // 清空容器内容
+        container.innerHTML = '';
+        
+        // 创建一个新的图表外容器，增加更多的底部间距
+        var chartOuterContainer = document.createElement('div');
+        chartOuterContainer.style.position = 'relative';
+        chartOuterContainer.style.marginBottom = '75px'; // 额外添加更多底部间距
+        container.appendChild(chartOuterContainer);
+        
         // 准备画布
-        container.innerHTML = '<canvas id="' + elementId + '-canvas" width="100%" height="300"></canvas>';
-        var canvas = document.getElementById(elementId + '-canvas');
+        var canvas = document.createElement('canvas');
+        canvas.id = elementId + '-canvas';
+        canvas.width = '100%';
+        canvas.height = '300';
+        chartOuterContainer.appendChild(canvas);
         
         // 分离月度和累积ROI数据
         var labels = [];
@@ -1327,10 +1339,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 添加图表描述
         var description = document.createElement('div');
-        description.className = 'roi-chart-description small text-center mt-2 mb-5 text-muted';
+        description.className = 'roi-chart-description small text-center mt-2 text-muted';
+        description.style.marginBottom = '60px'; // 强制添加大间距
+        description.style.paddingBottom = '30px'; // 额外填充
         description.innerHTML = '此图表显示了投资回报随时间的变化情况。蓝线表示累计ROI百分比，绿线表示累计利润金额。' +
                               '<br>This chart shows how ROI changes over time. Blue line represents cumulative ROI percentage, green line shows cumulative profit.';
-        container.appendChild(description);
+        chartOuterContainer.appendChild(description);
         
         return chart;
     }
