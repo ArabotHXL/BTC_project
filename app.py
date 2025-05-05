@@ -416,6 +416,12 @@ def calculate():
                 }
             }
             
+            # 保留客户ROI数据，这对客户用户是可见的
+            if 'roi' in result and 'client' in result['roi']:
+                filtered_result['roi'] = {
+                    'client': result['roi']['client']
+                }
+            
             # 如果结果中有估算注释，也添加到过滤结果中
             if 'estimation_note' in result:
                 filtered_result['estimation_note'] = result['estimation_note']
