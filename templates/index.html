@@ -378,7 +378,7 @@
                             <!-- 矿场主ROI信息 -->
                             <div class="row mt-4">
                                 <div class="col-md-12">
-                                    <h6 class="mb-3 bg-dark bg-opacity-10 p-2 rounded">矿场主投资回报 (Host ROI Analysis)</h6>
+                                    <h6 class="mb-3 bg-dark bg-opacity-10 p-2 rounded">{% if current_lang == 'en' %}Host ROI Analysis{% else %}矿场主投资回报{% endif %}</h6>
                                     <table class="table table-sm table-bordered">
                                         <tbody>
                                             <tr>
@@ -552,23 +552,23 @@
                             <div class="row">
                                 <!-- 比特币网络信息 -->
                                 <div class="col-md-4">
-                                    <h6 class="text-muted mb-2">比特币网络信息 (Bitcoin Network)</h6>
+                                    <h6 class="text-muted mb-2">{% if current_lang == 'en' %}Bitcoin Network Information{% else %}比特币网络信息{% endif %}</h6>
                                     <table class="table table-sm table-bordered">
                                         <tbody>
                                             <tr>
-                                                <td>网络难度 (Network Difficulty)</td>
+                                                <td>{% if current_lang == 'en' %}Network Difficulty{% else %}网络难度{% endif %}</td>
                                                 <td id="network-difficulty-value" class="text-end">0 T</td>
                                             </tr>
                                             <tr>
-                                                <td>网络算力 (Network Hashrate)</td>
+                                                <td>{% if current_lang == 'en' %}Network Hashrate{% else %}网络算力{% endif %}</td>
                                                 <td id="network-hashrate-value" class="text-end">0 EH/s</td>
                                             </tr>
                                             <tr>
-                                                <td>BTC当前价格 (BTC Price)</td>
+                                                <td>{% if current_lang == 'en' %}BTC Price{% else %}BTC当前价格{% endif %}</td>
                                                 <td id="current-btc-price-value" class="text-end">$0.00</td>
                                             </tr>
                                             <tr>
-                                                <td>区块奖励 (Block Reward)</td>
+                                                <td>{% if current_lang == 'en' %}Block Reward{% else %}区块奖励{% endif %}</td>
                                                 <td id="block-reward-value" class="text-end">0 BTC</td>
                                             </tr>
                                         </tbody>
@@ -577,19 +577,19 @@
                                 
                                 <!-- 挖矿场信息 -->
                                 <div class="col-md-4">
-                                    <h6 class="text-muted mb-2">挖矿场信息 (Mining Site)</h6>
+                                    <h6 class="text-muted mb-2">{% if current_lang == 'en' %}Mining Site Information{% else %}挖矿场信息{% endif %}</h6>
                                     <table class="table table-sm table-bordered">
                                         <tbody>
                                             <tr>
-                                                <td>场地总算力 (Total Site Hashrate)</td>
+                                                <td>{% if current_lang == 'en' %}Total Site Hashrate{% else %}场地总算力{% endif %}</td>
                                                 <td id="total-hashrate-result" class="text-end">0 TH/s</td>
                                             </tr>
                                             <tr>
-                                                <td>每TH日产BTC (BTC per TH Daily)</td>
+                                                <td>{% if current_lang == 'en' %}BTC per TH Daily{% else %}每TH日产BTC{% endif %}</td>
                                                 <td id="btc-per-th-daily" class="text-end">0.00000000</td>
                                             </tr>
                                             <tr>
-                                                <td>最优电费 (Optimal Electricity Rate)</td>
+                                                <td>{% if current_lang == 'en' %}Optimal Electricity Rate{% else %}最优电费{% endif %}</td>
                                                 <td id="optimal-electricity-rate" class="text-end">$0.00/kWh</td>
                                             </tr>
                                         </tbody>
@@ -598,19 +598,19 @@
                                 
                                 <!-- BTC产出算法 -->
                                 <div class="col-md-4">
-                                    <h6 class="text-muted mb-2">BTC产出算法 (BTC Output Algorithms)</h6>
+                                    <h6 class="text-muted mb-2">{% if current_lang == 'en' %}BTC Output Algorithms{% else %}BTC产出算法{% endif %}</h6>
                                     <table class="table table-sm table-bordered">
                                         <tbody>
                                             <tr class="bg-light">
-                                                <td>日产BTC总量 (Daily BTC Total)</td>
+                                                <td>{% if current_lang == 'en' %}Daily BTC Total{% else %}日产BTC总量{% endif %}</td>
                                                 <td id="daily-btc-value" class="text-end fw-bold">0.00000000</td>
                                             </tr>
                                             <tr>
-                                                <td><span class="badge bg-secondary">算法1</span> 按算力占比 (By Hashrate)</td>
+                                                <td><span class="badge bg-secondary">{% if current_lang == 'en' %}Algorithm 1{% else %}算法1{% endif %}</span> {% if current_lang == 'en' %}By Hashrate{% else %}按算力占比{% endif %}</td>
                                                 <td id="btc-method1-daily" class="text-end">0.00000000</td>
                                             </tr>
                                             <tr>
-                                                <td><span class="badge bg-primary">算法2</span> 按难度公式 (By Difficulty)</td>
+                                                <td><span class="badge bg-primary">{% if current_lang == 'en' %}Algorithm 2{% else %}算法2{% endif %}</span> {% if current_lang == 'en' %}By Difficulty{% else %}按难度公式{% endif %}</td>
                                                 <td id="btc-method2-daily" class="text-end">0.00000000</td>
                                             </tr>
                                         </tbody>
@@ -651,7 +651,7 @@
 
         <footer class="py-3 mt-auto border-top">
             <div class="container text-center text-muted">
-                <p class="mb-0">Bitcoin Mining Profitability Calculator &copy; 2025</p>
+                <p class="mb-0">{% if current_lang == 'en' %}Bitcoin Mining Profitability Calculator{% else %}比特币挖矿收益计算器{% endif %} &copy; 2025</p>
             </div>
         </footer>
     </div>
