@@ -225,6 +225,16 @@
                                     <div class="form-text">每月矿场维护费用 (Monthly maintenance cost for the mining facility)</div>
                                 </div>
                                 
+                                <!-- Curtailment Percentage -->
+                                <div class="mb-3">
+                                    <label for="curtailment" class="form-label">限电百分比 (Curtailment %)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="curtailment" name="curtailment" value="0" min="0" max="100" step="1">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <div class="form-text">电力削减/限电比例，表示因电网需求响应、高温或维护等原因需降低功率的时间百分比 (Percentage of time with reduced power due to grid demand response, high temperature, or maintenance)</div>
+                                </div>
+                                
                                 <!-- Host Investment Amount -->
                                 <div class="mb-3">
                                     <label for="host-investment" class="form-label">矿场主投资金额 (Host Investment)</label>
@@ -238,6 +248,7 @@
                                 <!-- 为普通用户隐藏字段，但提供默认值 -->
                                 <input type="hidden" id="maintenance-fee" name="maintenance_fee" value="5000">
                                 <input type="hidden" id="host-investment" name="host_investment" value="800000">
+                                <input type="hidden" id="curtailment" name="curtailment" value="0">
                                 {% endif %}
                                 
                                 <!-- Client Investment Amount -->
