@@ -166,19 +166,10 @@
                                     <div class="form-text">{% if current_lang == 'en' %}Calculated based on site power and miner model{% else %}基于矿场功率和矿机型号自动计算{% endif %}</div>
                                 </div>
 
-                                <!-- Hashrate input -->
-                                <div class="mb-3">
-                                    <label for="hashrate" class="form-label">{{ t('hashrate') }}</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="hashrate" name="hashrate" value="100" min="0" step="0.01">
-                                        <select class="form-select" id="hashrate-unit" name="hashrate_unit" style="max-width: 100px;">
-                                            <option value="TH/s">TH/s</option>
-                                            <option value="PH/s">PH/s</option>
-                                            <option value="EH/s">EH/s</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-text">{% if current_lang == 'en' %}Total hashrate will be calculated automatically if miner model is selected{% else %}如果选择了矿机型号，总算力将自动计算{% endif %}</div>
-                                </div>
+                                <!-- 单矿机算力和功耗字段（隐藏）-->
+                                <input type="hidden" class="form-control" id="hashrate" name="hashrate" value="100">
+                                <input type="hidden" class="form-select" id="hashrate-unit" name="hashrate_unit" value="TH/s">
+                                <input type="hidden" class="form-control" id="power-consumption" name="power_consumption" value="3000">
 
                                 <!-- Total Hashrate - 隐藏但仍然发送到后端 -->
                                 <input type="hidden" id="total-hashrate" name="total_hashrate" value="0">
@@ -187,13 +178,6 @@
                                     <label for="total-hashrate-display" class="form-label">总算力 / Total Hashrate (TH/s)</label>
                                     <input type="number" class="form-control" id="total-hashrate-display" readonly>
                                     <div class="form-text">总算力 = 单台算力 × 矿机数量 / Total hashrate = Single miner hashrate × Miner count</div>
-                                </div>
-
-                                <!-- Power consumption -->
-                                <div class="mb-3">
-                                    <label for="power-consumption" class="form-label">{{ t('power_consumption') }} (W)</label>
-                                    <input type="number" class="form-control" id="power-consumption" name="power_consumption" value="3000" min="0">
-                                    <div class="form-text">{% if current_lang == 'en' %}Single miner power consumption{% else %}单台矿机功耗{% endif %}</div>
                                 </div>
                                 
                                 <!-- Total Power Consumption - 隐藏但仍然发送到后端 -->
