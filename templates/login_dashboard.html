@@ -2,40 +2,6 @@
 
 {% block title %}登录数据分析仪表盘 | Login Dashboard{% endblock %}
 
-{% block extra_head %}
-<!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css?v={{ now.timestamp }}" 
-      crossorigin=""/>
-<!-- Leaflet JavaScript -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js?v={{ now.timestamp }}" 
-        crossorigin=""></script>
-<style>
-    #loginMap {
-        height: 400px;
-        width: 100%;
-        border-radius: 0.25rem;
-    }
-    .marker-popup-content {
-        font-size: 0.9rem;
-    }
-    .marker-popup-content .email {
-        font-weight: bold;
-        margin-bottom: 3px;
-    }
-    .marker-popup-content .time {
-        color: #6c757d;
-        font-size: 0.8rem;
-        margin-bottom: 5px;
-    }
-    .marker-popup-content .status-success {
-        color: #198754;
-    }
-    .marker-popup-content .status-failed {
-        color: #dc3545;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="container mt-4">
     <div class="row mb-4">
@@ -117,23 +83,6 @@
                 </div>
                 <div class="card-body">
                     <canvas id="loginTrendsChart" height="300"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 登录地理位置地图 / Login Locations Map -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-geo-alt"></i>
-                        {% if current_lang == 'en' %}Login Locations Map{% else %}登录位置地图{% endif %}
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div id="loginMap"></div>
                 </div>
             </div>
         </div>
@@ -343,120 +292,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
-});
-</script>
-
-<!-- 使用独立的超简化地图脚本 -->
-<script>
-// 在DOMContentLoaded事件中初始化地图，避免变量名冲突
-document.addEventListener('DOMContentLoaded', function initMap() {
-    // 创建地图实例
-    var map = L.map('loginMap').setView([30, 10], 2);
-    
-    // 添加深色地图图层 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?v={{ now.timestamp }}', {
-        attribution: '© OpenStreetMap',
-        maxZoom: 19
-    }).addTo(map);
-    
-    // 各国坐标映射
-    var coords = {
-        {% if current_lang == 'en' %}
-        'China': [35, 105],
-        'United States': [40, -100],
-        'United Kingdom': [54, -2],
-        'Canada': [56, -105],
-        'Australia': [-25, 135],
-        'Japan': [36, 138],
-        'Germany': [51, 10],
-        'France': [47, 2],
-        'Brazil': [-10, -55],
-        'India': [20, 80]
-        {% else %}
-        '中国': [35, 105],
-        '美国': [40, -100],
-        '英国': [54, -2],
-        '加拿大': [56, -105],
-        '澳大利亚': [-25, 135],
-        '日本': [36, 138],
-        '德国': [51, 10],
-        '法国': [47, 2],
-        '巴西': [-10, -55],
-        '印度': [20, 80]
-        {% endif %}
-    };
-    
-    // 生成伪随机数的函数（基于简单线性同余算法）
-    var seed = 2025;
-    function random() {
-        seed = (seed * 9301 + 49297) % 233280;
-        return seed / 233280;
-    }
-    
-    // 收集所有标记的位置
-    var markers = [];
-    
-    // 渲染登录位置标记（遍历记录数据）
-    {% for record in records %}
-        {% if record.login_location and ',' in record.login_location %}
-            (function() { // 使用IIFE创建独立作用域
-                // 解析位置信息
-                var parts = "{{ record.login_location }}".split(',');
-                var country = parts[0].trim();
-                var region = parts.length > 1 ? parts[1].trim() : '';
-                var city = parts.length > 2 ? parts[2].trim() : '';
-                
-                // 计算位置 - 使用更小的分布范围，使点集中在国家
-                var position;
-                if (coords[country]) {
-                    // 使用国家基础坐标加更小的随机偏移
-                    var base = coords[country];
-                    // 大国家使用较小偏移，小国家使用极小偏移
-                    var offset = country.match(/中国|China|美国|United States|加拿大|Canada|澳大利亚|Australia|巴西|Brazil|印度|India/) ? 2 : 0.8;
-                    
-                    // 生成更均匀的分布，确保所有点都在合理的区域内
-                    // 对每个国家，在中心点周围创建一个小的集群
-                    var angle = random() * 2 * Math.PI; // 随机角度
-                    var distance = random() * offset;    // 随机距离但受限
-                    
-                    position = [
-                        base[0] + Math.cos(angle) * distance,
-                        base[1] + Math.sin(angle) * distance
-                    ];
-                } else {
-                    // 对于未知国家，将其随机分配到欧洲或亚洲
-                    // 默认放在欧洲中部
-                    position = [48 + (random() - 0.5) * 2, 8 + (random() - 0.5) * 2];
-                }
-                
-                // 创建标记
-                var marker = L.marker(position).addTo(map);
-                
-                // 创建弹出内容
-                var html = 
-                    '<div class="marker-popup-content">' +
-                    '<div class="email">{{ record.email }}</div>' +
-                    '<div class="time">{{ record.est_time }}</div>' +
-                    '<div class="{{ "status-success" if record.successful else "status-failed" }}">' +
-                    '{{ "Success" if record.successful and current_lang == "en" else "成功" if record.successful else "Failed" if current_lang == "en" else "失败" }}' +
-                    '</div>' +
-                    '<div>' + city + (region ? ', ' + region : '') + ', ' + country + '</div>' +
-                    '<div>IP: {{ record.ip_address or "Unknown" }}</div>' +
-                    '</div>';
-                
-                // 绑定弹出窗口
-                marker.bindPopup(html);
-                
-                // 保存位置
-                markers.push(position);
-            })();
-        {% endif %}
-    {% endfor %}
-    
-    // 如果有标记，调整地图视图
-    if (markers.length > 0) {
-        map.fitBounds(L.latLngBounds(markers), {padding: [30, 30]});
-    }
 });
 </script>
 {% endblock %}
