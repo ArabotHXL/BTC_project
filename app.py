@@ -1119,6 +1119,20 @@ def get_profit_chart_data():
             'error': f'Server error: {str(e)}'
         }), 500
 
+@app.route('/api-tester')
+@login_required
+def api_tester():
+    """电力管理系统API测试工具页面"""
+    # 只允许拥有者和管理员角色访问
+    if not has_role(['owner', 'admin']):
+        if g.language == 'en':
+            flash('Access denied. Owner or admin privileges required.', 'danger')
+        else:
+            flash('您没有权限访问此页面，需要拥有者或管理员权限', 'danger')
+        return redirect(url_for('index'))
+    
+    return render_template('api_tester.html')
+
 @app.route('/power-management')
 @login_required
 def power_management_dashboard():

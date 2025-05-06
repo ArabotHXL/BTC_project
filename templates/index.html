@@ -20,6 +20,25 @@
     <link rel="stylesheet" href="/static/css/styles.css">
     <!-- Animation CSS -->
     <link rel="stylesheet" href="/static/css/animations.css">
+    <!-- 子菜单支持 -->
+    <style>
+        .dropdown-submenu {
+            position: relative;
+        }
+        .dropdown-submenu .dropdown-menu {
+            top: 0;
+            left: 100%;
+            margin-top: -1px;
+        }
+        /* 在悬停时显示子菜单 */
+        .dropdown-submenu:hover > .dropdown-menu {
+            display: block;
+        }
+        /* 选中的菜单项高亮 */
+        .dropdown-item:active, .dropdown-item:focus, .dropdown-item:hover {
+            background-color: rgba(var(--bs-primary-rgb), 0.2);
+        }
+    </style>
 </head>
 <body>
     <div class="container-fluid">
@@ -28,12 +47,22 @@
                 <h1 class="fs-4">{{ t('bitcoin_mining_profitability_calculator') }}</h1>
                 
                 <div class="d-flex gap-4 align-items-center">
-                    <!-- 智能电力管理系统快速访问按钮 (仅对管理员显示) -->
+                    <!-- 智能电力管理系统按钮 (仅对管理员显示) -->
                     {% if session.role in ['owner', 'admin'] %}
-                    <a href="{{ url_for('power_management_dashboard') }}" class="btn btn-outline-success btn-sm me-3">
-                        <i class="bi bi-lightning-charge-fill me-1"></i>
-                        {% if current_lang == 'en' %}Power Manager{% else %}电力管理{% endif %}
-                    </a>
+                    <div class="btn-group btn-group-sm me-3">
+                        <a href="{{ url_for('power_management_dashboard') }}" class="btn btn-outline-success">
+                            <i class="bi bi-lightning-charge-fill me-1"></i>
+                            {% if current_lang == 'en' %}Power Dashboard{% else %}电力仪表盘{% endif %}
+                        </a>
+                        <a href="{{ url_for('power_management_admin') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-tools me-1"></i>
+                            {% if current_lang == 'en' %}Quick Actions{% else %}快速操作{% endif %}
+                        </a>
+                        <a href="{{ url_for('api_tester') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-code-slash me-1"></i>
+                            {% if current_lang == 'en' %}API Tester{% else %}API测试{% endif %}
+                        </a>
+                    </div>
                     {% endif %}
                     
                     <!-- 语言切换 / Language Switcher -->
@@ -104,10 +133,27 @@
                                     </a></li>
                                     
                                     <!-- 智能电力管理系统入口 -->
-                                    <li><a class="dropdown-item" href="{{ url_for('power_management_dashboard') }}">
-                                        <i class="bi bi-lightning-charge-fill me-1"></i> 
-                                        {% if current_lang == 'en' %}Smart Power Management{% else %}智能电力管理系统{% endif %}
-                                    </a></li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-lightning-charge-fill me-1"></i> 
+                                            {% if current_lang == 'en' %}Smart Power Management{% else %}智能电力管理系统{% endif %}
+                                            <i class="bi bi-chevron-right float-end"></i>
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-dark">
+                                            <li><a class="dropdown-item" href="{{ url_for('power_management_dashboard') }}">
+                                                <i class="bi bi-speedometer2 me-1"></i> 
+                                                {% if current_lang == 'en' %}Dashboard{% else %}仪表盘{% endif %}
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="{{ url_for('power_management_admin') }}">
+                                                <i class="bi bi-tools me-1"></i> 
+                                                {% if current_lang == 'en' %}Quick Actions{% else %}快速操作{% endif %}
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="{{ url_for('api_tester') }}">
+                                                <i class="bi bi-code-slash me-1"></i> 
+                                                {% if current_lang == 'en' %}API Tester{% else %}API测试{% endif %}
+                                            </a></li>
+                                        </ul>
+                                    </li>
                                     {% endif %}
                                     
                                     <!-- 显示当前用户角色 -->
