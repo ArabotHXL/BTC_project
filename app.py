@@ -1119,5 +1119,15 @@ def get_profit_chart_data():
             'error': f'Server error: {str(e)}'
         }), 500
 
+@app.route('/power-management')
+@login_required
+def power_management_dashboard():
+    """智能电力管理系统仪表盘"""
+    if not has_role(['owner', 'admin']):
+        flash('您没有访问此页面的权限。', 'danger')
+        return redirect(url_for('unauthorized'))
+    
+    return render_template('db_power_dashboard.html')
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
