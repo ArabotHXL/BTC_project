@@ -2,12 +2,23 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log("页面已加载，初始化应用...");
     
+    // 加密货币单位映射表
+    var CRYPTOCURRENCIES_UNITS = {
+        "BTC": "TH/s",
+        "LTC": "GH/s",
+        "ETC": "MH/s",
+        "DOGE": "GH/s",
+        "RVN": "MH/s",
+        "ZEC": "kSol/s"
+    };
+    
     // 元素引用 (Element references)
     var btcPriceEl = document.getElementById('btc-price');
     var networkDifficultyEl = document.getElementById('network-difficulty');
     var networkHashrateEl = document.getElementById('network-hashrate');
     var blockRewardEl = document.getElementById('block-reward');
     
+    var cryptoCurrencySelect = document.getElementById('crypto-currency');
     var minerModelSelect = document.getElementById('miner-model');
     var sitePowerMwInput = document.getElementById('site-power-mw');
     var minerCountInput = document.getElementById('miner-count');
@@ -46,8 +57,20 @@ document.addEventListener('DOMContentLoaded', function() {
         // 加载网络数据 (Load network data)
         fetchNetworkStats();
         
-        // 加载矿机型号列表 (Load miner models)
-        fetchMiners();
+        // 加载加密货币列表，然后加载矿机列表
+        if (cryptoCurrencySelect) {
+            // 先加载加密货币列表，完成后再加载矿机列表
+            loadCryptocurrencies(function() {
+                // 加密货币列表加载完成后，加载对应的矿机列表
+                fetchMiners();
+            });
+            
+            // 添加加密货币选择事件监听器
+            cryptoCurrencySelect.addEventListener('change', updateCryptocurrency);
+        } else {
+            // 如果没有加密货币选择框，直接加载BTC矿机
+            fetchMiners();
+        }
         
         // 延迟计算以确保元素已加载完成
         console.log("在init函数中等待1秒后开始计算总算力和总功耗");
@@ -155,13 +178,27 @@ document.addEventListener('DOMContentLoaded', function() {
         var selectedMiner = minerModelSelect.value;
         
         if (selectedMiner) {
+            // 获取当前选择的加密货币
+            var currentCrypto = 'BTC';
+            if (cryptoCurrencySelect) {
+                currentCrypto = cryptoCurrencySelect.value;
+            }
+            
             // 从localStorage获取矿机数据 (Get miner data from localStorage)
-            var miners = JSON.parse(localStorage.getItem('miners') || '[]');
+            var cacheKey = 'miners_' + currentCrypto;
+            var defaultCacheKey = 'miners'; // 向后兼容
+            
+            var miners = JSON.parse(localStorage.getItem(cacheKey) || localStorage.getItem(defaultCacheKey) || '[]');
             var miner = miners.find(function(m) { return m.name === selectedMiner; });
             
             if (miner) {
                 hashrateInput.value = miner.hashrate;
                 powerConsumptionInput.value = miner.power_watt;
+                
+                // 如果矿机有单位信息，同时更新
+                if (miner.unit && hashrateUnitSelect) {
+                    hashrateUnitSelect.value = miner.unit;
+                }
                 
                 // 禁用手动输入 (Disable manual input)
                 hashrateInput.disabled = true;
@@ -173,6 +210,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // 计算总算力和总功耗
                 calculateTotalHashrateAndPower();
+                
+                // 更新算力单位显示
+                var totalHashrateLabel = document.querySelector('label[for="total-hashrate-display"]');
+                if (totalHashrateLabel) {
+                    var unit = miner.unit || CRYPTOCURRENCIES_UNITS[currentCrypto] || 'TH/s';
+                    totalHashrateLabel.textContent = '总算力 / Total Hashrate (' + unit + ')';
+                }
             }
         } else {
             // 启用手动输入 (Enable manual input)
@@ -381,6 +425,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // 收集表单数据 (Collect form data)
         var formData = new FormData(calculatorForm);
         
+        // 添加加密货币信息
+        if (cryptoCurrencySelect) {
+            formData.append('crypto_symbol', cryptoCurrencySelect.value);
+        } else {
+            formData.append('crypto_symbol', 'BTC'); // 默认使用BTC
+        }
+        
         // 手动添加总算力和总功耗数据到表单
         var minerCount = parseInt(minerCountInput.value) || 0;
         var hashrate = parseFloat(hashrateInput.value) || 0;
@@ -397,6 +448,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (formData.has('total_power')) {
                 formData.delete('total_power');
             }
+            
+            // 添加算力单位信息
+            var currentCrypto = cryptoCurrencySelect ? cryptoCurrencySelect.value : 'BTC';
+            var hashUnit = hashrateUnitSelect ? hashrateUnitSelect.value : 
+                          (CRYPTOCURRENCIES_UNITS[currentCrypto] || 'TH/s');
+            formData.append('hashrate_unit', hashUnit);
             
             // 添加计算出的值
             formData.append('total_hashrate', totalHashrate.toFixed(0));
