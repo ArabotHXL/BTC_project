@@ -406,22 +406,27 @@ document.addEventListener('DOMContentLoaded', function initMap() {
                 var region = parts.length > 1 ? parts[1].trim() : '';
                 var city = parts.length > 2 ? parts[2].trim() : '';
                 
-                // 计算位置
+                // 计算位置 - 使用更小的分布范围，使点集中在国家
                 var position;
                 if (coords[country]) {
-                    // 使用国家基础坐标加随机偏移
+                    // 使用国家基础坐标加更小的随机偏移
                     var base = coords[country];
-                    var offset = country.match(/中国|China|美国|United States|加拿大|Canada|澳大利亚|Australia|巴西|Brazil|印度|India/) ? 5 : 2;
+                    // 大国家使用较小偏移，小国家使用极小偏移
+                    var offset = country.match(/中国|China|美国|United States|加拿大|Canada|澳大利亚|Australia|巴西|Brazil|印度|India/) ? 2 : 0.8;
+                    
+                    // 生成更均匀的分布，确保所有点都在合理的区域内
+                    // 对每个国家，在中心点周围创建一个小的集群
+                    var angle = random() * 2 * Math.PI; // 随机角度
+                    var distance = random() * offset;    // 随机距离但受限
+                    
                     position = [
-                        base[0] + (random() - 0.5) * offset,
-                        base[1] + (random() - 0.5) * offset
+                        base[0] + Math.cos(angle) * distance,
+                        base[1] + Math.sin(angle) * distance
                     ];
                 } else {
-                    // 随机生成世界范围内的坐标
-                    position = [
-                        random() * 140 - 70,
-                        random() * 340 - 170
-                    ];
+                    // 对于未知国家，将其随机分配到欧洲或亚洲
+                    // 默认放在欧洲中部
+                    position = [48 + (random() - 0.5) * 2, 8 + (random() - 0.5) * 2];
                 }
                 
                 // 创建标记
