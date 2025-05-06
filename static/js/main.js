@@ -13,10 +13,11 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // 元素引用 (Element references)
-    var btcPriceEl = document.getElementById('btc-price');
+    var cryptoPriceEl = document.getElementById('crypto-price');  // 更新为多币种价格元素ID
     var networkDifficultyEl = document.getElementById('network-difficulty');
     var networkHashrateEl = document.getElementById('network-hashrate');
     var blockRewardEl = document.getElementById('block-reward');
+    var cryptoSymbolEl = document.getElementById('crypto-symbol');
     
     var cryptoCurrencySelect = document.getElementById('crypto-currency');
     var minerModelSelect = document.getElementById('miner-model');
@@ -171,6 +172,26 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             btcPriceInput.disabled = false;
         }
+    }
+    
+    // 更新加密货币选择后的UI和数据
+    function updateCryptocurrency() {
+        var selectedCrypto = cryptoCurrencySelect.value;
+        console.log("更新加密货币: " + selectedCrypto);
+        
+        // 更新加密货币符号显示
+        if (cryptoSymbolEl) {
+            cryptoSymbolEl.textContent = selectedCrypto;
+        }
+        
+        // 加载所选加密货币的网络数据
+        fetchNetworkStats();
+        
+        // 加载所选加密货币的矿机列表
+        fetchMiners(selectedCrypto);
+        
+        // 更新算力单位显示
+        updateCryptoInfo(selectedCrypto);
     }
     
     // 更新矿机规格 (Update miner specifications)
