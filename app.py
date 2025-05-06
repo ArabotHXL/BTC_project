@@ -458,11 +458,14 @@ def calculate():
             client_electricity_cost = 0
             
         try:
-            btc_price = float(request.form.get('btc_price', 0))
+            # 获取加密货币价格 - 保留对btc_price的支持，但添加crypto_price作为更通用的参数
+            crypto_price = float(request.form.get('crypto_price', request.form.get('btc_price', 0)))
+            btc_price = crypto_price  # 为向后兼容
         except ValueError as e:
-            error_msg = f"无效的BTC价格值: {request.form.get('btc_price')}"
+            error_msg = f"无效的{crypto_symbol}价格值: {request.form.get('crypto_price', request.form.get('btc_price', 0))}"
             logging.error(f"{error_msg} - {str(e)}")
             input_errors.append(error_msg)
+            crypto_price = 0
             btc_price = 0
             
         use_real_time = request.form.get('use_real_time') == 'on'
@@ -576,7 +579,7 @@ def calculate():
                 power_consumption=total_power if total_power > 0 else power_consumption,  # 使用计算出的总功耗而不是单位功耗
                 electricity_cost=electricity_cost,
                 client_electricity_cost=client_electricity_cost,
-                btc_price=btc_price if not use_real_time else None,
+                btc_price=crypto_price if not use_real_time else None,
                 use_real_time_data=use_real_time,
                 miner_model=miner_model,
                 miner_count=1,  # 设为1因为我们已经使用总算力和总功耗
@@ -616,7 +619,7 @@ def calculate():
                 
                 # 估算收入和成本
                 default_price = crypto_info.get('default_price', 80000)
-                price_to_use = btc_price if not use_real_time else default_price
+                price_to_use = crypto_price if not use_real_time else default_price
                 monthly_revenue = monthly_coin_output * price_to_use
                 monthly_cost = monthly_power_kwh * electricity_cost
                 
@@ -734,12 +737,51 @@ def calculate():
             'error': 'An error occurred during calculation. Please try again.'
         }), 500
 
+@app.route('/crypto_price', methods=['GET'])
+@login_required
+def get_crypto_price():
+    """Get the current cryptocurrency price from API"""
+    try:
+        # 获取请求的加密货币类型，默认为BTC
+        crypto_symbol = request.args.get('crypto', 'BTC')
+        
+        # 导入多币种数据功能
+        from crypto_data import get_real_time_crypto_price, CRYPTOCURRENCIES
+        
+        # 获取实时价格
+        price = get_real_time_crypto_price(crypto_symbol)
+        
+        # 如果获取失败，使用默认价格
+        if price is None:
+            crypto_info = CRYPTOCURRENCIES.get(crypto_symbol, CRYPTOCURRENCIES['BTC'])
+            price = crypto_info.get('default_price', 80000)
+            
+        return jsonify({
+            'success': True,
+            'crypto_symbol': crypto_symbol,
+            'price': price
+        })
+    except Exception as e:
+        logging.error(f"Error fetching {request.args.get('crypto', 'BTC')} price: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f"Could not fetch {request.args.get('crypto', 'BTC')} price."
+        }), 500
+        
+# 为了向后兼容，保留btc_price路由
 @app.route('/btc_price', methods=['GET'])
 @login_required
 def get_btc_price():
-    """Get the current Bitcoin price from API"""
+    """Get the current Bitcoin price from API (legacy route)"""
     try:
-        current_btc_price = get_real_time_btc_price()
+        # 直接使用通用加密货币价格获取函数，但固定为BTC
+        from crypto_data import get_real_time_crypto_price
+        current_btc_price = get_real_time_crypto_price('BTC')
+        
+        # 如果获取失败，使用默认值
+        if current_btc_price is None:
+            current_btc_price = 80000
+            
         return jsonify({
             'success': True,
             'price': current_btc_price
@@ -754,72 +796,120 @@ def get_btc_price():
 @app.route('/network_stats', methods=['GET'])
 @login_required
 def get_network_stats():
-    """Get current Bitcoin network statistics"""
+    """Get current cryptocurrency network statistics"""
     try:
-        # 使用定义的默认值
+        # 获取请求的加密货币类型，默认为BTC
+        crypto_symbol = request.args.get('crypto', 'BTC')
         
+        # 导入多币种数据
+        from crypto_data import CRYPTOCURRENCIES, get_real_time_crypto_price, get_real_time_network_data
+        
+        # 获取加密货币信息
+        crypto_info = CRYPTOCURRENCIES.get(crypto_symbol, CRYPTOCURRENCIES['BTC'])
+        
+        # 获取默认值
+        default_price = crypto_info.get('default_price', 80000)
+        default_difficulty = crypto_info.get('default_difficulty', 119.12)
+        default_hashrate = crypto_info.get('default_hashrate', 700)
+        default_block_reward = crypto_info.get('default_block_reward', 3.125)
+        
+        # 使用定义的默认值
         # 获取实时数据，如果有任何错误使用默认值
         try:
-            price = get_real_time_btc_price()
-            logging.info(f"成功获取BTC价格: ${price}")
+            price = get_real_time_crypto_price(crypto_symbol)
+            if price is None:
+                price = default_price
+            logging.info(f"成功获取{crypto_symbol}价格: ${price}")
         except Exception as e:
-            logging.error(f"获取BTC价格失败: {e}")
-            price = 80000  # 默认价格
+            logging.error(f"获取{crypto_symbol}价格失败: {e}")
+            price = default_price
             
-        try:
-            difficulty = get_real_time_difficulty()
-            logging.info(f"成功获取网络难度: {difficulty/10**12}T")
-        except Exception as e:
-            logging.error(f"获取网络难度失败: {e}")
-            difficulty = 119116256505723  # 默认难度
-            
-        try:
-            block_reward = get_real_time_block_reward()
-            logging.info(f"成功获取区块奖励: {block_reward} BTC")
-        except Exception as e:
-            logging.error(f"获取区块奖励失败: {e}")
-            block_reward = 3.125  # 默认区块奖励
-            
-        try:
-            # 直接使用简单高效的API获取哈希率
-            response = requests.get('https://blockchain.info/q/hashrate', timeout=5)
-            if response.status_code == 200:
-                # 该API直接返回TH/s单位的哈希率
-                hashrate_th = float(response.text.strip())
-                # 转换为EH/s (1 EH/s = 1,000,000,000 TH/s)
-                hashrate = hashrate_th / 1e9
-                logging.info(f"成功获取网络哈希率: {hashrate_th} TH/s → {hashrate} EH/s")
+        # 尝试获取网络数据（针对BTC）
+        if crypto_symbol == 'BTC':
+            try:
+                from mining_calculator import get_real_time_difficulty, get_real_time_block_reward, get_real_time_btc_hashrate
                 
-                # 如果哈希率不合理，使用默认值
-                if hashrate < 10 or hashrate > 2000:
-                    logging.warning(f"计算的哈希率值不合理: {hashrate} EH/s，使用默认值")
-                    hashrate = DEFAULT_HASHRATE_EH
+                try:
+                    difficulty = get_real_time_difficulty()
+                    logging.info(f"成功获取BTC网络难度: {difficulty/10**12}T")
+                except Exception as e:
+                    logging.error(f"获取BTC网络难度失败: {e}")
+                    difficulty = default_difficulty * 10**12  # 默认难度
+                    
+                try:
+                    block_reward = get_real_time_block_reward()
+                    logging.info(f"成功获取BTC区块奖励: {block_reward} BTC")
+                except Exception as e:
+                    logging.error(f"获取BTC区块奖励失败: {e}")
+                    block_reward = default_block_reward  # 默认区块奖励
+                    
+                try:
+                    # 直接使用简单高效的API获取哈希率
+                    response = requests.get('https://blockchain.info/q/hashrate', timeout=5)
+                    if response.status_code == 200:
+                        # 该API直接返回TH/s单位的哈希率
+                        hashrate_th = float(response.text.strip())
+                        # 转换为EH/s (1 EH/s = 1,000,000,000 TH/s)
+                        hashrate = hashrate_th / 1e9
+                        logging.info(f"成功获取BTC网络哈希率: {hashrate_th} TH/s → {hashrate} EH/s")
+                        
+                        # 如果哈希率不合理，使用默认值
+                        if hashrate < 10 or hashrate > 2000:
+                            logging.warning(f"计算的哈希率值不合理: {hashrate} EH/s，使用默认值")
+                            hashrate = default_hashrate
+                    else:
+                        logging.error(f"获取BTC网络哈希率API返回错误状态码: {response.status_code}")
+                        hashrate = default_hashrate
+                except Exception as e:
+                    logging.error(f"获取BTC网络哈希率时出错: {e}")
+                    hashrate = default_hashrate
+            except Exception as e:
+                logging.error(f"BTC数据获取过程中出错: {e}")
+                difficulty = default_difficulty * 10**12
+                hashrate = default_hashrate
+                block_reward = default_block_reward
+        else:
+            # 对于其他加密货币，使用默认值或从crypto_data模块获取数据
+            network_data = get_real_time_network_data(crypto_symbol)
+            
+            if network_data:
+                difficulty = network_data.get('difficulty', default_difficulty)
+                hashrate = network_data.get('hashrate', default_hashrate)
+                block_reward = network_data.get('block_reward', default_block_reward)
             else:
-                logging.error(f"获取网络哈希率API返回错误状态码: {response.status_code}")
-                hashrate = DEFAULT_HASHRATE_EH
-        except Exception as e:
-            logging.error(f"获取网络哈希率时出错: {e}")
-            hashrate = DEFAULT_HASHRATE_EH
+                difficulty = default_difficulty
+                hashrate = default_hashrate
+                block_reward = default_block_reward
+                
+            if crypto_symbol != 'BTC':
+                # 对于非BTC货币，不需要转换难度单位
+                difficulty_multiplier = 1
+            else:
+                difficulty_multiplier = 10**12
         
         # 提供额外日志以便调试
-        logging.info(f"返回网络统计数据: 价格=${price}, 难度={difficulty/10**12}T, 哈希率={hashrate}EH/s, 奖励={block_reward}BTC")
+        logging.info(f"返回{crypto_symbol}网络统计数据: 价格=${price}, 难度={difficulty if crypto_symbol != 'BTC' else difficulty/10**12}, 哈希率={hashrate}, 奖励={block_reward}")
         
         return jsonify({
             'success': True,
+            'crypto_symbol': crypto_symbol,
             'price': price,
-            'difficulty': difficulty / 10**12,  # Convert to T for readability
-            'hashrate': hashrate,  # EH/s
-            'block_reward': block_reward
+            'difficulty': difficulty / 10**12 if crypto_symbol == 'BTC' else difficulty,  # BTC转换为T
+            'hashrate': hashrate,  # 单位根据货币不同而不同
+            'block_reward': block_reward,
+            'unit': crypto_info.get('unit', 'TH/s')
         })
     except Exception as e:
         logging.error(f"获取网络状态统计时发生错误: {str(e)}")
         # 返回默认值而不是错误，这样前端至少能显示一些内容
         return jsonify({
             'success': True,
-            'price': DEFAULT_BTC_PRICE,  # 默认价格
-            'difficulty': DEFAULT_DIFFICULTY,  # 默认难度，单位T
-            'hashrate': DEFAULT_HASHRATE_EH,  # 默认哈希率，单位EH/s
-            'block_reward': DEFAULT_BLOCK_REWARD  # 默认区块奖励
+            'crypto_symbol': 'BTC',
+            'price': 80000,  # 默认BTC价格
+            'difficulty': 119.12,  # 默认BTC难度，单位T
+            'hashrate': 700,  # 默认BTC哈希率，单位EH/s
+            'block_reward': 3.125,  # 默认BTC区块奖励
+            'unit': 'TH/s'
         })
 
 @app.route('/miners', methods=['GET'])

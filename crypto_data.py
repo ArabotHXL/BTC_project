@@ -185,7 +185,13 @@ CRYPTOCURRENCIES = {
             "mining_competition": 5,
             "regulatory_risk": 7,
             "adoption_rate": 4
-        }
+        },
+        # 默认值和估算常量
+        "daily_output_per_unit": 0.00028,  # 每kSol/s每天的ZEC产出估算
+        "default_price": 150,  # 默认价格（美元）
+        "default_difficulty": 85.0,  # 默认难度（M）
+        "default_hashrate": 15.0,  # 默认哈希率（MSol/s）
+        "default_block_reward": 3.125  # 默认区块奖励
     }
 }
 
