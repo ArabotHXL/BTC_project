@@ -1376,11 +1376,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (clientBreakEvenBtcEl && data.break_even) {
             // 支持新旧两种格式的价格字段
-            var priceField = data.break_even.hasOwnProperty('crypto_price') ? 'crypto_price' : 'btc_price';
-            var price = data.break_even[priceField];
+            var price = 0;
+            if (data.break_even.hasOwnProperty('crypto_price')) {
+                price = data.break_even.crypto_price;
+            } else if (data.break_even.hasOwnProperty('btc_price')) {
+                price = data.break_even.btc_price;
+            }
             
             // 获取当前加密货币符号
-            var cryptoSymbol = data.inputs && data.inputs.crypto_symbol ? data.inputs.crypto_symbol : 'BTC';
+            var cryptoSymbol = data.crypto_symbol || (data.inputs && data.inputs.crypto_symbol ? data.inputs.crypto_symbol : 'BTC');
             
             // 更新文本和标签
             clientBreakEvenBtcEl.textContent = formatCurrency(price, 2);
@@ -1467,7 +1471,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         chartData.profit_data.forEach(function(item) {
                             // 支持新旧两种格式的价格字段
-                            var priceField = item.hasOwnProperty('crypto_price') ? 'crypto_price' : 'btc_price';
+                            var priceField = null;
+                            if (item.hasOwnProperty('crypto_price')) {
+                                priceField = 'crypto_price';
+                            } else if (item.hasOwnProperty('btc_price')) {
+                                priceField = 'btc_price';
+                            }
                             
                             // 获取币种符号
                             if (item.crypto_symbol) {
