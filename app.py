@@ -794,18 +794,56 @@ def get_network_stats():
 def get_miners():
     """Get the list of available miner models and their specifications"""
     try:
+        # 获取请求的加密货币类型，默认为BTC
+        crypto_symbol = request.args.get('crypto', 'BTC')
+        
+        # 导入加密货币数据
+        from crypto_data import CRYPTOCURRENCIES, MINER_DATA_BY_ALGORITHM
+        
+        # 获取该加密货币的算法
+        algorithm = None
+        if crypto_symbol in CRYPTOCURRENCIES:
+            algorithm = CRYPTOCURRENCIES[crypto_symbol]['algorithm']
+            
+        # 获取该算法的矿机列表，如果不存在则使用BTC矿机
+        miner_data = {}
+        if algorithm and algorithm in MINER_DATA_BY_ALGORITHM:
+            miner_data = MINER_DATA_BY_ALGORITHM[algorithm]
+        else:
+            # 默认使用SHA-256矿机(BTC)
+            miner_data = MINER_DATA_BY_ALGORITHM.get('SHA-256', MINER_DATA)
+        
         miners_list = []
-        for name, specs in MINER_DATA.items():
+        hash_unit = CRYPTOCURRENCIES.get(crypto_symbol, {}).get('unit', 'TH/s')
+        
+        for name, specs in miner_data.items():
+            # 获取该矿机的算力单位
+            unit = specs.get('unit', hash_unit)
+            
             miners_list.append({
                 'name': name,
                 'hashrate': specs['hashrate'],
                 'power_watt': specs['power_watt'],
-                'efficiency': round(specs['power_watt'] / specs['hashrate'], 2) # W/TH
+                'unit': unit,
+                'efficiency': round(specs['power_watt'] / specs['hashrate'], 2) # W/Hash
+            })
+        
+        # 获取所有支持的加密货币列表
+        supported_cryptos = []
+        for symbol, crypto_data in CRYPTOCURRENCIES.items():
+            supported_cryptos.append({
+                'symbol': symbol,
+                'name': crypto_data['name'],
+                'chinese_name': crypto_data['chinese_name'],
+                'algorithm': crypto_data['algorithm']
             })
         
         return jsonify({
             'success': True,
-            'miners': miners_list
+            'miners': miners_list,
+            'current_crypto': crypto_symbol,
+            'supported_cryptos': supported_cryptos,
+            'algorithm': algorithm
         })
     except Exception as e:
         logging.error(f"Error fetching miners data: {str(e)}")

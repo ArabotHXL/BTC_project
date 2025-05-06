@@ -560,10 +560,110 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // 获取矿机列表 (Fetch miner list)
-    function fetchMiners() {
+    // 加载加密货币列表
+    function loadCryptocurrencies(callback) {
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/miners', true);
+        // 首先获取支持的加密货币列表
+        xhr.open('GET', '/miners?crypto=BTC', true);
+        
+        // 设置10秒超时
+        xhr.timeout = 10000;
+        
+        xhr.onload = function() {
+            try {
+                if (xhr.status === 200) {
+                    // 确保响应不为空
+                    if (!xhr.responseText || xhr.responseText.trim() === '') {
+                        throw new Error('服务器返回空响应');
+                    }
+                    
+                    var data = JSON.parse(xhr.responseText);
+                    
+                    if (data && data.success && data.supported_cryptos) {
+                        var cryptoSelect = document.getElementById('crypto-currency');
+                        if (!cryptoSelect) {
+                            console.error('找不到加密货币选择元素');
+                            return;
+                        }
+                        
+                        // 清空选项
+                        cryptoSelect.innerHTML = '';
+                        
+                        // 添加加密货币选项
+                        data.supported_cryptos.forEach(function(crypto) {
+                            var option = document.createElement('option');
+                            option.value = crypto.symbol;
+                            
+                            // 根据当前语言设置显示名称
+                            var currentLang = document.querySelector('meta[name="language"]')?.content || 'zh';
+                            var displayName = currentLang === 'zh' ? 
+                                crypto.chinese_name + ' (' + crypto.symbol + ')' : 
+                                crypto.name + ' (' + crypto.symbol + ')';
+                                
+                            option.textContent = displayName;
+                            cryptoSelect.appendChild(option);
+                        });
+                        
+                        console.log('加密货币列表加载成功:', data.supported_cryptos.length);
+                        
+                        // 如果有回调函数，则执行
+                        if (typeof callback === 'function') {
+                            callback();
+                        }
+                    } else {
+                        console.error('服务器返回的数据格式不正确:', data);
+                    }
+                } else {
+                    console.error('获取加密货币列表失败, 状态码:', xhr.status);
+                }
+            } catch (error) {
+                console.error('处理加密货币列表响应时出错:', error);
+            }
+        };
+        
+        xhr.onerror = function() {
+            console.error('请求加密货币列表时网络错误');
+        };
+        
+        xhr.ontimeout = function() {
+            console.error('请求加密货币列表超时');
+        };
+        
+        xhr.send();
+    }
+    
+    // 更新当前选择的加密货币
+    function updateCryptocurrency() {
+        var cryptoSelect = document.getElementById('crypto-currency');
+        var selectedCrypto = cryptoSelect.value;
+        console.log('切换到加密货币:', selectedCrypto);
+        
+        // 重新加载该币种的矿机列表
+        fetchMiners(selectedCrypto);
+        
+        // 更新币种相关信息显示
+        updateCryptoInfo(selectedCrypto);
+    }
+    
+    // 更新加密货币信息显示
+    function updateCryptoInfo(cryptoSymbol) {
+        // 这里可以添加更多关于所选加密货币的信息显示
+        var algorithmInfo = document.getElementById('miner-algorithm-info');
+        if (algorithmInfo) {
+            // 算法信息将在加载矿机列表时更新
+            algorithmInfo.textContent = '加载中...';
+        }
+    }
+
+    // 获取矿机列表 (Fetch miner list)
+    function fetchMiners(cryptoSymbol) {
+        if (!cryptoSymbol) {
+            var cryptoSelect = document.getElementById('crypto-currency');
+            cryptoSymbol = cryptoSelect ? cryptoSelect.value : 'BTC';
+        }
+        
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/miners?crypto=' + encodeURIComponent(cryptoSymbol), true);
         
         // 设置10秒超时
         xhr.timeout = 10000;
@@ -580,20 +680,44 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if (data && data.success && data.miners) {
                         // 保存到localStorage (Save to localStorage)
-                        localStorage.setItem('miners', JSON.stringify(data.miners));
+                        localStorage.setItem('miners_' + cryptoSymbol, JSON.stringify(data.miners));
                         
                         // 清空选项 (Clear options)
                         minerModelSelect.innerHTML = '<option value="">选择矿机型号 (Select a miner model)</option>';
+                        
+                        // 获取当前币种的算力单位
+                        var hashUnit = data.miners.length > 0 ? (data.miners[0].unit || 'TH/s') : 'TH/s';
                         
                         // 添加矿机选项 (Add miner options)
                         data.miners.forEach(function(miner) {
                             var option = document.createElement('option');
                             option.value = miner.name;
-                            option.textContent = miner.name + ' (' + miner.hashrate + ' TH/s, ' + miner.power_watt + 'W)';
+                            option.textContent = miner.name + ' (' + miner.hashrate + ' ' + (miner.unit || hashUnit) + ', ' + miner.power_watt + 'W)';
+                            option.setAttribute('data-hashrate', miner.hashrate);
+                            option.setAttribute('data-power', miner.power_watt);
+                            option.setAttribute('data-unit', miner.unit || hashUnit);
                             minerModelSelect.appendChild(option);
                         });
                         
                         console.log('矿机列表加载成功:', data.miners.length);
+                        
+                        // 更新算法信息显示
+                        var algorithmInfo = document.getElementById('miner-algorithm-info');
+                        if (algorithmInfo && data.algorithm) {
+                            algorithmInfo.textContent = '算法: ' + data.algorithm + ' | ';
+                        }
+                        
+                        // 更新算力单位显示
+                        var hashrateUnitSpan = document.getElementById('miner-hashrate-unit');
+                        if (hashrateUnitSpan) {
+                            hashrateUnitSpan.textContent = '单位: ' + hashUnit;
+                            
+                            // 也更新总算力显示的单位
+                            var totalHashrateLabel = document.querySelector('label[for="total-hashrate-display"]');
+                            if (totalHashrateLabel) {
+                                totalHashrateLabel.textContent = '总算力 / Total Hashrate (' + hashUnit + ')';
+                            }
+                        }
                         
                         // 如果已选择了矿机型号，重新计算总算力和总功耗
                         if (minerModelSelect.value) {
@@ -603,7 +727,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     } else {
                         console.error('获取矿机数据失败:', data);
-                        useCachedMiners();
+                        useCachedMiners(cryptoSymbol);
                     }
                 } else {
                     throw new Error('服务器返回状态码: ' + xhr.status);
@@ -628,8 +752,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 使用本地缓存的矿机列表
-    function useCachedMiners() {
-        var cachedMiners = localStorage.getItem('miners');
+    function useCachedMiners(cryptoSymbol) {
+        if (!cryptoSymbol) {
+            var cryptoSelect = document.getElementById('crypto-currency');
+            cryptoSymbol = cryptoSelect ? cryptoSelect.value : 'BTC';
+        }
+        
+        var cacheKey = 'miners_' + cryptoSymbol;
+        var defaultCacheKey = 'miners'; // 向后兼容，使用旧的缓存键
+        
+        var cachedMiners = localStorage.getItem(cacheKey) || localStorage.getItem(defaultCacheKey);
         
         if (cachedMiners) {
             try {
@@ -638,11 +770,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 清空选项
                 minerModelSelect.innerHTML = '<option value="">选择矿机型号 (Select a miner model)</option>';
                 
+                // 获取默认算力单位
+                var hashUnit = 'TH/s';
+                if (cryptoSymbol in CRYPTOCURRENCIES_UNITS) {
+                    hashUnit = CRYPTOCURRENCIES_UNITS[cryptoSymbol];
+                }
+                
                 // 添加矿机选项
                 miners.forEach(function(miner) {
                     var option = document.createElement('option');
                     option.value = miner.name;
-                    option.textContent = miner.name + ' (' + miner.hashrate + ' TH/s, ' + miner.power_watt + 'W)';
+                    var unit = miner.unit || hashUnit;
+                    option.textContent = miner.name + ' (' + miner.hashrate + ' ' + unit + ', ' + miner.power_watt + 'W)';
+                    option.setAttribute('data-hashrate', miner.hashrate);
+                    option.setAttribute('data-power', miner.power_watt);
+                    option.setAttribute('data-unit', unit);
                     minerModelSelect.appendChild(option);
                 });
                 
