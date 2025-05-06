@@ -24,5 +24,5 @@ if __name__ == "__main__":
     
     # 启动Web服务
     print("启动智能电力削减管理系统...")
-    print("访问: http://localhost:5000/")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    print("访问: http://localhost:5001/")
+    app.run(host='0.0.0.0', port=5001, debug=True)

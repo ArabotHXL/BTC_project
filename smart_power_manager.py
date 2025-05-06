@@ -334,11 +334,14 @@ class PowerReductionManager:
         返回:
             轮换计划
         """
+        from datetime import timedelta
+        
         shutdown_ids = [m.miner_id for m in miners_to_shutdown]
         
         # 创建基础计划
+        next_date = datetime.now().date() + timedelta(days=days_between_rotation)
         rotation_schedule = {
-            'next_rotation_date': (datetime.now().date() + days_between_rotation).isoformat(),
+            'next_rotation_date': next_date.isoformat(),
             'days_between_rotation': days_between_rotation,
             'current_shutdown_miners': shutdown_ids,
             'next_rotation_plan': {}
