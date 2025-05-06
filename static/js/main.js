@@ -134,15 +134,25 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // PDF报告下载按钮
         var pdfReportBtn = document.getElementById('generate-pdf-report-btn');
+        console.log("PDF报告按钮元素获取结果:", pdfReportBtn ? "已找到" : "未找到");
+        
         if (pdfReportBtn) {
-            pdfReportBtn.addEventListener('click', function() {
+            console.log("为PDF报告按钮添加点击事件监听器");
+            pdfReportBtn.addEventListener('click', function(event) {
+                console.log("PDF报告按钮被点击");
+                console.log("当前计算结果数据:", calculationResultData ? "有效" : "无效");
+                
                 if (!calculationResultData) {
                     showError('请先计算挖矿收益再导出PDF报告。(Please calculate mining profitability first.)');
                     return;
                 }
                 
+                console.log("调用generatePdfReport函数");
                 generatePdfReport(calculationResultData);
             });
+            
+            // 再次确认事件已添加
+            console.log("PDF报告按钮事件监听器已添加");
         }
     }
     
