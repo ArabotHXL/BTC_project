@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ t('crypto_portfolio_title') }}{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <h1 class="mb-4"><i class="bi bi-pie-chart-fill me-2"></i>{{ t('crypto_portfolio_management') }}</h1>
+    
+    <div class="row">
+        <!-- 左侧：当前组合和总资产 -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-primary bg-opacity-10 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ t('current_portfolio') }}</h5>
+                    <button class="btn btn-sm btn-primary" id="add-asset-btn" data-bs-toggle="modal" data-bs-target="#add-asset-modal">
+                        <i class="bi bi-plus-circle me-1"></i>{{ t('add_asset') }}
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="portfolio-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{{ t('crypto_name') }}</th>
+                                    <th>{{ t('amount') }}</th>
+                                    <th>{{ t('price') }} (USD)</th>
+                                    <th>{{ t('value') }} (USD)</th>
+                                    <th>{{ t('allocation') }}</th>
+                                    <th>{{ t('daily_change') }}</th>
+                                    <th>{{ t('actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="portfolio-body">
+                                <!-- 资产列表将通过JavaScript动态加载 -->
+                                <tr class="placeholder-row">
+                                    <td colspan="7" class="text-center py-4">
+                                        <div class="text-muted">
+                                            <i class="bi bi-info-circle me-2"></i>{{ t('no_assets_message') }}
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot id="portfolio-summary" class="table-light fw-bold">
+                                <tr>
+                                    <td>{{ t('total') }}</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td id="total-value">$0.00</td>
+                                    <td>100%</td>
+                                    <td id="total-change">0.00%</td>
+                                    <td>-</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧：组合分析 -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-info bg-opacity-10">
+                    <h5 class="mb-0">{{ t('portfolio_analysis') }}</h5>
+                </div>
+                <div class="card-body">
+                    <!-- 投资组合饼图 -->
+                    <div class="mb-4">
+                        <h6 class="card-subtitle mb-3 text-muted">{{ t('allocation_chart') }}</h6>
+                        <div class="chart-container" style="position: relative; height: 200px;">
+                            <canvas id="allocation-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- 风险评估 -->
+                    <div class="mb-4">
+                        <h6 class="card-subtitle mb-3 text-muted">{{ t('risk_assessment') }}</h6>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="me-2">{{ t('diversification') }}:</div>
+                            <div class="progress flex-grow-1" style="height: 8px;">
+                                <div id="diversification-progress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <div class="ms-2 small" id="diversification-score">0/10</div>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="me-2">{{ t('volatility') }}:</div>
+                            <div class="progress flex-grow-1" style="height: 8px;">
+                                <div id="volatility-progress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <div class="ms-2 small" id="volatility-score">0/10</div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="me-2">{{ t('overall_risk') }}:</div>
+                            <div class="progress flex-grow-1" style="height: 8px;">
+                                <div id="risk-progress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <div class="ms-2 small" id="risk-score">0/10</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 推荐优化 -->
+                    <div>
+                        <h6 class="card-subtitle mb-3 text-muted">{{ t('portfolio_optimization') }}</h6>
+                        <div class="list-group" id="optimization-recommendations">
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>{{ t('add_assets_recommendation') }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 历史表现 -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-success bg-opacity-10">
+                    <h5 class="mb-0">{{ t('portfolio_performance') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 300px;">
+                        <canvas id="performance-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 组合调整推荐 -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-warning bg-opacity-10">
+                    <h5 class="mb-0">{{ t('rebalancing_suggestions') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-light mb-0" id="rebalance-message">
+                        <i class="bi bi-info-circle me-2"></i>{{ t('add_more_assets') }}
+                    </div>
+                    <div id="rebalance-suggestions" class="d-none">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ t('crypto_name') }}</th>
+                                    <th>{{ t('current_allocation') }}</th>
+                                    <th>{{ t('suggested_allocation') }}</th>
+                                    <th>{{ t('action_required') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rebalance-table-body">
+                                <!-- 这里将由JavaScript填充 -->
+                            </tbody>
+                        </table>
+                        <button class="btn btn-primary" id="apply-rebalance-btn">
+                            <i class="bi bi-arrow-repeat me-1"></i>{{ t('apply_suggestions') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加加密货币资产模态框 -->
+<div class="modal fade" id="add-asset-modal" tabindex="-1" aria-labelledby="add-asset-modal-label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="add-asset-modal-label">{{ t('add_crypto_asset') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-asset-form">
+                    <div class="mb-3">
+                        <label for="crypto-select" class="form-label">{{ t('select_cryptocurrency') }}</label>
+                        <select class="form-select" id="crypto-select" required>
+                            <option value="" selected disabled>{{ t('choose_crypto') }}</option>
+                            <!-- 加密货币列表将通过API动态加载 -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="crypto-amount" class="form-label">{{ t('amount') }}</label>
+                        <input type="number" class="form-control" id="crypto-amount" step="any" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="purchase-price" class="form-label">{{ t('purchase_price') }} (USD)</label>
+                        <input type="number" class="form-control" id="purchase-price" step="any" min="0">
+                        <div class="form-text">{{ t('purchase_price_help') }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="purchase-date" class="form-label">{{ t('purchase_date') }}</label>
+                        <input type="date" class="form-control" id="purchase-date">
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">{{ t('notes') }}</label>
+                        <textarea class="form-control" id="notes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('cancel') }}</button>
+                <button type="button" class="btn btn-primary" id="save-asset-btn">{{ t('add_asset') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑资产模态框 -->
+<div class="modal fade" id="edit-asset-modal" tabindex="-1" aria-labelledby="edit-asset-modal-label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="edit-asset-modal-label">{{ t('edit_crypto_asset') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-asset-form">
+                    <input type="hidden" id="edit-asset-id">
+                    <div class="mb-3">
+                        <label for="edit-crypto-name" class="form-label">{{ t('cryptocurrency') }}</label>
+                        <input type="text" class="form-control" id="edit-crypto-name" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-crypto-amount" class="form-label">{{ t('amount') }}</label>
+                        <input type="number" class="form-control" id="edit-crypto-amount" step="any" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-purchase-price" class="form-label">{{ t('purchase_price') }} (USD)</label>
+                        <input type="number" class="form-control" id="edit-purchase-price" step="any" min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-purchase-date" class="form-label">{{ t('purchase_date') }}</label>
+                        <input type="date" class="form-control" id="edit-purchase-date">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-notes" class="form-label">{{ t('notes') }}</label>
+                        <textarea class="form-control" id="edit-notes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger me-auto" id="delete-asset-btn">{{ t('delete') }}</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('cancel') }}</button>
+                <button type="button" class="btn btn-primary" id="update-asset-btn">{{ t('save_changes') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script src="{{ url_for('static', filename='js/crypto_portfolio.js') }}"></script>
+{% endblock %}
