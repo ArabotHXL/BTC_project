@@ -18,6 +18,21 @@ document.addEventListener('DOMContentLoaded', function() {
     var useRealTimeCheckbox = document.getElementById('use-real-time');
     var calculatorForm = document.getElementById('mining-calculator-form');
     
+    // 隐藏字段（用于提交）
+    var totalHashrateInput = document.getElementById('total-hashrate');
+    var totalPowerInput = document.getElementById('total-power');
+    
+    // 显示字段（用于UI显示）
+    var totalHashrateDisplay = document.getElementById('total-hashrate-display');
+    var totalPowerDisplay = document.getElementById('total-power-display');
+    
+    // 在控制台输出所有dom元素，用于调试
+    console.log("DOM元素获取结果:");
+    console.log("总算力隐藏输入框:", totalHashrateInput);
+    console.log("总功耗隐藏输入框:", totalPowerInput);
+    console.log("总算力显示输入框:", totalHashrateDisplay);
+    console.log("总功耗显示输入框:", totalPowerDisplay);
+    
     var resultsCard = document.getElementById('results-card');
     var chartCard = document.getElementById('chart-card');
     
@@ -74,6 +89,50 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // 计算总算力和总功耗
+    function calculateTotalHashrateAndPower() {
+        var minerCount = parseInt(minerCountInput.value) || 0;
+        var hashrate = parseFloat(hashrateInput.value) || 0;
+        var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
+        
+        console.log("计算总算力和总功耗 - 矿机数量:", minerCount, "单矿机算力:", hashrate, "单矿机功耗:", powerWatt);
+        
+        if (minerCount > 0 && hashrate > 0 && powerWatt > 0) {
+            // 计算总算力和总功耗
+            var totalHashrate = minerCount * hashrate;
+            var totalPower = minerCount * powerWatt;
+            
+            console.log("计算结果 - 总算力:", totalHashrate, "总功耗:", totalPower);
+            
+            // 更新隐藏字段（用于表单提交）
+            if (totalHashrateInput) {
+                totalHashrateInput.value = totalHashrate.toFixed(0);
+                console.log("总算力隐藏字段已更新为:", totalHashrate.toFixed(0));
+            }
+            
+            if (totalPowerInput) {
+                totalPowerInput.value = totalPower.toFixed(0);
+                console.log("总功耗隐藏字段已更新为:", totalPower.toFixed(0));
+            }
+            
+            // 更新显示字段（用于用户界面）
+            if (totalHashrateDisplay) {
+                totalHashrateDisplay.value = totalHashrate.toFixed(0);
+                console.log("总算力显示字段已更新为:", totalHashrate.toFixed(0));
+            }
+            
+            if (totalPowerDisplay) {
+                totalPowerDisplay.value = totalPower.toFixed(0);
+                console.log("总功耗显示字段已更新为:", totalPower.toFixed(0));
+            }
+            
+            return { totalHashrate: totalHashrate, totalPower: totalPower };
+        } else {
+            console.log("计算条件不满足 - 矿机数量、算力或功耗有一项为0");
+            return null;
+        }
+    }
+    
     // 更新矿机规格 (Update miner specifications)
     function updateMinerSpecs() {
         var selectedMiner = minerModelSelect.value;
@@ -94,6 +153,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // 基于矿机功率和数量更新显示 (Update based on miner power and count)
                 updateMinerCount();
+                // 计算并更新总算力和总功耗
+                calculateTotalHashrateAndPower();
             }
         } else {
             // 启用手动输入 (Enable manual input)
@@ -113,12 +174,19 @@ document.addEventListener('DOMContentLoaded', function() {
             // Formula: (site_power_mw * 1000) / (power_watt / 1000)
             var maxMiners = Math.floor((sitePowerMw * 1000000) / powerWatt);
             minerCountInput.value = maxMiners;
+            
+            // 计算并更新总算力和总功耗
+            calculateTotalHashrateAndPower();
         }
     }
     
     // 处理计算表单提交 (Handle calculation form submission)
     function handleCalculateSubmit(event) {
         event.preventDefault();
+        
+        // 在提交表单前重新计算总算力和总功耗
+        console.log("表单提交前重新计算总算力和总功耗");
+        calculateTotalHashrateAndPower();
         
         // 表单验证 (Form validation)
         var hasErrors = false;
@@ -154,6 +222,22 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 收集表单数据 (Collect form data)
         var formData = new FormData(calculatorForm);
+        
+        // 手动确保总算力和总功耗已添加到表单
+        var minerCount = parseInt(minerCountInput.value) || 0;
+        var hashrate = parseFloat(hashrateInput.value) || 0;
+        var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
+        
+        if (minerCount > 0 && hashrate > 0 && powerWatt > 0) {
+            var totalHashrate = minerCount * hashrate;
+            var totalPower = minerCount * powerWatt;
+            
+            console.log("提交表单前手动重新计算 - 总算力:", totalHashrate, "总功耗:", totalPower);
+            
+            // 确保表单中有最新值
+            formData.set('total_hashrate', totalHashrate.toFixed(0));
+            formData.set('total_power', totalPower.toFixed(0));
+        }
         
         // 请求计算 (Request calculation)
         var xhr = new XMLHttpRequest();
