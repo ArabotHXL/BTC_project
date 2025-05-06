@@ -1,4 +1,7 @@
 // Bitcoin Mining Calculator - Main JavaScript
+// 存储最新计算结果的全局变量
+var calculationResultData = null;
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log("页面已加载，初始化应用...");
     
@@ -126,6 +129,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 generateProfitChart(minerModel, minerCount, clientElectricityCost);
+            });
+        }
+        
+        // PDF报告下载按钮
+        var pdfReportBtn = document.getElementById('generate-pdf-report-btn');
+        if (pdfReportBtn) {
+            pdfReportBtn.addEventListener('click', function() {
+                if (!calculationResultData) {
+                    showError('请先计算挖矿收益再导出PDF报告。(Please calculate mining profitability first.)');
+                    return;
+                }
+                
+                generatePdfReport(calculationResultData);
             });
         }
     }
@@ -359,6 +375,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     var data = JSON.parse(xhr.responseText);
                     
                     if (data && data.success) {
+                        // 保存计算结果，以便稍后用于PDF导出
+                        calculationResultData = data;
+                        // 向数据中添加当前矿机型号，以便PDF报告使用
+                        calculationResultData.inputs.miner_model = minerModelSelect.value;
                         // 显示结果 (Display results)
                         displayResults(data);
                     } else {
