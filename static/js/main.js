@@ -715,9 +715,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // 其他挖矿信息
-        var minerCountEl = document.getElementById('site-miner-count');
+        var minerCountEl = document.getElementById('miner-count-result');
+        var runningMinersEl = document.getElementById('running-miners');
+        var shutdownMinersEl = document.getElementById('shutdown-miners');
+        
         if (minerCountEl && data.inputs) {
             minerCountEl.textContent = formatNumber(data.inputs.miner_count, 0);
+        }
+        
+        // 显示运行中和停机的矿机数量
+        if (runningMinersEl && data.optimization) {
+            runningMinersEl.textContent = formatNumber(data.optimization.running_miner_count, 0);
+        }
+        
+        if (shutdownMinersEl && data.optimization) {
+            shutdownMinersEl.textContent = formatNumber(data.optimization.shutdown_miner_count, 0);
         }
     }
     
