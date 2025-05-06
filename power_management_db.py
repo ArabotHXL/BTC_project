@@ -17,9 +17,8 @@ class PowerManagementDB:
     @staticmethod
     def init_app(app):
         """初始化数据库与应用"""
-        db.init_app(app)
-        with app.app_context():
-            db.create_all()
+        # 在主应用中已经初始化了数据库，此处不需要重复初始化
+        pass
     
     @staticmethod
     def get_miner(miner_id: str) -> Optional[MinerStatus]:

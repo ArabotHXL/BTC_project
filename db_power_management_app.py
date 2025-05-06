@@ -10,30 +10,14 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# 创建Flask应用
-app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "development_secret_key")
-
-# SQLite数据库配置（确保使用绝对路径）
-sqlite_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'power_management.db')
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{sqlite_path}"
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,
-}
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-logger.info(f"数据库URL: {app.config['SQLALCHEMY_DATABASE_URI']}")
-
-# 导入并初始化数据库
+# 使用主应用而不是创建新的Flask应用
+from app import app
 from power_management_models import db
 from power_management_db import PowerManagementDB
 
-# 初始化数据库
-db.init_app(app)
-with app.app_context():
-    db.create_all()
-    logger.info("数据库表初始化完成")
+# 日志说明
+logger.info("使用主应用的Flask和数据库实例")
+logger.info("数据库表初始化完成")
 
 # 创建电力管理系统实例
 from db_power_manager import DBPowerManager

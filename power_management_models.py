@@ -6,9 +6,10 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import JSON
 from datetime import datetime
 import json
+import os
 
-# 创建数据库实例
-db = SQLAlchemy()
+# 使用主应用中的数据库实例
+from db import db
 
 class MinerStatus(db.Model):
     """矿机状态模型"""

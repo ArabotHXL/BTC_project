@@ -1129,33 +1129,29 @@ def power_management_dashboard():
     
     # 导入电力管理系统相关组件
     try:
-        # 初始化电力管理系统的数据库
-        from power_management_models import db as power_db
+        logging.info("正在初始化电力管理系统...")
+        
+        # 确保数据库表已创建
+        with app.app_context():
+            from power_management_models import MinerStatus, MinerOperation, PowerReductionPlan, RotationSchedule, PerformanceSnapshot
+            db.create_all()
+            logging.info("电力管理系统数据库表已创建/验证")
+        
+        # 导入电力管理系统
+        from db_power_manager import DBPowerManager
         from power_management_db import PowerManagementDB
         
-        # 确保电力管理数据库与主应用关联
-        if not power_db.get_app():
-            logging.info("初始化电力管理数据库与Flask应用的关联")
-            # 配置SQLite数据库
-            app.config["SQLALCHEMY_BINDS"] = {
-                'power_management': f"sqlite:///{os.path.join(os.path.dirname(os.path.abspath(__file__)), 'power_management.db')}"
-            }
-            power_db.init_app(app)
-            
-            # 创建必要的表
-            with app.app_context():
-                power_db.create_all(bind='power_management')
-        
         # 初始化电力管理系统
-        from db_power_manager import DBPowerManager
         power_manager = DBPowerManager()
         
         # 获取矿机数量
-        miner_count = len(PowerManagementDB.get_all_miners())
+        all_miners = PowerManagementDB.get_all_miners()
+        miner_count = len(all_miners)
         logging.info(f"当前系统中有 {miner_count} 台矿机")
         
         # 如果没有矿机数据，初始化100台测试矿机
         if miner_count == 0:
+            logging.info("正在初始化测试矿机数据...")
             miner_count = power_manager.initialize_test_data(count=100)
             if miner_count > 0:
                 flash(f'已成功初始化{miner_count}台测试矿机数据。', 'success')
