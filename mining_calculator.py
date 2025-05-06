@@ -408,9 +408,9 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         client_electricity_expense = monthly_power_consumption * (client_electricity_cost or electricity_cost)
         
         # === 收入 & 利润计算 (Revenue & Profit Calculation) ===
-        monthly_revenue = monthly_btc * btc_price
+        monthly_revenue = monthly_coin * crypto_price
         
-        # 矿场主的比特币挖矿收益，减去电费和维护费
+        # 矿场主的加密货币挖矿收益，减去电费和维护费
         monthly_mining_profit = monthly_revenue - electricity_expense - maintenance_fee
         
         # 矿场主的电费差价收益（如果提供了客户电费且高于矿场电费）
@@ -429,7 +429,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         client_monthly_profit = monthly_revenue - client_electricity_expense - maintenance_fee
         
         # === 最优电价 (Optimal Electricity Rate) 计算 ===
-        optimal_electricity_rate = (monthly_btc * btc_price) / monthly_power_consumption if monthly_power_consumption > 0 else 0
+        optimal_electricity_rate = (monthly_coin * crypto_price) / monthly_power_consumption if monthly_power_consumption > 0 else 0
         
         # === 最优削减比例 (Optimal Curtailment) 计算 ===
         if electricity_cost > optimal_electricity_rate and optimal_electricity_rate > 0:
@@ -471,21 +471,23 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         logging.info(f"ROI计算输入数据 - 客户月利润: ${client_monthly_profit}, 年利润: ${client_yearly_profit}")
         
         if host_investment > 0:
-            host_roi_data = calculate_roi(host_investment, yearly_profit, monthly_profit, btc_price)
+            host_roi_data = calculate_roi(host_investment, yearly_profit, monthly_profit, crypto_price)
             logging.info(f"矿场主ROI计算结果 - 年化回报率: {host_roi_data['roi_percent_annual']}%, 回收期: {host_roi_data['payback_period_months']}月")
             
         if client_investment > 0:
-            client_roi_data = calculate_roi(client_investment, client_yearly_profit, client_monthly_profit, btc_price)
+            client_roi_data = calculate_roi(client_investment, client_yearly_profit, client_monthly_profit, crypto_price)
             logging.info(f"客户ROI计算结果 - 年化回报率: {client_roi_data['roi_percent_annual']}%, 回收期: {client_roi_data['payback_period_months']}月")
             
         # Return results in a consistent format with our previous implementation
         return {
             'success': True,
             'timestamp': datetime.now().isoformat(),
+            'crypto_symbol': crypto_symbol,
+            'hashrate_unit': hashrate_unit,
             'network_data': {
-                'btc_price': btc_price,
+                'crypto_price': crypto_price,
                 'network_difficulty': difficulty / 10**12,  # Convert to more readable format (T)
-                'network_hashrate': real_time_btc_hashrate,  # EH/s
+                'network_hashrate': real_time_network_hashrate,  # EH/s or appropriate unit
                 'block_reward': block_reward_to_use
             },
             'inputs': {
@@ -506,18 +508,18 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
                 'monthly': maintenance_fee,
                 'yearly': yearly_maintenance_fee
             },
-            'btc_mined': {
-                'daily': daily_btc,
-                'monthly': monthly_btc,
-                'yearly': monthly_btc * 12,
-                'per_th_daily': btc_per_th,
+            'coin_mined': {
+                'daily': daily_coin,
+                'monthly': monthly_coin,
+                'yearly': monthly_coin * 12,
+                'per_unit_daily': coin_per_unit,
                 'method1': {
-                    'daily': site_daily_btc_output,
-                    'monthly': site_monthly_btc_output
+                    'daily': site_daily_output,
+                    'monthly': site_monthly_output
                 },
                 'method2': {
-                    'daily': site_daily_btc_output_difficulty,
-                    'monthly': site_monthly_btc_output_difficulty
+                    'daily': site_daily_output_difficulty,
+                    'monthly': site_monthly_output_difficulty
                 }
             },
             'revenue': {
@@ -547,7 +549,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             },
             'break_even': {
                 'electricity_cost': optimal_electricity_rate,
-                'btc_price': (electricity_expense / monthly_btc) if monthly_btc > 0 else 0
+                'crypto_price': (electricity_expense / monthly_coin) if monthly_coin > 0 else 0
             },
             'optimization': {
                 'optimal_curtailment': optimal_curtailment,
@@ -565,16 +567,17 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         logging.error(f"Arguments: hashrate={hashrate}, power_consumption={power_consumption}, electricity_cost={electricity_cost}, miner_model={miner_model}, miner_count={miner_count}")
         raise
 
-def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner_count=1, client_electricity_cost=None):
+def generate_profit_chart_data(miner_model, electricity_costs, crypto_prices, miner_count=1, client_electricity_cost=None, crypto_symbol="BTC"):
     """
     Generate data for the profit chart
     
     Parameters:
     - miner_model: The miner model to use
     - electricity_costs: List of electricity costs to analyze
-    - btc_prices: List of BTC prices to analyze
+    - crypto_prices: List of cryptocurrency prices to analyze
     - miner_count: Number of miners
     - client_electricity_cost: Optional client electricity cost
+    - crypto_symbol: Cryptocurrency symbol (default: "BTC")
     
     Returns:
     - Dictionary with data for the chart
@@ -600,14 +603,36 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
                 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20
             ]
             
-        if not isinstance(btc_prices, list) or len(btc_prices) == 0:
-            logging.warning(f"Invalid BTC prices: {btc_prices}, using defaults")
-            # 2025年的BTC价格范围更高，基于当前市场情况调整
+        if not isinstance(crypto_prices, list) or len(crypto_prices) == 0:
+            logging.warning(f"Invalid cryptocurrency prices: {crypto_prices}, using defaults")
+            # 2025年的加密货币价格范围，基于当前市场情况调整
             # 增加更多价格点以形成更平滑的热力图
-            btc_prices = [
-                20000, 30000, 40000, 50000, 60000, 70000, 80000, 
-                90000, 100000, 110000, 120000, 130000, 140000, 150000
-            ]
+            if crypto_symbol == "BTC":
+                crypto_prices = [
+                    20000, 30000, 40000, 50000, 60000, 70000, 80000, 
+                    90000, 100000, 110000, 120000, 130000, 140000, 150000
+                ]
+            elif crypto_symbol in ["LTC", "ETC"]:
+                crypto_prices = [
+                    50, 75, 100, 125, 150, 175, 200, 
+                    225, 250, 275, 300, 325, 350, 375
+                ]
+            elif crypto_symbol in ["DOGE", "RVN"]:
+                crypto_prices = [
+                    0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 
+                    0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70
+                ]
+            elif crypto_symbol == "ZEC":
+                crypto_prices = [
+                    100, 150, 200, 250, 300, 350, 400, 
+                    450, 500, 550, 600, 650, 700, 750
+                ]
+            else:
+                # Default for any other cryptocurrency
+                crypto_prices = [
+                    10, 25, 50, 75, 100, 150, 200, 
+                    250, 300, 350, 400, 450, 500, 550
+                ]
         
         # Validate miner count
         if not isinstance(miner_count, int) or miner_count <= 0:
@@ -649,8 +674,8 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
         # Generate profit matrix
         profit_data = []
         
-        # Calculate profit for each combination of BTC price and electricity cost
-        for price in btc_prices:
+        # Calculate profit for each combination of cryptocurrency price and electricity cost
+        for price in crypto_prices:
             for cost in electricity_costs:
                 # 计算这个BTC价格和电费成本组合下的利润
                 # 特别注意：必须将当前循环的电费成本'cost'传递给函数
