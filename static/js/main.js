@@ -611,6 +611,27 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             console.log('收到计算结果数据:', data);
             
+            // 检查是否有optimization数据
+            if (data.optimization) {
+                console.log("矿机运行状态数据:", {
+                    "运行中矿机数量": data.optimization.running_miner_count,
+                    "停机矿机数量": data.optimization.shutdown_miner_count,
+                    "最佳限电比例": data.optimization.optimal_curtailment + "%"
+                });
+            } else {
+                console.warn("没有接收到矿机运行状态数据");
+            }
+            
+            // 检查输入参数
+            if (data.inputs) {
+                console.log("输入参数:", {
+                    "矿机型号": data.inputs.miner_model,
+                    "矿机数量": data.inputs.miner_count,
+                    "限电比例": data.inputs.curtailment + "%",
+                    "电费成本": "$" + data.inputs.electricity_cost + "/kWh"
+                });
+            }
+            
             // 显示结果卡片 (Show results card)
             if (resultsCard) resultsCard.style.display = 'block';
             
