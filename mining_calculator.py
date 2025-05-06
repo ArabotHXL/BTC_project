@@ -399,6 +399,8 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
                 'miner_count': miner_count,
                 'site_power_mw': site_power_mw,
                 'curtailment': curtailment,
+                'curtailment_factor': curtailment_factor,
+                'effective_hashrate': site_total_hashrate,
                 'host_investment': host_investment,
                 'client_investment': client_investment
             },
