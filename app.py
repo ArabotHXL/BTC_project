@@ -37,7 +37,7 @@ app.secret_key = os.environ.get("SESSION_SECRET", secrets.token_hex(32))
 
 # 导入数据库和用户模型
 from db import db
-from models import LoginRecord, UserAccess
+from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity
 
 # 导入翻译模块
 from translations import get_translation
