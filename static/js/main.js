@@ -1375,7 +1375,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (clientBreakEvenBtcEl && data.break_even) {
-            clientBreakEvenBtcEl.textContent = formatCurrency(data.break_even.btc_price, 2);
+            // 支持新旧两种格式的价格字段
+            var priceField = data.break_even.hasOwnProperty('crypto_price') ? 'crypto_price' : 'btc_price';
+            var price = data.break_even[priceField];
+            
+            // 获取当前加密货币符号
+            var cryptoSymbol = data.inputs && data.inputs.crypto_symbol ? data.inputs.crypto_symbol : 'BTC';
+            
+            // 更新文本和标签
+            clientBreakEvenBtcEl.textContent = formatCurrency(price, 2);
+            
+            // 找到并更新标签元素
+            var labelEl = document.querySelector('label[for="client-breakeven-btc"]');
+            if (labelEl) {
+                labelEl.textContent = cryptoSymbol + '盈亏平衡价格 / ' + cryptoSymbol + ' Break-even Price:';
+            }
         }
         
         // 更新客户矿机数量信息
@@ -1522,15 +1536,22 @@ document.addEventListener('DOMContentLoaded', function() {
                                         callbacks: {
                                             label: function(context) {
                                                 var profit = context.raw.profit;
-                                                return '月利润: $' + profit.toFixed(2);
+                                                var symbol = context.raw.symbol || cryptoSymbol;
+                                                var price = context.raw.y;
+                                                
+                                                return [
+                                                    symbol + ' 价格: $' + price.toFixed(2),
+                                                    '电价: $' + context.raw.x.toFixed(4) + '/kWh',
+                                                    '月利润: $' + profit.toFixed(2)
+                                                ];
                                             }
                                         }
                                     },
                                     title: {
                                         display: true,
                                         text: (parseFloat(clientElectricityCost) > 0) ? 
-                                            '客户收益热力图 / Customer Profit Chart' : 
-                                            '矿场主收益热力图 / Host Profit Chart'
+                                            cryptoSymbol + ' 客户收益热力图 / ' + cryptoSymbol + ' Customer Profit Chart' : 
+                                            cryptoSymbol + ' 矿场主收益热力图 / ' + cryptoSymbol + ' Host Profit Chart'
                                     }
                                 }
                             }
