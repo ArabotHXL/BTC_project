@@ -101,11 +101,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (minerCountInput) {
-            // 当矿机数量变化时计算总算力和总功耗
-            minerCountInput.addEventListener('input', calculateTotalHashrateAndPower);
-            
-            // 当矿机数量变化时更新矿场功率
-            minerCountInput.addEventListener('input', updateSitePower);
+            // 当矿机数量变化时，先更新矿场功率，然后计算总算力和总功耗
+            minerCountInput.addEventListener('input', function() {
+                // 先更新矿场功率
+                updateSitePower();
+                // 然后计算总算力和总功耗
+                calculateTotalHashrateAndPower();
+            });
         }
         
         if (hashrateInput) {
@@ -209,34 +211,45 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 根据矿机数量更新矿场功率 (Update site power based on miner count)
     function updateSitePower() {
-        // 如果已经在更新矿机数量，则退出以防止循环
-        if (isUpdatingMinerCount) {
-            return;
-        }
-        
-        // 设置标志，表示正在更新矿场功率
-        isUpdatingSitePower = true;
-        
-        var minerCount = parseInt(minerCountInput.value) || 0;
-        var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
-        
-        console.log("更新矿场功率 - 矿机数量:", minerCount, "单机功率:", powerWatt, "功率元素:", powerConsumptionInput ? "存在" : "不存在");
-        
-        if (minerCount > 0 && powerWatt > 0) {
-            // 计算所需的矿场功率 (Calculate required site power)
-            // Formula: (miner_count * power_watt) / 1000000
-            var requiredPowerMw = (minerCount * powerWatt) / 1000000;
-            console.log("计算的新矿场功率:", requiredPowerMw.toFixed(2), "MW");
-            sitePowerMwInput.value = requiredPowerMw.toFixed(2);
+        try {
+            // 如果已经在更新矿机数量，则退出以防止循环
+            if (isUpdatingMinerCount) {
+                console.log("矿机数量正在更新中，跳过矿场功率更新");
+                return;
+            }
             
-            // 计算总算力和总功耗
-            calculateTotalHashrateAndPower();
-        } else {
-            console.log("无法更新矿场功率 - 矿机数量或单机功率为0");
+            // 设置标志，表示正在更新矿场功率
+            isUpdatingSitePower = true;
+            
+            // 获取必要的值
+            var minerCount = parseInt(minerCountInput.value) || 0;
+            var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
+            
+            console.log("矿机数量发生变化 - 更新矿场功率...");
+            console.log("  矿机数量:", minerCount);
+            console.log("  单机功率:", powerWatt);
+            console.log("  功率输入框元素:", powerConsumptionInput ? "已找到" : "未找到");
+            console.log("  矿场功率输入框元素:", sitePowerMwInput ? "已找到" : "未找到");
+            
+            if (minerCount > 0 && powerWatt > 0) {
+                // 计算所需的矿场功率 (Calculate required site power)
+                var requiredPowerMw = (minerCount * powerWatt) / 1000000;
+                
+                console.log("计算得到的新矿场功率:", requiredPowerMw.toFixed(2), "MW");
+                console.log("当前矿场功率:", parseFloat(sitePowerMwInput.value).toFixed(2), "MW");
+                
+                // 设置新的矿场功率
+                sitePowerMwInput.value = requiredPowerMw.toFixed(2);
+                console.log("矿场功率已更新为:", requiredPowerMw.toFixed(2), "MW");
+            } else {
+                console.log("无法更新矿场功率 - 矿机数量或单机功率为0");
+            }
+        } catch (error) {
+            console.error("更新矿场功率时发生错误:", error);
+        } finally {
+            // 清除标志
+            isUpdatingSitePower = false;
         }
-        
-        // 清除标志
-        isUpdatingSitePower = false;
     }
     
     // 计算总算力和总功耗
@@ -244,13 +257,6 @@ document.addEventListener('DOMContentLoaded', function() {
         var minerCount = parseInt(minerCountInput.value) || 0;
         var hashrate = parseFloat(hashrateInput.value) || 0;
         var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
-        
-        // 每次计算总算力和总功耗时，自动更新矿场功率
-        // 这是为了确保在任何矿机数量变化时都能更新矿场功率
-        if (!isUpdatingMinerCount && !isUpdatingSitePower && minerCount > 0 && powerWatt > 0) {
-            var requiredPowerMw = (minerCount * powerWatt) / 1000000;
-            sitePowerMwInput.value = requiredPowerMw.toFixed(2);
-        }
         
         console.log("计算总算力和总功耗 - 矿机数量:", minerCount, "单矿机算力:", hashrate, "单矿机功耗:", powerWatt);
         
