@@ -342,6 +342,11 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             optimal_curtailment = max(0, min(100, 100 * (1 - (optimal_electricity_rate / electricity_cost))))
         else:
             optimal_curtailment = 0
+            
+        # === 矿机运行状态计算 ===
+        # 根据curtailment计算停机和运行中的矿机数量
+        running_miners = int(miner_count * curtailment_factor)
+        shutdown_miners = miner_count - running_miners
         
         # 计算每日维护费
         daily_maintenance_fee = maintenance_fee / 30.5
@@ -454,7 +459,8 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             },
             'optimization': {
                 'optimal_curtailment': optimal_curtailment,
-                'shutdown_miner_count': int(miner_count * (curtailment / 100))
+                'shutdown_miner_count': shutdown_miners,
+                'running_miner_count': running_miners
             },
             'roi': {
                 'host': host_roi_data,
