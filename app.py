@@ -1127,6 +1127,28 @@ def power_management_dashboard():
         flash('您没有访问此页面的权限。', 'danger')
         return redirect(url_for('unauthorized'))
     
+    # 导入电力管理系统
+    from db_power_manager import DBPowerManager
+    power_manager = DBPowerManager()
+    
+    # 检查数据库中是否有矿机数据，如果没有，初始化测试数据
+    try:
+        from power_management_models import MinerStatus
+        from power_management_db import PowerManagementDB
+        
+        # 获取矿机数量
+        miner_count = len(PowerManagementDB.get_all_miners())
+        
+        # 如果没有矿机数据，初始化100台测试矿机
+        if miner_count == 0:
+            miner_count = power_manager.initialize_test_data(count=100)
+            if miner_count > 0:
+                flash(f'已成功初始化{miner_count}台测试矿机数据。', 'success')
+                logging.info(f'已初始化{miner_count}台测试矿机数据')
+    except Exception as e:
+        logging.error(f"初始化电力管理系统数据出错: {str(e)}")
+        flash(f'初始化数据时出错: {str(e)}', 'danger')
+    
     return render_template('db_power_dashboard.html')
 
 if __name__ == '__main__':
