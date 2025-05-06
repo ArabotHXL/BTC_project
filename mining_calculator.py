@@ -8,26 +8,18 @@ from datetime import datetime
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
-# Constants
-BLOCKS_PER_DAY = 144
+# 导入多币种数据
+from crypto_data import CRYPTOCURRENCIES, MINER_DATA_BY_ALGORITHM, get_real_time_crypto_price, get_real_time_network_data, get_miners_for_crypto
+
+# Constants - 保留原始BTC常量作为向后兼容
+BLOCKS_PER_DAY = 144  # BTC区块时间
 DEFAULT_BTC_PRICE = 80000  # USD
 DEFAULT_NETWORK_DIFFICULTY = 119116256505723  # ~119.12T
 DEFAULT_NETWORK_HASHRATE = 900  # EH/s
 BLOCK_REWARD = 3.125  # BTC
 
-# Fixed miner data including hashrate and power consumption for each model
-MINER_DATA = {
-    "Antminer S21 XP Hyd": {"hashrate": 473, "power_watt": 5676},
-    "Antminer S21 XP": {"hashrate": 270, "power_watt": 3645},
-    "Antminer S21": {"hashrate": 200, "power_watt": 3500},
-    "Antminer S21 Hyd": {"hashrate": 335, "power_watt": 5360},
-    "Antminer S19": {"hashrate": 95, "power_watt": 3250},
-    "Antminer S19 Pro": {"hashrate": 110, "power_watt": 3250},
-    "Antminer S19j Pro": {"hashrate": 100, "power_watt": 3050},
-    "Antminer S19 XP": {"hashrate": 140, "power_watt": 3010},
-    "Antminer S19 Hydro": {"hashrate": 158, "power_watt": 5451},
-    "Antminer S19 Pro+ Hyd": {"hashrate": 198, "power_watt": 5445}
-}
+# Fixed miner data including hashrate and power consumption for each model - 保留原来的BTC矿机数据作为向后兼容
+MINER_DATA = MINER_DATA_BY_ALGORITHM.get("SHA-256", {})
 
 def calculate_roi(investment, yearly_profit, monthly_profit, btc_price, forecast_months=36):
     """
@@ -176,17 +168,17 @@ def get_real_time_btc_hashrate():
 
 def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electricity_cost=0.05, client_electricity_cost=None, 
                              btc_price=None, difficulty=None, block_reward=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0.0, 
-                             host_investment=0.0, client_investment=0.0, maintenance_fee=0.0):
+                             host_investment=0.0, client_investment=0.0, maintenance_fee=0.0, crypto_symbol="BTC"):
     """
-    Calculate Bitcoin mining profitability using the exact calculation method from the original code
+    Calculate cryptocurrency mining profitability
     
     Parameters:
-    - hashrate: Mining hashrate in TH/s
+    - hashrate: Mining hashrate in appropriate unit for the selected cryptocurrency
     - power_consumption: Power consumption in watts
     - electricity_cost: Electricity cost in USD per kWh
     - client_electricity_cost: Electricity cost charged to customers (USD per kWh)
-    - btc_price: Current Bitcoin price in USD (optional if use_real_time_data=True)
-    - difficulty: Network difficulty (optional if use_real_time_data=True)
+    - btc_price: Current cryptocurrency price in USD (optional if use_real_time_data=True)
+    - difficulty: Network difficulty (optional if use_real_time_data=True) 
     - use_real_time_data: Whether to fetch real-time data from APIs
     - miner_model: Optional miner model name to use pre-defined values
     - miner_count: Number of miners (default is 1)
@@ -195,6 +187,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
     - host_investment: Total investment made by mining site owner (USD)
     - client_investment: Total investment made by client (USD)
     - maintenance_fee: Monthly maintenance fee in USD (default is 0)
+    - crypto_symbol: Cryptocurrency symbol (BTC, LTC, ETC, etc.)
     
     Returns:
     - Dictionary containing profitability metrics including ROI calculations
