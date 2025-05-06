@@ -782,7 +782,9 @@ def generate_profit_chart_data(miner_model, electricity_costs, crypto_prices, mi
             'success': True,
             'profit_data': profit_data,
             'current_network_data': {
-                'btc_price': current_btc_price,
+                'crypto_symbol': crypto_symbol,
+                'crypto_price': current_btc_price,
+                'btc_price': current_btc_price,  # 保留向后兼容
                 'difficulty': current_difficulty / 10**12,  # Convert to more readable format (T)
                 'block_reward': fixed_network_stats['block_reward']
             },
