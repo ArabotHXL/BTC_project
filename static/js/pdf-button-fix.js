@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // 添加PDF导出按钮的事件监听器
 function addPdfExportButtonListener() {
     // 查找PDF导出按钮
-    var pdfButton = document.getElementById('export-pdf-btn');
+    var pdfButton = document.getElementById('generate-pdf-report-btn');
     console.log("初始检查PDF按钮:", pdfButton ? "找到按钮" : "按钮不存在");
     
     if (pdfButton) {
@@ -22,7 +22,7 @@ function addPdfExportButtonListener() {
         
         // 清除现有的事件监听器，防止重复添加
         pdfButton.replaceWith(pdfButton.cloneNode(true));
-        pdfButton = document.getElementById('export-pdf-btn');
+        pdfButton = document.getElementById('generate-pdf-report-btn');
         
         console.log("正在绑定PDF按钮事件");
         // 添加新的事件监听器
