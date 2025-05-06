@@ -1,11 +1,14 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, g
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, g, make_response, send_file
 import logging
 import json
 import numpy as np
 import os
 import secrets
 import requests
+import io
+import tempfile
 from datetime import datetime, timedelta
+from weasyprint import HTML
 from auth import verify_email, login_required
 from mining_calculator import (
     MINER_DATA,
