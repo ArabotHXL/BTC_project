@@ -1,43 +1,45 @@
 """
 智能电力削减管理系统 - 数据库模型
+定义系统中使用的数据库表结构
 """
-from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import JSON
+from datetime import datetime
+import json
 
-# 初始化SQLAlchemy，会在应用中绑定
+# 创建数据库实例
 db = SQLAlchemy()
 
 class MinerStatus(db.Model):
-    """矿机状态记录模型"""
+    """矿机状态模型"""
     __tablename__ = 'miner_status'
     
     id = db.Column(db.Integer, primary_key=True)
-    miner_id = db.Column(db.String(100), nullable=False, index=True)
+    miner_id = db.Column(db.String(50), unique=True, nullable=False)
     ip_address = db.Column(db.String(50), nullable=True)
-    model = db.Column(db.String(100), nullable=True)
-    hashrate = db.Column(db.Float, default=0.0)  # TH/s
-    power = db.Column(db.Float, default=0.0)  # W
-    temperature = db.Column(db.Float, default=0.0)  # °C
-    fan_speed = db.Column(db.Integer, default=0)  # RPM
-    error_rate = db.Column(db.Float, default=0.0)  # %
-    health_score = db.Column(db.Integer, default=0)  # 0-100
-    efficiency = db.Column(db.Float, default=0.0)  # TH/J
-    category = db.Column(db.String(1), default='D')  # A, B, C, D
-    status = db.Column(db.String(20), default='unknown')  # running, shutdown, unknown
-    uptime = db.Column(db.Integer, default=0)  # seconds
-    last_updated = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    def __repr__(self):
-        return f"<MinerStatus {self.miner_id} ({self.status})>"
+    model = db.Column(db.String(50), nullable=True)
+    status = db.Column(db.String(20), default='unknown', nullable=False) # running, shutdown, unknown
+    category = db.Column(db.String(1), default='D', nullable=False) # A, B, C, D
+    hashrate = db.Column(db.Float, default=0.0, nullable=False)
+    power = db.Column(db.Float, default=0.0, nullable=False)
+    temperature = db.Column(db.Float, default=0.0, nullable=False)
+    fan_speed = db.Column(db.Integer, default=0, nullable=False)
+    error_rate = db.Column(db.Float, default=0.0, nullable=False)
+    health_score = db.Column(db.Float, default=0.0, nullable=False)
+    efficiency = db.Column(db.Float, default=0.0, nullable=False)
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    extra_data = db.Column(JSON, nullable=True)
     
     def to_dict(self):
-        """转换为字典格式"""
+        """转换为字典"""
         return {
             'id': self.id,
             'miner_id': self.miner_id,
             'ip_address': self.ip_address,
             'model': self.model,
+            'status': self.status,
+            'category': self.category,
             'hashrate': self.hashrate,
             'power': self.power,
             'temperature': self.temperature,
@@ -45,31 +47,29 @@ class MinerStatus(db.Model):
             'error_rate': self.error_rate,
             'health_score': self.health_score,
             'efficiency': self.efficiency,
-            'category': self.category,
-            'status': self.status,
-            'uptime': self.uptime,
-            'last_updated': self.last_updated.isoformat() if self.last_updated else None
+            'last_updated': self.last_updated.isoformat() if self.last_updated else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'extra_data': self.extra_data
         }
-
+    
+    def __repr__(self):
+        return f'<MinerStatus {self.miner_id}>'
 
 class MinerOperation(db.Model):
     """矿机操作记录模型"""
     __tablename__ = 'miner_operations'
     
     id = db.Column(db.Integer, primary_key=True)
-    miner_id = db.Column(db.String(100), nullable=False, index=True)
-    operation_type = db.Column(db.String(20), nullable=False)  # shutdown, startup, rotate
-    operation_time = db.Column(db.DateTime, default=datetime.utcnow)
-    operator = db.Column(db.String(100), nullable=True)  # 操作人或自动化规则名称
-    reason = db.Column(db.String(255), nullable=True)  # 操作原因
-    status = db.Column(db.String(20), default='success')  # success, failed
-    details = db.Column(db.Text, nullable=True)  # 详细信息JSON
-    
-    def __repr__(self):
-        return f"<MinerOperation {self.operation_type} on {self.miner_id}>"
+    miner_id = db.Column(db.String(50), nullable=False)
+    operation_type = db.Column(db.String(20), nullable=False) # shutdown, startup, rotate
+    operation_time = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    operator = db.Column(db.String(50), default='system', nullable=False)
+    reason = db.Column(db.String(200), nullable=True)
+    status = db.Column(db.String(20), default='success', nullable=False) # success, failed
+    details = db.Column(JSON, nullable=True)
     
     def to_dict(self):
-        """转换为字典格式"""
+        """转换为字典"""
         return {
             'id': self.id,
             'miner_id': self.miner_id,
@@ -80,7 +80,9 @@ class MinerOperation(db.Model):
             'status': self.status,
             'details': self.details
         }
-
+    
+    def __repr__(self):
+        return f'<MinerOperation {self.id}: {self.operation_type} on {self.miner_id}>'
 
 class PowerReductionPlan(db.Model):
     """电力削减计划模型"""
@@ -88,33 +90,30 @@ class PowerReductionPlan(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    reduction_percentage = db.Column(db.Float, nullable=False)
-    is_active = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    effective_from = db.Column(db.DateTime, nullable=True)
-    effective_to = db.Column(db.DateTime, nullable=True)
-    created_by = db.Column(db.String(100), nullable=True)
-    description = db.Column(db.Text, nullable=True)
-    miner_categories = db.Column(db.String(10), default='DCBA')  # 关停顺序，如'DCBA'表示先D再C再B再A
-    
-    def __repr__(self):
-        return f"<PowerReductionPlan {self.name} ({self.reduction_percentage}%)>"
+    reduction_percentage = db.Column(db.Float, default=10.0, nullable=False)
+    miner_categories = db.Column(db.String(10), default='DCBA', nullable=False) # 关停优先级
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_by = db.Column(db.String(50), default='system', nullable=False)
+    is_active = db.Column(db.Boolean, default=False, nullable=False)
+    execution_count = db.Column(db.Integer, default=0, nullable=False)
+    last_executed = db.Column(db.DateTime, nullable=True)
     
     def to_dict(self):
-        """转换为字典格式"""
+        """转换为字典"""
         return {
             'id': self.id,
             'name': self.name,
             'reduction_percentage': self.reduction_percentage,
-            'is_active': self.is_active,
+            'miner_categories': self.miner_categories,
             'created_at': self.created_at.isoformat() if self.created_at else None,
-            'effective_from': self.effective_from.isoformat() if self.effective_from else None,
-            'effective_to': self.effective_to.isoformat() if self.effective_to else None,
             'created_by': self.created_by,
-            'description': self.description,
-            'miner_categories': self.miner_categories
+            'is_active': self.is_active,
+            'execution_count': self.execution_count,
+            'last_executed': self.last_executed.isoformat() if self.last_executed else None
         }
-
+    
+    def __repr__(self):
+        return f'<PowerReductionPlan {self.id}: {self.name} ({self.reduction_percentage}%)>'
 
 class RotationSchedule(db.Model):
     """矿机轮换计划模型"""
@@ -122,62 +121,54 @@ class RotationSchedule(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    schedule_type = db.Column(db.String(20), default='auto')  # auto, manual
-    days_between_rotation = db.Column(db.Integer, default=14)
-    next_rotation_date = db.Column(db.DateTime, nullable=True)
-    last_rotation_date = db.Column(db.DateTime, nullable=True)
-    is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    created_by = db.Column(db.String(100), nullable=True)
-    miners_to_shutdown = db.Column(JSON, nullable=True)  # 需要关停的矿机ID列表
-    miners_to_start = db.Column(JSON, nullable=True)  # 需要启动的矿机ID列表
-    
-    def __repr__(self):
-        return f"<RotationSchedule {self.name}>"
+    miner_category = db.Column(db.String(1), default='C', nullable=False) # 轮换的矿机类别
+    days_between_rotation = db.Column(db.Integer, default=14, nullable=False)
+    next_rotation_date = db.Column(db.Date, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_by = db.Column(db.String(50), default='system', nullable=False)
+    is_active = db.Column(db.Boolean, default=False, nullable=False)
+    execution_count = db.Column(db.Integer, default=0, nullable=False)
+    last_executed = db.Column(db.DateTime, nullable=True)
+    miners_to_shutdown = db.Column(JSON, nullable=True) # 计划关停的矿机ID列表
+    miners_to_start = db.Column(JSON, nullable=True) # 计划启动的矿机ID列表
     
     def to_dict(self):
-        """转换为字典格式"""
+        """转换为字典"""
         return {
             'id': self.id,
             'name': self.name,
-            'schedule_type': self.schedule_type,
+            'miner_category': self.miner_category,
             'days_between_rotation': self.days_between_rotation,
             'next_rotation_date': self.next_rotation_date.isoformat() if self.next_rotation_date else None,
-            'last_rotation_date': self.last_rotation_date.isoformat() if self.last_rotation_date else None,
-            'is_active': self.is_active,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'created_by': self.created_by,
+            'is_active': self.is_active,
+            'execution_count': self.execution_count,
+            'last_executed': self.last_executed.isoformat() if self.last_executed else None,
             'miners_to_shutdown': self.miners_to_shutdown,
             'miners_to_start': self.miners_to_start
         }
-
+    
+    def __repr__(self):
+        return f'<RotationSchedule {self.id}: {self.name} (every {self.days_between_rotation} days)>'
 
 class PerformanceSnapshot(db.Model):
-    """性能快照模型 - 用于存储每日性能数据"""
+    """系统性能快照模型"""
     __tablename__ = 'performance_snapshots'
     
     id = db.Column(db.Integer, primary_key=True)
-    snapshot_date = db.Column(db.Date, nullable=False, index=True)
-    total_miners = db.Column(db.Integer, default=0)
-    running_miners = db.Column(db.Integer, default=0)
-    shutdown_miners = db.Column(db.Integer, default=0)
-    total_hashrate = db.Column(db.Float, default=0.0)  # TH/s
-    total_power = db.Column(db.Float, default=0.0)  # W
-    effective_power_reduction = db.Column(db.Float, default=0.0)  # %
-    a_category_count = db.Column(db.Integer, default=0)
-    b_category_count = db.Column(db.Integer, default=0)
-    c_category_count = db.Column(db.Integer, default=0)
-    d_category_count = db.Column(db.Integer, default=0)
-    a_shutdown_count = db.Column(db.Integer, default=0)
-    b_shutdown_count = db.Column(db.Integer, default=0)
-    c_shutdown_count = db.Column(db.Integer, default=0)
-    d_shutdown_count = db.Column(db.Integer, default=0)
-    
-    def __repr__(self):
-        return f"<PerformanceSnapshot {self.snapshot_date}>"
+    snapshot_date = db.Column(db.Date, nullable=False, unique=True)
+    total_miners = db.Column(db.Integer, default=0, nullable=False)
+    running_miners = db.Column(db.Integer, default=0, nullable=False)
+    shutdown_miners = db.Column(db.Integer, default=0, nullable=False)
+    total_hashrate = db.Column(db.Float, default=0.0, nullable=False) # TH/s
+    total_power = db.Column(db.Float, default=0.0, nullable=False) # W
+    category_stats = db.Column(JSON, nullable=True)
+    effective_power_reduction = db.Column(db.Float, default=0.0, nullable=False) # %
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     
     def to_dict(self):
-        """转换为字典格式"""
+        """转换为字典"""
         return {
             'id': self.id,
             'snapshot_date': self.snapshot_date.isoformat() if self.snapshot_date else None,
@@ -186,31 +177,10 @@ class PerformanceSnapshot(db.Model):
             'shutdown_miners': self.shutdown_miners,
             'total_hashrate': self.total_hashrate,
             'total_power': self.total_power,
+            'category_stats': self.category_stats,
             'effective_power_reduction': self.effective_power_reduction,
-            'a_category_count': self.a_category_count,
-            'b_category_count': self.b_category_count,
-            'c_category_count': self.c_category_count,
-            'd_category_count': self.d_category_count,
-            'a_shutdown_count': self.a_shutdown_count,
-            'b_shutdown_count': self.b_shutdown_count,
-            'c_shutdown_count': self.c_shutdown_count,
-            'd_shutdown_count': self.d_shutdown_count
+            'created_at': self.created_at.isoformat() if self.created_at else None
         }
-
-
-# 用户与权限模型
-class PowerUser(db.Model):
-    """电力管理系统用户模型"""
-    __tablename__ = 'power_users'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(256))
-    role = db.Column(db.String(20), default='viewer')  # admin, operator, viewer
-    is_active = db.Column(db.Boolean, default=True)
-    last_login = db.Column(db.DateTime, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def __repr__(self):
-        return f"<PowerUser {self.username}>"
+        return f'<PerformanceSnapshot {self.id}: {self.snapshot_date}>'

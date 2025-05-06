@@ -277,4 +277,4 @@ if __name__ == '__main__':
             power_manager.initialize_test_data(1000)
     
     # 启动Web服务器
-    app.run(host='0.0.0.0', port=5002, debug=True)
+    app.run(host='0.0.0.0', port=5002, debug=True, use_reloader=False)
