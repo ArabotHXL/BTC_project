@@ -245,6 +245,13 @@ document.addEventListener('DOMContentLoaded', function() {
         var hashrate = parseFloat(hashrateInput.value) || 0;
         var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
         
+        // 每次计算总算力和总功耗时，自动更新矿场功率
+        // 这是为了确保在任何矿机数量变化时都能更新矿场功率
+        if (!isUpdatingMinerCount && !isUpdatingSitePower && minerCount > 0 && powerWatt > 0) {
+            var requiredPowerMw = (minerCount * powerWatt) / 1000000;
+            sitePowerMwInput.value = requiredPowerMw.toFixed(2);
+        }
+        
         console.log("计算总算力和总功耗 - 矿机数量:", minerCount, "单矿机算力:", hashrate, "单矿机功耗:", powerWatt);
         
         if (minerCount > 0 && hashrate > 0 && powerWatt > 0) {
