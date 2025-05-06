@@ -1341,24 +1341,36 @@ document.addEventListener('DOMContentLoaded', function() {
             monthlyRevenue = monthlyOutput * cryptoPrice;
         }
         
-        console.log('月度BTC产出:', monthlyBtcOutput, 'BTC价格:', 
-                    data.network_data ? data.network_data.btc_price : 'N/A', 
-                    '计算得到月度收入:', monthlyBtcRevenue);
+        console.log('月度'+cryptoSymbol+'产出:', monthlyOutput, cryptoSymbol+'价格:', 
+                    cryptoPrice, 
+                    '计算得到月度收入:', monthlyRevenue);
         
-        // 更新客户BTC产出
+        // 更新客户加密货币产出
         if (clientMonthlyBtcEl) {
-            clientMonthlyBtcEl.textContent = formatNumber(monthlyBtcOutput, 8);
+            clientMonthlyBtcEl.textContent = formatNumber(monthlyOutput, 8);
+            
+            // 更新标签文本
+            var labelEl = document.querySelector('label[for="client-monthly-btc"]');
+            if (labelEl) {
+                labelEl.textContent = '月度' + cryptoSymbol + '产出 / Monthly ' + cryptoSymbol + ' Output:';
+            }
         }
         
-        // 更新客户BTC收入
+        // 更新客户加密货币收入
         if (clientMonthlyBtcRevenueEl) {
-            clientMonthlyBtcRevenueEl.textContent = formatCurrency(monthlyBtcRevenue);
+            clientMonthlyBtcRevenueEl.textContent = formatCurrency(monthlyRevenue);
+            
+            // 更新标签文本
+            var revenueLabelEl = document.querySelector('label[for="client-monthly-btc-revenue"]');
+            if (revenueLabelEl) {
+                revenueLabelEl.textContent = '月度' + cryptoSymbol + '收入 / Monthly ' + cryptoSymbol + ' Revenue:';
+            }
         }
         
-        // 更新客户总收入 - 这是矿机挖出的BTC产生的全部收入
+        // 更新客户总收入 - 这是矿机挖出的加密货币产生的全部收入
         if (clientTotalIncomeEl) {
-            clientTotalIncomeEl.textContent = formatCurrency(monthlyBtcRevenue);
-            console.log('已更新客户总收入:', monthlyBtcRevenue);
+            clientTotalIncomeEl.textContent = formatCurrency(monthlyRevenue);
+            console.log('已更新客户总收入:', monthlyRevenue);
         } else {
             console.error('无法找到客户总收入元素ID:client-total-income');
         }
