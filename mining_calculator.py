@@ -240,6 +240,10 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         curtailment_factor = max(0, min(1, (100 - curtailment) / 100))
         site_total_hashrate = hashrate * curtailment_factor if hashrate is not None else 0
         
+        # 计算运行中和停机的矿机数量
+        running_miner_count = int(miner_count * curtailment_factor)
+        shutdown_miner_count = miner_count - running_miner_count
+        
         # === BTC 产出计算 (BTC Output Calculation) ===
         # Method 1: Network Hashrate Based (算法1：基于网络实际哈希率)
         # 使用API返回的实际网络哈希率进行计算，但增加合理性检查
@@ -343,10 +347,8 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         else:
             optimal_curtailment = 0
             
-        # === 矿机运行状态计算 ===
-        # 根据curtailment计算停机和运行中的矿机数量
-        running_miners = int(miner_count * curtailment_factor)
-        shutdown_miners = miner_count - running_miners
+        # === 矿机运行状态计算 (重命名变量，之前已计算过) ===
+        # running_miners 和 shutdown_miners 已经在前面计算为 running_miner_count 和 shutdown_miner_count
         
         # 计算每日维护费
         daily_maintenance_fee = maintenance_fee / 30.5
@@ -459,8 +461,8 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             },
             'optimization': {
                 'optimal_curtailment': optimal_curtailment,
-                'shutdown_miner_count': shutdown_miners,
-                'running_miner_count': running_miners
+                'shutdown_miner_count': shutdown_miner_count,
+                'running_miner_count': running_miner_count
             },
             'roi': {
                 'host': host_roi_data,
