@@ -1,0 +1,179 @@
+{% extends "crm/base.html" %}
+
+{% block title %}客户管理 | BTC Mining CRM{% endblock %}
+
+{% block page_title %}客户管理{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">客户列表</li>
+{% endblock %}
+
+{% block action_buttons %}
+<a href="{{ url_for('crm.new_customer') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle me-1"></i> 新建客户
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Search and Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" action="{{ url_for('crm.customers') }}" class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="搜索客户名称、公司或邮箱...">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select name="tag" class="form-select">
+                    <option value="">所有标签</option>
+                    {% for tag in all_tags %}
+                    <option value="{{ tag }}" {% if tag == tag %}selected{% endif %}>{{ tag }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">筛选</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Customers List -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">客户列表</h5>
+            <span class="badge bg-info">{{ customers|length }} 个客户</span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>客户名称</th>
+                        <th>公司</th>
+                        <th>联系方式</th>
+                        <th>标签</th>
+                        <th>类型</th>
+                        <th>矿机容量</th>
+                        <th>创建日期</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if customers %}
+                        {% for customer in customers %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('crm.customer_detail', customer_id=customer.id) }}" class="text-info font-weight-bold">
+                                    {{ customer.name }}
+                                </a>
+                            </td>
+                            <td>{{ customer.company or '未设置' }}</td>
+                            <td>
+                                {% if customer.email %}
+                                <div><i class="bi bi-envelope-fill me-1"></i> {{ customer.email }}</div>
+                                {% endif %}
+                                {% if customer.phone %}
+                                <div><i class="bi bi-telephone-fill me-1"></i> {{ customer.phone }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if customer.tags %}
+                                    {% for tag in customer.tags.split(',') %}
+                                    <span class="badge bg-secondary me-1">{{ tag.strip() }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-muted">无标签</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'info' if customer.customer_type == '企业' else 'primary' }}">
+                                    {{ customer.customer_type }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if customer.mining_capacity %}
+                                    {{ customer.mining_capacity }} MW
+                                {% else %}
+                                    <span class="text-muted">未设置</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ customer.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('crm.customer_detail', customer_id=customer.id) }}" class="btn btn-sm btn-outline-info">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('crm.edit_customer', customer_id=customer.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ customer.id }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- Delete Confirmation Modal -->
+                                <div class="modal fade" id="deleteModal{{ customer.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ customer.id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content bg-dark">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="deleteModalLabel{{ customer.id }}">确认删除</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>您确定要删除客户 <strong>{{ customer.name }}</strong> 吗?</p>
+                                                <p class="text-warning">
+                                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                                    此操作将同时删除该客户的所有联系人、商机和交易记录，且无法恢复！
+                                                </p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                                <form action="{{ url_for('crm.delete_customer', customer_id=customer.id) }}" method="post">
+                                                    <button type="submit" class="btn btn-danger">确认删除</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                {% if search or tag %}
+                                    <i class="bi bi-search text-secondary mb-3" style="font-size: 2rem;"></i>
+                                    <p class="text-muted mb-0">没有找到符合条件的客户</p>
+                                {% else %}
+                                    <i class="bi bi-building text-secondary mb-3" style="font-size: 2rem;"></i>
+                                    <p class="text-muted mb-0">暂无客户数据</p>
+                                    <a href="{{ url_for('crm.new_customer') }}" class="btn btn-primary mt-3">
+                                        <i class="bi bi-plus-circle me-1"></i> 添加第一个客户
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+</script>
+{% endblock %}

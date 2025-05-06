@@ -17,6 +17,9 @@ from mining_calculator import (
     generate_profit_chart_data
 )
 
+# 导入CRM路由
+from crm_routes import init_crm_routes
+
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
@@ -1178,6 +1181,24 @@ def power_management_dashboard():
         flash(f'初始化数据时出错: {str(e)}', 'danger')
     
     return render_template('db_power_dashboard.html')
+
+# 初始化CRM系统
+init_crm_routes(app)
+
+# 添加导航菜单项
+@app.context_processor
+def inject_nav_menu():
+    """向模板注入导航菜单项"""
+    def user_has_crm_access():
+        """检查用户是否有访问CRM的权限"""
+        if not session.get('authenticated'):
+            return False
+        role = session.get('role')
+        return role in ['owner', 'admin', 'manager']
+        
+    return {
+        'user_has_crm_access': user_has_crm_access
+    }
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

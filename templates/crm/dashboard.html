@@ -1,0 +1,252 @@
+{% extends "crm/base.html" %}
+
+{% block title %}CRM 仪表盘 | BTC Mining CRM{% endblock %}
+
+{% block page_title %}CRM 仪表盘{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">仪表盘</li>
+{% endblock %}
+
+{% block content %}
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card bg-dark">
+            <div class="card-body text-center">
+                <i class="bi bi-building icon"></i>
+                <div class="value">{{ customers_count }}</div>
+                <div class="label">客户总数</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-dark">
+            <div class="card-body text-center">
+                <i class="bi bi-lightbulb icon"></i>
+                <div class="value">{{ leads_count }}</div>
+                <div class="label">潜在商机</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-dark">
+            <div class="card-body text-center">
+                <i class="bi bi-currency-dollar icon"></i>
+                <div class="value">{{ deals_count }}</div>
+                <div class="label">交易项目</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-dark">
+            <div class="card-body text-center">
+                <i class="bi bi-cash-stack icon"></i>
+                <div class="value">${{ "{:,.2f}".format(deals_value) }}</div>
+                <div class="label">交易总额</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Activity and Tasks Section -->
+<div class="row">
+    <!-- Recent Activities -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>最近活动</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% if recent_activities %}
+                        {% for activity in recent_activities %}
+                        <div class="list-group-item bg-dark">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ activity.summary }}</h6>
+                                <small class="text-muted">{{ activity.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                            </div>
+                            <p class="mb-1 small">
+                                <span class="badge bg-{{ 
+                                    'success' if activity.type == '创建' else 
+                                    'info' if activity.type == '备注' else 
+                                    'warning' if activity.type == '电话' else 
+                                    'primary' if activity.type == '会议' else 
+                                    'secondary' 
+                                }}">{{ activity.type }}</span>
+                                {% if activity.customer %}
+                                    <a href="{{ url_for('crm.customer_detail', customer_id=activity.customer.id) }}" class="text-info">
+                                        {{ activity.customer.name }}
+                                    </a>
+                                {% endif %}
+                            </p>
+                            {% if activity.details %}
+                            <small class="text-truncate d-block" style="max-width: 100%;">{{ activity.details[:100] }}{% if activity.details|length > 100 %}...{% endif %}</small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="list-group-item bg-dark text-center py-5">
+                            <i class="bi bi-calendar-x text-secondary mb-3" style="font-size: 2rem;"></i>
+                            <p class="text-muted mb-0">暂无活动记录</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('crm.activities') }}" class="btn btn-sm btn-outline-info">查看所有活动</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Follow Up Leads -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>待跟进的商机</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% if follow_up_leads %}
+                        {% for lead in follow_up_leads %}
+                        <div class="list-group-item bg-dark">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">
+                                    <a href="{{ url_for('crm.lead_detail', lead_id=lead.id) }}" class="text-info">
+                                        {{ lead.title }}
+                                    </a>
+                                </h6>
+                                <small class="text-muted">
+                                    跟进日期: {{ lead.next_follow_up.strftime('%Y-%m-%d') if lead.next_follow_up else '未设置' }}
+                                </small>
+                            </div>
+                            <p class="mb-1 small">
+                                <span class="badge bg-{{ 
+                                    'primary' if lead.status.name == 'NEW' else 
+                                    'info' if lead.status.name == 'CONTACTED' else 
+                                    'success' if lead.status.name == 'QUALIFIED' else 
+                                    'warning' if lead.status.name == 'NEGOTIATION' else 
+                                    'secondary' 
+                                }}">{{ lead.status.value }}</span>
+                                客户: 
+                                {% if lead.customer %}
+                                    <a href="{{ url_for('crm.customer_detail', customer_id=lead.customer.id) }}" class="text-info">
+                                        {{ lead.customer.name }}
+                                    </a>
+                                {% else %}
+                                    未知客户
+                                {% endif %}
+                            </p>
+                            {% if lead.assigned_to %}
+                            <small class="text-muted">负责人: {{ lead.assigned_to }}</small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="list-group-item bg-dark text-center py-5">
+                            <i class="bi bi-check-circle text-secondary mb-3" style="font-size: 2rem;"></i>
+                            <p class="text-muted mb-0">暂无待跟进商机</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('crm.leads') }}" class="btn btn-sm btn-outline-info">查看所有商机</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Deals -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-currency-dollar me-2"></i>近期交易</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>交易名称</th>
+                                <th>客户</th>
+                                <th>状态</th>
+                                <th>金额</th>
+                                <th>预计完成日期</th>
+                                <th>负责人</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if recent_deals %}
+                                {% for deal in recent_deals %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('crm.deal_detail', deal_id=deal.id) }}" class="text-info">
+                                            {{ deal.title }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if deal.customer %}
+                                        <a href="{{ url_for('crm.customer_detail', customer_id=deal.customer.id) }}" class="text-info">
+                                            {{ deal.customer.name }}
+                                        </a>
+                                        {% else %}
+                                        未知客户
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 
+                                            'secondary' if deal.status.name == 'DRAFT' else 
+                                            'info' if deal.status.name == 'PENDING' else 
+                                            'primary' if deal.status.name == 'APPROVED' else 
+                                            'warning' if deal.status.name == 'SIGNED' else 
+                                            'success' if deal.status.name == 'COMPLETED' else 
+                                            'danger'
+                                        }}">{{ deal.status.value }}</span>
+                                    </td>
+                                    <td>${{ "{:,.2f}".format(deal.value) }}</td>
+                                    <td>{{ deal.expected_close_date.strftime('%Y-%m-%d') if deal.expected_close_date else '未设置' }}</td>
+                                    <td>{{ deal.assigned_to if deal.assigned_to else '未分配' }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <i class="bi bi-cash-coin text-secondary mb-3" style="font-size: 2rem;"></i>
+                                        <p class="text-muted mb-0">暂无交易数据</p>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('crm.deals') }}" class="btn btn-sm btn-outline-info">查看所有交易</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Buttons -->
+<div class="row my-4">
+    <div class="col-12 text-center">
+        <a href="{{ url_for('crm.customers') }}" class="btn btn-outline-primary mx-2">
+            <i class="bi bi-building me-2"></i>管理客户
+        </a>
+        <a href="{{ url_for('crm.leads') }}" class="btn btn-outline-info mx-2">
+            <i class="bi bi-lightbulb me-2"></i>查看商机
+        </a>
+        <a href="{{ url_for('crm.deals') }}" class="btn btn-outline-success mx-2">
+            <i class="bi bi-currency-dollar me-2"></i>管理交易
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Any additional JavaScript specific to the dashboard can go here
+</script>
+{% endblock %}

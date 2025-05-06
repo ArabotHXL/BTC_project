@@ -1,0 +1,547 @@
+{% extends "crm/base.html" %}
+
+{% block title %}客户详情 - {{ customer.name }} | BTC Mining CRM{% endblock %}
+
+{% block page_title %}客户详情: {{ customer.name }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('crm.customers') }}">客户列表</a></li>
+<li class="breadcrumb-item active" aria-current="page">{{ customer.name }}</li>
+{% endblock %}
+
+{% block action_buttons %}
+<a href="{{ url_for('crm.edit_customer', customer_id=customer.id) }}" class="btn btn-primary me-2">
+    <i class="bi bi-pencil me-1"></i> 编辑客户
+</a>
+<div class="dropdown d-inline-block">
+    <button class="btn btn-success dropdown-toggle" type="button" id="newItemDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-plus-circle me-1"></i> 添加
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="newItemDropdown">
+        <li><a class="dropdown-item" href="{{ url_for('crm.new_contact', customer_id=customer.id) }}">
+            <i class="bi bi-person-plus me-2"></i>新增联系人
+        </a></li>
+        <li><a class="dropdown-item" href="{{ url_for('crm.new_lead', customer_id=customer.id) }}">
+            <i class="bi bi-lightbulb me-2"></i>新增商机
+        </a></li>
+        <li><a class="dropdown-item" href="{{ url_for('crm.new_deal', customer_id=customer.id) }}">
+            <i class="bi bi-currency-dollar me-2"></i>新增交易
+        </a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addActivityModal">
+            <i class="bi bi-journal-plus me-2"></i>记录活动
+        </a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Customer Info Card -->
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>客户基本信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h4 class="card-title">{{ customer.name }}</h4>
+                    {% if customer.company %}
+                    <h6 class="card-subtitle mb-2 text-muted">{{ customer.company }}</h6>
+                    {% endif %}
+                    
+                    {% if customer.tags %}
+                        <div class="mb-2">
+                        {% for tag in customer.tags.split(',') %}
+                            <span class="badge bg-secondary me-1">{{ tag.strip() }}</span>
+                        {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <ul class="list-group list-group-flush bg-dark">
+                    <li class="list-group-item bg-dark">
+                        <div class="d-flex justify-content-between">
+                            <span><i class="bi bi-building me-2"></i>客户类型</span>
+                            <span class="badge bg-{{ 'info' if customer.customer_type == '企业' else 'primary' }}">
+                                {{ customer.customer_type }}
+                            </span>
+                        </div>
+                    </li>
+                    {% if customer.mining_capacity %}
+                    <li class="list-group-item bg-dark">
+                        <div class="d-flex justify-content-between">
+                            <span><i class="bi bi-lightning-charge me-2"></i>矿机容量</span>
+                            <span>{{ customer.mining_capacity }} MW</span>
+                        </div>
+                    </li>
+                    {% endif %}
+                    <li class="list-group-item bg-dark">
+                        <div class="d-flex justify-content-between">
+                            <span><i class="bi bi-calendar-check me-2"></i>创建日期</span>
+                            <span>{{ customer.created_at.strftime('%Y-%m-%d') }}</span>
+                        </div>
+                    </li>
+                    <li class="list-group-item bg-dark">
+                        <div class="d-flex justify-content-between">
+                            <span><i class="bi bi-calendar-date me-2"></i>最近更新</span>
+                            <span>{{ customer.updated_at.strftime('%Y-%m-%d') }}</span>
+                        </div>
+                    </li>
+                </ul>
+                
+                {% if customer.email or customer.phone or customer.address %}
+                <div class="mt-3">
+                    <h6 class="mb-2">联系方式</h6>
+                    {% if customer.email %}
+                    <div class="mb-2">
+                        <i class="bi bi-envelope me-2"></i>
+                        <a href="mailto:{{ customer.email }}">{{ customer.email }}</a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if customer.phone %}
+                    <div class="mb-2">
+                        <i class="bi bi-telephone me-2"></i>
+                        <a href="tel:{{ customer.phone }}">{{ customer.phone }}</a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if customer.address %}
+                    <div class="mb-2">
+                        <i class="bi bi-geo-alt me-2"></i>
+                        {{ customer.address }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Contacts Card -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-people me-2"></i>联系人</h5>
+                <a href="{{ url_for('crm.new_contact', customer_id=customer.id) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-person-plus"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if customer.contacts %}
+                <div class="list-group list-group-flush">
+                    {% for contact in customer.contacts %}
+                    <div class="list-group-item bg-dark">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                {{ contact.name }}
+                                {% if contact.primary %}
+                                <span class="badge bg-info ms-1">主要</span>
+                                {% endif %}
+                            </h6>
+                            <button class="btn btn-sm btn-link text-info" data-bs-toggle="collapse" data-bs-target="#contact{{ contact.id }}Details">
+                                <i class="bi bi-chevron-down"></i>
+                            </button>
+                        </div>
+                        {% if contact.position %}
+                        <div class="text-muted small">{{ contact.position }}</div>
+                        {% endif %}
+                        
+                        <div class="collapse mt-2" id="contact{{ contact.id }}Details">
+                            {% if contact.email or contact.phone %}
+                            <div class="mt-2">
+                                {% if contact.email %}
+                                <div class="mb-1">
+                                    <i class="bi bi-envelope me-1"></i>
+                                    <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>
+                                </div>
+                                {% endif %}
+                                
+                                {% if contact.phone %}
+                                <div class="mb-1">
+                                    <i class="bi bi-telephone me-1"></i>
+                                    <a href="tel:{{ contact.phone }}">{{ contact.phone }}</a>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            
+                            {% if contact.notes %}
+                            <div class="mt-2 small">
+                                <i class="bi bi-sticky me-1"></i>
+                                {{ contact.notes }}
+                            </div>
+                            {% endif %}
+                            
+                            <div class="mt-2 small text-muted">
+                                添加日期: {{ contact.created_at.strftime('%Y-%m-%d') }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center p-4">
+                    <i class="bi bi-people text-secondary mb-3" style="font-size: 2rem;"></i>
+                    <p class="text-muted mb-3">尚未添加联系人</p>
+                    <a href="{{ url_for('crm.new_contact', customer_id=customer.id) }}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-person-plus me-1"></i>添加联系人
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <!-- Tabs Navigation -->
+        <ul class="nav nav-tabs mb-4" id="customerTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="activities-tab" data-bs-toggle="tab" data-bs-target="#activities-tab-pane" type="button" role="tab">
+                    <i class="bi bi-clock-history me-1"></i>活动记录
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="leads-tab" data-bs-toggle="tab" data-bs-target="#leads-tab-pane" type="button" role="tab">
+                    <i class="bi bi-lightbulb me-1"></i>商机
+                    {% if customer.leads %}
+                    <span class="badge bg-secondary rounded-circle ms-1">{{ customer.leads|length }}</span>
+                    {% endif %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="deals-tab" data-bs-toggle="tab" data-bs-target="#deals-tab-pane" type="button" role="tab">
+                    <i class="bi bi-currency-dollar me-1"></i>交易
+                    {% if customer.deals %}
+                    <span class="badge bg-secondary rounded-circle ms-1">{{ customer.deals|length }}</span>
+                    {% endif %}
+                </button>
+            </li>
+        </ul>
+        
+        <!-- Tabs Content -->
+        <div class="tab-content" id="customerTabsContent">
+            <!-- Activities Tab -->
+            <div class="tab-pane fade show active" id="activities-tab-pane" role="tabpanel" aria-labelledby="activities-tab" tabindex="0">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">活动记录</h5>
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addActivityModal">
+                            <i class="bi bi-plus-circle me-1"></i>添加活动
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush" id="activitiesList">
+                            {% if customer.activities %}
+                                {% for activity in customer.activities|sort(attribute='created_at', reverse=True) %}
+                                <div class="list-group-item bg-dark">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-1">{{ activity.summary }}</h6>
+                                        <small class="text-muted">{{ activity.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                    </div>
+                                    <div class="mb-2">
+                                        <span class="badge bg-{{ 
+                                            'success' if activity.type == '创建' else 
+                                            'info' if activity.type == '备注' else 
+                                            'warning' if activity.type == '电话' else 
+                                            'primary' if activity.type == '会议' else 
+                                            'secondary' 
+                                        }}">{{ activity.type }}</span>
+                                        {% if activity.created_by %}
+                                        <small class="text-muted">{{ activity.created_by }}</small>
+                                        {% endif %}
+                                    </div>
+                                    {% if activity.details %}
+                                    <p class="mb-0 small">{{ activity.details }}</p>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center p-5">
+                                    <i class="bi bi-journal-text text-secondary mb-3" style="font-size: 2rem;"></i>
+                                    <p class="text-muted mb-3">暂无活动记录</p>
+                                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addActivityModal">
+                                        <i class="bi bi-plus-circle me-1"></i>添加第一条记录
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Leads Tab -->
+            <div class="tab-pane fade" id="leads-tab-pane" role="tabpanel" aria-labelledby="leads-tab" tabindex="0">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">商机列表</h5>
+                        <a href="{{ url_for('crm.new_lead', customer_id=customer.id) }}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-plus-circle me-1"></i>新增商机
+                        </a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>商机名称</th>
+                                        <th>状态</th>
+                                        <th>来源</th>
+                                        <th>预估价值</th>
+                                        <th>创建日期</th>
+                                        <th>下次跟进</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if customer.leads %}
+                                        {% for lead in customer.leads|sort(attribute='created_at', reverse=True) %}
+                                        <tr>
+                                            <td>
+                                                <a href="{{ url_for('crm.lead_detail', lead_id=lead.id) }}" class="text-info">
+                                                    {{ lead.title }}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{{ 
+                                                    'primary' if lead.status.name == 'NEW' else 
+                                                    'info' if lead.status.name == 'CONTACTED' else 
+                                                    'success' if lead.status.name == 'QUALIFIED' else 
+                                                    'warning' if lead.status.name == 'NEGOTIATION' else 
+                                                    'secondary' 
+                                                }}">{{ lead.status.value }}</span>
+                                            </td>
+                                            <td>{{ lead.source or '未知' }}</td>
+                                            <td>${{ "{:,.2f}".format(lead.estimated_value) }}</td>
+                                            <td>{{ lead.created_at.strftime('%Y-%m-%d') }}</td>
+                                            <td>{{ lead.next_follow_up.strftime('%Y-%m-%d') if lead.next_follow_up else '未设置' }}</td>
+                                            <td>
+                                                <a href="{{ url_for('crm.lead_detail', lead_id=lead.id) }}" class="btn btn-sm btn-outline-info">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="7" class="text-center py-4">
+                                                <i class="bi bi-lightbulb text-secondary mb-3" style="font-size: 2rem;"></i>
+                                                <p class="text-muted mb-3">暂无商机数据</p>
+                                                <a href="{{ url_for('crm.new_lead', customer_id=customer.id) }}" class="btn btn-sm btn-primary">
+                                                    <i class="bi bi-plus-circle me-1"></i>添加商机
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Deals Tab -->
+            <div class="tab-pane fade" id="deals-tab-pane" role="tabpanel" aria-labelledby="deals-tab" tabindex="0">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">交易列表</h5>
+                        <a href="{{ url_for('crm.new_deal', customer_id=customer.id) }}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-plus-circle me-1"></i>新增交易
+                        </a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>交易名称</th>
+                                        <th>状态</th>
+                                        <th>金额</th>
+                                        <th>挖矿容量</th>
+                                        <th>电费价格</th>
+                                        <th>合同期限</th>
+                                        <th>预计完成</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if customer.deals %}
+                                        {% for deal in customer.deals|sort(attribute='created_at', reverse=True) %}
+                                        <tr>
+                                            <td>
+                                                <a href="{{ url_for('crm.deal_detail', deal_id=deal.id) }}" class="text-info">
+                                                    {{ deal.title }}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{{ 
+                                                    'secondary' if deal.status.name == 'DRAFT' else 
+                                                    'info' if deal.status.name == 'PENDING' else 
+                                                    'primary' if deal.status.name == 'APPROVED' else 
+                                                    'warning' if deal.status.name == 'SIGNED' else 
+                                                    'success' if deal.status.name == 'COMPLETED' else 
+                                                    'danger'
+                                                }}">{{ deal.status.value }}</span>
+                                            </td>
+                                            <td>${{ "{:,.2f}".format(deal.value) }}</td>
+                                            <td>{{ deal.mining_capacity }} MW</td>
+                                            <td>{{ "${:,.4f}".format(deal.electricity_cost) if deal.electricity_cost else '-' }}</td>
+                                            <td>{{ deal.contract_term }}个月</td>
+                                            <td>{{ deal.expected_close_date.strftime('%Y-%m-%d') if deal.expected_close_date else '未设置' }}</td>
+                                            <td>
+                                                <a href="{{ url_for('crm.deal_detail', deal_id=deal.id) }}" class="btn btn-sm btn-outline-info">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="8" class="text-center py-4">
+                                                <i class="bi bi-cash-coin text-secondary mb-3" style="font-size: 2rem;"></i>
+                                                <p class="text-muted mb-3">暂无交易数据</p>
+                                                <a href="{{ url_for('crm.new_deal', customer_id=customer.id) }}" class="btn btn-sm btn-primary">
+                                                    <i class="bi bi-plus-circle me-1"></i>添加交易
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Activity Modal -->
+<div class="modal fade" id="addActivityModal" tabindex="-1" aria-labelledby="addActivityModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addActivityModalLabel">添加活动记录</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="activityForm">
+                    <input type="hidden" id="customer_id" value="{{ customer.id }}">
+                    <div class="mb-3">
+                        <label for="activity_type" class="form-label">活动类型</label>
+                        <select class="form-select" id="activity_type" required>
+                            <option value="备注">备注</option>
+                            <option value="电话">电话</option>
+                            <option value="会议">会议</option>
+                            <option value="邮件">邮件</option>
+                            <option value="现场拜访">现场拜访</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="activity_summary" class="form-label">摘要</label>
+                        <input type="text" class="form-control" id="activity_summary" required placeholder="活动简短描述">
+                    </div>
+                    <div class="mb-3">
+                        <label for="activity_details" class="form-label">详细内容</label>
+                        <textarea class="form-control" id="activity_details" rows="4" placeholder="记录详细内容..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="saveActivity">保存记录</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Save Activity via AJAX
+        document.getElementById('saveActivity').addEventListener('click', function() {
+            var customerId = document.getElementById('customer_id').value;
+            var type = document.getElementById('activity_type').value;
+            var summary = document.getElementById('activity_summary').value;
+            var details = document.getElementById('activity_details').value;
+            
+            // Basic validation
+            if (!summary) {
+                alert('请输入活动摘要');
+                return;
+            }
+            
+            // Prepare data
+            var data = {
+                customer_id: customerId,
+                type: type,
+                summary: summary,
+                details: details
+            };
+            
+            // Send AJAX request
+            fetch('{{ url_for("crm.new_activity") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    // Close modal
+                    var modal = bootstrap.Modal.getInstance(document.getElementById('addActivityModal'));
+                    modal.hide();
+                    
+                    // Add activity to the list (prepend)
+                    var activitiesList = document.getElementById('activitiesList');
+                    if (activitiesList.innerHTML.includes('暂无活动记录')) {
+                        // If no activities, replace the "no activities" message
+                        activitiesList.innerHTML = '';
+                    }
+                    
+                    // Create new activity element
+                    var newActivity = document.createElement('div');
+                    newActivity.className = 'list-group-item bg-dark';
+                    
+                    // Badge class based on activity type
+                    var badgeClass = 'secondary';
+                    if (type === '创建') badgeClass = 'success';
+                    else if (type === '备注') badgeClass = 'info';
+                    else if (type === '电话') badgeClass = 'warning';
+                    else if (type === '会议') badgeClass = 'primary';
+                    
+                    newActivity.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-1">${summary}</h6>
+                            <small class="text-muted">${result.activity.created_at}</small>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-${badgeClass}">${type}</span>
+                            ${result.activity.created_by ? `<small class="text-muted">${result.activity.created_by}</small>` : ''}
+                        </div>
+                        ${details ? `<p class="mb-0 small">${details}</p>` : ''}
+                    `;
+                    
+                    // Add to the beginning of the list
+                    activitiesList.prepend(newActivity);
+                    
+                    // Reset form
+                    document.getElementById('activity_summary').value = '';
+                    document.getElementById('activity_details').value = '';
+                    
+                    // Show success message
+                    alert('活动记录已添加成功！');
+                } else {
+                    alert('添加活动记录失败: ' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('添加活动记录失败，请稍后重试');
+            });
+        });
+    });
+</script>
+{% endblock %}

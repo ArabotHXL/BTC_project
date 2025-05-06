@@ -57,6 +57,16 @@
                     </div>
                     {% endif %}
                     
+                    <!-- CRM系统按钮 (对特定角色显示) -->
+                    {% if user_has_crm_access() %}
+                    <div class="btn-group btn-group-sm me-3">
+                        <a href="{{ url_for('crm.dashboard') }}" class="btn btn-outline-info">
+                            <i class="bi bi-people-fill me-1"></i>
+                            {% if current_lang == 'en' %}CRM System{% else %}客户管理系统{% endif %}
+                        </a>
+                    </div>
+                    {% endif %}
+                    
                     <!-- 语言切换 / Language Switcher -->
                     <div class="d-flex align-items-center">
                         <div class="btn-group btn-group-sm me-3" role="group" aria-label="{{ t('language') }}">
@@ -131,6 +141,16 @@
                                             {% if current_lang == 'en' %}Smart Power Management{% else %}智能电力管理系统{% endif %}
                                         </a>
                                     </li>
+                                    
+                                    <!-- CRM系统入口 -->
+                                    {% if user_has_crm_access() %}
+                                    <li>
+                                        <a class="dropdown-item" href="{{ url_for('crm.dashboard') }}">
+                                            <i class="bi bi-people-fill me-1"></i> 
+                                            {% if current_lang == 'en' %}Customer Relationship Management{% else %}客户关系管理系统{% endif %}
+                                        </a>
+                                    </li>
+                                    {% endif %}
                                     {% endif %}
                                     
                                     <!-- 显示当前用户角色 -->
