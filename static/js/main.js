@@ -666,6 +666,37 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.estimation_note) {
                 showError(data.estimation_note, 'warning');
             }
+            
+            // ===== 5. 重新绑定PDF导出按钮事件 =====
+            // 因为现在结果卡片显示了，按钮应该可见
+            var pdfReportBtn = document.getElementById('generate-pdf-report-btn');
+            console.log("结果显示后检查PDF报告按钮:", pdfReportBtn ? "已找到" : "未找到");
+            
+            if (pdfReportBtn) {
+                console.log("重新绑定PDF报告按钮点击事件");
+                // 移除所有现有的点击事件处理器
+                var newPdfBtn = pdfReportBtn.cloneNode(true);
+                pdfReportBtn.parentNode.replaceChild(newPdfBtn, pdfReportBtn);
+                
+                // 添加新的事件处理器
+                newPdfBtn.addEventListener('click', function(event) {
+                    console.log("PDF报告按钮被点击 (结果显示后绑定)");
+                    event.preventDefault(); // 防止表单提交
+                    event.stopPropagation(); // 阻止事件冒泡
+                    
+                    if (!calculationResultData) {
+                        console.log("计算结果数据无效，无法生成PDF");
+                        showError('请先计算挖矿收益再导出PDF报告。(Please calculate mining profitability first.)');
+                        return;
+                    }
+                    
+                    console.log("调用generatePdfReport函数开始生成PDF");
+                    generatePdfReport(calculationResultData);
+                    
+                    return false; // 阻止默认行为
+                });
+                console.log("PDF报告按钮事件监听器已重新绑定");
+            }
         } catch (error) {
             console.error('显示结果时出错:', error);
             showError('显示计算结果时发生错误。(Error displaying calculation results.)');
