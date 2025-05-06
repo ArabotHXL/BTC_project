@@ -1,0 +1,284 @@
+{% extends "crm/base.html" %}
+
+{% block title %}交易管理 | BTC Mining CRM{% endblock %}
+
+{% block page_title %}交易管理{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">交易列表</li>
+{% endblock %}
+
+{% block action_buttons %}
+<a href="{{ url_for('crm.customers') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle me-1"></i> 为客户创建交易
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Filter and Status Selection -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" action="{{ url_for('crm.deals') }}" class="row g-3">
+            <div class="col-md-12">
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ url_for('crm.deals') }}" class="btn btn-sm {{ 'btn-secondary' if not status else 'btn-outline-secondary' }}">
+                        全部
+                    </a>
+                    {% for status_name in all_statuses %}
+                    <a href="{{ url_for('crm.deals', status=status_name) }}" class="btn btn-sm {{ 'btn-secondary' if status == status_name else 'btn-outline-secondary' }}">
+                        {{ {'DRAFT': '草稿', 'PENDING': '待定', 'APPROVED': '已批准', 'SIGNED': '已签署', 'COMPLETED': '已完成', 'CANCELED': '已取消'}[status_name] }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Deals Table -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">交易列表</h5>
+            <span class="badge bg-info">{{ deals|length }} 个交易</span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>交易名称</th>
+                        <th>客户</th>
+                        <th>状态</th>
+                        <th>金额</th>
+                        <th>挖矿容量</th>
+                        <th>电费价格</th>
+                        <th>合同期限</th>
+                        <th>预计完成</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if deals %}
+                        {% for deal in deals %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('crm.deal_detail', deal_id=deal.id) }}" class="text-info">
+                                    {{ deal.title }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if deal.customer %}
+                                <a href="{{ url_for('crm.customer_detail', customer_id=deal.customer.id) }}" class="text-info">
+                                    {{ deal.customer.name }}
+                                </a>
+                                {% else %}
+                                未知客户
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 
+                                    'secondary' if deal.status.name == 'DRAFT' else 
+                                    'info' if deal.status.name == 'PENDING' else 
+                                    'primary' if deal.status.name == 'APPROVED' else 
+                                    'warning' if deal.status.name == 'SIGNED' else 
+                                    'success' if deal.status.name == 'COMPLETED' else 
+                                    'danger'
+                                }}">{{ deal.status.value }}</span>
+                            </td>
+                            <td>${{ "{:,.2f}".format(deal.value) }}</td>
+                            <td>{{ deal.mining_capacity or '-' }} MW</td>
+                            <td>{{ "${:,.4f}".format(deal.electricity_cost) if deal.electricity_cost else '-' }}</td>
+                            <td>{{ deal.contract_term or '-' }}个月</td>
+                            <td>{{ deal.expected_close_date.strftime('%Y-%m-%d') if deal.expected_close_date else '未设置' }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('crm.deal_detail', deal_id=deal.id) }}" class="btn btn-sm btn-outline-info">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center py-4">
+                                {% if status %}
+                                    <i class="bi bi-search text-secondary mb-3" style="font-size: 2rem;"></i>
+                                    <p class="text-muted mb-0">没有找到符合条件的交易</p>
+                                {% else %}
+                                    <i class="bi bi-cash-coin text-secondary mb-3" style="font-size: 2rem;"></i>
+                                    <p class="text-muted mb-0">暂无交易数据</p>
+                                    <a href="{{ url_for('crm.customers') }}" class="btn btn-primary mt-3">
+                                        <i class="bi bi-plus-circle me-1"></i> 前往客户列表创建交易
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Deal Value Analysis Section -->
+{% if deals %}
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">交易金额统计</h5>
+            </div>
+            <div class="card-body">
+                <div id="dealValueChart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">交易状态分布</h5>
+            </div>
+            <div class="card-body">
+                <div id="dealStatusChart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if deals %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Count deals by status
+        let statusCounts = {
+            'DRAFT': 0,
+            'PENDING': 0,
+            'APPROVED': 0,
+            'SIGNED': 0,
+            'COMPLETED': 0,
+            'CANCELED': 0
+        };
+        
+        // Calculate total deal value by status
+        let dealValuesByStatus = {
+            'DRAFT': 0,
+            'PENDING': 0,
+            'APPROVED': 0,
+            'SIGNED': 0,
+            'COMPLETED': 0,
+            'CANCELED': 0
+        };
+        
+        {% for deal in deals %}
+        statusCounts['{{ deal.status.name }}']++;
+        dealValuesByStatus['{{ deal.status.name }}'] += {{ deal.value }};
+        {% endfor %}
+        
+        // Create the deal status distribution chart (pie chart)
+        const statusCtx = document.getElementById('dealStatusChart').getContext('2d');
+        new Chart(statusCtx, {
+            type: 'pie',
+            data: {
+                labels: ['草稿', '待定', '已批准', '已签署', '已完成', '已取消'],
+                datasets: [{
+                    data: [
+                        statusCounts['DRAFT'], 
+                        statusCounts['PENDING'], 
+                        statusCounts['APPROVED'], 
+                        statusCounts['SIGNED'], 
+                        statusCounts['COMPLETED'], 
+                        statusCounts['CANCELED']
+                    ],
+                    backgroundColor: [
+                        'rgba(108, 117, 125, 0.7)',
+                        'rgba(0, 123, 255, 0.7)',
+                        'rgba(23, 162, 184, 0.7)',
+                        'rgba(255, 193, 7, 0.7)',
+                        'rgba(40, 167, 69, 0.7)',
+                        'rgba(220, 53, 69, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(108, 117, 125, 1)',
+                        'rgba(0, 123, 255, 1)',
+                        'rgba(23, 162, 184, 1)',
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(220, 53, 69, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: '#fff'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Create the deal value by status chart (bar chart)
+        const valueCtx = document.getElementById('dealValueChart').getContext('2d');
+        new Chart(valueCtx, {
+            type: 'bar',
+            data: {
+                labels: ['草稿', '待定', '已批准', '已签署', '已完成', '已取消'],
+                datasets: [{
+                    label: '交易金额 ($)',
+                    data: [
+                        dealValuesByStatus['DRAFT'], 
+                        dealValuesByStatus['PENDING'], 
+                        dealValuesByStatus['APPROVED'], 
+                        dealValuesByStatus['SIGNED'], 
+                        dealValuesByStatus['COMPLETED'], 
+                        dealValuesByStatus['CANCELED']
+                    ],
+                    backgroundColor: [
+                        'rgba(108, 117, 125, 0.7)',
+                        'rgba(0, 123, 255, 0.7)',
+                        'rgba(23, 162, 184, 0.7)',
+                        'rgba(255, 193, 7, 0.7)',
+                        'rgba(40, 167, 69, 0.7)',
+                        'rgba(220, 53, 69, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(108, 117, 125, 1)',
+                        'rgba(0, 123, 255, 1)',
+                        'rgba(23, 162, 184, 1)',
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(220, 53, 69, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}

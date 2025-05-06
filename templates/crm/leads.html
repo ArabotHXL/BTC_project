@@ -1,0 +1,222 @@
+{% extends "crm/base.html" %}
+
+{% block title %}商机管理 | BTC Mining CRM{% endblock %}
+
+{% block page_title %}商机管理{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">商机列表</li>
+{% endblock %}
+
+{% block action_buttons %}
+<!-- 此处不添加直接创建按钮，因为商机应该关联到特定客户 -->
+<a href="{{ url_for('crm.customers') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle me-1"></i> 为客户创建商机
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Filter and Status Selection -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" action="{{ url_for('crm.leads') }}" class="row g-3">
+            <div class="col-md-12">
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ url_for('crm.leads') }}" class="btn btn-sm {{ 'btn-secondary' if not status else 'btn-outline-secondary' }}">
+                        全部
+                    </a>
+                    {% for status_name in all_statuses %}
+                    <a href="{{ url_for('crm.leads', status=status_name) }}" class="btn btn-sm {{ 'btn-secondary' if status == status_name else 'btn-outline-secondary' }}">
+                        {{ {'NEW': '新建', 'CONTACTED': '已联系', 'QUALIFIED': '合格线索', 'NEGOTIATION': '谈判中', 'WON': '已成交', 'LOST': '已流失'}[status_name] }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Leads Table -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">商机列表</h5>
+            <span class="badge bg-info">{{ leads|length }} 个商机</span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>商机名称</th>
+                        <th>客户</th>
+                        <th>状态</th>
+                        <th>来源</th>
+                        <th>预估价值</th>
+                        <th>创建日期</th>
+                        <th>负责人</th>
+                        <th>下次跟进</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if leads %}
+                        {% for lead in leads %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('crm.lead_detail', lead_id=lead.id) }}" class="text-info">
+                                    {{ lead.title }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if lead.customer %}
+                                <a href="{{ url_for('crm.customer_detail', customer_id=lead.customer.id) }}" class="text-info">
+                                    {{ lead.customer.name }}
+                                </a>
+                                {% else %}
+                                未知客户
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 
+                                    'primary' if lead.status.name == 'NEW' else 
+                                    'info' if lead.status.name == 'CONTACTED' else 
+                                    'success' if lead.status.name == 'QUALIFIED' else 
+                                    'warning' if lead.status.name == 'NEGOTIATION' else 
+                                    'secondary' 
+                                }}">{{ lead.status.value }}</span>
+                            </td>
+                            <td>{{ lead.source or '未知' }}</td>
+                            <td>${{ "{:,.2f}".format(lead.estimated_value) }}</td>
+                            <td>{{ lead.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ lead.assigned_to or '未分配' }}</td>
+                            <td>{{ lead.next_follow_up.strftime('%Y-%m-%d') if lead.next_follow_up else '未设置' }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('crm.lead_detail', lead_id=lead.id) }}" class="btn btn-sm btn-outline-info">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center py-4">
+                                {% if status %}
+                                    <i class="bi bi-search text-secondary mb-3" style="font-size: 2rem;"></i>
+                                    <p class="text-muted mb-0">没有找到符合条件的商机</p>
+                                {% else %}
+                                    <i class="bi bi-lightbulb text-secondary mb-3" style="font-size: 2rem;"></i>
+                                    <p class="text-muted mb-0">暂无商机数据</p>
+                                    <a href="{{ url_for('crm.customers') }}" class="btn btn-primary mt-3">
+                                        <i class="bi bi-plus-circle me-1"></i> 前往客户列表创建商机
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Visualization Section - Pipeline Chart -->
+{% if leads %}
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">商机转化漏斗</h5>
+    </div>
+    <div class="card-body">
+        <div id="pipelineChart" style="height: 300px;"></div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if leads %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Prepare the data for the pipeline chart
+        const leads = {{ leads|length }};
+        
+        // Count leads by status
+        let statusCounts = {
+            'NEW': 0,
+            'CONTACTED': 0,
+            'QUALIFIED': 0,
+            'NEGOTIATION': 0,
+            'WON': 0,
+            'LOST': 0
+        };
+        
+        {% for lead in leads %}
+        statusCounts['{{ lead.status.name }}']++;
+        {% endfor %}
+        
+        // Create the pipeline chart
+        const ctx = document.getElementById('pipelineChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['新建', '已联系', '合格线索', '谈判中', '已成交', '已流失'],
+                datasets: [{
+                    label: '商机数量',
+                    data: [
+                        statusCounts['NEW'], 
+                        statusCounts['CONTACTED'], 
+                        statusCounts['QUALIFIED'], 
+                        statusCounts['NEGOTIATION'], 
+                        statusCounts['WON'], 
+                        statusCounts['LOST']
+                    ],
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(255, 159, 64, 0.7)',
+                        'rgba(40, 167, 69, 0.7)',
+                        'rgba(220, 53, 69, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(255, 159, 64, 1)',
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(220, 53, 69, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0 // Only show integer values
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: '商机状态分布',
+                        color: '#fff',
+                        font: {
+                            size: 16
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}

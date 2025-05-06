@@ -1,0 +1,240 @@
+{% extends "crm/base.html" %}
+
+{% block title %}活动记录 | BTC Mining CRM{% endblock %}
+
+{% block page_title %}客户活动记录{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">活动记录</li>
+{% endblock %}
+
+{% block content %}
+<!-- Activities Timeline -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">最近活动</h5>
+            <span class="badge bg-info">{{ activities|length }} 条记录</span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="list-group list-group-flush" id="activitiesList">
+            {% if activities %}
+                {% for activity in activities %}
+                <div class="list-group-item bg-dark">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <span class="badge bg-{{ 
+                                'success' if activity.type == '创建' else 
+                                'info' if activity.type == '备注' else 
+                                'warning' if activity.type == '电话' else 
+                                'primary' if activity.type == '会议' else 
+                                'secondary' 
+                            }} me-2">{{ activity.type }}</span>
+                            <strong>{{ activity.summary }}</strong>
+                        </div>
+                        <small class="text-muted">{{ activity.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                    
+                    {% if activity.customer %}
+                    <div class="mb-2">
+                        <i class="bi bi-building me-2"></i>
+                        <a href="{{ url_for('crm.customer_detail', customer_id=activity.customer.id) }}" class="text-info">
+                            {{ activity.customer.name }}
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        {% if activity.lead %}
+                        <div>
+                            <i class="bi bi-lightbulb me-1"></i>
+                            <a href="{{ url_for('crm.lead_detail', lead_id=activity.lead.id) }}" class="text-info">
+                                商机: {{ activity.lead.title }}
+                            </a>
+                        </div>
+                        {% endif %}
+                        
+                        {% if activity.deal %}
+                        <div>
+                            <i class="bi bi-currency-dollar me-1"></i>
+                            <a href="{{ url_for('crm.deal_detail', deal_id=activity.deal.id) }}" class="text-info">
+                                交易: {{ activity.deal.title }}
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if activity.details %}
+                    <div class="mt-2 small">
+                        {{ activity.details }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if activity.created_by %}
+                    <div class="mt-2 text-end">
+                        <small class="text-muted">
+                            <i class="bi bi-person me-1"></i>{{ activity.created_by }}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center p-5">
+                    <i class="bi bi-journal-text text-secondary mb-3" style="font-size: 2rem;"></i>
+                    <p class="text-muted mb-0">暂无活动记录</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Activity Analysis -->
+{% if activities %}
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">活动类型分布</h5>
+            </div>
+            <div class="card-body">
+                <div id="activityTypeChart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">活动趋势（过去30天）</h5>
+            </div>
+            <div class="card-body">
+                <div id="activityTrendChart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if activities %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Count activities by type
+        let typeCounts = {
+            '创建': 0,
+            '备注': 0,
+            '电话': 0,
+            '会议': 0,
+            '邮件': 0,
+            '现场拜访': 0,
+            '其他': 0
+        };
+        
+        {% for activity in activities %}
+        // If the activity type is one of our predefined types, increment it, otherwise increment 'Others'
+        if ('{{ activity.type }}' in typeCounts) {
+            typeCounts['{{ activity.type }}']++;
+        } else {
+            typeCounts['其他']++;
+        }
+        {% endfor %}
+        
+        // Create activity type distribution chart (doughnut chart)
+        const typeCtx = document.getElementById('activityTypeChart').getContext('2d');
+        new Chart(typeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(typeCounts).filter(key => typeCounts[key] > 0),
+                datasets: [{
+                    data: Object.values(typeCounts).filter(count => count > 0),
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.7)',    // 创建
+                        'rgba(23, 162, 184, 0.7)',   // 备注
+                        'rgba(255, 193, 7, 0.7)',    // 电话
+                        'rgba(0, 123, 255, 0.7)',    // 会议
+                        'rgba(111, 66, 193, 0.7)',   // 邮件
+                        'rgba(255, 102, 0, 0.7)',    // 现场拜访
+                        'rgba(108, 117, 125, 0.7)'   // 其他
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: '#fff'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Prepare data for activity trend chart (last 30 days)
+        let today = new Date();
+        let dates = [];
+        let activityCounts = [];
+        
+        // Create an array of the last 30 days
+        for (let i = 29; i >= 0; i--) {
+            let date = new Date(today);
+            date.setDate(today.getDate() - i);
+            dates.push(date.toISOString().split('T')[0]);
+            activityCounts.push(0);
+        }
+        
+        // Count activities per day
+        {% for activity in activities %}
+        let activityDate = '{{ activity.created_at.strftime("%Y-%m-%d") }}';
+        let dateIndex = dates.indexOf(activityDate);
+        if (dateIndex !== -1) {
+            activityCounts[dateIndex]++;
+        }
+        {% endfor %}
+        
+        // Format dates for display (MM-DD)
+        let displayDates = dates.map(date => {
+            let parts = date.split('-');
+            return parts[1] + '-' + parts[2];
+        });
+        
+        // Create activity trend chart (line chart)
+        const trendCtx = document.getElementById('activityTrendChart').getContext('2d');
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: displayDates,
+                datasets: [{
+                    label: '活动数量',
+                    data: activityCounts,
+                    fill: false,
+                    borderColor: 'rgba(23, 162, 184, 1)',
+                    tension: 0.1,
+                    pointBackgroundColor: 'rgba(23, 162, 184, 1)',
+                    pointRadius: 3,
+                    pointHoverRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0 // Only show integer values
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}
