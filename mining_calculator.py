@@ -8,18 +8,26 @@ from datetime import datetime
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
-# 导入多币种数据
-from crypto_data import CRYPTOCURRENCIES, MINER_DATA_BY_ALGORITHM, get_real_time_crypto_price, get_real_time_network_data, get_miners_for_crypto
-
-# Constants - 保留原始BTC常量作为向后兼容
-BLOCKS_PER_DAY = 144  # BTC区块时间
+# Constants
+BLOCKS_PER_DAY = 144
 DEFAULT_BTC_PRICE = 80000  # USD
 DEFAULT_NETWORK_DIFFICULTY = 119116256505723  # ~119.12T
 DEFAULT_NETWORK_HASHRATE = 900  # EH/s
 BLOCK_REWARD = 3.125  # BTC
 
-# Fixed miner data including hashrate and power consumption for each model - 保留原来的BTC矿机数据作为向后兼容
-MINER_DATA = MINER_DATA_BY_ALGORITHM.get("SHA-256", {})
+# Fixed miner data including hashrate and power consumption for each model
+MINER_DATA = {
+    "Antminer S21 XP Hyd": {"hashrate": 473, "power_watt": 5676},
+    "Antminer S21 XP": {"hashrate": 270, "power_watt": 3645},
+    "Antminer S21": {"hashrate": 200, "power_watt": 3500},
+    "Antminer S21 Hyd": {"hashrate": 335, "power_watt": 5360},
+    "Antminer S19": {"hashrate": 95, "power_watt": 3250},
+    "Antminer S19 Pro": {"hashrate": 110, "power_watt": 3250},
+    "Antminer S19j Pro": {"hashrate": 100, "power_watt": 3050},
+    "Antminer S19 XP": {"hashrate": 140, "power_watt": 3010},
+    "Antminer S19 Hydro": {"hashrate": 158, "power_watt": 5451},
+    "Antminer S19 Pro+ Hyd": {"hashrate": 198, "power_watt": 5445}
+}
 
 def calculate_roi(investment, yearly_profit, monthly_profit, btc_price, forecast_months=36):
     """
@@ -168,17 +176,17 @@ def get_real_time_btc_hashrate():
 
 def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electricity_cost=0.05, client_electricity_cost=None, 
                              btc_price=None, difficulty=None, block_reward=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0.0, 
-                             host_investment=0.0, client_investment=0.0, maintenance_fee=0.0, crypto_symbol="BTC"):
+                             host_investment=0.0, client_investment=0.0, maintenance_fee=0.0):
     """
-    Calculate cryptocurrency mining profitability
+    Calculate Bitcoin mining profitability using the exact calculation method from the original code
     
     Parameters:
-    - hashrate: Mining hashrate in appropriate unit for the selected cryptocurrency
+    - hashrate: Mining hashrate in TH/s
     - power_consumption: Power consumption in watts
     - electricity_cost: Electricity cost in USD per kWh
     - client_electricity_cost: Electricity cost charged to customers (USD per kWh)
-    - btc_price: Current cryptocurrency price in USD (optional if use_real_time_data=True)
-    - difficulty: Network difficulty (optional if use_real_time_data=True) 
+    - btc_price: Current Bitcoin price in USD (optional if use_real_time_data=True)
+    - difficulty: Network difficulty (optional if use_real_time_data=True)
     - use_real_time_data: Whether to fetch real-time data from APIs
     - miner_model: Optional miner model name to use pre-defined values
     - miner_count: Number of miners (default is 1)
@@ -187,27 +195,16 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
     - host_investment: Total investment made by mining site owner (USD)
     - client_investment: Total investment made by client (USD)
     - maintenance_fee: Monthly maintenance fee in USD (default is 0)
-    - crypto_symbol: Cryptocurrency symbol (BTC, LTC, ETC, etc.)
     
     Returns:
     - Dictionary containing profitability metrics including ROI calculations
     """
     try:
-        # Get cryptocurrency specific data and defaults
-        crypto_data = CRYPTOCURRENCIES.get(crypto_symbol, CRYPTOCURRENCIES["BTC"])
-        crypto_algorithm = crypto_data.get("algorithm", "SHA-256")
-        
-        # Get appropriate miner data for the cryptocurrency algorithm
-        miner_data_for_algorithm = MINER_DATA_BY_ALGORITHM.get(crypto_algorithm, MINER_DATA)
-        
-        # Log selected cryptocurrency
-        logging.info(f"Calculating profitability for {crypto_symbol} using {crypto_algorithm} algorithm")
-        
         # Get values from miner model if provided
-        if miner_model and miner_model in miner_data_for_algorithm:
+        if miner_model and miner_model in MINER_DATA:
             # Get single miner specs
-            single_hashrate = miner_data_for_algorithm[miner_model]["hashrate"]
-            single_power_watt = miner_data_for_algorithm[miner_model]["power_watt"]
+            single_hashrate = MINER_DATA[miner_model]["hashrate"]
+            single_power_watt = MINER_DATA[miner_model]["power_watt"]
             
             # Calculate miner count from site power if provided
             if site_power_mw and site_power_mw > 0:
@@ -219,52 +216,20 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             hashrate = single_hashrate * miner_count
             power_consumption = single_power_watt * miner_count
         
-        # Set cryptocurrency-specific default values
-        default_price = crypto_data.get("default_price", DEFAULT_BTC_PRICE)
-        default_difficulty = crypto_data.get("default_difficulty", DEFAULT_NETWORK_DIFFICULTY / 10**12)  # Convert to appropriate scale
-        default_hashrate = crypto_data.get("default_hashrate", DEFAULT_NETWORK_HASHRATE)
-        default_block_reward = crypto_data.get("default_block_reward", BLOCK_REWARD)
-        blocks_per_day = 86400 / crypto_data.get("block_time", 600)  # Default is BTC block time (600 seconds)
-        
-        # Log cryptocurrency parameters
-        logging.info(f"Using {crypto_symbol} parameters - Block time: {crypto_data.get('block_time', 600)}s, Blocks per day: {blocks_per_day}")
-        
         # Get real-time data if requested
         if use_real_time_data:
-            if crypto_symbol == "BTC":
-                # Use Bitcoin-specific functions
-                real_time_crypto_price = get_real_time_btc_price()
-                difficulty_raw = get_real_time_difficulty()
-                real_time_network_hashrate = get_real_time_btc_hashrate() or default_hashrate
-                current_block_reward = get_real_time_block_reward()
-            else:
-                # Use generic functions for other cryptocurrencies
-                real_time_crypto_price = get_real_time_crypto_price(crypto_symbol)
-                
-                # Get network data (difficulty, hashrate, block reward)
-                network_data = get_real_time_network_data(crypto_symbol)
-                if network_data:
-                    difficulty_raw = network_data.get('difficulty', default_difficulty)
-                    if crypto_symbol == "BTC":
-                        difficulty_raw = difficulty_raw * 10**12  # Convert from T to raw value if BTC
-                    real_time_network_hashrate = network_data.get('hashrate', default_hashrate)
-                    current_block_reward = network_data.get('block_reward', default_block_reward)
-                else:
-                    # Use defaults if network data is not available
-                    difficulty_raw = default_difficulty
-                    if crypto_symbol == "BTC":
-                        difficulty_raw = difficulty_raw * 10**12  # Convert from T to raw value if BTC
-                    real_time_network_hashrate = default_hashrate
-                    current_block_reward = default_block_reward
+            real_time_btc_price = get_real_time_btc_price()
+            difficulty_raw = get_real_time_difficulty()
+            real_time_btc_hashrate = get_real_time_btc_hashrate() or DEFAULT_NETWORK_HASHRATE  # EH/s
+            current_block_reward = get_real_time_block_reward()
         else:
-            # Use provided values or defaults
-            real_time_crypto_price = btc_price or default_price
-            difficulty_raw = difficulty or (default_difficulty * 10**12 if crypto_symbol == "BTC" else default_difficulty)
-            real_time_network_hashrate = default_hashrate
-            current_block_reward = default_block_reward
+            real_time_btc_price = btc_price or DEFAULT_BTC_PRICE
+            difficulty_raw = difficulty or DEFAULT_NETWORK_DIFFICULTY
+            real_time_btc_hashrate = DEFAULT_NETWORK_HASHRATE  # EH/s
+            current_block_reward = BLOCK_REWARD
         
         # Use provided values if given
-        crypto_price = btc_price or real_time_crypto_price
+        btc_price = btc_price or real_time_btc_price
         difficulty = difficulty_raw
         block_reward_to_use = block_reward or current_block_reward
         
@@ -282,124 +247,72 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         # 添加日志，记录限电率和矿机数量计算结果
         logging.info(f"Curtailment计算: 限电率={curtailment}%, 系数={curtailment_factor}, 总矿机={miner_count}, 运行={running_miner_count}, 停机={shutdown_miner_count}")
         
-        # === 加密货币产出计算 (Cryptocurrency Output Calculation) ===
-        # 获取加密货币特定的区块时间和每日区块数
-        block_time = crypto_data.get("block_time", 600)  # 区块时间，默认为BTC的600秒
-        daily_blocks = 86400 / block_time  # 每日区块数
-        
+        # === BTC 产出计算 (BTC Output Calculation) ===
         # Method 1: Network Hashrate Based (算法1：基于网络实际哈希率)
         # 使用API返回的实际网络哈希率进行计算，但增加合理性检查
         difficulty_factor = 2 ** 32
         
-        # 按币种获取网络哈希率的转换单位
-        hashrate_unit = crypto_data.get("unit", "TH/s")
-        
         # 计算基于难度的参考哈希率，用于合理性检查
-        block_time_to_use = crypto_data.get("block_time", 600)
-        network_hashrate_from_difficulty = (difficulty_raw * difficulty_factor) / block_time_to_use  # H/s
+        network_hashrate_from_difficulty = (difficulty_raw * difficulty_factor) / 600  # H/s
+        network_TH_from_difficulty = network_hashrate_from_difficulty / 1e12  # 从H/s转换为TH/s
         
-        # 转换网络哈希率到适当单位
-        unit_multiplier = 1
-        if hashrate_unit == "TH/s":
-            network_standard_from_difficulty = network_hashrate_from_difficulty / 1e12
-            if crypto_symbol == "BTC":
-                api_network_standard = real_time_network_hashrate * 1000000  # EH/s → TH/s
-            else:
-                api_network_standard = real_time_network_hashrate
-            unit_multiplier = 1
-        elif hashrate_unit == "GH/s":
-            network_standard_from_difficulty = network_hashrate_from_difficulty / 1e9
-            api_network_standard = real_time_network_hashrate * 1000  # TH/s → GH/s
-            unit_multiplier = 1e-3
-        elif hashrate_unit == "MH/s":
-            network_standard_from_difficulty = network_hashrate_from_difficulty / 1e6
-            api_network_standard = real_time_network_hashrate * 1000000  # TH/s → MH/s
-            unit_multiplier = 1e-6
-        elif hashrate_unit == "kSol/s":
-            network_standard_from_difficulty = network_hashrate_from_difficulty / 1e3
-            api_network_standard = real_time_network_hashrate * 1000  # MSol/s → kSol/s
-            unit_multiplier = 1e-3
-        else:
-            # 默认转换为TH/s
-            network_standard_from_difficulty = network_hashrate_from_difficulty / 1e12
-            api_network_standard = real_time_network_hashrate
-            unit_multiplier = 1
+        # 将API返回的哈希率从EH/s转换为TH/s
+        api_network_TH = real_time_btc_hashrate * 1000000  # 从EH/s转换为TH/s
         
         # 比较API哈希率和难度推导哈希率的差异
-        hashrate_ratio = api_network_standard / max(1, network_standard_from_difficulty)
+        hashrate_ratio = api_network_TH / max(1, network_TH_from_difficulty)
         
         # 如果API哈希率与难度推导哈希率相差过大(>50%)，使用加权平均值
         if hashrate_ratio > 1.5 or hashrate_ratio < 0.67:
-            logging.info(f"API哈希率与难度推导哈希率差异过大 (比率: {hashrate_ratio:.2f})，使用加权平均值")
-            network_standard = (api_network_standard * 0.4 + network_standard_from_difficulty * 0.6)  # 偏向难度推导值，因为更稳定
+            print(f"API哈希率与难度推导哈希率差异过大 (比率: {hashrate_ratio:.2f})，使用加权平均值")
+            network_TH = (api_network_TH * 0.4 + network_TH_from_difficulty * 0.6)  # 偏向难度推导值，因为更稳定
         else:
             # 差异在合理范围内，直接使用API返回的哈希率
-            network_standard = api_network_standard
+            network_TH = api_network_TH
             
-        # 确保最小值，不同币种的最小值不同
-        min_hashrate = 1
-        if crypto_symbol == "BTC":
-            min_hashrate = 1000  # TH/s
-        elif crypto_symbol in ["LTC", "DOGE"]:
-            min_hashrate = 100  # GH/s
-        elif crypto_symbol in ["ETC", "RVN"]:
-            min_hashrate = 10  # MH/s
-        elif crypto_symbol == "ZEC":
-            min_hashrate = 10  # kSol/s
-            
-        network_standard = max(min_hashrate, network_standard)
+        # 确保最小值
+        network_TH = max(1000, network_TH)  # 确保最小值为1000 TH/s
         
         # 全网日产出 = 区块奖励 * 每日区块数
-        network_daily_output = block_reward_to_use * daily_blocks
-        
-        # 每单位算力每日产出 = 全网日产出 / 全网算力
-        coin_per_unit = network_daily_output / network_standard
-        
-        # 矿场每日产出 = 矿场算力 * 每单位算力产出
-        site_daily_output = site_total_hashrate * coin_per_unit
-        site_monthly_output = site_daily_output * 30.5
+        network_daily_btc = block_reward_to_use * BLOCKS_PER_DAY
+        # 每TH每日产出 = 全网日产出 / 全网TH
+        btc_per_th = network_daily_btc / network_TH
+        # 矿场每日产出 = 矿场TH * 每TH产出
+        site_daily_btc_output = site_total_hashrate * btc_per_th
+        site_monthly_btc_output = site_daily_btc_output * 30.5
         
         # 打印推导的网络哈希率与API返回的对比，便于调试
-        logging.info(f"API Network Hashrate: {api_network_standard:.2f} {hashrate_unit} vs Derived from Difficulty: {network_standard_from_difficulty:.2f} {hashrate_unit}")
+        print(f"API Network Hashrate: {real_time_btc_hashrate:.2f} EH/s vs Derived from Difficulty: {network_TH_from_difficulty/1e6:.2f} EH/s")
         
-        # 计算单个矿机每日产出
+        # 计算单个矿机每日BTC产出
         single_miner_hashrate = None
-        if miner_model and miner_model in miner_data_for_algorithm:
-            single_miner_hashrate = miner_data_for_algorithm[miner_model]["hashrate"]
-        daily_coin_per_miner = coin_per_unit * (single_miner_hashrate if single_miner_hashrate else (hashrate / max(1, miner_count)))
+        if miner_model and miner_model in MINER_DATA:
+            single_miner_hashrate = MINER_DATA[miner_model]["hashrate"]
+        daily_btc_per_miner = btc_per_th * (single_miner_hashrate if single_miner_hashrate else (hashrate / max(1, miner_count)))
         
         # Method 2: Difficulty Based (算法2：基于难度)
-        # 矿场H/s = 矿场单位算力 * 单位转换
-        site_hashrate_Hs = site_total_hashrate
-        if hashrate_unit == "TH/s":
-            site_hashrate_Hs = site_total_hashrate * 1e12
-        elif hashrate_unit == "GH/s":
-            site_hashrate_Hs = site_total_hashrate * 1e9
-        elif hashrate_unit == "MH/s":
-            site_hashrate_Hs = site_total_hashrate * 1e6
-        elif hashrate_unit == "kSol/s":
-            site_hashrate_Hs = site_total_hashrate * 1e3
-            
+        # 矿场H/s = 矿场TH/s * 1万亿
+        site_total_hashrate_Hs = site_total_hashrate * 1e12  # TH/s → H/s
         difficulty_factor = 2 ** 32
-        site_daily_output_difficulty = (site_hashrate_Hs * block_reward_to_use * 86400) / (difficulty_raw * difficulty_factor)
-        site_monthly_output_difficulty = site_daily_output_difficulty * 30.5
+        site_daily_btc_output_difficulty = (site_total_hashrate_Hs * block_reward_to_use * 86400) / (difficulty_raw * difficulty_factor)
+        site_monthly_btc_output_difficulty = site_daily_btc_output_difficulty * 30.5
         
         # 打印两种算法的结果，方便调试
-        logging.info(f"Algorithm 1 (Network Based) - Daily {crypto_symbol}: {site_daily_output:.8f}")
-        logging.info(f"Algorithm 2 (Difficulty Based) - Daily {crypto_symbol}: {site_daily_output_difficulty:.8f}")
+        print(f"Algorithm 1 (Network Based) - Daily BTC: {site_daily_btc_output:.8f}")
+        print(f"Algorithm 2 (Difficulty Based) - Daily BTC: {site_daily_btc_output_difficulty:.8f}")
         
         # 使用难度方法的结果作为最终结果（更准确）
         # 如果两种方法差异过大(>100%)，使用算法2
-        algo1_algo2_ratio = site_daily_output / site_daily_output_difficulty if site_daily_output_difficulty > 0 else float('inf')
+        algo1_algo2_ratio = site_daily_btc_output / site_daily_btc_output_difficulty if site_daily_btc_output_difficulty > 0 else float('inf')
         
         if algo1_algo2_ratio > 2 or algo1_algo2_ratio < 0.5:
-            logging.info(f"警告: 算法1和算法2结果相差过大 (比率: {algo1_algo2_ratio:.2f})，使用算法2(基于难度)的结果")
-            daily_coin = site_daily_output_difficulty
-            monthly_coin = site_monthly_output_difficulty
+            print(f"警告: 算法1和算法2结果相差过大 (比率: {algo1_algo2_ratio:.2f})，使用算法2(基于难度)的结果")
+            daily_btc = site_daily_btc_output_difficulty
+            monthly_btc = site_monthly_btc_output_difficulty
         else:
             # 差异在允许范围内，两种方法平均值
-            daily_coin = (site_daily_output + site_daily_output_difficulty) / 2
-            monthly_coin = (site_monthly_output + site_monthly_output_difficulty) / 2
+            daily_btc = (site_daily_btc_output + site_daily_btc_output_difficulty) / 2
+            monthly_btc = (site_monthly_btc_output + site_monthly_btc_output_difficulty) / 2
         
         # === 成本计算 (Cost Calculation) ===
         # Calculate using the operating time after curtailment
@@ -408,9 +321,9 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         client_electricity_expense = monthly_power_consumption * (client_electricity_cost or electricity_cost)
         
         # === 收入 & 利润计算 (Revenue & Profit Calculation) ===
-        monthly_revenue = monthly_coin * crypto_price
+        monthly_revenue = monthly_btc * btc_price
         
-        # 矿场主的加密货币挖矿收益，减去电费和维护费
+        # 矿场主的比特币挖矿收益，减去电费和维护费
         monthly_mining_profit = monthly_revenue - electricity_expense - maintenance_fee
         
         # 矿场主的电费差价收益（如果提供了客户电费且高于矿场电费）
@@ -429,7 +342,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         client_monthly_profit = monthly_revenue - client_electricity_expense - maintenance_fee
         
         # === 最优电价 (Optimal Electricity Rate) 计算 ===
-        optimal_electricity_rate = (monthly_coin * crypto_price) / monthly_power_consumption if monthly_power_consumption > 0 else 0
+        optimal_electricity_rate = (monthly_btc * btc_price) / monthly_power_consumption if monthly_power_consumption > 0 else 0
         
         # === 最优削减比例 (Optimal Curtailment) 计算 ===
         if electricity_cost > optimal_electricity_rate and optimal_electricity_rate > 0:
@@ -471,23 +384,21 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         logging.info(f"ROI计算输入数据 - 客户月利润: ${client_monthly_profit}, 年利润: ${client_yearly_profit}")
         
         if host_investment > 0:
-            host_roi_data = calculate_roi(host_investment, yearly_profit, monthly_profit, crypto_price)
+            host_roi_data = calculate_roi(host_investment, yearly_profit, monthly_profit, btc_price)
             logging.info(f"矿场主ROI计算结果 - 年化回报率: {host_roi_data['roi_percent_annual']}%, 回收期: {host_roi_data['payback_period_months']}月")
             
         if client_investment > 0:
-            client_roi_data = calculate_roi(client_investment, client_yearly_profit, client_monthly_profit, crypto_price)
+            client_roi_data = calculate_roi(client_investment, client_yearly_profit, client_monthly_profit, btc_price)
             logging.info(f"客户ROI计算结果 - 年化回报率: {client_roi_data['roi_percent_annual']}%, 回收期: {client_roi_data['payback_period_months']}月")
             
         # Return results in a consistent format with our previous implementation
         return {
             'success': True,
             'timestamp': datetime.now().isoformat(),
-            'crypto_symbol': crypto_symbol,
-            'hashrate_unit': hashrate_unit,
             'network_data': {
-                'crypto_price': crypto_price,
+                'btc_price': btc_price,
                 'network_difficulty': difficulty / 10**12,  # Convert to more readable format (T)
-                'network_hashrate': real_time_network_hashrate,  # EH/s or appropriate unit
+                'network_hashrate': real_time_btc_hashrate,  # EH/s
                 'block_reward': block_reward_to_use
             },
             'inputs': {
@@ -508,18 +419,18 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
                 'monthly': maintenance_fee,
                 'yearly': yearly_maintenance_fee
             },
-            'coin_mined': {
-                'daily': daily_coin,
-                'monthly': monthly_coin,
-                'yearly': monthly_coin * 12,
-                'per_unit_daily': coin_per_unit,
+            'btc_mined': {
+                'daily': daily_btc,
+                'monthly': monthly_btc,
+                'yearly': monthly_btc * 12,
+                'per_th_daily': btc_per_th,
                 'method1': {
-                    'daily': site_daily_output,
-                    'monthly': site_monthly_output
+                    'daily': site_daily_btc_output,
+                    'monthly': site_monthly_btc_output
                 },
                 'method2': {
-                    'daily': site_daily_output_difficulty,
-                    'monthly': site_monthly_output_difficulty
+                    'daily': site_daily_btc_output_difficulty,
+                    'monthly': site_monthly_btc_output_difficulty
                 }
             },
             'revenue': {
@@ -549,8 +460,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             },
             'break_even': {
                 'electricity_cost': optimal_electricity_rate,
-                'crypto_price': (electricity_expense / monthly_coin) if monthly_coin > 0 else 0,
-                'btc_price': (electricity_expense / monthly_coin) if monthly_coin > 0 else 0  # 为了向后兼容
+                'btc_price': (electricity_expense / monthly_btc) if monthly_btc > 0 else 0
             },
             'optimization': {
                 'optimal_curtailment': optimal_curtailment,
@@ -568,17 +478,16 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         logging.error(f"Arguments: hashrate={hashrate}, power_consumption={power_consumption}, electricity_cost={electricity_cost}, miner_model={miner_model}, miner_count={miner_count}")
         raise
 
-def generate_profit_chart_data(miner_model, electricity_costs, crypto_prices, miner_count=1, client_electricity_cost=None, crypto_symbol="BTC"):
+def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner_count=1, client_electricity_cost=None):
     """
     Generate data for the profit chart
     
     Parameters:
     - miner_model: The miner model to use
     - electricity_costs: List of electricity costs to analyze
-    - crypto_prices: List of cryptocurrency prices to analyze
+    - btc_prices: List of BTC prices to analyze
     - miner_count: Number of miners
     - client_electricity_cost: Optional client electricity cost
-    - crypto_symbol: Cryptocurrency symbol (default: "BTC")
     
     Returns:
     - Dictionary with data for the chart
@@ -604,36 +513,14 @@ def generate_profit_chart_data(miner_model, electricity_costs, crypto_prices, mi
                 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20
             ]
             
-        if not isinstance(crypto_prices, list) or len(crypto_prices) == 0:
-            logging.warning(f"Invalid cryptocurrency prices: {crypto_prices}, using defaults")
-            # 2025年的加密货币价格范围，基于当前市场情况调整
+        if not isinstance(btc_prices, list) or len(btc_prices) == 0:
+            logging.warning(f"Invalid BTC prices: {btc_prices}, using defaults")
+            # 2025年的BTC价格范围更高，基于当前市场情况调整
             # 增加更多价格点以形成更平滑的热力图
-            if crypto_symbol == "BTC":
-                crypto_prices = [
-                    20000, 30000, 40000, 50000, 60000, 70000, 80000, 
-                    90000, 100000, 110000, 120000, 130000, 140000, 150000
-                ]
-            elif crypto_symbol in ["LTC", "ETC"]:
-                crypto_prices = [
-                    50, 75, 100, 125, 150, 175, 200, 
-                    225, 250, 275, 300, 325, 350, 375
-                ]
-            elif crypto_symbol in ["DOGE", "RVN"]:
-                crypto_prices = [
-                    0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 
-                    0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70
-                ]
-            elif crypto_symbol == "ZEC":
-                crypto_prices = [
-                    100, 150, 200, 250, 300, 350, 400, 
-                    450, 500, 550, 600, 650, 700, 750
-                ]
-            else:
-                # Default for any other cryptocurrency
-                crypto_prices = [
-                    10, 25, 50, 75, 100, 150, 200, 
-                    250, 300, 350, 400, 450, 500, 550
-                ]
+            btc_prices = [
+                20000, 30000, 40000, 50000, 60000, 70000, 80000, 
+                90000, 100000, 110000, 120000, 130000, 140000, 150000
+            ]
         
         # Validate miner count
         if not isinstance(miner_count, int) or miner_count <= 0:
@@ -675,8 +562,8 @@ def generate_profit_chart_data(miner_model, electricity_costs, crypto_prices, mi
         # Generate profit matrix
         profit_data = []
         
-        # Calculate profit for each combination of cryptocurrency price and electricity cost
-        for price in crypto_prices:
+        # Calculate profit for each combination of BTC price and electricity cost
+        for price in btc_prices:
             for cost in electricity_costs:
                 # 计算这个BTC价格和电费成本组合下的利润
                 # 特别注意：必须将当前循环的电费成本'cost'传递给函数
@@ -717,8 +604,8 @@ def generate_profit_chart_data(miner_model, electricity_costs, crypto_prices, mi
                         monthly_profit = customer_monthly_revenue - customer_monthly_cost
                         
                         # 记录日志帮助调试（仅在第一个点记录）
-                        if price == crypto_prices[0] and cost == electricity_costs[0]:
-                            print(f"客户模式热力图 - {crypto_symbol}价格: ${price}, 电费: ${used_electricity_cost}/kWh, 月利润: ${monthly_profit}, {crypto_symbol}产出: {monthly_btc}")
+                        if price == btc_prices[0] and cost == electricity_costs[0]:
+                            print(f"客户模式热力图 - BTC价格: ${price}, 电费: ${used_electricity_cost}/kWh, 月利润: ${monthly_profit}, BTC产出: {monthly_btc}")
                     else:
                         # === 矿场主模式 ===
                         # 在矿场主模式下，有两种利润模式：
@@ -742,17 +629,16 @@ def generate_profit_chart_data(miner_model, electricity_costs, crypto_prices, mi
                         monthly_profit = mining_profit
                         
                         # 记录日志帮助调试（仅在第一个点记录）
-                        if price == crypto_prices[0] and cost == electricity_costs[0]:
-                            print(f"矿场主模式热力图 - {crypto_symbol}价格: ${price}, 矿场电费: ${cost}/kWh, 加密货币收入: ${btc_revenue}, 电费成本: ${mining_cost}, 维护: ${maintenance_monthly}, 利润: ${monthly_profit}")
+                        if price == btc_prices[0] and cost == electricity_costs[0]:
+                            print(f"矿场主模式热力图 - BTC价格: ${price}, 矿场电费: ${cost}/kWh, 比特币收入: ${btc_revenue}, 电费成本: ${mining_cost}, 维护: ${maintenance_monthly}, 利润: ${monthly_profit}")
                 except Exception as e:
                     # 捕获计算过程中的任何错误
-                    logging.error(f"热力图数据点计算错误 - {crypto_symbol}价格: ${price}, 电费: ${cost}/kWh, 错误: {str(e)}")
+                    logging.error(f"热力图数据点计算错误 - BTC价格: ${price}, 电费: ${cost}/kWh, 错误: {str(e)}")
                     # 使用默认利润以便继续生成图表
                     monthly_profit = 0
                 
                 profit_data.append({
-                    'crypto_price': price,
-                    'crypto_symbol': crypto_symbol,
+                    'btc_price': price,
                     'electricity_cost': cost,
                     'monthly_profit': monthly_profit
                 })
@@ -760,28 +646,21 @@ def generate_profit_chart_data(miner_model, electricity_costs, crypto_prices, mi
         # Calculate optimal electricity rate at current BTC price
         optimal_electricity_rate = 0
         try:
-            # 使用calculate_mining_profitability函数计算盈亏平衡点
             base_result = calculate_mining_profitability(
                 hashrate=hashrate,
                 power_consumption=power_consumption,
                 electricity_cost=0.05,  # Dummy value, not used for this calculation
-                btc_price=current_btc_price,  # 仍然使用btc_price参数，因为函数内部使用这个参数名
+                btc_price=current_btc_price,
                 difficulty=fixed_network_stats['difficulty'],
                 block_reward=fixed_network_stats['block_reward'],
                 use_real_time_data=False,
                 miner_model=miner_model,
                 miner_count=miner_count,
-                maintenance_fee=5000,  # 一致添加维护费
-                crypto_symbol=crypto_symbol  # 添加加密货币符号
+                maintenance_fee=5000  # 一致添加维护费
             )
             
-            # 检查break_even是否存在以及包含必要字段
             if 'break_even' in base_result and 'electricity_cost' in base_result['break_even']:
                 optimal_electricity_rate = base_result['break_even']['electricity_cost']
-                
-                # 确保break_even中有crypto_price字段
-                if 'btc_price' in base_result['break_even'] and 'crypto_price' not in base_result['break_even']:
-                    base_result['break_even']['crypto_price'] = base_result['break_even']['btc_price']
         except Exception as e:
             logging.error(f"Error calculating optimal electricity rate: {str(e)}")
             optimal_electricity_rate = 0
@@ -790,9 +669,7 @@ def generate_profit_chart_data(miner_model, electricity_costs, crypto_prices, mi
             'success': True,
             'profit_data': profit_data,
             'current_network_data': {
-                'crypto_symbol': crypto_symbol,
-                'crypto_price': current_btc_price,
-                'btc_price': current_btc_price,  # 保留向后兼容
+                'btc_price': current_btc_price,
                 'difficulty': current_difficulty / 10**12,  # Convert to more readable format (T)
                 'block_reward': fixed_network_stats['block_reward']
             },

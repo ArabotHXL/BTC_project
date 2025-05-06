@@ -2,24 +2,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log("页面已加载，初始化应用...");
     
-    // 加密货币单位映射表
-    var CRYPTOCURRENCIES_UNITS = {
-        "BTC": "TH/s",
-        "LTC": "GH/s",
-        "ETC": "MH/s",
-        "DOGE": "GH/s",
-        "RVN": "MH/s",
-        "ZEC": "kSol/s"
-    };
-    
     // 元素引用 (Element references)
-    var cryptoPriceEl = document.getElementById('crypto-price');  // 更新为多币种价格元素ID
+    var btcPriceEl = document.getElementById('btc-price');
     var networkDifficultyEl = document.getElementById('network-difficulty');
     var networkHashrateEl = document.getElementById('network-hashrate');
     var blockRewardEl = document.getElementById('block-reward');
-    var cryptoSymbolEl = document.getElementById('crypto-symbol');
     
-    var cryptoCurrencySelect = document.getElementById('crypto-currency');
     var minerModelSelect = document.getElementById('miner-model');
     var sitePowerMwInput = document.getElementById('site-power-mw');
     var minerCountInput = document.getElementById('miner-count');
@@ -58,20 +46,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // 加载网络数据 (Load network data)
         fetchNetworkStats();
         
-        // 加载加密货币列表，然后加载矿机列表
-        if (cryptoCurrencySelect) {
-            // 先加载加密货币列表，完成后再加载矿机列表
-            loadCryptocurrencies(function() {
-                // 加密货币列表加载完成后，加载对应的矿机列表
-                fetchMiners();
-            });
-            
-            // 添加加密货币选择事件监听器
-            cryptoCurrencySelect.addEventListener('change', updateCryptocurrency);
-        } else {
-            // 如果没有加密货币选择框，直接加载BTC矿机
-            fetchMiners();
-        }
+        // 加载矿机型号列表 (Load miner models)
+        fetchMiners();
         
         // 延迟计算以确保元素已加载完成
         console.log("在init函数中等待1秒后开始计算总算力和总功耗");
@@ -174,52 +150,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // 更新加密货币选择后的UI和数据
-    function updateCryptocurrency() {
-        var selectedCrypto = cryptoCurrencySelect.value;
-        console.log("更新加密货币: " + selectedCrypto);
-        
-        // 更新加密货币符号显示
-        if (cryptoSymbolEl) {
-            cryptoSymbolEl.textContent = selectedCrypto;
-        }
-        
-        // 加载所选加密货币的网络数据
-        fetchNetworkStats();
-        
-        // 加载所选加密货币的矿机列表
-        fetchMiners(selectedCrypto);
-        
-        // 更新算力单位显示
-        updateCryptoInfo(selectedCrypto);
-    }
-    
     // 更新矿机规格 (Update miner specifications)
     function updateMinerSpecs() {
         var selectedMiner = minerModelSelect.value;
         
         if (selectedMiner) {
-            // 获取当前选择的加密货币
-            var currentCrypto = 'BTC';
-            if (cryptoCurrencySelect) {
-                currentCrypto = cryptoCurrencySelect.value;
-            }
-            
             // 从localStorage获取矿机数据 (Get miner data from localStorage)
-            var cacheKey = 'miners_' + currentCrypto;
-            var defaultCacheKey = 'miners'; // 向后兼容
-            
-            var miners = JSON.parse(localStorage.getItem(cacheKey) || localStorage.getItem(defaultCacheKey) || '[]');
+            var miners = JSON.parse(localStorage.getItem('miners') || '[]');
             var miner = miners.find(function(m) { return m.name === selectedMiner; });
             
             if (miner) {
                 hashrateInput.value = miner.hashrate;
                 powerConsumptionInput.value = miner.power_watt;
-                
-                // 如果矿机有单位信息，同时更新
-                if (miner.unit && hashrateUnitSelect) {
-                    hashrateUnitSelect.value = miner.unit;
-                }
                 
                 // 禁用手动输入 (Disable manual input)
                 hashrateInput.disabled = true;
@@ -231,13 +173,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // 计算总算力和总功耗
                 calculateTotalHashrateAndPower();
-                
-                // 更新算力单位显示
-                var totalHashrateLabel = document.querySelector('label[for="total-hashrate-display"]');
-                if (totalHashrateLabel) {
-                    var unit = miner.unit || CRYPTOCURRENCIES_UNITS[currentCrypto] || 'TH/s';
-                    totalHashrateLabel.textContent = '总算力 / Total Hashrate (' + unit + ')';
-                }
             }
         } else {
             // 启用手动输入 (Enable manual input)
@@ -446,13 +381,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // 收集表单数据 (Collect form data)
         var formData = new FormData(calculatorForm);
         
-        // 添加加密货币信息
-        if (cryptoCurrencySelect) {
-            formData.append('crypto_symbol', cryptoCurrencySelect.value);
-        } else {
-            formData.append('crypto_symbol', 'BTC'); // 默认使用BTC
-        }
-        
         // 手动添加总算力和总功耗数据到表单
         var minerCount = parseInt(minerCountInput.value) || 0;
         var hashrate = parseFloat(hashrateInput.value) || 0;
@@ -469,12 +397,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (formData.has('total_power')) {
                 formData.delete('total_power');
             }
-            
-            // 添加算力单位信息
-            var currentCrypto = cryptoCurrencySelect ? cryptoCurrencySelect.value : 'BTC';
-            var hashUnit = hashrateUnitSelect ? hashrateUnitSelect.value : 
-                          (CRYPTOCURRENCIES_UNITS[currentCrypto] || 'TH/s');
-            formData.append('hashrate_unit', hashUnit);
             
             // 添加计算出的值
             formData.append('total_hashrate', totalHashrate.toFixed(0));
@@ -536,20 +458,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 获取网络状态 (Fetch network status)
     function fetchNetworkStats() {
-        // 获取当前选择的加密货币
-        var currentCrypto = 'BTC';
-        if (cryptoCurrencySelect) {
-            currentCrypto = cryptoCurrencySelect.value;
-        }
-        
         // 显示加载状态 (Show loading state)
-        var networkStatsElements = [cryptoPriceEl, networkDifficultyEl, networkHashrateEl, blockRewardEl];
+        var networkStatsElements = [btcPriceEl, networkDifficultyEl, networkHashrateEl, blockRewardEl];
         networkStatsElements.forEach(function(el) {
             if (el) el.innerHTML = '<small class="text-muted">Loading...</small>';
         });
         
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/network_stats?crypto=' + currentCrypto, true);
+        xhr.open('GET', '/network_stats', true);
         
         // 设置15秒超时
         xhr.timeout = 15000;
@@ -566,46 +482,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if (data && data.success) {
                         // 更新UI (Update UI)
-                        if (cryptoPriceEl) cryptoPriceEl.textContent = formatCurrency(data.price, 2);
+                        if (btcPriceEl) btcPriceEl.textContent = formatCurrency(data.price, 2);
+                        if (networkDifficultyEl) networkDifficultyEl.textContent = formatNumber(data.difficulty) + 'T';
+                        if (networkHashrateEl) networkHashrateEl.textContent = formatNumber(data.hashrate) + ' EH/s';
+                        if (blockRewardEl) blockRewardEl.textContent = formatNumber(data.block_reward) + ' BTC';
                         
-                        // 从响应中获取单位或使用默认单位
-                        var difficultyUnit = data.unit ? data.unit.replace('/s', '') : getAppropriateDifficultyUnit(currentCrypto);
-                        var hashrateUnit = data.unit || getAppropriateHashrateUnit(currentCrypto);
-                        
-                        if (networkDifficultyEl) networkDifficultyEl.textContent = formatNumber(data.difficulty) + difficultyUnit;
-                        if (networkHashrateEl) networkHashrateEl.textContent = formatNumber(data.hashrate) + ' ' + hashrateUnit;
-                        if (blockRewardEl) blockRewardEl.textContent = formatNumber(data.block_reward);
-                        
-                        // 更新加密货币符号
-                        if (cryptoSymbolEl) cryptoSymbolEl.textContent = currentCrypto;
-                        
-                        // 更新算法信息
-                        var algorithmInfo = document.getElementById('miner-algorithm-info');
-                        if (algorithmInfo && data.algorithm) {
-                            algorithmInfo.textContent = '算法: ' + data.algorithm + ' | ';
-                        }
-                        
-                        // 显示币种中文名称（如果是中文界面）
-                        var currentLang = document.querySelector('meta[name="language"]')?.content || 'zh';
-                        var cryptoNameEl = document.getElementById('crypto-name');
-                        if (cryptoNameEl) {
-                            cryptoNameEl.textContent = currentLang === 'zh' ? data.crypto_chinese_name : data.crypto_name;
-                        }
-                        
-                        // 更新价格输入框 (Update price input)
+                        // 更新BTC价格输入框 (Update BTC price input)
                         if (useRealTimeCheckbox && useRealTimeCheckbox.checked && btcPriceInput) {
                             btcPriceInput.value = data.price.toFixed(2);
                             btcPriceInput.disabled = true;
                         }
                         
                         // 保存到localStorage作为备用 (Save to localStorage as backup)
-                        localStorage.setItem('last_' + currentCrypto + '_price', data.price);
-                        localStorage.setItem('last_' + currentCrypto + '_difficulty', data.difficulty);
-                        localStorage.setItem('last_' + currentCrypto + '_hashrate', data.hashrate);
-                        localStorage.setItem('last_' + currentCrypto + '_block_reward', data.block_reward);
-                        localStorage.setItem('last_' + currentCrypto + '_timestamp', new Date().getTime());
+                        localStorage.setItem('last_btc_price', data.price);
+                        localStorage.setItem('last_network_difficulty', data.difficulty);
+                        localStorage.setItem('last_network_hashrate', data.hashrate);
+                        localStorage.setItem('last_block_reward', data.block_reward);
                     } else {
-                        useFallbackNetworkStats(currentCrypto);
+                        useFallbackNetworkStats();
                         console.error('获取网络状态时服务器返回错误:', data && data.error ? data.error : null);
                     }
                 } else {
@@ -613,245 +507,63 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } catch (error) {
                 console.error('获取网络状态失败:', error);
-                useFallbackNetworkStats(currentCrypto);
+                useFallbackNetworkStats();
             }
         };
         
         xhr.onerror = function() {
             console.error('网络状态请求失败');
-            useFallbackNetworkStats(currentCrypto);
+            useFallbackNetworkStats();
         };
         
         xhr.ontimeout = function() {
             console.error('网络状态请求超时');
-            useFallbackNetworkStats(currentCrypto);
+            useFallbackNetworkStats();
         };
         
         xhr.send();
-    }
-    
-    // 获取适合显示的难度单位
-    function getAppropriateDifficultyUnit(crypto) {
-        switch(crypto) {
-            case 'BTC': return 'T';
-            case 'LTC': return 'M';
-            case 'ETC': return 'T';
-            case 'DOGE': return 'M';
-            case 'RVN': return 'K';
-            case 'ZEC': return 'M';
-            default: return 'T';
-        }
-    }
-    
-    // 获取适合显示的算力单位
-    function getAppropriateHashrateUnit(crypto) {
-        switch(crypto) {
-            case 'BTC': return 'EH/s';
-            case 'LTC': return 'TH/s';
-            case 'ETC': return 'TH/s';
-            case 'DOGE': return 'TH/s';
-            case 'RVN': return 'TH/s';
-            case 'ZEC': return 'MSol/s';
-            default: return 'TH/s';
-        }
     }
     
     // 使用备用网络状态 (Use fallback network status)
-    function useFallbackNetworkStats(cryptoSymbol) {
-        if (!cryptoSymbol) {
-            cryptoSymbol = 'BTC';
-            if (cryptoCurrencySelect) {
-                cryptoSymbol = cryptoCurrencySelect.value;
+    function useFallbackNetworkStats() {
+        var lastBtcPrice = localStorage.getItem('last_btc_price');
+        var lastDifficulty = localStorage.getItem('last_network_difficulty');
+        var lastHashrate = localStorage.getItem('last_network_hashrate');
+        var lastBlockReward = localStorage.getItem('last_block_reward');
+        
+        if (lastBtcPrice && btcPriceEl) {
+            btcPriceEl.textContent = formatCurrency(parseFloat(lastBtcPrice), 2);
+            if (useRealTimeCheckbox && useRealTimeCheckbox.checked && btcPriceInput) {
+                btcPriceInput.value = parseFloat(lastBtcPrice).toFixed(2);
+                btcPriceInput.disabled = true;
             }
+        } else if (btcPriceEl) {
+            btcPriceEl.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
         }
         
-        var lastPrice = localStorage.getItem('last_' + cryptoSymbol + '_price');
-        var lastDifficulty = localStorage.getItem('last_' + cryptoSymbol + '_difficulty');
-        var lastHashrate = localStorage.getItem('last_' + cryptoSymbol + '_hashrate');
-        var lastBlockReward = localStorage.getItem('last_' + cryptoSymbol + '_block_reward');
-        var lastTimestamp = localStorage.getItem('last_' + cryptoSymbol + '_timestamp');
-        
-        // 如果有缓存数据且不超过24小时
-        var isDataValid = lastPrice && lastDifficulty && lastHashrate && lastBlockReward;
-        var isDataFresh = false;
-        
-        if (lastTimestamp) {
-            var now = new Date().getTime();
-            var then = parseInt(lastTimestamp);
-            var diffHours = (now - then) / (1000 * 60 * 60);
-            isDataFresh = diffHours < 24;
+        if (lastDifficulty && networkDifficultyEl) {
+            networkDifficultyEl.textContent = formatNumber(parseFloat(lastDifficulty)) + 'T';
+        } else if (networkDifficultyEl) {
+            networkDifficultyEl.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
         }
         
-        if (isDataValid && isDataFresh) {
-            var difficultyUnit = getAppropriateDifficultyUnit(cryptoSymbol);
-            var hashrateUnit = getAppropriateHashrateUnit(cryptoSymbol);
-            
-            if (cryptoPriceEl) {
-                cryptoPriceEl.textContent = formatCurrency(parseFloat(lastPrice), 2);
-                if (useRealTimeCheckbox && useRealTimeCheckbox.checked && btcPriceInput) {
-                    btcPriceInput.value = parseFloat(lastPrice).toFixed(2);
-                    btcPriceInput.disabled = true;
-                }
-            }
-            
-            if (networkDifficultyEl) {
-                networkDifficultyEl.textContent = formatNumber(parseFloat(lastDifficulty)) + difficultyUnit;
-            }
-            
-            if (networkHashrateEl) {
-                networkHashrateEl.textContent = formatNumber(parseFloat(lastHashrate)) + ' ' + hashrateUnit;
-            }
-            
-            if (blockRewardEl) {
-                blockRewardEl.textContent = formatNumber(parseFloat(lastBlockReward));
-            }
-            
-            if (cryptoSymbolEl) {
-                cryptoSymbolEl.textContent = cryptoSymbol;
-            }
-        } else {
-            // 如果没有缓存数据或数据太旧，尝试使用旧的BTC数据
-            if (cryptoSymbol === 'BTC') {
-                var legacyBtcPrice = localStorage.getItem('last_btc_price');
-                var legacyDifficulty = localStorage.getItem('last_network_difficulty');
-                var legacyHashrate = localStorage.getItem('last_network_hashrate');
-                var legacyBlockReward = localStorage.getItem('last_block_reward');
-                
-                if (legacyBtcPrice && legacyDifficulty && legacyHashrate && legacyBlockReward) {
-                    if (cryptoPriceEl) {
-                        cryptoPriceEl.textContent = formatCurrency(parseFloat(legacyBtcPrice), 2);
-                    }
-                    if (networkDifficultyEl) {
-                        networkDifficultyEl.textContent = formatNumber(parseFloat(legacyDifficulty)) + 'T';
-                    }
-                    if (networkHashrateEl) {
-                        networkHashrateEl.textContent = formatNumber(parseFloat(legacyHashrate)) + ' EH/s';
-                    }
-                    if (blockRewardEl) {
-                        blockRewardEl.textContent = formatNumber(parseFloat(legacyBlockReward));
-                    }
-                    if (cryptoSymbolEl) {
-                        cryptoSymbolEl.textContent = 'BTC';
-                    }
-                    return;
-                }
-            }
-            
-            // 如果没有可用的数据，显示错误信息
-            [cryptoPriceEl, networkDifficultyEl, networkHashrateEl, blockRewardEl].forEach(function(el) {
-                if (el) el.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
-            });
-            
-            if (cryptoSymbolEl) {
-                cryptoSymbolEl.textContent = cryptoSymbol;
-            }
+        if (lastHashrate && networkHashrateEl) {
+            networkHashrateEl.textContent = formatNumber(parseFloat(lastHashrate)) + ' EH/s';
+        } else if (networkHashrateEl) {
+            networkHashrateEl.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
+        }
+        
+        if (lastBlockReward && blockRewardEl) {
+            blockRewardEl.textContent = formatNumber(parseFloat(lastBlockReward), 4) + ' BTC';
+        } else if (blockRewardEl) {
+            blockRewardEl.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
         }
     }
     
-    // 加载加密货币列表
-    function loadCryptocurrencies(callback) {
-        var xhr = new XMLHttpRequest();
-        // 首先获取支持的加密货币列表
-        xhr.open('GET', '/miners?crypto=BTC', true);
-        
-        // 设置10秒超时
-        xhr.timeout = 10000;
-        
-        xhr.onload = function() {
-            try {
-                if (xhr.status === 200) {
-                    // 确保响应不为空
-                    if (!xhr.responseText || xhr.responseText.trim() === '') {
-                        throw new Error('服务器返回空响应');
-                    }
-                    
-                    var data = JSON.parse(xhr.responseText);
-                    
-                    if (data && data.success && data.supported_cryptos) {
-                        var cryptoSelect = document.getElementById('crypto-currency');
-                        if (!cryptoSelect) {
-                            console.error('找不到加密货币选择元素');
-                            return;
-                        }
-                        
-                        // 清空选项
-                        cryptoSelect.innerHTML = '';
-                        
-                        // 添加加密货币选项
-                        data.supported_cryptos.forEach(function(crypto) {
-                            var option = document.createElement('option');
-                            option.value = crypto.symbol;
-                            
-                            // 根据当前语言设置显示名称
-                            var currentLang = document.querySelector('meta[name="language"]')?.content || 'zh';
-                            var displayName = currentLang === 'zh' ? 
-                                crypto.chinese_name + ' (' + crypto.symbol + ')' : 
-                                crypto.name + ' (' + crypto.symbol + ')';
-                                
-                            option.textContent = displayName;
-                            cryptoSelect.appendChild(option);
-                        });
-                        
-                        console.log('加密货币列表加载成功:', data.supported_cryptos.length);
-                        
-                        // 如果有回调函数，则执行
-                        if (typeof callback === 'function') {
-                            callback();
-                        }
-                    } else {
-                        console.error('服务器返回的数据格式不正确:', data);
-                    }
-                } else {
-                    console.error('获取加密货币列表失败, 状态码:', xhr.status);
-                }
-            } catch (error) {
-                console.error('处理加密货币列表响应时出错:', error);
-            }
-        };
-        
-        xhr.onerror = function() {
-            console.error('请求加密货币列表时网络错误');
-        };
-        
-        xhr.ontimeout = function() {
-            console.error('请求加密货币列表超时');
-        };
-        
-        xhr.send();
-    }
-    
-    // 更新当前选择的加密货币
-    function updateCryptocurrency() {
-        var cryptoSelect = document.getElementById('crypto-currency');
-        var selectedCrypto = cryptoSelect.value;
-        console.log('切换到加密货币:', selectedCrypto);
-        
-        // 重新加载该币种的矿机列表
-        fetchMiners(selectedCrypto);
-        
-        // 更新币种相关信息显示
-        updateCryptoInfo(selectedCrypto);
-    }
-    
-    // 更新加密货币信息显示
-    function updateCryptoInfo(cryptoSymbol) {
-        // 这里可以添加更多关于所选加密货币的信息显示
-        var algorithmInfo = document.getElementById('miner-algorithm-info');
-        if (algorithmInfo) {
-            // 算法信息将在加载矿机列表时更新
-            algorithmInfo.textContent = '加载中...';
-        }
-    }
-
     // 获取矿机列表 (Fetch miner list)
-    function fetchMiners(cryptoSymbol) {
-        if (!cryptoSymbol) {
-            var cryptoSelect = document.getElementById('crypto-currency');
-            cryptoSymbol = cryptoSelect ? cryptoSelect.value : 'BTC';
-        }
-        
+    function fetchMiners() {
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/miners?crypto=' + encodeURIComponent(cryptoSymbol), true);
+        xhr.open('GET', '/miners', true);
         
         // 设置10秒超时
         xhr.timeout = 10000;
@@ -868,44 +580,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if (data && data.success && data.miners) {
                         // 保存到localStorage (Save to localStorage)
-                        localStorage.setItem('miners_' + cryptoSymbol, JSON.stringify(data.miners));
+                        localStorage.setItem('miners', JSON.stringify(data.miners));
                         
                         // 清空选项 (Clear options)
                         minerModelSelect.innerHTML = '<option value="">选择矿机型号 (Select a miner model)</option>';
-                        
-                        // 获取当前币种的算力单位
-                        var hashUnit = data.miners.length > 0 ? (data.miners[0].unit || 'TH/s') : 'TH/s';
                         
                         // 添加矿机选项 (Add miner options)
                         data.miners.forEach(function(miner) {
                             var option = document.createElement('option');
                             option.value = miner.name;
-                            option.textContent = miner.name + ' (' + miner.hashrate + ' ' + (miner.unit || hashUnit) + ', ' + miner.power_watt + 'W)';
-                            option.setAttribute('data-hashrate', miner.hashrate);
-                            option.setAttribute('data-power', miner.power_watt);
-                            option.setAttribute('data-unit', miner.unit || hashUnit);
+                            option.textContent = miner.name + ' (' + miner.hashrate + ' TH/s, ' + miner.power_watt + 'W)';
                             minerModelSelect.appendChild(option);
                         });
                         
                         console.log('矿机列表加载成功:', data.miners.length);
-                        
-                        // 更新算法信息显示
-                        var algorithmInfo = document.getElementById('miner-algorithm-info');
-                        if (algorithmInfo && data.algorithm) {
-                            algorithmInfo.textContent = '算法: ' + data.algorithm + ' | ';
-                        }
-                        
-                        // 更新算力单位显示
-                        var hashrateUnitSpan = document.getElementById('miner-hashrate-unit');
-                        if (hashrateUnitSpan) {
-                            hashrateUnitSpan.textContent = '单位: ' + hashUnit;
-                            
-                            // 也更新总算力显示的单位
-                            var totalHashrateLabel = document.querySelector('label[for="total-hashrate-display"]');
-                            if (totalHashrateLabel) {
-                                totalHashrateLabel.textContent = '总算力 / Total Hashrate (' + hashUnit + ')';
-                            }
-                        }
                         
                         // 如果已选择了矿机型号，重新计算总算力和总功耗
                         if (minerModelSelect.value) {
@@ -915,7 +603,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     } else {
                         console.error('获取矿机数据失败:', data);
-                        useCachedMiners(cryptoSymbol);
+                        useCachedMiners();
                     }
                 } else {
                     throw new Error('服务器返回状态码: ' + xhr.status);
@@ -940,16 +628,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 使用本地缓存的矿机列表
-    function useCachedMiners(cryptoSymbol) {
-        if (!cryptoSymbol) {
-            var cryptoSelect = document.getElementById('crypto-currency');
-            cryptoSymbol = cryptoSelect ? cryptoSelect.value : 'BTC';
-        }
-        
-        var cacheKey = 'miners_' + cryptoSymbol;
-        var defaultCacheKey = 'miners'; // 向后兼容，使用旧的缓存键
-        
-        var cachedMiners = localStorage.getItem(cacheKey) || localStorage.getItem(defaultCacheKey);
+    function useCachedMiners() {
+        var cachedMiners = localStorage.getItem('miners');
         
         if (cachedMiners) {
             try {
@@ -958,21 +638,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 清空选项
                 minerModelSelect.innerHTML = '<option value="">选择矿机型号 (Select a miner model)</option>';
                 
-                // 获取默认算力单位
-                var hashUnit = 'TH/s';
-                if (cryptoSymbol in CRYPTOCURRENCIES_UNITS) {
-                    hashUnit = CRYPTOCURRENCIES_UNITS[cryptoSymbol];
-                }
-                
                 // 添加矿机选项
                 miners.forEach(function(miner) {
                     var option = document.createElement('option');
                     option.value = miner.name;
-                    var unit = miner.unit || hashUnit;
-                    option.textContent = miner.name + ' (' + miner.hashrate + ' ' + unit + ', ' + miner.power_watt + 'W)';
-                    option.setAttribute('data-hashrate', miner.hashrate);
-                    option.setAttribute('data-power', miner.power_watt);
-                    option.setAttribute('data-unit', unit);
+                    option.textContent = miner.name + ' (' + miner.hashrate + ' TH/s, ' + miner.power_watt + 'W)';
                     minerModelSelect.appendChild(option);
                 });
                 
@@ -996,15 +666,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // 显示计算结果 (Display calculation results)
     function displayResults(data) {
         // 检查数据有效性 - 更加灵活，适应不同角色的权限
-        if (!data) {
+        if (!data || !data.btc_mined) {
             showError('服务器返回的数据无效或不完整。(Invalid or incomplete data received from server.)');
-            console.error('数据结构无效:', data);
+            console.error('数据结构无效 - 缺少btc_mined字段:', data);
             return;
         }
         
         try {
-            // 防止JSON被截断导致错误
-            console.log('收到计算结果数据');
+            console.log('收到计算结果数据:', data);
             
             // 检查是否有optimization数据
             if (data.optimization) {
@@ -1060,47 +729,33 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 更新BTC产出显示
     function updateBtcOutputDisplay(data) {
-        try {
-            // 检查是否有加密货币产出数据 - 兼容btc_mined和coin_mined两种格式
-            var coinData = data.coin_mined || data.btc_mined || {};
-            if (!coinData || Object.keys(coinData).length === 0) {
-                console.error("没有找到加密货币产出数据");
-                return;
-            }
-
-            // 显示界面元素
-            var btcMethod1CardEl = document.getElementById('btc-method1-daily-card');
-            var btcMethod2CardEl = document.getElementById('btc-method2-daily-card');
-            var dailyBtcTotalEl = document.getElementById('daily-btc-total');
-            
-            // 获取币种符号
-            var cryptoSymbol = data.crypto_symbol || (data.inputs && data.inputs.crypto_symbol ? data.inputs.crypto_symbol : 'BTC');
-            
-            // 日产加密货币总量
-            if (dailyBtcTotalEl && coinData.daily !== undefined) {
-                dailyBtcTotalEl.textContent = formatNumber(coinData.daily, 8);
-            }
-            
-            // 算法1: 按算力占比
-            if (btcMethod1CardEl && coinData.method1 && coinData.method1.daily !== undefined) {
-                var method1Value = formatNumber(coinData.method1.daily, 8);
-                btcMethod1CardEl.textContent = method1Value;
-                // 月产出提示
-                var monthlyOutput1 = coinData.method1.daily * 30.5;
-                btcMethod1CardEl.title = '每月约: ' + formatNumber(monthlyOutput1, 8) + ' ' + cryptoSymbol;
-            }
-            
-            // 算法2: 按难度公式
-            if (btcMethod2CardEl && coinData.method2 && coinData.method2.daily !== undefined) {
-                var method2Value = formatNumber(coinData.method2.daily, 8);
-                btcMethod2CardEl.textContent = method2Value;
-                btcMethod2CardEl.className = "text-info";
-                // 月产出提示
-                var monthlyOutput2 = coinData.method2.daily * 30.5;
-                btcMethod2CardEl.title = '每月约: ' + formatNumber(monthlyOutput2, 8) + ' ' + cryptoSymbol;
-            }
-        } catch (e) {
-            console.error("更新加密货币产出显示时出错:", e);
+        // 算法1和算法2的BTC产出
+        var btcMethod1CardEl = document.getElementById('btc-method1-daily-card');
+        var btcMethod2CardEl = document.getElementById('btc-method2-daily-card');
+        var dailyBtcTotalEl = document.getElementById('daily-btc-total');
+        
+        // 日产BTC总量
+        if (dailyBtcTotalEl && data.btc_mined) {
+            dailyBtcTotalEl.textContent = formatNumber(data.btc_mined.daily, 8);
+        }
+        
+        // 算法1: 按算力占比
+        if (btcMethod1CardEl && data.btc_mined && data.btc_mined.method1) {
+            var method1Value = formatNumber(data.btc_mined.method1.daily, 8);
+            btcMethod1CardEl.textContent = method1Value;
+            // 月产出提示
+            var monthlyOutput1 = data.btc_mined.method1.daily * 30.5;
+            btcMethod1CardEl.title = '每月约: ' + formatNumber(monthlyOutput1, 8) + ' BTC';
+        }
+        
+        // 算法2: 按难度公式
+        if (btcMethod2CardEl && data.btc_mined && data.btc_mined.method2) {
+            var method2Value = formatNumber(data.btc_mined.method2.daily, 8);
+            btcMethod2CardEl.textContent = method2Value;
+            btcMethod2CardEl.className = "text-info";
+            // 月产出提示
+            var monthlyOutput2 = data.btc_mined.method2.daily * 30.5;
+            btcMethod2CardEl.title = '每月约: ' + formatNumber(monthlyOutput2, 8) + ' BTC';
         }
     }
     
@@ -1137,12 +792,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (siteTotalHashrateEl && data.inputs) {
             siteTotalHashrateEl.textContent = formatNumber(data.inputs.hashrate, 2) + ' TH/s';
         }
-        if (btcPerThDailyEl) {
-            // 兼容两种格式
-            var coinData = data.coin_mined || data.btc_mined || {};
-            if (coinData.per_th_daily !== undefined) {
-                btcPerThDailyEl.textContent = formatNumber(coinData.per_th_daily, 8);
-            }
+        if (btcPerThDailyEl && data.btc_mined) {
+            btcPerThDailyEl.textContent = formatNumber(data.btc_mined.per_th_daily, 8);
         }
         if (optimalElectricityRateEl && data.break_even) {
             optimalElectricityRateEl.textContent = '$' + formatNumber(data.break_even.electricity_cost, 4) + '/kWh';
@@ -1325,52 +976,32 @@ document.addEventListener('DOMContentLoaded', function() {
         var clientRunningMinersEl = document.getElementById('client-running-miners');
         var clientShutdownMinersEl = document.getElementById('client-shutdown-miners');
         
-        // 客户加密货币产出和收入
-        // 兼容两种数据格式
-        var coinData = data.coin_mined || data.btc_mined || {};
-        var monthlyOutput = coinData.monthly || 0;
-        var monthlyRevenue = 0;
+        // 客户BTC产出和收入
+        var monthlyBtcOutput = data.btc_mined && data.btc_mined.monthly ? data.btc_mined.monthly : 0;
+        var monthlyBtcRevenue = 0;
         
-        // 获取币种名称和价格
-        var cryptoSymbol = data.crypto_symbol || (data.inputs && data.inputs.crypto_symbol ? data.inputs.crypto_symbol : 'BTC');
-        var cryptoPrice = 0;
-        
-        if (data.network_data) {
-            // 兼容两种价格命名
-            cryptoPrice = data.network_data.crypto_price || data.network_data.btc_price || 0;
-            monthlyRevenue = monthlyOutput * cryptoPrice;
+        if (data.network_data && data.network_data.btc_price) {
+            monthlyBtcRevenue = monthlyBtcOutput * data.network_data.btc_price;
         }
         
-        console.log('月度'+cryptoSymbol+'产出:', monthlyOutput, cryptoSymbol+'价格:', 
-                    cryptoPrice, 
-                    '计算得到月度收入:', monthlyRevenue);
+        console.log('月度BTC产出:', monthlyBtcOutput, 'BTC价格:', 
+                    data.network_data ? data.network_data.btc_price : 'N/A', 
+                    '计算得到月度收入:', monthlyBtcRevenue);
         
-        // 更新客户加密货币产出
+        // 更新客户BTC产出
         if (clientMonthlyBtcEl) {
-            clientMonthlyBtcEl.textContent = formatNumber(monthlyOutput, 8);
-            
-            // 更新标签文本
-            var labelEl = document.querySelector('label[for="client-monthly-btc"]');
-            if (labelEl) {
-                labelEl.textContent = '月度' + cryptoSymbol + '产出 / Monthly ' + cryptoSymbol + ' Output:';
-            }
+            clientMonthlyBtcEl.textContent = formatNumber(monthlyBtcOutput, 8);
         }
         
-        // 更新客户加密货币收入
+        // 更新客户BTC收入
         if (clientMonthlyBtcRevenueEl) {
-            clientMonthlyBtcRevenueEl.textContent = formatCurrency(monthlyRevenue);
-            
-            // 更新标签文本
-            var revenueLabelEl = document.querySelector('label[for="client-monthly-btc-revenue"]');
-            if (revenueLabelEl) {
-                revenueLabelEl.textContent = '月度' + cryptoSymbol + '收入 / Monthly ' + cryptoSymbol + ' Revenue:';
-            }
+            clientMonthlyBtcRevenueEl.textContent = formatCurrency(monthlyBtcRevenue);
         }
         
-        // 更新客户总收入 - 这是矿机挖出的加密货币产生的全部收入
+        // 更新客户总收入 - 这是矿机挖出的BTC产生的全部收入
         if (clientTotalIncomeEl) {
-            clientTotalIncomeEl.textContent = formatCurrency(monthlyRevenue);
-            console.log('已更新客户总收入:', monthlyRevenue);
+            clientTotalIncomeEl.textContent = formatCurrency(monthlyBtcRevenue);
+            console.log('已更新客户总收入:', monthlyBtcRevenue);
         } else {
             console.error('无法找到客户总收入元素ID:client-total-income');
         }
@@ -1414,25 +1045,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (clientBreakEvenBtcEl && data.break_even) {
-            // 支持新旧两种格式的价格字段
-            var price = 0;
-            if (data.break_even.hasOwnProperty('crypto_price')) {
-                price = data.break_even.crypto_price;
-            } else if (data.break_even.hasOwnProperty('btc_price')) {
-                price = data.break_even.btc_price;
-            }
-            
-            // 获取当前加密货币符号
-            var cryptoSymbol = data.crypto_symbol || (data.inputs && data.inputs.crypto_symbol ? data.inputs.crypto_symbol : 'BTC');
-            
-            // 更新文本和标签
-            clientBreakEvenBtcEl.textContent = formatCurrency(price, 2);
-            
-            // 找到并更新标签元素
-            var labelEl = document.querySelector('label[for="client-breakeven-btc"]');
-            if (labelEl) {
-                labelEl.textContent = cryptoSymbol + '盈亏平衡价格 / ' + cryptoSymbol + ' Break-even Price:';
-            }
+            clientBreakEvenBtcEl.textContent = formatCurrency(data.break_even.btc_price, 2);
         }
         
         // 更新客户矿机数量信息
@@ -1476,18 +1089,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // 显示加载状态 (Show loading state)
         chartContainer.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div><p class="mt-3">正在生成热力图...<br>Generating chart...</p></div>';
         
-        // 获取当前选择的加密货币
-        var cryptoSymbol = 'BTC';
-        var cryptoSelect = document.getElementById('crypto-currency');
-        if (cryptoSelect) {
-            cryptoSymbol = cryptoSelect.value;
-        }
-        
         // 准备请求参数 (Prepare request parameters)
         var params = 'miner_model=' + encodeURIComponent(minerModel) + 
                      '&miner_count=' + encodeURIComponent(minerCount) + 
-                     '&client_electricity_cost=' + encodeURIComponent(clientElectricityCost) + 
-                     '&crypto_currency=' + encodeURIComponent(cryptoSymbol);
+                     '&client_electricity_cost=' + encodeURIComponent(clientElectricityCost);
         
         // 发送请求 (Send request)
         var xhr = new XMLHttpRequest();
@@ -1506,31 +1111,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         // 创建散点图数据 (Create scatter data)
                         var scatterData = [];
-                        var cryptoSymbol = 'BTC'; // 默认币种
-                        
                         chartData.profit_data.forEach(function(item) {
-                            // 支持新旧两种格式的价格字段
-                            var priceField = null;
-                            if (item.hasOwnProperty('crypto_price')) {
-                                priceField = 'crypto_price';
-                            } else if (item.hasOwnProperty('btc_price')) {
-                                priceField = 'btc_price';
-                            }
-                            
-                            // 获取币种符号
-                            if (item.crypto_symbol) {
-                                cryptoSymbol = item.crypto_symbol;
-                            }
-                            
                             if (item && typeof item.electricity_cost === 'number' && 
-                                typeof item[priceField] === 'number' && 
+                                typeof item.btc_price === 'number' && 
                                 typeof item.monthly_profit === 'number') {
                                 
                                 scatterData.push({
                                     x: item.electricity_cost,
-                                    y: item[priceField],
-                                    profit: item.monthly_profit,
-                                    symbol: item.crypto_symbol || 'BTC'
+                                    y: item.btc_price,
+                                    profit: item.monthly_profit
                                 });
                             }
                         });
@@ -1575,7 +1164,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     y: {
                                         title: {
                                             display: true,
-                                            text: cryptoSymbol + ' 价格 ($) / ' + cryptoSymbol + ' Price ($)'
+                                            text: '比特币价格 ($)'
                                         }
                                     }
                                 },
@@ -1584,22 +1173,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                         callbacks: {
                                             label: function(context) {
                                                 var profit = context.raw.profit;
-                                                var symbol = context.raw.symbol || cryptoSymbol;
-                                                var price = context.raw.y;
-                                                
-                                                return [
-                                                    symbol + ' 价格: $' + price.toFixed(2),
-                                                    '电价: $' + context.raw.x.toFixed(4) + '/kWh',
-                                                    '月利润: $' + profit.toFixed(2)
-                                                ];
+                                                return '月利润: $' + profit.toFixed(2);
                                             }
                                         }
                                     },
                                     title: {
                                         display: true,
                                         text: (parseFloat(clientElectricityCost) > 0) ? 
-                                            cryptoSymbol + ' 客户收益热力图 / ' + cryptoSymbol + ' Customer Profit Chart' : 
-                                            cryptoSymbol + ' 矿场主收益热力图 / ' + cryptoSymbol + ' Host Profit Chart'
+                                            '客户收益热力图 / Customer Profit Chart' : 
+                                            '矿场主收益热力图 / Host Profit Chart'
                                     }
                                 }
                             }
@@ -1678,18 +1260,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         return formatter.format(value);
-    }
-    
-    // 更新加密货币相关信息显示
-    function updateCryptoInfo(cryptoSymbol) {
-        // 更新界面上显示的币种标签
-        var cryptoLabels = document.querySelectorAll('.crypto-symbol-label');
-        cryptoLabels.forEach(function(label) {
-            label.textContent = cryptoSymbol;
-        });
-        
-        // 更新网络数据请求
-        fetchNetworkStats();
     }
     
     // 调用初始化函数 (Call init function)

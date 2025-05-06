@@ -419,9 +419,6 @@ def calculate():
         # 初始化错误收集列表
         input_errors = []
         
-        # 获取加密货币符号，默认为BTC (Get cryptocurrency symbol, default is BTC)
-        crypto_symbol = request.form.get('crypto_symbol', 'BTC')
-        
         # Get values from the form submission with detailed error handling
         try:
             hashrate = float(request.form.get('hashrate', 0))
@@ -458,14 +455,11 @@ def calculate():
             client_electricity_cost = 0
             
         try:
-            # 获取加密货币价格 - 保留对btc_price的支持，但添加crypto_price作为更通用的参数
-            crypto_price = float(request.form.get('crypto_price', request.form.get('btc_price', 0)))
-            btc_price = crypto_price  # 为向后兼容
+            btc_price = float(request.form.get('btc_price', 0))
         except ValueError as e:
-            error_msg = f"无效的{crypto_symbol}价格值: {request.form.get('crypto_price', request.form.get('btc_price', 0))}"
+            error_msg = f"无效的BTC价格值: {request.form.get('btc_price')}"
             logging.error(f"{error_msg} - {str(e)}")
             input_errors.append(error_msg)
-            crypto_price = 0
             btc_price = 0
             
         use_real_time = request.form.get('use_real_time') == 'on'
@@ -579,7 +573,7 @@ def calculate():
                 power_consumption=total_power if total_power > 0 else power_consumption,  # 使用计算出的总功耗而不是单位功耗
                 electricity_cost=electricity_cost,
                 client_electricity_cost=client_electricity_cost,
-                btc_price=crypto_price if not use_real_time else None,
+                btc_price=btc_price if not use_real_time else None,
                 use_real_time_data=use_real_time,
                 miner_model=miner_model,
                 miner_count=1,  # 设为1因为我们已经使用总算力和总功耗
@@ -587,57 +581,39 @@ def calculate():
                 curtailment=curtailment,
                 host_investment=host_investment,
                 client_investment=client_investment,
-                maintenance_fee=maintenance_fee,
-                crypto_symbol=crypto_symbol  # 传递加密货币符号
+                maintenance_fee=maintenance_fee
             )
         except Exception as calc_error:
             # 如果计算过程中出错，使用基本估算
             logging.error(f"计算过程中出错，使用基本估算: {calc_error}")
             
             # 创建一个基本结果对象
-            # 导入多币种数据
-            from crypto_data import CRYPTOCURRENCIES, MINER_DATA_BY_ALGORITHM
-            
-            # 获取加密货币信息
-            crypto_info = CRYPTOCURRENCIES.get(crypto_symbol, CRYPTOCURRENCIES['BTC'])
-            crypto_name = crypto_info.get('name', 'Bitcoin')
-            crypto_algorithm = crypto_info.get('algorithm', 'SHA-256')
-            
-            # 获取相应算法的矿机数据
-            crypto_miners = MINER_DATA_BY_ALGORITHM.get(crypto_algorithm, MINER_DATA)
-            
-            if miner_model and miner_model in crypto_miners:
+            if miner_model and miner_model in MINER_DATA:
                 # 获取基本参数
-                miner_specs = crypto_miners[miner_model]
+                miner_specs = MINER_DATA[miner_model]
                 total_hashrate = miner_specs["hashrate"] * miner_count
                 total_power = miner_specs["power_watt"] * miner_count
                 
-                # 根据货币进行不同估算
-                daily_coin_output = total_hashrate * crypto_info.get('daily_output_per_unit', 0.00000200)  # 估算每单位算力每天产出
-                monthly_coin_output = daily_coin_output * 30.5
+                # 使用简单估算
+                daily_btc = total_hashrate * 0.00000200  # 估算每TH每天产出
+                monthly_btc = daily_btc * 30.5
                 monthly_power_kwh = total_power * 24 * 30.5 / 1000
                 
                 # 估算收入和成本
-                default_price = crypto_info.get('default_price', 80000)
-                price_to_use = crypto_price if not use_real_time else default_price
-                monthly_revenue = monthly_coin_output * price_to_use
+                price_to_use = btc_price if not use_real_time else 80000
+                monthly_revenue = monthly_btc * price_to_use
                 monthly_cost = monthly_power_kwh * electricity_cost
                 
                 # 确保维护费被考虑进利润计算
                 monthly_profit = monthly_revenue - monthly_cost - maintenance_fee
                 
-                # 创建结果对象，使用动态的加密货币信息
-                coin_key = crypto_symbol.lower() + '_mined'  # 例如: 'btc_mined', 'ltc_mined' 等
-                
                 result = {
                     'success': True,
-                    'crypto_symbol': crypto_symbol,
-                    'crypto_name': crypto_name,
-                    'estimation_note': f'由于实时API数据获取失败，使用{crypto_name}估算值',
-                    f'{coin_key}': {
-                        'daily': daily_coin_output,
-                        'monthly': monthly_coin_output,
-                        'yearly': monthly_coin_output * 12
+                    'estimation_note': '由于实时API数据获取失败，使用估算值',
+                    'btc_mined': {
+                        'daily': daily_btc,
+                        'monthly': monthly_btc,
+                        'yearly': monthly_btc * 12
                     },
                     'inputs': {
                         'hashrate': total_hashrate,
@@ -646,10 +622,10 @@ def calculate():
                         'miner_count': miner_count
                     },
                     'network_data': {
-                        'price': price_to_use,
-                        'network_difficulty': crypto_info.get('default_difficulty', 119.12),  # T
-                        'network_hashrate': crypto_info.get('default_hashrate', 700),  # EH/s
-                        'block_reward': crypto_info.get('default_block_reward', 3.125)
+                        'btc_price': price_to_use,
+                        'network_difficulty': 119.12,  # T
+                        'network_hashrate': 700,  # EH/s
+                        'block_reward': 3.125
                     },
                     'profit': {
                         'daily': monthly_profit / 30.5,
@@ -680,28 +656,19 @@ def calculate():
         if user_role not in ['owner', 'admin', 'mining_site']:
             logging.info("用户没有矿场主权限，过滤敏感数据")
             
-            # 获取加密货币信息
-            crypto_symbol = result.get('crypto_symbol', 'BTC')
-            coin_key = crypto_symbol.lower() + '_mined'  # 例如: 'btc_mined', 'ltc_mined' 等
-            
-            # 为向后兼容，确保老的btc_mined键也存在
-            mined_key = 'btc_mined'
-            if coin_key in result:
-                mined_key = coin_key
-                
             # 保留必要数据，移除敏感数据
             filtered_result = {
                 'success': True,  # 确保添加成功标志
                 'timestamp': result.get('timestamp', datetime.now().isoformat()),
-                'crypto_symbol': crypto_symbol,  # 加密货币符号
-                'crypto_name': result.get('crypto_name', 'Bitcoin'),  # 加密货币名称
-                mined_key: result.get(mined_key, result.get('btc_mined', {})),  # 使用正确的挖矿产出键
+                'btc_mined': result.get('btc_mined', {}),
                 'client_electricity_cost': result.get('client_electricity_cost', {}),
                 'client_profit': result.get('client_profit', {}),
                 'inputs': result.get('inputs', {}),
                 'network_data': result.get('network_data', {}),
                 'revenue': result.get('revenue', {}),  # 添加收入信息
-                'break_even': result.get('break_even', {}) if 'break_even' in result else {},
+                'break_even': {
+                    'btc_price': result.get('break_even', {}).get('btc_price', 0)
+                },
                 'optimization': result.get('optimization', {})  # 添加矿机运行状态数据
             }
             
@@ -734,51 +701,12 @@ def calculate():
             'error': 'An error occurred during calculation. Please try again.'
         }), 500
 
-@app.route('/crypto_price', methods=['GET'])
-@login_required
-def get_crypto_price():
-    """Get the current cryptocurrency price from API"""
-    try:
-        # 获取请求的加密货币类型，默认为BTC
-        crypto_symbol = request.args.get('crypto', 'BTC')
-        
-        # 导入多币种数据功能
-        from crypto_data import get_real_time_crypto_price, CRYPTOCURRENCIES
-        
-        # 获取实时价格
-        price = get_real_time_crypto_price(crypto_symbol)
-        
-        # 如果获取失败，使用默认价格
-        if price is None:
-            crypto_info = CRYPTOCURRENCIES.get(crypto_symbol, CRYPTOCURRENCIES['BTC'])
-            price = crypto_info.get('default_price', 80000)
-            
-        return jsonify({
-            'success': True,
-            'crypto_symbol': crypto_symbol,
-            'price': price
-        })
-    except Exception as e:
-        logging.error(f"Error fetching {request.args.get('crypto', 'BTC')} price: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': f"Could not fetch {request.args.get('crypto', 'BTC')} price."
-        }), 500
-        
-# 为了向后兼容，保留btc_price路由
 @app.route('/btc_price', methods=['GET'])
 @login_required
 def get_btc_price():
-    """Get the current Bitcoin price from API (legacy route)"""
+    """Get the current Bitcoin price from API"""
     try:
-        # 直接使用通用加密货币价格获取函数，但固定为BTC
-        from crypto_data import get_real_time_crypto_price
-        current_btc_price = get_real_time_crypto_price('BTC')
-        
-        # 如果获取失败，使用默认值
-        if current_btc_price is None:
-            current_btc_price = 80000
-            
+        current_btc_price = get_real_time_btc_price()
         return jsonify({
             'success': True,
             'price': current_btc_price
@@ -793,128 +721,72 @@ def get_btc_price():
 @app.route('/network_stats', methods=['GET'])
 @login_required
 def get_network_stats():
-    """Get current cryptocurrency network statistics"""
+    """Get current Bitcoin network statistics"""
     try:
-        # 获取请求的加密货币类型，默认为BTC
-        crypto_symbol = request.args.get('crypto', 'BTC')
-        
-        # 导入多币种数据
-        from crypto_data import CRYPTOCURRENCIES, get_real_time_crypto_price, get_real_time_network_data
-        
-        # 获取加密货币信息
-        crypto_info = CRYPTOCURRENCIES.get(crypto_symbol, CRYPTOCURRENCIES['BTC'])
-        
-        # 获取默认值
-        default_price = crypto_info.get('default_price', 80000)
-        default_difficulty = crypto_info.get('default_difficulty', 119.12)
-        default_hashrate = crypto_info.get('default_hashrate', 700)
-        default_block_reward = crypto_info.get('default_block_reward', 3.125)
-        
         # 使用定义的默认值
+        
         # 获取实时数据，如果有任何错误使用默认值
         try:
-            price = get_real_time_crypto_price(crypto_symbol)
-            if price is None:
-                price = default_price
-            logging.info(f"成功获取{crypto_symbol}价格: ${price}")
+            price = get_real_time_btc_price()
+            logging.info(f"成功获取BTC价格: ${price}")
         except Exception as e:
-            logging.error(f"获取{crypto_symbol}价格失败: {e}")
-            price = default_price
+            logging.error(f"获取BTC价格失败: {e}")
+            price = 80000  # 默认价格
             
-        # 尝试获取网络数据（针对BTC）
-        if crypto_symbol == 'BTC':
-            try:
-                from mining_calculator import get_real_time_difficulty, get_real_time_block_reward, get_real_time_btc_hashrate
-                
-                try:
-                    difficulty = get_real_time_difficulty()
-                    logging.info(f"成功获取BTC网络难度: {difficulty/10**12}T")
-                except Exception as e:
-                    logging.error(f"获取BTC网络难度失败: {e}")
-                    difficulty = default_difficulty * 10**12  # 默认难度
-                    
-                try:
-                    block_reward = get_real_time_block_reward()
-                    logging.info(f"成功获取BTC区块奖励: {block_reward} BTC")
-                except Exception as e:
-                    logging.error(f"获取BTC区块奖励失败: {e}")
-                    block_reward = default_block_reward  # 默认区块奖励
-                    
-                try:
-                    # 直接使用简单高效的API获取哈希率
-                    response = requests.get('https://blockchain.info/q/hashrate', timeout=5)
-                    if response.status_code == 200:
-                        # 该API直接返回TH/s单位的哈希率
-                        hashrate_th = float(response.text.strip())
-                        # 转换为EH/s (1 EH/s = 1,000,000,000 TH/s)
-                        hashrate = hashrate_th / 1e9
-                        logging.info(f"成功获取BTC网络哈希率: {hashrate_th} TH/s → {hashrate} EH/s")
-                        
-                        # 如果哈希率不合理，使用默认值
-                        if hashrate < 10 or hashrate > 2000:
-                            logging.warning(f"计算的哈希率值不合理: {hashrate} EH/s，使用默认值")
-                            hashrate = default_hashrate
-                    else:
-                        logging.error(f"获取BTC网络哈希率API返回错误状态码: {response.status_code}")
-                        hashrate = default_hashrate
-                except Exception as e:
-                    logging.error(f"获取BTC网络哈希率时出错: {e}")
-                    hashrate = default_hashrate
-            except Exception as e:
-                logging.error(f"BTC数据获取过程中出错: {e}")
-                difficulty = default_difficulty * 10**12
-                hashrate = default_hashrate
-                block_reward = default_block_reward
-        else:
-            # 对于其他加密货币，使用默认值或从crypto_data模块获取数据
-            network_data = get_real_time_network_data(crypto_symbol)
+        try:
+            difficulty = get_real_time_difficulty()
+            logging.info(f"成功获取网络难度: {difficulty/10**12}T")
+        except Exception as e:
+            logging.error(f"获取网络难度失败: {e}")
+            difficulty = 119116256505723  # 默认难度
             
-            if network_data:
-                difficulty = network_data.get('difficulty', default_difficulty)
-                hashrate = network_data.get('hashrate', default_hashrate)
-                block_reward = network_data.get('block_reward', default_block_reward)
-            else:
-                difficulty = default_difficulty
-                hashrate = default_hashrate
-                block_reward = default_block_reward
+        try:
+            block_reward = get_real_time_block_reward()
+            logging.info(f"成功获取区块奖励: {block_reward} BTC")
+        except Exception as e:
+            logging.error(f"获取区块奖励失败: {e}")
+            block_reward = 3.125  # 默认区块奖励
+            
+        try:
+            # 直接使用简单高效的API获取哈希率
+            response = requests.get('https://blockchain.info/q/hashrate', timeout=5)
+            if response.status_code == 200:
+                # 该API直接返回TH/s单位的哈希率
+                hashrate_th = float(response.text.strip())
+                # 转换为EH/s (1 EH/s = 1,000,000,000 TH/s)
+                hashrate = hashrate_th / 1e9
+                logging.info(f"成功获取网络哈希率: {hashrate_th} TH/s → {hashrate} EH/s")
                 
-            if crypto_symbol != 'BTC':
-                # 对于非BTC货币，不需要转换难度单位
-                difficulty_multiplier = 1
+                # 如果哈希率不合理，使用默认值
+                if hashrate < 10 or hashrate > 2000:
+                    logging.warning(f"计算的哈希率值不合理: {hashrate} EH/s，使用默认值")
+                    hashrate = DEFAULT_HASHRATE_EH
             else:
-                difficulty_multiplier = 10**12
+                logging.error(f"获取网络哈希率API返回错误状态码: {response.status_code}")
+                hashrate = DEFAULT_HASHRATE_EH
+        except Exception as e:
+            logging.error(f"获取网络哈希率时出错: {e}")
+            hashrate = DEFAULT_HASHRATE_EH
         
         # 提供额外日志以便调试
-        logging.info(f"返回{crypto_symbol}网络统计数据: 价格=${price}, 难度={difficulty if crypto_symbol != 'BTC' else difficulty/10**12}, 哈希率={hashrate}, 奖励={block_reward}")
+        logging.info(f"返回网络统计数据: 价格=${price}, 难度={difficulty/10**12}T, 哈希率={hashrate}EH/s, 奖励={block_reward}BTC")
         
         return jsonify({
             'success': True,
-            'crypto_symbol': crypto_symbol,
-            'crypto_name': crypto_info.get('name', 'Bitcoin'),
-            'crypto_chinese_name': crypto_info.get('chinese_name', '比特币'),
-            'algorithm': crypto_info.get('algorithm', 'SHA-256'),
             'price': price,
-            'difficulty': difficulty / 10**12 if crypto_symbol == 'BTC' else difficulty,  # BTC转换为T
-            'hashrate': hashrate,  # 单位根据货币不同而不同
-            'block_reward': block_reward,
-            'unit': crypto_info.get('unit', 'TH/s'),
-            'block_time': crypto_info.get('block_time', 600)  # 块时间（秒）
+            'difficulty': difficulty / 10**12,  # Convert to T for readability
+            'hashrate': hashrate,  # EH/s
+            'block_reward': block_reward
         })
     except Exception as e:
         logging.error(f"获取网络状态统计时发生错误: {str(e)}")
         # 返回默认值而不是错误，这样前端至少能显示一些内容
         return jsonify({
             'success': True,
-            'crypto_symbol': 'BTC',
-            'crypto_name': 'Bitcoin',
-            'crypto_chinese_name': '比特币',
-            'algorithm': 'SHA-256',
-            'price': 80000,  # 默认BTC价格
-            'difficulty': 119.12,  # 默认BTC难度，单位T
-            'hashrate': 700,  # 默认BTC哈希率，单位EH/s
-            'block_reward': 3.125,  # 默认BTC区块奖励
-            'unit': 'TH/s',
-            'block_time': 600  # 默认块时间（秒）
+            'price': DEFAULT_BTC_PRICE,  # 默认价格
+            'difficulty': DEFAULT_DIFFICULTY,  # 默认难度，单位T
+            'hashrate': DEFAULT_HASHRATE_EH,  # 默认哈希率，单位EH/s
+            'block_reward': DEFAULT_BLOCK_REWARD  # 默认区块奖励
         })
 
 @app.route('/miners', methods=['GET'])
@@ -922,56 +794,18 @@ def get_network_stats():
 def get_miners():
     """Get the list of available miner models and their specifications"""
     try:
-        # 获取请求的加密货币类型，默认为BTC
-        crypto_symbol = request.args.get('crypto', 'BTC')
-        
-        # 导入加密货币数据
-        from crypto_data import CRYPTOCURRENCIES, MINER_DATA_BY_ALGORITHM
-        
-        # 获取该加密货币的算法
-        algorithm = None
-        if crypto_symbol in CRYPTOCURRENCIES:
-            algorithm = CRYPTOCURRENCIES[crypto_symbol]['algorithm']
-            
-        # 获取该算法的矿机列表，如果不存在则使用BTC矿机
-        miner_data = {}
-        if algorithm and algorithm in MINER_DATA_BY_ALGORITHM:
-            miner_data = MINER_DATA_BY_ALGORITHM[algorithm]
-        else:
-            # 默认使用SHA-256矿机(BTC)
-            miner_data = MINER_DATA_BY_ALGORITHM.get('SHA-256', MINER_DATA)
-        
         miners_list = []
-        hash_unit = CRYPTOCURRENCIES.get(crypto_symbol, {}).get('unit', 'TH/s')
-        
-        for name, specs in miner_data.items():
-            # 获取该矿机的算力单位
-            unit = specs.get('unit', hash_unit)
-            
+        for name, specs in MINER_DATA.items():
             miners_list.append({
                 'name': name,
                 'hashrate': specs['hashrate'],
                 'power_watt': specs['power_watt'],
-                'unit': unit,
-                'efficiency': round(specs['power_watt'] / specs['hashrate'], 2) # W/Hash
-            })
-        
-        # 获取所有支持的加密货币列表
-        supported_cryptos = []
-        for symbol, crypto_data in CRYPTOCURRENCIES.items():
-            supported_cryptos.append({
-                'symbol': symbol,
-                'name': crypto_data['name'],
-                'chinese_name': crypto_data['chinese_name'],
-                'algorithm': crypto_data['algorithm']
+                'efficiency': round(specs['power_watt'] / specs['hashrate'], 2) # W/TH
             })
         
         return jsonify({
             'success': True,
-            'miners': miners_list,
-            'current_crypto': crypto_symbol,
-            'supported_cryptos': supported_cryptos,
-            'algorithm': algorithm
+            'miners': miners_list
         })
     except Exception as e:
         logging.error(f"Error fetching miners data: {str(e)}")
@@ -1172,34 +1006,22 @@ def get_profit_chart_data():
             logging.error(f"Error parsing client electricity cost: {request.form.get('client_electricity_cost')} - {str(e)}")
             client_electricity_cost = 0
         
-        # 获取所选加密货币类型
-        crypto_symbol = request.form.get('crypto_currency', 'BTC')
-        logging.info(f"Cryptocurrency selected for profit chart: {crypto_symbol}")
-        
-        # 导入加密货币数据
-        from crypto_data import CRYPTOCURRENCIES, get_real_time_crypto_price
-        
-        # 获取加密货币信息
-        crypto_info = CRYPTOCURRENCIES.get(crypto_symbol, CRYPTOCURRENCIES['BTC'])
-        
         # 禁用缓存以避免使用旧的数据（此前的缓存可能包含错误数据）
         # 生成新的价格和电费成本范围
         try:
-            current_price = get_real_time_crypto_price(crypto_symbol)
-            if current_price is None:
-                current_price = crypto_info.get('default_price', 80000)
-            logging.info(f"Current {crypto_symbol} price fetched: ${current_price}")
+            current_btc_price = get_real_time_btc_price()
+            logging.info(f"Current BTC price fetched: ${current_btc_price}")
         except Exception as e:
-            logging.error(f"Error getting real-time {crypto_symbol} price: {str(e)}, using default")
-            current_price = crypto_info.get('default_price', 80000)  # 使用默认值
+            logging.error(f"Error getting real-time BTC price: {str(e)}, using default")
+            current_btc_price = 50000  # 使用默认值
             
         # 创建价格和电费点的网格(5x5)
-        price_factors = [0.5, 0.75, 1.0, 1.25, 1.5]
-        crypto_prices = [round(current_price * factor) for factor in price_factors]
+        btc_price_factors = [0.5, 0.75, 1.0, 1.25, 1.5]
+        btc_prices = [round(current_btc_price * factor) for factor in btc_price_factors]
         electricity_costs = [0.02, 0.04, 0.06, 0.08, 0.10]
         
-        logging.info(f"Generating profit chart for {miner_model} with {miner_count} miners for {crypto_symbol}")
-        logging.info(f"Using {crypto_symbol} prices: {crypto_prices}")
+        logging.info(f"Generating profit chart for {miner_model} with {miner_count} miners")
+        logging.info(f"Using BTC prices: {btc_prices}")
         logging.info(f"Using electricity costs: {electricity_costs}")
         
         # 获取热力图数据
@@ -1208,10 +1030,9 @@ def get_profit_chart_data():
             chart_data = generate_profit_chart_data(
                 miner_model=miner_model,
                 electricity_costs=electricity_costs,
-                crypto_prices=crypto_prices,  # 更改为crypto_prices
+                btc_prices=btc_prices,
                 miner_count=miner_count,
-                client_electricity_cost=client_electricity_cost if client_electricity_cost > 0 else None,
-                crypto_symbol=crypto_symbol  # 传递加密货币符号
+                client_electricity_cost=client_electricity_cost if client_electricity_cost > 0 else None
             )
             
             # 验证返回的数据结构
@@ -1242,26 +1063,16 @@ def get_profit_chart_data():
                 
                 # 验证所有字段存在且为数字
                 try:
-                    # 支持新旧两种格式的价格字段 - 兼容BTC和多币种
-                    price_field = 'crypto_price' if 'crypto_price' in point else 'btc_price'
-                    
-                    if (isinstance(point.get(price_field), (int, float)) and 
+                    if (isinstance(point.get('btc_price'), (int, float)) and 
                         isinstance(point.get('electricity_cost'), (int, float)) and 
                         isinstance(point.get('monthly_profit'), (int, float))):
                         
-                        # 添加有效数据点，统一使用crypto_price字段
-                        data_point = {
-                            'crypto_price': float(point[price_field]),
+                        # 添加有效数据点
+                        cleaned_data.append({
+                            'btc_price': float(point['btc_price']),
                             'electricity_cost': float(point['electricity_cost']),
-                            'monthly_profit': float(point['monthly_profit']),
-                            'crypto_symbol': crypto_symbol  # 记录使用的加密货币类型
-                        }
-                        
-                        # 为了向后兼容，保留btc_price字段
-                        if crypto_symbol == 'BTC':
-                            data_point['btc_price'] = data_point['crypto_price']
-                            
-                        cleaned_data.append(data_point)
+                            'monthly_profit': float(point['monthly_profit'])
+                        })
                     else:
                         logging.warning(f"Skipping data point with invalid field types: {point}")
                 except Exception as e:
@@ -1278,15 +1089,10 @@ def get_profit_chart_data():
             # 替换清理后的数据
             chart_data['profit_data'] = cleaned_data
             
-            # 验证利润值和加密货币价格值是否有变化
+            # 验证利润值是否有变化
             unique_profits = set(round(item['monthly_profit'], 2) for item in cleaned_data)
-            unique_prices = set(round(item['crypto_price'], 2) for item in cleaned_data)
-            
             if len(unique_profits) <= 1:
                 logging.warning(f"All profit values are identical ({list(unique_profits)[0] if unique_profits else 'N/A'}), data may be incorrect")
-                
-            if len(unique_prices) <= 1:
-                logging.warning(f"All {crypto_symbol} price values are identical ({list(unique_prices)[0] if unique_prices else 'N/A'}), data may be incorrect")
                 
             # 记录最终有效数据点数量
             logging.info(f"Validated profit chart data: {len(cleaned_data)} valid points out of {len(profit_data)} original points")

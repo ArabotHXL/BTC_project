@@ -46,14 +46,9 @@
                     
                     <!-- Network Stats -->
                     <div id="network-stats-container" class="d-flex gap-3 text-center">
-                        <!-- 显示当前加密货币名称 -->
                         <div class="stats-item">
-                            <span class="badge bg-primary">{{ t('crypto_name') if 'crypto_name' in t_functions else '币种' }}</span>
-                            <span id="crypto-name" class="stats-value">比特币</span>
-                        </div>
-                        <div class="stats-item">
-                            <span class="badge bg-warning">{{ t('crypto_price') if 'crypto_price' in t_functions else '价格' }}</span>
-                            <span id="crypto-price" class="stats-value">$0</span>
+                            <span class="badge bg-warning">{{ t('btc_price') }}</span>
+                            <span id="btc-price" class="stats-value">$0</span>
                         </div>
                         <div class="stats-item">
                             <span class="badge bg-info">{{ t('difficulty') }}</span>
@@ -65,8 +60,7 @@
                         </div>
                         <div class="stats-item">
                             <span class="badge bg-success">{{ t('block_reward') }}</span>
-                            <span id="block-reward" class="stats-value">0</span>
-                            <span id="crypto-symbol" class="stats-value">BTC</span>
+                            <span id="block-reward" class="stats-value">0 BTC</span>
                         </div>
                     </div>
                     
@@ -169,21 +163,6 @@
                         </div>
                         <div class="card-body">
                             <form id="mining-calculator-form">
-                                <!-- 加密货币选择 / Cryptocurrency Selection -->
-                                <div class="mb-3">
-                                    <label for="crypto-currency" class="form-label">{{ t('crypto_currency') if 'crypto_currency' in t_functions else '加密货币 / Cryptocurrency' }}</label>
-                                    <select class="form-select" id="crypto-currency" name="crypto_currency" onchange="updateCryptocurrency()">
-                                        <!-- 加密货币选项 / Cryptocurrency options -->
-                                        <option value="BTC">Bitcoin (BTC) - 比特币</option>
-                                        <option value="LTC">Litecoin (LTC) - 莱特币</option>
-                                        <option value="ETC">Ethereum Classic (ETC) - 以太经典</option>
-                                        <option value="DOGE">Dogecoin (DOGE) - 狗狗币</option>
-                                        <option value="RVN">Ravencoin (RVN) - 渡鸦币</option>
-                                        <option value="ZEC">Zcash (ZEC) - 大零币</option>
-                                    </select>
-                                    <div class="form-text">{% if current_lang == 'en' %}Select the cryptocurrency you want to mine. Different cryptocurrencies use different mining algorithms and hardware.{% else %}选择您想要挖矿的加密货币。不同的加密货币使用不同的挖矿算法和硬件。{% endif %}</div>
-                                </div>
-
                                 <!-- Mining hardware selection -->
                                 <div class="mb-3">
                                     <label for="miner-model" class="form-label">{{ t('miner_model') }}</label>
@@ -191,10 +170,6 @@
                                         <option value="">{{ t('select_miner') }}</option>
                                         <!-- Miner options will be loaded dynamically -->
                                     </select>
-                                    <div class="form-text">
-                                        <span id="miner-algorithm-info"></span> 
-                                        <span id="miner-hashrate-unit"></span>
-                                    </div>
                                 </div>
 
                                 <!-- Site Power Consumption (MW) -->
