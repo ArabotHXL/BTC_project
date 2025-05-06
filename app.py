@@ -34,18 +34,7 @@ app.secret_key = os.environ.get("SESSION_SECRET", secrets.token_hex(32))
 
 # 导入数据库和用户模型
 from db import db
-from models import LoginRecord, UserAccess, CryptoAsset, Portfolio
-
-# 导入加密货币投资组合功能
-from crypto_portfolio import (
-    get_crypto_list, 
-    get_user_assets, 
-    add_crypto_asset, 
-    update_crypto_asset, 
-    delete_crypto_asset,
-    get_portfolio_summary,
-    update_portfolio_metrics
-)
+from models import LoginRecord, UserAccess
 
 # 导入翻译模块
 from translations import get_translation
@@ -254,85 +243,6 @@ def logout():
 def index():
     """渲染BTC挖矿计算器主页"""
     return render_template('index.html')
-    
-@app.route('/crypto_portfolio')
-@login_required
-def crypto_portfolio():
-    """加密货币投资组合管理页面"""
-    return render_template('crypto_portfolio.html')
-    
-# API 路由 - 加密货币投资组合
-@app.route('/api/crypto/list', methods=['GET'])
-@login_required
-def api_crypto_list():
-    """获取支持的加密货币列表"""
-    result = get_crypto_list()
-    return jsonify(result)
-
-@app.route('/api/crypto/assets', methods=['GET'])
-@login_required
-def api_get_assets():
-    """获取用户的加密货币资产"""
-    user_email = session.get('email')
-    if not user_email:
-        return jsonify({'success': False, 'error': '未登录'})
-    
-    result = get_user_assets(user_email)
-    return jsonify(result)
-
-@app.route('/api/crypto/portfolio', methods=['GET'])
-@login_required
-def api_get_portfolio():
-    """获取用户的投资组合摘要"""
-    user_email = session.get('email')
-    if not user_email:
-        return jsonify({'success': False, 'error': '未登录'})
-    
-    result = get_portfolio_summary(user_email)
-    return jsonify(result)
-
-@app.route('/api/crypto/asset', methods=['POST'])
-@login_required
-def api_add_asset():
-    """添加新的加密货币资产"""
-    user_email = session.get('email')
-    if not user_email:
-        return jsonify({'success': False, 'error': '未登录'})
-    
-    # 从JSON请求体中获取数据
-    data = request.json
-    if not data:
-        return jsonify({'success': False, 'error': '无效的请求数据'})
-    
-    result = add_crypto_asset(user_email, data)
-    return jsonify(result)
-
-@app.route('/api/crypto/asset/<int:asset_id>', methods=['PUT'])
-@login_required
-def api_update_asset(asset_id):
-    """更新加密货币资产"""
-    user_email = session.get('email')
-    if not user_email:
-        return jsonify({'success': False, 'error': '未登录'})
-    
-    # 从JSON请求体中获取数据
-    data = request.json
-    if not data:
-        return jsonify({'success': False, 'error': '无效的请求数据'})
-    
-    result = update_crypto_asset(asset_id, user_email, data)
-    return jsonify(result)
-
-@app.route('/api/crypto/asset/<int:asset_id>', methods=['DELETE'])
-@login_required
-def api_delete_asset(asset_id):
-    """删除加密货币资产"""
-    user_email = session.get('email')
-    if not user_email:
-        return jsonify({'success': False, 'error': '未登录'})
-    
-    result = delete_crypto_asset(asset_id, user_email)
-    return jsonify(result)
 
 @app.route('/admin/login_records')
 @login_required
