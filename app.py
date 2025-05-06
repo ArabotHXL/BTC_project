@@ -401,6 +401,55 @@ def login_dashboard():
             geo_data['countries'].append("其他")
         geo_data['counts'].append(others_count)
     
+    # 为地图准备地理位置和坐标数据
+    # 注意：在实际应用中，这些坐标数据应该从地理编码API获取，这里我们只是使用一个简单的国家位置映射
+    country_coordinates = {
+        '中国': {'lat': 35.0, 'lng': 105.0},
+        'China': {'lat': 35.0, 'lng': 105.0},
+        '美国': {'lat': 40.0, 'lng': -100.0},
+        'United States': {'lat': 40.0, 'lng': -100.0},
+        '英国': {'lat': 54.0, 'lng': -2.0},
+        'United Kingdom': {'lat': 54.0, 'lng': -2.0},
+        '加拿大': {'lat': 56.0, 'lng': -105.0},
+        'Canada': {'lat': 56.0, 'lng': -105.0},
+        '澳大利亚': {'lat': -25.0, 'lng': 135.0},
+        'Australia': {'lat': -25.0, 'lng': 135.0},
+        '日本': {'lat': 36.0, 'lng': 138.0},
+        'Japan': {'lat': 36.0, 'lng': 138.0},
+        '德国': {'lat': 51.0, 'lng': 10.0},
+        'Germany': {'lat': 51.0, 'lng': 10.0},
+        '法国': {'lat': 47.0, 'lng': 2.0},
+        'France': {'lat': 47.0, 'lng': 2.0},
+        '巴西': {'lat': -10.0, 'lng': -55.0},
+        'Brazil': {'lat': -10.0, 'lng': -55.0},
+        '印度': {'lat': 20.0, 'lng': 80.0},
+        'India': {'lat': 20.0, 'lng': 80.0},
+    }
+    
+    # 设置随机种子，确保每次刷新页面坐标不会改变
+    import random
+    random.seed(2025)
+    
+    # 生成每条记录的地理坐标
+    for record in recent_records:
+        if record['login_location'] and ',' in record['login_location']:
+            parts = record['login_location'].split(',')
+            if len(parts) > 0:
+                country = parts[0].strip()
+                # 为常见国家提供合理的坐标范围
+                if country in country_coordinates:
+                    base_lat = country_coordinates[country]['lat']
+                    base_lng = country_coordinates[country]['lng']
+                    # 在基础坐标附近添加一些随机偏移，使得地图上的点不会重叠
+                    # 随机范围在国家大小的合理范围内
+                    offset_range = 5.0 if country in ['中国', 'China', '美国', 'United States', '加拿大', 'Canada', '澳大利亚', 'Australia', '巴西', 'Brazil', '印度', 'India'] else 2.0
+                    record['latitude'] = base_lat + (random.random() - 0.5) * offset_range
+                    record['longitude'] = base_lng + (random.random() - 0.5) * offset_range
+                else:
+                    # 为未识别的国家生成随机位置
+                    record['latitude'] = (random.random() * 140 - 70)  # -70到70度之间
+                    record['longitude'] = (random.random() * 340 - 170)  # -170到170度之间
+    
     return render_template('login_dashboard.html', 
                           records=recent_records, 
                           stats=stats, 

@@ -2,6 +2,52 @@
 
 {% block title %}登录数据分析仪表盘 | Login Dashboard{% endblock %}
 
+{% block extra_head %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+      crossorigin=""/>
+<!-- Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+        crossorigin=""></script>
+<style>
+    #loginMap {
+        height: 400px;
+        width: 100%;
+        border-radius: 0.25rem;
+    }
+    .cluster-marker {
+        background-color: rgba(38, 143, 255, 0.6);
+        border: 2px solid #268fff;
+        border-radius: 50%;
+        color: white;
+        font-weight: bold;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .marker-popup-content {
+        font-size: 0.9rem;
+    }
+    .marker-popup-content .email {
+        font-weight: bold;
+        margin-bottom: 3px;
+    }
+    .marker-popup-content .time {
+        color: #6c757d;
+        font-size: 0.8rem;
+        margin-bottom: 5px;
+    }
+    .marker-popup-content .status-success {
+        color: #198754;
+    }
+    .marker-popup-content .status-failed {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <div class="row mb-4">
@@ -83,6 +129,23 @@
                 </div>
                 <div class="card-body">
                     <canvas id="loginTrendsChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 登录地理位置地图 / Login Locations Map -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-geo-alt"></i>
+                        {% if current_lang == 'en' %}Login Locations Map{% else %}登录位置地图{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="loginMap"></div>
                 </div>
             </div>
         </div>
@@ -292,6 +355,126 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+    
+    // 初始化地图 / Initialize the map
+    const loginMap = L.map('loginMap').setView([30, 10], 2); // 世界地图中心点
+    
+    // 添加深色主题地图图层 / Add dark theme map tiles
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 19
+    }).addTo(loginMap);
+    
+    // 添加登录位置标记 / Add login location markers
+    const locationMarkers = [];
+    const markerInfos = [];
+    
+    {% for record in records %}
+        {% if record.login_location and ',' in record.login_location %}
+            // 解析位置信息 / Parse location information
+            const locationParts = "{{ record.login_location }}".split(',');
+            if (locationParts.length >= 3) {
+                const country = locationParts[0].trim();
+                const region = locationParts[1].trim();
+                const city = locationParts[2].trim();
+                
+                // 获取地理坐标 / Get geographic coordinates
+                // 注意：这里使用一个简单的随机方法来生成坐标，实际应用中应该使用地理编码API
+                // Note: Using a simple random offset method here for demonstration purposes
+                // In a real application, use proper geocoding API
+                
+                // 创建一个假的坐标系统给不同国家，仅用于演示
+                // Create a fake coordinate system for different countries, for demo only
+                let lat, lng;
+                
+                if (country.includes('China') || country.includes('中国')) {
+                    // 中国大致位置
+                    lat = 35.0 + (Math.random() - 0.5) * 10;
+                    lng = 105.0 + (Math.random() - 0.5) * 10;
+                } else if (country.includes('United States') || country.includes('美国')) {
+                    // 美国大致位置
+                    lat = 40.0 + (Math.random() - 0.5) * 10;
+                    lng = -100.0 + (Math.random() - 0.5) * 15;
+                } else if (country.includes('United Kingdom') || country.includes('英国')) {
+                    // 英国大致位置
+                    lat = 54.0 + (Math.random() - 0.5) * 5;
+                    lng = -2.0 + (Math.random() - 0.5) * 5;
+                } else if (country.includes('Canada') || country.includes('加拿大')) {
+                    // 加拿大大致位置
+                    lat = 56.0 + (Math.random() - 0.5) * 10;
+                    lng = -105.0 + (Math.random() - 0.5) * 15;
+                } else if (country.includes('Australia') || country.includes('澳大利亚')) {
+                    // 澳大利亚大致位置
+                    lat = -25.0 + (Math.random() - 0.5) * 10;
+                    lng = 135.0 + (Math.random() - 0.5) * 15;
+                } else if (country.includes('Japan') || country.includes('日本')) {
+                    // 日本大致位置
+                    lat = 36.0 + (Math.random() - 0.5) * 5;
+                    lng = 138.0 + (Math.random() - 0.5) * 5;
+                } else if (country.includes('Germany') || country.includes('德国')) {
+                    // 德国大致位置
+                    lat = 51.0 + (Math.random() - 0.5) * 5;
+                    lng = 10.0 + (Math.random() - 0.5) * 5;
+                } else if (country.includes('France') || country.includes('法国')) {
+                    // 法国大致位置
+                    lat = 47.0 + (Math.random() - 0.5) * 5;
+                    lng = 2.0 + (Math.random() - 0.5) * 5;
+                } else if (country.includes('Brazil') || country.includes('巴西')) {
+                    // 巴西大致位置
+                    lat = -10.0 + (Math.random() - 0.5) * 10;
+                    lng = -55.0 + (Math.random() - 0.5) * 10;
+                } else if (country.includes('India') || country.includes('印度')) {
+                    // 印度大致位置
+                    lat = 20.0 + (Math.random() - 0.5) * 10;
+                    lng = 80.0 + (Math.random() - 0.5) * 10;
+                } else {
+                    // 随机位置
+                    lat = (Math.random() * 140 - 70); // -70 to 70
+                    lng = (Math.random() * 340 - 170); // -170 to 170
+                }
+                
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    locationMarkers.push([lat, lng]);
+                    markerInfos.push({
+                        email: "{{ record.email }}",
+                        time: "{{ record.est_time }}",
+                        status: {{ record.successful|tojson }},
+                        location: `${city}, ${region}, ${country}`,
+                        ip: "{{ record.ip_address or 'Unknown' }}"
+                    });
+                }
+            }
+        {% endif %}
+    {% endfor %}
+    
+    // 添加标记到地图 / Add markers to the map
+    for (let i = 0; i < locationMarkers.length; i++) {
+        const marker = L.marker(locationMarkers[i]).addTo(loginMap);
+        const info = markerInfos[i];
+        
+        const popupContent = `
+            <div class="marker-popup-content">
+                <div class="email">${info.email}</div>
+                <div class="time">${info.time}</div>
+                <div class="${info.status ? 'status-success' : 'status-failed'}">
+                    ${info.status ? ({% if current_lang == 'en' %}'Success'{% else %}'成功'{% endif %}) : 
+                    ({% if current_lang == 'en' %}'Failed'{% else %}'失败'{% endif %})}
+                </div>
+                <div>${info.location}</div>
+                <div>IP: ${info.ip}</div>
+            </div>
+        `;
+        
+        marker.bindPopup(popupContent);
+    }
+    
+    // 如果有标记，调整地图视图以适应所有标记
+    // If there are markers, adjust map view to fit all markers
+    if (locationMarkers.length > 0) {
+        const bounds = L.latLngBounds(locationMarkers);
+        loginMap.fitBounds(bounds, {padding: [30, 30]});
+    }
 });
 </script>
 {% endblock %}
