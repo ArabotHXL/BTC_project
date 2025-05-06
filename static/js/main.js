@@ -536,14 +536,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 获取网络状态 (Fetch network status)
     function fetchNetworkStats() {
+        // 获取当前选择的加密货币
+        var currentCrypto = 'BTC';
+        if (cryptoCurrencySelect) {
+            currentCrypto = cryptoCurrencySelect.value;
+        }
+        
         // 显示加载状态 (Show loading state)
-        var networkStatsElements = [btcPriceEl, networkDifficultyEl, networkHashrateEl, blockRewardEl];
+        var networkStatsElements = [cryptoPriceEl, networkDifficultyEl, networkHashrateEl, blockRewardEl];
         networkStatsElements.forEach(function(el) {
             if (el) el.innerHTML = '<small class="text-muted">Loading...</small>';
         });
         
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/network_stats', true);
+        xhr.open('GET', '/network_stats?crypto=' + currentCrypto, true);
         
         // 设置15秒超时
         xhr.timeout = 15000;
@@ -560,24 +566,33 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if (data && data.success) {
                         // 更新UI (Update UI)
-                        if (btcPriceEl) btcPriceEl.textContent = formatCurrency(data.price, 2);
-                        if (networkDifficultyEl) networkDifficultyEl.textContent = formatNumber(data.difficulty) + 'T';
-                        if (networkHashrateEl) networkHashrateEl.textContent = formatNumber(data.hashrate) + ' EH/s';
-                        if (blockRewardEl) blockRewardEl.textContent = formatNumber(data.block_reward) + ' BTC';
+                        if (cryptoPriceEl) cryptoPriceEl.textContent = formatCurrency(data.price, 2);
                         
-                        // 更新BTC价格输入框 (Update BTC price input)
+                        // 获取适合当前加密货币的单位
+                        var difficultyUnit = getAppropriateDifficultyUnit(currentCrypto);
+                        var hashrateUnit = getAppropriateHashrateUnit(currentCrypto);
+                        
+                        if (networkDifficultyEl) networkDifficultyEl.textContent = formatNumber(data.difficulty) + difficultyUnit;
+                        if (networkHashrateEl) networkHashrateEl.textContent = formatNumber(data.hashrate) + ' ' + hashrateUnit;
+                        if (blockRewardEl) blockRewardEl.textContent = formatNumber(data.block_reward);
+                        
+                        // 更新加密货币符号
+                        if (cryptoSymbolEl) cryptoSymbolEl.textContent = currentCrypto;
+                        
+                        // 更新价格输入框 (Update price input)
                         if (useRealTimeCheckbox && useRealTimeCheckbox.checked && btcPriceInput) {
                             btcPriceInput.value = data.price.toFixed(2);
                             btcPriceInput.disabled = true;
                         }
                         
                         // 保存到localStorage作为备用 (Save to localStorage as backup)
-                        localStorage.setItem('last_btc_price', data.price);
-                        localStorage.setItem('last_network_difficulty', data.difficulty);
-                        localStorage.setItem('last_network_hashrate', data.hashrate);
-                        localStorage.setItem('last_block_reward', data.block_reward);
+                        localStorage.setItem('last_' + currentCrypto + '_price', data.price);
+                        localStorage.setItem('last_' + currentCrypto + '_difficulty', data.difficulty);
+                        localStorage.setItem('last_' + currentCrypto + '_hashrate', data.hashrate);
+                        localStorage.setItem('last_' + currentCrypto + '_block_reward', data.block_reward);
+                        localStorage.setItem('last_' + currentCrypto + '_timestamp', new Date().getTime());
                     } else {
-                        useFallbackNetworkStats();
+                        useFallbackNetworkStats(currentCrypto);
                         console.error('获取网络状态时服务器返回错误:', data && data.error ? data.error : null);
                     }
                 } else {
@@ -585,56 +600,138 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } catch (error) {
                 console.error('获取网络状态失败:', error);
-                useFallbackNetworkStats();
+                useFallbackNetworkStats(currentCrypto);
             }
         };
         
         xhr.onerror = function() {
             console.error('网络状态请求失败');
-            useFallbackNetworkStats();
+            useFallbackNetworkStats(currentCrypto);
         };
         
         xhr.ontimeout = function() {
             console.error('网络状态请求超时');
-            useFallbackNetworkStats();
+            useFallbackNetworkStats(currentCrypto);
         };
         
         xhr.send();
     }
     
+    // 获取适合显示的难度单位
+    function getAppropriateDifficultyUnit(crypto) {
+        switch(crypto) {
+            case 'BTC': return 'T';
+            case 'LTC': return 'M';
+            case 'ETC': return 'T';
+            case 'DOGE': return 'M';
+            case 'RVN': return 'K';
+            case 'ZEC': return 'M';
+            default: return 'T';
+        }
+    }
+    
+    // 获取适合显示的算力单位
+    function getAppropriateHashrateUnit(crypto) {
+        switch(crypto) {
+            case 'BTC': return 'EH/s';
+            case 'LTC': return 'TH/s';
+            case 'ETC': return 'TH/s';
+            case 'DOGE': return 'TH/s';
+            case 'RVN': return 'TH/s';
+            case 'ZEC': return 'MSol/s';
+            default: return 'TH/s';
+        }
+    }
+    
     // 使用备用网络状态 (Use fallback network status)
-    function useFallbackNetworkStats() {
-        var lastBtcPrice = localStorage.getItem('last_btc_price');
-        var lastDifficulty = localStorage.getItem('last_network_difficulty');
-        var lastHashrate = localStorage.getItem('last_network_hashrate');
-        var lastBlockReward = localStorage.getItem('last_block_reward');
-        
-        if (lastBtcPrice && btcPriceEl) {
-            btcPriceEl.textContent = formatCurrency(parseFloat(lastBtcPrice), 2);
-            if (useRealTimeCheckbox && useRealTimeCheckbox.checked && btcPriceInput) {
-                btcPriceInput.value = parseFloat(lastBtcPrice).toFixed(2);
-                btcPriceInput.disabled = true;
+    function useFallbackNetworkStats(cryptoSymbol) {
+        if (!cryptoSymbol) {
+            cryptoSymbol = 'BTC';
+            if (cryptoCurrencySelect) {
+                cryptoSymbol = cryptoCurrencySelect.value;
             }
-        } else if (btcPriceEl) {
-            btcPriceEl.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
         }
         
-        if (lastDifficulty && networkDifficultyEl) {
-            networkDifficultyEl.textContent = formatNumber(parseFloat(lastDifficulty)) + 'T';
-        } else if (networkDifficultyEl) {
-            networkDifficultyEl.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
+        var lastPrice = localStorage.getItem('last_' + cryptoSymbol + '_price');
+        var lastDifficulty = localStorage.getItem('last_' + cryptoSymbol + '_difficulty');
+        var lastHashrate = localStorage.getItem('last_' + cryptoSymbol + '_hashrate');
+        var lastBlockReward = localStorage.getItem('last_' + cryptoSymbol + '_block_reward');
+        var lastTimestamp = localStorage.getItem('last_' + cryptoSymbol + '_timestamp');
+        
+        // 如果有缓存数据且不超过24小时
+        var isDataValid = lastPrice && lastDifficulty && lastHashrate && lastBlockReward;
+        var isDataFresh = false;
+        
+        if (lastTimestamp) {
+            var now = new Date().getTime();
+            var then = parseInt(lastTimestamp);
+            var diffHours = (now - then) / (1000 * 60 * 60);
+            isDataFresh = diffHours < 24;
         }
         
-        if (lastHashrate && networkHashrateEl) {
-            networkHashrateEl.textContent = formatNumber(parseFloat(lastHashrate)) + ' EH/s';
-        } else if (networkHashrateEl) {
-            networkHashrateEl.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
-        }
-        
-        if (lastBlockReward && blockRewardEl) {
-            blockRewardEl.textContent = formatNumber(parseFloat(lastBlockReward), 4) + ' BTC';
-        } else if (blockRewardEl) {
-            blockRewardEl.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
+        if (isDataValid && isDataFresh) {
+            var difficultyUnit = getAppropriateDifficultyUnit(cryptoSymbol);
+            var hashrateUnit = getAppropriateHashrateUnit(cryptoSymbol);
+            
+            if (cryptoPriceEl) {
+                cryptoPriceEl.textContent = formatCurrency(parseFloat(lastPrice), 2);
+                if (useRealTimeCheckbox && useRealTimeCheckbox.checked && btcPriceInput) {
+                    btcPriceInput.value = parseFloat(lastPrice).toFixed(2);
+                    btcPriceInput.disabled = true;
+                }
+            }
+            
+            if (networkDifficultyEl) {
+                networkDifficultyEl.textContent = formatNumber(parseFloat(lastDifficulty)) + difficultyUnit;
+            }
+            
+            if (networkHashrateEl) {
+                networkHashrateEl.textContent = formatNumber(parseFloat(lastHashrate)) + ' ' + hashrateUnit;
+            }
+            
+            if (blockRewardEl) {
+                blockRewardEl.textContent = formatNumber(parseFloat(lastBlockReward));
+            }
+            
+            if (cryptoSymbolEl) {
+                cryptoSymbolEl.textContent = cryptoSymbol;
+            }
+        } else {
+            // 如果没有缓存数据或数据太旧，尝试使用旧的BTC数据
+            if (cryptoSymbol === 'BTC') {
+                var legacyBtcPrice = localStorage.getItem('last_btc_price');
+                var legacyDifficulty = localStorage.getItem('last_network_difficulty');
+                var legacyHashrate = localStorage.getItem('last_network_hashrate');
+                var legacyBlockReward = localStorage.getItem('last_block_reward');
+                
+                if (legacyBtcPrice && legacyDifficulty && legacyHashrate && legacyBlockReward) {
+                    if (cryptoPriceEl) {
+                        cryptoPriceEl.textContent = formatCurrency(parseFloat(legacyBtcPrice), 2);
+                    }
+                    if (networkDifficultyEl) {
+                        networkDifficultyEl.textContent = formatNumber(parseFloat(legacyDifficulty)) + 'T';
+                    }
+                    if (networkHashrateEl) {
+                        networkHashrateEl.textContent = formatNumber(parseFloat(legacyHashrate)) + ' EH/s';
+                    }
+                    if (blockRewardEl) {
+                        blockRewardEl.textContent = formatNumber(parseFloat(legacyBlockReward));
+                    }
+                    if (cryptoSymbolEl) {
+                        cryptoSymbolEl.textContent = 'BTC';
+                    }
+                    return;
+                }
+            }
+            
+            // 如果没有可用的数据，显示错误信息
+            [cryptoPriceEl, networkDifficultyEl, networkHashrateEl, blockRewardEl].forEach(function(el) {
+                if (el) el.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
+            });
+            
+            if (cryptoSymbolEl) {
+                cryptoSymbolEl.textContent = cryptoSymbol;
+            }
         }
     }
     
