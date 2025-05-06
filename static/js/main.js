@@ -906,8 +906,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 格式化货币值 (Format currency value)
-    function formatCurrency(value) {
-        return '$' + formatNumber(value);
+    function formatCurrency(value, decimals) {
+        return '$' + formatNumber(value, decimals);
     }
     
     // 格式化数字 (Format number)
