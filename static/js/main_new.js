@@ -1,8 +1,4 @@
 // Bitcoin Mining Calculator - Main JavaScript
-// 全局变量用于存储计算结果
-var calculationResultData = null;
-var lastCalculationTime = null;
-
 document.addEventListener('DOMContentLoaded', function() {
     // 元素引用 (Element references)
     var btcPriceEl = document.getElementById('btc-price');
@@ -253,15 +249,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     var data = JSON.parse(xhr.responseText);
                     
                     if (data.success) {
-                        // 保存计算结果到全局变量，用于PDF导出
-                        calculationResultData = data;
-                        lastCalculationTime = new Date();
-                        // 添加矿机型号
-                        if (calculationResultData && calculationResultData.inputs && minerModelSelect.value) {
-                            calculationResultData.inputs.miner_model = minerModelSelect.value;
-                        }
-                        console.log("已保存计算结果数据，用于PDF导出");
-                        
                         // 显示结果 (Display results)
                         displayResults(data);
                     } else {

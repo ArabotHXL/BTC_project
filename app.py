@@ -1,15 +1,11 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, g, make_response, send_file
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, g
 import logging
 import json
 import numpy as np
 import os
 import secrets
 import requests
-import io
-import tempfile
 from datetime import datetime, timedelta
-from weasyprint import HTML, CSS
-from weasyprint.text.fonts import FontConfiguration
 from auth import verify_email, login_required
 from mining_calculator import (
     MINER_DATA,
@@ -1119,90 +1115,6 @@ def get_profit_chart_data():
             'success': False,
             'error': f'Server error: {str(e)}'
         }), 500
-
-@app.route('/generate_pdf_report', methods=['POST'])
-@login_required
-def generate_pdf_report():
-    """生成挖矿收益PDF报告并提供下载 / Generate mining profitability PDF report for download"""
-    try:
-        # 从请求体获取计算结果数据
-        calculation_data = request.json
-        
-        if not calculation_data or not calculation_data.get('success', False):
-            if g.language == 'en':
-                return jsonify({'success': False, 'error': 'No valid calculation data provided'}), 400
-            else:
-                return jsonify({'success': False, 'error': '未提供有效的计算数据'}), 400
-                
-        # 准备PDF渲染所需数据
-        report_data = calculation_data.copy()
-        
-        # 添加矿机型号
-        report_data['inputs']['miner_model'] = request.json.get('inputs', {}).get('miner_model', 'Unknown')
-        
-        # 添加收入和成本数据（如果不存在）
-        if 'revenue' not in report_data:
-            btc_price = report_data['network_data']['btc_price']
-            report_data['revenue'] = {
-                'daily': report_data['btc_mined']['daily'] * btc_price,
-                'monthly': report_data['btc_mined']['monthly'] * btc_price,
-                'yearly': report_data['btc_mined']['yearly'] * btc_price
-            }
-            
-        if 'cost' not in report_data:
-            electricity_cost = report_data['inputs']['electricity_cost']
-            # 假设每日用电量(kWh) = 功率(W) * 24小时 / 1000
-            daily_power_kwh = report_data['inputs']['power_consumption'] * 24 / 1000
-            
-            # 添加维护费到成本（如果存在）
-            daily_maintenance = 0
-            monthly_maintenance = 0
-            if 'maintenance_fee' in report_data:
-                monthly_maintenance = report_data['maintenance_fee']['monthly']
-                daily_maintenance = monthly_maintenance / 30.5  # 每月平均天数
-                
-            report_data['cost'] = {
-                'daily': (daily_power_kwh * electricity_cost) + daily_maintenance,
-                'monthly': (daily_power_kwh * 30.5 * electricity_cost) + monthly_maintenance,
-                'yearly': (daily_power_kwh * 365 * electricity_cost) + (monthly_maintenance * 12)
-            }
-            
-        # 添加当前日期
-        current_time = datetime.now()
-        report_data['report_date'] = current_time.strftime("%Y-%m-%d %H:%M:%S")
-        report_data['current_year'] = str(current_time.year)
-        
-        # 渲染PDF模板
-        rendered_html = render_template('pdf_report.html', data=report_data,
-                                       report_date=current_time.strftime("%Y-%m-%d %H:%M:%S"),
-                                       current_year=current_time.year)
-        
-        # 生成PDF
-        font_config = FontConfiguration()
-        html = HTML(string=rendered_html)
-        pdf_file = io.BytesIO()
-        html.write_pdf(target=pdf_file, font_config=font_config)
-        pdf_file.seek(0)
-        
-        # 设置文件名
-        filename = f"BTC_Mining_Report_{current_time.strftime('%Y%m%d_%H%M%S')}.pdf"
-        
-        # 返回PDF文件
-        return send_file(
-            pdf_file,
-            mimetype='application/pdf',
-            as_attachment=True,
-            download_name=filename
-        )
-        
-    except Exception as e:
-        logging.error(f"生成PDF报告时出错: {str(e)}")
-        import traceback
-        logging.error(traceback.format_exc())
-        if g.language == 'en':
-            return jsonify({'success': False, 'error': f'Error generating PDF report: {str(e)}'}), 500
-        else:
-            return jsonify({'success': False, 'error': f'生成PDF报告时出错: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
