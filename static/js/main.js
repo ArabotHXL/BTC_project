@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if (data && data.success) {
                         // 更新UI (Update UI)
-                        if (btcPriceEl) btcPriceEl.textContent = formatCurrency(data.price);
+                        if (btcPriceEl) btcPriceEl.textContent = formatCurrency(data.price, 2);
                         if (networkDifficultyEl) networkDifficultyEl.textContent = formatNumber(data.difficulty) + 'T';
                         if (networkHashrateEl) networkHashrateEl.textContent = formatNumber(data.hashrate) + ' EH/s';
                         if (blockRewardEl) blockRewardEl.textContent = formatNumber(data.block_reward) + ' BTC';
@@ -286,7 +286,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var lastBlockReward = localStorage.getItem('last_block_reward');
         
         if (lastBtcPrice && btcPriceEl) {
-            btcPriceEl.textContent = formatCurrency(parseFloat(lastBtcPrice));
+            btcPriceEl.textContent = formatCurrency(parseFloat(lastBtcPrice), 2);
             if (useRealTimeCheckbox && useRealTimeCheckbox.checked && btcPriceInput) {
                 btcPriceInput.value = parseFloat(lastBtcPrice).toFixed(2);
                 btcPriceInput.disabled = true;
@@ -500,7 +500,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 networkHashrateEl.textContent = formatNumber(data.network_data.network_hashrate, 2) + ' EH/s';
             }
             if (currentBtcPriceEl) {
-                currentBtcPriceEl.textContent = formatCurrency(data.network_data.btc_price);
+                currentBtcPriceEl.textContent = formatCurrency(data.network_data.btc_price, 2);
             }
             if (blockRewardEl) {
                 blockRewardEl.textContent = formatNumber(data.network_data.block_reward, 4) + ' BTC';
@@ -633,7 +633,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (hostBreakEvenBtcEl && data.break_even) {
-            hostBreakEvenBtcEl.textContent = formatCurrency(data.break_even.btc_price);
+            hostBreakEvenBtcEl.textContent = formatCurrency(data.break_even.btc_price, 2);
         }
         
         if (optimalCurtailmentEl && data.optimization) {
@@ -733,7 +733,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (clientBreakEvenBtcEl && data.break_even) {
-            clientBreakEvenBtcEl.textContent = formatCurrency(data.break_even.btc_price);
+            clientBreakEvenBtcEl.textContent = formatCurrency(data.break_even.btc_price, 2);
         }
     }
     
