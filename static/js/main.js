@@ -1138,6 +1138,115 @@ document.addEventListener('DOMContentLoaded', function() {
         return formatter.format(value);
     }
     
+    // 生成PDF报告 (Generate PDF report)
+    function generatePdfReport(data) {
+        // 检查数据有效性
+        if (!data || !data.success) {
+            showError('数据无效，无法生成PDF报告。(Invalid data, cannot generate PDF report.)');
+            return;
+        }
+        
+        console.log('开始生成PDF报告...');
+        
+        // 添加当前语言到数据
+        const currentLang = document.querySelector('meta[name="language"]')?.content || 'zh';
+        data.language = currentLang;
+        
+        try {
+            // 显示加载状态
+            setLoadingState(true);
+            
+            // 创建一个显示下载中的弹出提示
+            var downloadingMessage = document.createElement('div');
+            downloadingMessage.className = 'alert alert-info position-fixed top-0 start-50 translate-middle-x mt-3';
+            downloadingMessage.style.zIndex = '9999';
+            downloadingMessage.innerHTML = '<i class="bi bi-cloud-download me-2"></i>' + 
+                (currentLang === 'en' ? 'Generating PDF report...' : '正在生成PDF报告...');
+            document.body.appendChild(downloadingMessage);
+            
+            // 使用fetch API发送数据
+            fetch('/generate_pdf_report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                // 移除下载中提示
+                document.body.removeChild(downloadingMessage);
+                
+                if (!response.ok) {
+                    throw new Error('HTTP error ' + response.status);
+                }
+                
+                // 获取文件名（如果有）
+                var filename = '';
+                var disposition = response.headers.get('Content-Disposition');
+                
+                if (disposition && disposition.indexOf('attachment') !== -1) {
+                    var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                    var matches = filenameRegex.exec(disposition);
+                    if (matches != null && matches[1]) { 
+                        filename = matches[1].replace(/['"]/g, '');
+                    }
+                }
+                
+                if (!filename) {
+                    filename = 'BTC_Mining_Report.pdf';
+                }
+                
+                // 将响应转换为blob
+                return response.blob().then(blob => {
+                    return {
+                        blob: blob,
+                        filename: filename
+                    };
+                });
+            })
+            .then(data => {
+                // 创建一个下载链接
+                var downloadUrl = window.URL.createObjectURL(data.blob);
+                var a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = downloadUrl;
+                a.download = data.filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(downloadUrl);
+                document.body.removeChild(a);
+                
+                // 显示成功消息
+                var successMsg = document.createElement('div');
+                successMsg.className = 'alert alert-success position-fixed top-0 start-50 translate-middle-x mt-3';
+                successMsg.style.zIndex = '9999';
+                successMsg.innerHTML = '<i class="bi bi-check-circle me-2"></i>' + 
+                    (currentLang === 'en' ? 'PDF report has been downloaded successfully!' : 'PDF报告已成功下载！');
+                document.body.appendChild(successMsg);
+                
+                // 3秒后自动关闭成功消息
+                setTimeout(function() {
+                    document.body.removeChild(successMsg);
+                }, 3000);
+            })
+            .catch(error => {
+                console.error('PDF生成错误:', error);
+                showError(currentLang === 'en' ? 
+                    'Error generating PDF report. Please try again.' : 
+                    'PDF报告生成错误，请重试。');
+            })
+            .finally(() => {
+                setLoadingState(false);
+            });
+        } catch (error) {
+            console.error('PDF生成过程中发生错误:', error);
+            showError(currentLang === 'en' ? 
+                'An error occurred while generating the PDF report.' : 
+                'PDF报告生成过程中发生错误。');
+            setLoadingState(false);
+        }
+    }
+    
     // 调用初始化函数 (Call init function)
     init();
 });

@@ -8,7 +8,8 @@ import requests
 import io
 import tempfile
 from datetime import datetime, timedelta
-from weasyprint import HTML
+from weasyprint import HTML, CSS
+from weasyprint.text.fonts import FontConfiguration
 from auth import verify_email, login_required
 from mining_calculator import (
     MINER_DATA,
@@ -1177,9 +1178,10 @@ def generate_pdf_report():
                                        current_year=current_time.year)
         
         # 生成PDF
+        font_config = FontConfiguration()
         html = HTML(string=rendered_html)
         pdf_file = io.BytesIO()
-        html.write_pdf(pdf_file)
+        html.write_pdf(target=pdf_file, font_config=font_config)
         pdf_file.seek(0)
         
         # 设置文件名
