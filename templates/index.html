@@ -180,11 +180,25 @@
                                     <div class="form-text">{% if current_lang == 'en' %}Total hashrate will be calculated automatically if miner model is selected{% else %}如果选择了矿机型号，总算力将自动计算{% endif %}</div>
                                 </div>
 
+                                <!-- Total Hashrate -->
+                                <div class="mb-3">
+                                    <label for="total-hashrate" class="form-label">总算力 / Total Hashrate (TH/s)</label>
+                                    <input type="number" class="form-control" id="total-hashrate" name="total_hashrate" readonly>
+                                    <div class="form-text">总算力 = 单台算力 × 矿机数量 / Total hashrate = Single miner hashrate × Miner count</div>
+                                </div>
+
                                 <!-- Power consumption -->
                                 <div class="mb-3">
                                     <label for="power-consumption" class="form-label">{{ t('power_consumption') }} (W)</label>
                                     <input type="number" class="form-control" id="power-consumption" name="power_consumption" value="3000" min="0">
-                                    <div class="form-text">{% if current_lang == 'en' %}Total power will be calculated automatically if miner model is selected{% else %}如果选择了矿机型号，总功耗将自动计算{% endif %}</div>
+                                    <div class="form-text">{% if current_lang == 'en' %}Single miner power consumption{% else %}单台矿机功耗{% endif %}</div>
+                                </div>
+                                
+                                <!-- Total Power Consumption -->
+                                <div class="mb-3">
+                                    <label for="total-power" class="form-label">总功耗 / Total Power (W)</label>
+                                    <input type="number" class="form-control" id="total-power" name="total_power" readonly>
+                                    <div class="form-text">总功耗 = 单台功耗 × 矿机数量 / Total power = Single miner power × Miner count</div>
                                 </div>
 
                                 <!-- Electricity cost -->
