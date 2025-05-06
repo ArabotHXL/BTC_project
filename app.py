@@ -1175,22 +1175,34 @@ def get_profit_chart_data():
             logging.error(f"Error parsing client electricity cost: {request.form.get('client_electricity_cost')} - {str(e)}")
             client_electricity_cost = 0
         
+        # 获取所选加密货币类型
+        crypto_symbol = request.form.get('crypto_currency', 'BTC')
+        logging.info(f"Cryptocurrency selected for profit chart: {crypto_symbol}")
+        
+        # 导入加密货币数据
+        from crypto_data import CRYPTOCURRENCIES, get_real_time_crypto_price
+        
+        # 获取加密货币信息
+        crypto_info = CRYPTOCURRENCIES.get(crypto_symbol, CRYPTOCURRENCIES['BTC'])
+        
         # 禁用缓存以避免使用旧的数据（此前的缓存可能包含错误数据）
         # 生成新的价格和电费成本范围
         try:
-            current_btc_price = get_real_time_btc_price()
-            logging.info(f"Current BTC price fetched: ${current_btc_price}")
+            current_price = get_real_time_crypto_price(crypto_symbol)
+            if current_price is None:
+                current_price = crypto_info.get('default_price', 80000)
+            logging.info(f"Current {crypto_symbol} price fetched: ${current_price}")
         except Exception as e:
-            logging.error(f"Error getting real-time BTC price: {str(e)}, using default")
-            current_btc_price = 50000  # 使用默认值
+            logging.error(f"Error getting real-time {crypto_symbol} price: {str(e)}, using default")
+            current_price = crypto_info.get('default_price', 80000)  # 使用默认值
             
         # 创建价格和电费点的网格(5x5)
-        btc_price_factors = [0.5, 0.75, 1.0, 1.25, 1.5]
-        btc_prices = [round(current_btc_price * factor) for factor in btc_price_factors]
+        price_factors = [0.5, 0.75, 1.0, 1.25, 1.5]
+        crypto_prices = [round(current_price * factor) for factor in price_factors]
         electricity_costs = [0.02, 0.04, 0.06, 0.08, 0.10]
         
-        logging.info(f"Generating profit chart for {miner_model} with {miner_count} miners")
-        logging.info(f"Using BTC prices: {btc_prices}")
+        logging.info(f"Generating profit chart for {miner_model} with {miner_count} miners for {crypto_symbol}")
+        logging.info(f"Using {crypto_symbol} prices: {crypto_prices}")
         logging.info(f"Using electricity costs: {electricity_costs}")
         
         # 获取热力图数据
@@ -1199,9 +1211,10 @@ def get_profit_chart_data():
             chart_data = generate_profit_chart_data(
                 miner_model=miner_model,
                 electricity_costs=electricity_costs,
-                btc_prices=btc_prices,
+                crypto_prices=crypto_prices,  # 更改为crypto_prices
                 miner_count=miner_count,
-                client_electricity_cost=client_electricity_cost if client_electricity_cost > 0 else None
+                client_electricity_cost=client_electricity_cost if client_electricity_cost > 0 else None,
+                crypto_symbol=crypto_symbol  # 传递加密货币符号
             )
             
             # 验证返回的数据结构

@@ -46,8 +46,13 @@
                     
                     <!-- Network Stats -->
                     <div id="network-stats-container" class="d-flex gap-3 text-center">
+                        <!-- 显示当前加密货币名称 -->
                         <div class="stats-item">
-                            <span class="badge bg-warning">{{ t('crypto_price') if 'crypto_price' in t_functions else '加密货币价格' }}</span>
+                            <span class="badge bg-primary">{{ t('crypto_name') if 'crypto_name' in t_functions else '币种' }}</span>
+                            <span id="crypto-name" class="stats-value">比特币</span>
+                        </div>
+                        <div class="stats-item">
+                            <span class="badge bg-warning">{{ t('crypto_price') if 'crypto_price' in t_functions else '价格' }}</span>
                             <span id="crypto-price" class="stats-value">$0</span>
                         </div>
                         <div class="stats-item">
