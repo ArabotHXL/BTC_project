@@ -568,9 +568,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         // 更新UI (Update UI)
                         if (cryptoPriceEl) cryptoPriceEl.textContent = formatCurrency(data.price, 2);
                         
-                        // 获取适合当前加密货币的单位
-                        var difficultyUnit = getAppropriateDifficultyUnit(currentCrypto);
-                        var hashrateUnit = getAppropriateHashrateUnit(currentCrypto);
+                        // 从响应中获取单位或使用默认单位
+                        var difficultyUnit = data.unit ? data.unit.replace('/s', '') : getAppropriateDifficultyUnit(currentCrypto);
+                        var hashrateUnit = data.unit || getAppropriateHashrateUnit(currentCrypto);
                         
                         if (networkDifficultyEl) networkDifficultyEl.textContent = formatNumber(data.difficulty) + difficultyUnit;
                         if (networkHashrateEl) networkHashrateEl.textContent = formatNumber(data.hashrate) + ' ' + hashrateUnit;
@@ -578,6 +578,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         // 更新加密货币符号
                         if (cryptoSymbolEl) cryptoSymbolEl.textContent = currentCrypto;
+                        
+                        // 更新算法信息
+                        var algorithmInfo = document.getElementById('miner-algorithm-info');
+                        if (algorithmInfo && data.algorithm) {
+                            algorithmInfo.textContent = '算法: ' + data.algorithm + ' | ';
+                        }
+                        
+                        // 显示币种中文名称（如果是中文界面）
+                        var currentLang = document.querySelector('meta[name="language"]')?.content || 'zh';
+                        var cryptoNameEl = document.getElementById('crypto-name');
+                        if (cryptoNameEl) {
+                            cryptoNameEl.textContent = currentLang === 'zh' ? data.crypto_chinese_name : data.crypto_name;
+                        }
                         
                         // 更新价格输入框 (Update price input)
                         if (useRealTimeCheckbox && useRealTimeCheckbox.checked && btcPriceInput) {

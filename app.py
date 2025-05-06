@@ -893,11 +893,15 @@ def get_network_stats():
         return jsonify({
             'success': True,
             'crypto_symbol': crypto_symbol,
+            'crypto_name': crypto_info.get('name', 'Bitcoin'),
+            'crypto_chinese_name': crypto_info.get('chinese_name', '比特币'),
+            'algorithm': crypto_info.get('algorithm', 'SHA-256'),
             'price': price,
             'difficulty': difficulty / 10**12 if crypto_symbol == 'BTC' else difficulty,  # BTC转换为T
             'hashrate': hashrate,  # 单位根据货币不同而不同
             'block_reward': block_reward,
-            'unit': crypto_info.get('unit', 'TH/s')
+            'unit': crypto_info.get('unit', 'TH/s'),
+            'block_time': crypto_info.get('block_time', 600)  # 块时间（秒）
         })
     except Exception as e:
         logging.error(f"获取网络状态统计时发生错误: {str(e)}")
@@ -905,11 +909,15 @@ def get_network_stats():
         return jsonify({
             'success': True,
             'crypto_symbol': 'BTC',
+            'crypto_name': 'Bitcoin',
+            'crypto_chinese_name': '比特币',
+            'algorithm': 'SHA-256',
             'price': 80000,  # 默认BTC价格
             'difficulty': 119.12,  # 默认BTC难度，单位T
             'hashrate': 700,  # 默认BTC哈希率，单位EH/s
             'block_reward': 3.125,  # 默认BTC区块奖励
-            'unit': 'TH/s'
+            'unit': 'TH/s',
+            'block_time': 600  # 默认块时间（秒）
         })
 
 @app.route('/miners', methods=['GET'])
