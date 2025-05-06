@@ -74,7 +74,7 @@ function directPdfExport() {
         
         // 发送请求
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', '/generate_pdf', true);
+        xhr.open('POST', '/generate_pdf_report', true);
         xhr.responseType = 'blob'; // 设置响应类型为blob
         
         xhr.onload = function() {
