@@ -244,6 +244,9 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         running_miner_count = int(miner_count * curtailment_factor)
         shutdown_miner_count = miner_count - running_miner_count
         
+        # 添加日志，记录限电率和矿机数量计算结果
+        logging.info(f"Curtailment计算: 限电率={curtailment}%, 系数={curtailment_factor}, 总矿机={miner_count}, 运行={running_miner_count}, 停机={shutdown_miner_count}")
+        
         # === BTC 产出计算 (BTC Output Calculation) ===
         # Method 1: Network Hashrate Based (算法1：基于网络实际哈希率)
         # 使用API返回的实际网络哈希率进行计算，但增加合理性检查

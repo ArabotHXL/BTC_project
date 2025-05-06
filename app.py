@@ -529,7 +529,9 @@ def calculate():
             }), 400
             
         try:
-            curtailment = float(request.form.get('curtailment', 0))
+            curtailment_str = request.form.get('curtailment', '0')
+            curtailment = float(curtailment_str)
+            logging.info(f"解析限电率: 原始值='{curtailment_str}'，转换后={curtailment}%")
         except ValueError as e:
             logging.error(f"Invalid curtailment value: {request.form.get('curtailment')} - {str(e)}")
             curtailment = 0
