@@ -182,8 +182,24 @@
                                 <!-- Miner count (can be manually adjusted) -->
                                 <div class="mb-3">
                                     <label for="miner-count" class="form-label">{{ t('miner_count') }}</label>
-                                    <input type="number" class="form-control" id="miner-count" name="miner_count" value="1" min="1">
+                                    <input type="number" class="form-control" id="miner-count" name="miner_count" value="1" min="1" oninput="updateSitePowerDirectly()">
                                     <div class="form-text">{% if current_lang == 'en' %}Number of miners. Adjusting this will recalculate the site power.{% else %}矿机数量。调整此值会重新计算矿场功率。{% endif %}</div>
+                                    <script>
+                                    function updateSitePowerDirectly() {
+                                        try {
+                                            var minerCount = parseInt(document.getElementById('miner-count').value) || 0;
+                                            var powerWatt = parseFloat(document.getElementById('power-consumption').value) || 0;
+                                            
+                                            if (minerCount > 0 && powerWatt > 0) {
+                                                var requiredPowerMw = (minerCount * powerWatt) / 1000000;
+                                                document.getElementById('site-power-mw').value = requiredPowerMw.toFixed(2);
+                                                console.log("[直接更新] 矿机数量: " + minerCount + ", 单机功率: " + powerWatt + ", 计算得到矿场功率: " + requiredPowerMw.toFixed(2) + "MW");
+                                            }
+                                        } catch (error) {
+                                            console.error("直接更新矿场功率时出错:", error);
+                                        }
+                                    }
+                                    </script>
                                 </div>
 
                                 <!-- 单矿机算力和功耗字段（隐藏）-->
