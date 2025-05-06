@@ -419,6 +419,9 @@ def calculate():
         # 初始化错误收集列表
         input_errors = []
         
+        # 获取加密货币符号，默认为BTC (Get cryptocurrency symbol, default is BTC)
+        crypto_symbol = request.form.get('crypto_symbol', 'BTC')
+        
         # Get values from the form submission with detailed error handling
         try:
             hashrate = float(request.form.get('hashrate', 0))
@@ -581,39 +584,57 @@ def calculate():
                 curtailment=curtailment,
                 host_investment=host_investment,
                 client_investment=client_investment,
-                maintenance_fee=maintenance_fee
+                maintenance_fee=maintenance_fee,
+                crypto_symbol=crypto_symbol  # 传递加密货币符号
             )
         except Exception as calc_error:
             # 如果计算过程中出错，使用基本估算
             logging.error(f"计算过程中出错，使用基本估算: {calc_error}")
             
             # 创建一个基本结果对象
-            if miner_model and miner_model in MINER_DATA:
+            # 导入多币种数据
+            from crypto_data import CRYPTOCURRENCIES, MINER_DATA_BY_ALGORITHM
+            
+            # 获取加密货币信息
+            crypto_info = CRYPTOCURRENCIES.get(crypto_symbol, CRYPTOCURRENCIES['BTC'])
+            crypto_name = crypto_info.get('name', 'Bitcoin')
+            crypto_algorithm = crypto_info.get('algorithm', 'SHA-256')
+            
+            # 获取相应算法的矿机数据
+            crypto_miners = MINER_DATA_BY_ALGORITHM.get(crypto_algorithm, MINER_DATA)
+            
+            if miner_model and miner_model in crypto_miners:
                 # 获取基本参数
-                miner_specs = MINER_DATA[miner_model]
+                miner_specs = crypto_miners[miner_model]
                 total_hashrate = miner_specs["hashrate"] * miner_count
                 total_power = miner_specs["power_watt"] * miner_count
                 
-                # 使用简单估算
-                daily_btc = total_hashrate * 0.00000200  # 估算每TH每天产出
-                monthly_btc = daily_btc * 30.5
+                # 根据货币进行不同估算
+                daily_coin_output = total_hashrate * crypto_info.get('daily_output_per_unit', 0.00000200)  # 估算每单位算力每天产出
+                monthly_coin_output = daily_coin_output * 30.5
                 monthly_power_kwh = total_power * 24 * 30.5 / 1000
                 
                 # 估算收入和成本
-                price_to_use = btc_price if not use_real_time else 80000
-                monthly_revenue = monthly_btc * price_to_use
+                default_price = crypto_info.get('default_price', 80000)
+                price_to_use = btc_price if not use_real_time else default_price
+                monthly_revenue = monthly_coin_output * price_to_use
                 monthly_cost = monthly_power_kwh * electricity_cost
                 
                 # 确保维护费被考虑进利润计算
                 monthly_profit = monthly_revenue - monthly_cost - maintenance_fee
                 
+                # 创建结果对象，使用动态的加密货币信息
+                coin_key = crypto_symbol.lower() + '_mined'  # 例如: 'btc_mined', 'ltc_mined' 等
+                
                 result = {
                     'success': True,
-                    'estimation_note': '由于实时API数据获取失败，使用估算值',
-                    'btc_mined': {
-                        'daily': daily_btc,
-                        'monthly': monthly_btc,
-                        'yearly': monthly_btc * 12
+                    'crypto_symbol': crypto_symbol,
+                    'crypto_name': crypto_name,
+                    'estimation_note': f'由于实时API数据获取失败，使用{crypto_name}估算值',
+                    f'{coin_key}': {
+                        'daily': daily_coin_output,
+                        'monthly': monthly_coin_output,
+                        'yearly': monthly_coin_output * 12
                     },
                     'inputs': {
                         'hashrate': total_hashrate,
@@ -622,10 +643,10 @@ def calculate():
                         'miner_count': miner_count
                     },
                     'network_data': {
-                        'btc_price': price_to_use,
-                        'network_difficulty': 119.12,  # T
-                        'network_hashrate': 700,  # EH/s
-                        'block_reward': 3.125
+                        'price': price_to_use,
+                        'network_difficulty': crypto_info.get('default_difficulty', 119.12),  # T
+                        'network_hashrate': crypto_info.get('default_hashrate', 700),  # EH/s
+                        'block_reward': crypto_info.get('default_block_reward', 3.125)
                     },
                     'profit': {
                         'daily': monthly_profit / 30.5,
@@ -656,18 +677,30 @@ def calculate():
         if user_role not in ['owner', 'admin', 'mining_site']:
             logging.info("用户没有矿场主权限，过滤敏感数据")
             
+            # 获取加密货币信息
+            crypto_symbol = result.get('crypto_symbol', 'BTC')
+            coin_key = crypto_symbol.lower() + '_mined'  # 例如: 'btc_mined', 'ltc_mined' 等
+            
+            # 为向后兼容，确保老的btc_mined键也存在
+            mined_key = 'btc_mined'
+            if coin_key in result:
+                mined_key = coin_key
+                
             # 保留必要数据，移除敏感数据
             filtered_result = {
                 'success': True,  # 确保添加成功标志
                 'timestamp': result.get('timestamp', datetime.now().isoformat()),
-                'btc_mined': result.get('btc_mined', {}),
+                'crypto_symbol': crypto_symbol,  # 加密货币符号
+                'crypto_name': result.get('crypto_name', 'Bitcoin'),  # 加密货币名称
+                mined_key: result.get(mined_key, result.get('btc_mined', {})),  # 使用正确的挖矿产出键
                 'client_electricity_cost': result.get('client_electricity_cost', {}),
                 'client_profit': result.get('client_profit', {}),
                 'inputs': result.get('inputs', {}),
                 'network_data': result.get('network_data', {}),
                 'revenue': result.get('revenue', {}),  # 添加收入信息
                 'break_even': {
-                    'btc_price': result.get('break_even', {}).get('btc_price', 0)
+                    'price': result.get('break_even', {}).get('price', 
+                            result.get('break_even', {}).get('btc_price', 0))
                 },
                 'optimization': result.get('optimization', {})  # 添加矿机运行状态数据
             }

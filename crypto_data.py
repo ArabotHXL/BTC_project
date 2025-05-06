@@ -40,7 +40,13 @@ CRYPTOCURRENCIES = {
             "mining_competition": 9,
             "regulatory_risk": 5,
             "adoption_rate": 9
-        }
+        },
+        # 默认值和估算常量
+        "daily_output_per_unit": 0.00000200,  # 每TH/s每天的BTC产出估算
+        "default_price": 80000,  # 默认价格（美元）
+        "default_difficulty": 119.12,  # 默认难度（T）
+        "default_hashrate": 700,  # 默认哈希率（EH/s）
+        "default_block_reward": 3.125  # 默认区块奖励
     },
     "LTC": {
         "name": "Litecoin",
@@ -63,7 +69,13 @@ CRYPTOCURRENCIES = {
             "mining_competition": 6,
             "regulatory_risk": 4,
             "adoption_rate": 5
-        }
+        },
+        # 默认值和估算常量
+        "daily_output_per_unit": 0.00000850,  # 每GH/s每天的LTC产出估算
+        "default_price": 90,  # 默认价格（美元）
+        "default_difficulty": 21.32,  # 默认难度（M）
+        "default_hashrate": 800,  # 默认哈希率（TH/s）
+        "default_block_reward": 6.25  # 默认区块奖励
     },
     "ETC": {
         "name": "Ethereum Classic",
@@ -86,7 +98,13 @@ CRYPTOCURRENCIES = {
             "mining_competition": 5,
             "regulatory_risk": 4,
             "adoption_rate": 3
-        }
+        },
+        # 默认值和估算常量
+        "daily_output_per_unit": 0.00001500,  # 每MH/s每天的ETC产出估算
+        "default_price": 30,  # 默认价格（美元）
+        "default_difficulty": 115.2,  # 默认难度（TH）
+        "default_hashrate": 25,  # 默认哈希率（TH/s）
+        "default_block_reward": 2.56  # 默认区块奖励
     },
     "DOGE": {
         "name": "Dogecoin",
@@ -109,7 +127,13 @@ CRYPTOCURRENCIES = {
             "mining_competition": 4,
             "regulatory_risk": 5,
             "adoption_rate": 7
-        }
+        },
+        # 默认值和估算常量
+        "daily_output_per_unit": 0.02300000,  # 每GH/s每天的DOGE产出估算
+        "default_price": 0.12,  # 默认价格（美元）
+        "default_difficulty": 12.15,  # 默认难度（M）
+        "default_hashrate": 750,  # 默认哈希率（TH/s）
+        "default_block_reward": 10000  # 默认区块奖励
     },
     "RVN": {
         "name": "Ravencoin",
@@ -132,7 +156,13 @@ CRYPTOCURRENCIES = {
             "mining_competition": 3,
             "regulatory_risk": 3,
             "adoption_rate": 2
-        }
+        },
+        # 默认值和估算常量
+        "daily_output_per_unit": 25.0,  # 每MH/s每天的RVN产出估算
+        "default_price": 0.02,  # 默认价格（美元）
+        "default_difficulty": 85.0,  # 默认难度（K）
+        "default_hashrate": 8.5,  # 默认哈希率（TH/s）
+        "default_block_reward": 2500  # 默认区块奖励
     },
     "ZEC": {
         "name": "Zcash",
