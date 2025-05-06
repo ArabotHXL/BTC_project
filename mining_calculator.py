@@ -716,8 +716,8 @@ def generate_profit_chart_data(miner_model, electricity_costs, crypto_prices, mi
                         monthly_profit = customer_monthly_revenue - customer_monthly_cost
                         
                         # 记录日志帮助调试（仅在第一个点记录）
-                        if price == btc_prices[0] and cost == electricity_costs[0]:
-                            print(f"客户模式热力图 - BTC价格: ${price}, 电费: ${used_electricity_cost}/kWh, 月利润: ${monthly_profit}, BTC产出: {monthly_btc}")
+                        if price == crypto_prices[0] and cost == electricity_costs[0]:
+                            print(f"客户模式热力图 - {crypto_symbol}价格: ${price}, 电费: ${used_electricity_cost}/kWh, 月利润: ${monthly_profit}, {crypto_symbol}产出: {monthly_btc}")
                     else:
                         # === 矿场主模式 ===
                         # 在矿场主模式下，有两种利润模式：
@@ -741,16 +741,17 @@ def generate_profit_chart_data(miner_model, electricity_costs, crypto_prices, mi
                         monthly_profit = mining_profit
                         
                         # 记录日志帮助调试（仅在第一个点记录）
-                        if price == btc_prices[0] and cost == electricity_costs[0]:
-                            print(f"矿场主模式热力图 - BTC价格: ${price}, 矿场电费: ${cost}/kWh, 比特币收入: ${btc_revenue}, 电费成本: ${mining_cost}, 维护: ${maintenance_monthly}, 利润: ${monthly_profit}")
+                        if price == crypto_prices[0] and cost == electricity_costs[0]:
+                            print(f"矿场主模式热力图 - {crypto_symbol}价格: ${price}, 矿场电费: ${cost}/kWh, 加密货币收入: ${btc_revenue}, 电费成本: ${mining_cost}, 维护: ${maintenance_monthly}, 利润: ${monthly_profit}")
                 except Exception as e:
                     # 捕获计算过程中的任何错误
-                    logging.error(f"热力图数据点计算错误 - BTC价格: ${price}, 电费: ${cost}/kWh, 错误: {str(e)}")
+                    logging.error(f"热力图数据点计算错误 - {crypto_symbol}价格: ${price}, 电费: ${cost}/kWh, 错误: {str(e)}")
                     # 使用默认利润以便继续生成图表
                     monthly_profit = 0
                 
                 profit_data.append({
-                    'btc_price': price,
+                    'crypto_price': price,
+                    'crypto_symbol': crypto_symbol,
                     'electricity_cost': cost,
                     'monthly_profit': monthly_profit
                 })
