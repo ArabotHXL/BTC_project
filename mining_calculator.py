@@ -193,11 +193,21 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
     - Dictionary containing profitability metrics including ROI calculations
     """
     try:
+        # Get cryptocurrency specific data and defaults
+        crypto_data = CRYPTOCURRENCIES.get(crypto_symbol, CRYPTOCURRENCIES["BTC"])
+        crypto_algorithm = crypto_data.get("algorithm", "SHA-256")
+        
+        # Get appropriate miner data for the cryptocurrency algorithm
+        miner_data_for_algorithm = MINER_DATA_BY_ALGORITHM.get(crypto_algorithm, MINER_DATA)
+        
+        # Log selected cryptocurrency
+        logging.info(f"Calculating profitability for {crypto_symbol} using {crypto_algorithm} algorithm")
+        
         # Get values from miner model if provided
-        if miner_model and miner_model in MINER_DATA:
+        if miner_model and miner_model in miner_data_for_algorithm:
             # Get single miner specs
-            single_hashrate = MINER_DATA[miner_model]["hashrate"]
-            single_power_watt = MINER_DATA[miner_model]["power_watt"]
+            single_hashrate = miner_data_for_algorithm[miner_model]["hashrate"]
+            single_power_watt = miner_data_for_algorithm[miner_model]["power_watt"]
             
             # Calculate miner count from site power if provided
             if site_power_mw and site_power_mw > 0:
@@ -209,20 +219,52 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             hashrate = single_hashrate * miner_count
             power_consumption = single_power_watt * miner_count
         
+        # Set cryptocurrency-specific default values
+        default_price = crypto_data.get("default_price", DEFAULT_BTC_PRICE)
+        default_difficulty = crypto_data.get("default_difficulty", DEFAULT_NETWORK_DIFFICULTY / 10**12)  # Convert to appropriate scale
+        default_hashrate = crypto_data.get("default_hashrate", DEFAULT_NETWORK_HASHRATE)
+        default_block_reward = crypto_data.get("default_block_reward", BLOCK_REWARD)
+        blocks_per_day = 86400 / crypto_data.get("block_time", 600)  # Default is BTC block time (600 seconds)
+        
+        # Log cryptocurrency parameters
+        logging.info(f"Using {crypto_symbol} parameters - Block time: {crypto_data.get('block_time', 600)}s, Blocks per day: {blocks_per_day}")
+        
         # Get real-time data if requested
         if use_real_time_data:
-            real_time_btc_price = get_real_time_btc_price()
-            difficulty_raw = get_real_time_difficulty()
-            real_time_btc_hashrate = get_real_time_btc_hashrate() or DEFAULT_NETWORK_HASHRATE  # EH/s
-            current_block_reward = get_real_time_block_reward()
+            if crypto_symbol == "BTC":
+                # Use Bitcoin-specific functions
+                real_time_crypto_price = get_real_time_btc_price()
+                difficulty_raw = get_real_time_difficulty()
+                real_time_network_hashrate = get_real_time_btc_hashrate() or default_hashrate
+                current_block_reward = get_real_time_block_reward()
+            else:
+                # Use generic functions for other cryptocurrencies
+                real_time_crypto_price = get_real_time_crypto_price(crypto_symbol)
+                
+                # Get network data (difficulty, hashrate, block reward)
+                network_data = get_real_time_network_data(crypto_symbol)
+                if network_data:
+                    difficulty_raw = network_data.get('difficulty', default_difficulty)
+                    if crypto_symbol == "BTC":
+                        difficulty_raw = difficulty_raw * 10**12  # Convert from T to raw value if BTC
+                    real_time_network_hashrate = network_data.get('hashrate', default_hashrate)
+                    current_block_reward = network_data.get('block_reward', default_block_reward)
+                else:
+                    # Use defaults if network data is not available
+                    difficulty_raw = default_difficulty
+                    if crypto_symbol == "BTC":
+                        difficulty_raw = difficulty_raw * 10**12  # Convert from T to raw value if BTC
+                    real_time_network_hashrate = default_hashrate
+                    current_block_reward = default_block_reward
         else:
-            real_time_btc_price = btc_price or DEFAULT_BTC_PRICE
-            difficulty_raw = difficulty or DEFAULT_NETWORK_DIFFICULTY
-            real_time_btc_hashrate = DEFAULT_NETWORK_HASHRATE  # EH/s
-            current_block_reward = BLOCK_REWARD
+            # Use provided values or defaults
+            real_time_crypto_price = btc_price or default_price
+            difficulty_raw = difficulty or (default_difficulty * 10**12 if crypto_symbol == "BTC" else default_difficulty)
+            real_time_network_hashrate = default_hashrate
+            current_block_reward = default_block_reward
         
         # Use provided values if given
-        btc_price = btc_price or real_time_btc_price
+        crypto_price = btc_price or real_time_crypto_price
         difficulty = difficulty_raw
         block_reward_to_use = block_reward or current_block_reward
         
@@ -240,72 +282,124 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         # 添加日志，记录限电率和矿机数量计算结果
         logging.info(f"Curtailment计算: 限电率={curtailment}%, 系数={curtailment_factor}, 总矿机={miner_count}, 运行={running_miner_count}, 停机={shutdown_miner_count}")
         
-        # === BTC 产出计算 (BTC Output Calculation) ===
+        # === 加密货币产出计算 (Cryptocurrency Output Calculation) ===
+        # 获取加密货币特定的区块时间和每日区块数
+        block_time = crypto_data.get("block_time", 600)  # 区块时间，默认为BTC的600秒
+        daily_blocks = 86400 / block_time  # 每日区块数
+        
         # Method 1: Network Hashrate Based (算法1：基于网络实际哈希率)
         # 使用API返回的实际网络哈希率进行计算，但增加合理性检查
         difficulty_factor = 2 ** 32
         
-        # 计算基于难度的参考哈希率，用于合理性检查
-        network_hashrate_from_difficulty = (difficulty_raw * difficulty_factor) / 600  # H/s
-        network_TH_from_difficulty = network_hashrate_from_difficulty / 1e12  # 从H/s转换为TH/s
+        # 按币种获取网络哈希率的转换单位
+        hashrate_unit = crypto_data.get("unit", "TH/s")
         
-        # 将API返回的哈希率从EH/s转换为TH/s
-        api_network_TH = real_time_btc_hashrate * 1000000  # 从EH/s转换为TH/s
+        # 计算基于难度的参考哈希率，用于合理性检查
+        block_time_to_use = crypto_data.get("block_time", 600)
+        network_hashrate_from_difficulty = (difficulty_raw * difficulty_factor) / block_time_to_use  # H/s
+        
+        # 转换网络哈希率到适当单位
+        unit_multiplier = 1
+        if hashrate_unit == "TH/s":
+            network_standard_from_difficulty = network_hashrate_from_difficulty / 1e12
+            if crypto_symbol == "BTC":
+                api_network_standard = real_time_network_hashrate * 1000000  # EH/s → TH/s
+            else:
+                api_network_standard = real_time_network_hashrate
+            unit_multiplier = 1
+        elif hashrate_unit == "GH/s":
+            network_standard_from_difficulty = network_hashrate_from_difficulty / 1e9
+            api_network_standard = real_time_network_hashrate * 1000  # TH/s → GH/s
+            unit_multiplier = 1e-3
+        elif hashrate_unit == "MH/s":
+            network_standard_from_difficulty = network_hashrate_from_difficulty / 1e6
+            api_network_standard = real_time_network_hashrate * 1000000  # TH/s → MH/s
+            unit_multiplier = 1e-6
+        elif hashrate_unit == "kSol/s":
+            network_standard_from_difficulty = network_hashrate_from_difficulty / 1e3
+            api_network_standard = real_time_network_hashrate * 1000  # MSol/s → kSol/s
+            unit_multiplier = 1e-3
+        else:
+            # 默认转换为TH/s
+            network_standard_from_difficulty = network_hashrate_from_difficulty / 1e12
+            api_network_standard = real_time_network_hashrate
+            unit_multiplier = 1
         
         # 比较API哈希率和难度推导哈希率的差异
-        hashrate_ratio = api_network_TH / max(1, network_TH_from_difficulty)
+        hashrate_ratio = api_network_standard / max(1, network_standard_from_difficulty)
         
         # 如果API哈希率与难度推导哈希率相差过大(>50%)，使用加权平均值
         if hashrate_ratio > 1.5 or hashrate_ratio < 0.67:
-            print(f"API哈希率与难度推导哈希率差异过大 (比率: {hashrate_ratio:.2f})，使用加权平均值")
-            network_TH = (api_network_TH * 0.4 + network_TH_from_difficulty * 0.6)  # 偏向难度推导值，因为更稳定
+            logging.info(f"API哈希率与难度推导哈希率差异过大 (比率: {hashrate_ratio:.2f})，使用加权平均值")
+            network_standard = (api_network_standard * 0.4 + network_standard_from_difficulty * 0.6)  # 偏向难度推导值，因为更稳定
         else:
             # 差异在合理范围内，直接使用API返回的哈希率
-            network_TH = api_network_TH
+            network_standard = api_network_standard
             
-        # 确保最小值
-        network_TH = max(1000, network_TH)  # 确保最小值为1000 TH/s
+        # 确保最小值，不同币种的最小值不同
+        min_hashrate = 1
+        if crypto_symbol == "BTC":
+            min_hashrate = 1000  # TH/s
+        elif crypto_symbol in ["LTC", "DOGE"]:
+            min_hashrate = 100  # GH/s
+        elif crypto_symbol in ["ETC", "RVN"]:
+            min_hashrate = 10  # MH/s
+        elif crypto_symbol == "ZEC":
+            min_hashrate = 10  # kSol/s
+            
+        network_standard = max(min_hashrate, network_standard)
         
         # 全网日产出 = 区块奖励 * 每日区块数
-        network_daily_btc = block_reward_to_use * BLOCKS_PER_DAY
-        # 每TH每日产出 = 全网日产出 / 全网TH
-        btc_per_th = network_daily_btc / network_TH
-        # 矿场每日产出 = 矿场TH * 每TH产出
-        site_daily_btc_output = site_total_hashrate * btc_per_th
-        site_monthly_btc_output = site_daily_btc_output * 30.5
+        network_daily_output = block_reward_to_use * daily_blocks
+        
+        # 每单位算力每日产出 = 全网日产出 / 全网算力
+        coin_per_unit = network_daily_output / network_standard
+        
+        # 矿场每日产出 = 矿场算力 * 每单位算力产出
+        site_daily_output = site_total_hashrate * coin_per_unit
+        site_monthly_output = site_daily_output * 30.5
         
         # 打印推导的网络哈希率与API返回的对比，便于调试
-        print(f"API Network Hashrate: {real_time_btc_hashrate:.2f} EH/s vs Derived from Difficulty: {network_TH_from_difficulty/1e6:.2f} EH/s")
+        logging.info(f"API Network Hashrate: {api_network_standard:.2f} {hashrate_unit} vs Derived from Difficulty: {network_standard_from_difficulty:.2f} {hashrate_unit}")
         
-        # 计算单个矿机每日BTC产出
+        # 计算单个矿机每日产出
         single_miner_hashrate = None
-        if miner_model and miner_model in MINER_DATA:
-            single_miner_hashrate = MINER_DATA[miner_model]["hashrate"]
-        daily_btc_per_miner = btc_per_th * (single_miner_hashrate if single_miner_hashrate else (hashrate / max(1, miner_count)))
+        if miner_model and miner_model in miner_data_for_algorithm:
+            single_miner_hashrate = miner_data_for_algorithm[miner_model]["hashrate"]
+        daily_coin_per_miner = coin_per_unit * (single_miner_hashrate if single_miner_hashrate else (hashrate / max(1, miner_count)))
         
         # Method 2: Difficulty Based (算法2：基于难度)
-        # 矿场H/s = 矿场TH/s * 1万亿
-        site_total_hashrate_Hs = site_total_hashrate * 1e12  # TH/s → H/s
+        # 矿场H/s = 矿场单位算力 * 单位转换
+        site_hashrate_Hs = site_total_hashrate
+        if hashrate_unit == "TH/s":
+            site_hashrate_Hs = site_total_hashrate * 1e12
+        elif hashrate_unit == "GH/s":
+            site_hashrate_Hs = site_total_hashrate * 1e9
+        elif hashrate_unit == "MH/s":
+            site_hashrate_Hs = site_total_hashrate * 1e6
+        elif hashrate_unit == "kSol/s":
+            site_hashrate_Hs = site_total_hashrate * 1e3
+            
         difficulty_factor = 2 ** 32
-        site_daily_btc_output_difficulty = (site_total_hashrate_Hs * block_reward_to_use * 86400) / (difficulty_raw * difficulty_factor)
-        site_monthly_btc_output_difficulty = site_daily_btc_output_difficulty * 30.5
+        site_daily_output_difficulty = (site_hashrate_Hs * block_reward_to_use * 86400) / (difficulty_raw * difficulty_factor)
+        site_monthly_output_difficulty = site_daily_output_difficulty * 30.5
         
         # 打印两种算法的结果，方便调试
-        print(f"Algorithm 1 (Network Based) - Daily BTC: {site_daily_btc_output:.8f}")
-        print(f"Algorithm 2 (Difficulty Based) - Daily BTC: {site_daily_btc_output_difficulty:.8f}")
+        logging.info(f"Algorithm 1 (Network Based) - Daily {crypto_symbol}: {site_daily_output:.8f}")
+        logging.info(f"Algorithm 2 (Difficulty Based) - Daily {crypto_symbol}: {site_daily_output_difficulty:.8f}")
         
         # 使用难度方法的结果作为最终结果（更准确）
         # 如果两种方法差异过大(>100%)，使用算法2
-        algo1_algo2_ratio = site_daily_btc_output / site_daily_btc_output_difficulty if site_daily_btc_output_difficulty > 0 else float('inf')
+        algo1_algo2_ratio = site_daily_output / site_daily_output_difficulty if site_daily_output_difficulty > 0 else float('inf')
         
         if algo1_algo2_ratio > 2 or algo1_algo2_ratio < 0.5:
-            print(f"警告: 算法1和算法2结果相差过大 (比率: {algo1_algo2_ratio:.2f})，使用算法2(基于难度)的结果")
-            daily_btc = site_daily_btc_output_difficulty
-            monthly_btc = site_monthly_btc_output_difficulty
+            logging.info(f"警告: 算法1和算法2结果相差过大 (比率: {algo1_algo2_ratio:.2f})，使用算法2(基于难度)的结果")
+            daily_coin = site_daily_output_difficulty
+            monthly_coin = site_monthly_output_difficulty
         else:
             # 差异在允许范围内，两种方法平均值
-            daily_btc = (site_daily_btc_output + site_daily_btc_output_difficulty) / 2
-            monthly_btc = (site_monthly_btc_output + site_monthly_btc_output_difficulty) / 2
+            daily_coin = (site_daily_output + site_daily_output_difficulty) / 2
+            monthly_coin = (site_monthly_output + site_monthly_output_difficulty) / 2
         
         # === 成本计算 (Cost Calculation) ===
         # Calculate using the operating time after curtailment
