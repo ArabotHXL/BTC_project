@@ -47,8 +47,8 @@
                     <!-- Network Stats -->
                     <div id="network-stats-container" class="d-flex gap-3 text-center">
                         <div class="stats-item">
-                            <span class="badge bg-warning">{{ t('btc_price') }}</span>
-                            <span id="btc-price" class="stats-value">$0</span>
+                            <span class="badge bg-warning">{{ t('crypto_price') if 'crypto_price' in t_functions else '加密货币价格' }}</span>
+                            <span id="crypto-price" class="stats-value">$0</span>
                         </div>
                         <div class="stats-item">
                             <span class="badge bg-info">{{ t('difficulty') }}</span>
@@ -60,7 +60,8 @@
                         </div>
                         <div class="stats-item">
                             <span class="badge bg-success">{{ t('block_reward') }}</span>
-                            <span id="block-reward" class="stats-value">0 BTC</span>
+                            <span id="block-reward" class="stats-value">0</span>
+                            <span id="crypto-symbol" class="stats-value">BTC</span>
                         </div>
                     </div>
                     
@@ -167,8 +168,13 @@
                                 <div class="mb-3">
                                     <label for="crypto-currency" class="form-label">{{ t('crypto_currency') if 'crypto_currency' in t_functions else '加密货币 / Cryptocurrency' }}</label>
                                     <select class="form-select" id="crypto-currency" name="crypto_currency" onchange="updateCryptocurrency()">
-                                        <!-- 加密货币选项将被动态加载 / Cryptocurrency options will be loaded dynamically -->
-                                        <option value="BTC">Bitcoin (BTC)</option>
+                                        <!-- 加密货币选项 / Cryptocurrency options -->
+                                        <option value="BTC">Bitcoin (BTC) - 比特币</option>
+                                        <option value="LTC">Litecoin (LTC) - 莱特币</option>
+                                        <option value="ETC">Ethereum Classic (ETC) - 以太经典</option>
+                                        <option value="DOGE">Dogecoin (DOGE) - 狗狗币</option>
+                                        <option value="RVN">Ravencoin (RVN) - 渡鸦币</option>
+                                        <option value="ZEC">Zcash (ZEC) - 大零币</option>
                                     </select>
                                     <div class="form-text">{% if current_lang == 'en' %}Select the cryptocurrency you want to mine. Different cryptocurrencies use different mining algorithms and hardware.{% else %}选择您想要挖矿的加密货币。不同的加密货币使用不同的挖矿算法和硬件。{% endif %}</div>
                                 </div>
