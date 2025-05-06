@@ -330,6 +330,44 @@ def calculate():
             input_errors.append(error_msg)
             site_power_mw = 1.0
             
+        # 从表单获取总算力和总功耗值
+        try:
+            total_hashrate = float(request.form.get('total_hashrate') or 0)
+        except (ValueError, TypeError) as e:
+            logging.info(f"表单中的总算力格式无效或未提供: {request.form.get('total_hashrate')} - {str(e)}")
+            total_hashrate = 0
+            
+        try:
+            total_power = float(request.form.get('total_power') or 0)
+        except (ValueError, TypeError) as e:
+            logging.info(f"表单中的总功耗格式无效或未提供: {request.form.get('total_power')} - {str(e)}")
+            total_power = 0
+            
+        # 如果没有提供或无效，根据矿机型号和数量计算总算力和总功耗
+        if (total_hashrate <= 0 or total_power <= 0) and miner_model:
+            # 导入矿机数据
+            from mining_calculator import MINER_DATA
+            if miner_model in MINER_DATA:
+                miner_data = MINER_DATA[miner_model]
+                if total_hashrate <= 0:
+                    total_hashrate = miner_data['hashrate'] * miner_count
+                    logging.info(f"已计算总算力: {total_hashrate} TH/s")
+                
+                if total_power <= 0:
+                    total_power = miner_data['power_watt'] * miner_count
+                    logging.info(f"已计算总功耗: {total_power} W")
+            else:
+                # 如果没有找到矿机模型，使用表单中的单位hashrate和power_consumption来计算
+                if total_hashrate <= 0 and hashrate > 0:
+                    total_hashrate = hashrate * miner_count
+                    logging.info(f"已根据单位算力计算总算力: {total_hashrate} TH/s")
+                
+                if total_power <= 0 and power_consumption > 0:
+                    total_power = power_consumption * miner_count
+                    logging.info(f"已根据单位功耗计算总功耗: {total_power} W")
+                    
+        logging.info(f"计算使用的总算力: {total_hashrate} TH/s, 总功耗: {total_power} W")
+            
         # 如果有输入错误，返回具体的错误信息
         if input_errors:
             error_message = "输入参数无效: " + ", ".join(input_errors)
@@ -376,16 +414,16 @@ def calculate():
                 
         # 添加错误处理来确保即使API调用失败计算仍能继续
         try:
-            # 计算挖矿盈利能力
+            # 计算挖矿盈利能力 - 使用计算得到的总算力和总功耗
             result = calculate_mining_profitability(
-                hashrate=hashrate,
-                power_consumption=power_consumption,
+                hashrate=total_hashrate if total_hashrate > 0 else hashrate,  # 使用计算出的总算力而不是单位算力
+                power_consumption=total_power if total_power > 0 else power_consumption,  # 使用计算出的总功耗而不是单位功耗
                 electricity_cost=electricity_cost,
                 client_electricity_cost=client_electricity_cost,
                 btc_price=btc_price if not use_real_time else None,
                 use_real_time_data=use_real_time,
                 miner_model=miner_model,
-                miner_count=miner_count,
+                miner_count=1,  # 设为1因为我们已经使用总算力和总功耗
                 site_power_mw=site_power_mw,
                 curtailment=curtailment,
                 host_investment=host_investment,
