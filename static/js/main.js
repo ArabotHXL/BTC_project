@@ -1,5 +1,7 @@
 // Bitcoin Mining Calculator - Main JavaScript
 document.addEventListener('DOMContentLoaded', function() {
+    console.log("页面已加载，初始化应用...");
+    
     // 元素引用 (Element references)
     var btcPriceEl = document.getElementById('btc-price');
     var networkDifficultyEl = document.getElementById('network-difficulty');
@@ -18,6 +20,16 @@ document.addEventListener('DOMContentLoaded', function() {
     var useRealTimeCheckbox = document.getElementById('use-real-time');
     var calculatorForm = document.getElementById('mining-calculator-form');
     
+    // 检查总算力和总功耗输入框
+    var totalHashrateInput = document.getElementById('total-hashrate');
+    var totalPowerInput = document.getElementById('total-power');
+    
+    console.log("元素检查 - 矿机数量:", minerCountInput ? "已找到" : "未找到");
+    console.log("元素检查 - 单矿机算力:", hashrateInput ? "已找到" : "未找到");
+    console.log("元素检查 - 单矿机功耗:", powerConsumptionInput ? "已找到" : "未找到");
+    console.log("元素检查 - 总算力输入框:", totalHashrateInput ? "已找到" : "未找到");
+    console.log("元素检查 - 总功耗输入框:", totalPowerInput ? "已找到" : "未找到");
+    
     var resultsCard = document.getElementById('results-card');
     var chartCard = document.getElementById('chart-card');
     
@@ -33,8 +45,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // 加载矿机型号列表 (Load miner models)
         fetchMiners();
         
-        // 初始化时立即计算总算力和总功耗
-        calculateTotalHashrateAndPower();
+        // 延迟计算以确保元素已加载完成
+        console.log("在init函数中等待1秒后开始计算总算力和总功耗");
+        setTimeout(function() {
+            console.log("即将计算总算力和总功耗");
+            calculateTotalHashrateAndPower();
+        }, 1000);
         
         // 事件绑定 (Event bindings)
         if (calculatorForm) {
