@@ -1419,10 +1419,18 @@ document.addEventListener('DOMContentLoaded', function() {
         // 显示加载状态 (Show loading state)
         chartContainer.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div><p class="mt-3">正在生成热力图...<br>Generating chart...</p></div>';
         
+        // 获取当前选择的加密货币
+        var cryptoSymbol = 'BTC';
+        var cryptoSelect = document.getElementById('crypto-currency');
+        if (cryptoSelect) {
+            cryptoSymbol = cryptoSelect.value;
+        }
+        
         // 准备请求参数 (Prepare request parameters)
         var params = 'miner_model=' + encodeURIComponent(minerModel) + 
                      '&miner_count=' + encodeURIComponent(minerCount) + 
-                     '&client_electricity_cost=' + encodeURIComponent(clientElectricityCost);
+                     '&client_electricity_cost=' + encodeURIComponent(clientElectricityCost) + 
+                     '&crypto_currency=' + encodeURIComponent(cryptoSymbol);
         
         // 发送请求 (Send request)
         var xhr = new XMLHttpRequest();
@@ -1441,15 +1449,26 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         // 创建散点图数据 (Create scatter data)
                         var scatterData = [];
+                        var cryptoSymbol = 'BTC'; // 默认币种
+                        
                         chartData.profit_data.forEach(function(item) {
+                            // 支持新旧两种格式的价格字段
+                            var priceField = item.hasOwnProperty('crypto_price') ? 'crypto_price' : 'btc_price';
+                            
+                            // 获取币种符号
+                            if (item.crypto_symbol) {
+                                cryptoSymbol = item.crypto_symbol;
+                            }
+                            
                             if (item && typeof item.electricity_cost === 'number' && 
-                                typeof item.btc_price === 'number' && 
+                                typeof item[priceField] === 'number' && 
                                 typeof item.monthly_profit === 'number') {
                                 
                                 scatterData.push({
                                     x: item.electricity_cost,
-                                    y: item.btc_price,
-                                    profit: item.monthly_profit
+                                    y: item[priceField],
+                                    profit: item.monthly_profit,
+                                    symbol: item.crypto_symbol || 'BTC'
                                 });
                             }
                         });
@@ -1494,7 +1513,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     y: {
                                         title: {
                                             display: true,
-                                            text: '比特币价格 ($)'
+                                            text: cryptoSymbol + ' 价格 ($) / ' + cryptoSymbol + ' Price ($)'
                                         }
                                     }
                                 },

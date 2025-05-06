@@ -1245,16 +1245,26 @@ def get_profit_chart_data():
                 
                 # 验证所有字段存在且为数字
                 try:
-                    if (isinstance(point.get('btc_price'), (int, float)) and 
+                    # 支持新旧两种格式的价格字段 - 兼容BTC和多币种
+                    price_field = 'crypto_price' if 'crypto_price' in point else 'btc_price'
+                    
+                    if (isinstance(point.get(price_field), (int, float)) and 
                         isinstance(point.get('electricity_cost'), (int, float)) and 
                         isinstance(point.get('monthly_profit'), (int, float))):
                         
-                        # 添加有效数据点
-                        cleaned_data.append({
-                            'btc_price': float(point['btc_price']),
+                        # 添加有效数据点，统一使用crypto_price字段
+                        data_point = {
+                            'crypto_price': float(point[price_field]),
                             'electricity_cost': float(point['electricity_cost']),
-                            'monthly_profit': float(point['monthly_profit'])
-                        })
+                            'monthly_profit': float(point['monthly_profit']),
+                            'crypto_symbol': crypto_symbol  # 记录使用的加密货币类型
+                        }
+                        
+                        # 为了向后兼容，保留btc_price字段
+                        if crypto_symbol == 'BTC':
+                            data_point['btc_price'] = data_point['crypto_price']
+                            
+                        cleaned_data.append(data_point)
                     else:
                         logging.warning(f"Skipping data point with invalid field types: {point}")
                 except Exception as e:
@@ -1271,10 +1281,15 @@ def get_profit_chart_data():
             # 替换清理后的数据
             chart_data['profit_data'] = cleaned_data
             
-            # 验证利润值是否有变化
+            # 验证利润值和加密货币价格值是否有变化
             unique_profits = set(round(item['monthly_profit'], 2) for item in cleaned_data)
+            unique_prices = set(round(item['crypto_price'], 2) for item in cleaned_data)
+            
             if len(unique_profits) <= 1:
                 logging.warning(f"All profit values are identical ({list(unique_profits)[0] if unique_profits else 'N/A'}), data may be incorrect")
+                
+            if len(unique_prices) <= 1:
+                logging.warning(f"All {crypto_symbol} price values are identical ({list(unique_prices)[0] if unique_prices else 'N/A'}), data may be incorrect")
                 
             # 记录最终有效数据点数量
             logging.info(f"Validated profit chart data: {len(cleaned_data)} valid points out of {len(profit_data)} original points")
