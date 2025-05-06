@@ -549,7 +549,8 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             },
             'break_even': {
                 'electricity_cost': optimal_electricity_rate,
-                'crypto_price': (electricity_expense / monthly_coin) if monthly_coin > 0 else 0
+                'crypto_price': (electricity_expense / monthly_coin) if monthly_coin > 0 else 0,
+                'btc_price': (electricity_expense / monthly_coin) if monthly_coin > 0 else 0  # 为了向后兼容
             },
             'optimization': {
                 'optimal_curtailment': optimal_curtailment,
@@ -759,21 +760,28 @@ def generate_profit_chart_data(miner_model, electricity_costs, crypto_prices, mi
         # Calculate optimal electricity rate at current BTC price
         optimal_electricity_rate = 0
         try:
+            # 使用calculate_mining_profitability函数计算盈亏平衡点
             base_result = calculate_mining_profitability(
                 hashrate=hashrate,
                 power_consumption=power_consumption,
                 electricity_cost=0.05,  # Dummy value, not used for this calculation
-                btc_price=current_btc_price,
+                btc_price=current_btc_price,  # 仍然使用btc_price参数，因为函数内部使用这个参数名
                 difficulty=fixed_network_stats['difficulty'],
                 block_reward=fixed_network_stats['block_reward'],
                 use_real_time_data=False,
                 miner_model=miner_model,
                 miner_count=miner_count,
-                maintenance_fee=5000  # 一致添加维护费
+                maintenance_fee=5000,  # 一致添加维护费
+                crypto_symbol=crypto_symbol  # 添加加密货币符号
             )
             
+            # 检查break_even是否存在以及包含必要字段
             if 'break_even' in base_result and 'electricity_cost' in base_result['break_even']:
                 optimal_electricity_rate = base_result['break_even']['electricity_cost']
+                
+                # 确保break_even中有crypto_price字段
+                if 'btc_price' in base_result['break_even'] and 'crypto_price' not in base_result['break_even']:
+                    base_result['break_even']['crypto_price'] = base_result['break_even']['btc_price']
         except Exception as e:
             logging.error(f"Error calculating optimal electricity rate: {str(e)}")
             optimal_electricity_rate = 0
