@@ -2532,6 +2532,150 @@
         function padZero(num) {
             return num.toString().padStart(2, '0');
         }
+        
+        // 快速操作按钮事件处理器
+        document.addEventListener('DOMContentLoaded', function() {
+            // 一键初始化系统
+            const quickInitButton = document.getElementById('quick-init-system');
+            if (quickInitButton) {
+                quickInitButton.addEventListener('click', function() {
+                    if (!confirm('确定要初始化系统吗？这将创建100台测试矿机和默认的电力削减计划。')) {
+                        return;
+                    }
+                    
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 正在初始化...';
+                    
+                    // 步骤1: 初始化矿机数据
+                    fetch('/api/initialize-miners', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({count: 100})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('初始化矿机数据成功:', data);
+                        
+                        // 步骤2: 创建电力削减计划
+                        let plans = [
+                            {"name": "轻度削减计划", "description": "削减10%电力", "reduction_percentage": 10, 
+                             "target_categories": ["D"], "active": false},
+                            {"name": "中度削减计划", "description": "削减25%电力", "reduction_percentage": 25, 
+                             "target_categories": ["C", "D"], "active": false},
+                            {"name": "重度削减计划", "description": "削减50%电力", "reduction_percentage": 50, 
+                             "target_categories": ["B", "C", "D"], "active": false}
+                        ];
+                        
+                        let planPromises = plans.map(plan => 
+                            fetch('/api/create-reduction-plan', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify(plan)
+                            }).then(response => response.json())
+                        );
+                        
+                        return Promise.all(planPromises);
+                    })
+                    .then(planResults => {
+                        console.log('创建削减计划成功:', planResults);
+                        
+                        // 步骤3: 创建性能快照
+                        return fetch('/api/create-snapshot', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'}
+                        }).then(response => response.json());
+                    })
+                    .then(snapshotData => {
+                        console.log('创建性能快照成功:', snapshotData);
+                        alert('系统初始化成功！已创建100台测试矿机、3个电力削减计划和初始性能快照。');
+                        // 刷新页面以显示新数据
+                        location.reload();
+                    })
+                    .catch(error => {
+                        console.error('系统初始化失败:', error);
+                        alert('系统初始化失败: ' + error);
+                        this.disabled = false;
+                        this.innerHTML = '<i class="bi bi-database-fill-gear me-1"></i> 一键初始化系统';
+                    });
+                });
+            }
+            
+            // 应用10%削减
+            const quickReduceButton = document.getElementById('quick-apply-10');
+            if (quickReduceButton) {
+                quickReduceButton.addEventListener('click', function() {
+                    if (!confirm('确定要应用10%的电力削减吗？这将根据矿机健康状况自动关闭部分矿机。')) {
+                        return;
+                    }
+                    
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 正在应用...';
+                    
+                    fetch('/api/apply-reduction', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({percentage: 10})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('应用10%削减成功:', data);
+                        alert(`电力削减成功应用！已关闭 ${data.shutdown_count} 台矿机，节省了 ${data.power_saved}W 电力。`);
+                        // 刷新页面以显示新数据
+                        location.reload();
+                    })
+                    .catch(error => {
+                        console.error('应用电力削减失败:', error);
+                        alert('应用电力削减失败: ' + error);
+                        this.disabled = false;
+                        this.innerHTML = '<i class="bi bi-lightning-charge me-1"></i> 应用10%削减';
+                    });
+                });
+            }
+            
+            // 生成轮换计划
+            const quickRotationButton = document.getElementById('quick-generate-rotation');
+            if (quickRotationButton) {
+                quickRotationButton.addEventListener('click', function() {
+                    if (!confirm('确定要生成轮换计划吗？这将根据矿机运行时间自动安排轮换。')) {
+                        return;
+                    }
+                    
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 正在生成...';
+                    
+                    fetch('/api/generate-rotation', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'}
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('生成轮换计划成功:', data);
+                        
+                        if (confirm(`轮换计划生成成功！计划关闭 ${data.miners_to_shutdown.length} 台矿机并启动 ${data.miners_to_start.length} 台矿机。是否立即执行该计划？`)) {
+                            return fetch('/api/execute-rotation', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({plan_id: data.id})
+                            }).then(response => response.json());
+                        } else {
+                            return Promise.resolve({message: '轮换计划已生成但未执行'});
+                        }
+                    })
+                    .then(data => {
+                        console.log('执行轮换计划结果:', data);
+                        alert(data.message || '轮换计划处理完成');
+                        // 刷新页面以显示新数据
+                        location.reload();
+                    })
+                    .catch(error => {
+                        console.error('轮换计划操作失败:', error);
+                        alert('轮换计划操作失败: ' + error);
+                        this.disabled = false;
+                        this.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> 生成轮换计划';
+                    });
+                });
+            }
+        });
     </script>
 </body>
 </html>
