@@ -18,6 +18,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- Animation CSS -->
+    <link rel="stylesheet" href="/static/css/animations.css">
 </head>
 <body>
     <div class="container-fluid">
@@ -277,7 +279,7 @@
                             <div class="row g-4 text-center">
                                 <!-- BTC mined -->
                                 <div class="col-md-4">
-                                    <div class="p-3 rounded bg-primary bg-opacity-10">
+                                    <div class="p-3 rounded bg-primary bg-opacity-10 btc-mined-card results-hover-card">
                                         <h6>{{ t('btc_mined') }} ({{ t('daily') }})</h6>
                                         <div class="mt-1 mb-1">
                                             <div>
@@ -294,7 +296,7 @@
                                 <!-- Host profit - 只对特定角色显示 -->
                                 {% if session.role in ['owner', 'admin', 'mining_site'] %}
                                 <div class="col-md-4">
-                                    <div class="p-3 rounded bg-dark bg-opacity-10">
+                                    <div class="p-3 rounded bg-dark bg-opacity-10 host-profit-card results-hover-card">
                                         <h6>{% if current_lang == 'en' %}Host Monthly Profit{% else %}矿场主月度收益{% endif %}</h6>
                                         <h3 id="host-profit-card">$0.00</h3>
                                     </div>
@@ -302,7 +304,7 @@
                                 {% endif %}
                                 <!-- Customer profit -->
                                 <div class="col-md-4">
-                                    <div class="p-3 rounded bg-info bg-opacity-10">
+                                    <div class="p-3 rounded bg-info bg-opacity-10 client-profit-card results-hover-card">
                                         <h6>{% if session.role in ['owner', 'admin', 'mining_site'] %}客户月度收益 (Client Monthly){% else %}月度收益 (Monthly Profit){% endif %}</h6>
                                         <h3 id="client-profit-card">$0.00</h3>
                                     </div>
