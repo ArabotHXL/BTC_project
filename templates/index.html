@@ -175,7 +175,7 @@
                                 <!-- Site Power Consumption (MW) -->
                                 <div class="mb-3">
                                     <label for="site-power-mw" class="form-label">{{ t('site_power_mw') }}</label>
-                                    <input type="number" class="form-control" id="site-power-mw" name="site_power_mw" value="1" min="0.01" step="0.01">
+                                    <input type="number" class="form-control" id="site-power-mw" name="site_power_mw" value="1" min="0.1" step="0.1">
                                     <div class="form-text">{% if current_lang == 'en' %}Total site power capacity in megawatts (MW). Adjusting this will recalculate the number of miners.{% else %}矿场总功率，单位为兆瓦特(MW)。调整此值会重新计算矿机数量。{% endif %}</div>
                                 </div>
                                 
