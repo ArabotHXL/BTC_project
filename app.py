@@ -103,18 +103,33 @@ def login():
         try:
             # 获取地理位置信息（基于IP地址）
             location = "未知位置"  # 默认设置
+            # 初始化客户端IP以避免未定义
+            client_ip = request.remote_addr
+            
             try:
-                if request.remote_addr:
+                # 获取真实的客户端IP地址
+                # 在Replit环境中，通常通过X-Forwarded-For或X-Real-IP头部获取
+                client_ip = request.headers.get('X-Forwarded-For') or \
+                           request.headers.get('X-Real-IP') or \
+                           request.remote_addr
+                
+                # 如果X-Forwarded-For包含多个IP，取第一个（最靠近客户端的IP）
+                if client_ip and ',' in client_ip:
+                    client_ip = client_ip.split(',')[0].strip()
+                
+                logging.info(f"识别到的客户端IP: {client_ip}, 原始IP: {request.remote_addr}")
+                
+                if client_ip:
                     # 如果是本地或内部网络IP
-                    if request.remote_addr.startswith('127.') or request.remote_addr == '::1':
+                    if client_ip.startswith('127.') or client_ip == '::1':
                         location = "本地, 开发环境, localhost"
-                    elif request.remote_addr.startswith('192.168.') or request.remote_addr.startswith('10.'):
+                    elif client_ip.startswith('192.168.') or client_ip.startswith('10.'):
                         location = "中国, 内部网络, 局域网"
                     else:
                         # 使用IP-API获取地理位置信息
                         import requests
                         # 免费版的ip-api.com，不需要API密钥
-                        ip_api_url = f"http://ip-api.com/json/{request.remote_addr}?fields=status,message,country,regionName,city,query"
+                        ip_api_url = f"http://ip-api.com/json/{client_ip}?fields=status,message,country,regionName,city,query"
                         response = requests.get(ip_api_url, timeout=3)
                         if response.status_code == 200:
                             data = response.json()
@@ -130,20 +145,29 @@ def login():
                                 logging.warning(f"IP-API返回错误: {error_msg}")
                                 # 对于私有IP范围，使用更友好的显示
                                 if error_msg == 'private range':
-                                    location = f"Replit服务器, 数据中心"
+                                    # 如果在Replit环境中且检测到私有IP
+                                    if 'replit' in request.headers.get('Host', '').lower():
+                                        location = f"Replit托管服务, {client_ip}"
+                                    else:
+                                        location = f"私有网络, {client_ip}"
                                 else:
-                                    location = f"外部网络 ({request.remote_addr})"
+                                    location = f"外部网络 ({client_ip})"
                         else:
                             logging.warning(f"IP-API请求失败，状态码: {response.status_code}")
-                            location = f"外部网络 ({request.remote_addr})"
-                    logging.info(f"用户IP地址 {request.remote_addr} 已被识别为 {location}")
+                            location = f"外部网络 ({client_ip})"
+                    
+                    # 记录请求头信息以便调试
+                    headers_info = {key: value for key, value in request.headers.items() 
+                                   if key.lower() in ['x-forwarded-for', 'x-real-ip', 'host', 'user-agent']}
+                    logging.info(f"请求头信息: {headers_info}")
+                    logging.info(f"用户IP地址 {client_ip} 已被识别为 {location}")
             except Exception as e:
                 logging.error(f"获取位置信息时出错: {str(e)}")
                 
             login_record = LoginRecord(
                 email=email,
                 successful=login_successful,
-                ip_address=request.remote_addr,
+                ip_address=client_ip,  # 使用获取到的真实客户端IP
                 login_location=location
             )
             logging.info(f"创建登录记录: {email}, 状态: {'成功' if login_successful else '失败'}")

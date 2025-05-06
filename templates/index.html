@@ -211,7 +211,7 @@
                                 <div class="mb-3">
                                     <label for="maintenance-fee" class="form-label">矿场维护费 (Maintenance Fee)</label>
                                     <div class="input-group">
-                                        <input type="number" class="form-control" id="maintenance-fee" name="maintenance_fee" value="5000" step="1000" min="0">
+                                        <input type="number" class="form-control" id="maintenance-fee" name="maintenance_fee" value="5000" step="1" min="0">
                                         <span class="input-group-text">$</span>
                                     </div>
                                     <div class="form-text">每月矿场维护费用 (Monthly maintenance cost for the mining facility)</div>
@@ -221,7 +221,7 @@
                                 <div class="mb-3">
                                     <label for="host-investment" class="form-label">矿场主投资金额 (Host Investment)</label>
                                     <div class="input-group">
-                                        <input type="number" class="form-control" id="host-investment" name="host_investment" value="0" step="10000" min="0">
+                                        <input type="number" class="form-control" id="host-investment" name="host_investment" value="0" step="1" min="0">
                                         <span class="input-group-text">$</span>
                                     </div>
                                     <div class="form-text">矿场主的总投资金额，用于计算ROI (Total investment by mining site owner, for ROI calculation)</div>
@@ -236,7 +236,7 @@
                                 <div class="mb-3">
                                     <label for="client-investment" class="form-label">{% if session.role in ['owner', 'admin', 'mining_site'] %}客户投资金额 (Client Investment){% else %}投资金额 (Investment Amount){% endif %}</label>
                                     <div class="input-group">
-                                        <input type="number" class="form-control" id="client-investment" name="client_investment" value="0" step="10000" min="0">
+                                        <input type="number" class="form-control" id="client-investment" name="client_investment" value="0" step="1" min="0">
                                         <span class="input-group-text">$</span>
                                     </div>
                                     <div class="form-text">{% if session.role in ['owner', 'admin', 'mining_site'] %}客户的总投资金额，用于计算ROI (Total investment by client, for ROI calculation){% else %}您的总投资金额，用于计算投资回报率 (Your total investment amount for ROI calculation){% endif %}</div>
