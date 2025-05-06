@@ -33,6 +33,10 @@ document.addEventListener('DOMContentLoaded', function() {
     var resultsCard = document.getElementById('results-card');
     var chartCard = document.getElementById('chart-card');
     
+    // 防止无限循环的标志
+    var isUpdatingMinerCount = false;
+    var isUpdatingSitePower = false;
+    
     // 初始化 (Initialization)
     function init() {
         // 获取当前语言设置 (Get current language setting)
@@ -178,6 +182,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 更新矿机数量 (Update miner count)
     function updateMinerCount() {
+        // 如果已经在更新矿场功率，则退出以防止循环
+        if (isUpdatingSitePower) {
+            return;
+        }
+        
+        // 设置标志，表示正在更新矿机数量
+        isUpdatingMinerCount = true;
+        
         var sitePowerMw = parseFloat(sitePowerMwInput.value) || 0;
         var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
         
@@ -190,10 +202,21 @@ document.addEventListener('DOMContentLoaded', function() {
             // 计算总算力和总功耗
             calculateTotalHashrateAndPower();
         }
+        
+        // 清除标志
+        isUpdatingMinerCount = false;
     }
     
     // 根据矿机数量更新矿场功率 (Update site power based on miner count)
     function updateSitePower() {
+        // 如果已经在更新矿机数量，则退出以防止循环
+        if (isUpdatingMinerCount) {
+            return;
+        }
+        
+        // 设置标志，表示正在更新矿场功率
+        isUpdatingSitePower = true;
+        
         var minerCount = parseInt(minerCountInput.value) || 0;
         var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
         
@@ -206,6 +229,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // 计算总算力和总功耗
             calculateTotalHashrateAndPower();
         }
+        
+        // 清除标志
+        isUpdatingSitePower = false;
     }
     
     // 计算总算力和总功耗
