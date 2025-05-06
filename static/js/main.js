@@ -996,14 +996,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // 显示计算结果 (Display calculation results)
     function displayResults(data) {
         // 检查数据有效性 - 更加灵活，适应不同角色的权限
-        if (!data || !data.btc_mined) {
+        if (!data) {
             showError('服务器返回的数据无效或不完整。(Invalid or incomplete data received from server.)');
-            console.error('数据结构无效 - 缺少btc_mined字段:', data);
+            console.error('数据结构无效:', data);
             return;
         }
         
         try {
-            console.log('收到计算结果数据:', data);
+            // 防止JSON被截断导致错误
+            console.log('收到计算结果数据');
             
             // 检查是否有optimization数据
             if (data.optimization) {
@@ -1059,33 +1060,47 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 更新BTC产出显示
     function updateBtcOutputDisplay(data) {
-        // 算法1和算法2的BTC产出
-        var btcMethod1CardEl = document.getElementById('btc-method1-daily-card');
-        var btcMethod2CardEl = document.getElementById('btc-method2-daily-card');
-        var dailyBtcTotalEl = document.getElementById('daily-btc-total');
-        
-        // 日产BTC总量
-        if (dailyBtcTotalEl && data.btc_mined) {
-            dailyBtcTotalEl.textContent = formatNumber(data.btc_mined.daily, 8);
-        }
-        
-        // 算法1: 按算力占比
-        if (btcMethod1CardEl && data.btc_mined && data.btc_mined.method1) {
-            var method1Value = formatNumber(data.btc_mined.method1.daily, 8);
-            btcMethod1CardEl.textContent = method1Value;
-            // 月产出提示
-            var monthlyOutput1 = data.btc_mined.method1.daily * 30.5;
-            btcMethod1CardEl.title = '每月约: ' + formatNumber(monthlyOutput1, 8) + ' BTC';
-        }
-        
-        // 算法2: 按难度公式
-        if (btcMethod2CardEl && data.btc_mined && data.btc_mined.method2) {
-            var method2Value = formatNumber(data.btc_mined.method2.daily, 8);
-            btcMethod2CardEl.textContent = method2Value;
-            btcMethod2CardEl.className = "text-info";
-            // 月产出提示
-            var monthlyOutput2 = data.btc_mined.method2.daily * 30.5;
-            btcMethod2CardEl.title = '每月约: ' + formatNumber(monthlyOutput2, 8) + ' BTC';
+        try {
+            // 检查是否有加密货币产出数据 - 兼容btc_mined和coin_mined两种格式
+            var coinData = data.coin_mined || data.btc_mined || {};
+            if (!coinData || Object.keys(coinData).length === 0) {
+                console.error("没有找到加密货币产出数据");
+                return;
+            }
+
+            // 显示界面元素
+            var btcMethod1CardEl = document.getElementById('btc-method1-daily-card');
+            var btcMethod2CardEl = document.getElementById('btc-method2-daily-card');
+            var dailyBtcTotalEl = document.getElementById('daily-btc-total');
+            
+            // 获取币种符号
+            var cryptoSymbol = data.crypto_symbol || (data.inputs && data.inputs.crypto_symbol ? data.inputs.crypto_symbol : 'BTC');
+            
+            // 日产加密货币总量
+            if (dailyBtcTotalEl && coinData.daily !== undefined) {
+                dailyBtcTotalEl.textContent = formatNumber(coinData.daily, 8);
+            }
+            
+            // 算法1: 按算力占比
+            if (btcMethod1CardEl && coinData.method1 && coinData.method1.daily !== undefined) {
+                var method1Value = formatNumber(coinData.method1.daily, 8);
+                btcMethod1CardEl.textContent = method1Value;
+                // 月产出提示
+                var monthlyOutput1 = coinData.method1.daily * 30.5;
+                btcMethod1CardEl.title = '每月约: ' + formatNumber(monthlyOutput1, 8) + ' ' + cryptoSymbol;
+            }
+            
+            // 算法2: 按难度公式
+            if (btcMethod2CardEl && coinData.method2 && coinData.method2.daily !== undefined) {
+                var method2Value = formatNumber(coinData.method2.daily, 8);
+                btcMethod2CardEl.textContent = method2Value;
+                btcMethod2CardEl.className = "text-info";
+                // 月产出提示
+                var monthlyOutput2 = coinData.method2.daily * 30.5;
+                btcMethod2CardEl.title = '每月约: ' + formatNumber(monthlyOutput2, 8) + ' ' + cryptoSymbol;
+            }
+        } catch (e) {
+            console.error("更新加密货币产出显示时出错:", e);
         }
     }
     
@@ -1122,8 +1137,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (siteTotalHashrateEl && data.inputs) {
             siteTotalHashrateEl.textContent = formatNumber(data.inputs.hashrate, 2) + ' TH/s';
         }
-        if (btcPerThDailyEl && data.btc_mined) {
-            btcPerThDailyEl.textContent = formatNumber(data.btc_mined.per_th_daily, 8);
+        if (btcPerThDailyEl) {
+            // 兼容两种格式
+            var coinData = data.coin_mined || data.btc_mined || {};
+            if (coinData.per_th_daily !== undefined) {
+                btcPerThDailyEl.textContent = formatNumber(coinData.per_th_daily, 8);
+            }
         }
         if (optimalElectricityRateEl && data.break_even) {
             optimalElectricityRateEl.textContent = '$' + formatNumber(data.break_even.electricity_cost, 4) + '/kWh';
@@ -1306,12 +1325,20 @@ document.addEventListener('DOMContentLoaded', function() {
         var clientRunningMinersEl = document.getElementById('client-running-miners');
         var clientShutdownMinersEl = document.getElementById('client-shutdown-miners');
         
-        // 客户BTC产出和收入
-        var monthlyBtcOutput = data.btc_mined && data.btc_mined.monthly ? data.btc_mined.monthly : 0;
-        var monthlyBtcRevenue = 0;
+        // 客户加密货币产出和收入
+        // 兼容两种数据格式
+        var coinData = data.coin_mined || data.btc_mined || {};
+        var monthlyOutput = coinData.monthly || 0;
+        var monthlyRevenue = 0;
         
-        if (data.network_data && data.network_data.btc_price) {
-            monthlyBtcRevenue = monthlyBtcOutput * data.network_data.btc_price;
+        // 获取币种名称和价格
+        var cryptoSymbol = data.crypto_symbol || (data.inputs && data.inputs.crypto_symbol ? data.inputs.crypto_symbol : 'BTC');
+        var cryptoPrice = 0;
+        
+        if (data.network_data) {
+            // 兼容两种价格命名
+            cryptoPrice = data.network_data.crypto_price || data.network_data.btc_price || 0;
+            monthlyRevenue = monthlyOutput * cryptoPrice;
         }
         
         console.log('月度BTC产出:', monthlyBtcOutput, 'BTC价格:', 
@@ -1639,6 +1666,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         return formatter.format(value);
+    }
+    
+    // 更新加密货币相关信息显示
+    function updateCryptoInfo(cryptoSymbol) {
+        // 更新界面上显示的币种标签
+        var cryptoLabels = document.querySelectorAll('.crypto-symbol-label');
+        cryptoLabels.forEach(function(label) {
+            label.textContent = cryptoSymbol;
+        });
+        
+        // 更新网络数据请求
+        fetchNetworkStats();
     }
     
     // 调用初始化函数 (Call init function)
