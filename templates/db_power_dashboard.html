@@ -2619,7 +2619,7 @@
                     .then(response => response.json())
                     .then(data => {
                         console.log('应用10%削减成功:', data);
-                        alert(`电力削减成功应用！已关闭 ${data.shutdown_count} 台矿机，节省了 ${data.power_saved}W 电力。`);
+                        alert(`电力削减成功应用！已关闭 ${data.results.successful_shutdown} 台矿机，节省了 ${data.results.power_reduced.toFixed(2)}W 电力。`);
                         // 刷新页面以显示新数据
                         location.reload();
                     })
@@ -2651,11 +2651,15 @@
                     .then(data => {
                         console.log('生成轮换计划成功:', data);
                         
-                        if (confirm(`轮换计划生成成功！计划关闭 ${data.miners_to_shutdown.length} 台矿机并启动 ${data.miners_to_start.length} 台矿机。是否立即执行该计划？`)) {
+                        const planData = data.results || data;
+                        const shutdownCount = planData.miners_to_shutdown ? planData.miners_to_shutdown.length : 0;
+                        const startupCount = planData.miners_to_start ? planData.miners_to_start.length : 0;
+                        
+                        if (confirm(`轮换计划生成成功！计划关闭 ${shutdownCount} 台矿机并启动 ${startupCount} 台矿机。是否立即执行该计划？`)) {
                             return fetch('/api/execute-rotation', {
                                 method: 'POST',
                                 headers: {'Content-Type': 'application/json'},
-                                body: JSON.stringify({plan_id: data.id})
+                                body: JSON.stringify({plan_id: planData.id})
                             }).then(response => response.json());
                         } else {
                             return Promise.resolve({message: '轮换计划已生成但未执行'});
