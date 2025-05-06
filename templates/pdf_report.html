@@ -11,6 +11,12 @@
             line-height: 1.5;
             margin: 0;
             padding: 20px;
+            font-size: 11pt;
+        }
+        
+        @page {
+            size: A4;
+            margin: 1cm;
         }
         .report-header {
             text-align: center;
@@ -183,31 +189,69 @@
             <tbody>
                 <tr>
                     <td>{% if data.language == 'en' %}Daily{% else %}每日{% endif %}</td>
-                    <td class="btc-value">{{ '{:.8f}'.format(data.btc_mined.method1.daily) }}</td>
-                    <td class="btc-value">{{ '{:.8f}'.format(data.btc_mined.method2.daily) }}</td>
-                    <td class="usd-value">${{ '{:.2f}'.format(data.btc_mined.daily * data.network_data.btc_price) if data.btc_mined.daily and data.network_data.btc_price else '{:.2f}'.format(0) }}</td>
-                    <td class="expense-value">${{ '{:.2f}'.format(data.electricity_cost.daily) if data.electricity_cost and data.electricity_cost.daily else '{:.2f}'.format(0) }}</td>
-                    <td>${{ '{:.2f}'.format((data.btc_mined.daily * data.network_data.btc_price) - (data.electricity_cost.daily if data.electricity_cost and data.electricity_cost.daily else 0)) if data.btc_mined.daily and data.network_data.btc_price else '{:.2f}'.format(0) }}</td>
+                    <td class="btc-value">{{ '{:.8f}'.format(data.btc_mined.method1.daily) if data.btc_mined.method1 and data.btc_mined.method1.daily else '0.00000000' }}</td>
+                    <td class="btc-value">{{ '{:.8f}'.format(data.btc_mined.method2.daily) if data.btc_mined.method2 and data.btc_mined.method2.daily else '0.00000000' }}</td>
+                    <td class="usd-value">${{ '{:,.2f}'.format(data.btc_mined.daily * data.network_data.btc_price) if data.btc_mined.daily and data.network_data.btc_price else '0.00' }}</td>
+                    <td class="expense-value">${{ '{:,.2f}'.format(data.electricity_cost.daily) if data.electricity_cost and data.electricity_cost.daily else '0.00' }}</td>
+                    <td>${{ '{:,.2f}'.format(data.profit.daily) if data.profit and data.profit.daily else '{:,.2f}'.format((data.btc_mined.daily * data.network_data.btc_price) - (data.electricity_cost.daily if data.electricity_cost and data.electricity_cost.daily else 0)) if data.btc_mined.daily and data.network_data.btc_price else '0.00' }}</td>
                 </tr>
                 <tr>
                     <td>{% if data.language == 'en' %}Monthly{% else %}每月{% endif %}</td>
-                    <td class="btc-value">{{ '{:.8f}'.format(data.btc_mined.method1.monthly) }}</td>
-                    <td class="btc-value">{{ '{:.8f}'.format(data.btc_mined.method2.monthly) }}</td>
-                    <td class="usd-value">${{ '{:.2f}'.format(data.btc_mined.monthly * data.network_data.btc_price) if data.btc_mined.monthly and data.network_data.btc_price else '{:.2f}'.format(0) }}</td>
-                    <td class="expense-value">${{ '{:.2f}'.format(data.electricity_cost.monthly) if data.electricity_cost and data.electricity_cost.monthly else '{:.2f}'.format(0) }}</td>
-                    <td>${{ '{:.2f}'.format((data.btc_mined.monthly * data.network_data.btc_price) - (data.electricity_cost.monthly if data.electricity_cost and data.electricity_cost.monthly else 0)) if data.btc_mined.monthly and data.network_data.btc_price else '{:.2f}'.format(0) }}</td>
+                    <td class="btc-value">{{ '{:.8f}'.format(data.btc_mined.method1.monthly) if data.btc_mined.method1 and data.btc_mined.method1.monthly else '0.00000000' }}</td>
+                    <td class="btc-value">{{ '{:.8f}'.format(data.btc_mined.method2.monthly) if data.btc_mined.method2 and data.btc_mined.method2.monthly else '0.00000000' }}</td>
+                    <td class="usd-value">${{ '{:,.2f}'.format(data.btc_mined.monthly * data.network_data.btc_price) if data.btc_mined.monthly and data.network_data.btc_price else '0.00' }}</td>
+                    <td class="expense-value">${{ '{:,.2f}'.format(data.electricity_cost.monthly) if data.electricity_cost and data.electricity_cost.monthly else '0.00' }}</td>
+                    <td>${{ '{:,.2f}'.format(data.profit.monthly) if data.profit and data.profit.monthly else '{:,.2f}'.format((data.btc_mined.monthly * data.network_data.btc_price) - (data.electricity_cost.monthly if data.electricity_cost and data.electricity_cost.monthly else 0)) if data.btc_mined.monthly and data.network_data.btc_price else '0.00' }}</td>
                 </tr>
                 <tr>
                     <td>{% if data.language == 'en' %}Yearly{% else %}每年{% endif %}</td>
-                    <td class="btc-value">{{ '{:.8f}'.format(data.btc_mined.method1.monthly * 12) if data.btc_mined.method1.monthly else '{:.8f}'.format(0) }}</td>
-                    <td class="btc-value">{{ '{:.8f}'.format(data.btc_mined.method2.monthly * 12) if data.btc_mined.method2.monthly else '{:.8f}'.format(0) }}</td>
-                    <td class="usd-value">${{ '{:.2f}'.format(data.btc_mined.yearly * data.network_data.btc_price) if data.btc_mined.yearly and data.network_data.btc_price else '{:.2f}'.format(0) }}</td>
-                    <td class="expense-value">${{ '{:.2f}'.format(data.electricity_cost.yearly) if data.electricity_cost and data.electricity_cost.yearly else '{:.2f}'.format(0) }}</td>
-                    <td>${{ '{:.2f}'.format((data.btc_mined.yearly * data.network_data.btc_price) - (data.electricity_cost.yearly if data.electricity_cost and data.electricity_cost.yearly else 0)) if data.btc_mined.yearly and data.network_data.btc_price else '{:.2f}'.format(0) }}</td>
+                    <td class="btc-value">{{ '{:.8f}'.format(data.btc_mined.method1.monthly * 12) if data.btc_mined.method1 and data.btc_mined.method1.monthly else '0.00000000' }}</td>
+                    <td class="btc-value">{{ '{:.8f}'.format(data.btc_mined.method2.monthly * 12) if data.btc_mined.method2 and data.btc_mined.method2.monthly else '0.00000000' }}</td>
+                    <td class="usd-value">${{ '{:,.2f}'.format(data.btc_mined.yearly * data.network_data.btc_price) if data.btc_mined.yearly and data.network_data.btc_price else '0.00' }}</td>
+                    <td class="expense-value">${{ '{:,.2f}'.format(data.electricity_cost.yearly) if data.electricity_cost and data.electricity_cost.yearly else '0.00' }}</td>
+                    <td>${{ '{:,.2f}'.format(data.profit.yearly) if data.profit and data.profit.yearly else '{:,.2f}'.format((data.btc_mined.yearly * data.network_data.btc_price) - (data.electricity_cost.yearly if data.electricity_cost and data.electricity_cost.yearly else 0)) if data.btc_mined.yearly and data.network_data.btc_price else '0.00' }}</td>
                 </tr>
             </tbody>
         </table>
     </div>
+
+    {% if data.role == 'owner' or data.role == 'admin' %}
+    <div class="report-section">
+        <div class="section-title">
+            {% if data.language == 'en' %}Host Profit Analysis{% else %}矿场收益分析{% endif %}
+        </div>
+        <table class="profit-table">
+            <thead>
+                <tr>
+                    <th>{% if data.language == 'en' %}Time Period{% else %}时间周期{% endif %}</th>
+                    <th>{% if data.language == 'en' %}Electricity Cost Difference{% else %}电费差价{% endif %}</th>
+                    <th>{% if data.language == 'en' %}Operation Cost{% else %}运维成本{% endif %}</th>
+                    <th>{% if data.language == 'en' %}Host Profit{% else %}场主收益{% endif %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{% if data.language == 'en' %}Daily{% else %}每日{% endif %}</td>
+                    <td class="btc-value">${{ '{:,.2f}'.format(data.host_profit.electricity_margin_daily) if data.host_profit and data.host_profit.electricity_margin_daily else '0.00' }}</td>
+                    <td class="expense-value">${{ '{:,.2f}'.format(data.host_profit.operation_cost_daily) if data.host_profit and data.host_profit.operation_cost_daily else '0.00' }}</td>
+                    <td class="usd-value">${{ '{:,.2f}'.format(data.host_profit.daily) if data.host_profit and data.host_profit.daily else '0.00' }}</td>
+                </tr>
+                <tr>
+                    <td>{% if data.language == 'en' %}Monthly{% else %}每月{% endif %}</td>
+                    <td class="btc-value">${{ '{:,.2f}'.format(data.host_profit.electricity_margin_monthly) if data.host_profit and data.host_profit.electricity_margin_monthly else '0.00' }}</td>
+                    <td class="expense-value">${{ '{:,.2f}'.format(data.host_profit.operation_cost_monthly) if data.host_profit and data.host_profit.operation_cost_monthly else '0.00' }}</td>
+                    <td class="usd-value">${{ '{:,.2f}'.format(data.host_profit.monthly) if data.host_profit and data.host_profit.monthly else '0.00' }}</td>
+                </tr>
+                <tr>
+                    <td>{% if data.language == 'en' %}Yearly{% else %}每年{% endif %}</td>
+                    <td class="btc-value">${{ '{:,.2f}'.format(data.host_profit.electricity_margin_yearly) if data.host_profit and data.host_profit.electricity_margin_yearly else '0.00' }}</td>
+                    <td class="expense-value">${{ '{:,.2f}'.format(data.host_profit.operation_cost_yearly) if data.host_profit and data.host_profit.operation_cost_yearly else '0.00' }}</td>
+                    <td class="usd-value">${{ '{:,.2f}'.format(data.host_profit.yearly) if data.host_profit and data.host_profit.yearly else '0.00' }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
 
     {% if data.roi_data %}
     <div class="report-section">

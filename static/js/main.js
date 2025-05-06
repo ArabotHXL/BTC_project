@@ -385,10 +385,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     var data = JSON.parse(xhr.responseText);
                     
                     if (data && data.success) {
-                        // 保存计算结果，以便稍后用于PDF导出
-                        calculationResultData = data;
+                        // 保存计算结果到全局变量，以便稍后用于PDF导出
+                        window.calculationResultData = data;
                         // 向数据中添加当前矿机型号，以便PDF报告使用
-                        calculationResultData.inputs.miner_model = minerModelSelect.value;
+                        window.calculationResultData.inputs.miner_model = minerModelSelect.value;
+                        console.log("计算结果已保存到全局变量，可用于PDF导出");
                         // 显示结果 (Display results)
                         displayResults(data);
                     } else {
