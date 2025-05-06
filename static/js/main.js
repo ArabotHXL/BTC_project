@@ -46,6 +46,18 @@ document.addEventListener('DOMContentLoaded', function() {
             sitePowerMwInput.addEventListener('input', updateMinerCount);
         }
         
+        if (minerCountInput) {
+            minerCountInput.addEventListener('input', calculateTotalHashrateAndPower);
+        }
+        
+        if (hashrateInput) {
+            hashrateInput.addEventListener('input', calculateTotalHashrateAndPower);
+        }
+        
+        if (powerConsumptionInput) {
+            powerConsumptionInput.addEventListener('input', calculateTotalHashrateAndPower);
+        }
+        
         if (useRealTimeCheckbox) {
             useRealTimeCheckbox.addEventListener('change', handleRealTimeToggle);
         }
@@ -98,6 +110,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // 基于矿机功率和数量更新显示 (Update based on miner power and count)
                 updateMinerCount();
+                
+                // 计算总算力和总功耗
+                calculateTotalHashrateAndPower();
             }
         } else {
             // 启用手动输入 (Enable manual input)
@@ -117,6 +132,34 @@ document.addEventListener('DOMContentLoaded', function() {
             // Formula: (site_power_mw * 1000) / (power_watt / 1000)
             var maxMiners = Math.floor((sitePowerMw * 1000000) / powerWatt);
             minerCountInput.value = maxMiners;
+            
+            // 计算总算力和总功耗
+            calculateTotalHashrateAndPower();
+        }
+    }
+    
+    // 计算总算力和总功耗
+    function calculateTotalHashrateAndPower() {
+        var minerCount = parseInt(minerCountInput.value) || 0;
+        var hashrate = parseFloat(hashrateInput.value) || 0;
+        var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
+        
+        if (minerCount > 0 && hashrate > 0 && powerWatt > 0) {
+            // 计算总算力和总功耗
+            var totalHashrate = minerCount * hashrate;
+            var totalPower = minerCount * powerWatt;
+            
+            // 更新UI显示
+            var totalHashrateInput = document.getElementById('total-hashrate');
+            var totalPowerInput = document.getElementById('total-power');
+            
+            if (totalHashrateInput) {
+                totalHashrateInput.value = totalHashrate.toFixed(0);
+            }
+            
+            if (totalPowerInput) {
+                totalPowerInput.value = totalPower.toFixed(0);
+            }
         }
     }
     
