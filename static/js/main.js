@@ -97,7 +97,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (minerCountInput) {
+            // 当矿机数量变化时计算总算力和总功耗
             minerCountInput.addEventListener('input', calculateTotalHashrateAndPower);
+            
+            // 当矿机数量变化时更新矿场功率
+            minerCountInput.addEventListener('input', updateSitePower);
         }
         
         if (hashrateInput) {
@@ -182,6 +186,22 @@ document.addEventListener('DOMContentLoaded', function() {
             // Formula: (site_power_mw * 1000) / (power_watt / 1000)
             var maxMiners = Math.floor((sitePowerMw * 1000000) / powerWatt);
             minerCountInput.value = maxMiners;
+            
+            // 计算总算力和总功耗
+            calculateTotalHashrateAndPower();
+        }
+    }
+    
+    // 根据矿机数量更新矿场功率 (Update site power based on miner count)
+    function updateSitePower() {
+        var minerCount = parseInt(minerCountInput.value) || 0;
+        var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
+        
+        if (minerCount > 0 && powerWatt > 0) {
+            // 计算所需的矿场功率 (Calculate required site power)
+            // Formula: (miner_count * power_watt) / 1000000
+            var requiredPowerMw = (minerCount * powerWatt) / 1000000;
+            sitePowerMwInput.value = requiredPowerMw.toFixed(2);
             
             // 计算总算力和总功耗
             calculateTotalHashrateAndPower();
