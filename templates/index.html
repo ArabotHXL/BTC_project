@@ -180,10 +180,12 @@
                                     <div class="form-text">{% if current_lang == 'en' %}Total hashrate will be calculated automatically if miner model is selected{% else %}如果选择了矿机型号，总算力将自动计算{% endif %}</div>
                                 </div>
 
-                                <!-- Total Hashrate -->
+                                <!-- Total Hashrate - 隐藏但仍然发送到后端 -->
+                                <input type="hidden" id="total-hashrate" name="total_hashrate" value="0">
+                                <!-- 仅用于显示的总算力 -->
                                 <div class="mb-3">
-                                    <label for="total-hashrate" class="form-label">总算力 / Total Hashrate (TH/s)</label>
-                                    <input type="number" class="form-control" id="total-hashrate" name="total_hashrate" readonly>
+                                    <label for="total-hashrate-display" class="form-label">总算力 / Total Hashrate (TH/s)</label>
+                                    <input type="number" class="form-control" id="total-hashrate-display" readonly>
                                     <div class="form-text">总算力 = 单台算力 × 矿机数量 / Total hashrate = Single miner hashrate × Miner count</div>
                                 </div>
 
@@ -194,10 +196,12 @@
                                     <div class="form-text">{% if current_lang == 'en' %}Single miner power consumption{% else %}单台矿机功耗{% endif %}</div>
                                 </div>
                                 
-                                <!-- Total Power Consumption -->
+                                <!-- Total Power Consumption - 隐藏但仍然发送到后端 -->
+                                <input type="hidden" id="total-power" name="total_power" value="0">
+                                <!-- 仅用于显示的总功耗 -->
                                 <div class="mb-3">
-                                    <label for="total-power" class="form-label">总功耗 / Total Power (W)</label>
-                                    <input type="number" class="form-control" id="total-power" name="total_power" readonly>
+                                    <label for="total-power-display" class="form-label">总功耗 / Total Power (W)</label>
+                                    <input type="number" class="form-control" id="total-power-display" readonly>
                                     <div class="form-text">总功耗 = 单台功耗 × 矿机数量 / Total power = Single miner power × Miner count</div>
                                 </div>
 

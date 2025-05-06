@@ -203,35 +203,40 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log("计算结果 - 总算力:", totalHashrate, "总功耗:", totalPower);
             
-            // 更新UI显示
+            // 更新隐藏字段
             var totalHashrateInput = document.getElementById('total-hashrate');
             var totalPowerInput = document.getElementById('total-power');
             
-            console.log("总算力输入框:", totalHashrateInput ? "已找到" : "未找到", 
-                        "总功耗输入框:", totalPowerInput ? "已找到" : "未找到");
+            // 更新显示字段
+            var totalHashrateDisplay = document.getElementById('total-hashrate-display');
+            var totalPowerDisplay = document.getElementById('total-power-display');
             
+            // 日志输出字段状态
+            console.log("总算力隐藏字段:", totalHashrateInput ? "已找到" : "未找到", 
+                        "总功耗隐藏字段:", totalPowerInput ? "已找到" : "未找到");
+            console.log("总算力显示字段:", totalHashrateDisplay ? "已找到" : "未找到", 
+                        "总功耗显示字段:", totalPowerDisplay ? "已找到" : "未找到");
+            
+            // 更新隐藏字段（用于表单提交）
             if (totalHashrateInput) {
                 totalHashrateInput.value = totalHashrate.toFixed(0);
-                console.log("总算力已更新为:", totalHashrate.toFixed(0));
-                
-                // 尝试直接更新UI显示
-                totalHashrateInput.setAttribute('value', totalHashrate.toFixed(0));
-                
-                // 触发change事件
-                var event = new Event('change', { bubbles: true });
-                totalHashrateInput.dispatchEvent(event);
+                console.log("总算力隐藏字段已更新为:", totalHashrate.toFixed(0));
             }
             
             if (totalPowerInput) {
                 totalPowerInput.value = totalPower.toFixed(0);
-                console.log("总功耗已更新为:", totalPower.toFixed(0));
-                
-                // 尝试直接更新UI显示
-                totalPowerInput.setAttribute('value', totalPower.toFixed(0));
-                
-                // 触发change事件
-                var event = new Event('change', { bubbles: true });
-                totalPowerInput.dispatchEvent(event);
+                console.log("总功耗隐藏字段已更新为:", totalPower.toFixed(0));
+            }
+            
+            // 更新显示字段（用于用户界面）
+            if (totalHashrateDisplay) {
+                totalHashrateDisplay.value = totalHashrate.toFixed(0);
+                console.log("总算力显示字段已更新为:", totalHashrate.toFixed(0));
+            }
+            
+            if (totalPowerDisplay) {
+                totalPowerDisplay.value = totalPower.toFixed(0);
+                console.log("总功耗显示字段已更新为:", totalPower.toFixed(0));
             }
             
             return { totalHashrate: totalHashrate, totalPower: totalPower };
