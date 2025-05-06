@@ -213,14 +213,31 @@ document.addEventListener('DOMContentLoaded', function() {
             if (totalHashrateInput) {
                 totalHashrateInput.value = totalHashrate.toFixed(0);
                 console.log("总算力已更新为:", totalHashrate.toFixed(0));
+                
+                // 尝试直接更新UI显示
+                totalHashrateInput.setAttribute('value', totalHashrate.toFixed(0));
+                
+                // 触发change事件
+                var event = new Event('change', { bubbles: true });
+                totalHashrateInput.dispatchEvent(event);
             }
             
             if (totalPowerInput) {
                 totalPowerInput.value = totalPower.toFixed(0);
                 console.log("总功耗已更新为:", totalPower.toFixed(0));
+                
+                // 尝试直接更新UI显示
+                totalPowerInput.setAttribute('value', totalPower.toFixed(0));
+                
+                // 触发change事件
+                var event = new Event('change', { bubbles: true });
+                totalPowerInput.dispatchEvent(event);
             }
+            
+            return { totalHashrate: totalHashrate, totalPower: totalPower };
         } else {
             console.log("计算条件不满足 - 矿机数量、算力或功耗有一项为0");
+            return null;
         }
     }
     
@@ -294,6 +311,30 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 收集表单数据 (Collect form data)
         var formData = new FormData(calculatorForm);
+        
+        // 手动添加总算力和总功耗数据到表单
+        var minerCount = parseInt(minerCountInput.value) || 0;
+        var hashrate = parseFloat(hashrateInput.value) || 0;
+        var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
+        
+        if (minerCount > 0 && hashrate > 0 && powerWatt > 0) {
+            var totalHashrate = minerCount * hashrate;
+            var totalPower = minerCount * powerWatt;
+            
+            // 移除之前的值（如果存在）
+            if (formData.has('total_hashrate')) {
+                formData.delete('total_hashrate');
+            }
+            if (formData.has('total_power')) {
+                formData.delete('total_power');
+            }
+            
+            // 添加计算出的值
+            formData.append('total_hashrate', totalHashrate.toFixed(0));
+            formData.append('total_power', totalPower.toFixed(0));
+            
+            console.log("手动添加到表单数据 - 总算力:", totalHashrate.toFixed(0), "总功耗:", totalPower.toFixed(0));
+        }
         
         // 请求计算 (Request calculation)
         var xhr = new XMLHttpRequest();
