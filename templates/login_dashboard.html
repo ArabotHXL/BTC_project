@@ -373,11 +373,11 @@ document.addEventListener('DOMContentLoaded', function() {
     {% for record in records %}
         {% if record.login_location and ',' in record.login_location %}
             // 解析位置信息 / Parse location information
-            const locationParts = "{{ record.login_location }}".split(',');
+            let locationParts = "{{ record.login_location }}".split(',');
             if (locationParts.length >= 3) {
-                const country = locationParts[0].trim();
-                const region = locationParts[1].trim();
-                const city = locationParts[2].trim();
+                let country = locationParts[0].trim();
+                let region = locationParts[1].trim();
+                let city = locationParts[2].trim();
                 
                 // 获取地理坐标 / Get geographic coordinates
                 // 注意：这里使用一个简单的随机方法来生成坐标，实际应用中应该使用地理编码API
