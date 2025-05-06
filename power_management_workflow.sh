@@ -1,2 +1,2 @@
 #!/bin/bash
-python run_power_management.py
+nohup python run_db_power_manager.py > power_management.log 2>&1 &

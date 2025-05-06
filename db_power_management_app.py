@@ -4,24 +4,39 @@
 import os
 from flask import Flask, render_template, jsonify, request, redirect, url_for, flash, session
 from datetime import datetime, timedelta
+import logging
 
-from power_management_models import db
-from power_management_db import PowerManagementDB
-from db_power_manager import DBPowerManager
+# 配置日志
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
+# 创建Flask应用
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "development_secret_key")
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+
+# SQLite数据库配置（确保使用绝对路径）
+sqlite_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'power_management.db')
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{sqlite_path}"
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
 }
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+logger.info(f"数据库URL: {app.config['SQLALCHEMY_DATABASE_URI']}")
+
+# 导入并初始化数据库
+from power_management_models import db
+from power_management_db import PowerManagementDB
+
 # 初始化数据库
-PowerManagementDB.init_app(app)
+db.init_app(app)
+with app.app_context():
+    db.create_all()
+    logger.info("数据库表初始化完成")
 
 # 创建电力管理系统实例
+from db_power_manager import DBPowerManager
 power_manager = DBPowerManager()
 
 # ---------------- Web路由 ----------------
