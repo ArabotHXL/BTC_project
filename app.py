@@ -668,7 +668,8 @@ def calculate():
                 'revenue': result.get('revenue', {}),  # 添加收入信息
                 'break_even': {
                     'btc_price': result.get('break_even', {}).get('btc_price', 0)
-                }
+                },
+                'optimization': result.get('optimization', {})  # 添加矿机运行状态数据
             }
             
             # 保留客户ROI数据，这对客户用户是可见的

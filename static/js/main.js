@@ -886,6 +886,11 @@ document.addEventListener('DOMContentLoaded', function() {
         var clientBreakEvenElectricityEl = document.getElementById('client-break-even-electricity');
         var clientBreakEvenBtcEl = document.getElementById('client-break-even-btc');
         
+        // 客户矿机状态
+        var clientMinerCountEl = document.getElementById('client-miner-count');
+        var clientRunningMinersEl = document.getElementById('client-running-miners');
+        var clientShutdownMinersEl = document.getElementById('client-shutdown-miners');
+        
         // 客户BTC产出和收入
         var monthlyBtcOutput = data.btc_mined && data.btc_mined.monthly ? data.btc_mined.monthly : 0;
         var monthlyBtcRevenue = 0;
@@ -956,6 +961,34 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (clientBreakEvenBtcEl && data.break_even) {
             clientBreakEvenBtcEl.textContent = formatCurrency(data.break_even.btc_price, 2);
+        }
+        
+        // 更新客户矿机数量信息
+        if (clientMinerCountEl && data.inputs && data.inputs.miner_count) {
+            clientMinerCountEl.textContent = formatNumber(data.inputs.miner_count, 0);
+        }
+        
+        // 更新客户运行中和停机矿机数量
+        if (clientRunningMinersEl && data.optimization && data.optimization.running_miner_count !== undefined) {
+            console.log("正在更新客户运行中矿机数量:", data.optimization.running_miner_count);
+            clientRunningMinersEl.textContent = formatNumber(data.optimization.running_miner_count, 0);
+        } else {
+            console.log("无法更新客户运行中矿机数量:", {
+                "clientRunningMinersEl存在": !!clientRunningMinersEl,
+                "data.optimization存在": !!data.optimization,
+                "optimization数据": data.optimization ? JSON.stringify(data.optimization).substring(0, 100) : "无数据"
+            });
+        }
+        
+        if (clientShutdownMinersEl && data.optimization && data.optimization.shutdown_miner_count !== undefined) {
+            console.log("正在更新客户停机矿机数量:", data.optimization.shutdown_miner_count);
+            clientShutdownMinersEl.textContent = formatNumber(data.optimization.shutdown_miner_count, 0);
+        } else {
+            console.log("无法更新客户停机矿机数量:", {
+                "clientShutdownMinersEl存在": !!clientShutdownMinersEl,
+                "data.optimization存在": !!data.optimization,
+                "optimization数据": data.optimization ? JSON.stringify(data.optimization).substring(0, 100) : "无数据"
+            });
         }
     }
     
