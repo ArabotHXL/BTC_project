@@ -701,10 +701,7 @@ def calculate():
                 'inputs': result.get('inputs', {}),
                 'network_data': result.get('network_data', {}),
                 'revenue': result.get('revenue', {}),  # 添加收入信息
-                'break_even': {
-                    'price': result.get('break_even', {}).get('price', 
-                            result.get('break_even', {}).get('btc_price', 0))
-                },
+                'break_even': result.get('break_even', {}) if 'break_even' in result else {},
                 'optimization': result.get('optimization', {})  # 添加矿机运行状态数据
             }
             
