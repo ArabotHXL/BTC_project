@@ -220,14 +220,19 @@ document.addEventListener('DOMContentLoaded', function() {
         var minerCount = parseInt(minerCountInput.value) || 0;
         var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
         
+        console.log("更新矿场功率 - 矿机数量:", minerCount, "单机功率:", powerWatt, "功率元素:", powerConsumptionInput ? "存在" : "不存在");
+        
         if (minerCount > 0 && powerWatt > 0) {
             // 计算所需的矿场功率 (Calculate required site power)
             // Formula: (miner_count * power_watt) / 1000000
             var requiredPowerMw = (minerCount * powerWatt) / 1000000;
+            console.log("计算的新矿场功率:", requiredPowerMw.toFixed(2), "MW");
             sitePowerMwInput.value = requiredPowerMw.toFixed(2);
             
             // 计算总算力和总功耗
             calculateTotalHashrateAndPower();
+        } else {
+            console.log("无法更新矿场功率 - 矿机数量或单机功率为0");
         }
         
         // 清除标志
