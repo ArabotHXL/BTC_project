@@ -725,11 +725,25 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 显示运行中和停机的矿机数量
         if (runningMinersEl && data.optimization) {
+            console.log("正在更新运行中矿机数量:", data.optimization.running_miner_count);
             runningMinersEl.textContent = formatNumber(data.optimization.running_miner_count, 0);
+        } else {
+            console.log("无法更新运行中矿机数量:", {
+                "runningMinersEl存在": !!runningMinersEl,
+                "data.optimization存在": !!data.optimization,
+                "data包含内容": JSON.stringify(data).substring(0, 100) + "..."
+            });
         }
         
         if (shutdownMinersEl && data.optimization) {
+            console.log("正在更新停机矿机数量:", data.optimization.shutdown_miner_count);
             shutdownMinersEl.textContent = formatNumber(data.optimization.shutdown_miner_count, 0);
+        } else {
+            console.log("无法更新停机矿机数量:", {
+                "shutdownMinersEl存在": !!shutdownMinersEl,
+                "data.optimization存在": !!data.optimization,
+                "data包含内容": JSON.stringify(data).substring(0, 100) + "..."
+            });
         }
     }
     
