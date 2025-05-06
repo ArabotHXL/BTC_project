@@ -5,6 +5,7 @@ import numpy as np
 import os
 import secrets
 import requests
+import time
 from datetime import datetime, timedelta
 from auth import verify_email, login_required
 from mining_calculator import (
@@ -53,12 +54,14 @@ def before_request():
         session['language'] = request.args.get('lang')
         g.language = session['language']
 
-# 添加翻译函数到模板上下文
+# 添加翻译函数和当前时间到模板上下文
 @app.context_processor
 def inject_translator():
     def translate(text):
         return get_translation(text, to_lang=g.language)
-    return dict(t=translate, current_lang=g.language)
+    # 添加当前时间戳给模板使用（用于防止缓存）
+    now = datetime.now()
+    return dict(t=translate, current_lang=g.language, now=now)
 
 def get_user_role(email):
     """根据用户邮箱获取角色"""

@@ -4,28 +4,16 @@
 
 {% block extra_head %}
 <!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css?v={{ now.timestamp }}" 
       crossorigin=""/>
 <!-- Leaflet JavaScript -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js?v={{ now.timestamp }}" 
         crossorigin=""></script>
 <style>
     #loginMap {
         height: 400px;
         width: 100%;
         border-radius: 0.25rem;
-    }
-    .cluster-marker {
-        background-color: rgba(38, 143, 255, 0.6);
-        border: 2px solid #268fff;
-        border-radius: 50%;
-        color: white;
-        font-weight: bold;
-        display: flex;
-        justify-content: center;
-        align-items: center;
     }
     .marker-popup-content {
         font-size: 0.9rem;
@@ -358,113 +346,111 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<!-- 地图初始化脚本，单独放置以避免变量冲突 -->
+<!-- 使用独立的超简化地图脚本 -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 初始化地图
-    var loginMap = L.map('loginMap').setView([30, 10], 2);
+// 在DOMContentLoaded事件中初始化地图，避免变量名冲突
+document.addEventListener('DOMContentLoaded', function initMap() {
+    // 创建地图实例
+    var map = L.map('loginMap').setView([30, 10], 2);
     
-    // 添加地图图层
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        subdomains: 'abcd',
+    // 添加深色地图图层 
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?v={{ now.timestamp }}', {
+        attribution: '© OpenStreetMap',
         maxZoom: 19
-    }).addTo(loginMap);
+    }).addTo(map);
     
-    // 预定义国家的基本坐标
-    var countryCoords = {
+    // 各国坐标映射
+    var coords = {
         {% if current_lang == 'en' %}
-        'China': [35.0, 105.0],
-        'United States': [40.0, -100.0],
-        'United Kingdom': [54.0, -2.0],
-        'Canada': [56.0, -105.0],
-        'Australia': [-25.0, 135.0],
-        'Japan': [36.0, 138.0],
-        'Germany': [51.0, 10.0],
-        'France': [47.0, 2.0],
-        'Brazil': [-10.0, -55.0],
-        'India': [20.0, 80.0]
+        'China': [35, 105],
+        'United States': [40, -100],
+        'United Kingdom': [54, -2],
+        'Canada': [56, -105],
+        'Australia': [-25, 135],
+        'Japan': [36, 138],
+        'Germany': [51, 10],
+        'France': [47, 2],
+        'Brazil': [-10, -55],
+        'India': [20, 80]
         {% else %}
-        '中国': [35.0, 105.0],
-        '美国': [40.0, -100.0],
-        '英国': [54.0, -2.0],
-        '加拿大': [56.0, -105.0],
-        '澳大利亚': [-25.0, 135.0],
-        '日本': [36.0, 138.0],
-        '德国': [51.0, 10.0],
-        '法国': [47.0, 2.0],
-        '巴西': [-10.0, -55.0],
-        '印度': [20.0, 80.0]
+        '中国': [35, 105],
+        '美国': [40, -100],
+        '英国': [54, -2],
+        '加拿大': [56, -105],
+        '澳大利亚': [-25, 135],
+        '日本': [36, 138],
+        '德国': [51, 10],
+        '法国': [47, 2],
+        '巴西': [-10, -55],
+        '印度': [20, 80]
         {% endif %}
     };
     
-    // 大国家列表，决定坐标偏移范围
-    var largeCountries = [
-        {% if current_lang == 'en' %}
-        'China', 'United States', 'Canada', 'Australia', 'Brazil', 'India'
-        {% else %}
-        '中国', '美国', '加拿大', '澳大利亚', '巴西', '印度'
-        {% endif %}
-    ];
-    
-    // 生成伪随机数
-    var seedValue = 2025;
-    function getRandomOffset() {
-        seedValue = (seedValue * 9301 + 49297) % 233280;
-        return seedValue / 233280;
+    // 生成伪随机数的函数（基于简单线性同余算法）
+    var seed = 2025;
+    function random() {
+        seed = (seed * 9301 + 49297) % 233280;
+        return seed / 233280;
     }
     
-    // 存储所有标记位置
-    var allMarkers = [];
+    // 收集所有标记的位置
+    var markers = [];
     
-    // 为每条记录添加标记
+    // 渲染登录位置标记（遍历记录数据）
     {% for record in records %}
         {% if record.login_location and ',' in record.login_location %}
-        (function() { // 使用IIFE避免变量污染
-            var recordLocation = "{{ record.login_location }}".split(',');
-            var country = recordLocation[0].trim();
-            var region = recordLocation.length > 1 ? recordLocation[1].trim() : '';
-            var city = recordLocation.length > 2 ? recordLocation[2].trim() : '';
-            
-            var lat, lng, offsetRange;
-            
-            // 检查是否有国家的基本坐标
-            if (countryCoords[country]) {
-                offsetRange = largeCountries.includes(country) ? 5.0 : 2.0;
-                lat = countryCoords[country][0] + (getRandomOffset() - 0.5) * offsetRange;
-                lng = countryCoords[country][1] + (getRandomOffset() - 0.5) * offsetRange;
-            } else {
-                lat = (getRandomOffset() * 140 - 70);
-                lng = (getRandomOffset() * 340 - 170);
-            }
-            
-            // 创建标记
-            var marker = L.marker([lat, lng]).addTo(loginMap);
-            
-            // 创建弹出窗口内容
-            var popupContent = '<div class="marker-popup-content">' +
-                '<div class="email">{{ record.email }}</div>' +
-                '<div class="time">{{ record.est_time }}</div>' +
-                '<div class="{{ "status-success" if record.successful else "status-failed" }}">' +
+            (function() { // 使用IIFE创建独立作用域
+                // 解析位置信息
+                var parts = "{{ record.login_location }}".split(',');
+                var country = parts[0].trim();
+                var region = parts.length > 1 ? parts[1].trim() : '';
+                var city = parts.length > 2 ? parts[2].trim() : '';
+                
+                // 计算位置
+                var position;
+                if (coords[country]) {
+                    // 使用国家基础坐标加随机偏移
+                    var base = coords[country];
+                    var offset = country.match(/中国|China|美国|United States|加拿大|Canada|澳大利亚|Australia|巴西|Brazil|印度|India/) ? 5 : 2;
+                    position = [
+                        base[0] + (random() - 0.5) * offset,
+                        base[1] + (random() - 0.5) * offset
+                    ];
+                } else {
+                    // 随机生成世界范围内的坐标
+                    position = [
+                        random() * 140 - 70,
+                        random() * 340 - 170
+                    ];
+                }
+                
+                // 创建标记
+                var marker = L.marker(position).addTo(map);
+                
+                // 创建弹出内容
+                var html = 
+                    '<div class="marker-popup-content">' +
+                    '<div class="email">{{ record.email }}</div>' +
+                    '<div class="time">{{ record.est_time }}</div>' +
+                    '<div class="{{ "status-success" if record.successful else "status-failed" }}">' +
                     '{{ "Success" if record.successful and current_lang == "en" else "成功" if record.successful else "Failed" if current_lang == "en" else "失败" }}' +
-                '</div>' +
-                '<div>' + city + (region ? ', ' + region : '') + ', ' + country + '</div>' +
-                '<div>IP: {{ record.ip_address or "Unknown" }}</div>' +
-                '</div>';
-            
-            // 绑定弹出窗口
-            marker.bindPopup(popupContent);
-            
-            // 添加到标记数组
-            allMarkers.push([lat, lng]);
-        })();
+                    '</div>' +
+                    '<div>' + city + (region ? ', ' + region : '') + ', ' + country + '</div>' +
+                    '<div>IP: {{ record.ip_address or "Unknown" }}</div>' +
+                    '</div>';
+                
+                // 绑定弹出窗口
+                marker.bindPopup(html);
+                
+                // 保存位置
+                markers.push(position);
+            })();
         {% endif %}
     {% endfor %}
     
-    // 调整地图视图以适应所有标记
-    if (allMarkers.length > 0) {
-        var bounds = L.latLngBounds(allMarkers);
-        loginMap.fitBounds(bounds, {padding: [30, 30]});
+    // 如果有标记，调整地图视图
+    if (markers.length > 0) {
+        map.fitBounds(L.latLngBounds(markers), {padding: [30, 30]});
     }
 });
 </script>
