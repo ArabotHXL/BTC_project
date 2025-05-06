@@ -68,13 +68,13 @@ function directPdfExport() {
     console.log("直接调用PDF生成API");
     
     try {
-        // 创建表单数据
-        var formData = new FormData();
-        formData.append('data', JSON.stringify(window.calculationResultData));
+        // 准备JSON数据
+        var jsonData = JSON.stringify(window.calculationResultData);
         
         // 发送请求
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '/generate_pdf_report', true);
+        xhr.setRequestHeader('Content-Type', 'application/json'); // 设置内容类型为application/json
         xhr.responseType = 'blob'; // 设置响应类型为blob
         
         xhr.onload = function() {
@@ -102,7 +102,7 @@ function directPdfExport() {
             alert("PDF报告生成失败，请重试。\nFailed to generate PDF report, please try again.");
         };
         
-        xhr.send(formData);
+        xhr.send(jsonData);
         
     } catch (error) {
         console.error("PDF生成错误:", error);
