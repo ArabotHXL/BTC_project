@@ -25,10 +25,7 @@ power_manager = DBPowerManager()
 
 # ---------------- Web路由 ----------------
 
-@app.route('/')
-def index():
-    """主页 - 系统仪表盘"""
-    return render_template('db_power_dashboard.html')
+# 删除冲突的根路由
 
 # ---------------- API路由 ----------------
 

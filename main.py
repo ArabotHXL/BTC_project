@@ -13,5 +13,9 @@ app.secret_key = os.environ.get("SESSION_SECRET", "bitcoin_mining_calculator_sec
 # 初始化数据库
 init_db(app)
 
+# 导入电力管理系统API和路由
+logging.info("正在加载电力管理系统模块...")
+import db_power_management_app
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
