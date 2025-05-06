@@ -19,7 +19,10 @@
                 
                 <div class="d-flex gap-4 align-items-center">
                     <div>
-                        <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+                        <a href="{{ url_for('login_dashboard') }}" class="btn btn-outline-info">
+                            <i class="bi bi-graph-up me-1"></i> 登录分析仪表盘
+                        </a>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-primary ms-2">
                             <i class="bi bi-calculator me-1"></i> 返回计算器
                         </a>
                         <a href="{{ url_for('logout') }}" class="btn btn-outline-danger ms-2">

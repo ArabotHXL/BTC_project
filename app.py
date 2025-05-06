@@ -5,7 +5,7 @@ import numpy as np
 import os
 import secrets
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from auth import verify_email, login_required
 from mining_calculator import (
     MINER_DATA,
@@ -256,6 +256,157 @@ def login_records():
     # 获取登录记录
     records = LoginRecord.query.order_by(LoginRecord.login_time.desc()).limit(100).all()
     return render_template('login_records.html', records=records)
+    
+@app.route('/admin/login_dashboard')
+@login_required
+def login_dashboard():
+    """拥有者查看登录数据分析仪表盘"""
+    # 只允许拥有者角色访问
+    if not has_role(['owner']):
+        if g.language == 'en':
+            flash('Access denied. Owner privileges required.', 'danger')
+        else:
+            flash('您没有权限访问此页面，需要拥有者权限', 'danger')
+        return redirect(url_for('index'))
+    
+    # 从数据库获取登录记录
+    all_records = LoginRecord.query.order_by(LoginRecord.login_time.desc()).all()
+    
+    # 定义从UTC转换到EST的时区偏移（-5小时）
+    utc_to_est_offset = timedelta(hours=-5)
+    
+    # 处理记录，将UTC时间转换为EST时间
+    records_with_est = []
+    for record in all_records:
+        # 深拷贝记录对象的关键属性
+        record_copy = {
+            'id': record.id,
+            'email': record.email,
+            'login_time': record.login_time,
+            'successful': record.successful,
+            'ip_address': record.ip_address,
+            'login_location': record.login_location,
+            # 转换为EST时间
+            'est_time': (record.login_time + utc_to_est_offset).strftime("%Y-%m-%d %H:%M:%S")
+        }
+        
+        # 处理位置显示
+        display_location = "未知/Unknown"
+        if record.login_location and ',' in record.login_location:
+            parts = record.login_location.split(',')
+            if len(parts) >= 3:
+                country = parts[0].strip()
+                region = parts[1].strip()
+                city = parts[2].strip()
+                display_location = f"{city}, {region}, {country}"
+            elif len(parts) == 2:
+                country = parts[0].strip()
+                region = parts[1].strip()
+                display_location = f"{region}, {country}"
+            else:
+                display_location = parts[0].strip()
+        
+        record_copy['display_location'] = display_location
+        records_with_est.append(record_copy)
+    
+    # 只取最近100条记录用于表格显示
+    recent_records = records_with_est[:100]
+    
+    # 计算统计数据
+    unique_users = len(set(r['email'] for r in records_with_est))
+    total_logins = len(records_with_est)
+    failed_logins = sum(1 for r in records_with_est if not r['successful'])
+    
+    # 计算今日登录数（使用EST时间）
+    today = datetime.utcnow() + utc_to_est_offset
+    today_start = datetime(today.year, today.month, today.day, 0, 0, 0) - utc_to_est_offset  # 转回UTC
+    today_logins = sum(1 for r in records_with_est if r['login_time'] >= today_start)
+    
+    # 准备统计数据
+    stats = {
+        'unique_users': unique_users,
+        'total_logins': total_logins,
+        'failed_logins': failed_logins,
+        'today_logins': today_logins
+    }
+    
+    # 准备最近30天的登录趋势数据
+    trend_data = {'dates': [], 'counts': []}
+    
+    # 生成过去30天的日期列表（EST时区）
+    end_date = today
+    start_date = end_date - timedelta(days=29)
+    current_date = start_date
+    
+    while current_date <= end_date:
+        date_str = current_date.strftime('%Y-%m-%d')
+        trend_data['dates'].append(date_str)
+        
+        # 计算当天的登录数量（EST时区）
+        day_start = datetime(current_date.year, current_date.month, current_date.day, 0, 0, 0) - utc_to_est_offset
+        day_end = day_start + timedelta(days=1)
+        day_count = sum(1 for r in records_with_est 
+                        if r['login_time'] >= day_start and r['login_time'] < day_end)
+        
+        trend_data['counts'].append(day_count)
+        current_date += timedelta(days=1)
+    
+    # 准备按小时的登录分布数据
+    time_data = {'hours': [], 'counts': []}
+    hour_counts = [0] * 24
+    
+    for record in records_with_est:
+        login_time = record['login_time'] + utc_to_est_offset
+        hour = login_time.hour
+        hour_counts[hour] += 1
+    
+    for hour in range(24):
+        # 格式化小时显示，如 "00:00", "01:00", ...
+        hour_str = f"{hour:02d}:00"
+        time_data['hours'].append(hour_str)
+        time_data['counts'].append(hour_counts[hour])
+    
+    # 准备地理位置分布数据
+    geo_data = {'countries': [], 'counts': []}
+    country_counts = {}
+    
+    for record in records_with_est:
+        if record['login_location'] and ',' in record['login_location']:
+            country = record['login_location'].split(',')[0].strip()
+            if country in country_counts:
+                country_counts[country] += 1
+            else:
+                country_counts[country] = 1
+        else:
+            country = "未知/Unknown"
+            if country in country_counts:
+                country_counts[country] += 1
+            else:
+                country_counts[country] = 1
+    
+    # 按登录次数排序国家，并限制为前10个
+    sorted_countries = sorted(country_counts.items(), key=lambda x: x[1], reverse=True)
+    top_countries = sorted_countries[:10]
+    
+    for country, count in top_countries:
+        geo_data['countries'].append(country)
+        geo_data['counts'].append(count)
+    
+    # 如果超过10个国家，将剩余的合并为"其他"
+    if len(sorted_countries) > 10:
+        others_count = sum(count for _, count in sorted_countries[10:])
+        if g.language == 'en':
+            geo_data['countries'].append("Others")
+        else:
+            geo_data['countries'].append("其他")
+        geo_data['counts'].append(others_count)
+    
+    return render_template('login_dashboard.html', 
+                          records=recent_records, 
+                          stats=stats, 
+                          trend_data=trend_data,
+                          time_data=time_data,
+                          geo_data=geo_data)
 
 @app.route('/calculate', methods=['POST'])
 @login_required
