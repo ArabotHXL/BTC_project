@@ -147,22 +147,33 @@ document.addEventListener('DOMContentLoaded', function() {
         var hashrate = parseFloat(hashrateInput.value) || 0;
         var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
         
+        console.log("计算总算力和总功耗 - 矿机数量:", minerCount, "单矿机算力:", hashrate, "单矿机功耗:", powerWatt);
+        
         if (minerCount > 0 && hashrate > 0 && powerWatt > 0) {
             // 计算总算力和总功耗
             var totalHashrate = minerCount * hashrate;
             var totalPower = minerCount * powerWatt;
             
+            console.log("计算结果 - 总算力:", totalHashrate, "总功耗:", totalPower);
+            
             // 更新UI显示
             var totalHashrateInput = document.getElementById('total-hashrate');
             var totalPowerInput = document.getElementById('total-power');
             
+            console.log("总算力输入框:", totalHashrateInput ? "已找到" : "未找到", 
+                        "总功耗输入框:", totalPowerInput ? "已找到" : "未找到");
+            
             if (totalHashrateInput) {
                 totalHashrateInput.value = totalHashrate.toFixed(0);
+                console.log("总算力已更新为:", totalHashrate.toFixed(0));
             }
             
             if (totalPowerInput) {
                 totalPowerInput.value = totalPower.toFixed(0);
+                console.log("总功耗已更新为:", totalPower.toFixed(0));
             }
+        } else {
+            console.log("计算条件不满足 - 矿机数量、算力或功耗有一项为0");
         }
     }
     
