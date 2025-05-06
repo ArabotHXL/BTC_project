@@ -33,6 +33,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // 加载矿机型号列表 (Load miner models)
         fetchMiners();
         
+        // 初始化时立即计算总算力和总功耗
+        calculateTotalHashrateAndPower();
+        
         // 事件绑定 (Event bindings)
         if (calculatorForm) {
             calculatorForm.addEventListener('submit', handleCalculateSubmit);
@@ -391,6 +394,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                         
                         console.log('矿机列表加载成功:', data.miners.length);
+                        
+                        // 如果已选择了矿机型号，重新计算总算力和总功耗
+                        if (minerModelSelect.value) {
+                            updateMinerSpecs();
+                        } else {
+                            calculateTotalHashrateAndPower();
+                        }
                     } else {
                         console.error('获取矿机数据失败:', data);
                         useCachedMiners();
@@ -437,6 +447,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 
                 console.log('使用缓存的矿机列表:', miners.length);
+                
+                // 如果已选择了矿机型号，重新计算总算力和总功耗
+                if (minerModelSelect.value) {
+                    updateMinerSpecs();
+                } else {
+                    calculateTotalHashrateAndPower();
+                }
             } catch (error) {
                 console.error('解析缓存的矿机列表失败:', error);
                 showError('加载矿机列表失败。(Failed to load miner list.)');
