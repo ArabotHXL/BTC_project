@@ -1127,17 +1127,32 @@ def power_management_dashboard():
         flash('您没有访问此页面的权限。', 'danger')
         return redirect(url_for('unauthorized'))
     
-    # 导入电力管理系统
-    from db_power_manager import DBPowerManager
-    power_manager = DBPowerManager()
-    
-    # 检查数据库中是否有矿机数据，如果没有，初始化测试数据
+    # 导入电力管理系统相关组件
     try:
-        from power_management_models import MinerStatus
+        # 初始化电力管理系统的数据库
+        from power_management_models import db as power_db
         from power_management_db import PowerManagementDB
+        
+        # 确保电力管理数据库与主应用关联
+        if not power_db.get_app():
+            logging.info("初始化电力管理数据库与Flask应用的关联")
+            # 配置SQLite数据库
+            app.config["SQLALCHEMY_BINDS"] = {
+                'power_management': f"sqlite:///{os.path.join(os.path.dirname(os.path.abspath(__file__)), 'power_management.db')}"
+            }
+            power_db.init_app(app)
+            
+            # 创建必要的表
+            with app.app_context():
+                power_db.create_all(bind='power_management')
+        
+        # 初始化电力管理系统
+        from db_power_manager import DBPowerManager
+        power_manager = DBPowerManager()
         
         # 获取矿机数量
         miner_count = len(PowerManagementDB.get_all_miners())
+        logging.info(f"当前系统中有 {miner_count} 台矿机")
         
         # 如果没有矿机数据，初始化100台测试矿机
         if miner_count == 0:
@@ -1145,8 +1160,11 @@ def power_management_dashboard():
             if miner_count > 0:
                 flash(f'已成功初始化{miner_count}台测试矿机数据。', 'success')
                 logging.info(f'已初始化{miner_count}台测试矿机数据')
+        
     except Exception as e:
         logging.error(f"初始化电力管理系统数据出错: {str(e)}")
+        import traceback
+        logging.error(traceback.format_exc())
         flash(f'初始化数据时出错: {str(e)}', 'danger')
     
     return render_template('db_power_dashboard.html')
