@@ -1,36 +1,36 @@
-/* 挖矿仪表盘动画效果 */
+/* 挖矿仪表盘动画效果 - 更微妙专业的版本 */
 
-/* 卡片悬停效果 */
+/* 卡片悬停效果 - 更微妙的版本 */
 .card {
-    transition: all 0.3s ease;
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
     border: 1px solid rgba(0, 0, 0, 0.125);
 }
 
 .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-    border-color: var(--bs-primary);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    border-color: rgba(13, 110, 253, 0.4);
 }
 
-/* 结果卡片悬停效果 */
+/* 结果卡片悬停效果 - 更微妙的版本 */
 .results-hover-card {
-    transition: all 0.3s ease;
+    transition: box-shadow 0.25s ease, background-color 0.25s ease;
 }
 
 .results-hover-card:hover {
-    transform: scale(1.03);
-    z-index: 2;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    z-index: 1;
 }
 
-/* 比特币挖矿产出卡片 */
+/* 比特币挖矿产出卡片 - 更微妙的版本 */
 .btc-mined-card {
-    transition: all 0.3s ease;
+    transition: background-color 0.25s ease, box-shadow 0.25s ease;
     overflow: hidden;
     position: relative;
 }
 
 .btc-mined-card:hover {
-    background-color: rgba(13, 110, 253, 0.08);
+    background-color: rgba(13, 110, 253, 0.03);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
 }
 
 .btc-mined-card:hover::before {
@@ -39,19 +39,20 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 5px;
-    background: linear-gradient(90deg, var(--bs-primary), var(--bs-info));
+    height: 3px;
+    background: var(--bs-primary);
 }
 
-/* 矿场主月度收益卡片 */
+/* 矿场主月度收益卡片 - 更微妙的版本 */
 .host-profit-card {
-    transition: all 0.3s ease;
+    transition: background-color 0.25s ease, box-shadow 0.25s ease;
     overflow: hidden;
     position: relative;
 }
 
 .host-profit-card:hover {
-    background-color: rgba(33, 37, 41, 0.08);
+    background-color: rgba(33, 37, 41, 0.03);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
 }
 
 .host-profit-card:hover::before {
@@ -60,19 +61,20 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 5px;
-    background: linear-gradient(90deg, var(--bs-dark), var(--bs-secondary));
+    height: 3px;
+    background: var(--bs-dark);
 }
 
-/* 客户月度收益卡片 */
+/* 客户月度收益卡片 - 更微妙的版本 */
 .client-profit-card {
-    transition: all 0.3s ease;
+    transition: background-color 0.25s ease, box-shadow 0.25s ease;
     overflow: hidden;
     position: relative;
 }
 
 .client-profit-card:hover {
-    background-color: rgba(13, 202, 240, 0.08);
+    background-color: rgba(13, 202, 240, 0.03);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
 }
 
 .client-profit-card:hover::before {
@@ -81,76 +83,54 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 5px;
-    background: linear-gradient(90deg, var(--bs-info), var(--bs-primary));
+    height: 3px;
+    background: var(--bs-info);
 }
 
-/* 表单控件动画 */
+/* 表单控件动画 - 更微妙的版本 */
 .form-control, .form-select {
-    transition: all 0.2s ease;
-    border: 1px solid rgba(0, 0, 0, 0.15);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .form-control:focus, .form-select:focus {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    border-color: var(--bs-primary);
+    border-color: rgba(13, 110, 253, 0.5);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
 }
 
-/* 按钮悬停动画 */
+/* 按钮悬停动画 - 更微妙的版本 */
 .btn {
-    transition: all 0.3s ease;
+    transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
     position: relative;
-    overflow: hidden;
 }
 
 .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
+    box-shadow: 0 2px 5px rgba(13, 110, 253, 0.2);
 }
 
-.btn-primary:after {
-    content: "";
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 100%);
-    transform: translateX(-100%);
-}
-
-.btn-primary:hover:after {
-    transition: transform 1s ease;
-    transform: translateX(100%);
-}
-
-/* 图表生成按钮特效 */
+/* 图表生成按钮特效 - 更微妙的版本 */
 #generate-chart-btn {
-    transition: all 0.3s ease;
+    transition: background-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 #generate-chart-btn:hover {
-    transform: translateY(-3px) scale(1.03);
-    box-shadow: 0 8px 15px rgba(13, 110, 253, 0.2);
+    box-shadow: 0 2px 5px rgba(13, 110, 253, 0.2);
 }
 
 #generate-chart-btn i {
-    transition: transform 0.3s ease;
+    transition: transform 0.25s ease;
 }
 
 #generate-chart-btn:hover i {
-    transform: rotate(15deg);
+    transform: rotate(5deg);
 }
 
-/* 表格行悬停动画 */
+/* 表格行悬停动画 - 更微妙的版本 */
 .table tbody tr {
-    transition: all 0.2s ease;
+    transition: background-color 0.25s ease;
 }
 
 .table tbody tr:hover {
-    background-color: rgba(13, 110, 253, 0.05);
-    transform: translateX(3px);
+    background-color: rgba(13, 110, 253, 0.03);
 }
 
 /* 加载动画 */
@@ -167,7 +147,7 @@
     z-index: 1000;
     opacity: 0;
     visibility: hidden;
-    transition: all 0.3s ease;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
 }
 
 .loading-overlay.show {
@@ -176,6 +156,6 @@
 }
 
 .spinner-border {
-    width: 3rem;
-    height: 3rem;
+    width: 2.5rem;
+    height: 2.5rem;
 }
