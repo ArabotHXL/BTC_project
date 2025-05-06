@@ -34,7 +34,18 @@ app.secret_key = os.environ.get("SESSION_SECRET", secrets.token_hex(32))
 
 # 导入数据库和用户模型
 from db import db
-from models import LoginRecord, UserAccess
+from models import LoginRecord, UserAccess, CryptoAsset, Portfolio
+
+# 导入加密货币投资组合功能
+from crypto_portfolio import (
+    get_crypto_list, 
+    get_user_assets, 
+    add_crypto_asset, 
+    update_crypto_asset, 
+    delete_crypto_asset, 
+    get_portfolio_summary, 
+    update_portfolio_metrics
+)
 
 # 导入翻译模块
 from translations import get_translation
