@@ -185,25 +185,25 @@
                     <td>{% if data.language == 'en' %}Daily{% else %}每日{% endif %}</td>
                     <td class="btc-value">{{ '{:.8f}'.format(data.btc_mined.method1.daily) }}</td>
                     <td class="btc-value">{{ '{:.8f}'.format(data.btc_mined.method2.daily) }}</td>
-                    <td class="usd-value">${{ '{:.2f}'.format(data.revenue.daily) }}</td>
-                    <td class="expense-value">${{ '{:.2f}'.format(data.cost.daily) }}</td>
-                    <td>${{ '{:.2f}'.format(data.revenue.daily - data.cost.daily) }}</td>
+                    <td class="usd-value">${{ '{:.2f}'.format(data.btc_mined.daily * data.network_data.btc_price) if data.btc_mined.daily and data.network_data.btc_price else '{:.2f}'.format(0) }}</td>
+                    <td class="expense-value">${{ '{:.2f}'.format(data.electricity_cost.daily) if data.electricity_cost and data.electricity_cost.daily else '{:.2f}'.format(0) }}</td>
+                    <td>${{ '{:.2f}'.format((data.btc_mined.daily * data.network_data.btc_price) - (data.electricity_cost.daily if data.electricity_cost and data.electricity_cost.daily else 0)) if data.btc_mined.daily and data.network_data.btc_price else '{:.2f}'.format(0) }}</td>
                 </tr>
                 <tr>
                     <td>{% if data.language == 'en' %}Monthly{% else %}每月{% endif %}</td>
                     <td class="btc-value">{{ '{:.8f}'.format(data.btc_mined.method1.monthly) }}</td>
                     <td class="btc-value">{{ '{:.8f}'.format(data.btc_mined.method2.monthly) }}</td>
-                    <td class="usd-value">${{ '{:.2f}'.format(data.revenue.monthly) }}</td>
-                    <td class="expense-value">${{ '{:.2f}'.format(data.cost.monthly) }}</td>
-                    <td>${{ '{:.2f}'.format(data.revenue.monthly - data.cost.monthly) }}</td>
+                    <td class="usd-value">${{ '{:.2f}'.format(data.btc_mined.monthly * data.network_data.btc_price) if data.btc_mined.monthly and data.network_data.btc_price else '{:.2f}'.format(0) }}</td>
+                    <td class="expense-value">${{ '{:.2f}'.format(data.electricity_cost.monthly) if data.electricity_cost and data.electricity_cost.monthly else '{:.2f}'.format(0) }}</td>
+                    <td>${{ '{:.2f}'.format((data.btc_mined.monthly * data.network_data.btc_price) - (data.electricity_cost.monthly if data.electricity_cost and data.electricity_cost.monthly else 0)) if data.btc_mined.monthly and data.network_data.btc_price else '{:.2f}'.format(0) }}</td>
                 </tr>
                 <tr>
                     <td>{% if data.language == 'en' %}Yearly{% else %}每年{% endif %}</td>
-                    <td class="btc-value">{{ '{:.8f}'.format(data.btc_mined.method1.yearly) }}</td>
-                    <td class="btc-value">{{ '{:.8f}'.format(data.btc_mined.method2.yearly) }}</td>
-                    <td class="usd-value">${{ '{:.2f}'.format(data.revenue.yearly) }}</td>
-                    <td class="expense-value">${{ '{:.2f}'.format(data.cost.yearly) }}</td>
-                    <td>${{ '{:.2f}'.format(data.revenue.yearly - data.cost.yearly) }}</td>
+                    <td class="btc-value">{{ '{:.8f}'.format(data.btc_mined.method1.monthly * 12) if data.btc_mined.method1.monthly else '{:.8f}'.format(0) }}</td>
+                    <td class="btc-value">{{ '{:.8f}'.format(data.btc_mined.method2.monthly * 12) if data.btc_mined.method2.monthly else '{:.8f}'.format(0) }}</td>
+                    <td class="usd-value">${{ '{:.2f}'.format(data.btc_mined.yearly * data.network_data.btc_price) if data.btc_mined.yearly and data.network_data.btc_price else '{:.2f}'.format(0) }}</td>
+                    <td class="expense-value">${{ '{:.2f}'.format(data.electricity_cost.yearly) if data.electricity_cost and data.electricity_cost.yearly else '{:.2f}'.format(0) }}</td>
+                    <td>${{ '{:.2f}'.format((data.btc_mined.yearly * data.network_data.btc_price) - (data.electricity_cost.yearly if data.electricity_cost and data.electricity_cost.yearly else 0)) if data.btc_mined.yearly and data.network_data.btc_price else '{:.2f}'.format(0) }}</td>
                 </tr>
             </tbody>
         </table>
