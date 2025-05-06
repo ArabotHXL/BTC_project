@@ -49,6 +49,37 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("在init函数中等待1秒后开始计算总算力和总功耗");
         setTimeout(function() {
             console.log("即将计算总算力和总功耗");
+            
+            // 初始化总算力和总功耗字段
+            var totalHashrateInput = document.getElementById('total-hashrate');
+            var totalPowerInput = document.getElementById('total-power');
+            
+            console.log("总算力输入框存在:", !!totalHashrateInput);
+            console.log("总功耗输入框存在:", !!totalPowerInput);
+            
+            // 如果有初始值，先设置一下
+            var minerCount = parseInt(minerCountInput.value) || 0;
+            var hashrate = parseFloat(hashrateInput.value) || 0;
+            var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
+            
+            console.log("初始值 - 矿机数量:", minerCount, "单机算力:", hashrate, "单机功耗:", powerWatt);
+            
+            if (minerCount > 0 && hashrate > 0 && powerWatt > 0) {
+                var totalHashrate = minerCount * hashrate;
+                var totalPower = minerCount * powerWatt;
+                
+                if (totalHashrateInput) {
+                    totalHashrateInput.value = totalHashrate.toFixed(0);
+                    console.log("初始化总算力为:", totalHashrate.toFixed(0));
+                }
+                
+                if (totalPowerInput) {
+                    totalPowerInput.value = totalPower.toFixed(0);
+                    console.log("初始化总功耗为:", totalPower.toFixed(0));
+                }
+            }
+            
+            // 然后正常调用计算函数
             calculateTotalHashrateAndPower();
         }, 1000);
         
@@ -196,6 +227,38 @@ document.addEventListener('DOMContentLoaded', function() {
     // 处理计算表单提交 (Handle calculation form submission)
     function handleCalculateSubmit(event) {
         event.preventDefault();
+        
+        // 在提交表单前重新计算一次总算力和总功耗
+        console.log("表单提交前重新计算总算力和总功耗");
+        calculateTotalHashrateAndPower();
+        
+        // 直接设置总算力和总功耗
+        var minerCount = parseInt(minerCountInput.value) || 0;
+        var hashrate = parseFloat(hashrateInput.value) || 0;
+        var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
+        
+        if (minerCount > 0 && hashrate > 0 && powerWatt > 0) {
+            var totalHashrate = minerCount * hashrate;
+            var totalPower = minerCount * powerWatt;
+            
+            // 获取总算力和总功耗输入框
+            var totalHashrateInput = document.getElementById('total-hashrate');
+            var totalPowerInput = document.getElementById('total-power');
+            
+            console.log("表单提交前检查总算力和总功耗输入框");
+            console.log("总算力输入框:", totalHashrateInput ? "存在" : "不存在");
+            console.log("总功耗输入框:", totalPowerInput ? "存在" : "不存在");
+            
+            if (totalHashrateInput) {
+                console.log("设置总算力为:", totalHashrate);
+                totalHashrateInput.value = totalHashrate.toFixed(0);
+            }
+            
+            if (totalPowerInput) {
+                console.log("设置总功耗为:", totalPower);
+                totalPowerInput.value = totalPower.toFixed(0);
+            }
+        }
         
         // 表单验证 (Form validation)
         var hasErrors = false;
