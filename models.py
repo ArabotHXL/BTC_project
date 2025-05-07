@@ -1,6 +1,9 @@
+# 标准库导入
 from datetime import datetime, timedelta
-from db import db
 import enum
+
+# 本地模块导入
+from db import db
 
 class LeadStatus(enum.Enum):
     """潜在客户状态"""

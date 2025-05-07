@@ -1,5 +1,8 @@
+# 标准库导入
 import os
 import logging
+
+# 第三方库导入
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 
@@ -28,7 +31,8 @@ def init_db(app):
     # 创建表
     with app.app_context():
         # 导入模型以便创建表
-        from models import LoginRecord  # noqa: F401
+        # 导入所有模型，确保表创建完整
+        import models  # noqa: F401
         
         # 创建所有表
         db.create_all()

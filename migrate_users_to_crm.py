@@ -3,8 +3,10 @@
 此脚本将user_access表中的所有用户迁移为CRM系统中的客户
 """
 
+# 标准库导入
 from datetime import datetime
-from flask import Flask
+
+# 本地模块导入
 from models import UserAccess, Customer, Contact, Lead, db
 
 def migrate_users_to_crm():
@@ -88,8 +90,11 @@ def migrate_users_to_crm():
 
 if __name__ == "__main__":
     # 创建一个临时应用上下文
+    from flask import Flask
+    import os
+    
     app = Flask(__name__)
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///instance/database.db"  # 根据实际情况修改
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///instance/database.db")
     db.init_app(app)
     
     with app.app_context():

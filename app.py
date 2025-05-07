@@ -135,7 +135,6 @@ def login():
                         location = "中国, 内部网络, 局域网"
                     else:
                         # 使用IP-API获取地理位置信息
-                        import requests
                         # 免费版的ip-api.com，不需要API密钥
                         ip_api_url = f"http://ip-api.com/json/{client_ip}?fields=status,message,country,regionName,city,query"
                         response = requests.get(ip_api_url, timeout=3)
