@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="1600" xmlns="http://www.w3.org/2000/svg">
+    <style>
+        .title { font: bold 24px sans-serif; fill: #333; }
+        .subtitle { font: bold 18px sans-serif; fill: #555; }
+        .entity { fill: #3498db; stroke: #2c3e50; stroke-width: 2; rx: 10; ry: 10; }
+        .table { fill: #34495e; stroke: #2c3e50; stroke-width: 2; rx: 5; ry: 5; }
+        .field { fill: #ecf0f1; stroke: #bdc3c7; stroke-width: 1; rx: 3; ry: 3; }
+        .relationship { stroke: #7f8c8d; stroke-width: 2; marker-end: url(#arrowhead); }
+        .dataflow { stroke: #e67e22; stroke-width: 2; stroke-dasharray: 5,3; marker-end: url(#arrowhead); }
+        .entityText { font: bold 16px sans-serif; fill: white; text-anchor: middle; }
+        .tableText { font: bold 14px sans-serif; fill: white; text-anchor: middle; }
+        .fieldText { font: 12px sans-serif; fill: #333; text-anchor: start; }
+        .relationshipText { font: 12px sans-serif; fill: #555; }
+        .apiBox { fill: #9b59b6; stroke: #8e44ad; stroke-width: 2; rx: 5; ry: 5; }
+        .apiText { font: bold 14px sans-serif; fill: white; text-anchor: middle; }
+        .note { font: 12px sans-serif; fill: #666; }
+    </style>
+    
+    <!-- Arrow Marker Definition -->
+    <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#7f8c8d" />
+        </marker>
+    </defs>
+    
+    <!-- Title -->
+    <text x="600" y="40" class="title" text-anchor="middle">BTC 挖矿计算器 - 数据流图</text>
+    <text x="600" y="70" class="subtitle" text-anchor="middle">数据模型与流转关系</text>
+    
+    <!-- 数据库实体关系图 -->
+    <text x="600" y="110" class="subtitle" text-anchor="middle">核心数据实体与关系</text>
+    
+    <!-- 用户实体 -->
+    <rect x="150" y="150" width="200" height="60" class="entity" />
+    <text x="250" y="185" class="entityText">用户 (UserAccess)</text>
+    
+    <!-- 登录记录 -->
+    <rect x="150" y="300" width="200" height="60" class="entity" />
+    <text x="250" y="335" class="entityText">登录记录 (LoginRecord)</text>
+    
+    <!-- 客户 -->
+    <rect x="450" y="150" width="200" height="60" class="entity" />
+    <text x="550" y="185" class="entityText">客户 (Customer)</text>
+    
+    <!-- 联系人 -->
+    <rect x="750" y="150" width="200" height="60" class="entity" />
+    <text x="850" y="185" class="entityText">联系人 (Contact)</text>
+    
+    <!-- 商机 -->
+    <rect x="450" y="300" width="200" height="60" class="entity" />
+    <text x="550" y="335" class="entityText">商机 (Lead)</text>
+    
+    <!-- 交易 -->
+    <rect x="750" y="300" width="200" height="60" class="entity" />
+    <text x="850" y="335" class="entityText">交易 (Deal)</text>
+    
+    <!-- 活动记录 -->
+    <rect x="600" y="450" width="200" height="60" class="entity" />
+    <text x="700" y="485" class="entityText">活动记录 (Activity)</text>
+    
+    <!-- 矿机状态 -->
+    <rect x="150" y="450" width="200" height="60" class="entity" />
+    <text x="250" y="485" class="entityText">矿机状态 (MinerStatus)</text>
+    
+    <!-- 电力削减计划 -->
+    <rect x="150" y="600" width="200" height="60" class="entity" />
+    <text x="250" y="635" class="entityText">电力削减计划 (ReductionPlan)</text>
+    
+    <!-- 轮换计划 -->
+    <rect x="450" y="600" width="200" height="60" class="entity" />
+    <text x="550" y="635" class="entityText">轮换计划 (RotationSchedule)</text>
+    
+    <!-- 矿机操作记录 -->
+    <rect x="750" y="600" width="200" height="60" class="entity" />
+    <text x="850" y="635" class="entityText">矿机操作记录 (MinerOperation)</text>
+    
+    <!-- 性能快照 -->
+    <rect x="450" y="750" width="200" height="60" class="entity" />
+    <text x="550" y="785" class="entityText">性能快照 (PerformanceSnapshot)</text>
+    
+    <!-- 关系连接 -->
+    <!-- UserAccess 到 LoginRecord -->
+    <line x1="250" y1="210" x2="250" y2="300" class="relationship" />
+    <text x="260" y="260" class="relationshipText">1:n</text>
+    
+    <!-- UserAccess 迁移到 Customer -->
+    <line x1="350" y1="180" x2="450" y2="180" class="dataflow" />
+    <text x="400" y="170" class="relationshipText">迁移</text>
+    
+    <!-- Customer 到 Contact -->
+    <line x1="650" y1="180" x2="750" y2="180" class="relationship" />
+    <text x="700" y="170" class="relationshipText">1:n</text>
+    
+    <!-- Customer 到 Lead -->
+    <line x1="550" y1="210" x2="550" y2="300" class="relationship" />
+    <text x="560" y="260" class="relationshipText">1:n</text>
+    
+    <!-- Lead 到 Deal -->
+    <line x1="650" y1="330" x2="750" y2="330" class="relationship" />
+    <text x="700" y="320" class="relationshipText">1:n</text>
+    
+    <!-- Customer 到 Activity -->
+    <line x1="550" y1="360" x2="650" y2="450" class="relationship" />
+    <text x="580" y="410" class="relationshipText">1:n</text>
+    
+    <!-- Lead 到 Activity -->
+    <line x1="550" y1="360" x2="640" y2="450" class="relationship" />
+    <text x="580" y="410" class="relationshipText">1:n</text>
+    
+    <!-- Deal 到 Activity -->
+    <line x1="800" y1="360" x2="730" y2="450" class="relationship" />
+    <text x="770" y="410" class="relationshipText">1:n</text>
+    
+    <!-- MinerStatus 到 MinerOperation -->
+    <line x1="350" y1="480" x2="830" y2="600" class="relationship" stroke-dasharray="5,3" />
+    <text x="400" y="520" class="relationshipText">1:n</text>
+    
+    <!-- MinerStatus 到 RotationSchedule -->
+    <line x1="290" y1="510" x2="500" y2="600" class="relationship" stroke-dasharray="5,3" />
+    <text x="350" y="550" class="relationshipText">n:m</text>
+    
+    <!-- ReductionPlan 到 MinerOperation -->
+    <line x1="350" y1="630" x2="750" y2="630" class="relationship" />
+    <text x="550" y="620" class="relationshipText">1:n</text>
+    
+    <!-- RotationSchedule 到 MinerOperation -->
+    <line x1="650" y1="630" x2="750" y2="630" class="relationship" />
+    <text x="700" y="620" class="relationshipText">1:n</text>
+    
+    <!-- MinerStatus 到 PerformanceSnapshot -->
+    <line x1="250" y1="510" x2="500" y2="750" class="relationship" stroke-dasharray="5,3" />
+    <text x="300" y="580" class="relationshipText">1:n</text>
+    
+    <!-- 数据库表结构详情 -->
+    <text x="600" y="860" class="subtitle" text-anchor="middle">主要数据表结构</text>
+    
+    <!-- UserAccess 表 -->
+    <rect x="100" y="900" width="200" height="30" class="table" />
+    <text x="200" y="920" class="tableText">user_access</text>
+    
+    <rect x="100" y="930" width="200" height="20" class="field" />
+    <text x="110" y="945" class="fieldText">id: Integer (PK)</text>
+    
+    <rect x="100" y="950" width="200" height="20" class="field" />
+    <text x="110" y="965" class="fieldText">name: String</text>
+    
+    <rect x="100" y="970" width="200" height="20" class="field" />
+    <text x="110" y="985" class="fieldText">email: String (Unique)</text>
+    
+    <rect x="100" y="990" width="200" height="20" class="field" />
+    <text x="110" y="1005" class="fieldText">role: String</text>
+    
+    <rect x="100" y="1010" width="200" height="20" class="field" />
+    <text x="110" y="1025" class="fieldText">expires_at: DateTime</text>
+    
+    <!-- Customer 表 -->
+    <rect x="320" y="900" width="200" height="30" class="table" />
+    <text x="420" y="920" class="tableText">crm_customers</text>
+    
+    <rect x="320" y="930" width="200" height="20" class="field" />
+    <text x="330" y="945" class="fieldText">id: Integer (PK)</text>
+    
+    <rect x="320" y="950" width="200" height="20" class="field" />
+    <text x="330" y="965" class="fieldText">name: String</text>
+    
+    <rect x="320" y="970" width="200" height="20" class="field" />
+    <text x="330" y="985" class="fieldText">company: String</text>
+    
+    <rect x="320" y="990" width="200" height="20" class="field" />
+    <text x="330" y="1005" class="fieldText">email: String</text>
+    
+    <rect x="320" y="1010" width="200" height="20" class="field" />
+    <text x="330" y="1025" class="fieldText">mining_capacity: Float</text>
+    
+    <rect x="320" y="1030" width="200" height="20" class="field" />
+    <text x="330" y="1045" class="fieldText">notes: Text</text>
+    
+    <!-- Lead 表 -->
+    <rect x="540" y="900" width="200" height="30" class="table" />
+    <text x="640" y="920" class="tableText">crm_leads</text>
+    
+    <rect x="540" y="930" width="200" height="20" class="field" />
+    <text x="550" y="945" class="fieldText">id: Integer (PK)</text>
+    
+    <rect x="540" y="950" width="200" height="20" class="field" />
+    <text x="550" y="965" class="fieldText">customer_id: Integer (FK)</text>
+    
+    <rect x="540" y="970" width="200" height="20" class="field" />
+    <text x="550" y="985" class="fieldText">title: String</text>
+    
+    <rect x="540" y="990" width="200" height="20" class="field" />
+    <text x="550" y="1005" class="fieldText">status: Enum(LeadStatus)</text>
+    
+    <rect x="540" y="1010" width="200" height="20" class="field" />
+    <text x="550" y="1025" class="fieldText">estimated_value: Float</text>
+    
+    <!-- MinerStatus 表 -->
+    <rect x="760" y="900" width="200" height="30" class="table" />
+    <text x="860" y="920" class="tableText">power_miner_status</text>
+    
+    <rect x="760" y="930" width="200" height="20" class="field" />
+    <text x="770" y="945" class="fieldText">id: Integer (PK)</text>
+    
+    <rect x="760" y="950" width="200" height="20" class="field" />
+    <text x="770" y="965" class="fieldText">miner_id: String</text>
+    
+    <rect x="760" y="970" width="200" height="20" class="field" />
+    <text x="770" y="985" class="fieldText">model: String</text>
+    
+    <rect x="760" y="990" width="200" height="20" class="field" />
+    <text x="770" y="1005" class="fieldText">hashrate: Float</text>
+    
+    <rect x="760" y="1010" width="200" height="20" class="field" />
+    <text x="770" y="1025" class="fieldText">power_consumption: Float</text>
+    
+    <rect x="760" y="1030" width="200" height="20" class="field" />
+    <text x="770" y="1045" class="fieldText">health_grade: String(A-D)</text>
+    
+    <!-- 外部API数据流 -->
+    <text x="600" y="1100" class="subtitle" text-anchor="middle">外部数据流</text>
+    
+    <!-- BTC价格API -->
+    <rect x="150" y="1150" width="200" height="60" class="apiBox" />
+    <text x="250" y="1185" class="apiText">BTC价格API</text>
+    
+    <!-- BTC网络数据API -->
+    <rect x="450" y="1150" width="200" height="60" class="apiBox" />
+    <text x="550" y="1185" class="apiText">BTC网络数据API</text>
+    
+    <!-- IP地理位置API -->
+    <rect x="750" y="1150" width="200" height="60" class="apiBox" />
+    <text x="850" y="1185" class="apiText">IP地理位置API</text>
+    
+    <!-- 计算引擎 -->
+    <rect x="300" y="1300" width="200" height="60" class="entity" />
+    <text x="400" y="1335" class="entityText">挖矿计算引擎</text>
+    
+    <!-- 认证系统 -->
+    <rect x="600" y="1300" width="200" height="60" class="entity" />
+    <text x="700" y="1335" class="entityText">用户认证系统</text>
+    
+    <!-- 数据流 -->
+    <line x1="250" y1="1210" x2="350" y2="1300" class="dataflow" />
+    <text x="280" y="1260" class="relationshipText">BTC价格数据</text>
+    
+    <line x1="500" y1="1210" x2="400" y2="1300" class="dataflow" />
+    <text x="430" y="1260" class="relationshipText">网络难度/哈希率</text>
+    
+    <line x1="800" y1="1210" x2="700" y2="1300" class="dataflow" />
+    <text x="730" y="1260" class="relationshipText">地理位置数据</text>
+    
+    <!-- 计算引擎到数据库 -->
+    <line x1="400" y1="1300" x2="300" y2="1030" class="dataflow" />
+    <text x="320" y="1150" class="relationshipText">计算结果</text>
+    
+    <!-- 认证系统到数据库 -->
+    <line x1="650" y1="1300" x2="250" y2="1030" class="dataflow" />
+    <text x="400" y="1150" class="relationshipText">登录记录</text>
+    
+    <!-- 注释 -->
+    <text x="150" y="1400" class="note">数据库模型说明：</text>
+    <text x="150" y="1420" class="note">1. 用户访问权限(UserAccess)表存储用户基本信息和访问控制，是系统安全的核心部分</text>
+    <text x="150" y="1440" class="note">2. CRM模块由客户(Customer)、联系人(Contact)、商机(Lead)、交易(Deal)和活动(Activity)组成</text>
+    <text x="150" y="1460" class="note">3. 电力管理模块由矿机状态(MinerStatus)、操作记录(MinerOperation)、电力计划(ReductionPlan)组成</text>
+    <text x="150" y="1480" class="note">4. 外部API数据经计算引擎处理后，用于挖矿盈利能力分析</text>
+    <text x="150" y="1500" class="note">5. 系统支持用户数据从UserAccess表迁移到CRM系统，实现数据集成</text>
+    
+    <text x="150" y="1550" class="note">© 2025 - BTC挖矿计算器数据流图</text>
+</svg>
