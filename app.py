@@ -1,11 +1,16 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, g
+# 标准库导入
 import logging
 import json
-import numpy as np
 import os
 import secrets
 import requests
 from datetime import datetime, timedelta
+
+# 第三方库导入
+import numpy as np
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, g
+
+# 本地模块导入
 from auth import verify_email, login_required
 from mining_calculator import (
     MINER_DATA,

@@ -1,11 +1,18 @@
 """
 客户关系管理 (CRM) 系统路由
+此模块包含CRM系统的所有路由和功能
 """
-from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, session
-from datetime import datetime
 import json
+from datetime import datetime
+
+# Flask和SQLAlchemy导入
+from flask import (
+    Blueprint, render_template, redirect, url_for, 
+    request, flash, jsonify, session
+)
 from sqlalchemy import or_
 
+# 内部模块导入
 from models import db, Customer, Contact, Lead, Deal, Activity, LeadStatus, DealStatus
 from auth import login_required
 
