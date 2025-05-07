@@ -1019,7 +1019,7 @@ def migrate_to_crm():
             lead = Lead(
                 customer_id=customer.id,
                 title=f"{user.name} 访问授权",
-                status="QUALIFIED" if user.has_access() else "LOST",  # 根据当前访问状态设置
+                status="QUALIFIED" if user.has_access else "LOST",  # 根据当前访问状态设置
                 source="系统迁移",
                 estimated_value=0.0,  # 授权访问没有直接价值
                 assigned_to="系统管理员",
