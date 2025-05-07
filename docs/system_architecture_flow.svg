@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="1800" xmlns="http://www.w3.org/2000/svg">
+    <style>
+        .title { font: bold 24px sans-serif; fill: #333; }
+        .subtitle { font: bold 18px sans-serif; fill: #555; }
+        .module { font: bold 16px sans-serif; fill: white; }
+        .module-bg { fill: #4a6da7; stroke: #2c3e50; stroke-width: 2; rx: 10; ry: 10; }
+        .auth-module { fill: #5e97f6; }
+        .calc-module { fill: #4a8ab8; }
+        .crm-module { fill: #9b59b6; }
+        .power-module { fill: #2ecc71; }
+        .db-module { fill: #34495e; }
+        .api-module { fill: #e67e22; }
+        .arrow { stroke: #888; stroke-width: 2; marker-end: url(#arrowhead); }
+        .label { font: 14px sans-serif; fill: #555; }
+        .role { font: 14px sans-serif; fill: #777; font-style: italic; }
+        .note { font: 12px sans-serif; fill: #666; }
+        .section { fill: #f5f5f5; stroke: #ddd; stroke-width: 1; rx: 15; ry: 15; }
+    </style>
+    
+    <!-- Arrow Marker Definition -->
+    <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#888" />
+        </marker>
+    </defs>
+    
+    <!-- Title -->
+    <text x="600" y="40" class="title" text-anchor="middle">BTC 挖矿计算器 - 系统架构流程图</text>
+    <text x="600" y="70" class="subtitle" text-anchor="middle">系统组件和数据流</text>
+    
+    <!-- Background Sections -->
+    <!-- 用户界面层 -->
+    <rect x="50" y="100" width="1100" height="200" class="section" opacity="0.8" />
+    <text x="100" y="130" class="subtitle">用户界面层 (UI Layer)</text>
+    
+    <!-- 应用逻辑层 -->
+    <rect x="50" y="350" width="1100" height="700" class="section" opacity="0.8" />
+    <text x="100" y="380" class="subtitle">应用逻辑层 (Application Layer)</text>
+    
+    <!-- 数据访问层 -->
+    <rect x="50" y="1100" width="1100" height="200" class="section" opacity="0.8" />
+    <text x="100" y="1130" class="subtitle">数据访问层 (Data Access Layer)</text>
+    
+    <!-- 外部服务层 -->
+    <rect x="50" y="1350" width="1100" height="150" class="section" opacity="0.8" />
+    <text x="100" y="1380" class="subtitle">外部服务层 (External Services Layer)</text>
+    
+    <!-- 用户角色 -->
+    <rect x="100" y="1550" width="1000" height="100" class="section" opacity="0.8" />
+    <text x="150" y="1580" class="subtitle">用户角色和权限</text>
+    <text x="200" y="1610" class="role">拥有者(Owner): 完全访问权限，包括CRM，用户管理，和系统设置</text>
+    <text x="200" y="1630" class="role">管理员(Admin): 大部分功能，不能管理拥有者账户</text>
+    <text x="600" y="1610" class="role">矿场管理(Mining_Site): 电力管理和计算器功能</text>
+    <text x="600" y="1630" class="role">矿场客人(Guest): 仅限计算器功能</text>
+    
+    <!-- User Interface Components -->
+    <!-- 登录页面 -->
+    <rect x="150" y="180" width="180" height="70" class="module-bg auth-module" />
+    <text x="240" y="220" class="module" text-anchor="middle">登录页面</text>
+    
+    <!-- 主计算器页面 -->
+    <rect x="350" y="180" width="180" height="70" class="module-bg calc-module" />
+    <text x="440" y="220" class="module" text-anchor="middle">挖矿计算器页面</text>
+    
+    <!-- CRM页面 -->
+    <rect x="550" y="180" width="180" height="70" class="module-bg crm-module" />
+    <text x="640" y="220" class="module" text-anchor="middle">CRM 系统页面</text>
+    
+    <!-- 电力管理页面 -->
+    <rect x="750" y="180" width="180" height="70" class="module-bg power-module" />
+    <text x="840" y="220" class="module" text-anchor="middle">电力管理仪表盘</text>
+    
+    <!-- 用户管理页面 -->
+    <rect x="950" y="180" width="180" height="70" class="module-bg auth-module" />
+    <text x="1040" y="220" class="module" text-anchor="middle">用户管理页面</text>
+    
+    <!-- Main Application Modules -->
+    <!-- 认证模块 - auth.py -->
+    <rect x="100" y="450" width="200" height="100" class="module-bg auth-module" />
+    <text x="200" y="500" class="module" text-anchor="middle">认证模块</text>
+    <text x="200" y="525" class="module" text-anchor="middle">(auth.py)</text>
+    
+    <!-- 挖矿计算器模块 - mining_calculator.py -->
+    <rect x="100" y="600" width="200" height="100" class="module-bg calc-module" />
+    <text x="200" y="650" class="module" text-anchor="middle">挖矿计算器模块</text>
+    <text x="200" y="675" class="module" text-anchor="middle">(mining_calculator.py)</text>
+    
+    <!-- 数据模型 - models.py -->
+    <rect x="100" y="750" width="200" height="100" class="module-bg db-module" />
+    <text x="200" y="800" class="module" text-anchor="middle">数据模型</text>
+    <text x="200" y="825" class="module" text-anchor="middle">(models.py)</text>
+    
+    <!-- 主应用 - app.py -->
+    <rect x="350" y="450" width="200" height="400" class="module-bg" />
+    <text x="450" y="650" class="module" text-anchor="middle">主应用</text>
+    <text x="450" y="675" class="module" text-anchor="middle">(app.py)</text>
+    
+    <!-- CRM模块 - crm_routes.py -->
+    <rect x="600" y="450" width="200" height="150" class="module-bg crm-module" />
+    <text x="700" y="510" class="module" text-anchor="middle">CRM系统模块</text>
+    <text x="700" y="535" class="module" text-anchor="middle">(crm_routes.py)</text>
+    
+    <!-- 电力管理模块 - db_power_manager.py -->
+    <rect x="600" y="650" width="200" height="150" class="module-bg power-module" />
+    <text x="700" y="710" class="module" text-anchor="middle">电力管理模块</text>
+    <text x="700" y="735" class="module" text-anchor="middle">(db_power_manager.py)</text>
+    
+    <!-- 翻译模块 - translations.py -->
+    <rect x="850" y="450" width="200" height="80" class="module-bg" />
+    <text x="950" y="495" class="module" text-anchor="middle">翻译模块</text>
+    <text x="950" y="520" class="module" text-anchor="middle">(translations.py)</text>
+    
+    <!-- 用户管理模块 -->
+    <rect x="850" y="550" width="200" height="100" class="module-bg auth-module" />
+    <text x="950" y="600" class="module" text-anchor="middle">用户管理模块</text>
+    <text x="950" y="625" class="module" text-anchor="middle">(UserAccess)</text>
+    
+    <!-- 数据初始化 - initialize_power_system.py -->
+    <rect x="850" y="700" width="200" height="100" class="module-bg power-module" />
+    <text x="950" y="750" class="module" text-anchor="middle">电力系统初始化</text>
+    <text x="950" y="775" class="module" text-anchor="middle">(initialize_power_system.py)</text>
+    
+    <!-- Database Layer -->
+    <!-- 数据库连接 - db.py -->
+    <rect x="350" y="1170" width="200" height="80" class="module-bg db-module" />
+    <text x="450" y="1215" class="module" text-anchor="middle">数据库连接管理</text>
+    <text x="450" y="1240" class="module" text-anchor="middle">(db.py)</text>
+    
+    <!-- PostgreSQL Database -->
+    <rect x="650" y="1170" width="200" height="80" class="module-bg db-module" />
+    <text x="750" y="1215" class="module" text-anchor="middle">PostgreSQL 数据库</text>
+    <text x="750" y="1240" class="module" text-anchor="middle">(DATABASE_URL)</text>
+    
+    <!-- External APIs -->
+    <!-- BTC Price API -->
+    <rect x="150" y="1400" width="180" height="60" class="module-bg api-module" />
+    <text x="240" y="1435" class="module" text-anchor="middle">BTC价格API</text>
+    
+    <!-- BTC Network Stats API -->
+    <rect x="350" y="1400" width="180" height="60" class="module-bg api-module" />
+    <text x="440" y="1435" class="module" text-anchor="middle">BTC网络参数API</text>
+    
+    <!-- IP Geolocation API -->
+    <rect x="550" y="1400" width="180" height="60" class="module-bg api-module" />
+    <text x="640" y="1435" class="module" text-anchor="middle">IP地理位置API</text>
+    
+    <!-- Connection Arrows -->
+    <!-- UI to App Layer -->
+    <line x1="240" y1="250" x2="450" y2="450" class="arrow" />
+    <line x1="440" y1="250" x2="450" y2="450" class="arrow" />
+    <line x1="640" y1="250" x2="450" y2="450" class="arrow" />
+    <line x1="840" y1="250" x2="450" y2="450" class="arrow" />
+    <line x1="1040" y1="250" x2="450" y2="450" class="arrow" />
+    
+    <!-- App to Modules -->
+    <line x1="350" y1="500" x2="300" y2="500" class="arrow" />
+    <text x="320" y="490" class="label">认证</text>
+    
+    <line x1="350" y1="650" x2="300" y2="650" class="arrow" />
+    <text x="320" y="640" class="label">计算</text>
+    
+    <line x1="350" y1="800" x2="300" y2="800" class="arrow" />
+    <text x="320" y="790" class="label">数据模型</text>
+    
+    <line x1="550" y1="500" x2="600" y2="500" class="arrow" />
+    <text x="570" y="490" class="label">CRM路由</text>
+    
+    <line x1="550" y1="700" x2="600" y2="700" class="arrow" />
+    <text x="570" y="690" class="label">电力管理</text>
+    
+    <line x1="550" y1="480" x2="850" y2="480" class="arrow" />
+    <text x="700" y="460" class="label">语言翻译</text>
+    
+    <line x1="550" y1="600" x2="850" y2="600" class="arrow" />
+    <text x="700" y="580" class="label">用户管理</text>
+    
+    <line x1="600" y1="800" x2="850" y2="750" class="arrow" />
+    <text x="700" y="780" class="label">初始化系统</text>
+    
+    <!-- App Layer to DB Layer -->
+    <line x1="450" y1="850" x2="450" y2="1170" class="arrow" />
+    <text x="460" y="1000" class="label">数据库连接</text>
+    
+    <line x1="550" y1="800" x2="740" y2="1170" class="arrow" />
+    <text x="650" y="1000" class="label">持久化存储</text>
+    
+    <!-- DB to PostgreSQL -->
+    <line x1="550" y1="1210" x2="650" y2="1210" class="arrow" />
+    <text x="600" y="1190" class="label">SQL执行</text>
+    
+    <!-- App to External APIs -->
+    <line x1="200" y1="700" x2="240" y2="1400" class="arrow" />
+    <text x="215" y="1000" class="label">获取BTC价格</text>
+    
+    <line x1="300" y1="700" x2="440" y2="1400" class="arrow" />
+    <text x="360" y="1000" class="label">获取网络参数</text>
+    
+    <line x1="450" y1="850" x2="640" y2="1400" class="arrow" />
+    <text x="540" y="1000" class="label">位置跟踪</text>
+    
+    <!-- 数据模型关系 -->
+    <text x="150" y="900" class="note">主要数据模型：</text>
+    <text x="150" y="920" class="note">• LoginRecord: 记录登录活动</text>
+    <text x="150" y="940" class="note">• UserAccess: 用户权限和访问控制</text>
+    <text x="150" y="960" class="note">• Customer: CRM客户信息</text>
+    <text x="150" y="980" class="note">• Contact: 客户联系人</text>
+    <text x="150" y="1000" class="note">• Lead: 潜在客户机会</text>
+    <text x="150" y="1020" class="note">• Deal: 交易项目</text>
+    <text x="150" y="1040" class="note">• MinerStatus: 矿机状态</text>
+    
+    <!-- 计算器功能说明 -->
+    <text x="850" y="820" class="note">挖矿计算核心功能：</text>
+    <text x="850" y="840" class="note">• 根据矿场功率计算矿机数量</text>
+    <text x="850" y="860" class="note">• 基于网络难度/哈希率计算BTC产出</text>
+    <text x="850" y="880" class="note">• 支持电费、电力限制(curtailment)计算</text>
+    <text x="850" y="900" class="note">• 计算矿场主和客户的利润</text>
+    <text x="850" y="920" class="note">• 生成利润热力图</text>
+    <text x="850" y="940" class="note">• ROI计算与预测</text>
+    
+    <!-- 电力管理功能说明 -->
+    <text x="850" y="980" class="note">电力管理系统功能：</text>
+    <text x="850" y="1000" class="note">• 矿机健康分级 (A-D)</text>
+    <text x="850" y="1020" class="note">• 智能电力削减策略</text>
+    <text x="850" y="1040" class="note">• 矿机轮换计划</text>
+    <text x="850" y="1060" class="note">• 性能监控与快照</text>
+    
+    <!-- 流程标注 -->
+    <text x="100" y="1700" class="note">© 2025 - BTC挖矿计算器系统架构</text>
+</svg>
