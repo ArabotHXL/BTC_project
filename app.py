@@ -4,6 +4,8 @@ import json
 import os
 import secrets
 import requests
+import time
+import traceback
 from datetime import datetime, timedelta
 
 # 第三方库导入
@@ -12,6 +14,9 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 
 # 本地模块导入
 from auth import verify_email, login_required
+from db import db
+from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity
+from translations import get_translation
 from mining_calculator import (
     MINER_DATA,
     get_real_time_btc_price,
@@ -21,8 +26,6 @@ from mining_calculator import (
     calculate_mining_profitability,
     generate_profit_chart_data
 )
-
-# 导入CRM路由
 from crm_routes import init_crm_routes
 
 # Set up logging
@@ -39,13 +42,6 @@ app = Flask(__name__)
 
 # 设置安全的会话密钥
 app.secret_key = os.environ.get("SESSION_SECRET", secrets.token_hex(32))
-
-# 导入数据库和用户模型
-from db import db
-from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity
-
-# 导入翻译模块
-from translations import get_translation
 
 # 默认语言 'en' 英文, 'zh' 中文
 DEFAULT_LANGUAGE = 'zh'
@@ -503,8 +499,7 @@ def calculate():
             
         # 如果没有提供或无效，根据矿机型号和数量计算总算力和总功耗
         if (total_hashrate <= 0 or total_power <= 0) and miner_model:
-            # 导入矿机数据
-            from mining_calculator import MINER_DATA
+            # 使用矿机数据
             if miner_model in MINER_DATA:
                 miner_data = MINER_DATA[miner_model]
                 if total_hashrate <= 0:
@@ -801,13 +796,15 @@ def get_network_stats():
 def get_miners():
     """Get the list of available miner models and their specifications"""
     try:
+        # 确保使用的是从mining_calculator导入的MINER_DATA
         miners_list = []
+        # 计算效率时使用正确的公式：W/TH（能效比）
         for name, specs in MINER_DATA.items():
             miners_list.append({
                 'name': name,
-                'hashrate': specs['hashrate'],
-                'power_watt': specs['power_watt'],
-                'efficiency': round(specs['power_watt'] / specs['hashrate'], 2) # W/TH
+                'hashrate': specs['hashrate'],  # TH/s
+                'power_watt': specs['power_watt'],  # W
+                'efficiency': round(specs['power_watt'] / specs['hashrate'], 2)  # W/TH
             })
         
         return jsonify({
@@ -1023,7 +1020,7 @@ def migrate_to_crm():
             lead = Lead(
                 customer_id=customer.id,
                 title=f"{user.name} 访问授权",
-                status="QUALIFIED" if user.has_access else "LOST",  # 根据当前访问状态设置
+                status="QUALIFIED" if user.has_access else "LOST",  # 访问has_access属性
                 source="系统迁移",
                 estimated_value=0.0,  # 授权访问没有直接价值
                 assigned_to="系统管理员",
@@ -1069,7 +1066,6 @@ def get_profit_chart_data():
     """Generate profit chart data for visualization"""
     try:
         # 添加详细日志以帮助调试
-        import time
         start_time = time.time()
         
         # 记录完整的请求数据
@@ -1209,7 +1205,6 @@ def get_profit_chart_data():
             
         except Exception as e:
             logging.error(f"Error generating chart data: {str(e)}")
-            import traceback
             logging.error(traceback.format_exc())
             return jsonify({
                 'success': False,
@@ -1217,7 +1212,6 @@ def get_profit_chart_data():
             }), 500
     except Exception as e:
         logging.error(f"Unhandled exception in profit chart data generation: {str(e)}")
-        import traceback
         logging.error(traceback.format_exc())
         return jsonify({
             'success': False,
@@ -1278,7 +1272,6 @@ def power_management_dashboard():
         
     except Exception as e:
         logging.error(f"初始化电力管理系统数据出错: {str(e)}")
-        import traceback
         logging.error(traceback.format_exc())
         flash(f'初始化数据时出错: {str(e)}', 'danger')
     
