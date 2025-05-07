@@ -166,14 +166,69 @@
                 <h5 class="mb-0">状态管理</h5>
             </div>
             <div class="card-body">
-                <div class="alert alert-info mb-3">
-                    <i class="bi bi-info-circle me-2"></i>
-                    商机详细状态管理功能正在开发中
+                <div class="status-workflow mb-4">
+                    <div class="d-flex justify-content-between position-relative mb-2">
+                        {% for status in ['NEW', 'CONTACTED', 'QUALIFIED', 'NEGOTIATION', 'WON', 'LOST'] %}
+                            {% set is_current = status == lead.status.name %}
+                            {% set is_completed = (
+                                (status == 'NEW' and lead.status.name != 'NEW') or
+                                (status == 'CONTACTED' and lead.status.name not in ['NEW', 'CONTACTED']) or
+                                (status == 'QUALIFIED' and lead.status.name not in ['NEW', 'CONTACTED', 'QUALIFIED']) or
+                                (status == 'NEGOTIATION' and lead.status.name not in ['NEW', 'CONTACTED', 'QUALIFIED', 'NEGOTIATION']) or
+                                (status == 'WON' and lead.status.name == 'WON') or
+                                (status == 'LOST' and lead.status.name == 'LOST')
+                            ) %}
+                            <div class="status-node 
+                                {{ 'status-current' if is_current else '' }}
+                                {{ 'status-completed' if is_completed else '' }}">
+                                <div class="status-indicator 
+                                    {{ 'bg-success' if is_completed else 'bg-primary' if is_current else 'bg-secondary' }}">
+                                </div>
+                            </div>
+                        {% endfor %}
+                        
+                        <!-- Connecting Line -->
+                        <div class="status-line"></div>
+                    </div>
+                    <div class="d-flex justify-content-between small text-muted">
+                        <span>新建</span>
+                        <span>已联系</span>
+                        <span>合格</span>
+                        <span>谈判</span>
+                        <span>成交</span>
+                        <span>流失</span>
+                    </div>
                 </div>
-                <div class="d-grid gap-2">
-                    <a href="{{ url_for('crm.customers') }}" class="btn btn-outline-info">
-                        <i class="bi bi-arrow-left me-1"></i>返回客户列表
-                    </a>
+                
+                <div class="update-status-section">
+                    <form action="{{ url_for('crm.update_lead_status', lead_id=lead.id) }}" method="post">
+                        <div class="mb-3">
+                            <label for="status" class="form-label">更新状态:</label>
+                            <select class="form-select" id="status" name="status">
+                                {% for status_name, status_value in [
+                                    ('NEW', '新建'),
+                                    ('CONTACTED', '已联系'),
+                                    ('QUALIFIED', '合格线索'),
+                                    ('NEGOTIATION', '谈判中'),
+                                    ('WON', '已成交'),
+                                    ('LOST', '已流失')
+                                ] %}
+                                    <option value="{{ status_name }}" {{ 'selected' if status_name == lead.status.name else '' }}>
+                                        {{ status_value }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="status_comment" class="form-label">状态变更说明:</label>
+                            <textarea class="form-control" id="status_comment" name="status_comment" rows="2" placeholder="添加状态变更原因(可选)"></textarea>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">更新商机状态</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

@@ -18,6 +18,47 @@
             min-height: 100vh;
         }
         
+        /* 商机状态流程图 样式 */
+        .status-workflow {
+            position: relative;
+        }
+        
+        .status-line {
+            position: absolute;
+            height: 2px;
+            background-color: #6c757d;
+            width: 100%;
+            top: 14px;
+            z-index: 1;
+        }
+        
+        .status-node {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .status-indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: #6c757d;
+            border: 2px solid #343a40;
+            cursor: pointer;
+        }
+        
+        .status-current .status-indicator {
+            width: 24px;
+            height: 24px;
+            margin-top: -4px;
+            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.25);
+        }
+        
+        .status-completed .status-indicator {
+            background-color: #198754;
+        }
+        
         .sidebar {
             width: var(--sidebar-width);
             position: fixed;

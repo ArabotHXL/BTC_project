@@ -241,6 +241,61 @@ def lead_detail(lead_id):
     lead = Lead.query.get_or_404(lead_id)
     return render_template('crm/lead_detail.html', lead=lead)
 
+@crm.route('/leads/<int:lead_id>/update-status', methods=['POST'])
+@crm_access_required
+def update_lead_status(lead_id):
+    """更新商机状态"""
+    lead = Lead.query.get_or_404(lead_id)
+    
+    if request.method == 'POST':
+        old_status = lead.status
+        status_name = request.form.get('status')
+        status_comment = request.form.get('status_comment', '')
+        
+        try:
+            new_status = LeadStatus[status_name]
+            
+            # 只有状态有变化时才更新
+            if new_status != old_status:
+                lead.status = new_status
+                
+                # 如果状态变为"已成交"，记录成交日期
+                if new_status == LeadStatus.WON:
+                    # 如果没有相关交易，可以创建一个
+                    if not lead.deals:
+                        flash('请为此商机创建相关交易', 'info')
+                
+                # 更新时间戳
+                lead.updated_at = datetime.utcnow()
+                
+                db.session.commit()
+                
+                # 记录状态变更活动
+                status_change_desc = f"商机状态从 {old_status.value} 变更为 {new_status.value}"
+                if status_comment:
+                    status_change_desc += f"\n\n变更说明: {status_comment}"
+                
+                activity = Activity(
+                    customer_id=lead.customer_id,
+                    lead_id=lead.id,
+                    type="状态变更",
+                    summary=f"更新了商机状态: {new_status.value}",
+                    details=status_change_desc,
+                    created_by=session.get('email')
+                )
+                
+                db.session.add(activity)
+                db.session.commit()
+                
+                flash(f'商机状态已更新为: {new_status.value}', 'success')
+            else:
+                flash('状态未变更', 'info')
+                
+        except KeyError:
+            flash('无效的状态值', 'danger')
+        
+    return redirect(url_for('crm.lead_detail', lead_id=lead_id))
+
 @crm.route('/customers/<int:customer_id>/leads/new', methods=['GET', 'POST'])
 @crm_access_required
 def new_lead(customer_id):

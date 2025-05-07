@@ -19,20 +19,67 @@
 <!-- Filter and Status Selection -->
 <div class="card mb-4">
     <div class="card-body">
-        <form method="get" action="{{ url_for('crm.leads') }}" class="row g-3">
-            <div class="col-md-12">
-                <div class="d-flex flex-wrap gap-2">
-                    <a href="{{ url_for('crm.leads') }}" class="btn btn-sm {{ 'btn-secondary' if not status else 'btn-outline-secondary' }}">
-                        全部
+        <!-- 可视化状态流程图过滤器 -->
+        <div class="status-workflow mb-4">
+            <div class="d-flex justify-content-between position-relative mb-2">
+                <!-- 全部状态链接 -->
+                <div class="status-node status-all {{ 'status-current' if not status else '' }}">
+                    <a href="{{ url_for('crm.leads') }}" class="status-indicator bg-dark border border-light">
+                        <i class="bi bi-grid text-white" style="font-size: 0.6rem; position: absolute; top: 2px; left: 3px;"></i>
                     </a>
-                    {% for status_name in all_statuses %}
-                    <a href="{{ url_for('crm.leads', status=status_name) }}" class="btn btn-sm {{ 'btn-secondary' if status == status_name else 'btn-outline-secondary' }}">
-                        {{ {'NEW': '新建', 'CONTACTED': '已联系', 'QUALIFIED': '合格线索', 'NEGOTIATION': '谈判中', 'WON': '已成交', 'LOST': '已流失'}[status_name] }}
-                    </a>
-                    {% endfor %}
+                </div>
+                
+                <!-- 各个状态节点 -->
+                {% for status_name in ['NEW', 'CONTACTED', 'QUALIFIED', 'NEGOTIATION', 'WON', 'LOST'] %}
+                    {% set is_current = status == status_name %}
+                    <div class="status-node {{ 'status-current' if is_current else '' }}">
+                        <a href="{{ url_for('crm.leads', status=status_name) }}" 
+                           class="status-indicator 
+                                {{ 'bg-primary' if is_current else 
+                                   'bg-success' if status_name == 'WON' else 
+                                   'bg-danger' if status_name == 'LOST' else 
+                                   'bg-info' if status_name == 'CONTACTED' else
+                                   'bg-warning' if status_name == 'NEGOTIATION' else
+                                   'bg-secondary' }}"
+                           title="{{ {'NEW': '新建', 'CONTACTED': '已联系', 'QUALIFIED': '合格线索', 'NEGOTIATION': '谈判中', 'WON': '已成交', 'LOST': '已流失'}[status_name] }}">
+                        </a>
+                    </div>
+                {% endfor %}
+                
+                <!-- 连接线 -->
+                <div class="status-line"></div>
+            </div>
+            <div class="d-flex justify-content-between small text-muted" style="width: 87%; margin-left: 13%;">
+                <span>新建</span>
+                <span>已联系</span>
+                <span>合格</span>
+                <span>谈判</span>
+                <span>成交</span>
+                <span>流失</span>
+            </div>
+        </div>
+        
+        <!-- 文字状态过滤器 -->
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <a href="{{ url_for('crm.leads') }}" class="btn btn-sm {{ 'btn-dark' if not status else 'btn-outline-dark' }}">
+                全部商机
+            </a>
+            {% for status_name in all_statuses %}
+            <a href="{{ url_for('crm.leads', status=status_name) }}" 
+               class="btn btn-sm {{ 
+                   'btn-primary' if status == status_name else 
+                   'btn-outline-success' if status_name == 'WON' and status != status_name else
+                   'btn-outline-danger' if status_name == 'LOST' and status != status_name else
+                   'btn-outline-info' if status_name == 'CONTACTED' and status != status_name else
+                   'btn-outline-warning' if status_name == 'NEGOTIATION' and status != status_name else
+                   'btn-outline-secondary'
+               }}">
+                {{ {'NEW': '新建', 'CONTACTED': '已联系', 'QUALIFIED': '合格线索', 'NEGOTIATION': '谈判中', 'WON': '已成交', 'LOST': '已流失'}[status_name] }}
+            </a>
+            {% endfor %}
                 </div>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 
@@ -80,10 +127,12 @@
                             </td>
                             <td>
                                 <span class="badge bg-{{ 
-                                    'primary' if lead.status.name == 'NEW' else 
+                                    'secondary' if lead.status.name == 'NEW' else 
                                     'info' if lead.status.name == 'CONTACTED' else 
-                                    'success' if lead.status.name == 'QUALIFIED' else 
+                                    'primary' if lead.status.name == 'QUALIFIED' else 
                                     'warning' if lead.status.name == 'NEGOTIATION' else 
+                                    'success' if lead.status.name == 'WON' else
+                                    'danger' if lead.status.name == 'LOST' else
                                     'secondary' 
                                 }}">{{ lead.status.value }}</span>
                             </td>
