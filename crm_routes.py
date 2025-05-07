@@ -468,7 +468,7 @@ def new_deal(customer_id):
         if lead:
             deal = Deal(
                 title=lead.title,
-                estimated_value=lead.estimated_value,
+                value=lead.estimated_value,  # 使用value而不是estimated_value
                 description=lead.description
             )
     
