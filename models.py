@@ -114,6 +114,7 @@ class Customer(db.Model):
     tags = db.Column(db.String(500), nullable=True)  # 存储以逗号分隔的标签
     customer_type = db.Column(db.String(50), default="企业", nullable=False)  # 企业 或 个人
     mining_capacity = db.Column(db.Float, nullable=True)  # 挖矿容量（MW）
+    notes = db.Column(db.Text, nullable=True)  # 客户备注
     
     # 关联关系
     contacts = db.relationship('Contact', backref='customer', lazy=True, cascade="all, delete-orphan")

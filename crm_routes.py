@@ -476,6 +476,39 @@ def new_activity():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
+# 客户备注更新
+@crm.route('/customers/<int:customer_id>/update-notes', methods=['POST'])
+@crm_access_required
+def update_customer_notes(customer_id):
+    """更新客户备注"""
+    customer = Customer.query.get_or_404(customer_id)
+    
+    if request.method == 'POST':
+        notes = request.form.get('notes', '')
+        
+        # 保存以前的备注以比较变化
+        old_notes = customer.notes or ''
+        
+        # 更新备注
+        customer.notes = notes
+        db.session.commit()
+        
+        # 如果备注有变化，记录一条活动
+        if old_notes != notes:
+            activity = Activity(
+                customer_id=customer_id,
+                type="备注",
+                summary="更新了客户备注",
+                details="更新了客户备注信息",
+                created_by=session.get('email')
+            )
+            db.session.add(activity)
+            db.session.commit()
+        
+        flash('客户备注已更新', 'success')
+        
+    return redirect(url_for('crm.customer_detail', customer_id=customer_id))
+
 # 添加到应用程序
 def init_crm_routes(app):
     app.register_blueprint(crm)

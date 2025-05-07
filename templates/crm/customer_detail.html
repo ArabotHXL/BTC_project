@@ -115,6 +115,25 @@
                     {% endif %}
                 </div>
                 {% endif %}
+                
+                <!-- 客户备注 -->
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6><i class="bi bi-journal-text me-2"></i>客户备注</h6>
+                        <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#editNotesModal">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </div>
+                    {% if customer.notes %}
+                    <div class="p-3 border border-secondary rounded">
+                        {{ customer.notes|nl2br|safe }}
+                    </div>
+                    {% else %}
+                    <div class="text-center p-3 border border-secondary rounded text-muted">
+                        <i class="bi bi-journal me-1"></i> 暂无备注
+                    </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
         
@@ -449,6 +468,31 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                 <button type="button" class="btn btn-primary" id="saveActivity">保存记录</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Notes Modal -->
+<div class="modal fade" id="editNotesModal" tabindex="-1" aria-labelledby="editNotesModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editNotesModalLabel">编辑客户备注</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="notesForm" action="{{ url_for('crm.update_customer_notes', customer_id=customer.id) }}" method="post">
+                    <div class="mb-3">
+                        <label for="customer_notes" class="form-label">客户备注</label>
+                        <textarea class="form-control" id="customer_notes" name="notes" rows="6" placeholder="在此记录有关客户的重要信息...">{{ customer.notes or '' }}</textarea>
+                        <div class="form-text">记录客户特殊需求、偏好或其他重要信息</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-primary">保存备注</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
