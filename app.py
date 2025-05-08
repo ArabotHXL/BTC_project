@@ -186,12 +186,19 @@ def login():
             session['authenticated'] = True
             session['email'] = email
             
+            # 获取用户信息并保存到会话
+            user = UserAccess.query.filter_by(email=email).first()
+            if user:
+                session['user_id'] = user.id
+                user.last_login = datetime.utcnow()
+                db.session.commit()
+            
             # 获取并保存用户角色到会话
             user_role = get_user_role(email)
             session['role'] = user_role
             
             # 记录成功登录
-            logging.info(f"用户成功登录: {email}")
+            logging.info(f"用户成功登录: {email}, ID: {session.get('user_id')}")
             
             # 设置闪现成功消息，基于当前语言
             if g.language == 'en':
