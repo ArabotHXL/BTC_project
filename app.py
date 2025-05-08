@@ -1318,6 +1318,11 @@ def add_mine_customer():
     user_id = session.get('user_id')
     user_email = session.get('email')
     
+    # 调试日志
+    logging.info(f"当前登录用户: {user_email}, ID: {user_id}, 角色: {session.get('role')}")
+    if user_id is None:
+        logging.warning(f"用户ID未设置! 这会导致客户关联失败，请重新登录。会话数据: {session}")
+    
     if request.method == 'POST':
         # 获取表单数据
         name = request.form['name']
@@ -1451,6 +1456,18 @@ def view_customer_crm(user_id):
 
 # 初始化CRM系统
 init_crm_routes(app)
+
+# 添加调试信息页面
+@app.route('/debug_info')
+@login_required
+def debug_info():
+    """显示调试信息页面，用于排查会话问题"""
+    user_info = None
+    if session.get('user_id'):
+        # 获取数据库中的用户信息
+        user_info = UserAccess.query.get(session.get('user_id'))
+    
+    return render_template('debug_info.html', user_info=user_info)
 
 # 添加导航菜单项
 @app.context_processor

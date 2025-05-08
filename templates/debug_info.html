@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    调试信息 / Debug Info
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">用户会话信息 / User Session Info</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <strong>警告:</strong> 此页面仅用于调试目的，包含敏感信息！
+                    </div>
+                    
+                    <h6>会话状态 / Session Status:</h6>
+                    <ul class="list-group mb-3">
+                        <li class="list-group-item">
+                            <strong>已认证 / Authenticated:</strong> {{ session.authenticated|default('False') }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>用户ID / User ID:</strong> {{ session.user_id|default('未设置/Not set') }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>邮箱 / Email:</strong> {{ session.email|default('未设置/Not set') }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>角色 / Role:</strong> {{ session.role|default('未设置/Not set') }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>语言 / Language:</strong> {{ session.language|default('未设置/Not set') }}
+                        </li>
+                    </ul>
+                    
+                    {% if session.user_id %}
+                    <h6>数据库中的用户信息 / User Info from Database:</h6>
+                    {% if user_info %}
+                    <ul class="list-group">
+                        <li class="list-group-item">
+                            <strong>ID:</strong> {{ user_info.id }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>名称 / Name:</strong> {{ user_info.name }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>邮箱 / Email:</strong> {{ user_info.email }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>角色 / Role:</strong> {{ user_info.role }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>创建者ID / Created By ID:</strong> {{ user_info.created_by_id|default('未设置/Not set') }}
+                        </li>
+                    </ul>
+                    {% else %}
+                    <div class="alert alert-danger">未在数据库中找到用户记录! / User record not found in database!</div>
+                    {% endif %}
+                    {% endif %}
+                    
+                    <div class="mt-3">
+                        <a href="{{ url_for('index') }}" class="btn btn-primary">
+                            <i class="bi bi-arrow-left"></i> 返回首页 / Back to Home
+                        </a>
+                        <a href="{{ url_for('mine_customer_management') }}" class="btn btn-success">
+                            <i class="bi bi-people"></i> 客户管理 / Customer Management
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
