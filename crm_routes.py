@@ -42,8 +42,13 @@ def get_user_customers(user_id=None, include_all=False):
     返回:
     - 查询对象，包含用户可以访问的客户
     """
-    if user_id is None and 'user_id' in session:
-        user_id = session['user_id']
+    # 如果没有提供user_id，则尝试从session获取
+    if user_id is None:
+        user_id = session.get('user_id', 0)  # 如果session中也没有，则使用0（不存在的ID）
+    
+    # 确保user_id不为None，避免SQL查询错误
+    if user_id is None:
+        user_id = 0  # 使用0作为默认值，通常数据库ID从1开始
     
     # 管理员和拥有者可以查看所有客户
     if include_all and session.get('role') in ['owner', 'admin']:
