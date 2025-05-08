@@ -24,7 +24,7 @@ def crm_access_required(view_function):
     """验证用户是否有CRM访问权限"""
     @login_required
     def wrapped_view(*args, **kwargs):
-        if session.get('role') not in ['owner', 'admin', 'manager']:
+        if session.get('role') not in ['owner', 'admin', 'manager', 'mining_site']:
             flash('您没有权限访问CRM系统', 'danger')
             return redirect(url_for('index'))
         return view_function(*args, **kwargs)
@@ -49,7 +49,7 @@ def get_user_customers(user_id=None, include_all=False):
     if include_all and session.get('role') in ['owner', 'admin']:
         return Customer.query
     
-    # 否则只能查看自己创建的客户
+    # 所有其他用户(包括矿场主和经理)只能查看自己创建的客户
     return Customer.query.filter_by(created_by_id=user_id)
 
 # CRM仪表盘

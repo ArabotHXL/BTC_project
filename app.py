@@ -1289,7 +1289,7 @@ def inject_nav_menu():
         if not session.get('authenticated'):
             return False
         role = session.get('role')
-        return role in ['owner', 'admin', 'manager']
+        return role in ['owner', 'admin', 'manager', 'mining_site']
         
     return {
         'user_has_crm_access': user_has_crm_access
