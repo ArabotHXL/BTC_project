@@ -76,6 +76,22 @@
                         </div>
                         
                         <div class="mb-3">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="grant_calculator_access" name="grant_calculator_access" value="yes" checked>
+                                <label class="form-check-label" for="grant_calculator_access">
+                                    {% if current_lang == 'en' %}Grant Calculator Access{% else %}提供计算器访问权限{% endif %}
+                                </label>
+                            </div>
+                            <div class="form-text mb-2">
+                                {% if current_lang == 'en' %}
+                                If checked, customer will be able to log in and use the calculator.
+                                {% else %}
+                                如勾选，客户将能够登录并使用计算器。
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 calculator-access-option">
                             <label for="access_days" class="form-label">
                                 {% if current_lang == 'en' %}Access Duration (Days){% else %}访问期限（天）{% endif %} *
                             </label>
@@ -108,4 +124,32 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 获取计算器访问权限切换开关和相关字段
+        const accessSwitch = document.getElementById('grant_calculator_access');
+        const accessOptions = document.querySelectorAll('.calculator-access-option');
+        const accessDaysInput = document.getElementById('access_days');
+        
+        // 切换显示/隐藏访问选项
+        function toggleAccessOptions() {
+            if (accessSwitch.checked) {
+                accessOptions.forEach(option => option.style.display = 'block');
+                accessDaysInput.required = true;
+            } else {
+                accessOptions.forEach(option => option.style.display = 'none');
+                accessDaysInput.required = false;
+            }
+        }
+        
+        // 初始化时运行一次
+        toggleAccessOptions();
+        
+        // 添加切换事件监听器
+        accessSwitch.addEventListener('change', toggleAccessOptions);
+    });
+</script>
 {% endblock %}
