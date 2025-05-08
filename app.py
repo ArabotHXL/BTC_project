@@ -15,7 +15,7 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 # 本地模块导入
 from auth import verify_email, login_required
 from db import db
-from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity
+from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus
 from translations import get_translation
 from mining_calculator import (
     MINER_DATA,

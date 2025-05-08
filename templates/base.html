@@ -74,6 +74,14 @@
                                     </a></li>
                                     {% endif %}
                                     
+                                    <!-- Mining site operators can manage their customers -->
+                                    {% if session.role == 'mining_site' %}
+                                    <li><a class="dropdown-item" href="{{ url_for('mine_customer_management') }}">
+                                        <i class="bi bi-people-fill me-1"></i> 
+                                        {% if current_lang == 'en' %}Customer Management{% else %}客户管理{% endif %}
+                                    </a></li>
+                                    {% endif %}
+                                    
                                     <!-- Display current user role -->
                                     <li><span class="dropdown-item-text">
                                         <i class="bi bi-person-badge me-1"></i> 
