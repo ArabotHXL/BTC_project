@@ -1334,8 +1334,12 @@ def add_mine_customer():
             flash(f'邮箱 {email} 已存在', 'danger')
             return redirect(url_for('add_mine_customer'))
         
+        # 检查是否授予计算器访问权限
+        grant_calculator_access = request.form.get('grant_calculator_access') == 'yes'
+        
+        # 获取访问天数（如果不授予访问权限，将使用默认值，但不会实际创建用户）
         try:
-            access_days = int(request.form['access_days'])
+            access_days = int(request.form['access_days']) if grant_calculator_access else 30
         except (ValueError, KeyError):
             access_days = 30  # 默认30天
             
@@ -1343,33 +1347,36 @@ def add_mine_customer():
         position = request.form.get('position')
         notes = request.form.get('notes')
         
-        # 创建用户访问记录
-        user_access = UserAccess(
-            name=name,
-            email=email,
-            access_days=access_days,
-            company=company,
-            position=position,
-            notes=notes,
-            role='guest'  # 客户角色设为guest
-        )
-        
-        # 设置创建者ID（关联到当前矿场主）
-        user_access.created_by_id = user_id
-        
         # 添加调试日志
-        logging.info(f"添加客户: {name}, 邮箱: {email}, 创建者ID: {user_id}")
+        logging.info(f"添加客户: {name}, 邮箱: {email}, 创建者ID: {user_id}, 授予计算器访问: {grant_calculator_access}")
         
-        # 保存到数据库
-        try:
-            db.session.add(user_access)
-            db.session.commit()
-            logging.info(f"成功保存客户 {name} 到数据库，新用户ID: {user_access.id}")
-        except Exception as e:
-            db.session.rollback()
-            logging.error(f"保存客户记录时出错: {str(e)}")
-            flash(f'添加客户时出错: {str(e)}', 'danger')
-            return redirect(url_for('add_mine_customer'))
+        # 只有当授予计算器访问权限时，才创建用户访问记录
+        user_access = None
+        if grant_calculator_access:
+            # 创建用户访问记录
+            user_access = UserAccess(
+                name=name,
+                email=email,
+                access_days=access_days,
+                company=company,
+                position=position,
+                notes=notes,
+                role='guest'  # 客户角色设为guest
+            )
+            
+            # 设置创建者ID（关联到当前矿场主）
+            user_access.created_by_id = user_id
+            
+            # 保存到数据库
+            try:
+                db.session.add(user_access)
+                db.session.commit()
+                logging.info(f"成功保存客户 {name} 到数据库，新用户ID: {user_access.id}")
+            except Exception as e:
+                db.session.rollback()
+                logging.error(f"保存客户记录时出错: {str(e)}")
+                flash(f'添加客户时出错: {str(e)}', 'danger')
+                return redirect(url_for('add_mine_customer'))
         
         # 创建CRM客户记录
         try:
@@ -1400,7 +1407,8 @@ def add_mine_customer():
                 assigned_to=session.get('email'),
                 assigned_to_id=user_id,
                 created_by_id=user_id,
-                description=f"由矿场主 {session.get('email')} 添加的客户，授权使用挖矿计算器 {access_days} 天。"
+                description=f"由矿场主 {session.get('email')} 添加的客户。" + 
+                          (f"授权使用挖矿计算器 {access_days} 天。" if grant_calculator_access else "未授权使用计算器。")
             )
             db.session.add(lead)
             db.session.commit()
@@ -1425,7 +1433,13 @@ def add_mine_customer():
             flash(f'创建商机记录时出错: {str(e)}', 'danger')
             return redirect(url_for('mine_customer_management'))
         
-        flash(f'已成功添加客户: {name}，并授权访问 {access_days} 天。同时已在CRM系统中创建客户记录。', 'success')
+        success_message = f'已成功添加客户: {name}。'
+        if grant_calculator_access:
+            success_message += f'已授权访问计算器 {access_days} 天。'
+        else:
+            success_message += f'未授权使用计算器。'
+        success_message += '同时已在CRM系统中创建客户记录。'
+        flash(success_message, 'success')
         return redirect(url_for('mine_customer_management'))
     
     return render_template('add_mine_customer.html')
