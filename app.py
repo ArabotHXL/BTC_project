@@ -1352,48 +1352,73 @@ def add_mine_customer():
         # 设置创建者ID（关联到当前矿场主）
         user_access.created_by_id = user_id
         
+        # 添加调试日志
+        logging.info(f"添加客户: {name}, 邮箱: {email}, 创建者ID: {user_id}")
+        
         # 保存到数据库
-        db.session.add(user_access)
-        db.session.commit()
+        try:
+            db.session.add(user_access)
+            db.session.commit()
+            logging.info(f"成功保存客户 {name} 到数据库，新用户ID: {user_access.id}")
+        except Exception as e:
+            db.session.rollback()
+            logging.error(f"保存客户记录时出错: {str(e)}")
+            flash(f'添加客户时出错: {str(e)}', 'danger')
+            return redirect(url_for('add_mine_customer'))
         
         # 创建CRM客户记录
-        customer = Customer(
-            name=name,
-            company=company,
-            email=email,
-            created_by_id=user_id,  # 设置创建者ID
-            customer_type='个人' if not company else '企业',
-            mining_capacity=float(request.form.get('mining_capacity', 0)) if request.form.get('mining_capacity') else None
-        )
-        db.session.add(customer)
-        db.session.commit()
+        try:
+            customer = Customer(
+                name=name,
+                company=company,
+                email=email,
+                created_by_id=user_id,  # 设置创建者ID
+                customer_type='个人' if not company else '企业',
+                mining_capacity=float(request.form.get('mining_capacity', 0)) if request.form.get('mining_capacity') else None
+            )
+            db.session.add(customer)
+            db.session.commit()
+            logging.info(f"成功创建CRM客户记录: {name}, ID: {customer.id}")
+        except Exception as e:
+            db.session.rollback()
+            logging.error(f"创建CRM客户记录时出错: {str(e)}")
+            flash(f'创建CRM客户记录时出错: {str(e)}', 'danger')
+            return redirect(url_for('mine_customer_management'))
         
         # 创建默认的商机记录
-        lead = Lead(
-            customer_id=customer.id,
-            title=f"{name} 访问授权",
-            status=LeadStatus.NEW,
-            source="矿场主添加",
-            assigned_to=session.get('email'),
-            assigned_to_id=user_id,
-            created_by_id=user_id,
-            description=f"由矿场主 {session.get('email')} 添加的客户，授权使用挖矿计算器 {access_days} 天。"
-        )
-        db.session.add(lead)
-        db.session.commit()
-        
-        # 记录活动
-        activity = Activity(
-            customer_id=customer.id,
-            lead_id=lead.id,
-            type="创建",
-            summary=f"矿场主添加新客户: {name}",
-            details=notes,
-            created_by=user_email,
-            created_by_id=user_id
-        )
-        db.session.add(activity)
-        db.session.commit()
+        try:
+            lead = Lead(
+                customer_id=customer.id,
+                title=f"{name} 访问授权",
+                status=LeadStatus.NEW,
+                source="矿场主添加",
+                assigned_to=session.get('email'),
+                assigned_to_id=user_id,
+                created_by_id=user_id,
+                description=f"由矿场主 {session.get('email')} 添加的客户，授权使用挖矿计算器 {access_days} 天。"
+            )
+            db.session.add(lead)
+            db.session.commit()
+            logging.info(f"成功创建商机记录: {name}, ID: {lead.id}")
+            
+            # 记录活动
+            activity = Activity(
+                customer_id=customer.id,
+                lead_id=lead.id,
+                type="创建",
+                summary=f"矿场主添加新客户: {name}",
+                details=notes,
+                created_by=user_email,
+                created_by_id=user_id
+            )
+            db.session.add(activity)
+            db.session.commit()
+            logging.info(f"成功记录活动: {name}")
+        except Exception as e:
+            db.session.rollback()
+            logging.error(f"创建商机记录或活动时出错: {str(e)}")
+            flash(f'创建商机记录时出错: {str(e)}', 'danger')
+            return redirect(url_for('mine_customer_management'))
         
         flash(f'已成功添加客户: {name}，并授权访问 {access_days} 天。同时已在CRM系统中创建客户记录。', 'success')
         return redirect(url_for('mine_customer_management'))
