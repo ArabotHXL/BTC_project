@@ -55,6 +55,10 @@ class UserAccess(db.Model):
     last_login = db.Column(db.DateTime, nullable=True)
     role = db.Column(db.String(20), default="guest", nullable=False)
     
+    # 创建者关联（矿场主可以创建客户）
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
+    created_by = db.relationship('UserAccess', foreign_keys=[created_by_id], backref='managed_users', remote_side=[id])
+    
     def __init__(self, name, email, access_days=30, company=None, position=None, notes=None, role="guest"):
         self.name = name
         self.email = email

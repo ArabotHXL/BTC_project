@@ -1277,6 +1277,146 @@ def power_management_dashboard():
     
     return render_template('db_power_dashboard.html')
 
+# 矿场客户管理
+@app.route('/mine/customers')
+@login_required
+def mine_customer_management():
+    """矿场主管理自己的客户"""
+    # 只允许mining_site角色访问
+    if not has_role(['mining_site']):
+        flash('您没有权限访问此页面，需要矿场主权限', 'danger')
+        return redirect(url_for('index'))
+    
+    # 获取当前用户ID
+    user_id = session.get('user_id')
+    
+    # 查询该矿场主创建的所有客户
+    users = UserAccess.query.filter_by(
+        created_by_id=user_id, 
+        role='guest'
+    ).order_by(UserAccess.created_at.desc()).all()
+    
+    return render_template('mine_customer_management.html', users=users)
+
+@app.route('/mine/customers/add', methods=['GET', 'POST'])
+@login_required
+def add_mine_customer():
+    """矿场主添加新客户"""
+    # 只允许mining_site角色访问
+    if not has_role(['mining_site']):
+        flash('您没有权限访问此页面，需要矿场主权限', 'danger')
+        return redirect(url_for('index'))
+    
+    # 获取当前矿场主信息
+    user_id = session.get('user_id')
+    user_email = session.get('email')
+    
+    if request.method == 'POST':
+        # 获取表单数据
+        name = request.form['name']
+        email = request.form['email']
+        
+        # 检查邮箱是否已存在
+        existing_user = UserAccess.query.filter_by(email=email).first()
+        if existing_user:
+            flash(f'邮箱 {email} 已存在', 'danger')
+            return redirect(url_for('add_mine_customer'))
+        
+        try:
+            access_days = int(request.form['access_days'])
+        except (ValueError, KeyError):
+            access_days = 30  # 默认30天
+            
+        company = request.form.get('company')
+        position = request.form.get('position')
+        notes = request.form.get('notes')
+        
+        # 创建用户访问记录
+        user_access = UserAccess(
+            name=name,
+            email=email,
+            access_days=access_days,
+            company=company,
+            position=position,
+            notes=notes,
+            role='guest'  # 客户角色设为guest
+        )
+        
+        # 设置创建者ID（关联到当前矿场主）
+        user_access.created_by_id = user_id
+        
+        # 保存到数据库
+        db.session.add(user_access)
+        db.session.commit()
+        
+        # 创建CRM客户记录
+        customer = Customer(
+            name=name,
+            company=company,
+            email=email,
+            created_by_id=user_id,  # 设置创建者ID
+            customer_type='个人' if not company else '企业',
+            mining_capacity=float(request.form.get('mining_capacity', 0)) if request.form.get('mining_capacity') else None
+        )
+        db.session.add(customer)
+        db.session.commit()
+        
+        # 创建默认的商机记录
+        lead = Lead(
+            customer_id=customer.id,
+            title=f"{name} 访问授权",
+            status=LeadStatus.NEW,
+            source="矿场主添加",
+            assigned_to=session.get('email'),
+            assigned_to_id=user_id,
+            created_by_id=user_id,
+            description=f"由矿场主 {session.get('email')} 添加的客户，授权使用挖矿计算器 {access_days} 天。"
+        )
+        db.session.add(lead)
+        db.session.commit()
+        
+        # 记录活动
+        activity = Activity(
+            customer_id=customer.id,
+            lead_id=lead.id,
+            type="创建",
+            summary=f"矿场主添加新客户: {name}",
+            details=notes,
+            created_by=user_email,
+            created_by_id=user_id
+        )
+        db.session.add(activity)
+        db.session.commit()
+        
+        flash(f'已成功添加客户: {name}，并授权访问 {access_days} 天。同时已在CRM系统中创建客户记录。', 'success')
+        return redirect(url_for('mine_customer_management'))
+    
+    return render_template('add_mine_customer.html')
+
+@app.route('/mine/customers/view_crm/<int:user_id>')
+@login_required
+def view_customer_crm(user_id):
+    """在CRM中查看客户详情"""
+    # 只允许mining_site角色访问
+    if not has_role(['mining_site']):
+        flash('您没有权限访问此页面，需要矿场主权限', 'danger')
+        return redirect(url_for('index'))
+    
+    # 验证客户属于当前矿场主
+    user_access = UserAccess.query.get_or_404(user_id)
+    if user_access.created_by_id != session.get('user_id'):
+        flash('您无权查看此客户', 'danger')
+        return redirect(url_for('mine_customer_management'))
+    
+    # 查找对应的CRM客户记录
+    customer = Customer.query.filter_by(email=user_access.email).first()
+    if not customer:
+        flash('未找到此客户的CRM记录', 'warning')
+        return redirect(url_for('mine_customer_management'))
+    
+    # 重定向到CRM客户详情页
+    return redirect(url_for('crm.customer_detail', customer_id=customer.id))
+
 # 初始化CRM系统
 init_crm_routes(app)
 
