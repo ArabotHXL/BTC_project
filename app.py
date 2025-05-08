@@ -676,7 +676,8 @@ def calculate():
                 'network_data': result.get('network_data', {}),
                 'revenue': result.get('revenue', {}),  # 添加收入信息
                 'break_even': {
-                    'btc_price': result.get('break_even', {}).get('btc_price', 0)
+                    'btc_price': result.get('break_even', {}).get('btc_price', 0),
+                    'electricity_cost': result.get('break_even', {}).get('electricity_cost', 0)  # 添加盈亏平衡电价给客户
                 },
                 'optimization': result.get('optimization', {})  # 添加矿机运行状态数据
             }
