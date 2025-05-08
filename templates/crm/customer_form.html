@@ -81,20 +81,34 @@
                     <div class="mb-3 mt-4">
                         <h5 class="mb-3">计算器访问设置</h5>
                         <div class="form-check form-switch mb-2">
-                            <input class="form-check-input" type="checkbox" id="grant_calculator_access" name="grant_calculator_access" value="yes" checked>
+                            <input class="form-check-input" type="checkbox" id="grant_calculator_access" name="grant_calculator_access" value="yes" 
+                            {% if has_calculator_access %}checked{% elif customer is none %}checked{% endif %}>
                             <label class="form-check-label" for="grant_calculator_access">
                                 提供计算器访问权限
                             </label>
                         </div>
                         <div class="form-text mb-2">
                             如勾选，客户将能够登录并使用计算器。
+                            {% if has_calculator_access %}
+                                <span class="text-success">
+                                    <i class="bi bi-check-circle-fill"></i> 
+                                    此客户已有计算器访问权限，到期日期: {{ access_info.expires_at.strftime('%Y-%m-%d') }}
+                                    (剩余{{ access_info.days_remaining() }}天)
+                                </span>
+                            {% endif %}
                         </div>
                     </div>
                     
                     <div class="mb-3 calculator-access-option">
                         <label for="access_days" class="form-label">访问期限（天）</label>
                         <input type="number" class="form-control" id="access_days" name="access_days" value="30" min="1" max="365" required>
-                        <div class="form-text">客户可以访问计算器的天数。</div>
+                        <div class="form-text">
+                            {% if has_calculator_access %}
+                                将延长客户的访问期限天数。
+                            {% else %}
+                                客户可以访问计算器的天数。
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
