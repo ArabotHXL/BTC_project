@@ -219,6 +219,89 @@ def new_customer():
             created_by_id=user_id
         )
         db.session.add(activity)
+        
+        # 检查是否要提供计算器访问权限
+        if request.form.get('grant_calculator_access') == 'yes':
+            try:
+                # 获取访问天数，默认30天
+                access_days = int(request.form.get('access_days', 30))
+                
+                # 创建UserAccess记录
+                from models import UserAccess
+                from datetime import datetime, timedelta
+                
+                email = request.form.get('email')
+                if email:  # 只有当提供了邮箱时才创建访问权限
+                    # 检查邮箱是否已存在
+                    existing_user = UserAccess.query.filter_by(email=email).first()
+                    
+                    if not existing_user:
+                        # 创建新的用户访问权限
+                        user_access = UserAccess(
+                            name=name,
+                            email=email,
+                            access_days=access_days,
+                            company=request.form.get('company'),
+                            position='客户',
+                            notes=f'从CRM系统自动创建，关联客户ID: {customer.id}',
+                            role='guest'  # 客户默认为guest角色
+                        )
+                        # 设置创建者
+                        user_access.created_by_id = user_id
+                        
+                        db.session.add(user_access)
+                        db.session.commit()
+                        
+                        # 添加活动记录
+                        calculator_activity = Activity(
+                            customer_id=customer.id,
+                            type="系统",
+                            summary="为客户创建了计算器访问权限",
+                            details=f"访问期限: {access_days}天，到期日期: {datetime.utcnow() + timedelta(days=access_days)}",
+                            created_by=session.get('email'),
+                            created_by_id=user_id
+                        )
+                        db.session.add(calculator_activity)
+                    else:
+                        # 已存在用户，更新访问权限
+                        existing_user.extend_access(access_days)
+                        # 添加活动记录
+                        calculator_activity = Activity(
+                            customer_id=customer.id,
+                            type="系统",
+                            summary="更新了客户的计算器访问权限",
+                            details=f"延长访问期限: {access_days}天，新到期日期: {existing_user.expires_at}",
+                            created_by=session.get('email'),
+                            created_by_id=user_id
+                        )
+                        db.session.add(calculator_activity)
+                else:
+                    # 未提供邮箱，记录警告活动
+                    warning_activity = Activity(
+                        customer_id=customer.id,
+                        type="警告",
+                        summary="无法创建计算器访问权限",
+                        details="客户邮箱地址为空，无法创建计算器访问权限。请先添加邮箱地址。",
+                        created_by=session.get('email'),
+                        created_by_id=user_id
+                    )
+                    db.session.add(warning_activity)
+            except Exception as e:
+                # 记录错误活动，但不影响客户创建
+                error_activity = Activity(
+                    customer_id=customer.id,
+                    type="错误",
+                    summary="创建计算器访问权限失败",
+                    details=f"错误信息: {str(e)}",
+                    created_by=session.get('email'),
+                    created_by_id=user_id
+                )
+                db.session.add(error_activity)
+                
+                import logging
+                logging.error(f"创建计算器访问权限时出错: {str(e)}")
+        
+        # 提交所有更改
         db.session.commit()
         
         flash(f'已成功创建客户: {name}', 'success')
@@ -241,6 +324,9 @@ def edit_customer(customer_id):
         return redirect(url_for('crm.customers'))
     
     if request.method == 'POST':
+        # 保存原始邮箱，用于检查是否变更
+        original_email = customer.email
+        
         customer.name = request.form.get('name')
         customer.company = request.form.get('company')
         customer.email = request.form.get('email')
@@ -262,12 +348,119 @@ def edit_customer(customer_id):
             created_by_id=user_id
         )
         db.session.add(activity)
+        
+        # 处理计算器访问权限
+        if request.form.get('grant_calculator_access') == 'yes':
+            try:
+                # 获取访问天数，默认30天
+                access_days = int(request.form.get('access_days', 30))
+                
+                # 创建UserAccess记录
+                from models import UserAccess
+                from datetime import datetime, timedelta
+                
+                email = customer.email
+                if email:  # 只有当提供了邮箱时才处理访问权限
+                    # 检查邮箱是否变更，如果变更则需要更新UserAccess记录
+                    email_changed = original_email != email
+                    
+                    # 检查邮箱对应的用户访问权限
+                    existing_user = UserAccess.query.filter_by(email=email).first()
+                    
+                    if not existing_user:
+                        # 创建新的用户访问权限
+                        user_access = UserAccess(
+                            name=customer.name,
+                            email=email,
+                            access_days=access_days,
+                            company=customer.company,
+                            position='客户',
+                            notes=f'从CRM系统自动创建，关联客户ID: {customer.id}',
+                            role='guest'  # 客户默认为guest角色
+                        )
+                        # 设置创建者
+                        user_access.created_by_id = user_id
+                        
+                        db.session.add(user_access)
+                        db.session.commit()
+                        
+                        # 添加活动记录
+                        calculator_activity = Activity(
+                            customer_id=customer.id,
+                            type="系统",
+                            summary="为客户创建了计算器访问权限",
+                            details=f"访问期限: {access_days}天，到期日期: {datetime.utcnow() + timedelta(days=access_days)}",
+                            created_by=session.get('email'),
+                            created_by_id=user_id
+                        )
+                        db.session.add(calculator_activity)
+                    else:
+                        # 已存在用户，更新访问权限
+                        existing_user.extend_access(access_days)
+                        
+                        # 如果邮箱变更，更新用户名和公司信息
+                        if email_changed or existing_user.name != customer.name:
+                            existing_user.name = customer.name
+                            existing_user.company = customer.company
+                            db.session.commit()
+                        
+                        # 添加活动记录
+                        calculator_activity = Activity(
+                            customer_id=customer.id,
+                            type="系统",
+                            summary="更新了客户的计算器访问权限",
+                            details=f"延长访问期限: {access_days}天，新到期日期: {existing_user.expires_at}",
+                            created_by=session.get('email'),
+                            created_by_id=user_id
+                        )
+                        db.session.add(calculator_activity)
+                else:
+                    # 未提供邮箱，记录警告活动
+                    warning_activity = Activity(
+                        customer_id=customer.id,
+                        type="警告",
+                        summary="无法更新计算器访问权限",
+                        details="客户邮箱地址为空，无法更新计算器访问权限。请先添加邮箱地址。",
+                        created_by=session.get('email'),
+                        created_by_id=user_id
+                    )
+                    db.session.add(warning_activity)
+            except Exception as e:
+                # 记录错误活动，但不影响客户更新
+                error_activity = Activity(
+                    customer_id=customer.id,
+                    type="错误",
+                    summary="更新计算器访问权限失败",
+                    details=f"错误信息: {str(e)}",
+                    created_by=session.get('email'),
+                    created_by_id=user_id
+                )
+                db.session.add(error_activity)
+                
+                import logging
+                logging.error(f"更新计算器访问权限时出错: {str(e)}")
+        
+        # 提交所有更改
         db.session.commit()
         
         flash(f'已成功更新客户: {customer.name}', 'success')
         return redirect(url_for('crm.customer_detail', customer_id=customer.id))
     
-    return render_template('crm/customer_form.html', customer=customer)
+    # 获取该客户是否有计算器访问权限
+    from models import UserAccess
+    has_calculator_access = False
+    access_info = None
+    
+    if customer.email:
+        access_info = UserAccess.query.filter_by(email=customer.email).first()
+        has_calculator_access = access_info is not None
+    
+    return render_template(
+        'crm/customer_form.html', 
+        customer=customer,
+        has_calculator_access=has_calculator_access,
+        access_info=access_info
+    )
 
 @crm.route('/customers/<int:customer_id>/delete', methods=['POST'])
 @crm_access_required
