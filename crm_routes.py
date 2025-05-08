@@ -452,7 +452,8 @@ def update_lead_status(lead_id):
                     type="状态变更",
                     summary=f"更新了商机状态: {new_status.value}",
                     details=status_change_desc,
-                    created_by=session.get('email')
+                    created_by=session.get('email'),
+                    created_by_id=session.get('user_id')
                 )
                 
                 db.session.add(activity)
