@@ -119,6 +119,10 @@ class Customer(db.Model):
     mining_capacity = db.Column(db.Float, nullable=True)  # 挖矿容量（MW）
     notes = db.Column(db.Text, nullable=True)  # 客户备注
     
+    # 关联到矿场主
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
+    created_by = db.relationship('UserAccess', foreign_keys=[created_by_id], backref='managed_customers')
+    
     # 关联关系
     contacts = db.relationship('Contact', backref='customer', lazy=True, cascade="all, delete-orphan")
     leads = db.relationship('Lead', backref='customer', lazy=True, cascade="all, delete-orphan")
@@ -156,7 +160,16 @@ class Lead(db.Model):
     estimated_value = db.Column(db.Float, default=0.0, nullable=False)  # 预估价值
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    assigned_to = db.Column(db.String(100), nullable=True)  # 负责人
+    
+    # 负责人关联到用户
+    assigned_to_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
+    assigned_to_user = db.relationship('UserAccess', foreign_keys=[assigned_to_id], backref='assigned_leads')
+    assigned_to = db.Column(db.String(100), nullable=True)  # 负责人名称 (冗余字段)
+    
+    # 创建者关联
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
+    created_by = db.relationship('UserAccess', foreign_keys=[created_by_id], backref='created_leads')
+    
     description = db.Column(db.Text, nullable=True)
     next_follow_up = db.Column(db.DateTime, nullable=True)  # 下次跟进时间
     
@@ -181,7 +194,16 @@ class Deal(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     expected_close_date = db.Column(db.DateTime, nullable=True)
     closed_date = db.Column(db.DateTime, nullable=True)
-    assigned_to = db.Column(db.String(100), nullable=True)  # 负责人
+    
+    # 负责人关联到用户
+    assigned_to_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
+    assigned_to_user = db.relationship('UserAccess', foreign_keys=[assigned_to_id], backref='assigned_deals')
+    assigned_to = db.Column(db.String(100), nullable=True)  # 负责人名称 (冗余字段)
+    
+    # 创建者关联
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
+    created_by = db.relationship('UserAccess', foreign_keys=[created_by_id], backref='created_deals')
+    
     description = db.Column(db.Text, nullable=True)
     
     # 挖矿相关属性
@@ -207,7 +229,11 @@ class Activity(db.Model):
     summary = db.Column(db.String(200), nullable=False)
     details = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    created_by = db.Column(db.String(100), nullable=True)  # 创建人员
+    
+    # 创建人关联到用户
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
+    created_by_user = db.relationship('UserAccess', foreign_keys=[created_by_id], backref='created_activities')
+    created_by = db.Column(db.String(100), nullable=True)  # 创建人名称 (冗余字段，方便显示)
     
     # 关联到客户
     customer = db.relationship('Customer', backref=db.backref('activities', lazy=True))
