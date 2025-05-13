@@ -750,62 +750,93 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 更新电力削减详情
     function updateCurtailmentDetails(data) {
-        // 获取削减百分比
-        const curtailmentPercentage = data.inputs?.curtailment || 0;
-        
-        // 获取电力削减详情部分
-        const curtailmentSection = document.getElementById('curtailment-details-section');
-        
-        // 如果没有削减或没有详情数据，则隐藏部分
-        if (curtailmentPercentage <= 0 || !data.curtailment_details || Object.keys(data.curtailment_details).length === 0) {
-            if (curtailmentSection) {
-                curtailmentSection.style.display = 'none';
-            }
-            return;
-        }
-        
-        // 显示削减详情部分
-        if (curtailmentSection) {
-            curtailmentSection.style.display = 'block';
-        }
-        
-        // 关机策略翻译映射
-        const strategyTranslation = {
-            'efficiency': '按效率关机 (Efficiency-based)',
-            'proportional': '按比例关机 (Proportional)',
-            'random': '随机关机 (Random)'
-        };
-        
-        // 更新削减影响数据
-        updateElementValue('curtailment-strategy', strategyTranslation[data.curtailment_details.strategy] || data.curtailment_details.strategy, document);
-        updateElementValue('saved-electricity', formatNumber(data.curtailment_details.saved_electricity_kwh || 0, 2) + ' kWh', document);
-        updateElementValue('saved-electricity-cost', formatCurrency(data.curtailment_details.saved_electricity_cost || 0), document);
-        updateElementValue('revenue-loss', formatCurrency(data.curtailment_details.revenue_loss || 0), document);
-        updateElementValue('net-impact', formatCurrency(data.curtailment_details.net_impact || 0), document);
-        
-        // 更新关闭的矿机详情
-        const shutdownMinersTable = document.getElementById('shutdown-miners-list');
-        if (shutdownMinersTable) {
-            shutdownMinersTable.innerHTML = '';
+        try {
+            console.log("更新电力削减详情 - 开始", data.curtailment_details);
+            // 获取削减百分比
+            const curtailmentPercentage = data?.inputs?.curtailment || 0;
+            console.log("削减百分比:", curtailmentPercentage);
             
-            // 如果有关闭的矿机数据
-            if (data.curtailment_details.shutdown_miners && data.curtailment_details.shutdown_miners.length > 0) {
-                data.curtailment_details.shutdown_miners.forEach(miner => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${miner.model}</td>
-                        <td>${miner.count}</td>
-                        <td>${formatNumber(miner.hashrate_th || 0, 2)} TH/s</td>
-                        <td>${formatNumber(miner.power_kw || 0, 2)} kW</td>
-                    `;
-                    shutdownMinersTable.appendChild(row);
-                });
-            } else {
-                // 如果没有关闭的矿机数据，显示提示
-                const row = document.createElement('tr');
-                row.innerHTML = `<td colspan="4" class="text-center">无关闭矿机数据</td>`;
-                shutdownMinersTable.appendChild(row);
+            // 获取电力削减详情部分
+            const curtailmentSection = document.getElementById('curtailment-details-section');
+            if (!curtailmentSection) {
+                console.warn('找不到电力削减详情部分元素');
+                return;
             }
+            
+            // 如果没有削减或没有详情数据，则隐藏部分
+            if (curtailmentPercentage <= 0 || !data.curtailment_details || Object.keys(data.curtailment_details).length === 0) {
+                curtailmentSection.style.display = 'none';
+                return;
+            }
+            
+            // 显示削减详情部分
+            curtailmentSection.style.display = 'block';
+            
+            // 关机策略翻译映射
+            const strategyTranslation = {
+                'efficiency': '按效率关机 (Efficiency-based)',
+                'proportional': '按比例关机 (Proportional)',
+                'random': '随机关机 (Random)'
+            };
+            
+            // 检查元素是否存在并更新
+            const strategyEl = document.getElementById('curtailment-strategy');
+            if (strategyEl) {
+                const strategy = data.curtailment_details.strategy || '';
+                strategyEl.textContent = strategyTranslation[strategy] || strategy;
+            }
+            
+            const savedElectricityEl = document.getElementById('saved-electricity');
+            if (savedElectricityEl) {
+                savedElectricityEl.textContent = formatNumber(data.curtailment_details.saved_electricity_kwh || 0, 2) + ' kWh';
+            }
+            
+            const savedCostEl = document.getElementById('saved-electricity-cost');
+            if (savedCostEl) {
+                savedCostEl.textContent = formatCurrency(data.curtailment_details.saved_electricity_cost || 0);
+            }
+            
+            const revenueLossEl = document.getElementById('revenue-loss');
+            if (revenueLossEl) {
+                revenueLossEl.textContent = formatCurrency(data.curtailment_details.revenue_loss || 0);
+            }
+            
+            const netImpactEl = document.getElementById('net-impact');
+            if (netImpactEl) {
+                netImpactEl.textContent = formatCurrency(data.curtailment_details.net_impact || 0);
+            }
+            
+            // 更新关闭的矿机详情
+            const shutdownMinersTable = document.getElementById('shutdown-miners-list');
+            if (shutdownMinersTable) {
+                shutdownMinersTable.innerHTML = '';
+                
+                // 如果有关闭的矿机数据
+                if (data.curtailment_details.shutdown_miners && Array.isArray(data.curtailment_details.shutdown_miners) && data.curtailment_details.shutdown_miners.length > 0) {
+                    data.curtailment_details.shutdown_miners.forEach(miner => {
+                        try {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${miner.model || 'Unknown'}</td>
+                                <td>${miner.count || 0}</td>
+                                <td>${formatNumber(miner.hashrate_th || 0, 2)} TH/s</td>
+                                <td>${formatNumber(miner.power_kw || 0, 2)} kW</td>
+                            `;
+                            shutdownMinersTable.appendChild(row);
+                        } catch (minerError) {
+                            console.error('处理关机矿机数据时出错:', minerError, miner);
+                        }
+                    });
+                } else {
+                    // 如果没有关闭的矿机数据，显示提示
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td colspan="4" class="text-center">无关闭矿机数据</td>`;
+                    shutdownMinersTable.appendChild(row);
+                }
+            }
+            
+        } catch (error) {
+            console.error('显示电力削减详情时出错:', error);
         }
     }
     
