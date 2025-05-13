@@ -318,6 +318,17 @@
                                     <div class="form-text">电力削减/限电比例，表示因电网需求响应、高温或维护等原因需降低功率的时间百分比 (Percentage of time with reduced power due to grid demand response, high temperature, or maintenance)</div>
                                 </div>
                                 
+                                <!-- Shutdown Strategy (仅当curtailment > 0时显示) -->
+                                <div class="mb-3" id="shutdown-strategy-container" style="display: none;">
+                                    <label for="shutdown-strategy" class="form-label">关机策略 (Shutdown Strategy)</label>
+                                    <select class="form-select" id="shutdown-strategy" name="shutdown_strategy">
+                                        <option value="efficiency" selected>按效率关机 - 先关效率低的 (Efficiency-based)</option>
+                                        <option value="proportional">按比例关机 - 每种型号同比例 (Proportional)</option>
+                                        <option value="random">随机关机 (Random)</option>
+                                    </select>
+                                    <div class="form-text">选择限电时优先关闭哪些矿机 (Select which miners to shut down during curtailment periods)</div>
+                                </div>
+                                
                                 <!-- Host Investment Amount -->
                                 <div class="mb-3">
                                     <label for="host-investment" class="form-label">矿场主投资金额 (Host Investment)</label>
@@ -782,5 +793,31 @@
 
     <!-- JavaScript -->
     <script src="/static/js/main_new.js"></script>
+    
+    <script>
+        // 添加关机策略的显示/隐藏控制
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取元素
+            const curtailmentInput = document.getElementById('curtailment');
+            const shutdownStrategyContainer = document.getElementById('shutdown-strategy-container');
+            
+            // 初始检查
+            updateShutdownStrategyVisibility();
+            
+            // 添加事件监听器
+            curtailmentInput.addEventListener('input', updateShutdownStrategyVisibility);
+            
+            function updateShutdownStrategyVisibility() {
+                const curtailmentValue = parseFloat(curtailmentInput.value) || 0;
+                
+                // 如果curtailment > 0，显示关机策略选择
+                if (curtailmentValue > 0) {
+                    shutdownStrategyContainer.style.display = 'block';
+                } else {
+                    shutdownStrategyContainer.style.display = 'none';
+                }
+            }
+        });
+    </script>
 </body>
 </html>
