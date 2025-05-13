@@ -432,14 +432,17 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             ci = locals().get('curtailment_impact', {})
             if isinstance(ci, dict):
                 # 添加削减策略详情
+                impact_data = ci.get('impact', {})
                 curtailment_details = {
                     'strategy': shutdown_strategy,
                     'shutdown_miners': ci.get('shutdown_details', []),
-                    'saved_electricity_kwh': ci.get('saved_electricity_kwh', 0),
-                    'saved_electricity_cost': ci.get('saved_electricity_cost', 0),
-                    'revenue_loss': ci.get('revenue_loss', 0),
-                    'net_impact': ci.get('net_impact', 0)
+                    'saved_electricity_kwh': impact_data.get('saved_electricity_kwh', 0),
+                    'saved_electricity_cost': impact_data.get('saved_electricity_cost', 0),
+                    'revenue_loss': impact_data.get('revenue_loss', 0),
+                    'net_impact': impact_data.get('net_impact', 0)
                 }
+                # 打印调试信息
+                logging.info(f"Curtailment impact data: {impact_data}")
         
         # Return results in a consistent format with our previous implementation
         return {
