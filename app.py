@@ -24,7 +24,8 @@ from mining_calculator import (
     get_real_time_block_reward,
     get_real_time_btc_hashrate,
     calculate_mining_profitability,
-    generate_profit_chart_data
+    generate_profit_chart_data,
+    calculate_monthly_curtailment_impact
 )
 from crm_routes import init_crm_routes
 
@@ -1483,6 +1484,130 @@ def debug_info():
         user_info = UserAccess.query.get(session.get('user_id'))
     
     return render_template('debug_info.html', user_info=user_info)
+
+# 月度电力削减(Curtailment)计算器
+@app.route('/curtailment_calculator')
+@login_required
+def curtailment_calculator():
+    """月度电力削减(Curtailment)计算器页面"""
+    # 检查是否有权限访问
+    if not has_role(['owner', 'admin', 'mining_site']):
+        flash('您没有权限访问此页面', 'danger')
+        return redirect(url_for('index'))
+        
+    # 获取最新的BTC价格作为默认值
+    try:
+        current_btc_price = get_real_time_btc_price()
+    except:
+        current_btc_price = 80000  # 默认值
+        
+    # 获取最新的网络难度作为默认值
+    try:
+        current_difficulty = get_real_time_difficulty() / 1e12  # 转换为T
+    except:
+        current_difficulty = 120  # 默认值 (T)
+    
+    # 渲染计算器页面
+    return render_template(
+        'curtailment_calculator.html',
+        btc_price=current_btc_price,
+        network_difficulty=current_difficulty,
+        block_reward=3.125  # 当前区块奖励
+    )
+    
+@app.route('/calculate_curtailment', methods=['POST'])
+@login_required
+def calculate_curtailment():
+    """计算月度电力削减的影响"""
+    try:
+        # 检查是否有权限
+        if not has_role(['owner', 'admin', 'mining_site']):
+            return jsonify({
+                'success': False,
+                'error': '您没有权限执行此操作'
+            }), 403
+            
+        # 从表单获取数据
+        miner_model = request.form.get('miner_model')
+        if not miner_model or miner_model not in MINER_DATA:
+            return jsonify({
+                'success': False,
+                'error': '请选择有效的矿机型号'
+            }), 400
+            
+        try:
+            miner_count = int(request.form.get('miner_count', 1))
+            if miner_count < 1:
+                miner_count = 1
+        except:
+            miner_count = 1
+            
+        try:
+            site_power_mw = float(request.form.get('site_power_mw', 0))
+        except:
+            site_power_mw = 0
+            
+        try:
+            curtailment_percentage = float(request.form.get('curtailment_percentage', 0))
+            if curtailment_percentage < 0:
+                curtailment_percentage = 0
+            elif curtailment_percentage > 100:
+                curtailment_percentage = 100
+        except:
+            curtailment_percentage = 0
+            
+        try:
+            electricity_cost = float(request.form.get('electricity_cost', 0.05))
+            if electricity_cost < 0:
+                electricity_cost = 0
+        except:
+            electricity_cost = 0.05
+            
+        try:
+            btc_price = float(request.form.get('btc_price', 80000))
+            if btc_price < 0:
+                btc_price = 80000
+        except:
+            btc_price = 80000
+            
+        try:
+            network_difficulty = float(request.form.get('network_difficulty', 120))
+            if network_difficulty <= 0:
+                network_difficulty = 120
+        except:
+            network_difficulty = 120
+            
+        try:
+            block_reward = float(request.form.get('block_reward', 3.125))
+            if block_reward <= 0:
+                block_reward = 3.125
+        except:
+            block_reward = 3.125
+        
+        # 调用计算函数
+        result = calculate_monthly_curtailment_impact(
+            miner_model=miner_model,
+            miner_count=miner_count,
+            site_power_mw=site_power_mw,
+            curtailment_percentage=curtailment_percentage,
+            electricity_cost=electricity_cost,
+            btc_price=btc_price,
+            network_difficulty=network_difficulty,
+            block_reward=block_reward
+        )
+        
+        # 记录计算结果
+        logging.info(f"月度Curtailment计算结果: 净影响=${result['impact']['net_impact']:.2f}")
+        
+        # 返回JSON结果
+        return jsonify(result)
+        
+    except Exception as e:
+        logging.error(f"计算月度Curtailment时出错: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'计算过程中发生错误: {str(e)}'
+        }), 500
 
 # 添加导航菜单项
 @app.context_processor

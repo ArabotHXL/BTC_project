@@ -3,6 +3,7 @@ import pandas as pd
 import requests
 import logging
 import json
+import calendar
 from datetime import datetime
 
 # Set up logging
@@ -681,3 +682,149 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
             'success': False,
             'error': str(e)
         }
+        
+def calculate_monthly_curtailment_impact(
+    miner_model, 
+    miner_count, 
+    site_power_mw, 
+    curtailment_percentage, 
+    electricity_cost,
+    btc_price,
+    network_difficulty,
+    block_reward=3.125
+):
+    """
+    计算月度电力削减的影响（基于用户输入，不使用外部API）
+    
+    参数:
+    - miner_model: 矿机型号
+    - miner_count: 矿机数量
+    - site_power_mw: 站点功率(MW)
+    - curtailment_percentage: 削减比例(%)
+    - electricity_cost: 电价($/kWh)
+    - btc_price: BTC价格($)
+    - network_difficulty: 网络难度(T)
+    - block_reward: 区块奖励(BTC)
+    
+    返回:
+    - 包含削减影响详情的字典
+    """
+    try:
+        logging.info(f"计算月度Curtailment: 矿机={miner_model}, 数量={miner_count}, 功率={site_power_mw}MW, 削减={curtailment_percentage}%")
+        
+        # 获取矿机规格
+        miner_specs = MINER_DATA.get(miner_model, {})
+        hashrate_per_miner = miner_specs.get("hashrate", 0)  # TH/s
+        power_per_miner = miner_specs.get("power_watt", 0)  # W
+        
+        # 计算总算力和功耗
+        total_hashrate = hashrate_per_miner * miner_count  # TH/s
+        total_power = power_per_miner * miner_count / 1000  # kW
+        
+        # 计算削减前的月度产出和成本
+        days_in_month = 30.5  # 平均每月天数
+        hours_in_month = days_in_month * 24
+        
+        # 使用难度计算算法
+        hashrate_h = total_hashrate * 1e12  # 转换为H/s
+        difficulty_h = network_difficulty * 1e12  # 转换为H (输入是T)
+        difficulty_factor = 2 ** 32
+        daily_btc = (hashrate_h * block_reward * 86400) / (difficulty_h * difficulty_factor)
+        monthly_btc = daily_btc * days_in_month
+        
+        monthly_power_kwh = total_power * hours_in_month
+        monthly_electricity_cost = monthly_power_kwh * electricity_cost
+        monthly_revenue = monthly_btc * btc_price
+        monthly_profit = monthly_revenue - monthly_electricity_cost
+        
+        # 计算削减后的情况
+        curtailment_factor = (100 - curtailment_percentage) / 100
+        reduced_miner_count = int(miner_count * curtailment_factor)
+        miners_to_shutdown = miner_count - reduced_miner_count
+        
+        reduced_hashrate = hashrate_per_miner * reduced_miner_count
+        reduced_power = power_per_miner * reduced_miner_count / 1000
+        
+        # 削减后产出计算
+        reduced_hashrate_h = reduced_hashrate * 1e12
+        reduced_daily_btc = (reduced_hashrate_h * block_reward * 86400) / (difficulty_h * difficulty_factor)
+        reduced_monthly_btc = reduced_daily_btc * days_in_month
+        
+        reduced_monthly_power_kwh = reduced_power * hours_in_month
+        reduced_monthly_electricity_cost = reduced_monthly_power_kwh * electricity_cost
+        reduced_monthly_revenue = reduced_monthly_btc * btc_price
+        reduced_monthly_profit = reduced_monthly_revenue - reduced_monthly_electricity_cost
+        
+        # 削减影响计算
+        saved_electricity_kwh = monthly_power_kwh - reduced_monthly_power_kwh
+        saved_electricity_cost = monthly_electricity_cost - reduced_monthly_electricity_cost
+        revenue_loss = monthly_revenue - reduced_monthly_revenue
+        net_impact = saved_electricity_cost - revenue_loss
+        
+        # 计算关闭矿机的详细信息
+        shutdown_detail = {
+            'model': miner_model,
+            'count': miners_to_shutdown,
+            'hashrate_th': hashrate_per_miner * miners_to_shutdown,
+            'power_kw': power_per_miner * miners_to_shutdown / 1000,
+            'efficiency': power_per_miner / hashrate_per_miner if hashrate_per_miner > 0 else 0
+        }
+        
+        # 计算收益率变化
+        before_profit_ratio = (monthly_profit / monthly_revenue * 100) if monthly_revenue > 0 else 0
+        after_profit_ratio = (reduced_monthly_profit / reduced_monthly_revenue * 100) if reduced_monthly_revenue > 0 else 0
+        
+        # 计算盈亏平衡点
+        break_even_electricity = (monthly_btc * btc_price) / monthly_power_kwh if monthly_power_kwh > 0 else 0
+        
+        result = {
+            'inputs': {
+                'miner_model': miner_model,
+                'total_miners': miner_count,
+                'curtailment_percentage': curtailment_percentage,
+                'electricity_cost': electricity_cost,
+                'btc_price': btc_price,
+                'network_difficulty': network_difficulty,
+                'block_reward': block_reward
+            },
+            'before_curtailment': {
+                'total_hashrate_th': total_hashrate,
+                'total_power_kw': total_power,
+                'monthly_btc': monthly_btc,
+                'monthly_power_kwh': monthly_power_kwh,
+                'monthly_electricity_cost': monthly_electricity_cost,
+                'monthly_revenue': monthly_revenue,
+                'monthly_profit': monthly_profit,
+                'profit_ratio': before_profit_ratio
+            },
+            'after_curtailment': {
+                'running_miners': reduced_miner_count,
+                'shutdown_miners': miners_to_shutdown,
+                'hashrate_th': reduced_hashrate,
+                'power_kw': reduced_power,
+                'monthly_btc': reduced_monthly_btc,
+                'monthly_power_kwh': reduced_monthly_power_kwh,
+                'monthly_electricity_cost': reduced_monthly_electricity_cost,
+                'monthly_revenue': reduced_monthly_revenue,
+                'monthly_profit': reduced_monthly_profit,
+                'profit_ratio': after_profit_ratio
+            },
+            'impact': {
+                'hashrate_reduction_th': total_hashrate - reduced_hashrate,
+                'power_reduction_kw': total_power - reduced_power,
+                'saved_electricity_kwh': saved_electricity_kwh,
+                'saved_electricity_cost': saved_electricity_cost,
+                'revenue_loss': revenue_loss,
+                'net_impact': net_impact,
+                'is_profitable': net_impact > 0,
+                'break_even_electricity': break_even_electricity
+            },
+            'shutdown_detail': shutdown_detail
+        }
+        
+        logging.info(f"月度Curtailment计算完成: 节省电费=${saved_electricity_cost:.2f}, 损失收入=${revenue_loss:.2f}, 净影响=${net_impact:.2f}")
+        return result
+        
+    except Exception as e:
+        logging.error(f"计算月度Curtailment时出错: {str(e)}")
+        raise e
