@@ -431,7 +431,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // ===== 2. 网络和挖矿信息 =====
             updateNetworkAndMiningInfo(data);
             
-            // ===== 3. 矿场主(Host)数据 =====
+            // ===== 3. 电力削减详情 =====
+            updateCurtailmentDetails(data);
+            
+            // ===== 4. 矿场主(Host)数据 =====
             updateHostData(data);
             
             // 生成矿场主ROI图表

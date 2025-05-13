@@ -177,7 +177,7 @@ def get_real_time_btc_hashrate():
 
 def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electricity_cost=0.05, client_electricity_cost=None, 
                              btc_price=None, difficulty=None, block_reward=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0.0, 
-                             host_investment=0.0, client_investment=0.0, maintenance_fee=0.0):
+                             shutdown_strategy="efficiency", host_investment=0.0, client_investment=0.0, maintenance_fee=0.0):
     """
     Calculate Bitcoin mining profitability using the exact calculation method from the original code
     
@@ -239,14 +239,46 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         # === 矿机数量 & 总算力计算 (Miner Count & Total Hashrate Calculation) ===
         # 确保我们有有效的网络哈希率（确保从未为零）
         curtailment_factor = max(0, min(1, (100 - curtailment) / 100))
-        site_total_hashrate = hashrate * curtailment_factor if hashrate is not None else 0
         
-        # 计算运行中和停机的矿机数量
-        running_miner_count = int(miner_count * curtailment_factor)
-        shutdown_miner_count = miner_count - running_miner_count
-        
-        # 添加日志，记录限电率和矿机数量计算结果
-        logging.info(f"Curtailment计算: 限电率={curtailment}%, 系数={curtailment_factor}, 总矿机={miner_count}, 运行={running_miner_count}, 停机={shutdown_miner_count}")
+        # 如果限电率大于0，则使用更复杂的关机策略逻辑
+        if curtailment > 0 and miner_model and miner_model in MINER_DATA:
+            logging.info(f"应用电力削减关机策略: {shutdown_strategy}")
+            
+            # 为计算创建矿机数据结构
+            miners_data = [{"model": miner_model, "count": miner_count}]
+            
+            # 计算削减影响
+            curtailment_impact = calculate_monthly_curtailment_impact(
+                miners_data=miners_data,
+                curtailment_percentage=curtailment,
+                electricity_cost=electricity_cost,
+                btc_price=btc_price or 100000,  # 使用传入的BTC价格或默认值
+                network_difficulty=difficulty/1e12 if difficulty else 119.12,  # 转换为T
+                block_reward=block_reward_to_use,
+                shutdown_strategy=shutdown_strategy
+            )
+            
+            # 使用削减计算的结果更新我们的值
+            if "reduced_hashrate" in curtailment_impact:
+                site_total_hashrate = curtailment_impact["reduced_hashrate"]
+                running_miner_count = miner_count - len(curtailment_impact.get("shutdown_miners", []))
+                shutdown_miner_count = miner_count - running_miner_count
+                logging.info(f"高级Curtailment计算: 限电率={curtailment}%, 策略={shutdown_strategy}, "
+                            f"总矿机={miner_count}, 运行={running_miner_count}, 停机={shutdown_miner_count}, "
+                            f"有效算力={site_total_hashrate} TH/s")
+            else:
+                # 如果高级计算失败，退回到简单计算
+                site_total_hashrate = hashrate * curtailment_factor if hashrate is not None else 0
+                running_miner_count = int(miner_count * curtailment_factor)
+                shutdown_miner_count = miner_count - running_miner_count
+                logging.info(f"简单Curtailment计算: 限电率={curtailment}%, 系数={curtailment_factor}, "
+                            f"总矿机={miner_count}, 运行={running_miner_count}, 停机={shutdown_miner_count}")
+        else:
+            # 简单的限电计算（对于没有具体矿机型号的情况）
+            site_total_hashrate = hashrate * curtailment_factor if hashrate is not None else 0
+            running_miner_count = int(miner_count * curtailment_factor)
+            shutdown_miner_count = miner_count - running_miner_count
+            logging.info(f"简单Curtailment计算: 限电率={curtailment}%, 系数={curtailment_factor}, 总矿机={miner_count}, 运行={running_miner_count}, 停机={shutdown_miner_count}")
         
         # === BTC 产出计算 (BTC Output Calculation) ===
         # Method 1: Network Hashrate Based (算法1：基于网络实际哈希率)
@@ -392,6 +424,19 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             client_roi_data = calculate_roi(client_investment, client_yearly_profit, client_monthly_profit, btc_price)
             logging.info(f"客户ROI计算结果 - 年化回报率: {client_roi_data['roi_percent_annual']}%, 回收期: {client_roi_data['payback_period_months']}月")
             
+        # 准备削减详情（仅当使用了高级削减计算时）
+        curtailment_details = {}
+        if curtailment > 0 and "curtailment_impact" in locals() and isinstance(curtailment_impact, dict):
+            # 添加削减策略详情
+            curtailment_details = {
+                'strategy': shutdown_strategy,
+                'shutdown_miners': curtailment_impact.get('shutdown_details', []),
+                'saved_electricity_kwh': curtailment_impact.get('saved_electricity_kwh', 0),
+                'saved_electricity_cost': curtailment_impact.get('saved_electricity_cost', 0),
+                'revenue_loss': curtailment_impact.get('revenue_loss', 0),
+                'net_impact': curtailment_impact.get('net_impact', 0)
+            }
+        
         # Return results in a consistent format with our previous implementation
         return {
             'success': True,
@@ -411,10 +456,12 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
                 'site_power_mw': site_power_mw,
                 'curtailment': curtailment,
                 'curtailment_factor': curtailment_factor,
+                'shutdown_strategy': shutdown_strategy,  # 添加关机策略
                 'effective_hashrate': site_total_hashrate,
                 'host_investment': host_investment,
                 'client_investment': client_investment
             },
+            'curtailment_details': curtailment_details,  # 添加削减详情
             'maintenance_fee': {
                 'daily': daily_maintenance_fee,
                 'monthly': maintenance_fee,

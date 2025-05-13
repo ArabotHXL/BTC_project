@@ -546,6 +546,14 @@ def calculate():
             logging.error(f"Invalid curtailment value: {request.form.get('curtailment')} - {str(e)}")
             curtailment = 0
             
+        # 获取关机策略（如果有限电）
+        shutdown_strategy = "efficiency"  # 默认按效率关机
+        if curtailment > 0:
+            strategy = request.form.get('shutdown_strategy')
+            if strategy in ['efficiency', 'proportional', 'random']:
+                shutdown_strategy = strategy
+            logging.info(f"电力削减关机策略: {shutdown_strategy}")
+            
         try:
             maintenance_fee = float(request.form.get('maintenance_fee', 0))
         except ValueError as e:
@@ -589,6 +597,7 @@ def calculate():
                 miner_count=1,  # 设为1因为我们已经使用总算力和总功耗
                 site_power_mw=site_power_mw,
                 curtailment=curtailment,
+                shutdown_strategy=shutdown_strategy,  # 新增参数：关机策略
                 host_investment=host_investment,
                 client_investment=client_investment,
                 maintenance_fee=maintenance_fee
