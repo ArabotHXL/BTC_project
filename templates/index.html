@@ -782,7 +782,8 @@
                             </div>
                         </div>
                         
-                        <!-- 电力削减详情部分 - 移动到页面底部 -->
+                        <!-- 电力削减详情部分 - 移动到页面底部 (仅对矿场主/管理员/所有者显示) -->
+                        {% if session.role in ['owner', 'admin', 'mining_site'] %}
                         <div id="curtailment-details-section" style="display: none;" class="mt-5">
                             <h4 class="mb-3">电力削减详情 (Curtailment Details)</h4>
                             <div class="row mb-3">
@@ -839,6 +840,7 @@
                                 </div>
                             </div>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
