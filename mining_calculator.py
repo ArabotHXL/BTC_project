@@ -684,42 +684,87 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
         }
         
 def calculate_monthly_curtailment_impact(
-    miner_model, 
-    miner_count, 
-    site_power_mw, 
+    miners_data, 
     curtailment_percentage, 
     electricity_cost,
     btc_price,
     network_difficulty,
-    block_reward=3.125
+    block_reward=3.125,
+    shutdown_strategy="efficiency"
 ):
     """
     计算月度电力削减的影响（基于用户输入，不使用外部API）
     
     参数:
-    - miner_model: 矿机型号
-    - miner_count: 矿机数量
-    - site_power_mw: 站点功率(MW)
+    - miners_data: 矿场矿机配置，格式为 [{"model": "型号名称", "count": 数量}, ...]
     - curtailment_percentage: 削减比例(%)
     - electricity_cost: 电价($/kWh)
     - btc_price: BTC价格($)
     - network_difficulty: 网络难度(T)
     - block_reward: 区块奖励(BTC)
+    - shutdown_strategy: 关机策略，可选值:
+        - "efficiency": 按效率关机（先关闭效率最低的）
+        - "random": 随机关机
+        - "proportional": 按比例关机（每种型号按同样比例关闭）
     
     返回:
     - 包含削减影响详情的字典
     """
     try:
-        logging.info(f"计算月度Curtailment: 矿机={miner_model}, 数量={miner_count}, 功率={site_power_mw}MW, 削减={curtailment_percentage}%")
+        logging.info(f"计算月度Curtailment: 矿机数量={len(miners_data)}, 削减={curtailment_percentage}%, 策略={shutdown_strategy}")
         
-        # 获取矿机规格
-        miner_specs = MINER_DATA.get(miner_model, {})
-        hashrate_per_miner = miner_specs.get("hashrate", 0)  # TH/s
-        power_per_miner = miner_specs.get("power_watt", 0)  # W
+        # 如果输入的miners_data为空，返回空结果
+        if not miners_data:
+            raise ValueError("未提供矿机数据")
+            
+        # 处理老版本的单一矿机输入（向后兼容）
+        if isinstance(miners_data, str):
+            # 如果传入的是字符串，假设是矿机型号
+            old_model = miners_data
+            miners_data = [{"model": old_model, "count": 1}]
+        elif isinstance(miners_data, dict) and "model" not in miners_data:
+            # 如果是字典但没有model字段，可能是旧版本的其他格式
+            logging.warning(f"收到未知矿机数据格式: {miners_data}")
+            raise ValueError("矿机数据格式无效")
         
-        # 计算总算力和功耗
-        total_hashrate = hashrate_per_miner * miner_count  # TH/s
-        total_power = power_per_miner * miner_count / 1000  # kW
+        # 汇总所有矿机的算力和功耗
+        miners_expanded = []
+        total_hashrate = 0
+        total_power_watt = 0
+        total_miners = 0
+        
+        # 展开所有矿机数据，便于按效率排序和关机
+        for miner_entry in miners_data:
+            model = miner_entry.get("model")
+            count = miner_entry.get("count", 0)
+            
+            if not model or model not in MINER_DATA or count <= 0:
+                continue
+                
+            specs = MINER_DATA[model]
+            hashrate = specs.get("hashrate", 0)  # TH/s
+            power = specs.get("power_watt", 0)  # W
+            efficiency = power / hashrate if hashrate > 0 else float('inf')  # W/TH
+            
+            # 记录每台矿机的信息
+            for i in range(count):
+                miners_expanded.append({
+                    "model": model,
+                    "hashrate": hashrate,
+                    "power": power,
+                    "efficiency": efficiency
+                })
+            
+            # 累加总算力和功耗
+            total_hashrate += hashrate * count
+            total_power_watt += power * count
+            total_miners += count
+        
+        if not miners_expanded:
+            raise ValueError("没有有效的矿机数据")
+            
+        # 总功耗(kW)
+        total_power = total_power_watt / 1000
         
         # 计算削减前的月度产出和成本
         days_in_month = 30.5  # 平均每月天数
@@ -737,13 +782,55 @@ def calculate_monthly_curtailment_impact(
         monthly_revenue = monthly_btc * btc_price
         monthly_profit = monthly_revenue - monthly_electricity_cost
         
-        # 计算削减后的情况
-        curtailment_factor = (100 - curtailment_percentage) / 100
-        reduced_miner_count = int(miner_count * curtailment_factor)
-        miners_to_shutdown = miner_count - reduced_miner_count
+        # 计算需要关闭的矿机数量
+        miners_to_shutdown_count = int(total_miners * curtailment_percentage / 100)
         
-        reduced_hashrate = hashrate_per_miner * reduced_miner_count
-        reduced_power = power_per_miner * reduced_miner_count / 1000
+        # 根据关机策略选择要关闭的矿机
+        miners_to_shutdown = []
+        miners_to_keep = miners_expanded.copy()
+        
+        if shutdown_strategy == "efficiency":
+            # 按效率排序（效率低的先关）
+            miners_to_keep.sort(key=lambda x: x["efficiency"], reverse=True)
+            miners_to_shutdown = miners_to_keep[:miners_to_shutdown_count]
+            miners_to_keep = miners_to_keep[miners_to_shutdown_count:]
+            
+        elif shutdown_strategy == "random":
+            # 随机选择矿机关闭
+            import random
+            random.shuffle(miners_to_keep)
+            miners_to_shutdown = miners_to_keep[:miners_to_shutdown_count]
+            miners_to_keep = miners_to_keep[miners_to_shutdown_count:]
+            
+        elif shutdown_strategy == "proportional":
+            # 按比例关闭每种型号的矿机
+            # 先统计每种型号的数量
+            model_counts = {}
+            for miner in miners_expanded:
+                model = miner["model"]
+                model_counts[model] = model_counts.get(model, 0) + 1
+            
+            # 计算每种型号需要关闭的数量
+            shutdown_counts = {}
+            for model, count in model_counts.items():
+                shutdown_counts[model] = int(count * curtailment_percentage / 100)
+            
+            # 按型号选择矿机关闭
+            for model in shutdown_counts:
+                count_to_shutdown = shutdown_counts[model]
+                model_miners = [m for m in miners_to_keep if m["model"] == model]
+                
+                if count_to_shutdown > 0 and model_miners:
+                    miners_to_shutdown.extend(model_miners[:count_to_shutdown])
+                    # 从保留列表中移除已关闭的矿机
+                    miners_to_keep = [m for m in miners_to_keep if m not in model_miners[:count_to_shutdown]]
+        
+        # 计算关闭和保留的矿机的总算力和功耗
+        shutdown_hashrate = sum(m["hashrate"] for m in miners_to_shutdown)
+        shutdown_power = sum(m["power"] for m in miners_to_shutdown) / 1000  # kW
+        
+        reduced_hashrate = total_hashrate - shutdown_hashrate
+        reduced_power = total_power - shutdown_power
         
         # 削减后产出计算
         reduced_hashrate_h = reduced_hashrate * 1e12
@@ -761,14 +848,35 @@ def calculate_monthly_curtailment_impact(
         revenue_loss = monthly_revenue - reduced_monthly_revenue
         net_impact = saved_electricity_cost - revenue_loss
         
-        # 计算关闭矿机的详细信息
-        shutdown_detail = {
-            'model': miner_model,
-            'count': miners_to_shutdown,
-            'hashrate_th': hashrate_per_miner * miners_to_shutdown,
-            'power_kw': power_per_miner * miners_to_shutdown / 1000,
-            'efficiency': power_per_miner / hashrate_per_miner if hashrate_per_miner > 0 else 0
-        }
+        # 计算关闭矿机的详细信息（按型号分组）
+        shutdown_by_model = {}
+        for miner in miners_to_shutdown:
+            model = miner["model"]
+            if model not in shutdown_by_model:
+                shutdown_by_model[model] = {
+                    "count": 0,
+                    "hashrate_th": 0,
+                    "power_kw": 0
+                }
+            shutdown_by_model[model]["count"] += 1
+            shutdown_by_model[model]["hashrate_th"] += miner["hashrate"]
+            shutdown_by_model[model]["power_kw"] += miner["power"] / 1000
+        
+        # 将字典转为列表
+        shutdown_details = []
+        for model, details in shutdown_by_model.items():
+            model_specs = MINER_DATA[model]
+            efficiency = model_specs["power_watt"] / model_specs["hashrate"] if model_specs["hashrate"] > 0 else 0
+            shutdown_details.append({
+                "model": model,
+                "count": details["count"],
+                "hashrate_th": details["hashrate_th"],
+                "power_kw": details["power_kw"],
+                "efficiency": efficiency
+            })
+        
+        # 按效率从低到高排序（效率最差的排在前面）
+        shutdown_details.sort(key=lambda x: x["efficiency"], reverse=True)
         
         # 计算收益率变化
         before_profit_ratio = (monthly_profit / monthly_revenue * 100) if monthly_revenue > 0 else 0
@@ -779,9 +887,10 @@ def calculate_monthly_curtailment_impact(
         
         result = {
             'inputs': {
-                'miner_model': miner_model,
-                'total_miners': miner_count,
+                'miners': miners_data,
+                'total_miners': total_miners,
                 'curtailment_percentage': curtailment_percentage,
+                'shutdown_strategy': shutdown_strategy,
                 'electricity_cost': electricity_cost,
                 'btc_price': btc_price,
                 'network_difficulty': network_difficulty,
@@ -798,8 +907,8 @@ def calculate_monthly_curtailment_impact(
                 'profit_ratio': before_profit_ratio
             },
             'after_curtailment': {
-                'running_miners': reduced_miner_count,
-                'shutdown_miners': miners_to_shutdown,
+                'running_miners': len(miners_to_keep),
+                'shutdown_miners': len(miners_to_shutdown),
                 'hashrate_th': reduced_hashrate,
                 'power_kw': reduced_power,
                 'monthly_btc': reduced_monthly_btc,
@@ -810,8 +919,8 @@ def calculate_monthly_curtailment_impact(
                 'profit_ratio': after_profit_ratio
             },
             'impact': {
-                'hashrate_reduction_th': total_hashrate - reduced_hashrate,
-                'power_reduction_kw': total_power - reduced_power,
+                'hashrate_reduction_th': shutdown_hashrate,
+                'power_reduction_kw': shutdown_power,
                 'saved_electricity_kwh': saved_electricity_kwh,
                 'saved_electricity_cost': saved_electricity_cost,
                 'revenue_loss': revenue_loss,
@@ -819,7 +928,7 @@ def calculate_monthly_curtailment_impact(
                 'is_profitable': net_impact > 0,
                 'break_even_electricity': break_even_electricity
             },
-            'shutdown_detail': shutdown_detail
+            'shutdown_details': shutdown_details
         }
         
         logging.info(f"月度Curtailment计算完成: 节省电费=${saved_electricity_cost:.2f}, 损失收入=${revenue_loss:.2f}, 净影响=${net_impact:.2f}")

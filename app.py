@@ -1527,26 +1527,7 @@ def calculate_curtailment():
                 'error': '您没有权限执行此操作'
             }), 403
             
-        # 从表单获取数据
-        miner_model = request.form.get('miner_model')
-        if not miner_model or miner_model not in MINER_DATA:
-            return jsonify({
-                'success': False,
-                'error': '请选择有效的矿机型号'
-            }), 400
-            
-        try:
-            miner_count = int(request.form.get('miner_count', 1))
-            if miner_count < 1:
-                miner_count = 1
-        except:
-            miner_count = 1
-            
-        try:
-            site_power_mw = float(request.form.get('site_power_mw', 0))
-        except:
-            site_power_mw = 0
-            
+        # 从表单获取基本数据
         try:
             curtailment_percentage = float(request.form.get('curtailment_percentage', 0))
             if curtailment_percentage < 0:
@@ -1583,21 +1564,99 @@ def calculate_curtailment():
                 block_reward = 3.125
         except:
             block_reward = 3.125
+            
+        # 获取关机策略
+        shutdown_strategy = request.form.get('shutdown_strategy', 'efficiency')
+        if shutdown_strategy not in ['efficiency', 'random', 'proportional']:
+            shutdown_strategy = 'efficiency'
+            
+        # 解析矿机数据（支持多台矿机）
+        miners_data = []
+        
+        # 检查是否使用单一矿机模式（向后兼容）
+        single_miner_model = request.form.get('miner_model')
+        if single_miner_model and single_miner_model in MINER_DATA:
+            try:
+                miner_count = int(request.form.get('miner_count', 1))
+                if miner_count < 1:
+                    miner_count = 1
+                    
+                miners_data.append({
+                    "model": single_miner_model,
+                    "count": miner_count
+                })
+            except:
+                return jsonify({
+                    'success': False,
+                    'error': '矿机数量格式无效'
+                }), 400
+        else:
+            # 多矿机模式：从POST数据中提取miners_data数组
+            miners_json = request.form.get('miners_data')
+            if miners_json:
+                try:
+                    miners_data = json.loads(miners_json)
+                    
+                    # 验证miners_data格式
+                    if not isinstance(miners_data, list):
+                        return jsonify({
+                            'success': False,
+                            'error': '矿机数据格式无效'
+                        }), 400
+                        
+                    # 验证每个矿机条目
+                    for miner in miners_data:
+                        if not isinstance(miner, dict) or 'model' not in miner or 'count' not in miner:
+                            return jsonify({
+                                'success': False,
+                                'error': '矿机数据格式无效，每个条目必须包含model和count'
+                            }), 400
+                            
+                        if miner['model'] not in MINER_DATA:
+                            return jsonify({
+                                'success': False,
+                                'error': f'无效的矿机型号: {miner["model"]}'
+                            }), 400
+                            
+                        try:
+                            miner['count'] = int(miner['count'])
+                            if miner['count'] < 1:
+                                return jsonify({
+                                    'success': False,
+                                    'error': f'矿机数量必须大于0: {miner["model"]}'
+                                }), 400
+                        except:
+                            return jsonify({
+                                'success': False,
+                                'error': f'矿机数量格式无效: {miner["model"]}'
+                            }), 400
+                            
+                except json.JSONDecodeError:
+                    return jsonify({
+                        'success': False,
+                        'error': '矿机数据JSON格式无效'
+                    }), 400
+        
+        # 如果没有有效的矿机数据，返回错误
+        if not miners_data:
+            return jsonify({
+                'success': False,
+                'error': '请提供至少一种有效的矿机型号'
+            }), 400
         
         # 调用计算函数
         result = calculate_monthly_curtailment_impact(
-            miner_model=miner_model,
-            miner_count=miner_count,
-            site_power_mw=site_power_mw,
+            miners_data=miners_data,
             curtailment_percentage=curtailment_percentage,
             electricity_cost=electricity_cost,
             btc_price=btc_price,
             network_difficulty=network_difficulty,
-            block_reward=block_reward
+            block_reward=block_reward,
+            shutdown_strategy=shutdown_strategy
         )
         
         # 记录计算结果
-        logging.info(f"月度Curtailment计算结果: 净影响=${result['impact']['net_impact']:.2f}")
+        logging.info(f"月度Curtailment计算结果: 矿机数量={len(miners_data)}, 净影响=${result['impact']['net_impact']:.2f}")
         
         # 返回JSON结果
         return jsonify(result)

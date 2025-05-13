@@ -34,27 +34,59 @@
                             <!-- 第一列：矿机参数 -->
                             <div class="col-md-4">
                                 <h5 class="mb-3">矿机参数</h5>
-                                <div class="mb-3">
-                                    <label for="miner-model" class="form-label">矿机型号</label>
-                                    <select class="form-select" id="miner-model" name="miner_model" required>
-                                        <option value="">选择矿机...</option>
-                                        <!-- 使用JavaScript填充 -->
-                                    </select>
-                                </div>
                                 
-                                <div class="mb-3">
-                                    <label for="site-power" class="form-label">矿场功率 (MW)</label>
-                                    <input type="number" class="form-control" id="site-power" name="site_power_mw" step="0.1" min="0">
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="miner-count" class="form-label">矿机数量</label>
-                                    <input type="number" class="form-control" id="miner-count" name="miner_count" value="100" min="1">
+                                <!-- 矿机选择区域 -->
+                                <div class="card mb-3 bg-light">
+                                    <div class="card-header bg-primary bg-opacity-10">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>矿机配置</span>
+                                            <button type="button" class="btn btn-sm btn-primary" id="add-miner-btn">
+                                                <i class="bi bi-plus"></i> 添加矿机
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body" id="miners-container">
+                                        <div class="alert alert-info">
+                                            添加您的矿场中使用的矿机型号和数量。
+                                        </div>
+                                        <div class="miner-entry mb-2">
+                                            <div class="row g-2 align-items-center">
+                                                <div class="col-7">
+                                                    <select class="form-select miner-model-select" required>
+                                                        <option value="">选择矿机...</option>
+                                                        <!-- 使用JavaScript填充 -->
+                                                    </select>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="input-group">
+                                                        <input type="number" class="form-control miner-count-input" value="100" min="1">
+                                                        <span class="input-group-text">台</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-1">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger remove-miner-btn" disabled>
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" name="miners_data" id="miners-data-input">
                                 </div>
                                 
                                 <div class="mb-3">
                                     <label for="curtailment-percentage" class="form-label">月度削减比例 (%)</label>
                                     <input type="number" class="form-control" id="curtailment-percentage" name="curtailment_percentage" value="20" min="0" max="100">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="shutdown-strategy" class="form-label">关机策略</label>
+                                    <select class="form-select" id="shutdown-strategy" name="shutdown_strategy">
+                                        <option value="efficiency" selected>按效率关机 (先关效率低的)</option>
+                                        <option value="proportional">按比例关机 (每种型号同比例)</option>
+                                        <option value="random">随机关机</option>
+                                    </select>
+                                    <div class="form-text">选择在电力削减时，关闭矿机的策略方式</div>
                                 </div>
                             </div>
                             
@@ -152,6 +184,24 @@
                                     <!-- 用JavaScript填充 -->
                                 </tbody>
                             </table>
+                            
+                            <h5 class="mt-4">要关闭的矿机</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>矿机型号</th>
+                                            <th>数量</th>
+                                            <th>总算力 (TH/s)</th>
+                                            <th>总功耗 (kW)</th>
+                                            <th>效率 (W/TH)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="shutdown-miners-table">
+                                        <!-- 用JavaScript填充 -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                         
                         <div class="col-md-5">
@@ -214,44 +264,185 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// 存储矿机数据
+let minersData = [];
+
 // 加载矿机型号列表
 function loadMinerModels() {
     fetch('/miners')
         .then(response => response.json())
         .then(data => {
             if (data.success && data.miners) {
-                const select = document.getElementById('miner-model');
-                data.miners.forEach(miner => {
-                    const option = document.createElement('option');
-                    option.value = miner.name;
-                    option.textContent = `${miner.name} (${miner.hashrate} TH/s, ${miner.power_watt}W)`;
-                    select.appendChild(option);
-                });
+                // 保存矿机数据供后续使用
+                minersData = data.miners;
+                
+                // 填充所有矿机选择下拉框
+                const selects = document.querySelectorAll('.miner-model-select');
+                selects.forEach(select => populateMinerSelect(select));
+                
+                // 设置添加矿机按钮事件
+                setupAddMinerButton();
+                
+                // 设置移除矿机按钮事件
+                setupRemoveMinerButtons();
             }
         })
         .catch(error => console.error('加载矿机失败:', error));
 }
 
-// 根据矿场功率计算矿机数量
-function updateMinerCount() {
-    const sitePower = parseFloat(document.getElementById('site-power').value) || 0;
-    const minerModel = document.getElementById('miner-model').value;
-    
-    if (sitePower > 0 && minerModel) {
-        fetch('/miners')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.miners) {
-                    const selectedMiner = data.miners.find(m => m.name === minerModel);
-                    if (selectedMiner) {
-                        // 计算公式: 矿机数量 = (矿场功率MW * 1000) / (矿机功率W / 1000)
-                        const minerCount = Math.floor((sitePower * 1000000) / selectedMiner.power_watt);
-                        document.getElementById('miner-count').value = minerCount;
-                    }
-                }
-            })
-            .catch(error => console.error('计算矿机数量失败:', error));
+// 填充单个矿机选择下拉框
+function populateMinerSelect(select) {
+    // 清空现有选项（保留第一个"选择矿机..."选项）
+    while (select.options.length > 1) {
+        select.remove(1);
     }
+    
+    // 添加矿机选项
+    minersData.forEach(miner => {
+        const option = document.createElement('option');
+        option.value = miner.name;
+        option.textContent = `${miner.name} (${miner.hashrate} TH/s, ${miner.power_watt}W)`;
+        select.appendChild(option);
+    });
+}
+
+// 设置添加矿机按钮
+function setupAddMinerButton() {
+    const addMinerBtn = document.getElementById('add-miner-btn');
+    if (addMinerBtn) {
+        addMinerBtn.addEventListener('click', function() {
+            addMinerEntry();
+        });
+    }
+}
+
+// 添加新的矿机条目
+function addMinerEntry(model = '', count = 100) {
+    const minersContainer = document.getElementById('miners-container');
+    const entries = minersContainer.querySelectorAll('.miner-entry');
+    
+    // 创建新的矿机条目
+    const newEntry = document.createElement('div');
+    newEntry.className = 'miner-entry mb-2';
+    newEntry.innerHTML = `
+        <div class="row g-2 align-items-center">
+            <div class="col-7">
+                <select class="form-select miner-model-select" required>
+                    <option value="">选择矿机...</option>
+                </select>
+            </div>
+            <div class="col-4">
+                <div class="input-group">
+                    <input type="number" class="form-control miner-count-input" value="${count}" min="1">
+                    <span class="input-group-text">台</span>
+                </div>
+            </div>
+            <div class="col-1">
+                <button type="button" class="btn btn-sm btn-outline-danger remove-miner-btn">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // 如果已经有条目，则移除提示信息
+    const infoAlert = minersContainer.querySelector('.alert-info');
+    if (infoAlert && entries.length > 0) {
+        infoAlert.style.display = 'none';
+    }
+    
+    // 添加到容器
+    minersContainer.appendChild(newEntry);
+    
+    // 填充矿机选择器
+    const select = newEntry.querySelector('.miner-model-select');
+    populateMinerSelect(select);
+    
+    // 如果有预设值，设置它
+    if (model) {
+        select.value = model;
+    }
+    
+    // 添加移除事件
+    const removeBtn = newEntry.querySelector('.remove-miner-btn');
+    removeBtn.addEventListener('click', function() {
+        minersContainer.removeChild(newEntry);
+        
+        // 如果没有条目了，显示提示信息
+        const remainingEntries = minersContainer.querySelectorAll('.miner-entry');
+        if (remainingEntries.length === 0 && infoAlert) {
+            infoAlert.style.display = 'block';
+        }
+        
+        // 更新miners_data隐藏字段
+        updateMinersDataInput();
+    });
+    
+    // 为第一个entry的移除按钮添加禁用
+    updateRemoveButtonStates();
+    
+    // 添加改变事件
+    select.addEventListener('change', updateMinersDataInput);
+    newEntry.querySelector('.miner-count-input').addEventListener('input', updateMinersDataInput);
+    
+    // 更新miners_data隐藏字段
+    updateMinersDataInput();
+}
+
+// 设置所有移除矿机按钮
+function setupRemoveMinerButtons() {
+    const removeButtons = document.querySelectorAll('.remove-miner-btn');
+    removeButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const entry = this.closest('.miner-entry');
+            const container = document.getElementById('miners-container');
+            container.removeChild(entry);
+            
+            // 更新显示状态
+            updateRemoveButtonStates();
+            
+            // 更新miners_data隐藏字段
+            updateMinersDataInput();
+        });
+    });
+    
+    // 更新按钮状态
+    updateRemoveButtonStates();
+}
+
+// 更新移除按钮状态（至少保留一个矿机条目）
+function updateRemoveButtonStates() {
+    const entries = document.querySelectorAll('.miner-entry');
+    if (entries.length <= 1) {
+        // 如果只有一个条目，禁用其移除按钮
+        entries[0].querySelector('.remove-miner-btn').disabled = true;
+    } else {
+        // 否则启用所有移除按钮
+        entries.forEach(entry => {
+            entry.querySelector('.remove-miner-btn').disabled = false;
+        });
+    }
+}
+
+// 更新miners_data隐藏字段
+function updateMinersDataInput() {
+    const entries = document.querySelectorAll('.miner-entry');
+    const minersData = [];
+    
+    entries.forEach(entry => {
+        const model = entry.querySelector('.miner-model-select').value;
+        const count = parseInt(entry.querySelector('.miner-count-input').value) || 0;
+        
+        if (model && count > 0) {
+            minersData.push({
+                model: model,
+                count: count
+            });
+        }
+    });
+    
+    // 更新隐藏字段
+    document.getElementById('miners-data-input').value = JSON.stringify(minersData);
 }
 
 // 计算月度削减影响
@@ -280,9 +471,22 @@ function calculateCurtailment() {
         
         // 更新主要指标
         document.getElementById('miners-to-shutdown').textContent = data.after_curtailment.shutdown_miners;
-        document.getElementById('miner-model-display').textContent = data.inputs.miner_model;
         document.getElementById('saved-electricity-cost').textContent = '$' + formatNumber(data.impact.saved_electricity_cost);
         document.getElementById('saved-electricity-kwh').textContent = formatNumber(data.impact.saved_electricity_kwh);
+        
+        // 更新矿机型号显示（可能有多个型号）
+        const minerModelDisplay = document.getElementById('miner-model-display');
+        if (data.shutdown_details && data.shutdown_details.length > 0) {
+            if (data.shutdown_details.length === 1) {
+                // 单种型号
+                minerModelDisplay.textContent = data.shutdown_details[0].model;
+            } else {
+                // 多种型号
+                minerModelDisplay.textContent = '多种型号';
+            }
+        } else {
+            minerModelDisplay.textContent = '-';
+        }
         
         const netImpactEl = document.getElementById('net-impact');
         const netImpactDescEl = document.getElementById('net-impact-desc');
@@ -294,6 +498,49 @@ function calculateCurtailment() {
             netImpactDescEl.textContent = "节省大于收入损失";
         } else {
             netImpactDescEl.textContent = "收入损失大于节省";
+        }
+        
+        // 更新要关闭的矿机表格
+        const shutdownMinersTable = document.getElementById('shutdown-miners-table');
+        shutdownMinersTable.innerHTML = '';
+        
+        if (data.shutdown_details && data.shutdown_details.length > 0) {
+            // 显示每种型号要关闭的矿机
+            data.shutdown_details.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.model}</td>
+                    <td>${item.count}</td>
+                    <td>${formatNumber(item.hashrate_th)}</td>
+                    <td>${formatNumber(item.power_kw)}</td>
+                    <td>${formatNumber(item.efficiency)}</td>
+                `;
+                shutdownMinersTable.appendChild(row);
+            });
+            
+            // 如果有多个型号，添加总计行
+            if (data.shutdown_details.length > 1) {
+                const totalRow = document.createElement('tr');
+                totalRow.className = 'table-secondary fw-bold';
+                
+                const totalCount = data.shutdown_details.reduce((sum, item) => sum + item.count, 0);
+                const totalHashrate = data.shutdown_details.reduce((sum, item) => sum + item.hashrate_th, 0);
+                const totalPower = data.shutdown_details.reduce((sum, item) => sum + item.power_kw, 0);
+                
+                totalRow.innerHTML = `
+                    <td>总计</td>
+                    <td>${totalCount}</td>
+                    <td>${formatNumber(totalHashrate)}</td>
+                    <td>${formatNumber(totalPower)}</td>
+                    <td>-</td>
+                `;
+                shutdownMinersTable.appendChild(totalRow);
+            }
+        } else {
+            // 没有关闭矿机的情况
+            const row = document.createElement('tr');
+            row.innerHTML = '<td colspan="5" class="text-center">没有矿机需要关闭</td>';
+            shutdownMinersTable.appendChild(row);
         }
         
         // 更新比较表格
