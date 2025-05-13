@@ -748,6 +748,67 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // 更新电力削减详情
+    function updateCurtailmentDetails(data) {
+        // 获取削减百分比
+        const curtailmentPercentage = data.inputs?.curtailment || 0;
+        
+        // 获取电力削减详情部分
+        const curtailmentSection = document.getElementById('curtailment-details-section');
+        
+        // 如果没有削减或没有详情数据，则隐藏部分
+        if (curtailmentPercentage <= 0 || !data.curtailment_details || Object.keys(data.curtailment_details).length === 0) {
+            if (curtailmentSection) {
+                curtailmentSection.style.display = 'none';
+            }
+            return;
+        }
+        
+        // 显示削减详情部分
+        if (curtailmentSection) {
+            curtailmentSection.style.display = 'block';
+        }
+        
+        // 关机策略翻译映射
+        const strategyTranslation = {
+            'efficiency': '按效率关机 (Efficiency-based)',
+            'proportional': '按比例关机 (Proportional)',
+            'random': '随机关机 (Random)'
+        };
+        
+        // 更新削减影响数据
+        updateElementValue('curtailment-strategy', strategyTranslation[data.curtailment_details.strategy] || data.curtailment_details.strategy, document);
+        updateElementValue('saved-electricity', formatNumber(data.curtailment_details.saved_electricity_kwh || 0, 2) + ' kWh', document);
+        updateElementValue('saved-electricity-cost', formatCurrency(data.curtailment_details.saved_electricity_cost || 0), document);
+        updateElementValue('revenue-loss', formatCurrency(data.curtailment_details.revenue_loss || 0), document);
+        updateElementValue('net-impact', formatCurrency(data.curtailment_details.net_impact || 0), document);
+        
+        // 更新关闭的矿机详情
+        const shutdownMinersTable = document.getElementById('shutdown-miners-list');
+        if (shutdownMinersTable) {
+            shutdownMinersTable.innerHTML = '';
+            
+            // 如果有关闭的矿机数据
+            if (data.curtailment_details.shutdown_miners && data.curtailment_details.shutdown_miners.length > 0) {
+                data.curtailment_details.shutdown_miners.forEach(miner => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${miner.model}</td>
+                        <td>${miner.count}</td>
+                        <td>${formatNumber(miner.hashrate_th || 0, 2)} TH/s</td>
+                        <td>${formatNumber(miner.power_kw || 0, 2)} kW</td>
+                    `;
+                    shutdownMinersTable.appendChild(row);
+                });
+            } else {
+                // 如果没有关闭的矿机数据，显示提示
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="4" class="text-center">无关闭矿机数据</td>`;
+                shutdownMinersTable.appendChild(row);
+            }
+        }
+    }
+    
     // 更新客户数据
     function updateCustomerData(data) {
         // 主要指标
