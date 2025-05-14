@@ -57,16 +57,6 @@
                     </div>
                     {% endif %}
                     
-                    <!-- 月度电力削减计算器按钮 (对矿场主和管理员显示) -->
-                    {% if session.role in ['owner', 'admin', 'mining_site'] %}
-                    <div class="btn-group btn-group-sm me-3">
-                        <a href="{{ url_for('curtailment_calculator') }}" class="btn btn-outline-warning">
-                            <i class="bi bi-lightning-charge me-1"></i>
-                            {% if current_lang == 'en' %}Curtailment Calculator{% else %}电力削减计算器{% endif %}
-                        </a>
-                    </div>
-                    {% endif %}
-                    
                     <!-- CRM系统按钮 (对特定角色显示) -->
                     {% if user_has_crm_access() %}
                     <div class="btn-group btn-group-sm me-3">
