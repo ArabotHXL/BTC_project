@@ -1,4 +1,7 @@
 // Bitcoin Mining Calculator - Main JavaScript
+// 注册Chart.js插件
+Chart.register(ChartDataLabels);
+
 document.addEventListener('DOMContentLoaded', function() {
     // 元素引用 (Element references)
     var btcPriceEl = document.getElementById('btc-price');
@@ -1090,18 +1093,26 @@ document.addEventListener('DOMContentLoaded', function() {
                         canvasElement.height = '400';
                         chartContainer.appendChild(canvasElement);
                         
-                        // 添加说明区域
-                        var descriptionCard = document.createElement('div');
-                        descriptionCard.className = 'mt-3 mb-2 text-center card p-3 bg-dark text-light border-secondary';
-                        descriptionCard.style.fontSize = '0.9rem';
-                        descriptionCard.innerHTML = '<p class="mb-1">' + 
-                            '此热力图显示不同BTC价格和电价组合下的月度利润变化情况。点的颜色表示盈利状况：深绿色表示高盈利，浅绿色表示低盈利，红色表示亏损。' + 
-                            '点的大小与盈利金额成正比。将鼠标悬停在点上可查看详细信息。</p>' +
-                            '<p class="mb-0">' + 
-                            'This chart shows how monthly profits change with different BTC prices and electricity costs. ' +
-                            'Point colors indicate profitability: dark green for high profits, light green for low profits, red for losses. ' +
-                            'Point sizes are proportional to profit amount. Hover over points for details.</p>';
-                        chartContainer.appendChild(descriptionCard);
+                        // 获取当前难度、区块奖励、电价和BTC价格
+                        var currentDifficulty = document.getElementById('network-difficulty').textContent || '0T';
+                        var currentBlockReward = document.getElementById('block-reward').textContent || '0 BTC';
+                        var currentBtcPrice = btcPriceInput.value || '0';
+                        var currentElectricityCost = electricityCostInput.value || '0';
+                        var optimalElectricityRate = chartData.optimal_electricity_rate || 0;
+                        
+                        // 添加图表标题和参数信息
+                        var titleElement = document.createElement('div');
+                        titleElement.className = 'chart-title mb-2';
+                        titleElement.innerHTML = `
+                            <h5 class="mb-1 text-center">
+                                Client Dynamic Profit Analysis (BTC Price: $${Number(currentBtcPrice).toLocaleString()})
+                            </h5>
+                            <div class="d-flex justify-content-between">
+                                <div class="badge bg-dark text-warning p-2">Difficulty: ${currentDifficulty}</div>
+                                <div class="badge bg-dark text-success p-2">Block Reward: ${currentBlockReward}</div>
+                            </div>
+                        `;
+                        chartContainer.insertBefore(titleElement, canvasElement);
                         
                         // 添加版权信息
                         var copyrightElement = document.createElement('div');
@@ -1203,6 +1214,21 @@ document.addEventListener('DOMContentLoaded', function() {
                                             callback: function(value) {
                                                 return '$' + value.toFixed(2);
                                             }
+                                        },
+                                        // 添加当前电价参考线
+                                        grid: {
+                                            color: function(context) {
+                                                if (context.tick.value == parseFloat(currentElectricityCost)) {
+                                                    return 'rgba(255, 159, 64, 0.8)'; // 橙色参考线
+                                                }
+                                                return 'rgba(0, 0, 0, 0.1)';
+                                            },
+                                            lineWidth: function(context) {
+                                                if (context.tick.value == parseFloat(currentElectricityCost)) {
+                                                    return 2;
+                                                }
+                                                return 1;
+                                            }
                                         }
                                     },
                                     y: {
@@ -1217,6 +1243,38 @@ document.addEventListener('DOMContentLoaded', function() {
                                             callback: function(value) {
                                                 return '$' + value.toLocaleString();
                                             }
+                                        },
+                                        // 添加当前BTC价格参考线
+                                        grid: {
+                                            color: function(context) {
+                                                if (context.tick.value == parseFloat(currentBtcPrice)) {
+                                                    return 'rgba(75, 192, 192, 0.8)'; // 青色参考线
+                                                }
+                                                return 'rgba(0, 0, 0, 0.1)';
+                                            },
+                                            lineWidth: function(context) {
+                                                if (context.tick.value == parseFloat(currentBtcPrice)) {
+                                                    return 2;
+                                                }
+                                                return 1;
+                                            }
+                                        }
+                                    }
+                                },
+                                // 添加最佳电力成本显示插件
+                                annotation: {
+                                    annotations: {
+                                        optimalLine: {
+                                            type: 'line',
+                                            xMin: optimalElectricityRate,
+                                            xMax: optimalElectricityRate,
+                                            borderColor: 'rgba(0, 255, 0, 0.7)',
+                                            borderWidth: 2,
+                                            label: {
+                                                content: '最佳电价 $' + optimalElectricityRate.toFixed(3) + '/kWh',
+                                                enabled: true,
+                                                position: 'top'
+                                            }
                                         }
                                     }
                                 },
@@ -1229,15 +1287,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 var electricityCost = context.raw.x;
                                                 
                                                 var lines = [
-                                                    '电价: $' + electricityCost.toFixed(3) + '/kWh',
-                                                    'BTC价格: $' + btcPrice.toLocaleString(),
-                                                    '月利润: $' + profit.toLocaleString(undefined, {
-                                                        minimumFractionDigits: 2,
-                                                        maximumFractionDigits: 2
+                                                    '电价 / Electricity: $' + electricityCost.toFixed(3) + '/kWh',
+                                                    'BTC价格 / Price: $' + btcPrice.toLocaleString(),
+                                                    '月利润 / Monthly: $' + profit.toLocaleString(undefined, {
+                                                        minimumFractionDigits: 0,
+                                                        maximumFractionDigits: 0
                                                     }),
-                                                    '年利润: $' + (profit * 12).toLocaleString(undefined, {
-                                                        minimumFractionDigits: 2,
-                                                        maximumFractionDigits: 2
+                                                    '年利润 / Yearly: $' + (profit * 12).toLocaleString(undefined, {
+                                                        minimumFractionDigits: 0,
+                                                        maximumFractionDigits: 0
                                                     })
                                                 ];
                                                 
@@ -1247,10 +1305,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                                     // 添加标记表示亏损
                                                     return ['⚠️ 亏损运营 / Loss Operation'].concat(lines);
                                                 }
-                                            },
-                                            title: function() {
-                                                // 清空标题，使用自定义标签替代
-                                                return '';
                                             }
                                         },
                                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -1263,11 +1317,37 @@ document.addEventListener('DOMContentLoaded', function() {
                                         },
                                         padding: 10
                                     },
-                                    title: {
-                                        display: true,
-                                        text: (parseFloat(clientElectricityCost) > 0) ? 
-                                            '客户收益热力图 / Customer Profit Chart' : 
-                                            '矿场主收益热力图 / Host Profit Chart'
+                                    // 添加数据点标签
+                                    datalabels: {
+                                        display: function(context) {
+                                            // 仅显示某些关键点的标签，以避免标签过多
+                                            return context.dataIndex % 3 === 0;
+                                        },
+                                        formatter: function(value, context) {
+                                            // 简化显示，只显示利润
+                                            if (value.profit >= 0) {
+                                                return '$' + Math.round(value.profit/1000) + 'K';
+                                            } else {
+                                                return '-$' + Math.abs(Math.round(value.profit/1000)) + 'K';
+                                            }
+                                        },
+                                        color: function(context) {
+                                            var profit = context.dataset.data[context.dataIndex].profit;
+                                            return profit >= 0 ? 'white' : 'white';
+                                        },
+                                        backgroundColor: function(context) {
+                                            var profit = context.dataset.data[context.dataIndex].profit;
+                                            return profit >= 0 ? 'rgba(0, 128, 0, 0.7)' : 'rgba(220, 20, 60, 0.7)';
+                                        },
+                                        borderRadius: 4,
+                                        padding: 4,
+                                        font: {
+                                            weight: 'bold',
+                                            size: 10
+                                        }
+                                    },
+                                    legend: {
+                                        display: false
                                     }
                                 }
                             }
