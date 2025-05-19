@@ -133,9 +133,32 @@ def login():
                     else:
                         # 使用IP-API获取地理位置信息
                         # 免费版的ip-api.com，不需要API密钥
-                        ip_api_url = f"http://ip-api.com/json/{client_ip}?fields=status,message,country,regionName,city,query"
-                        response = requests.get(ip_api_url, timeout=3)
-                        if response.status_code == 200:
+                        # 验证IP地址格式，防止SSRF攻击
+                        import re
+                        ip_pattern = re.compile(r'^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$')
+                        ip_match = ip_pattern.match(client_ip)
+                        
+                        if ip_match:
+                            # 确保IP地址的每个部分都是有效的（0-255）
+                            is_valid = True
+                            for i in range(1, 5):
+                                octet = int(ip_match.group(i))
+                                if octet < 0 or octet > 255:
+                                    is_valid = False
+                                    break
+                            
+                            if is_valid:
+                                ip_api_url = f"http://ip-api.com/json/{client_ip}?fields=status,message,country,regionName,city,query"
+                                response = requests.get(ip_api_url, timeout=3)
+                            else:
+                                logging.warning(f"无效的IP地址格式: {client_ip}")
+                                location = "未知位置 (无效IP格式)"
+                                response = None
+                        else:
+                            logging.warning(f"无效的IP地址格式: {client_ip}")
+                            location = "未知位置 (无效IP格式)"
+                            response = None
+                        if response and response.status_code == 200:
                             data = response.json()
                             if data.get('status') == 'success':
                                 country = data.get('country', '未知国家')
