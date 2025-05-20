@@ -791,21 +791,12 @@ def get_network_stats():
             block_reward = 3.125  # 默认区块奖励
             
         try:
-            # 直接使用简单高效的API获取哈希率
-            response = requests.get('https://blockchain.info/q/hashrate', timeout=5)
-            if response.status_code == 200:
-                # 该API直接返回TH/s单位的哈希率
-                hashrate_th = float(response.text.strip())
-                # 转换为EH/s (1 EH/s = 1,000,000,000 TH/s)
-                hashrate = hashrate_th / 1e9
-                logging.info(f"成功获取网络哈希率: {hashrate_th} TH/s → {hashrate} EH/s")
-                
-                # 如果哈希率不合理，使用默认值
-                if hashrate < 10 or hashrate > 2000:
-                    logging.warning(f"计算的哈希率值不合理: {hashrate} EH/s，使用默认值")
-                    hashrate = DEFAULT_HASHRATE_EH
-            else:
-                logging.error(f"获取网络哈希率API返回错误状态码: {response.status_code}")
+            # 使用mining_calculator.py中的优化函数获取哈希率
+            hashrate = get_real_time_btc_hashrate()
+            
+            # 如果哈希率不合理，使用默认值
+            if hashrate < 10 or hashrate > 2000:
+                logging.warning(f"计算的哈希率值不合理: {hashrate} EH/s，使用默认值")
                 hashrate = DEFAULT_HASHRATE_EH
         except Exception as e:
             logging.error(f"获取网络哈希率时出错: {e}")
