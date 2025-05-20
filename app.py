@@ -794,8 +794,8 @@ def get_network_stats():
             # 使用mining_calculator.py中的优化函数获取哈希率
             hashrate = get_real_time_btc_hashrate()
             
-            # 如果哈希率不合理，使用默认值
-            if hashrate < 10 or hashrate > 2000:
+            # 如果哈希率完全不合理，使用默认值（更新范围以接受943 EH/s的值）
+            if hashrate < 10 or hashrate > 10000:
                 logging.warning(f"计算的哈希率值不合理: {hashrate} EH/s，使用默认值")
                 hashrate = DEFAULT_HASHRATE_EH
         except Exception as e:
