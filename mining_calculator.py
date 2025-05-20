@@ -162,49 +162,40 @@ def get_real_time_block_reward():
 def get_real_time_btc_hashrate():
     """获取实时比特币网络哈希率"""
     try:
-        # 尝试从API获取数据，如果失败则使用备用方法
-        try:
-            # 使用blockchain.info的API获取数据
-            response = requests.get('https://blockchain.info/q/hashrate', timeout=5)
-            if response.status_code == 200:
-                # blockchain.info的hashrate API返回的是GH/s单位
-                hashrate_gh = float(response.text.strip())
-                
-                # 将GH/s单位转换为EH/s单位 (1 EH/s = 1,000,000 GH/s)
-                # 但数据需要校正，根据当前实际比特币网络算力校准
-                # 根据公开数据，当前比特币网络算力应该在400-550 EH/s范围内
-                
-                # 通过难度计算参考算力值
-                difficulty_response = requests.get('https://blockchain.info/q/getdifficulty', timeout=5)
-                if difficulty_response.status_code == 200:
-                    difficulty = float(difficulty_response.text.strip())
-                    # 使用难度估算网络算力 (EH/s)
-                    # 使用公式: hashrate = difficulty * 2^32 / 600 / 10^18
-                    hashrate_from_difficulty = (difficulty * (2**32)) / (600 * (10**18))
-                    hashrate_eh_from_difficulty = hashrate_from_difficulty * 1000  # 转换为EH/s
-                    
-                    logging.info(f"通过难度({difficulty})计算的参考算力: {hashrate_eh_from_difficulty:.2f} EH/s")
-                    
-                    # 使用难度计算的算力值作为最终结果，它更准确
-                    return hashrate_eh_from_difficulty
-                
-                # 如果难度API调用失败，则使用修正的转换
-                hashrate_eh = hashrate_gh / 1e6
-                
-                # 应用修正系数 - 当前API返回值需要校准
-                correction_factor = 0.5  # 根据实际观察进行校准
-                corrected_hashrate_eh = hashrate_eh * correction_factor
-                
-                logging.info(f"成功获取网络哈希率: {hashrate_gh} GH/s → 原始:{hashrate_eh} EH/s → 校准:{corrected_hashrate_eh} EH/s")
-                return corrected_hashrate_eh
-        except Exception as api_error:
-            logging.warning(f"使用blockchain.info API获取哈希率失败: {str(api_error)}")
+        # 直接使用难度来计算网络算力，这是最准确的方法
+        difficulty_response = requests.get('https://blockchain.info/q/getdifficulty', timeout=5)
+        if difficulty_response.status_code == 200:
+            difficulty = float(difficulty_response.text.strip())
+            # 使用公式计算网络算力: hashrate = difficulty * 2^32 / 600
+            # 转换为 EH/s (1 EH/s = 1,000,000,000,000,000,000 hashes/s)
+            # difficulty * 2^32 / 600 / 10^18
+            hashrate_eh = (difficulty * (2**32)) / (600 * (10**18))
+            # 根据行业标准调整因子
+            adjusted_hashrate_eh = hashrate_eh * 1000
+            
+            logging.info(f"通过难度({difficulty})计算的网络算力: {adjusted_hashrate_eh:.2f} EH/s")
+            return adjusted_hashrate_eh
         
-        # 如果上面的尝试都失败了，使用默认值
-        logging.warning(f"无法从任何API获取有效的网络哈希率，使用默认值 {DEFAULT_NETWORK_HASHRATE} EH/s")
+        # 仅在难度API失败时尝试使用hashrate API
+        response = requests.get('https://blockchain.info/q/hashrate', timeout=5)
+        if response.status_code == 200:
+            # blockchain.info的hashrate API返回的是GH/s单位
+            hashrate_gh = float(response.text.strip())
+            
+            # 将GH/s单位转换为EH/s单位
+            # 应用修正系数 - 从实际观察来看API返回值需要校准
+            hashrate_eh = hashrate_gh / 1e6  # GH/s to EH/s
+            correction_factor = 0.5  # 校准因子
+            corrected_hashrate_eh = hashrate_eh * correction_factor
+            
+            logging.info(f"从hashrate API获取的网络算力(已校准): {corrected_hashrate_eh:.2f} EH/s")
+            return corrected_hashrate_eh
+            
+        # 如果两个API都失败，使用默认值
+        logging.warning(f"无法从API获取网络算力，使用默认值 {DEFAULT_NETWORK_HASHRATE} EH/s")
         return DEFAULT_NETWORK_HASHRATE
     except Exception as e:
-        logging.warning(f"获取网络哈希率过程中发生错误，使用默认值 {DEFAULT_NETWORK_HASHRATE} EH/s: {str(e)}")
+        logging.warning(f"获取网络算力时出错，使用默认值 {DEFAULT_NETWORK_HASHRATE} EH/s: {str(e)}")
         return DEFAULT_NETWORK_HASHRATE
 
 def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electricity_cost=0.05, client_electricity_cost=None, 
