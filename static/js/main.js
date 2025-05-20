@@ -46,6 +46,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // 加载网络数据 (Load network data)
         fetchNetworkStats();
         
+        // 启动网络统计数据自动刷新（包括网络算力）
+        startNetworkStatsAutoRefresh();
+        
         // 加载矿机型号列表 (Load miner models)
         fetchMiners();
         
@@ -457,12 +460,42 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 获取网络状态 (Fetch network status)
-    function fetchNetworkStats() {
-        // 显示加载状态 (Show loading state)
-        var networkStatsElements = [btcPriceEl, networkDifficultyEl, networkHashrateEl, blockRewardEl];
-        networkStatsElements.forEach(function(el) {
-            if (el) el.innerHTML = '<small class="text-muted">Loading...</small>';
-        });
+    // 用于网络统计数据自动刷新的计时器
+    var networkStatsRefreshTimer = null;
+    // 网络统计数据刷新间隔（毫秒）
+    var networkStatsRefreshInterval = 30000; // 30秒刷新一次
+    
+    // 启动网络统计数据自动刷新
+    function startNetworkStatsAutoRefresh() {
+        // 清除可能存在的旧计时器
+        stopNetworkStatsAutoRefresh();
+        
+        // 设置新的自动刷新计时器
+        networkStatsRefreshTimer = setInterval(function() {
+            // 后台静默刷新，不显示加载状态
+            fetchNetworkStats(false);
+        }, networkStatsRefreshInterval);
+        
+        console.log("已启动网络统计数据自动刷新，间隔: " + (networkStatsRefreshInterval/1000) + "秒");
+    }
+    
+    // 停止网络统计数据自动刷新
+    function stopNetworkStatsAutoRefresh() {
+        if (networkStatsRefreshTimer) {
+            clearInterval(networkStatsRefreshTimer);
+            networkStatsRefreshTimer = null;
+            console.log("已停止网络统计数据自动刷新");
+        }
+    }
+    
+    function fetchNetworkStats(showLoading = true) {
+        // 显示加载状态 (Show loading state) - 只在首次加载或手动刷新时显示
+        if (showLoading) {
+            var networkStatsElements = [btcPriceEl, networkDifficultyEl, networkHashrateEl, blockRewardEl];
+            networkStatsElements.forEach(function(el) {
+                if (el) el.innerHTML = '<small class="text-muted">Loading...</small>';
+            });
+        }
         
         var xhr = new XMLHttpRequest();
         xhr.open('GET', '/network_stats', true);
@@ -498,6 +531,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         localStorage.setItem('last_network_difficulty', data.difficulty);
                         localStorage.setItem('last_network_hashrate', data.hashrate);
                         localStorage.setItem('last_block_reward', data.block_reward);
+                        
+                        // 在网络哈希率元素上添加闪烁效果来指示刷新
+                        if (networkHashrateEl) {
+                            networkHashrateEl.classList.add('refreshed-data');
+                            setTimeout(function() {
+                                networkHashrateEl.classList.remove('refreshed-data');
+                            }, 1000);
+                        }
                     } else {
                         useFallbackNetworkStats();
                         console.error('获取网络状态时服务器返回错误:', data && data.error ? data.error : null);
