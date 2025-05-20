@@ -162,40 +162,37 @@ def get_real_time_block_reward():
 def get_real_time_btc_hashrate():
     """获取实时比特币网络哈希率"""
     try:
-        # 直接使用难度来计算网络算力，这是最准确的方法
-        difficulty_response = requests.get('https://blockchain.info/q/getdifficulty', timeout=5)
-        if difficulty_response.status_code == 200:
-            difficulty = float(difficulty_response.text.strip())
-            # 使用公式计算网络算力: hashrate = difficulty * 2^32 / 600
-            # 转换为 EH/s (1 EH/s = 1,000,000,000,000,000,000 hashes/s)
-            # difficulty * 2^32 / 600 / 10^18
-            hashrate_eh = (difficulty * (2**32)) / (600 * (10**18))
-            # 根据行业标准调整因子
-            adjusted_hashrate_eh = hashrate_eh * 1000
-            
-            logging.info(f"通过难度({difficulty})计算的网络算力: {adjusted_hashrate_eh:.2f} EH/s")
-            return adjusted_hashrate_eh
-        
-        # 仅在难度API失败时尝试使用hashrate API
+        # 优先使用hashrate API来获取网络算力数据
         response = requests.get('https://blockchain.info/q/hashrate', timeout=5)
         if response.status_code == 200:
-            # blockchain.info的hashrate API返回的是GH/s单位
-            hashrate_gh = float(response.text.strip())
+            # blockchain.info的hashrate API返回的是TH/s单位
+            hashrate_value = float(response.text.strip())
             
-            # 将GH/s单位转换为EH/s单位
-            # 应用修正系数 - 从实际观察来看API返回值需要校准
-            hashrate_eh = hashrate_gh / 1e6  # GH/s to EH/s
-            correction_factor = 0.5  # 校准因子
-            corrected_hashrate_eh = hashrate_eh * correction_factor
+            # 将返回值转换为EH/s (1 EH/s = 1,000,000 TH/s)
+            hashrate_eh = hashrate_value / 1e6
             
-            logging.info(f"从hashrate API获取的网络算力(已校准): {corrected_hashrate_eh:.2f} EH/s")
-            return corrected_hashrate_eh
+            # 记录日志但不显示转换过程，避免干扰
+            logging.info(f"成功获取网络哈希率: {hashrate_value} TH/s = {hashrate_eh} EH/s")
+            return hashrate_eh
+        else:
+            logging.warning(f"获取哈希率API返回状态码: {response.status_code}")
             
-        # 如果两个API都失败，使用默认值
-        logging.warning(f"无法从API获取网络算力，使用默认值 {DEFAULT_NETWORK_HASHRATE} EH/s")
-        return DEFAULT_NETWORK_HASHRATE
+            # API失败时，尝试使用难度数据作为备份方法
+            difficulty_response = requests.get('https://blockchain.info/q/getdifficulty', timeout=5)
+            if difficulty_response.status_code == 200:
+                difficulty = float(difficulty_response.text.strip())
+                # 使用公式计算网络算力
+                hashrate_from_difficulty = (difficulty * (2**32)) / 600
+                # 转换为EH/s
+                hashrate_eh = hashrate_from_difficulty / 1e18
+                
+                logging.info(f"通过难度计算的备用网络算力: {hashrate_eh:.2f} EH/s")
+                return hashrate_eh
+            
+            # 所有方法都失败时使用默认值
+            return DEFAULT_NETWORK_HASHRATE
     except Exception as e:
-        logging.warning(f"获取网络算力时出错，使用默认值 {DEFAULT_NETWORK_HASHRATE} EH/s: {str(e)}")
+        logging.warning(f"无法获取实时BTC网络哈希率，使用默认值 {DEFAULT_NETWORK_HASHRATE} EH/s: {e}")
         return DEFAULT_NETWORK_HASHRATE
 
 def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electricity_cost=0.05, client_electricity_cost=None, 
