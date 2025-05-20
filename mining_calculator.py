@@ -164,9 +164,11 @@ def get_real_time_btc_hashrate():
     try:
         response = requests.get('https://blockchain.info/q/hashrate', timeout=5)
         if response.status_code == 200:
-            hashrate_th = float(response.text.strip())  # 原始数据为 TH/s
-            hashrate_eh = hashrate_th / 1e9  # 转换为 EH/s (1 EH/s = 1,000,000,000 TH/s)
-            logging.info(f"成功获取网络哈希率: {hashrate_th} TH/s = {hashrate_eh} EH/s")
+            # blockchain.info API返回的原始数据单位为GH/s (十亿哈希/秒)
+            hashrate_gh = float(response.text.strip())
+            # 转换为 EH/s (1 EH/s = 1,000,000 GH/s)
+            hashrate_eh = hashrate_gh / 1e6
+            logging.info(f"成功获取网络哈希率: {hashrate_gh} GH/s = {hashrate_eh} EH/s")
             return hashrate_eh
         else:
             logging.warning(f"获取哈希率API返回状态码: {response.status_code}")
