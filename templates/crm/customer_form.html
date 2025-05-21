@@ -89,7 +89,7 @@
                         </div>
                         <div class="form-text mb-2">
                             如勾选，客户将能够登录并使用计算器。
-                            {% if has_calculator_access %}
+                            {% if has_calculator_access and access_info %}
                                 <span class="text-success">
                                     <i class="bi bi-check-circle-fill"></i> 
                                     此客户已有计算器访问权限，到期日期: {{ access_info.expires_at.strftime('%Y-%m-%d') }}
