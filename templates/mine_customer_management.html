@@ -58,7 +58,7 @@
                                     <td>{{ user.email }}</td>
                                     <td>{{ user.company }}</td>
                                     <td>
-                                        {% if user.has_access() %}
+                                        {% if user.has_access %}
                                             <span class="badge bg-success">
                                                 {% if current_lang == 'en' %}Active{% else %}有效{% endif %}
                                             </span>
@@ -68,7 +68,7 @@
                                             </span>
                                         {% endif %}
                                     </td>
-                                    <td>{{ user.days_remaining() }}</td>
+                                    <td>{{ user.days_remaining }}</td>
                                     <td>
                                         <div class="btn-group" role="group">
                                             <a href="{{ url_for('extend_user_access', user_id=user.id, days=30) }}" class="btn btn-sm btn-outline-primary">
