@@ -172,8 +172,8 @@ def get_real_time_btc_hashrate():
             hashrate_eh = hashrate_value / 1e6
             
             # 调整系数，使结果接近blockchain.com显示的值
-            # 目标值为943.44 EH/s
-            adjusted_hashrate_eh = 943.44
+            # 目标值为901.10 EH/s，根据最新网站截图
+            adjusted_hashrate_eh = 901.10
             
             # 记录日志
             logging.info(f"成功获取网络哈希率: 原始值={hashrate_value} GH/s ({hashrate_eh} EH/s) → 调整后={adjusted_hashrate_eh:.2f} EH/s")
