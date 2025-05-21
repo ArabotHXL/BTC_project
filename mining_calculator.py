@@ -162,7 +162,7 @@ def get_real_time_block_reward():
 def get_real_time_btc_hashrate():
     """获取实时比特币网络哈希率"""
     try:
-        # 优先使用hashrate API来获取网络算力数据
+        # 从blockchain.info API获取官方哈希率数据
         response = requests.get('https://blockchain.info/q/hashrate', timeout=5)
         if response.status_code == 200:
             # blockchain.info的hashrate API返回的是GH/s单位
@@ -171,16 +171,19 @@ def get_real_time_btc_hashrate():
             # 将返回值转换为EH/s (1 EH/s = 1,000,000 GH/s)
             hashrate_eh = hashrate_value / 1e6
             
-            # 使用动态调整方式计算网络算力
-            # 假设我们观察到blockchain.info API返回的值和网站显示值之间存在特定关系
-            # 我们使用一个比例系数，而不是固定值
-            # 这样算力的变化会自动反映在结果中
-            adjustment_factor = 901.10 / 834579.065922  # 根据最近的一次观察
-            adjusted_hashrate_eh = hashrate_eh * adjustment_factor
+            # 获取哈希率的单位为EH/s（Exa Hash per second）
+            # 由于blockchain.info API在不同时间点可能返回不同的数据计算方式
+            # 我们根据返回值的范围来推断其显示方式
             
-            # 记录日志
-            logging.info(f"成功获取网络哈希率: 原始值={hashrate_value} GH/s ({hashrate_eh} EH/s) → 调整后={adjusted_hashrate_eh:.2f} EH/s")
-            return adjusted_hashrate_eh
+            # 如果哈希率超过10,000 EH/s，可能是使用了不同的计算单位
+            # 这是根据实际观察确定的阈值，实际比特币网络算力通常在数百到千EH/s范围
+            if hashrate_eh > 10000:
+                # 可能是PH/s单位被错误地解读为GH/s
+                hashrate_eh = hashrate_value / 1e9  # 重新解读为PH/s并转换为EH/s
+            
+            # 记录日志（不再使用调整系数）
+            logging.info(f"成功获取网络哈希率: 原始值={hashrate_value} GH/s → 转换后={hashrate_eh} EH/s")
+            return hashrate_eh
         else:
             logging.warning(f"获取哈希率API返回状态码: {response.status_code}")
             
