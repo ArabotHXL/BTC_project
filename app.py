@@ -44,6 +44,14 @@ app = Flask(__name__)
 # 设置安全的会话密钥
 app.secret_key = os.environ.get("SESSION_SECRET", secrets.token_hex(32))
 
+# 添加自定义过滤器
+@app.template_filter('nl2br')
+def nl2br_filter(s):
+    """将文本中的换行符转换为HTML的<br>标签"""
+    if s is None:
+        return ""
+    return str(s).replace('\n', '<br>')
+
 # 默认语言 'en' 英文, 'zh' 中文
 DEFAULT_LANGUAGE = 'zh'
 
