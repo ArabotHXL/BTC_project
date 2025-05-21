@@ -1,0 +1,92 @@
+{% extends "crm/base.html" %}
+
+{% block title %}{{ '新建商机' if not lead else '编辑商机' }} | BTC Mining CRM{% endblock %}
+
+{% block page_title %}{{ '新建商机' if not lead else '编辑商机' }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('crm.customers') }}">客户列表</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('crm.customer_detail', customer_id=customer.id) }}">{{ customer.name }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">{{ '新建商机' if not lead else '编辑商机' }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">{{ '新建商机' if not lead else '编辑商机' }}</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" action="{{ url_for('crm.new_lead', customer_id=customer.id) if not lead else url_for('crm.edit_lead', lead_id=lead.id) }}">
+            <div class="mb-3">
+                <label for="title" class="form-label">商机标题 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="title" name="title" value="{{ lead.title if lead else '' }}" required>
+                <div class="form-text">例如：矿场扩建项目、电费优化需求等</div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="status" class="form-label">状态</label>
+                        <select class="form-select" id="status" name="status">
+                            {% for status in all_statuses %}
+                            <option value="{{ status.name }}" {{ 'selected' if lead and lead.status == status else '' }}>
+                                {{ status.value }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="source" class="form-label">来源</label>
+                        <input type="text" class="form-control" id="source" name="source" value="{{ lead.source if lead else '' }}">
+                        <div class="form-text">例如：网站咨询、客户推荐、会议认识等</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="estimated_value" class="form-label">预估价值 (USD)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" step="0.01" class="form-control" id="estimated_value" name="estimated_value" value="{{ lead.estimated_value if lead else 0 }}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="next_follow_up" class="form-label">下次跟进时间</label>
+                        <input type="date" class="form-control" id="next_follow_up" name="next_follow_up" 
+                               value="{{ lead.next_follow_up.strftime('%Y-%m-%d') if lead and lead.next_follow_up else '' }}">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="assigned_to" class="form-label">负责人</label>
+                <input type="text" class="form-control" id="assigned_to" name="assigned_to" 
+                       value="{{ lead.assigned_to if lead else session.get('email', '') }}">
+                <div class="form-text">默认为创建者邮箱，可以手动指定其他负责人</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="description" class="form-label">商机描述</label>
+                <textarea class="form-control" id="description" name="description" rows="5">{{ lead.description if lead else '' }}</textarea>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('crm.customer_detail', customer_id=customer.id) }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> 返回客户页面
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i> {{ '保存商机' if not lead else '更新商机' }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
