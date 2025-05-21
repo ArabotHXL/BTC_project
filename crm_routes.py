@@ -455,20 +455,16 @@ def edit_customer(customer_id):
         access_info = UserAccess.query.filter_by(email=customer.email).first()
         has_calculator_access = access_info is not None
     
-    # 预处理访问信息以避免模板中的属性访问问题
-    access_info_dict = None
-    if access_info:
-        access_info_dict = {
-            'expires_at': access_info.expires_at,
-            'days_remaining': access_info.days_remaining,
-            'has_access': access_info.has_access
-        }
+    # 预处理访问信息
+    expires_at = None
+    if has_calculator_access and access_info:
+        expires_at = access_info.expires_at
     
     return render_template(
         'crm/customer_form.html', 
         customer=customer,
         has_calculator_access=has_calculator_access,
-        access_info=access_info_dict
+        expires_at=expires_at
     )
 
 @crm.route('/customers/<int:customer_id>/delete', methods=['POST'])
