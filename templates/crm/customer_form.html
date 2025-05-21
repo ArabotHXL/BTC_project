@@ -93,7 +93,7 @@
                                 <span class="text-success">
                                     <i class="bi bi-check-circle-fill"></i> 
                                     此客户已有计算器访问权限，到期日期: {{ access_info.expires_at.strftime('%Y-%m-%d') }}
-                                    (剩余{{ access_info.days_remaining() }}天)
+                                    (剩余{{ access_info.days_remaining }}天)
                                 </span>
                             {% endif %}
                         </div>
