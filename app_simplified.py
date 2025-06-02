@@ -10,7 +10,7 @@ from models import LoginRecord, UserAccess
 from translations import get_translation
 from utils.helpers import get_user_role, has_role, get_client_ip
 from utils.api_client import APIClient
-from mining_calculator import MINER_DATA, calculate_mining_profitability
+from mining_calculator_simplified import MINER_DATA, calculate_mining_profitability
 from crm_routes import init_crm_routes
 
 # 初始化Flask应用
