@@ -1458,12 +1458,23 @@ init_broker_routes(app)
 @login_required
 def debug_info():
     """显示调试信息页面，用于排查会话问题"""
-    user_info = None
-    if session.get('user_id'):
-        # 获取数据库中的用户信息
-        user_info = UserAccess.query.get(session.get('user_id'))
+    debug_data = {
+        'session_email': session.get('email'),
+        'session_role': session.get('role'),
+        'session_user_id': session.get('user_id'),
+        'session_authenticated': session.get('authenticated'),
+        'all_session_keys': list(session.keys())
+    }
     
-    return render_template('debug_info.html', user_info=user_info)
+    # 从数据库获取用户信息
+    if session.get('email'):
+        user = UserAccess.query.filter_by(email=session.get('email')).first()
+        if user:
+            debug_data['db_user_role'] = user.role
+            debug_data['db_user_has_access'] = user.has_access
+            debug_data['db_user_email'] = user.email
+    
+    return jsonify(debug_data)
 
 # 月度电力削减(Curtailment)计算器
 @app.route('/curtailment_calculator')
