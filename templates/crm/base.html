@@ -229,13 +229,30 @@
             <a href="{{ url_for('crm.activities') }}" class="nav-link {% if request.endpoint == 'crm.activities' %}active{% endif %}">
                 <i class="bi bi-journal-text"></i> 活动记录
             </a>
+            
+            <!-- 矿场中介业务 (仅所有者可见) -->
+            {% if session.role == 'owner' %}
+            <div class="mt-4 px-3">
+                <hr class="border-secondary">
+                <p class="text-muted small mb-2">矿场中介业务</p>
+                <a href="{{ url_for('crm.broker_dashboard') }}" class="nav-link {% if 'broker' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-graph-up-arrow"></i> 中介仪表盘
+                </a>
+                <a href="{{ url_for('crm.broker_deals') }}" class="nav-link {% if request.endpoint == 'crm.broker_deals' %}active{% endif %}">
+                    <i class="bi bi-building"></i> 矿场交易
+                </a>
+                <a href="{{ url_for('crm.broker_commissions') }}" class="nav-link {% if request.endpoint == 'crm.broker_commissions' %}active{% endif %}">
+                    <i class="bi bi-cash-coin"></i> 佣金管理
+                </a>
+            </div>
+            {% endif %}
+            
             <div class="mt-4 px-3">
                 <hr class="border-secondary">
                 <p class="text-muted small mb-2">BTC挖矿客户管理</p>
                 <a href="{{ url_for('index') }}" class="nav-link">
                     <i class="bi bi-house-door"></i> 返回首页
                 </a>
-                <!-- 电力管理功能已移除 -->
             </div>
         </div>
     </div>
