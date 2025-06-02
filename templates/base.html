@@ -82,6 +82,50 @@
                                     </a></li>
                                     {% endif %}
                                     
+                                    <!-- CRM System Access -->
+                                    {% if user_has_crm_access() %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header">{% if current_lang == 'en' %}CRM System{% else %}客户关系管理{% endif %}</h6></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('crm.dashboard') }}">
+                                        <i class="bi bi-speedometer2 me-1"></i> 
+                                        {% if current_lang == 'en' %}CRM Dashboard{% else %}CRM仪表盘{% endif %}
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('crm.customers') }}">
+                                        <i class="bi bi-people me-1"></i> 
+                                        {% if current_lang == 'en' %}Customers{% else %}客户管理{% endif %}
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('crm.leads') }}">
+                                        <i class="bi bi-funnel me-1"></i> 
+                                        {% if current_lang == 'en' %}Leads{% else %}商机管理{% endif %}
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('crm.deals') }}">
+                                        <i class="bi bi-handshake me-1"></i> 
+                                        {% if current_lang == 'en' %}Deals{% else %}交易管理{% endif %}
+                                    </a></li>
+                                    {% endif %}
+                                    
+                                    <!-- Mining Broker Business Access -->
+                                    {% if session.role in ['owner', 'admin', 'broker'] %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header">{% if current_lang == 'en' %}Broker Business{% else %}矿场中介业务{% endif %}</h6></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('broker.dashboard') }}">
+                                        <i class="bi bi-graph-up-arrow me-1"></i> 
+                                        {% if current_lang == 'en' %}Broker Dashboard{% else %}中介仪表盘{% endif %}
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('broker.deals') }}">
+                                        <i class="bi bi-building me-1"></i> 
+                                        {% if current_lang == 'en' %}Mining Farm Deals{% else %}矿场交易{% endif %}
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('broker.commissions') }}">
+                                        <i class="bi bi-cash-coin me-1"></i> 
+                                        {% if current_lang == 'en' %}Commission Management{% else %}佣金管理{% endif %}
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('broker.reports') }}">
+                                        <i class="bi bi-bar-chart me-1"></i> 
+                                        {% if current_lang == 'en' %}Business Reports{% else %}业务报告{% endif %}
+                                    </a></li>
+                                    {% endif %}
+                                    
                                     <!-- Display current user role -->
                                     <li><span class="dropdown-item-text">
                                         <i class="bi bi-person-badge me-1"></i> 
