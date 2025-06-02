@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}业务报告 - Business Reports{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h2 class="mb-4">业务报告 / Business Reports</h2>
+
+            <!-- 月度佣金趋势 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">月度佣金趋势 / Monthly Commission Trends</h5>
+                </div>
+                <div class="card-body">
+                    {% if monthly_data %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>月份 / Month</th>
+                                    <th>佣金总额 / Total Commission</th>
+                                    <th>记录数量 / Records Count</th>
+                                    <th>平均佣金 / Average Commission</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for data in monthly_data %}
+                                <tr>
+                                    <td>{{ data.record_month }}</td>
+                                    <td class="fw-bold text-success">${{ "%.2f"|format(data.total_commission) }}</td>
+                                    <td>{{ data.record_count }}</td>
+                                    <td>${{ "%.2f"|format(data.total_commission / data.record_count) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <p>暂无月度数据</p>
+                        <p>No monthly data available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 佣金类型统计 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">佣金类型统计 / Commission Type Statistics</h5>
+                </div>
+                <div class="card-body">
+                    {% if commission_type_data %}
+                    <div class="row">
+                        {% for data in commission_type_data %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-primary">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">
+                                        {% if data.commission_type == 'percentage' %}
+                                            利润抽成 / Profit Share
+                                        {% else %}
+                                            固定费用 / Fixed Fee
+                                        {% endif %}
+                                    </h5>
+                                    <h3 class="text-primary">${{ "%.2f"|format(data.total_amount) }}</h3>
+                                    <p class="card-text">
+                                        {{ data.count }} 笔记录 / {{ data.count }} records<br>
+                                        平均: ${{ "%.2f"|format(data.total_amount / data.count) }} / Average
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <p>暂无佣金类型数据</p>
+                        <p>No commission type data available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 业务概览 -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">业务概览 / Business Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="border p-3 rounded">
+                                <h6 class="text-muted">总佣金收入 / Total Commission Income</h6>
+                                <h4 class="text-success">
+                                    {% set total_income = commission_type_data|sum(attribute='total_amount') if commission_type_data else 0 %}
+                                    ${{ "%.2f"|format(total_income) }}
+                                </h4>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border p-3 rounded">
+                                <h6 class="text-muted">总记录数 / Total Records</h6>
+                                <h4 class="text-info">
+                                    {% set total_records = commission_type_data|sum(attribute='count') if commission_type_data else 0 %}
+                                    {{ total_records }}
+                                </h4>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border p-3 rounded">
+                                <h6 class="text-muted">平均月度佣金 / Average Monthly Commission</h6>
+                                <h4 class="text-primary">
+                                    {% if monthly_data %}
+                                        {% set avg_monthly = (monthly_data|sum(attribute='total_commission')) / (monthly_data|length) %}
+                                        ${{ "%.2f"|format(avg_monthly) }}
+                                    {% else %}
+                                        $0.00
+                                    {% endif %}
+                                </h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 返回按钮 -->
+            <div class="mt-4">
+                <a href="{{ url_for('broker.dashboard') }}" class="btn btn-secondary">
+                    返回仪表盘 / Back to Dashboard
+                </a>
+                <a href="{{ url_for('broker.commissions') }}" class="btn btn-primary">
+                    查看佣金记录 / View Commission Records
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

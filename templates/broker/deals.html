@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}交易管理 - Deal Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>交易管理 / Deal Management</h2>
+                <a href="{{ url_for('crm.new_deal', customer_id=0) }}" class="btn btn-primary">
+                    新建交易 / New Deal
+                </a>
+            </div>
+
+            <!-- 交易列表 -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">交易列表 / Deal List</h5>
+                </div>
+                <div class="card-body">
+                    {% if deals %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>交易标题 / Title</th>
+                                    <th>客户 / Customer</th>
+                                    <th>矿场 / Mining Farm</th>
+                                    <th>交易金额 / Value</th>
+                                    <th>客户投资 / Client Investment</th>
+                                    <th>佣金类型 / Commission Type</th>
+                                    <th>状态 / Status</th>
+                                    <th>创建时间 / Created</th>
+                                    <th>操作 / Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for deal in deals %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('broker.deal_detail', deal_id=deal.id) }}" class="fw-bold">
+                                            {{ deal.title }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if deal.customer %}
+                                            <a href="{{ url_for('crm.customer_detail', customer_id=deal.customer.id) }}">
+                                                {{ deal.customer.company_name or deal.customer.name }}
+                                            </a>
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if deal.mining_farm_name %}
+                                            {{ deal.mining_farm_name }}
+                                            {% if deal.mining_farm_location %}
+                                                <br><small class="text-muted">{{ deal.mining_farm_location }}</small>
+                                            {% endif %}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-success fw-bold">
+                                        ${{ "%.2f"|format(deal.value) if deal.value else "0.00" }}
+                                    </td>
+                                    <td class="text-info">
+                                        ${{ "%.2f"|format(deal.client_investment) if deal.client_investment else "0.00" }}
+                                    </td>
+                                    <td>
+                                        {% if deal.commission_type == 'percentage' %}
+                                            <span class="badge bg-primary">利润抽成 {{ deal.commission_rate }}%</span>
+                                        {% elif deal.commission_type == 'fixed' %}
+                                            <span class="badge bg-secondary">固定费用</span>
+                                        {% else %}
+                                            <span class="badge bg-light text-dark">未设置</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if deal.status == 'COMPLETED' %}bg-success{% elif deal.status == 'SIGNED' %}bg-primary{% elif deal.status == 'NEGOTIATION' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                            {{ deal.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {{ deal.created_at.strftime('%Y-%m-%d') if deal.created_at else 'N/A' }}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('broker.deal_detail', deal_id=deal.id) }}" 
+                                               class="btn btn-outline-primary" title="查看详情 / View Details">
+                                                详情 / Details
+                                            </a>
+                                            <a href="{{ url_for('crm.edit_deal', deal_id=deal.id) }}" 
+                                               class="btn btn-outline-secondary" title="编辑 / Edit">
+                                                编辑 / Edit
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 交易统计汇总 -->
+                    <div class="row mt-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h6>总交易数 / Total Deals</h6>
+                                    <h4>{{ deals|length }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h6>已完成 / Completed</h6>
+                                    <h4>{{ deals|selectattr('status', 'equalto', 'COMPLETED')|list|length }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h6>进行中 / In Progress</h6>
+                                    <h4>{{ deals|selectattr('status', 'in', ['SIGNED', 'NEGOTIATION'])|list|length }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h6>总价值 / Total Value</h6>
+                                    <h4>${{ "%.0f"|format(deals|sum(attribute='value') or 0) }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-5">
+                        <p>暂无交易记录</p>
+                        <p>No deals found</p>
+                        <a href="{{ url_for('crm.new_deal', customer_id=0) }}" class="btn btn-primary">
+                            创建第一个交易 / Create First Deal
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 返回按钮 -->
+            <div class="mt-4">
+                <a href="{{ url_for('broker.dashboard') }}" class="btn btn-secondary">
+                    返回仪表盘 / Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
