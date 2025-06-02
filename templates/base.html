@@ -108,21 +108,17 @@
                                     {% if session.role == 'owner' %}
                                     <li><hr class="dropdown-divider"></li>
                                     <li><h6 class="dropdown-header">{% if current_lang == 'en' %}Broker Business{% else %}矿场中介业务{% endif %}</h6></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('broker.dashboard') }}">
+                                    <li><a class="dropdown-item" href="{{ url_for('crm.broker_dashboard') }}">
                                         <i class="bi bi-graph-up-arrow me-1"></i> 
                                         {% if current_lang == 'en' %}Broker Dashboard{% else %}中介仪表盘{% endif %}
                                     </a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('broker.deals') }}">
+                                    <li><a class="dropdown-item" href="{{ url_for('crm.broker_deals') }}">
                                         <i class="bi bi-building me-1"></i> 
                                         {% if current_lang == 'en' %}Mining Farm Deals{% else %}矿场交易{% endif %}
                                     </a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('broker.commissions') }}">
+                                    <li><a class="dropdown-item" href="{{ url_for('crm.broker_commissions') }}">
                                         <i class="bi bi-cash-coin me-1"></i> 
                                         {% if current_lang == 'en' %}Commission Management{% else %}佣金管理{% endif %}
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('broker.reports') }}">
-                                        <i class="bi bi-bar-chart me-1"></i> 
-                                        {% if current_lang == 'en' %}Business Reports{% else %}业务报告{% endif %}
                                     </a></li>
                                     {% endif %}
                                     

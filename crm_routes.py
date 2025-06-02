@@ -1013,6 +1013,114 @@ def update_customer_notes(customer_id):
         
     return redirect(url_for('crm.customer_detail', customer_id=customer_id))
 
+# 矿场中介业务功能（仅限所有者）
+@crm.route('/broker')
+@crm_access_required
+def broker_dashboard():
+    """矿场中介业务仪表盘"""
+    if session.get('role') != 'owner':
+        flash('只有所有者可以访问矿场中介业务管理', 'danger')
+        return redirect(url_for('crm.dashboard'))
+    
+    # 统计数据
+    total_deals = Deal.query.filter(Deal.commission_type.isnot(None)).count()
+    active_deals = Deal.query.filter(
+        Deal.commission_type.isnot(None),
+        Deal.status.in_(['NEGOTIATION', 'SIGNED'])
+    ).count()
+    
+    # 总佣金收入计算
+    percentage_commission = db.session.query(
+        func.sum(Deal.commission_rate * Deal.client_investment / 100).label('total')
+    ).filter(
+        Deal.commission_type == 'percentage',
+        Deal.status == 'COMPLETED'
+    ).scalar() or 0
+    
+    fixed_fee_income = db.session.query(
+        func.sum(Deal.commission_rate).label('total')
+    ).filter(
+        Deal.commission_type == 'fixed',
+        Deal.status == 'COMPLETED'
+    ).scalar() or 0
+    
+    total_commission = percentage_commission + fixed_fee_income
+    
+    # 最近的中介交易
+    recent_broker_deals = Deal.query.filter(
+        Deal.commission_type.isnot(None)
+    ).order_by(Deal.created_at.desc()).limit(5).all()
+    
+    return render_template('crm/broker_dashboard.html',
+                         total_deals=total_deals,
+                         active_deals=active_deals,
+                         total_commission=total_commission,
+                         recent_deals=recent_broker_deals)
+
+@crm.route('/broker/deals')
+@crm_access_required
+def broker_deals():
+    """矿场中介交易管理"""
+    if session.get('role') != 'owner':
+        flash('只有所有者可以访问矿场中介业务管理', 'danger')
+        return redirect(url_for('crm.dashboard'))
+    
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    
+    # 只显示有佣金信息的交易（中介业务）
+    deals_query = Deal.query.filter(Deal.commission_type.isnot(None))
+    
+    deals_pagination = deals_query.order_by(Deal.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    return render_template('crm/broker_deals.html',
+                         deals=deals_pagination.items,
+                         pagination=deals_pagination)
+
+@crm.route('/broker/commissions')
+@crm_access_required
+def broker_commissions():
+    """佣金收入管理"""
+    if session.get('role') != 'owner':
+        flash('只有所有者可以访问矿场中介业务管理', 'danger')
+        return redirect(url_for('crm.dashboard'))
+    
+
+    
+    # 按月统计佣金收入
+    monthly_commissions = db.session.query(
+        extract('year', Deal.created_at).label('year'),
+        extract('month', Deal.created_at).label('month'),
+        func.sum(
+            case(
+                (Deal.commission_type == 'percentage', Deal.commission_rate * Deal.client_investment / 100),
+                (Deal.commission_type == 'fixed', Deal.commission_rate),
+                else_=0
+            )
+        ).label('total_commission'),
+        func.count(Deal.id).label('deal_count')
+    ).filter(
+        Deal.commission_type.isnot(None),
+        Deal.status == 'COMPLETED'
+    ).group_by(
+        extract('year', Deal.created_at),
+        extract('month', Deal.created_at)
+    ).order_by(
+        extract('year', Deal.created_at).desc(),
+        extract('month', Deal.created_at).desc()
+    ).all()
+    
+    # 所有中介交易
+    broker_deals = Deal.query.filter(
+        Deal.commission_type.isnot(None)
+    ).order_by(Deal.created_at.desc()).all()
+    
+    return render_template('crm/broker_commissions.html',
+                         monthly_commissions=monthly_commissions,
+                         broker_deals=broker_deals)
+
 # 添加到应用程序
 def init_crm_routes(app):
     app.register_blueprint(crm)

@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}矿场中介交易管理{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="h3 mb-0">
+                    <i class="bi bi-building me-2"></i>
+                    {% if current_lang == 'en' %}Mining Farm Deals{% else %}矿场中介交易{% endif %}
+                </h2>
+                <a href="{{ url_for('crm.deals') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i>
+                    {% if current_lang == 'en' %}New Deal{% else %}创建新交易{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body">
+                    {% if deals %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{% if current_lang == 'en' %}Customer{% else %}客户{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Mining Farm{% else %}矿场名称{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Investment{% else %}投资金额{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Commission Type{% else %}佣金类型{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Commission Rate{% else %}佣金率{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Expected Income{% else %}预期收入{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Date{% else %}创建日期{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for deal in deals %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('crm.customer_detail', customer_id=deal.customer_id) }}" 
+                                           class="text-decoration-none">
+                                            {{ deal.customer.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ deal.mining_farm_name or '-' }}</td>
+                                    <td>${{ "{:,.2f}".format(deal.client_investment or 0) }}</td>
+                                    <td>
+                                        {% if deal.commission_type == 'percentage' %}
+                                            <span class="badge bg-primary">{% if current_lang == 'en' %}Monthly %{% else %}月收益%{% endif %}</span>
+                                        {% elif deal.commission_type == 'fixed' %}
+                                            <span class="badge bg-success">{% if current_lang == 'en' %}Fixed Fee{% else %}固定费用{% endif %}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if deal.commission_type == 'percentage' %}
+                                            {{ deal.commission_rate }}%
+                                        {% elif deal.commission_type == 'fixed' %}
+                                            ${{ "{:,.2f}".format(deal.commission_rate) }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if deal.commission_type == 'percentage' and deal.client_investment %}
+                                            ${{ "{:,.2f}".format((deal.commission_rate * deal.client_investment / 100)) }}/{% if current_lang == 'en' %}month{% else %}月{% endif %}
+                                        {% elif deal.commission_type == 'fixed' %}
+                                            ${{ "{:,.2f}".format(deal.commission_rate) }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if deal.status.name == 'DRAFT' %}
+                                            <span class="badge bg-secondary">{% if current_lang == 'en' %}Draft{% else %}草稿{% endif %}</span>
+                                        {% elif deal.status.name == 'NEGOTIATION' %}
+                                            <span class="badge bg-warning">{% if current_lang == 'en' %}Negotiation{% else %}谈判中{% endif %}</span>
+                                        {% elif deal.status.name == 'SIGNED' %}
+                                            <span class="badge bg-info">{% if current_lang == 'en' %}Signed{% else %}已签约{% endif %}</span>
+                                        {% elif deal.status.name == 'COMPLETED' %}
+                                            <span class="badge bg-success">{% if current_lang == 'en' %}Completed{% else %}已完成{% endif %}</span>
+                                        {% elif deal.status.name == 'CANCELLED' %}
+                                            <span class="badge bg-danger">{% if current_lang == 'en' %}Cancelled{% else %}已取消{% endif %}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ deal.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('crm.deal_detail', deal_id=deal.id) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            {% if current_lang == 'en' %}View{% else %}查看{% endif %}
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% if pagination.pages > 1 %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if pagination.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('crm.broker_deals', page=pagination.prev_num) }}">
+                                    {% if current_lang == 'en' %}Previous{% else %}上一页{% endif %}
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for page_num in pagination.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num != pagination.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('crm.broker_deals', page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                    {% endif %}
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">…</span>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if pagination.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('crm.broker_deals', page=pagination.next_num) }}">
+                                    {% if current_lang == 'en' %}Next{% else %}下一页{% endif %}
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-inbox display-4 text-muted"></i>
+                        <h4 class="text-muted mt-3">
+                            {% if current_lang == 'en' %}No broker deals yet{% else %}暂无中介交易记录{% endif %}
+                        </h4>
+                        <p class="text-muted">
+                            {% if current_lang == 'en' %}Create deals with commission information to track your broker business{% else %}创建包含佣金信息的交易以追踪您的中介业务{% endif %}
+                        </p>
+                        <a href="{{ url_for('crm.deals') }}" class="btn btn-primary mt-3">
+                            <i class="bi bi-plus-circle me-1"></i>
+                            {% if current_lang == 'en' %}Create First Deal{% else %}创建第一个交易{% endif %}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
