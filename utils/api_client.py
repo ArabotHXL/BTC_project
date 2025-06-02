@@ -9,13 +9,13 @@ class APIClient:
     
     def __init__(self):
         self.session = requests.Session()
-        self.session.timeout = 10
+        self.timeout = 10
         
     def _make_request(self, url: str, max_retries: int = 3) -> Optional[Dict[Any, Any]]:
         """统一的API请求方法"""
         for attempt in range(max_retries):
             try:
-                response = self.session.get(url)
+                response = self.session.get(url, timeout=self.timeout)
                 if response.status_code == 200:
                     return response.json() if 'application/json' in response.headers.get('content-type', '') else {'value': response.text.strip()}
                 else:

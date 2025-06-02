@@ -62,11 +62,10 @@ def login():
             
             # 记录登录
             try:
-                login_record = LoginRecord(
-                    email=email,
-                    successful=True,
-                    ip_address=get_client_ip()
-                )
+                login_record = LoginRecord()
+                login_record.email = email
+                login_record.successful = True
+                login_record.ip_address = get_client_ip()
                 db.session.add(login_record)
                 db.session.commit()
             except Exception as e:
