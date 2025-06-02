@@ -215,11 +215,51 @@ class Deal(db.Model):
     electricity_cost = db.Column(db.Float, nullable=True)  # 电费价格 (kWh)
     contract_term = db.Column(db.Integer, nullable=True)  # 合同期限(月)
     
+    # 矿场中介业务相关字段
+    commission_type = db.Column(db.String(20), default="percentage", nullable=False)  # 佣金类型: percentage / fixed
+    commission_rate = db.Column(db.Float, nullable=True)  # 抽成比例 (%)
+    commission_amount = db.Column(db.Float, nullable=True)  # 固定佣金金额 (USD)
+    mining_farm_name = db.Column(db.String(200), nullable=True)  # 矿场名称
+    mining_farm_location = db.Column(db.String(200), nullable=True)  # 矿场位置
+    client_investment = db.Column(db.Float, nullable=True)  # 客户投资金额
+    monthly_profit_estimate = db.Column(db.Float, nullable=True)  # 预估月利润
+    
     # 关联
     activities = db.relationship('Activity', backref='deal', lazy=True, cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<Deal {self.title} - {self.status.value} - ${self.value}>"
+
+class CommissionRecord(db.Model):
+    """佣金收入记录"""
+    __tablename__ = 'commission_records'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    deal_id = db.Column(db.Integer, db.ForeignKey('crm_deals.id'), nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey('crm_customers.id'), nullable=False)
+    
+    record_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    record_month = db.Column(db.String(7), nullable=False)  # 格式: 2025-01
+    
+    # 客户挖矿数据
+    client_monthly_profit = db.Column(db.Float, nullable=False)  # 客户月利润
+    client_btc_mined = db.Column(db.Float, nullable=True)  # 客户月产BTC
+    btc_price = db.Column(db.Float, nullable=True)  # 当月BTC价格
+    
+    # 佣金计算
+    commission_type = db.Column(db.String(20), nullable=False)  # percentage / fixed
+    commission_rate = db.Column(db.Float, nullable=True)  # 抽成比例
+    commission_amount = db.Column(db.Float, nullable=False)  # 实际佣金金额
+    
+    # 支付状态
+    paid = db.Column(db.Boolean, default=False, nullable=False)
+    paid_date = db.Column(db.DateTime, nullable=True)
+    
+    notes = db.Column(db.Text, nullable=True)
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
+    
+    def __repr__(self):
+        return f"<CommissionRecord {self.record_month} - ${self.commission_amount}>"
 
 class Activity(db.Model):
     """客户活动记录"""

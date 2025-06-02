@@ -28,6 +28,7 @@ from mining_calculator import (
     calculate_monthly_curtailment_impact
 )
 from crm_routes import init_crm_routes
+from mining_broker_routes import init_broker_routes
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -1448,6 +1449,9 @@ def view_customer_crm(user_id):
 
 # 初始化CRM系统
 init_crm_routes(app)
+
+# 初始化矿场中介业务路由
+init_broker_routes(app)
 
 # 添加调试信息页面
 @app.route('/debug_info')
