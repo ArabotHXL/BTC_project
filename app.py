@@ -1258,64 +1258,9 @@ def get_profit_chart_data():
             'error': f'Server error: {str(e)}'
         }), 500
 
-@app.route('/api-tester')
-@login_required
-def api_tester():
-    """电力管理系统API测试工具页面"""
-    # 只允许拥有者和管理员角色访问
-    if not has_role(['owner', 'admin']):
-        if g.language == 'en':
-            flash('Access denied. Owner or admin privileges required.', 'danger')
-        else:
-            flash('您没有权限访问此页面，需要拥有者或管理员权限', 'danger')
-        return redirect(url_for('index'))
-    
-    return render_template('api_tester.html')
+# API测试工具已移除以简化代码
 
-@app.route('/power-management')
-@login_required
-def power_management_dashboard():
-    """智能电力管理系统仪表盘"""
-    if not has_role(['owner', 'admin']):
-        flash('您没有访问此页面的权限。', 'danger')
-        return redirect(url_for('unauthorized'))
-    
-    # 导入电力管理系统相关组件
-    try:
-        logging.info("正在初始化电力管理系统...")
-        
-        # 确保数据库表已创建
-        with app.app_context():
-            from power_management_models import MinerStatus, MinerOperation, PowerReductionPlan, RotationSchedule, PerformanceSnapshot
-            db.create_all()
-            logging.info("电力管理系统数据库表已创建/验证")
-        
-        # 导入电力管理系统
-        from db_power_manager import DBPowerManager
-        from power_management_db import PowerManagementDB
-        
-        # 初始化电力管理系统
-        power_manager = DBPowerManager()
-        
-        # 获取矿机数量
-        all_miners = PowerManagementDB.get_all_miners()
-        miner_count = len(all_miners)
-        logging.info(f"当前系统中有 {miner_count} 台矿机")
-        
-        # 如果没有矿机数据，初始化100台测试矿机
-        if miner_count == 0:
-            logging.info("正在初始化测试矿机数据...")
-            miner_count = power_manager.initialize_test_data(count=100)
-            if miner_count > 0:
-                flash(f'已成功初始化{miner_count}台测试矿机数据。', 'success')
-                logging.info(f'已初始化{miner_count}台测试矿机数据')
-        
-    except Exception as e:
-        logging.error(f"初始化电力管理系统数据出错: {str(e)}")
-        logging.error(traceback.format_exc())
-        flash(f'初始化数据时出错: {str(e)}', 'danger')
-    
-    return render_template('db_power_dashboard.html')
+# 电力管理系统功能已移除以简化代码
 
 # 矿场客户管理
 @app.route('/mine/customers')
