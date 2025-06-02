@@ -1164,7 +1164,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         // 添加到图表底部
                         chartContainer.insertAdjacentHTML('beforeend', legendHTML);
                         
-                        new Chart(canvas, {
+                        // 安全检查canvas元素
+                        if (canvas && typeof canvas.getContext === 'function') {
+                            new Chart(canvas, {
                             type: 'bubble',
                             data: {
                                 datasets: [{
@@ -1272,6 +1274,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }
                             }
                         });
+                        } else {
+                            console.error('Canvas element or getContext method not available for heatmap');
+                            chartContainer.innerHTML = '<div class="alert alert-warning text-center">图表功能暂时不可用。(Chart feature temporarily unavailable.)</div>';
+                        }
                     } else {
                         chartContainer.innerHTML = '<div class="alert alert-warning text-center">无法生成热力图数据。(Could not generate heatmap data.)</div>';
                     }
