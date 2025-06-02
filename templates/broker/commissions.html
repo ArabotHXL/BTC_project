@@ -120,14 +120,21 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        {% if not record.paid %}
-                                            <form method="POST" action="{{ url_for('broker.mark_commission_paid', record_id=record.id) }}" style="display: inline;">
-                                                <button type="submit" class="btn btn-sm btn-success" 
-                                                        onclick="return confirm('确认标记为已收款？ / Mark as paid?')">
-                                                    标记已收款 / Mark Paid
-                                                </button>
-                                            </form>
-                                        {% endif %}
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('broker.edit_commission', record_id=record.id) }}" 
+                                               class="btn btn-sm btn-outline-primary" title="编辑记录 / Edit Record">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                            {% if not record.paid %}
+                                                <form method="POST" action="{{ url_for('broker.mark_commission_paid', record_id=record.id) }}" style="display: inline;">
+                                                    <button type="submit" class="btn btn-sm btn-success" 
+                                                            onclick="return confirm('确认标记为已收款？ / Mark as paid?')"
+                                                            title="标记已收款 / Mark Paid">
+                                                        <i class="bi bi-check-circle"></i>
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                        </div>
                                     </td>
                                 </tr>
                                 {% endfor %}

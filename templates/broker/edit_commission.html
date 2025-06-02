@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}编辑佣金记录 - Edit Commission Record{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="h3 mb-0">
+                    <i class="bi bi-pencil-square me-2"></i>
+                    编辑佣金记录 / Edit Commission Record
+                </h2>
+                <a href="{{ url_for('broker.commissions') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>返回佣金列表
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑表单 -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        佣金记录信息 / Commission Record Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <!-- 交易信息 (只读) -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted border-bottom pb-2 mb-3">交易信息 / Deal Information</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">客户 / Customer:</label>
+                                    <div class="form-control-plaintext bg-light border rounded p-2">
+                                        {{ record.customer.name if record.customer else '未知客户' }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">记录月份 / Record Month:</label>
+                                    <div class="form-control-plaintext bg-light border rounded p-2">
+                                        {{ record.record_month }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 可编辑字段 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted border-bottom pb-2 mb-3">
+                                    可编辑信息 / Editable Information
+                                    <small class="text-warning ms-2">(所有修改都会被记录)</small>
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="client_monthly_profit" class="form-label">
+                                        客户月度净利润 / Monthly Net Profit ($) *
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" step="0.01" class="form-control" 
+                                               id="client_monthly_profit" name="client_monthly_profit" 
+                                               value="{{ record.client_monthly_profit }}" required>
+                                    </div>
+                                    <div class="form-text">
+                                        当前10%佣金: ${{ "{:,.2f}".format(record.client_monthly_profit * 0.1) }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="client_btc_mined" class="form-label">
+                                        客户产出BTC / BTC Mined (可选)
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.00000001" class="form-control" 
+                                               id="client_btc_mined" name="client_btc_mined" 
+                                               value="{{ record.client_btc_mined if record.client_btc_mined else '' }}"
+                                               placeholder="0.00000000">
+                                        <span class="input-group-text">BTC</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="btc_price" class="form-label">
+                                        BTC价格 / BTC Price ($) (可选)
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" step="0.01" class="form-control" 
+                                               id="btc_price" name="btc_price" 
+                                               value="{{ record.btc_price if record.btc_price else '' }}"
+                                               placeholder="0.00">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">当前佣金计算 / Current Commission:</label>
+                                    <div class="form-control-plaintext bg-success text-white border rounded p-2">
+                                        <strong>${{ "{:,.2f}".format(record.commission_amount) }}</strong>
+                                        ({{ record.commission_rate }}% of profit)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="notes" class="form-label">
+                                        备注 / Notes
+                                    </label>
+                                    <textarea class="form-control" id="notes" name="notes" rows="3">{{ record.notes if record.notes else '' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 修改原因 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="change_reason" class="form-label">
+                                        <i class="bi bi-chat-left-text me-1"></i>
+                                        修改原因 / Change Reason *
+                                    </label>
+                                    <input type="text" class="form-control" id="change_reason" 
+                                           name="change_reason" required
+                                           placeholder="请说明此次修改的原因，例如：客户提供了更准确的数据">
+                                    <div class="form-text text-info">
+                                        此信息将被记录在编辑历史中，便于后续审计
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 提交按钮 -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('broker.commissions') }}" class="btn btn-outline-secondary me-md-2">
+                                取消 / Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-2"></i>
+                                保存修改 / Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 编辑历史 -->
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>
+                        编辑历史 / Edit History
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% set edit_history = record.__class__.query.join(models.CommissionEditHistory).filter(models.CommissionEditHistory.commission_record_id == record.id).order_by(models.CommissionEditHistory.edited_at.desc()).all() %}
+                    
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <h6 class="timeline-title">记录创建</h6>
+                                <p class="timeline-text text-muted">
+                                    {{ record.created_at.strftime('%Y-%m-%d %H:%M') if record.created_at else '未知时间' }}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- 这里将来会显示编辑历史记录 -->
+                        <div class="text-center text-muted py-3">
+                            <i class="bi bi-info-circle"></i>
+                            <small>编辑历史功能将在保存后显示</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 20px;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -25px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.timeline-content {
+    margin-left: 10px;
+}
+
+.timeline-title {
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+.timeline-text {
+    font-size: 0.8rem;
+    margin-bottom: 0;
+}
+</style>
+{% endblock %}

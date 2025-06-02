@@ -142,12 +142,12 @@
                         </label>
                         <div class="input-group">
                             <input type="number" class="form-control" id="commission_rate" name="commission_rate" 
-                                   min="0" step="0.01" value="{{ deal.commission_rate if deal else '' }}">
+                                   min="0" step="0.01" value="{{ deal.commission_rate if deal else '10' }}">
                             <span class="input-group-text" id="commission_unit">%</span>
                         </div>
                         <div class="form-text" id="commission_help">
                             <span id="commission_percentage_help" style="display: none;">
-                                例如：输入5表示每月收取客户利润的5%
+                                推荐：10%为标准佣金率，即每月收取客户净收益的10%
                             </span>
                             <span id="commission_fixed_help" style="display: none;">
                                 例如：输入1000表示一次性收取$1000服务费

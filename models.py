@@ -261,6 +261,27 @@ class CommissionRecord(db.Model):
     def __repr__(self):
         return f"<CommissionRecord {self.record_month} - ${self.commission_amount}>"
 
+class CommissionEditHistory(db.Model):
+    """佣金记录编辑历史"""
+    __tablename__ = 'commission_edit_history'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    commission_record_id = db.Column(db.Integer, db.ForeignKey('commission_records.id'), nullable=False)
+    
+    # 编辑信息
+    edited_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    edited_by_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
+    edited_by_name = db.Column(db.String(100), nullable=True)
+    
+    # 编辑的字段和值
+    field_name = db.Column(db.String(50), nullable=False)  # 被修改的字段名
+    old_value = db.Column(db.Text, nullable=True)  # 原值
+    new_value = db.Column(db.Text, nullable=True)  # 新值
+    change_reason = db.Column(db.String(200), nullable=True)  # 修改原因
+    
+    def __repr__(self):
+        return f"<EditHistory {self.field_name}: {self.old_value} -> {self.new_value}>"
+
 class Activity(db.Model):
     """客户活动记录"""
     __tablename__ = 'crm_activities'

@@ -203,11 +203,86 @@ def add_commission():
     
     return render_template('broker/add_commission.html', deals=deals)
 
+@broker.route('/commissions/<int:record_id>/edit', methods=['GET', 'POST'])
+@broker_access_required
+def edit_commission(record_id):
+    """编辑佣金记录"""
+    from models import CommissionEditHistory
+    record = CommissionRecord.query.get_or_404(record_id)
+    
+    if request.method == 'POST':
+        # 记录编辑历史的函数
+        def record_change(field_name, old_value, new_value, reason=None):
+            if str(old_value) != str(new_value):
+                history = CommissionEditHistory(
+                    commission_record_id=record_id,
+                    edited_by_id=session.get('user_id'),
+                    edited_by_name=session.get('user_email', '未知用户'),
+                    field_name=field_name,
+                    old_value=str(old_value) if old_value is not None else None,
+                    new_value=str(new_value) if new_value is not None else None,
+                    change_reason=reason
+                )
+                db.session.add(history)
+        
+        # 获取修改原因
+        change_reason = request.form.get('change_reason', '')
+        
+        # 记录所有字段变更
+        old_profit = record.client_monthly_profit
+        new_profit = float(request.form.get('client_monthly_profit', 0))
+        record_change('client_monthly_profit', old_profit, new_profit, change_reason)
+        
+        old_btc = record.client_btc_mined
+        new_btc = float(request.form.get('client_btc_mined', 0)) if request.form.get('client_btc_mined') else 0
+        record_change('client_btc_mined', old_btc, new_btc, change_reason)
+        
+        old_price = record.btc_price
+        new_price = float(request.form.get('btc_price', 0)) if request.form.get('btc_price') else 0
+        record_change('btc_price', old_price, new_price, change_reason)
+        
+        old_notes = record.notes
+        new_notes = request.form.get('notes', '')
+        record_change('notes', old_notes, new_notes, change_reason)
+        
+        # 更新记录
+        record.client_monthly_profit = new_profit
+        record.client_btc_mined = new_btc if new_btc > 0 else None
+        record.btc_price = new_price if new_price > 0 else None
+        record.notes = new_notes
+        
+        # 重新计算佣金
+        deal = Deal.query.get(record.deal_id)
+        if deal and deal.commission_type == 'percentage':
+            old_commission = record.commission_amount
+            new_commission = new_profit * (deal.commission_rate / 100)
+            record_change('commission_amount', old_commission, new_commission, change_reason)
+            record.commission_amount = new_commission
+        
+        db.session.commit()
+        flash('佣金记录已更新，所有变更已记录', 'success')
+        return redirect(url_for('broker.commissions'))
+    
+    return render_template('broker/edit_commission.html', record=record)
+
 @broker.route('/commissions/<int:record_id>/mark-paid', methods=['POST'])
 @broker_access_required
 def mark_commission_paid(record_id):
     """标记佣金为已收款"""
+    from models import CommissionEditHistory
     commission_record = CommissionRecord.query.get_or_404(record_id)
+    
+    # 记录支付状态变更
+    history = CommissionEditHistory(
+        commission_record_id=record_id,
+        edited_by_id=session.get('user_id'),
+        edited_by_name=session.get('user_email', '未知用户'),
+        field_name='paid_status',
+        old_value='未收款',
+        new_value='已收款',
+        change_reason='标记为已收款'
+    )
+    db.session.add(history)
     
     commission_record.paid = True
     commission_record.paid_date = datetime.utcnow()
