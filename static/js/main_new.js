@@ -1380,6 +1380,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 创建画布元素
             var canvasEl = document.createElement('canvas');
+            canvasEl.width = 400;
+            canvasEl.height = 300;
             chartArea.appendChild(canvasEl);
             
             // 分离月度和累积ROI数据
@@ -1400,8 +1402,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
             
-            // 创建图表
-            var ctx = canvasEl.getContext('2d');
+            // 安全检查并创建图表
+            if (canvasEl && typeof canvasEl.getContext === 'function') {
+                var ctx = canvasEl.getContext('2d');
             var chart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -1561,6 +1564,14 @@ document.addEventListener('DOMContentLoaded', function() {
         container.appendChild(description);
         
         return chart;
+            } else {
+                console.error('Canvas element or getContext method not available');
+                var container = document.getElementById(elementId);
+                if (container) {
+                    container.innerHTML = '<div class="alert alert-warning text-center">图表功能暂时不可用。(Chart feature temporarily unavailable.)</div>';
+                }
+                return null;
+            }
         } catch (error) {
             console.error('生成ROI图表时出错:', error);
             var container = document.getElementById(elementId);
