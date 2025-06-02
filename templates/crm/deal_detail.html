@@ -194,6 +194,7 @@
                     </div>
                     {% endif %}
                 </div>
+                {% endif %}
                 
                 <!-- 佣金状态提示 -->
                 {% if deal.status.name == 'COMPLETED' and deal.commission_type %}
@@ -206,7 +207,6 @@
                     <i class="bi bi-clock me-2"></i>
                     <strong>佣金待收取</strong> - 等待交易完成后即可收取佣金
                 </div>
-                {% endif %}
                 {% endif %}
                 
                 {% if deal.description %}
@@ -268,6 +268,7 @@
                             </button>
                         </div>
                     {% endif %}
+                {% endif %}
                 </div>
             </div>
         </div>
