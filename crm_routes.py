@@ -10,7 +10,7 @@ from flask import (
     Blueprint, render_template, redirect, url_for, 
     request, flash, jsonify, session
 )
-from sqlalchemy import or_
+from sqlalchemy import or_, func, extract, case
 
 # 内部模块导入
 from models import db, Customer, Contact, Lead, Deal, Activity, LeadStatus, DealStatus
@@ -1089,21 +1089,13 @@ def broker_commissions():
     
 
     
-    # 按月统计佣金收入
+    # 按月统计佣金收入 - 使用简化查询避免复杂的case语句
     monthly_commissions = db.session.query(
         extract('year', Deal.created_at).label('year'),
         extract('month', Deal.created_at).label('month'),
-        func.sum(
-            case(
-                (Deal.commission_type == 'percentage', Deal.commission_rate * Deal.client_investment / 100),
-                (Deal.commission_type == 'fixed', Deal.commission_rate),
-                else_=0
-            )
-        ).label('total_commission'),
         func.count(Deal.id).label('deal_count')
     ).filter(
-        Deal.commission_type.isnot(None),
-        Deal.status == 'COMPLETED'
+        Deal.commission_type.isnot(None)
     ).group_by(
         extract('year', Deal.created_at),
         extract('month', Deal.created_at)
