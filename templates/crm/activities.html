@@ -191,8 +191,8 @@
         
         // Count activities per day
         {% for activity in activities %}
-        let activityDate = '{{ activity.created_at.strftime("%Y-%m-%d") }}';
-        let dateIndex = dates.indexOf(activityDate);
+        const currentActivityDate = '{{ activity.created_at.strftime("%Y-%m-%d") }}';
+        let dateIndex = dates.indexOf(currentActivityDate);
         if (dateIndex !== -1) {
             activityCounts[dateIndex]++;
         }
