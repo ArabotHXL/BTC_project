@@ -93,7 +93,72 @@
                         <input type="number" class="form-control" id="contract_term" name="contract_term" min="1" step="1" 
                                value="{{ deal.contract_term if deal and deal.contract_term else '' }}">
                     </div>
+                </div>
+            </div>
+            
+            <!-- 中介业务专用字段 -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h6 class="mb-3 text-muted">
+                        <i class="bi bi-building me-2"></i>中介业务信息
+                        <small class="text-info">(仅所有者可见，用于追踪佣金收入)</small>
+                    </h6>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="mining_farm_name" class="form-label">矿场名称</label>
+                        <input type="text" class="form-control" id="mining_farm_name" name="mining_farm_name" 
+                               value="{{ deal.mining_farm_name if deal else '' }}" 
+                               placeholder="例如：德克萨斯矿场A">
+                    </div>
                     
+                    <div class="mb-3">
+                        <label for="client_investment" class="form-label">客户投资金额 ($)</label>
+                        <input type="number" class="form-control" id="client_investment" name="client_investment" 
+                               min="0" step="0.01" value="{{ deal.client_investment if deal else '' }}"
+                               placeholder="客户实际投资的金额">
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="commission_type" class="form-label">佣金类型</label>
+                        <select class="form-select" id="commission_type" name="commission_type" onchange="toggleCommissionFields()">
+                            <option value="">选择佣金类型</option>
+                            <option value="percentage" {% if deal and deal.commission_type == 'percentage' %}selected{% endif %}>
+                                月收益百分比
+                            </option>
+                            <option value="fixed" {% if deal and deal.commission_type == 'fixed' %}selected{% endif %}>
+                                固定服务费
+                            </option>
+                        </select>
+                        <div class="form-text">选择您的收费模式</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="commission_rate" class="form-label">
+                            <span id="commission_rate_label">佣金率</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="commission_rate" name="commission_rate" 
+                                   min="0" step="0.01" value="{{ deal.commission_rate if deal else '' }}">
+                            <span class="input-group-text" id="commission_unit">%</span>
+                        </div>
+                        <div class="form-text" id="commission_help">
+                            <span id="commission_percentage_help" style="display: none;">
+                                例如：输入5表示每月收取客户利润的5%
+                            </span>
+                            <span id="commission_fixed_help" style="display: none;">
+                                例如：输入1000表示一次性收取$1000服务费
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-12">
                     <div class="mb-3">
                         <label for="description" class="form-label">交易描述</label>
                         <textarea class="form-control" id="description" name="description" rows="5">{{ deal.description if deal else '' }}</textarea>
@@ -112,6 +177,83 @@
 
 {% block extra_js %}
 <script>
+    // 佣金类型切换功能
+    function toggleCommissionFields() {
+        const commissionType = document.getElementById('commission_type').value;
+        const commissionUnit = document.getElementById('commission_unit');
+        const commissionRateLabel = document.getElementById('commission_rate_label');
+        const percentageHelp = document.getElementById('commission_percentage_help');
+        const fixedHelp = document.getElementById('commission_fixed_help');
+        
+        if (commissionType === 'percentage') {
+            commissionUnit.textContent = '%';
+            commissionRateLabel.textContent = '月收益百分比';
+            percentageHelp.style.display = 'block';
+            fixedHelp.style.display = 'none';
+        } else if (commissionType === 'fixed') {
+            commissionUnit.textContent = '$';
+            commissionRateLabel.textContent = '固定服务费';
+            percentageHelp.style.display = 'none';
+            fixedHelp.style.display = 'block';
+        } else {
+            commissionUnit.textContent = '%';
+            commissionRateLabel.textContent = '佣金率';
+            percentageHelp.style.display = 'none';
+            fixedHelp.style.display = 'none';
+        }
+    }
+    
+    // 页面加载时初始化佣金字段
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleCommissionFields();
+        
+        // 计算预期收入
+        const clientInvestmentInput = document.getElementById('client_investment');
+        const commissionRateInput = document.getElementById('commission_rate');
+        const commissionTypeSelect = document.getElementById('commission_type');
+        
+        function updateCommissionPreview() {
+            const investment = parseFloat(clientInvestmentInput.value) || 0;
+            const rate = parseFloat(commissionRateInput.value) || 0;
+            const type = commissionTypeSelect.value;
+            
+            let preview = '';
+            if (type === 'percentage' && investment > 0 && rate > 0) {
+                const monthlyCommission = (investment * rate / 100);
+                preview = `预期月收入: $${monthlyCommission.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            } else if (type === 'fixed' && rate > 0) {
+                preview = `一次性收入: $${rate.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            }
+            
+            // 显示预期收入
+            let previewElement = document.getElementById('commission_preview');
+            if (!previewElement) {
+                previewElement = document.createElement('div');
+                previewElement.id = 'commission_preview';
+                previewElement.className = 'alert alert-info mt-2';
+                document.getElementById('commission_help').appendChild(previewElement);
+            }
+            
+            if (preview) {
+                previewElement.innerHTML = `<i class="bi bi-calculator me-2"></i>${preview}`;
+                previewElement.style.display = 'block';
+            } else {
+                previewElement.style.display = 'none';
+            }
+        }
+        
+        // 绑定事件监听器
+        [clientInvestmentInput, commissionRateInput, commissionTypeSelect].forEach(element => {
+            if (element) {
+                element.addEventListener('input', updateCommissionPreview);
+                element.addEventListener('change', updateCommissionPreview);
+            }
+        });
+        
+        // 初始更新
+        updateCommissionPreview();
+    });
+
     // 表单验证
     (function() {
         'use strict';

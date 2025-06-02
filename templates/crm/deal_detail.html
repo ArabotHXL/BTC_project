@@ -120,6 +120,95 @@
                     </div>
                 </div>
                 
+                <!-- 中介业务信息 (仅所有者可见) -->
+                {% if session.role == 'owner' and (deal.commission_type or deal.mining_farm_name or deal.client_investment) %}
+                <hr class="my-4">
+                <h6 class="text-muted mb-3">
+                    <i class="bi bi-building me-2"></i>中介业务信息
+                    <small class="text-info">(仅所有者可见)</small>
+                </h6>
+                
+                <div class="row">
+                    {% if deal.mining_farm_name %}
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <h6 class="text-muted">矿场名称:</h6>
+                            <div class="fw-bold">{{ deal.mining_farm_name }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if deal.client_investment %}
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <h6 class="text-muted">客户投资金额:</h6>
+                            <div class="fw-bold text-success">${{ "{:,.2f}".format(deal.client_investment) }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if deal.commission_type %}
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <h6 class="text-muted">佣金类型:</h6>
+                            <div>
+                                {% if deal.commission_type == 'percentage' %}
+                                    <span class="badge bg-primary">月收益百分比</span>
+                                {% elif deal.commission_type == 'fixed' %}
+                                    <span class="badge bg-success">固定服务费</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    {% if deal.commission_rate %}
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <h6 class="text-muted">佣金率:</h6>
+                            <div class="fw-bold">
+                                {% if deal.commission_type == 'percentage' %}
+                                    {{ deal.commission_rate }}%
+                                {% elif deal.commission_type == 'fixed' %}
+                                    ${{ "{:,.2f}".format(deal.commission_rate) }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- 预期佣金收入计算 -->
+                    {% if deal.commission_type and deal.commission_rate %}
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <h6 class="text-muted">预期佣金收入:</h6>
+                            <div class="fw-bold text-warning">
+                                {% if deal.commission_type == 'percentage' and deal.client_investment %}
+                                    ${{ "{:,.2f}".format((deal.commission_rate * deal.client_investment / 100)) }}/月
+                                {% elif deal.commission_type == 'fixed' %}
+                                    ${{ "{:,.2f}".format(deal.commission_rate) }} (一次性)
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- 佣金状态提示 -->
+                {% if deal.status.name == 'COMPLETED' and deal.commission_type %}
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle me-2"></i>
+                    <strong>佣金已可收取</strong> - 此交易已完成，可以向客户收取佣金
+                </div>
+                {% elif deal.status.name in ['SIGNED', 'NEGOTIATION'] and deal.commission_type %}
+                <div class="alert alert-info">
+                    <i class="bi bi-clock me-2"></i>
+                    <strong>佣金待收取</strong> - 等待交易完成后即可收取佣金
+                </div>
+                {% endif %}
+                {% endif %}
+                
                 {% if deal.description %}
                 <div class="mb-3">
                     <h6 class="text-muted">详细描述:</h6>
