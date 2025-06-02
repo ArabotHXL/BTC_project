@@ -15,8 +15,8 @@ def broker_access_required(view_function):
     """验证用户是否有矿场中介业务访问权限"""
     @login_required
     def wrapped_view(*args, **kwargs):
-        if session.get('role') not in ['owner', 'admin', 'mining_site', 'broker', 'manager']:
-            flash('您没有权限访问矿场中介业务管理', 'danger')
+        if session.get('role') != 'owner':
+            flash('只有所有者可以访问矿场中介业务管理', 'danger')
             return redirect(url_for('index'))
         return view_function(*args, **kwargs)
     wrapped_view.__name__ = view_function.__name__
