@@ -928,7 +928,10 @@ def edit_deal(deal_id):
             deal.title = new_title
         
         old_value = deal.value
-        new_value = float(request.form.get('value', 0))
+        try:
+            new_value = float(request.form.get('value', 0) or 0)
+        except (ValueError, TypeError):
+            new_value = 0
         if old_value != new_value:
             changes.append(f"交易金额: ${old_value:,.2f} → ${new_value:,.2f}")
             deal.value = new_value
@@ -951,7 +954,10 @@ def edit_deal(deal_id):
             deal.mining_farm_name = new_mining_farm
         
         old_client_investment = deal.client_investment or 0
-        new_client_investment = float(request.form.get('client_investment', 0))
+        try:
+            new_client_investment = float(request.form.get('client_investment', 0) or 0)
+        except (ValueError, TypeError):
+            new_client_investment = 0
         if old_client_investment != new_client_investment:
             changes.append(f"客户投资: ${old_client_investment:,.2f} → ${new_client_investment:,.2f}")
             deal.client_investment = new_client_investment
@@ -963,7 +969,10 @@ def edit_deal(deal_id):
             deal.commission_type = new_commission_type
         
         old_commission_rate = deal.commission_rate or 0
-        new_commission_rate = float(request.form.get('commission_rate', 0))
+        try:
+            new_commission_rate = float(request.form.get('commission_rate', 0) or 0)
+        except (ValueError, TypeError):
+            new_commission_rate = 0
         if old_commission_rate != new_commission_rate:
             changes.append(f"佣金率: {old_commission_rate}% → {new_commission_rate}%")
             deal.commission_rate = new_commission_rate
