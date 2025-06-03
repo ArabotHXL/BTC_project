@@ -166,9 +166,31 @@
                 </div>
             </div>
             
+            {% if is_edit %}
+            <!-- 编辑时需要填写修改原因 -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>编辑提醒:</strong> 为了保证数据追踪，请说明本次修改的原因
+                    </div>
+                    <div class="mb-3">
+                        <label for="change_reason" class="form-label">
+                            <i class="bi bi-chat-left-text me-1"></i>
+                            修改原因 <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="change_reason" 
+                               name="change_reason" required
+                               placeholder="请说明此次修改的原因，例如：客户要求调整投资金额">
+                        <div class="form-text">此信息将被记录在活动历史中</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
             <div class="d-flex justify-content-between">
                 <a href="{{ url_for('crm.customer_detail', customer_id=customer.id) }}" class="btn btn-secondary">取消</a>
-                <button type="submit" class="btn btn-primary">{{ "保存交易" if deal else "创建交易" }}</button>
+                <button type="submit" class="btn btn-primary">{{ "保存修改" if is_edit else "创建交易" }}</button>
             </div>
         </form>
     </div>

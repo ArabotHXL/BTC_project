@@ -901,6 +901,113 @@ def new_deal(customer_id):
         all_statuses=DealStatus
     )
 
+@crm.route('/deals/<int:deal_id>/edit', methods=['GET', 'POST'])
+@crm_access_required
+def edit_deal(deal_id):
+    """编辑交易"""
+    deal = Deal.query.get_or_404(deal_id)
+    customer = deal.customer
+    
+    # 验证权限
+    user_id = session.get('user_id')
+    is_admin = session.get('role') in ['owner', 'admin']
+    
+    if not is_admin and deal.created_by_id != user_id:
+        flash('您没有权限编辑此交易', 'danger')
+        return redirect(url_for('crm.deals'))
+    
+    if request.method == 'POST':
+        # 记录变更历史
+        changes = []
+        
+        # 检查各字段的变更
+        old_title = deal.title
+        new_title = request.form.get('title', '').strip()
+        if old_title != new_title:
+            changes.append(f"标题: '{old_title}' → '{new_title}'")
+            deal.title = new_title
+        
+        old_value = deal.value
+        new_value = float(request.form.get('value', 0))
+        if old_value != new_value:
+            changes.append(f"交易金额: ${old_value:,.2f} → ${new_value:,.2f}")
+            deal.value = new_value
+        
+        old_status = deal.status.value if deal.status else ''
+        new_status_name = request.form.get('status')
+        if new_status_name:
+            new_status = DealStatus[new_status_name]
+            if deal.status != new_status:
+                changes.append(f"状态: '{old_status}' → '{new_status.value}'")
+                deal.status = new_status
+                if new_status == DealStatus.COMPLETED:
+                    deal.closed_date = datetime.utcnow()
+        
+        # 中介业务相关字段
+        old_mining_farm = deal.mining_farm_name or ''
+        new_mining_farm = request.form.get('mining_farm_name', '').strip()
+        if old_mining_farm != new_mining_farm:
+            changes.append(f"矿场名称: '{old_mining_farm}' → '{new_mining_farm}'")
+            deal.mining_farm_name = new_mining_farm
+        
+        old_client_investment = deal.client_investment or 0
+        new_client_investment = float(request.form.get('client_investment', 0))
+        if old_client_investment != new_client_investment:
+            changes.append(f"客户投资: ${old_client_investment:,.2f} → ${new_client_investment:,.2f}")
+            deal.client_investment = new_client_investment
+        
+        old_commission_type = deal.commission_type or ''
+        new_commission_type = request.form.get('commission_type', '')
+        if old_commission_type != new_commission_type:
+            changes.append(f"佣金类型: '{old_commission_type}' → '{new_commission_type}'")
+            deal.commission_type = new_commission_type
+        
+        old_commission_rate = deal.commission_rate or 0
+        new_commission_rate = float(request.form.get('commission_rate', 0))
+        if old_commission_rate != new_commission_rate:
+            changes.append(f"佣金率: {old_commission_rate}% → {new_commission_rate}%")
+            deal.commission_rate = new_commission_rate
+        
+        old_description = deal.description or ''
+        new_description = request.form.get('description', '').strip()
+        if old_description != new_description:
+            changes.append("描述已更新")
+            deal.description = new_description
+        
+        db.session.commit()
+        
+        # 记录编辑活动
+        if changes:
+            change_reason = request.form.get('change_reason', '').strip()
+            activity_details = f"修改原因: {change_reason}\n\n变更内容:\n" + "\n".join(changes)
+            
+            activity = Activity(
+                customer_id=customer.id,
+                deal_id=deal.id,
+                type="交易编辑",
+                summary=f"编辑了交易: {deal.title}",
+                details=activity_details,
+                created_by_id=user_id,
+                created_by=session.get('user_email', '未知用户')
+            )
+            db.session.add(activity)
+            db.session.commit()
+        
+        flash('交易信息已更新', 'success')
+        return redirect(url_for('crm.deal_detail', deal_id=deal.id))
+    
+    # GET请求 - 显示编辑表单
+    leads = Lead.query.filter_by(customer_id=customer.id).all()
+    
+    return render_template(
+        'crm/deal_form.html',
+        customer=customer,
+        leads=leads, 
+        deal=deal,
+        all_statuses=DealStatus,
+        is_edit=True
+    )
+
 # 活动记录
 @crm.route('/activities')
 @crm_access_required
