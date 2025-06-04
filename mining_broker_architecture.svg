@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; fill: #2c3e50; }
+      .subtitle { font-family: Arial, sans-serif; font-size: 16px; fill: #34495e; }
+      .module-title { font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; fill: #2980b9; }
+      .text { font-family: Arial, sans-serif; font-size: 12px; fill: #2c3e50; }
+      .small-text { font-family: Arial, sans-serif; font-size: 10px; fill: #7f8c8d; }
+      .arrow { stroke: #34495e; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .connection { stroke: #3498db; stroke-width: 1.5; stroke-dasharray: 5,5; fill: none; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#34495e" />
+    </marker>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="800" fill="#ecf0f1"/>
+  
+  <!-- Title -->
+  <text x="600" y="30" text-anchor="middle" class="title">Bitcoin Mining Broker Business Architecture</text>
+  <text x="600" y="50" text-anchor="middle" class="subtitle">矿场中介业务系统架构图</text>
+  
+  <!-- User Layer -->
+  <rect x="50" y="80" width="1100" height="60" fill="#3498db" opacity="0.1" stroke="#3498db" stroke-width="2"/>
+  <text x="70" y="100" class="module-title">User Layer / 用户层</text>
+  <rect x="80" y="105" width="120" height="25" fill="#2980b9" rx="5"/>
+  <text x="140" y="122" text-anchor="middle" class="text" fill="white">Owner/Admin</text>
+  <rect x="220" y="105" width="120" height="25" fill="#27ae60" rx="5"/>
+  <text x="280" y="122" text-anchor="middle" class="text" fill="white">Mining Farm</text>
+  <rect x="360" y="105" width="120" height="25" fill="#e74c3c" rx="5"/>
+  <text x="420" y="122" text-anchor="middle" class="text" fill="white">Customer</text>
+  
+  <!-- Web Interface Layer -->
+  <rect x="50" y="160" width="1100" height="80" fill="#9b59b6" opacity="0.1" stroke="#9b59b6" stroke-width="2"/>
+  <text x="70" y="180" class="module-title">Web Interface Layer / Web界面层</text>
+  <rect x="80" y="185" width="150" height="45" fill="#8e44ad" rx="5"/>
+  <text x="155" y="202" text-anchor="middle" class="text" fill="white">Mining Calculator</text>
+  <text x="155" y="218" text-anchor="middle" class="small-text" fill="white">挖矿收益计算器</text>
+  
+  <rect x="250" y="185" width="150" height="45" fill="#8e44ad" rx="5"/>
+  <text x="325" y="202" text-anchor="middle" class="text" fill="white">CRM Dashboard</text>
+  <text x="325" y="218" text-anchor="middle" class="small-text" fill="white">客户关系管理</text>
+  
+  <rect x="420" y="185" width="150" height="45" fill="#8e44ad" rx="5"/>
+  <text x="495" y="202" text-anchor="middle" class="text" fill="white">Broker Business</text>
+  <text x="495" y="218" text-anchor="middle" class="small-text" fill="white">矿场中介业务</text>
+  
+  <rect x="590" y="185" width="150" height="45" fill="#8e44ad" rx="5"/>
+  <text x="665" y="202" text-anchor="middle" class="text" fill="white">Commission Mgmt</text>
+  <text x="665" y="218" text-anchor="middle" class="small-text" fill="white">佣金管理</text>
+  
+  <!-- Business Logic Layer -->
+  <rect x="50" y="260" width="1100" height="180" fill="#e67e22" opacity="0.1" stroke="#e67e22" stroke-width="2"/>
+  <text x="70" y="280" class="module-title">Business Logic Layer / 业务逻辑层</text>
+  
+  <!-- CRM Module -->
+  <rect x="80" y="290" width="200" height="140" fill="#f39c12" rx="8"/>
+  <text x="180" y="310" text-anchor="middle" class="text" fill="white">CRM System</text>
+  <rect x="90" y="320" width="80" height="20" fill="white" rx="3"/>
+  <text x="130" y="333" text-anchor="middle" class="small-text">Customers</text>
+  <rect x="190" y="320" width="80" height="20" fill="white" rx="3"/>
+  <text x="230" y="333" text-anchor="middle" class="small-text">Contacts</text>
+  <rect x="90" y="350" width="80" height="20" fill="white" rx="3"/>
+  <text x="130" y="363" text-anchor="middle" class="small-text">Leads</text>
+  <rect x="190" y="350" width="80" height="20" fill="white" rx="3"/>
+  <text x="230" y="363" text-anchor="middle" class="small-text">Deals</text>
+  <rect x="90" y="380" width="180" height="20" fill="white" rx="3"/>
+  <text x="180" y="393" text-anchor="middle" class="small-text">Activities & History</text>
+  <rect x="90" y="405" width="180" height="20" fill="white" rx="3"/>
+  <text x="180" y="418" text-anchor="middle" class="small-text">Edit History Tracking</text>
+  
+  <!-- Broker Module -->
+  <rect x="300" y="290" width="200" height="140" fill="#e74c3c" rx="8"/>
+  <text x="400" y="310" text-anchor="middle" class="text" fill="white">Broker Business</text>
+  <rect x="310" y="320" width="80" height="20" fill="white" rx="3"/>
+  <text x="350" y="333" text-anchor="middle" class="small-text">Deal Mgmt</text>
+  <rect x="410" y="320" width="80" height="20" fill="white" rx="3"/>
+  <text x="450" y="333" text-anchor="middle" class="small-text">Mining Farms</text>
+  <rect x="310" y="350" width="80" height="20" fill="white" rx="3"/>
+  <text x="350" y="363" text-anchor="middle" class="small-text">10% Commission</text>
+  <rect x="410" y="350" width="80" height="20" fill="white" rx="3"/>
+  <text x="450" y="363" text-anchor="middle" class="small-text">Fixed Fees</text>
+  <rect x="310" y="380" width="180" height="20" fill="white" rx="3"/>
+  <text x="400" y="393" text-anchor="middle" class="small-text">Commission Records</text>
+  <rect x="310" y="405" width="180" height="20" fill="white" rx="3"/>
+  <text x="400" y="418" text-anchor="middle" class="small-text">Payment Tracking</text>
+  
+  <!-- Mining Calculator -->
+  <rect x="520" y="290" width="200" height="140" fill="#27ae60" rx="8"/>
+  <text x="620" y="310" text-anchor="middle" class="text" fill="white">Mining Calculator</text>
+  <rect x="530" y="320" width="80" height="20" fill="white" rx="3"/>
+  <text x="570" y="333" text-anchor="middle" class="small-text">Profitability</text>
+  <rect x="630" y="320" width="80" height="20" fill="white" rx="3"/>
+  <text x="670" y="333" text-anchor="middle" class="small-text">ROI Analysis</text>
+  <rect x="530" y="350" width="80" height="20" fill="white" rx="3"/>
+  <text x="570" y="363" text-anchor="middle" class="small-text">Real-time Data</text>
+  <rect x="630" y="350" width="80" height="20" fill="white" rx="3"/>
+  <text x="670" y="363" text-anchor="middle" class="small-text">Curtailment</text>
+  <rect x="530" y="380" width="180" height="20" fill="white" rx="3"/>
+  <text x="620" y="393" text-anchor="middle" class="small-text">Miner Models Database</text>
+  <rect x="530" y="405" width="180" height="20" fill="white" rx="3"/>
+  <text x="620" y="418" text-anchor="middle" class="small-text">Chart Generation</text>
+  
+  <!-- Authentication -->
+  <rect x="740" y="290" width="160" height="140" fill="#2980b9" rx="8"/>
+  <text x="820" y="310" text-anchor="middle" class="text" fill="white">Authentication</text>
+  <rect x="750" y="320" width="140" height="20" fill="white" rx="3"/>
+  <text x="820" y="333" text-anchor="middle" class="small-text">Email-based Login</text>
+  <rect x="750" y="350" width="140" height="20" fill="white" rx="3"/>
+  <text x="820" y="363" text-anchor="middle" class="small-text">Role-based Access</text>
+  <rect x="750" y="380" width="140" height="20" fill="white" rx="3"/>
+  <text x="820" y="393" text-anchor="middle" class="small-text">Session Management</text>
+  <rect x="750" y="405" width="140" height="20" fill="white" rx="3"/>
+  <text x="820" y="418" text-anchor="middle" class="small-text">Login Records</text>
+  
+  <!-- Reporting -->
+  <rect x="920" y="290" width="160" height="140" fill="#8e44ad" rx="8"/>
+  <text x="1000" y="310" text-anchor="middle" class="text" fill="white">Reporting</text>
+  <rect x="930" y="320" width="140" height="20" fill="white" rx="3"/>
+  <text x="1000" y="333" text-anchor="middle" class="small-text">Commission Reports</text>
+  <rect x="930" y="350" width="140" height="20" fill="white" rx="3"/>
+  <text x="1000" y="363" text-anchor="middle" class="small-text">Business Analytics</text>
+  <rect x="930" y="380" width="140" height="20" fill="white" rx="3"/>
+  <text x="1000" y="393" text-anchor="middle" class="small-text">Customer Insights</text>
+  <rect x="930" y="405" width="140" height="20" fill="white" rx="3"/>
+  <text x="1000" y="418" text-anchor="middle" class="small-text">Export Functions</text>
+  
+  <!-- Data Layer -->
+  <rect x="50" y="460" width="1100" height="120" fill="#2c3e50" opacity="0.1" stroke="#2c3e50" stroke-width="2"/>
+  <text x="70" y="480" class="module-title">Data Layer / 数据层</text>
+  
+  <!-- Database Tables -->
+  <rect x="80" y="490" width="150" height="80" fill="#34495e" rx="5"/>
+  <text x="155" y="510" text-anchor="middle" class="text" fill="white">Core Tables</text>
+  <text x="155" y="525" text-anchor="middle" class="small-text" fill="white">Customers</text>
+  <text x="155" y="540" text-anchor="middle" class="small-text" fill="white">Deals</text>
+  <text x="155" y="555" text-anchor="middle" class="small-text" fill="white">Activities</text>
+  
+  <rect x="250" y="490" width="150" height="80" fill="#34495e" rx="5"/>
+  <text x="325" y="510" text-anchor="middle" class="text" fill="white">Broker Tables</text>
+  <text x="325" y="525" text-anchor="middle" class="small-text" fill="white">Commission Records</text>
+  <text x="325" y="540" text-anchor="middle" class="small-text" fill="white">Edit History</text>
+  <text x="325" y="555" text-anchor="middle" class="small-text" fill="white">Payment Status</text>
+  
+  <rect x="420" y="490" width="150" height="80" fill="#34495e" rx="5"/>
+  <text x="495" y="510" text-anchor="middle" class="text" fill="white">Auth Tables</text>
+  <text x="495" y="525" text-anchor="middle" class="small-text" fill="white">User Access</text>
+  <text x="495" y="540" text-anchor="middle" class="small-text" fill="white">Login Records</text>
+  <text x="495" y="555" text-anchor="middle" class="small-text" fill="white">Sessions</text>
+  
+  <rect x="590" y="490" width="150" height="80" fill="#34495e" rx="5"/>
+  <text x="665" y="510" text-anchor="middle" class="text" fill="white">Config Data</text>
+  <text x="665" y="525" text-anchor="middle" class="small-text" fill="white">Miner Models</text>
+  <text x="665" y="540" text-anchor="middle" class="small-text" fill="white">Network Stats</text>
+  <text x="665" y="555" text-anchor="middle" class="small-text" fill="white">BTC Prices</text>
+  
+  <!-- External Services -->
+  <rect x="50" y="600" width="1100" height="80" fill="#95a5a6" opacity="0.1" stroke="#95a5a6" stroke-width="2"/>
+  <text x="70" y="620" class="module-title">External Services / 外部服务</text>
+  
+  <rect x="80" y="630" width="150" height="40" fill="#7f8c8d" rx="5"/>
+  <text x="155" y="645" text-anchor="middle" class="text" fill="white">CoinGecko API</text>
+  <text x="155" y="660" text-anchor="middle" class="small-text" fill="white">BTC Price Data</text>
+  
+  <rect x="250" y="630" width="150" height="40" fill="#7f8c8d" rx="5"/>
+  <text x="325" y="645" text-anchor="middle" class="text" fill="white">Mining Pool APIs</text>
+  <text x="325" y="660" text-anchor="middle" class="small-text" fill="white">Network Difficulty</text>
+  
+  <rect x="420" y="630" width="150" height="40" fill="#7f8c8d" rx="5"/>
+  <text x="495" y="645" text-anchor="middle" class="text" fill="white">Email Services</text>
+  <text x="495" y="660" text-anchor="middle" class="small-text" fill="white">Notifications</text>
+  
+  <!-- Key Features Box -->
+  <rect x="850" y="600" width="300" height="180" fill="#ecf0f1" stroke="#bdc3c7" stroke-width="2" rx="8"/>
+  <text x="1000" y="620" text-anchor="middle" class="module-title">Key Features / 核心功能</text>
+  
+  <text x="870" y="640" class="small-text">✓ 10% Net Profit Commission (净收益10%佣金)</text>
+  <text x="870" y="655" class="small-text">✓ Complete Edit History Tracking (完整编辑历史)</text>
+  <text x="870" y="670" class="small-text">✓ All Fields Editable (所有字段可编辑)</text>
+  <text x="870" y="685" class="small-text">✓ Role-based Access Control (基于角色的访问控制)</text>
+  <text x="870" y="700" class="small-text">✓ Real-time Mining Calculations (实时挖矿计算)</text>
+  <text x="870" y="715" class="small-text">✓ Customer Relationship Management (客户关系管理)</text>
+  <text x="870" y="730" class="small-text">✓ Commission Payment Tracking (佣金收款跟踪)</text>
+  <text x="870" y="745" class="small-text">✓ Mining Farm Broker Services (矿场中介服务)</text>
+  <text x="870" y="760" class="small-text">✓ Multilingual Support (多语言支持)</text>
+  
+  <!-- Connection Lines -->
+  <line x1="200" y1="240" x2="180" y2="290" class="arrow"/>
+  <line x1="400" y1="240" x2="400" y2="290" class="arrow"/>
+  <line x1="600" y1="240" x2="620" y2="290" class="arrow"/>
+  
+  <line x1="180" y1="430" x2="155" y2="490" class="arrow"/>
+  <line x1="400" y1="430" x2="325" y2="490" class="arrow"/>
+  <line x1="820" y1="430" x2="495" y2="490" class="arrow"/>
+  <line x1="620" y1="430" x2="665" y2="490" class="arrow"/>
+  
+  <line x1="155" y1="670" x2="620" y2="430" class="connection"/>
+  <line x1="325" y1="670" x2="620" y2="430" class="connection"/>
+  
+</svg>
