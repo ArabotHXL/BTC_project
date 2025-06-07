@@ -11,6 +11,10 @@ import requests
 from sqlalchemy import func, desc, asc
 from models import NetworkSnapshot
 from db import db
+import pytz
+
+# 设置时区为美国东部时间
+EST = pytz.timezone('US/Eastern')
 
 class NetworkDataCollector:
     """网络数据收集器"""
@@ -43,13 +47,17 @@ class NetworkDataCollector:
             
             api_response_time = time.time() - start_time
             
+            # 获取EST时间
+            utc_time = datetime.utcnow()
+            est_time = pytz.utc.localize(utc_time).astimezone(EST)
+            
             return {
                 'btc_price': btc_price,
                 'network_difficulty': difficulty,
                 'network_hashrate': hashrate,
                 'block_reward': block_reward,
                 'api_response_time': api_response_time,
-                'recorded_at': datetime.utcnow()
+                'recorded_at': est_time.replace(tzinfo=None)
             }
             
         except Exception as e:
@@ -111,13 +119,17 @@ class NetworkDataCollector:
             return False
             
         try:
+            # 转换时间为EST时区
+            utc_time = datetime.utcnow()
+            est_time = pytz.utc.localize(utc_time).astimezone(EST)
+            
             snapshot = NetworkSnapshot(
                 btc_price=data['btc_price'],
                 network_difficulty=data['network_difficulty'],
                 network_hashrate=data['network_hashrate'],
                 block_reward=data['block_reward'],
                 api_response_time=data['api_response_time'],
-                recorded_at=data['recorded_at']
+                recorded_at=est_time.replace(tzinfo=None)  # 存储为本地时间
             )
             
             db.session.add(snapshot)
