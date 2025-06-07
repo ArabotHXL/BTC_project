@@ -617,6 +617,19 @@ def calculate():
         elif hashrate_unit == 'EH/s':
             hashrate = hashrate * 1000000
                 
+        # 处理全网算力来源选择
+        hashrate_source = request.form.get('hashrate_source', 'api')
+        manual_hashrate = None
+        
+        if hashrate_source == 'manual':
+            try:
+                manual_hashrate = float(request.form.get('manual_hashrate', 800.0))
+                logging.info(f"使用手动输入的全网算力: {manual_hashrate} EH/s")
+            except ValueError:
+                logging.warning("手动全网算力输入无效，回退到API获取")
+                hashrate_source = 'api'
+                manual_hashrate = None
+        
         # 添加错误处理来确保即使API调用失败计算仍能继续
         try:
             # 计算挖矿盈利能力 - 使用计算得到的总算力和总功耗
@@ -634,7 +647,8 @@ def calculate():
                 shutdown_strategy=shutdown_strategy,  # 新增参数：关机策略
                 host_investment=host_investment,
                 client_investment=client_investment,
-                maintenance_fee=maintenance_fee
+                maintenance_fee=maintenance_fee,
+                manual_network_hashrate=manual_hashrate  # 新增参数：手动全网算力
             )
         except Exception as calc_error:
             # 如果计算过程中出错，使用基本估算

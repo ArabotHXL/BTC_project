@@ -343,6 +343,33 @@
                                     </div>
                                 </div>
 
+                                <!-- Network Hashrate Source Selection -->
+                                <div class="mb-3">
+                                    <label class="form-label">全网算力来源 (Network Hashrate Source)</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="hashrate_source" id="hashrate-api" value="api" checked onchange="toggleHashrateInput()">
+                                        <label class="form-check-label" for="hashrate-api">
+                                            使用API获取 (Use API Data)
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="hashrate_source" id="hashrate-manual" value="manual" onchange="toggleHashrateInput()">
+                                        <label class="form-check-label" for="hashrate-manual">
+                                            手动输入 (Manual Input)
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Manual Network Hashrate Input -->
+                                <div class="mb-3" id="manual-hashrate-container" style="display: none;">
+                                    <label for="manual-hashrate" class="form-label">全网算力 (Network Hashrate)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="manual-hashrate" name="manual_hashrate" value="800" step="0.1" min="0">
+                                        <span class="input-group-text">EH/s</span>
+                                    </div>
+                                    <div class="form-text">手动输入全网算力，单位：EH/s (Manually enter network hashrate in EH/s)</div>
+                                </div>
+
                                 <!-- Real-time data option -->
                                 <div class="form-check form-switch mb-3">
                                     <input class="form-check-input" type="checkbox" id="use-real-time" name="use_real_time" checked>
@@ -859,6 +886,19 @@
                 }
             }
         });
+
+        // 全网算力输入切换功能
+        function toggleHashrateInput() {
+            const hashrateApiRadio = document.getElementById('hashrate-api');
+            const hashrateManualRadio = document.getElementById('hashrate-manual');
+            const manualHashrateContainer = document.getElementById('manual-hashrate-container');
+            
+            if (hashrateManualRadio.checked) {
+                manualHashrateContainer.style.display = 'block';
+            } else {
+                manualHashrateContainer.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>
