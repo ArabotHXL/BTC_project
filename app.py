@@ -7,6 +7,7 @@ import requests
 import time
 import traceback
 from datetime import datetime, timedelta
+import pytz
 
 # 第三方库导入
 import numpy as np
@@ -744,12 +745,16 @@ def calculate():
                 # 使用计算结果中的网络数据记录快照
                 network_data = result.get('network_data', {})
                 if network_data:
+                    # 转换为EST时间
+                    utc_time = datetime.utcnow()
+                    est_time = pytz.utc.localize(utc_time).astimezone(pytz.timezone('US/Eastern'))
+                    
                     snapshot = NetworkSnapshot(
                         btc_price=network_data.get('btc_price', 0),
                         network_difficulty=network_data.get('network_difficulty', 0),
                         network_hashrate=network_data.get('network_hashrate', 0),
                         block_reward=network_data.get('block_reward', 3.125),
-                        recorded_at=datetime.utcnow()
+                        recorded_at=est_time.replace(tzinfo=None)
                     )
                     db.session.add(snapshot)
                     db.session.commit()
