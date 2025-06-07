@@ -1783,9 +1783,17 @@ def inject_nav_menu():
             return False
         role = session.get('role')
         return role in ['owner', 'admin', 'manager', 'mining_site']
+    
+    def user_has_network_analysis_access():
+        """检查用户是否有访问网络分析的权限"""
+        if not session.get('authenticated'):
+            return False
+        role = session.get('role')
+        return role in ['owner', 'admin', 'mining_site']
         
     return {
-        'user_has_crm_access': user_has_crm_access
+        'user_has_crm_access': user_has_crm_access,
+        'user_has_network_analysis_access': user_has_network_analysis_access
     }
 
 if __name__ == '__main__':
