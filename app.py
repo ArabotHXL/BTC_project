@@ -15,7 +15,7 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 # 本地模块导入
 from auth import verify_email, login_required
 from db import db
-from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus
+from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot
 from translations import get_translation
 from mining_calculator import (
     MINER_DATA,
@@ -28,6 +28,7 @@ from mining_calculator import (
     calculate_monthly_curtailment_impact
 )
 from crm_routes import init_crm_routes
+from network_data_service import network_collector, network_analyzer
 from mining_broker_routes import init_broker_routes
 
 # Set up logging
@@ -737,6 +738,26 @@ def calculate():
             # 返回过滤后的结果
             return jsonify(filtered_result)
             
+        # 记录网络数据快照（在成功计算后）
+        try:
+            if use_real_time and result.get('success', True):
+                # 使用计算结果中的网络数据记录快照
+                network_data = result.get('network_data', {})
+                if network_data:
+                    snapshot = NetworkSnapshot(
+                        btc_price=network_data.get('btc_price', 0),
+                        network_difficulty=network_data.get('network_difficulty', 0),
+                        network_hashrate=network_data.get('network_hashrate', 0),
+                        block_reward=network_data.get('block_reward', 3.125),
+                        recorded_at=datetime.utcnow()
+                    )
+                    db.session.add(snapshot)
+                    db.session.commit()
+                    logging.info(f"网络快照已记录: BTC=${network_data.get('btc_price')}, 难度={network_data.get('network_difficulty')}T")
+        except Exception as snapshot_error:
+            logging.error(f"记录网络快照失败: {snapshot_error}")
+            # 不影响主要计算流程
+        
         # 对于有权限的用户，返回完整结果
         return jsonify(result)
         
@@ -1446,6 +1467,99 @@ def view_customer_crm(user_id):
     
     # 重定向到CRM客户详情页
     return redirect(url_for('crm.customer_detail', customer_id=customer.id))
+
+# ============== 网络数据分析路由 ==============
+
+@app.route('/network/history')
+@login_required
+def network_history():
+    """网络历史数据分析页面"""
+    if not has_role(['owner', 'admin', 'mining_site']):
+        flash('您没有权限访问此页面', 'danger')
+        return redirect(url_for('index'))
+    
+    return render_template('network_history.html')
+
+@app.route('/api/network/stats')
+@login_required
+def api_network_stats():
+    """获取网络统计概览"""
+    try:
+        stats = network_analyzer.get_network_statistics()
+        return jsonify(stats)
+    except Exception as e:
+        logging.error(f"获取网络统计失败: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/network/price-trend')
+@login_required
+def api_price_trend():
+    """获取价格趋势数据"""
+    try:
+        days = request.args.get('days', 7, type=int)
+        trend_data = network_analyzer.get_price_trend(days)
+        return jsonify(trend_data)
+    except Exception as e:
+        logging.error(f"获取价格趋势失败: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/network/difficulty-trend')
+@login_required
+def api_difficulty_trend():
+    """获取难度趋势数据"""
+    try:
+        days = request.args.get('days', 30, type=int)
+        trend_data = network_analyzer.get_difficulty_trend(days)
+        return jsonify(trend_data)
+    except Exception as e:
+        logging.error(f"获取难度趋势失败: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/network/hashrate-analysis')
+@login_required
+def api_hashrate_analysis():
+    """获取算力分析数据"""
+    try:
+        days = request.args.get('days', 7, type=int)
+        analysis_data = network_analyzer.get_hashrate_analysis(days)
+        return jsonify(analysis_data)
+    except Exception as e:
+        logging.error(f"获取算力分析失败: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/network/profitability-forecast')
+@login_required
+def api_profitability_forecast():
+    """基于历史数据的收益预测"""
+    try:
+        miner_model = request.args.get('miner_model', 'Antminer S21')
+        electricity_cost = request.args.get('electricity_cost', 0.05, type=float)
+        days_back = request.args.get('days_back', 30, type=int)
+        
+        forecast_data = network_analyzer.get_profitability_forecast(
+            miner_model, electricity_cost, days_back
+        )
+        return jsonify(forecast_data)
+    except Exception as e:
+        logging.error(f"获取收益预测失败: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/network/record-snapshot', methods=['POST'])
+@login_required
+def api_record_snapshot():
+    """手动记录网络快照"""
+    if not has_role(['owner', 'admin']):
+        return jsonify({'error': '权限不足'}), 403
+    
+    try:
+        success = network_collector.record_network_snapshot()
+        if success:
+            return jsonify({'success': True, 'message': '网络快照记录成功'})
+        else:
+            return jsonify({'success': False, 'error': '记录失败'}), 500
+    except Exception as e:
+        logging.error(f"手动记录快照失败: {e}")
+        return jsonify({'error': str(e)}), 500
 
 # 初始化CRM系统
 init_crm_routes(app)

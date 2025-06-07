@@ -23,6 +23,42 @@ class DealStatus(enum.Enum):
     COMPLETED = "已完成"
     CANCELED = "已取消"
 
+class NetworkSnapshot(db.Model):
+    """网络状态快照记录"""
+    __tablename__ = 'network_snapshots'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    recorded_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    btc_price = db.Column(db.Float, nullable=False)
+    network_difficulty = db.Column(db.Float, nullable=False)
+    network_hashrate = db.Column(db.Float, nullable=False)  # 单位: EH/s
+    block_reward = db.Column(db.Float, nullable=False, default=3.125)
+    
+    # API来源标记
+    price_source = db.Column(db.String(50), default='coingecko')
+    data_source = db.Column(db.String(50), default='blockchain.info')
+    
+    # 数据质量标记
+    is_valid = db.Column(db.Boolean, default=True)
+    api_response_time = db.Column(db.Float, nullable=True)  # API响应时间(秒)
+    
+    def __repr__(self):
+        return f"<NetworkSnapshot {self.recorded_at}: BTC=${self.btc_price}, Difficulty={self.network_difficulty}T>"
+    
+    def to_dict(self):
+        """转换为字典格式，便于JSON序列化"""
+        return {
+            'id': self.id,
+            'recorded_at': self.recorded_at.isoformat(),
+            'btc_price': self.btc_price,
+            'network_difficulty': self.network_difficulty,
+            'network_hashrate': self.network_hashrate,
+            'block_reward': self.block_reward,
+            'price_source': self.price_source,
+            'data_source': self.data_source,
+            'is_valid': self.is_valid
+        }
+
 class LoginRecord(db.Model):
     """记录用户登录信息的模型"""
     __tablename__ = 'login_records'
