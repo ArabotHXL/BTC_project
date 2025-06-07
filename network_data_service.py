@@ -119,17 +119,13 @@ class NetworkDataCollector:
             return False
             
         try:
-            # 转换时间为EST时区
-            utc_time = datetime.utcnow()
-            est_time = pytz.utc.localize(utc_time).astimezone(EST)
-            
             snapshot = NetworkSnapshot(
                 btc_price=data['btc_price'],
                 network_difficulty=data['network_difficulty'],
                 network_hashrate=data['network_hashrate'],
                 block_reward=data['block_reward'],
                 api_response_time=data['api_response_time'],
-                recorded_at=est_time.replace(tzinfo=None)  # 存储为本地时间
+                recorded_at=data['recorded_at']  # 已经是EST时间
             )
             
             db.session.add(snapshot)
