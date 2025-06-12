@@ -813,52 +813,68 @@ def get_btc_price():
 @app.route('/network_stats', methods=['GET'])
 @login_required
 def get_network_stats():
-    """Get current Bitcoin network statistics using enhanced CoinWarz + blockchain.info data"""
+    """Get current Bitcoin network statistics using smart API switching"""
     try:
         from coinwarz_api import get_enhanced_network_data
         
-        # 获取增强网络数据
+        # 获取增强网络数据（自动切换API）
         network_data = get_enhanced_network_data()
         
-        if network_data:
-            # 使用CoinWarz增强数据
-            return jsonify({
+        if network_data and network_data.get('btc_price'):
+            response_data = {
                 'success': True,
                 'price': network_data['btc_price'],
-                'difficulty': network_data['difficulty'] / 10**12,  # Convert to T for readability
-                'hashrate': network_data['hashrate'],  # EH/s
+                'difficulty': network_data['difficulty'] / 10**12 if network_data['difficulty'] > 1000 else network_data['difficulty'],
+                'hashrate': network_data['hashrate'],
                 'block_reward': network_data['block_reward'],
                 'data_source': network_data['data_source'],
                 'profit_ratio': network_data.get('profit_ratio', 100),
-                'health_status': network_data.get('health_status', 'Unknown')
-            })
+                'health_status': network_data.get('health_status', 'Unknown'),
+                'api_calls_remaining': network_data.get('api_calls_remaining', 0)
+            }
+            
+            # 添加详细的API状态信息
+            if 'hashrate_source' in network_data:
+                response_data['hashrate_source'] = network_data['hashrate_source']
+            if 'fallback_reason' in network_data:
+                response_data['fallback_reason'] = network_data['fallback_reason']
+            if 'coinwarz_hashrate' in network_data and 'blockchain_hashrate' in network_data:
+                response_data['hashrate_comparison'] = {
+                    'coinwarz': network_data['coinwarz_hashrate'],
+                    'blockchain': network_data['blockchain_hashrate']
+                }
+            
+            return jsonify(response_data)
         else:
-            # 回退到原始方法
+            # 最后的备选方案 - 使用blockchain.info直接获取
+            from mining_calculator import get_real_time_btc_price, get_real_time_difficulty, get_real_time_btc_hashrate, get_real_time_block_reward
+            
             price = get_real_time_btc_price()
             difficulty = get_real_time_difficulty()
-            block_reward = get_real_time_block_reward()
             hashrate = get_real_time_btc_hashrate()
-            
-            logging.info(f"返回网络统计数据: 价格=${price}, 难度={difficulty/10**12}T, 哈希率={hashrate}EH/s, 奖励={block_reward}BTC")
+            block_reward = get_real_time_block_reward()
             
             return jsonify({
                 'success': True,
                 'price': price,
-                'difficulty': difficulty / 10**12,
+                'difficulty': difficulty / 10**12 if difficulty and difficulty > 1000 else difficulty,
                 'hashrate': hashrate,
                 'block_reward': block_reward,
-                'data_source': 'blockchain.info (fallback)'
+                'data_source': 'blockchain.info (direct)',
+                'health_status': 'Backup Active',
+                'api_calls_remaining': 0,
+                'fallback_reason': 'All enhanced APIs unavailable'
             })
+        
     except Exception as e:
-        logging.error(f"获取网络状态统计时发生错误: {str(e)}")
-        # 返回默认值而不是错误，这样前端至少能显示一些内容
+        logging.error(f"获取网络统计数据时发生错误: {str(e)}")
         return jsonify({
-            'success': True,
-            'price': DEFAULT_BTC_PRICE,  # 默认价格
-            'difficulty': DEFAULT_DIFFICULTY,  # 默认难度，单位T
-            'hashrate': DEFAULT_HASHRATE_EH,  # 默认哈希率，单位EH/s
-            'block_reward': DEFAULT_BLOCK_REWARD  # 默认区块奖励
-        })
+            'success': False,
+            'error': 'Failed to retrieve network statistics',
+            'data_source': 'error',
+            'health_status': 'Error',
+            'api_calls_remaining': 0
+        }), 500
 
 @app.route('/mining/sha256_comparison', methods=['GET'])
 @login_required
