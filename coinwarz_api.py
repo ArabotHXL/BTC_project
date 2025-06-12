@@ -130,6 +130,27 @@ def check_coinwarz_api_status():
         logging.error(f"检查CoinWarz API状态失败: {e}")
         return None
 
+def calculate_hashrate_from_difficulty(difficulty, block_time=600):
+    """
+    从难度计算网络算力
+    
+    Parameters:
+    - difficulty: 网络难度
+    - block_time: 区块时间（秒），比特币为600秒
+    
+    Returns:
+    - 网络算力（EH/s）
+    """
+    try:
+        # 使用比特币算力计算公式: hashrate = (difficulty * 2^32) / block_time
+        hashrate_hash_per_sec = (difficulty * (2**32)) / block_time
+        # 转换为EH/s
+        hashrate_eh = hashrate_hash_per_sec / 1e18
+        return hashrate_eh
+    except Exception as e:
+        logging.error(f"从难度计算算力失败: {e}")
+        return None
+
 def get_enhanced_network_data():
     """
     获取增强的网络数据，结合CoinWarz和blockchain.info
@@ -145,13 +166,35 @@ def get_enhanced_network_data():
         from mining_calculator import get_real_time_btc_price, get_real_time_difficulty, get_real_time_btc_hashrate
         
         if coinwarz_btc:
+            # 计算CoinWarz基于难度的算力
+            coinwarz_hashrate = calculate_hashrate_from_difficulty(coinwarz_btc['difficulty'])
+            blockchain_hashrate = get_real_time_btc_hashrate()
+            
+            # 选择更可靠的算力值：如果两者差异较小，使用CoinWarz计算值
+            if coinwarz_hashrate and blockchain_hashrate:
+                diff_percent = abs(coinwarz_hashrate - blockchain_hashrate) / blockchain_hashrate * 100
+                if diff_percent < 20:  # 差异小于20%时使用CoinWarz计算值
+                    final_hashrate = coinwarz_hashrate
+                    hashrate_source = "CoinWarz (calculated)"
+                    logging.info(f"使用CoinWarz计算算力: {coinwarz_hashrate:.1f} EH/s (差异: {diff_percent:.1f}%)")
+                else:
+                    final_hashrate = blockchain_hashrate
+                    hashrate_source = "blockchain.info (API)"
+                    logging.info(f"算力差异过大({diff_percent:.1f}%)，使用blockchain.info: {blockchain_hashrate:.1f} EH/s")
+            else:
+                final_hashrate = blockchain_hashrate or coinwarz_hashrate
+                hashrate_source = "fallback"
+            
             # 使用CoinWarz作为主要数据源
             network_data = {
                 'btc_price': coinwarz_btc['btc_price'],
                 'difficulty': coinwarz_btc['difficulty'],
                 'block_reward': coinwarz_btc['block_reward'],
                 'block_count': coinwarz_btc['block_count'],
-                'hashrate': get_real_time_btc_hashrate(),  # 仍使用blockchain.info的算力
+                'hashrate': final_hashrate,
+                'hashrate_source': hashrate_source,
+                'coinwarz_hashrate': coinwarz_hashrate,
+                'blockchain_hashrate': blockchain_hashrate,
                 'data_source': 'CoinWarz + blockchain.info',
                 'profit_ratio': coinwarz_btc['profit_ratio'],
                 'health_status': coinwarz_btc['health_status']
@@ -165,6 +208,7 @@ def get_enhanced_network_data():
                 'difficulty': get_real_time_difficulty(),
                 'block_reward': 3.125,
                 'hashrate': get_real_time_btc_hashrate(),
+                'hashrate_source': 'blockchain.info (fallback)',
                 'data_source': 'blockchain.info (fallback)',
                 'profit_ratio': 100,
                 'health_status': 'Unknown'
