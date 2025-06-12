@@ -107,7 +107,8 @@ def get_real_time_btc_price():
 
 def get_real_time_difficulty():
     """Get the current Bitcoin network difficulty with fallback options"""
-    # 尝试多个API源以增加可靠性
+    # 使用API密钥获取更准确的难度数据
+    headers = {'X-API-Key': '8dd87e048ec84b6c8ad3322fb07f747a'}
     apis = [
         'https://blockchain.info/q/getdifficulty',
         'https://api.blockchain.info/stats'  # 备用API提供一个包含difficulty的JSON
@@ -115,7 +116,7 @@ def get_real_time_difficulty():
     
     for api_url in apis:
         try:
-            response = requests.get(api_url, timeout=5)  # 减少超时时间以避免长时间等待
+            response = requests.get(api_url, headers=headers, timeout=5)  # 减少超时时间以避免长时间等待
             
             if response.status_code == 200:
                 if 'stats' in api_url:  # 处理JSON格式的响应
@@ -162,8 +163,9 @@ def get_real_time_block_reward():
 def get_real_time_btc_hashrate():
     """获取实时比特币网络哈希率"""
     try:
-        # 从blockchain.info API获取官方哈希率数据
-        response = requests.get('https://blockchain.info/q/hashrate', timeout=5)
+        # 使用API密钥获取更准确的哈希率数据
+        headers = {'X-API-Key': '8dd87e048ec84b6c8ad3322fb07f747a'}
+        response = requests.get('https://blockchain.info/q/hashrate', headers=headers, timeout=5)
         if response.status_code == 200:
             # blockchain.info的hashrate API返回的是GH/s单位
             hashrate_value = float(response.text.strip())
