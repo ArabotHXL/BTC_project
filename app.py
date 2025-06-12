@@ -813,54 +813,42 @@ def get_btc_price():
 @app.route('/network_stats', methods=['GET'])
 @login_required
 def get_network_stats():
-    """Get current Bitcoin network statistics"""
+    """Get current Bitcoin network statistics using enhanced CoinWarz + blockchain.info data"""
     try:
-        # 使用定义的默认值
+        from coinwarz_api import get_enhanced_network_data
         
-        # 获取实时数据，如果有任何错误使用默认值
-        try:
+        # 获取增强网络数据
+        network_data = get_enhanced_network_data()
+        
+        if network_data:
+            # 使用CoinWarz增强数据
+            return jsonify({
+                'success': True,
+                'price': network_data['btc_price'],
+                'difficulty': network_data['difficulty'] / 10**12,  # Convert to T for readability
+                'hashrate': network_data['hashrate'],  # EH/s
+                'block_reward': network_data['block_reward'],
+                'data_source': network_data['data_source'],
+                'profit_ratio': network_data.get('profit_ratio', 100),
+                'health_status': network_data.get('health_status', 'Unknown')
+            })
+        else:
+            # 回退到原始方法
             price = get_real_time_btc_price()
-            logging.info(f"成功获取BTC价格: ${price}")
-        except Exception as e:
-            logging.error(f"获取BTC价格失败: {e}")
-            price = 80000  # 默认价格
-            
-        try:
             difficulty = get_real_time_difficulty()
-            logging.info(f"成功获取网络难度: {difficulty/10**12}T")
-        except Exception as e:
-            logging.error(f"获取网络难度失败: {e}")
-            difficulty = 119116256505723  # 默认难度
-            
-        try:
             block_reward = get_real_time_block_reward()
-            logging.info(f"成功获取区块奖励: {block_reward} BTC")
-        except Exception as e:
-            logging.error(f"获取区块奖励失败: {e}")
-            block_reward = 3.125  # 默认区块奖励
-            
-        try:
-            # 使用mining_calculator.py中的优化函数获取哈希率
             hashrate = get_real_time_btc_hashrate()
             
-            # 如果哈希率完全不合理，使用默认值（更新范围以接受943 EH/s的值）
-            if hashrate < 10 or hashrate > 10000:
-                logging.warning(f"计算的哈希率值不合理: {hashrate} EH/s，使用默认值")
-                hashrate = DEFAULT_HASHRATE_EH
-        except Exception as e:
-            logging.error(f"获取网络哈希率时出错: {e}")
-            hashrate = DEFAULT_HASHRATE_EH
-        
-        # 提供额外日志以便调试
-        logging.info(f"返回网络统计数据: 价格=${price}, 难度={difficulty/10**12}T, 哈希率={hashrate}EH/s, 奖励={block_reward}BTC")
-        
-        return jsonify({
-            'success': True,
-            'price': price,
-            'difficulty': difficulty / 10**12,  # Convert to T for readability
-            'hashrate': hashrate,  # EH/s
-            'block_reward': block_reward
-        })
+            logging.info(f"返回网络统计数据: 价格=${price}, 难度={difficulty/10**12}T, 哈希率={hashrate}EH/s, 奖励={block_reward}BTC")
+            
+            return jsonify({
+                'success': True,
+                'price': price,
+                'difficulty': difficulty / 10**12,
+                'hashrate': hashrate,
+                'block_reward': block_reward,
+                'data_source': 'blockchain.info (fallback)'
+            })
     except Exception as e:
         logging.error(f"获取网络状态统计时发生错误: {str(e)}")
         # 返回默认值而不是错误，这样前端至少能显示一些内容
@@ -871,6 +859,44 @@ def get_network_stats():
             'hashrate': DEFAULT_HASHRATE_EH,  # 默认哈希率，单位EH/s
             'block_reward': DEFAULT_BLOCK_REWARD  # 默认区块奖励
         })
+
+@app.route('/mining/sha256_comparison', methods=['GET'])
+@login_required
+def get_sha256_mining_comparison():
+    """Get SHA-256 mining profitability comparison from CoinWarz"""
+    try:
+        from coinwarz_api import get_sha256_coins_comparison, check_coinwarz_api_status
+        
+        # 检查API状态
+        api_status = check_coinwarz_api_status()
+        if not api_status or not api_status.get('Approved'):
+            return jsonify({
+                'success': False,
+                'error': 'CoinWarz API not available or not approved'
+            }), 503
+        
+        # 获取SHA-256币种对比数据
+        comparison_data = get_sha256_coins_comparison()
+        
+        if comparison_data:
+            return jsonify({
+                'success': True,
+                'data': comparison_data,
+                'api_calls_remaining': api_status.get('ApiUsageAvailable', 0),
+                'daily_calls_remaining': api_status.get('DailyUsageAvailable', 0)
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Unable to fetch mining comparison data'
+            }), 500
+            
+    except Exception as e:
+        logging.error(f"获取SHA-256挖矿对比数据时发生错误: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error while fetching comparison data'
+        }), 500
 
 @app.route('/miners', methods=['GET'])
 @login_required
