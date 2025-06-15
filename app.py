@@ -926,7 +926,8 @@ def get_miners():
             miners_list.append({
                 'name': name,
                 'hashrate': specs['hashrate'],  # TH/s
-                'power_watt': specs['power_watt'],  # W
+                'power_consumption': specs['power_watt'],  # W (renamed for consistency)
+                'power_watt': specs['power_watt'],  # W (keep for backward compatibility)
                 'efficiency': round(specs['power_watt'] / specs['hashrate'], 2)  # W/TH
             })
         
