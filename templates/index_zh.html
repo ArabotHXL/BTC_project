@@ -431,6 +431,9 @@
             const resultsContent = document.getElementById('results-content');
             
             console.log('Displaying results for:', data);
+            console.log('Break-even:', data.break_even);
+            console.log('Inputs:', data.inputs);
+            console.log('Host profit:', data.profit);
             
             if (data.error) {
                 resultsContent.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
@@ -530,7 +533,7 @@
                     </div>
                     
                     <!-- 矿机运行状态 -->
-                    ${optimization.running_miner_count ? `
+                    ${inputs.miner_count ? `
                     <div class="card mb-3">
                         <div class="card-header bg-info text-white">
                             <h6 class="mb-0">矿机运行状态</h6>
@@ -547,7 +550,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <small class="text-muted">有效算力</small>
-                                    <div class="fw-bold">${(inputs.effective_hashrate / 1000).toFixed(1)} TH/s</div>
+                                    <div class="fw-bold">${inputs.effective_hashrate?.toLocaleString() || 'N/A'} TH/s</div>
                                 </div>
                             </div>
                         </div>
