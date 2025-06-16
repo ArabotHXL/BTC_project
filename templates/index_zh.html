@@ -392,14 +392,28 @@
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Calculate response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log('Calculate response data:', data);
                 document.getElementById('loading').style.display = 'none';
                 displayResults(data);
             })
             .catch(error => {
                 document.getElementById('loading').style.display = 'none';
                 console.error('计算失败:', error);
+                console.error('Error details:', error.message);
+                
+                // Display error to user
+                const resultsCard = document.getElementById('results-card');
+                const resultsContent = document.getElementById('results-content');
+                resultsContent.innerHTML = `<div class="alert alert-danger">计算失败: ${error.message}</div>`;
+                resultsCard.style.display = 'block';
             });
         });
 
@@ -409,39 +423,49 @@
             
             if (data.error) {
                 resultsContent.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
-            } else {
-                const isProfitable = data.daily_profit > 0;
+            } else if (data.success) {
+                // Extract data from the new response format
+                const dailyProfit = data.client_profit?.daily || 0;
+                const monthlyProfit = data.client_profit?.monthly || 0;
+                const yearlyProfit = data.client_profit?.yearly || 0;
+                const btcPerDay = data.btc_mined?.daily || 0;
+                const dailyElectricity = data.client_electricity_cost?.daily || 0;
+                const dailyRevenue = data.revenue?.daily || 0;
+                
+                const isProfitable = dailyProfit > 0;
                 resultsCard.className = isProfitable ? 'card result-card' : 'card result-card negative-result';
                 
                 resultsContent.innerHTML = `
                     <div class="row">
                         <div class="col-md-6">
                             <h6>每日收益</h6>
-                            <h4 class="${isProfitable ? 'text-success' : 'text-danger'}">$${data.daily_profit.toFixed(2)}</h4>
+                            <h4 class="${isProfitable ? 'text-success' : 'text-danger'}">$${dailyProfit.toFixed(2)}</h4>
                         </div>
                         <div class="col-md-6">
                             <h6>每月收益</h6>
-                            <h4 class="${isProfitable ? 'text-success' : 'text-danger'}">$${data.monthly_profit.toFixed(2)}</h4>
+                            <h4 class="${isProfitable ? 'text-success' : 'text-danger'}">$${monthlyProfit.toFixed(2)}</h4>
                         </div>
                         <div class="col-md-6">
                             <h6>每年收益</h6>
-                            <h4 class="${isProfitable ? 'text-success' : 'text-danger'}">$${data.yearly_profit.toFixed(2)}</h4>
+                            <h4 class="${isProfitable ? 'text-success' : 'text-danger'}">$${yearlyProfit.toFixed(2)}</h4>
                         </div>
                         <div class="col-md-6">
                             <h6>日产出BTC</h6>
-                            <h4>${data.btc_per_day.toFixed(8)}</h4>
+                            <h4>${btcPerDay.toFixed(8)}</h4>
                         </div>
                     </div>
                     <hr>
                     <div class="row">
                         <div class="col-md-6">
-                            <small class="text-muted">每日电费: $${data.daily_electricity_cost.toFixed(2)}</small>
+                            <small class="text-muted">每日电费: $${dailyElectricity.toFixed(2)}</small>
                         </div>
                         <div class="col-md-6">
-                            <small class="text-muted">每日收入: $${data.daily_revenue.toFixed(2)}</small>
+                            <small class="text-muted">每日收入: $${dailyRevenue.toFixed(2)}</small>
                         </div>
                     </div>
                 `;
+            } else {
+                resultsContent.innerHTML = `<div class="alert alert-warning">无法解析计算结果</div>`;
             }
             
             resultsCard.style.display = 'block';
