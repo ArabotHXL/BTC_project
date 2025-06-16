@@ -388,6 +388,12 @@
             
             const formData = new FormData(this);
             
+            // Debug form data
+            console.log('Form data being sent:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+            
             fetch('/calculate', {
                 method: 'POST',
                 body: formData
