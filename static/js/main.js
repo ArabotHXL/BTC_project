@@ -624,7 +624,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         localStorage.setItem('miners', JSON.stringify(data.miners));
                         
                         // 清空选项 (Clear options)
-                        minerModelSelect.innerHTML = '<option value="">选择矿机型号 (Select a miner model)</option>';
+                        const currentLang = document.querySelector('meta[name="language"]')?.content || 'zh';
+                        const selectText = currentLang === 'en' ? 'Select a miner model' : '选择矿机型号';
+                        minerModelSelect.innerHTML = '<option value="">' + selectText + '</option>';
                         
                         // 添加矿机选项 (Add miner options)
                         data.miners.forEach(function(miner) {
@@ -677,7 +679,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 var miners = JSON.parse(cachedMiners);
                 
                 // 清空选项
-                minerModelSelect.innerHTML = '<option value="">选择矿机型号 (Select a miner model)</option>';
+                const currentLang = document.querySelector('meta[name="language"]')?.content || 'zh';
+                const selectText = currentLang === 'en' ? 'Select a miner model' : '选择矿机型号';
+                minerModelSelect.innerHTML = '<option value="">' + selectText + '</option>';
                 
                 // 添加矿机选项
                 miners.forEach(function(miner) {
