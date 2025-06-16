@@ -292,9 +292,21 @@
         // Load miners
         function loadMiners() {
             fetch('/miners')
-                .then(response => response.json())
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Miners data received:', data);
                     const select = document.getElementById('miner-model');
+                    if (!select) {
+                        console.error('Miner select element not found');
+                        return;
+                    }
+                    
                     select.innerHTML = '<option value="">选择矿机</option>';
                     if (data.success && data.miners) {
                         data.miners.forEach(miner => {
@@ -306,9 +318,14 @@
                             select.appendChild(option);
                         });
                         console.log('矿机列表加载成功:', data.miners.length);
+                    } else {
+                        console.error('Invalid miners data:', data);
                     }
                 })
-                .catch(error => console.error('加载矿机列表失败:', error));
+                .catch(error => {
+                    console.error('加载矿机列表失败:', error);
+                    console.error('Error details:', error.message);
+                });
         }
 
         // Toggle hashrate input
