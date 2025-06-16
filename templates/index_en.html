@@ -60,6 +60,23 @@
                                 <i class="bi bi-person-circle me-1"></i>{{ session.role_display or 'User' }}
                             </button>
                             <ul class="dropdown-menu">
+                                {% if session.role in ['owner', 'admin'] %}
+                                <li><a class="dropdown-item" href="/admin/login_records">Login Records</a></li>
+                                <li><a class="dropdown-item" href="/admin/login_dashboard">Login Analytics</a></li>
+                                <li><a class="dropdown-item" href="/user_access">User Management</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                {% endif %}
+                                {% if session.role in ['owner', 'admin', 'mining_site', 'broker'] %}
+                                <li><a class="dropdown-item" href="/crm/dashboard">Customer Management</a></li>
+                                {% endif %}
+                                {% if session.role in ['owner', 'admin', 'mining_site'] %}
+                                <li><a class="dropdown-item" href="/network_history">Network Data</a></li>
+                                <li><a class="dropdown-item" href="/curtailment_calculator">Curtailment Calculator</a></li>
+                                {% endif %}
+                                {% if session.role in ['owner', 'admin', 'broker'] %}
+                                <li><a class="dropdown-item" href="/broker/dashboard">Broker Business</a></li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="/logout">Logout</a></li>
                             </ul>
                         </div>
@@ -279,14 +296,17 @@
                 .then(data => {
                     const select = document.getElementById('miner-model');
                     select.innerHTML = '<option value="">Select Miner</option>';
-                    data.forEach(miner => {
-                        const option = document.createElement('option');
-                        option.value = miner.model;
-                        option.textContent = `${miner.model} (${miner.hashrate} TH/s, ${miner.power_consumption}W)`;
-                        option.dataset.hashrate = miner.hashrate;
-                        option.dataset.power = miner.power_consumption;
-                        select.appendChild(option);
-                    });
+                    if (data.success && data.miners) {
+                        data.miners.forEach(miner => {
+                            const option = document.createElement('option');
+                            option.value = miner.name;
+                            option.textContent = `${miner.name} (${miner.hashrate} TH/s, ${miner.power_consumption}W)`;
+                            option.dataset.hashrate = miner.hashrate;
+                            option.dataset.power = miner.power_consumption;
+                            select.appendChild(option);
+                        });
+                        console.log('Miners loaded successfully:', data.miners.length);
+                    }
                 })
                 .catch(error => console.error('Failed to load miners:', error));
         }
