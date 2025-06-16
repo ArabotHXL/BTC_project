@@ -299,23 +299,23 @@
                                 
                                 <!-- Shutdown Strategy (仅当curtailment > 0时显示) -->
                                 <div class="mb-3" id="shutdown-strategy-container" style="display: none;">
-                                    <label for="shutdown-strategy" class="form-label">关机策略 (Shutdown Strategy)</label>
+                                    <label for="shutdown-strategy" class="form-label">{% if current_lang == 'en' %}Shutdown Strategy{% else %}关机策略{% endif %}</label>
                                     <select class="form-select" id="shutdown-strategy" name="shutdown_strategy">
-                                        <option value="efficiency" selected>按效率关机 - 先关效率低的 (Efficiency-based)</option>
-                                        <option value="proportional">按比例关机 - 每种型号同比例 (Proportional)</option>
-                                        <option value="random">随机关机 (Random)</option>
+                                        <option value="efficiency" selected>{% if current_lang == 'en' %}Efficiency-based{% else %}按效率关机 - 先关效率低的{% endif %}</option>
+                                        <option value="proportional">{% if current_lang == 'en' %}Proportional{% else %}按比例关机 - 每种型号同比例{% endif %}</option>
+                                        <option value="random">{% if current_lang == 'en' %}Random{% else %}随机关机{% endif %}</option>
                                     </select>
-                                    <div class="form-text">选择限电时优先关闭哪些矿机 (Select which miners to shut down during curtailment periods)</div>
+                                    <div class="form-text">{% if current_lang == 'en' %}Select which miners to shut down during curtailment periods{% else %}选择限电时优先关闭哪些矿机{% endif %}</div>
                                 </div>
                                 
                                 <!-- Host Investment Amount -->
                                 <div class="mb-3">
-                                    <label for="host-investment" class="form-label">矿场主投资金额 (Host Investment)</label>
+                                    <label for="host-investment" class="form-label">{% if current_lang == 'en' %}Host Investment{% else %}矿场主投资金额{% endif %}</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="host-investment" name="host_investment" value="0" step="1" min="0">
                                         <span class="input-group-text">$</span>
                                     </div>
-                                    <div class="form-text">矿场主的总投资金额，用于计算ROI (Total investment by mining site owner, for ROI calculation)</div>
+                                    <div class="form-text">{% if current_lang == 'en' %}Total investment by mining site owner, for ROI calculation{% else %}矿场主的总投资金额，用于计算ROI{% endif %}</div>
                                 </div>
                                 {% else %}
                                 <!-- 为普通用户隐藏字段，但提供默认值 -->
@@ -345,29 +345,29 @@
 
                                 <!-- Network Hashrate Source Selection -->
                                 <div class="mb-3">
-                                    <label class="form-label">全网算力来源 (Network Hashrate Source)</label>
+                                    <label class="form-label">{% if current_lang == 'en' %}Network Hashrate Source{% else %}全网算力来源{% endif %}</label>
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="hashrate_source" id="hashrate-api" value="api" checked onchange="toggleHashrateInput()">
                                         <label class="form-check-label" for="hashrate-api">
-                                            使用API获取 (Use API Data)
+                                            {% if current_lang == 'en' %}Use API Data{% else %}使用API获取{% endif %}
                                         </label>
                                     </div>
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="hashrate_source" id="hashrate-manual" value="manual" onchange="toggleHashrateInput()">
                                         <label class="form-check-label" for="hashrate-manual">
-                                            手动输入 (Manual Input)
+                                            {% if current_lang == 'en' %}Manual Input{% else %}手动输入{% endif %}
                                         </label>
                                     </div>
                                 </div>
 
                                 <!-- Manual Network Hashrate Input -->
                                 <div class="mb-3" id="manual-hashrate-container" style="display: none;">
-                                    <label for="manual-hashrate" class="form-label">全网算力 (Network Hashrate)</label>
+                                    <label for="manual-hashrate" class="form-label">{% if current_lang == 'en' %}Network Hashrate{% else %}全网算力{% endif %}</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="manual-hashrate" name="manual_hashrate" value="921.8" step="0.1" min="0">
                                         <span class="input-group-text">EH/s</span>
                                     </div>
-                                    <div class="form-text">手动输入全网算力，单位：EH/s (Manually enter network hashrate in EH/s)</div>
+                                    <div class="form-text">{% if current_lang == 'en' %}Manually enter network hashrate in EH/s{% else %}手动输入全网算力，单位：EH/s{% endif %}</div>
                                 </div>
 
                                 <!-- Real-time data option -->
@@ -422,7 +422,7 @@
                                 <!-- Customer profit -->
                                 <div class="col-md-4">
                                     <div class="p-3 rounded bg-info bg-opacity-10 client-profit-card results-hover-card">
-                                        <h6>{% if session.role in ['owner', 'admin', 'mining_site'] %}客户月度收益 (Client Monthly){% else %}月度收益 (Monthly Profit){% endif %}</h6>
+                                        <h6>{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Client Monthly Profit{% else %}客户月度收益{% endif %}{% else %}{% if current_lang == 'en' %}Monthly Profit{% else %}月度收益{% endif %}{% endif %}</h6>
                                         <h3 id="client-profit-card">$0.00</h3>
                                     </div>
                                 </div>
@@ -436,23 +436,23 @@
                             <div class="row">
                                 <!-- 矿场主收入列 -->
                                 <div class="col-md-6">
-                                    <h6 class="text-success mb-2">矿场主收入 (Host Income)</h6>
+                                    <h6 class="text-success mb-2">{% if current_lang == 'en' %}Host Income{% else %}矿场主收入{% endif %}</h6>
                                     <table class="table table-sm table-bordered border-success border-opacity-25">
                                         <tbody>
                                             <tr>
-                                                <td>矿场主电费差收益 (Host Electric Profit)</td>
+                                                <td>{% if current_lang == 'en' %}Host Electric Profit{% else %}矿场主电费差收益{% endif %}</td>
                                                 <td id="host-monthly-profit" class="text-end">$0.00</td>
                                             </tr>
                                             <tr>
-                                                <td>矿场主运营收益 (Host Operation Profit)</td>
+                                                <td>{% if current_lang == 'en' %}Host Operation Profit{% else %}矿场主运营收益{% endif %}</td>
                                                 <td id="host-self-profit" class="text-end">$0.00</td>
                                             </tr>
                                             <tr>
-                                                <td>矿场总收入 (Total Site Revenue)</td>
+                                                <td>{% if current_lang == 'en' %}Total Site Revenue{% else %}矿场总收入{% endif %}</td>
                                                 <td id="site-total-revenue" class="text-end">$0.00</td>
                                             </tr>
                                             <tr class="table-success bg-opacity-25">
-                                                <td><strong>总收入 (Total Income)</strong></td>
+                                                <td><strong>{% if current_lang == 'en' %}Total Income{% else %}总收入{% endif %}</strong></td>
                                                 <td id="host-total-income" class="text-end fw-bold">$0.00</td>
                                             </tr>
                                         </tbody>
@@ -460,19 +460,19 @@
                                 </div>
                                 <!-- 矿场主支出列 -->
                                 <div class="col-md-6">
-                                    <h6 class="text-danger mb-2">矿场主支出 (Host Expenses)</h6>
+                                    <h6 class="text-danger mb-2">{% if current_lang == 'en' %}Host Expenses{% else %}矿场主支出{% endif %}</h6>
                                     <table class="table table-sm table-bordered border-danger border-opacity-25">
                                         <tbody>
                                             <tr>
-                                                <td>月度电费 (Monthly Electricity Cost)</td>
+                                                <td>{% if current_lang == 'en' %}Monthly Electricity Cost{% else %}月度电费{% endif %}</td>
                                                 <td id="monthly-electricity" class="text-end">$0.00</td>
                                             </tr>
                                             <tr>
-                                                <td>运维费用 (Operation Cost)</td>
+                                                <td>{% if current_lang == 'en' %}Operation Cost{% else %}运维费用{% endif %}</td>
                                                 <td id="operation-cost" class="text-end">$0.00</td>
                                             </tr>
                                             <tr class="table-danger bg-opacity-25">
-                                                <td><strong>总支出 (Total Expenses)</strong></td>
+                                                <td><strong>{% if current_lang == 'en' %}Total Expenses{% else %}总支出{% endif %}</strong></td>
                                                 <td id="host-total-expenses" class="text-end fw-bold">$0.00</td>
                                             </tr>
                                         </tbody>
@@ -486,9 +486,9 @@
                                     <table class="table table-sm table-bordered">
                                         <tbody>
                                             <tr class="bg-dark bg-opacity-10">
-                                                <td>矿场主月度净收益 (Host Monthly Net Profit)</td>
+                                                <td>{% if current_lang == 'en' %}Host Monthly Net Profit{% else %}矿场主月度净收益{% endif %}</td>
                                                 <td id="host-monthly-profit-display" class="text-end">$0.00</td>
-                                                <td>矿场主年度净收益 (Host Yearly Net Profit)</td>
+                                                <td>{% if current_lang == 'en' %}Host Yearly Net Profit{% else %}矿场主年度净收益{% endif %}</td>
                                                 <td id="host-yearly-profit" class="text-end">$0.00</td>
                                             </tr>
                                         </tbody>
