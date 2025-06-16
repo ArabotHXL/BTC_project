@@ -443,40 +443,169 @@
                 const isProfitable = dailyProfit > 0;
                 resultsCard.className = isProfitable ? 'card result-card' : 'card result-card negative-result';
                 
+                // Extract additional detailed data
+                const breakEven = data.break_even || {};
+                const inputs = data.inputs || {};
+                const optimization = data.optimization || {};
+                const maintenanceFee = data.maintenance_fee || {};
+                const hostProfit = data.profit || {};
+                
                 resultsContent.innerHTML = `
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6>Daily Profit</h6>
-                            <h4 class="${isProfitable ? 'text-success' : 'text-danger'}">$${dailyProfit.toFixed(2)}</h4>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Monthly Profit</h6>
-                            <h4 class="${isProfitable ? 'text-success' : 'text-danger'}">$${monthlyProfit.toFixed(2)}</h4>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Yearly Profit</h6>
-                            <h4 class="${isProfitable ? 'text-success' : 'text-danger'}">$${yearlyProfit.toFixed(2)}</h4>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>BTC per Day</h6>
-                            <h4>${btcPerDay.toFixed(8)}</h4>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <small class="text-muted">Daily Electricity: $${dailyElectricity.toFixed(2)}</small>
-                        </div>
-                        <div class="col-md-6">
-                            <small class="text-muted">Daily Revenue: $${dailyRevenue.toFixed(2)}</small>
+                    <!-- Main Profit Indicators -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h6 class="text-muted">Daily Profit</h6>
+                                <h4 class="${isProfitable ? 'text-success' : 'text-danger'}">$${dailyProfit.toFixed(2)}</h4>
+                            </div>
                         </div>
                         <div class="col-md-3">
-                            <small class="text-muted">Network Hashrate: ${data.network_data?.network_hashrate || 'N/A'} EH/s</small>
+                            <div class="text-center">
+                                <h6 class="text-muted">Monthly Profit</h6>
+                                <h4 class="${isProfitable ? 'text-success' : 'text-danger'}">$${monthlyProfit.toFixed(2)}</h4>
+                            </div>
                         </div>
                         <div class="col-md-3">
-                            <small class="text-muted">BTC Price: $${(data.network_data?.btc_price || 0).toLocaleString()}</small>
+                            <div class="text-center">
+                                <h6 class="text-muted">Yearly Profit</h6>
+                                <h4 class="${isProfitable ? 'text-success' : 'text-danger'}">$${yearlyProfit.toFixed(2)}</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h6 class="text-muted">BTC per Day</h6>
+                                <h4 class="text-warning">${btcPerDay.toFixed(8)}</h4>
+                            </div>
                         </div>
                     </div>
+                    
+                    <!-- Cost & Revenue Details -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body py-2">
+                                    <small class="text-muted">Daily Revenue</small>
+                                    <div class="fw-bold text-success">$${dailyRevenue.toFixed(2)}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body py-2">
+                                    <small class="text-muted">Daily Electricity</small>
+                                    <div class="fw-bold text-danger">$${dailyElectricity.toFixed(2)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Network Information -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0">Network Status</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <small class="text-muted">BTC Price</small>
+                                    <div class="fw-bold">$${(data.network_data?.btc_price || 0).toLocaleString()}</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">Network Hashrate</small>
+                                    <div class="fw-bold">${data.network_data?.network_hashrate || 'N/A'} EH/s</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">Network Difficulty</small>
+                                    <div class="fw-bold">${data.network_data?.network_difficulty?.toFixed(2) || 'N/A'} T</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">Block Reward</small>
+                                    <div class="fw-bold">${data.network_data?.block_reward || 3.125} BTC</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Miner Status -->
+                    ${optimization.running_miner_count ? `
+                    <div class="card mb-3">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">Miner Status</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <small class="text-muted">Running Miners</small>
+                                    <div class="fw-bold text-success">${optimization.running_miner_count} units</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted">Shut Down Miners</small>
+                                    <div class="fw-bold text-warning">${optimization.shutdown_miner_count || 0} units</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted">Effective Hashrate</small>
+                                    <div class="fw-bold">${(inputs.effective_hashrate / 1000).toFixed(1)} TH/s</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    <!-- Break-even Analysis -->
+                    ${breakEven.btc_price ? `
+                    <div class="card mb-3">
+                        <div class="card-header bg-warning text-dark">
+                            <h6 class="mb-0">Break-even Analysis</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small class="text-muted">Break-even BTC Price</small>
+                                    <div class="fw-bold">$${breakEven.btc_price.toFixed(2)}</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted">Break-even Electricity Cost</small>
+                                    <div class="fw-bold">$${breakEven.electricity_cost?.toFixed(4) || 'N/A'}/kWh</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    <!-- Host Profit (if authorized) -->
+                    ${hostProfit.daily ? `
+                    <div class="card mb-3">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0">Host Profit Analysis</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <small class="text-muted">Daily Profit</small>
+                                    <div class="fw-bold text-success">$${hostProfit.daily?.toFixed(2) || 0}</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted">Monthly Profit</small>
+                                    <div class="fw-bold text-success">$${hostProfit.monthly?.toFixed(2) || 0}</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted">Yearly Profit</small>
+                                    <div class="fw-bold text-success">$${hostProfit.yearly?.toFixed(2) || 0}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    ${!isProfitable ? `
+                    <div class="alert alert-warning">
+                        <strong><i class="fas fa-exclamation-triangle"></i> Profitability Alert</strong><br>
+                        Current configuration shows low profitability. Consider:<br>
+                        • Increase miner count for economies of scale<br>
+                        • Find lower electricity cost hosting services<br>
+                        • Choose more efficient miner models
+                    </div>
+                    ` : ''}
                 `;
             } else {
                 console.error('Invalid response data structure:', data);
