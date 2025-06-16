@@ -421,14 +421,16 @@
             const resultsCard = document.getElementById('results-card');
             const resultsContent = document.getElementById('results-content');
             
+            console.log('Displaying results for:', data);
+            
             if (data.error) {
                 resultsContent.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
-            } else if (data.success) {
-                // Extract data from the new response format
-                const dailyProfit = data.client_profit?.daily || 0;
-                const monthlyProfit = data.client_profit?.monthly || 0;
-                const yearlyProfit = data.client_profit?.yearly || 0;
-                const btcPerDay = data.btc_mined?.daily || 0;
+            } else if (data.success && data.client_profit && data.btc_mined) {
+                // Extract data from the actual API response format
+                const dailyProfit = data.client_profit.daily || 0;
+                const monthlyProfit = data.client_profit.monthly || 0;
+                const yearlyProfit = data.client_profit.yearly || 0;
+                const btcPerDay = data.btc_mined.daily || 0;
                 const dailyElectricity = data.client_electricity_cost?.daily || 0;
                 const dailyRevenue = data.revenue?.daily || 0;
                 
@@ -462,10 +464,17 @@
                         <div class="col-md-6">
                             <small class="text-muted">Daily Revenue: $${dailyRevenue.toFixed(2)}</small>
                         </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">Network Hashrate: ${data.network_data?.network_hashrate || 'N/A'} EH/s</small>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">BTC Price: $${(data.network_data?.btc_price || 0).toLocaleString()}</small>
+                        </div>
                     </div>
                 `;
             } else {
-                resultsContent.innerHTML = `<div class="alert alert-warning">Unable to parse calculation results</div>`;
+                console.error('Invalid response data structure:', data);
+                resultsContent.innerHTML = `<div class="alert alert-warning">Unable to parse calculation results - invalid data format</div>`;
             }
             
             resultsCard.style.display = 'block';
