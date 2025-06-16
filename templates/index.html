@@ -243,18 +243,18 @@
                                 <input type="hidden" id="total-hashrate" name="total_hashrate" value="0">
                                 <!-- 仅用于显示的总算力 -->
                                 <div class="mb-3">
-                                    <label for="total-hashrate-display" class="form-label">总算力 / Total Hashrate (TH/s)</label>
+                                    <label for="total-hashrate-display" class="form-label">{% if current_lang == 'en' %}Total Hashrate (TH/s){% else %}总算力 (TH/s){% endif %}</label>
                                     <input type="number" class="form-control" id="total-hashrate-display" readonly>
-                                    <div class="form-text">总算力 = 单台算力 × 矿机数量 / Total hashrate = Single miner hashrate × Miner count</div>
+                                    <div class="form-text">{% if current_lang == 'en' %}Total hashrate = Single miner hashrate × Miner count{% else %}总算力 = 单台算力 × 矿机数量{% endif %}</div>
                                 </div>
                                 
                                 <!-- Total Power Consumption - 隐藏但仍然发送到后端 -->
                                 <input type="hidden" id="total-power" name="total_power" value="0">
                                 <!-- 仅用于显示的总功耗 -->
                                 <div class="mb-3">
-                                    <label for="total-power-display" class="form-label">总功耗 / Total Power (W)</label>
+                                    <label for="total-power-display" class="form-label">{% if current_lang == 'en' %}Total Power (W){% else %}总功耗 (W){% endif %}</label>
                                     <input type="number" class="form-control" id="total-power-display" readonly>
-                                    <div class="form-text">总功耗 = 单台功耗 × 矿机数量 / Total power = Single miner power × Miner count</div>
+                                    <div class="form-text">{% if current_lang == 'en' %}Total power = Single miner power × Miner count{% else %}总功耗 = 单台功耗 × 矿机数量{% endif %}</div>
                                 </div>
 
                                 <!-- Electricity cost -->
@@ -271,30 +271,30 @@
 
                                 <!-- Customer Electricity Cost -->
                                 <div class="mb-3">
-                                    <label for="client-electricity-cost" class="form-label">{% if session.role in ['owner', 'admin', 'mining_site'] %}Customer Electricity Cost{% else %}Electricity Cost{% endif %} ($/kWh)</label>
+                                    <label for="client-electricity-cost" class="form-label">{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Customer Electricity Cost ($/kWh){% else %}客户电费 ($/kWh){% endif %}{% else %}{% if current_lang == 'en' %}Electricity Cost ($/kWh){% else %}电费成本 ($/kWh){% endif %}{% endif %}</label>
                                     <input type="number" class="form-control" id="client-electricity-cost" name="client_electricity_cost" value="0.06" min="0" step="0.001">
-                                    <div class="form-text">{% if session.role in ['owner', 'admin', 'mining_site'] %}收取客户的电费 (Electricity cost charged to customers){% else %}您支付的电费 (Electricity cost you are paying){% endif %}</div>
+                                    <div class="form-text">{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Electricity cost charged to customers{% else %}收取客户的电费{% endif %}{% else %}{% if current_lang == 'en' %}Electricity cost you are paying{% else %}您支付的电费{% endif %}{% endif %}</div>
                                 </div>
                                 
                                 <!-- Maintenance Fee - 仅对矿场管理员显示 -->
                                 {% if session.role in ['owner', 'admin', 'mining_site'] %}
                                 <div class="mb-3">
-                                    <label for="maintenance-fee" class="form-label">矿场维护费 (Maintenance Fee)</label>
+                                    <label for="maintenance-fee" class="form-label">{% if current_lang == 'en' %}Maintenance Fee{% else %}矿场维护费{% endif %}</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="maintenance-fee" name="maintenance_fee" value="5000" step="1" min="0">
                                         <span class="input-group-text">$</span>
                                     </div>
-                                    <div class="form-text">每月矿场维护费用 (Monthly maintenance cost for the mining facility)</div>
+                                    <div class="form-text">{% if current_lang == 'en' %}Monthly maintenance cost for the mining facility{% else %}每月矿场维护费用{% endif %}</div>
                                 </div>
                                 
                                 <!-- Curtailment Percentage -->
                                 <div class="mb-3">
-                                    <label for="curtailment" class="form-label">限电百分比 (Curtailment %)</label>
+                                    <label for="curtailment" class="form-label">{% if current_lang == 'en' %}Curtailment %{% else %}限电百分比{% endif %}</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="curtailment" name="curtailment" value="0" min="0" max="100" step="1">
                                         <span class="input-group-text">%</span>
                                     </div>
-                                    <div class="form-text">电力削减/限电比例，表示因电网需求响应、高温或维护等原因需降低功率的时间百分比 (Percentage of time with reduced power due to grid demand response, high temperature, or maintenance)</div>
+                                    <div class="form-text">{% if current_lang == 'en' %}Percentage of time with reduced power due to grid demand response, high temperature, or maintenance{% else %}电力削减/限电比例，表示因电网需求响应、高温或维护等原因需降低功率的时间百分比{% endif %}</div>
                                 </div>
                                 
                                 <!-- Shutdown Strategy (仅当curtailment > 0时显示) -->
