@@ -286,8 +286,27 @@ def logout():
 @app.route('/')
 @login_required
 def index():
-    """渲染BTC挖矿计算器主页"""
-    return render_template('index.html')
+    """渲染BTC挖矿计算器主页 - 根据语言偏好重定向"""
+    # 检查用户语言偏好，默认中文
+    preferred_lang = session.get('language', 'zh')
+    if preferred_lang == 'en':
+        return redirect(url_for('index_en'))
+    else:
+        return redirect(url_for('index_zh'))
+
+@app.route('/zh')
+@login_required
+def index_zh():
+    """中文版挖矿计算器"""
+    session['language'] = 'zh'
+    return render_template('index_zh.html')
+
+@app.route('/en')
+@login_required
+def index_en():
+    """English version mining calculator"""
+    session['language'] = 'en'
+    return render_template('index_en.html')
 
 @app.route('/admin/login_records')
 @login_required
