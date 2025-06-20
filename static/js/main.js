@@ -184,16 +184,27 @@
         
         // 加载网络数据
         function loadNetworkData() {
-            fetch('/network_stats')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        updateNetworkDisplay(data);
-                    }
-                })
-                .catch(error => {
-                    console.warn('网络数据加载失败:', error);
-                });
+            if (window.initialData && window.initialData.network) {
+                const data = {
+                    success: true,
+                    btc_price: window.initialData.network.btc_price,
+                    difficulty: window.initialData.network.difficulty,
+                    hashrate_eh: window.initialData.network.network_hashrate,
+                    block_reward: window.initialData.network.block_reward
+                };
+                updateNetworkDisplay(data);
+            } else {
+                fetch('/network_stats')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            updateNetworkDisplay(data);
+                        }
+                    })
+                    .catch(error => {
+                        console.warn('网络数据加载失败:', error);
+                    });
+            }
         }
         
         // 更新网络数据显示
@@ -206,18 +217,25 @@
         
         // 加载矿机数据
         function loadMinerData() {
-            fetch('/miners')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.miners) {
-                        localStorage.setItem('miners', JSON.stringify(data.miners));
-                        populateMinerSelect(data.miners);
-                        console.log("矿机列表加载成功:", data.miners.length);
-                    }
-                })
-                .catch(error => {
-                    console.warn('矿机数据加载失败:', error);
-                });
+            if (window.initialData && window.initialData.miners) {
+                const miners = window.initialData.miners;
+                localStorage.setItem('miners', JSON.stringify(miners));
+                populateMinerSelect(miners);
+                console.log("矿机列表加载成功:", miners.length);
+            } else {
+                fetch('/miners')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.miners) {
+                            localStorage.setItem('miners', JSON.stringify(data.miners));
+                            populateMinerSelect(data.miners);
+                            console.log("矿机列表加载成功:", data.miners.length);
+                        }
+                    })
+                    .catch(error => {
+                        console.warn('矿机数据加载失败:', error);
+                    });
+            }
         }
         
         // 填充矿机选择列表

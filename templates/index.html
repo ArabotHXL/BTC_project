@@ -861,9 +861,15 @@
 
     <!-- JavaScript -->
     <script src="/static/js/dom-safety.js"></script>
-    <script src="/static/js/main.js?v=3"></script>
+    <script src="/static/js/main.js?v=4"></script>
     
     <script>
+        // 嵌入初始数据
+        window.initialData = {
+            network: {{ initial_network_data | tojson }},
+            miners: {{ initial_miners_data | tojson }}
+        };
+        
         // 添加关机策略的显示/隐藏控制
         document.addEventListener('DOMContentLoaded', function() {
             function updateShutdownStrategyVisibility() {
