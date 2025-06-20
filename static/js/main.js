@@ -106,20 +106,49 @@
         
         // 显示计算结果
         function displayResults(data) {
+            console.log('显示计算结果:', data);
+            
             // 安全显示结果卡片
             safeStyle('results-card', 'display', 'block');
             
-            // 更新各种结果显示
+            // 更新BTC挖矿收益
             if (data.btc_mined) {
+                updateText('btc-method1-daily-card', formatNumber(data.btc_mined.daily, 8));
+                updateText('btc-method2-daily-card', formatNumber(data.btc_mined.daily, 8));
                 updateText('daily-btc', formatNumber(data.btc_mined.daily, 6) + ' BTC');
                 updateText('monthly-btc', formatNumber(data.btc_mined.monthly, 4) + ' BTC');
                 updateText('yearly-btc', formatNumber(data.btc_mined.yearly, 2) + ' BTC');
             }
             
+            // 更新收益数据
             if (data.profitability) {
                 updateText('daily-profit', formatCurrency(data.profitability.daily_profit));
                 updateText('monthly-profit', formatCurrency(data.profitability.monthly_profit));
                 updateText('yearly-profit', formatCurrency(data.profitability.yearly_profit));
+            }
+            
+            // 更新客户月度收益
+            if (data.monthly_profit_usd) {
+                updateText('client-profit-card', formatCurrency(data.monthly_profit_usd));
+            }
+            
+            // 更新矿场主收益 (如果有权限)
+            if (data.host_profit_usd) {
+                updateText('host-profit-card', formatCurrency(data.host_profit_usd));
+                updateText('host-monthly-profit', formatCurrency(data.host_profit_usd));
+            }
+            
+            // 更新总算力和功耗结果显示
+            if (data.total_hashrate_th) {
+                updateText('total-hashrate-result', formatNumber(data.total_hashrate_th, 0) + ' TH/s');
+            }
+            if (data.total_power_w) {
+                updateText('total-power-result', formatNumber(data.total_power_w / 1000, 0) + ' kW');
+            }
+            
+            // 更新矿机数量
+            if (data.miner_count) {
+                updateText('miner-count-result', formatNumber(data.miner_count, 0));
             }
         }
         
