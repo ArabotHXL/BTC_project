@@ -158,16 +158,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 处理实时数据切换 (Handle real-time data toggle)
     function handleRealTimeToggle() {
-        if (useRealTimeCheckbox.checked) {
-            btcPriceInput.disabled = true;
+        if (useRealTimeCheckbox && useRealTimeCheckbox.checked) {
+            if (btcPriceInput) btcPriceInput.disabled = true;
             fetchNetworkStats();
         } else {
-            btcPriceInput.disabled = false;
+            if (btcPriceInput) btcPriceInput.disabled = false;
         }
     }
     
     // 更新矿机规格 (Update miner specifications)
     function updateMinerSpecs() {
+        if (!minerModelSelect) return;
+        
         var selectedMiner = minerModelSelect.value;
         
         if (selectedMiner) {
@@ -176,13 +178,13 @@ document.addEventListener('DOMContentLoaded', function() {
             var miner = miners.find(function(m) { return m.name === selectedMiner; });
             
             if (miner) {
-                hashrateInput.value = miner.hashrate;
-                powerConsumptionInput.value = miner.power_watt;
+                if (hashrateInput) hashrateInput.value = miner.hashrate;
+                if (powerConsumptionInput) powerConsumptionInput.value = miner.power_watt;
                 
                 // 禁用手动输入 (Disable manual input)
-                hashrateInput.disabled = true;
-                hashrateUnitSelect.disabled = true;
-                powerConsumptionInput.disabled = true;
+                if (hashrateInput) hashrateInput.disabled = true;
+                if (hashrateUnitSelect) hashrateUnitSelect.disabled = true;
+                if (powerConsumptionInput) powerConsumptionInput.disabled = true;
                 
                 // 基于矿机功率和数量更新显示 (Update based on miner power and count)
                 updateMinerCount();
@@ -192,9 +194,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } else {
             // 启用手动输入 (Enable manual input)
-            hashrateInput.disabled = false;
-            hashrateUnitSelect.disabled = false;
-            powerConsumptionInput.disabled = false;
+            if (hashrateInput) hashrateInput.disabled = false;
+            if (hashrateUnitSelect) hashrateUnitSelect.disabled = false;
+            if (powerConsumptionInput) powerConsumptionInput.disabled = false;
         }
     }
     
@@ -208,6 +210,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // 设置标志，表示正在更新矿机数量
         isUpdatingMinerCount = true;
         
+        if (!sitePowerMwInput || !powerConsumptionInput) {
+            isUpdatingMinerCount = false;
+            return;
+        }
+        
         var sitePowerMw = parseFloat(sitePowerMwInput.value) || 0;
         var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
         
@@ -215,7 +222,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // 计算最大矿机数量 (Calculate maximum miner count)
             // Formula: (site_power_mw * 1000) / (power_watt / 1000)
             var maxMiners = Math.floor((sitePowerMw * 1000000) / powerWatt);
-            minerCountInput.value = maxMiners;
+            if (minerCountInput) {
+                minerCountInput.value = maxMiners;
+            }
             
             // 计算总算力和总功耗
             calculateTotalHashrateAndPower();
@@ -238,6 +247,11 @@ document.addEventListener('DOMContentLoaded', function() {
             isUpdatingSitePower = true;
             
             // 获取必要的值
+            if (!minerCountInput || !powerConsumptionInput || !sitePowerMwInput) {
+                isUpdatingSitePower = false;
+                return;
+            }
+            
             var minerCount = parseInt(minerCountInput.value) || 0;
             var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
             
@@ -255,8 +269,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log("当前矿场功率:", parseFloat(sitePowerMwInput.value).toFixed(2), "MW");
                 
                 // 设置新的矿场功率
-                sitePowerMwInput.value = requiredPowerMw.toFixed(2);
-                console.log("矿场功率已更新为:", requiredPowerMw.toFixed(2), "MW");
+                if (sitePowerMwInput) {
+                    sitePowerMwInput.value = requiredPowerMw.toFixed(2);
+                    console.log("矿场功率已更新为:", requiredPowerMw.toFixed(2), "MW");
+                }
             } else {
                 console.log("无法更新矿场功率 - 矿机数量或单机功率为0");
             }
@@ -755,10 +771,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // 显示结果卡片 (Show results card)
-            var resultsCardElement = document.getElementById('results-card');
-            if (resultsCardElement) {
-                resultsCardElement.style.display = 'block';
-            }
+            safeElementAccess('results-card', function(element) {
+                element.style.display = 'block';
+            });
             
             // ===== 1. 基本BTC挖矿产出 =====
             updateBtcOutputDisplay(data);
