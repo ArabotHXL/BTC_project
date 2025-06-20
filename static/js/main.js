@@ -128,7 +128,9 @@
             }
             
             // 更新客户月度收益
-            if (data.monthly_profit_usd) {
+            if (data.client_profit && data.client_profit.monthly) {
+                updateText('client-profit-card', formatCurrency(data.client_profit.monthly));
+            } else if (data.monthly_profit_usd) {
                 updateText('client-profit-card', formatCurrency(data.monthly_profit_usd));
             }
             
