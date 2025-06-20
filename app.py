@@ -318,8 +318,8 @@ def index():
             miners_data.append({
                 'name': name,
                 'hashrate': specs['hashrate'],
-                'power_consumption': specs['power_consumption'],
-                'efficiency': round(specs['power_consumption'] / specs['hashrate'], 2)
+                'power_consumption': specs['power_watt'],
+                'efficiency': round(specs['power_watt'] / specs['hashrate'], 2)
             })
             
     except Exception as e:
