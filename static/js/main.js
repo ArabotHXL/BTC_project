@@ -69,7 +69,13 @@
             safeEvent('hashrate', 'input', updateCalculations);
             safeEvent('power-consumption', 'input', updateCalculations);
             safeEvent('site-power-mw', 'input', updateMinerCount);
+            safeEvent('site-power-mw', 'change', updateMinerCount);
             safeEvent('use-real-time', 'change', toggleRealTime);
+            
+            // 添加额外的事件监听器确保计算更新
+            safeEvent('miner-count', 'change', updateCalculations);
+            safeEvent('hashrate', 'change', updateCalculations);
+            safeEvent('power-consumption', 'change', updateCalculations);
         }
         
         // 处理表单提交
@@ -130,12 +136,30 @@
             const model = getValue('miner-model');
             if (!model) return;
             
-            const miners = JSON.parse(localStorage.getItem('miners') || '[]');
-            const miner = miners.find(m => m.name === model);
+            console.log('选择的矿机型号:', model);
+            
+            // 从初始数据或localStorage获取矿机数据
+            let miners = [];
+            if (window.initialData && window.initialData.miners) {
+                miners = window.initialData.miners;
+            } else {
+                miners = JSON.parse(localStorage.getItem('miners') || '[]');
+            }
+            
+            const miner = miners.find(m => m.model === model || m.name === model);
+            console.log('找到的矿机数据:', miner);
             
             if (miner) {
-                safeValue('hashrate', miner.hashrate);
-                safeValue('power-consumption', miner.power_watt);
+                const hashrate = miner.hashrate || miner.hash_rate || 0;
+                const power = miner.power_watt || miner.power_consumption || 0;
+                
+                console.log('设置矿机参数:', {hashrate, power});
+                
+                safeValue('hashrate', hashrate);
+                safeValue('power-consumption', power);
+                
+                // 触发矿机数量和总算力计算
+                updateMinerCount();
                 updateCalculations();
             }
         }
@@ -146,14 +170,22 @@
             const hashrate = parseFloat(getValue('hashrate', '0')) || 0;
             const power = parseFloat(getValue('power-consumption', '0')) || 0;
             
+            console.log('更新计算:', {count, hashrate, power});
+            
             if (count > 0 && hashrate > 0 && power > 0) {
                 const totalHashrate = count * hashrate;
                 const totalPower = count * power;
+                
+                console.log('计算结果:', {totalHashrate, totalPower});
                 
                 safeValue('total-hashrate', totalHashrate.toFixed(0));
                 safeValue('total-power', totalPower.toFixed(0));
                 safeValue('total-hashrate-display', totalHashrate.toFixed(0));
                 safeValue('total-power-display', totalPower.toFixed(0));
+                
+                // 同时更新文本显示
+                updateText('total-hashrate-result', totalHashrate.toFixed(0) + ' TH/s');
+                updateText('total-power-result', totalPower.toFixed(0) + ' W');
             }
         }
         
@@ -162,8 +194,11 @@
             const sitePower = parseFloat(getValue('site-power-mw', '0')) || 0;
             const minerPower = parseFloat(getValue('power-consumption', '0')) || 0;
             
+            console.log('更新矿机数量:', {sitePower, minerPower});
+            
             if (sitePower > 0 && minerPower > 0) {
                 const maxMiners = Math.floor((sitePower * 1000000) / minerPower);
+                console.log('计算出的最大矿机数量:', maxMiners);
                 safeValue('miner-count', maxMiners);
                 updateCalculations();
             }
