@@ -287,56 +287,7 @@ def logout():
 @login_required
 def index():
     """渲染BTC挖矿计算器主页"""
-    # 获取网络数据供页面使用
-    network_data = {}
-    miners_data = []
-    
-    try:
-        from coinwarz_api import get_enhanced_network_data
-        from mining_calculator import MINER_DATA
-        
-        # 获取网络数据
-        raw_network_data = get_enhanced_network_data()
-        if raw_network_data and raw_network_data.get('btc_price'):
-            network_data = {
-                'btc_price': raw_network_data.get('btc_price', 80000),
-                'difficulty': raw_network_data.get('difficulty', 119.12),
-                'network_hashrate': raw_network_data.get('network_hashrate', 900),
-                'block_reward': raw_network_data.get('block_reward', 3.125)
-            }
-        else:
-            # 默认数据
-            network_data = {
-                'btc_price': 80000,
-                'difficulty': 119.12,
-                'network_hashrate': 900,
-                'block_reward': 3.125
-            }
-        
-        # 获取矿机数据
-        for name, specs in MINER_DATA.items():
-            miners_data.append({
-                'model': name,
-                'name': name,  # 保持向后兼容
-                'hashrate': specs['hashrate'],
-                'power_consumption': specs['power_watt'],
-                'power_watt': specs['power_watt'],  # 保持向后兼容
-                'efficiency': round(specs['power_watt'] / specs['hashrate'], 2)
-            })
-            
-    except Exception as e:
-        logging.warning(f"获取初始数据失败: {str(e)}")
-        # 使用默认数据
-        network_data = {
-            'btc_price': 80000,
-            'difficulty': 119.12,
-            'network_hashrate': 900,
-            'block_reward': 3.125
-        }
-        
-    return render_template('index.html', 
-                         initial_network_data=network_data,
-                         initial_miners_data=miners_data)
+    return render_template('index.html')
 
 @app.route('/admin/login_records')
 @login_required
@@ -872,14 +823,11 @@ def get_network_stats():
         if network_data and network_data.get('btc_price'):
             response_data = {
                 'success': True,
-                'btc_price': network_data['btc_price'],  # 前端期望的字段名
-                'price': network_data['btc_price'],      # 保持向后兼容
-                'difficulty': network_data['difficulty'],
-                'hashrate_eh': network_data['hashrate'], # 前端期望的字段名
-                'hashrate': network_data['hashrate'],    # 保持向后兼容
+                'price': network_data['btc_price'],
+                'difficulty': network_data['difficulty'] / 10**12 if network_data['difficulty'] > 1000 else network_data['difficulty'],
+                'hashrate': network_data['hashrate'],
                 'block_reward': network_data['block_reward'],
-                'api_source': network_data['data_source'], # 前端期望的字段名
-                'data_source': network_data['data_source'], # 保持向后兼容
+                'data_source': network_data['data_source'],
                 'profit_ratio': network_data.get('profit_ratio', 100),
                 'health_status': network_data.get('health_status', 'Unknown'),
                 'api_calls_remaining': network_data.get('api_calls_remaining', 0)

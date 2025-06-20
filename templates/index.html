@@ -860,45 +860,43 @@
     </div>
 
     <!-- JavaScript -->
-    <script src="/static/js/dom-safety.js"></script>
-    <script src="/static/js/main.js?v=10"></script>
+    <script src="/static/js/main_new.js"></script>
     
     <script>
-        // 嵌入初始数据
-        window.initialData = {
-            network: {{ initial_network_data | tojson }},
-            miners: {{ initial_miners_data | tojson }}
-        };
-        
         // 添加关机策略的显示/隐藏控制
         document.addEventListener('DOMContentLoaded', function() {
+            // 获取元素
+            const curtailmentInput = document.getElementById('curtailment');
+            const shutdownStrategyContainer = document.getElementById('shutdown-strategy-container');
+            
+            // 初始检查
+            updateShutdownStrategyVisibility();
+            
+            // 添加事件监听器
+            curtailmentInput.addEventListener('input', updateShutdownStrategyVisibility);
+            
             function updateShutdownStrategyVisibility() {
-                const curtailmentValue = parseFloat(DOMSafety.getValue('curtailment')) || 0;
+                const curtailmentValue = parseFloat(curtailmentInput.value) || 0;
                 
                 // 如果curtailment > 0，显示关机策略选择
                 if (curtailmentValue > 0) {
-                    DOMSafety.show('shutdown-strategy-container');
+                    shutdownStrategyContainer.style.display = 'block';
                 } else {
-                    DOMSafety.hide('shutdown-strategy-container');
+                    shutdownStrategyContainer.style.display = 'none';
                 }
-            }
-            
-            // 只有当元素存在时才执行
-            if (DOMSafety.exists('curtailment')) {
-                updateShutdownStrategyVisibility();
-                DOMSafety.on('curtailment', 'input', updateShutdownStrategyVisibility);
             }
         });
 
         // 全网算力输入切换功能
         function toggleHashrateInput() {
-            if (DOMSafety.exists('hashrate-manual')) {
-                const hashrateManualRadio = DOMSafety.get('hashrate-manual');
-                if (hashrateManualRadio && hashrateManualRadio.checked) {
-                    DOMSafety.show('manual-hashrate-container');
-                } else {
-                    DOMSafety.hide('manual-hashrate-container');
-                }
+            const hashrateApiRadio = document.getElementById('hashrate-api');
+            const hashrateManualRadio = document.getElementById('hashrate-manual');
+            const manualHashrateContainer = document.getElementById('manual-hashrate-container');
+            
+            if (hashrateManualRadio.checked) {
+                manualHashrateContainer.style.display = 'block';
+            } else {
+                manualHashrateContainer.style.display = 'none';
             }
         }
     </script>

@@ -1,363 +1,1312 @@
-// Bitcoin Mining Calculator - Clean Version
-(function() {
-    'use strict';
+// Bitcoin Mining Calculator - Main JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("页面已加载，初始化应用...");
     
-    // 等待DOM完全加载
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initApp);
-    } else {
-        setTimeout(initApp, 100);
-    }
+    // 元素引用 (Element references)
+    var btcPriceEl = document.getElementById('btc-price');
+    var networkDifficultyEl = document.getElementById('network-difficulty');
+    var networkHashrateEl = document.getElementById('network-hashrate');
+    var blockRewardEl = document.getElementById('block-reward');
     
-    function initApp() {
-        console.log("应用初始化开始");
+    var minerModelSelect = document.getElementById('miner-model');
+    var sitePowerMwInput = document.getElementById('site-power-mw');
+    var minerCountInput = document.getElementById('miner-count');
+    var hashrateInput = document.getElementById('hashrate');
+    var hashrateUnitSelect = document.getElementById('hashrate-unit');
+    var powerConsumptionInput = document.getElementById('power-consumption');
+    var electricityCostInput = document.getElementById('electricity-cost');
+    var clientElectricityCostInput = document.getElementById('client-electricity-cost');
+    var btcPriceInput = document.getElementById('btc-price-input');
+    var useRealTimeCheckbox = document.getElementById('use-real-time');
+    var calculatorForm = document.getElementById('mining-calculator-form');
+    
+    // 检查总算力和总功耗输入框
+    var totalHashrateInput = document.getElementById('total-hashrate');
+    var totalPowerInput = document.getElementById('total-power');
+    
+    console.log("元素检查 - 矿机数量:", minerCountInput ? "已找到" : "未找到");
+    console.log("元素检查 - 单矿机算力:", hashrateInput ? "已找到" : "未找到");
+    console.log("元素检查 - 单矿机功耗:", powerConsumptionInput ? "已找到" : "未找到");
+    console.log("元素检查 - 总算力输入框:", totalHashrateInput ? "已找到" : "未找到");
+    console.log("元素检查 - 总功耗输入框:", totalPowerInput ? "已找到" : "未找到");
+    
+    var resultsCard = document.getElementById('results-card');
+    var chartCard = document.getElementById('chart-card');
+    
+    // 防止无限循环的标志
+    var isUpdatingMinerCount = false;
+    var isUpdatingSitePower = false;
+    
+    // 初始化 (Initialization)
+    function init() {
+        // 获取当前语言设置 (Get current language setting)
+        const currentLang = document.querySelector('meta[name="language"]')?.content || 'zh';
+        console.log("当前语言设置 (Current language):", currentLang);
         
-        // DOM元素缓存
-        const elements = {};
+        // 加载网络数据 (Load network data)
+        fetchNetworkStats();
         
-        // 安全获取元素
-        function safeGet(id) {
-            if (!elements[id]) {
-                elements[id] = document.getElementById(id);
-            }
-            return elements[id];
-        }
+        // 启动网络统计数据自动刷新（包括网络算力）
+        startNetworkStatsAutoRefresh();
         
-        // 安全设置样式
-        function safeStyle(id, prop, val) {
-            const el = safeGet(id);
-            if (el && el.style) {
-                el.style[prop] = val;
-            }
-        }
+        // 加载矿机型号列表 (Load miner models)
+        fetchMiners();
         
-        // 安全设置值
-        function safeValue(id, val) {
-            const el = safeGet(id);
-            if (el && 'value' in el) {
-                el.value = val;
-            }
-        }
-        
-        // 安全获取值
-        function getValue(id, defaultVal = '') {
-            const el = safeGet(id);
-            return el ? (el.value || defaultVal) : defaultVal;
-        }
-        
-        // 安全事件绑定
-        function safeEvent(id, event, handler) {
-            const el = safeGet(id);
-            if (el && el.addEventListener) {
-                el.addEventListener(event, handler);
-            }
-        }
-        
-        // 初始化所有功能
-        function initialize() {
-            loadNetworkData();
-            loadMinerData();
-            bindEvents();
-            startAutoRefresh();
-        }
-        
-        // 绑定事件监听器
-        function bindEvents() {
-            safeEvent('mining-calculator-form', 'submit', handleSubmit);
-            safeEvent('miner-model', 'change', updateMinerSpecs);
-            safeEvent('miner-count', 'input', updateCalculations);
-            safeEvent('hashrate', 'input', updateCalculations);
-            safeEvent('power-consumption', 'input', updateCalculations);
-            safeEvent('site-power-mw', 'input', updateMinerCount);
-            safeEvent('site-power-mw', 'change', updateMinerCount);
-            safeEvent('use-real-time', 'change', toggleRealTime);
+        // 延迟计算以确保元素已加载完成
+        console.log("在init函数中等待1秒后开始计算总算力和总功耗");
+        setTimeout(function() {
+            console.log("即将计算总算力和总功耗");
             
-            // 添加额外的事件监听器确保计算更新
-            safeEvent('miner-count', 'change', updateCalculations);
-            safeEvent('hashrate', 'change', updateCalculations);
-            safeEvent('power-consumption', 'change', updateCalculations);
-        }
-        
-        // 处理表单提交
-        function handleSubmit(e) {
-            e.preventDefault();
+            // 初始化总算力和总功耗字段
+            var totalHashrateInput = document.getElementById('total-hashrate');
+            var totalPowerInput = document.getElementById('total-power');
             
-            const form = safeGet('mining-calculator-form');
-            if (!form) return;
+            console.log("总算力输入框存在:", !!totalHashrateInput);
+            console.log("总功耗输入框存在:", !!totalPowerInput);
             
-            const formData = new FormData(form);
+            // 如果有初始值，先设置一下
+            var minerCount = parseInt(minerCountInput.value) || 0;
+            var hashrate = parseFloat(hashrateInput.value) || 0;
+            var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
             
-            fetch('/calculate', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    displayResults(data);
-                } else {
-                    console.error('计算错误:', data.error);
+            console.log("初始值 - 矿机数量:", minerCount, "单机算力:", hashrate, "单机功耗:", powerWatt);
+            
+            if (minerCount > 0 && hashrate > 0 && powerWatt > 0) {
+                var totalHashrate = minerCount * hashrate;
+                var totalPower = minerCount * powerWatt;
+                
+                if (totalHashrateInput) {
+                    totalHashrateInput.value = totalHashrate.toFixed(0);
+                    console.log("初始化总算力为:", totalHashrate.toFixed(0));
                 }
-            })
-            .catch(error => {
-                console.error('请求失败:', error);
+                
+                if (totalPowerInput) {
+                    totalPowerInput.value = totalPower.toFixed(0);
+                    console.log("初始化总功耗为:", totalPower.toFixed(0));
+                }
+            }
+            
+            // 然后正常调用计算函数
+            calculateTotalHashrateAndPower();
+        }, 1000);
+        
+        // 事件绑定 (Event bindings)
+        if (calculatorForm) {
+            calculatorForm.addEventListener('submit', handleCalculateSubmit);
+        }
+        
+        if (minerModelSelect) {
+            minerModelSelect.addEventListener('change', updateMinerSpecs);
+        }
+        
+        if (sitePowerMwInput) {
+            sitePowerMwInput.addEventListener('input', updateMinerCount);
+        }
+        
+        if (minerCountInput) {
+            // 当矿机数量变化时，先更新矿场功率，然后计算总算力和总功耗
+            minerCountInput.addEventListener('input', function() {
+                // 先更新矿场功率
+                updateSitePower();
+                // 然后计算总算力和总功耗
+                calculateTotalHashrateAndPower();
             });
         }
         
-        // 显示计算结果
-        function displayResults(data) {
-            console.log('显示计算结果:', data);
-            
-            // 安全显示结果卡片
-            safeStyle('results-card', 'display', 'block');
-            
-            // 更新BTC挖矿收益
-            if (data.btc_mined) {
-                updateText('btc-method1-daily-card', formatNumber(data.btc_mined.daily, 8));
-                updateText('btc-method2-daily-card', formatNumber(data.btc_mined.daily, 8));
-                updateText('daily-btc', formatNumber(data.btc_mined.daily, 6) + ' BTC');
-                updateText('monthly-btc', formatNumber(data.btc_mined.monthly, 4) + ' BTC');
-                updateText('yearly-btc', formatNumber(data.btc_mined.yearly, 2) + ' BTC');
-            }
-            
-            // 更新收益数据
-            if (data.profitability) {
-                updateText('daily-profit', formatCurrency(data.profitability.daily_profit));
-                updateText('monthly-profit', formatCurrency(data.profitability.monthly_profit));
-                updateText('yearly-profit', formatCurrency(data.profitability.yearly_profit));
-            }
-            
-            // 更新客户月度收益
-            if (data.client_profit && data.client_profit.monthly) {
-                updateText('client-profit-card', formatCurrency(data.client_profit.monthly));
-            } else if (data.monthly_profit_usd) {
-                updateText('client-profit-card', formatCurrency(data.monthly_profit_usd));
-            }
-            
-            // 更新矿场主收益 (如果有权限)
-            if (data.host_profit_usd) {
-                updateText('host-profit-card', formatCurrency(data.host_profit_usd));
-                updateText('host-monthly-profit', formatCurrency(data.host_profit_usd));
-            }
-            
-            // 更新总算力和功耗结果显示
-            if (data.inputs && data.inputs.hashrate) {
-                updateText('total-hashrate-result', formatNumber(data.inputs.hashrate, 0) + ' TH/s');
-                updateText('total-hashrate-display', formatNumber(data.inputs.hashrate, 0) + ' TH/s');
-            }
-            if (data.inputs && data.inputs.power_consumption) {
-                updateText('total-power-result', formatNumber(data.inputs.power_consumption / 1000, 0) + ' kW');
-                updateText('total-power-display', formatNumber(data.inputs.power_consumption / 1000, 0) + ' kW');
-            }
-            
-            // 更新矿机数量显示
-            if (data.inputs && data.inputs.miner_count) {
-                updateText('miner-count-display', formatNumber(data.inputs.miner_count, 0));
-            }
-            
-            // 更新矿机数量
-            if (data.miner_count) {
-                updateText('miner-count-result', formatNumber(data.miner_count, 0));
-            }
+        if (hashrateInput) {
+            hashrateInput.addEventListener('input', calculateTotalHashrateAndPower);
         }
         
-        // 安全更新文本内容
-        function updateText(id, text) {
-            const el = safeGet(id);
-            if (el) {
-                el.textContent = text;
-            }
+        if (powerConsumptionInput) {
+            powerConsumptionInput.addEventListener('input', calculateTotalHashrateAndPower);
         }
         
-        // 更新矿机规格
-        function updateMinerSpecs() {
-            const model = getValue('miner-model');
-            if (!model) return;
-            
-            console.log('选择的矿机型号:', model);
-            
-            // 从初始数据或localStorage获取矿机数据
-            let miners = [];
-            if (window.initialData && window.initialData.miners) {
-                miners = window.initialData.miners;
-            } else {
-                miners = JSON.parse(localStorage.getItem('miners') || '[]');
-            }
-            
-            const miner = miners.find(m => m.model === model || m.name === model);
-            console.log('找到的矿机数据:', miner);
+        if (useRealTimeCheckbox) {
+            useRealTimeCheckbox.addEventListener('change', handleRealTimeToggle);
+        }
+        
+        // 图表生成按钮
+        var chartBtn = document.getElementById('generate-chart-btn');
+        if (chartBtn) {
+            chartBtn.addEventListener('click', function() {
+                var minerModel = minerModelSelect.value;
+                var minerCount = minerCountInput.value || 1;
+                var clientElectricityCost = clientElectricityCostInput.value || 0;
+                
+                if (!minerModel) {
+                    showError('请先选择矿机型号再生成热力图。(Please select a miner model first.)');
+                    return;
+                }
+                
+                generateProfitChart(minerModel, minerCount, clientElectricityCost);
+            });
+        }
+    }
+    
+    // 处理实时数据切换 (Handle real-time data toggle)
+    function handleRealTimeToggle() {
+        if (useRealTimeCheckbox.checked) {
+            btcPriceInput.disabled = true;
+            fetchNetworkStats();
+        } else {
+            btcPriceInput.disabled = false;
+        }
+    }
+    
+    // 更新矿机规格 (Update miner specifications)
+    function updateMinerSpecs() {
+        var selectedMiner = minerModelSelect.value;
+        
+        if (selectedMiner) {
+            // 从localStorage获取矿机数据 (Get miner data from localStorage)
+            var miners = JSON.parse(localStorage.getItem('miners') || '[]');
+            var miner = miners.find(function(m) { return m.name === selectedMiner; });
             
             if (miner) {
-                const hashrate = miner.hashrate || miner.hash_rate || 0;
-                const power = miner.power_watt || miner.power_consumption || 0;
+                hashrateInput.value = miner.hashrate;
+                powerConsumptionInput.value = miner.power_watt;
                 
-                console.log('设置矿机参数:', {hashrate, power});
+                // 禁用手动输入 (Disable manual input)
+                hashrateInput.disabled = true;
+                hashrateUnitSelect.disabled = true;
+                powerConsumptionInput.disabled = true;
                 
-                safeValue('hashrate', hashrate);
-                safeValue('power-consumption', power);
-                
-                // 触发矿机数量和总算力计算
+                // 基于矿机功率和数量更新显示 (Update based on miner power and count)
                 updateMinerCount();
-                updateCalculations();
+                
+                // 计算总算力和总功耗
+                calculateTotalHashrateAndPower();
+            }
+        } else {
+            // 启用手动输入 (Enable manual input)
+            hashrateInput.disabled = false;
+            hashrateUnitSelect.disabled = false;
+            powerConsumptionInput.disabled = false;
+        }
+    }
+    
+    // 更新矿机数量 (Update miner count)
+    function updateMinerCount() {
+        // 如果已经在更新矿场功率，则退出以防止循环
+        if (isUpdatingSitePower) {
+            return;
+        }
+        
+        // 设置标志，表示正在更新矿机数量
+        isUpdatingMinerCount = true;
+        
+        var sitePowerMw = parseFloat(sitePowerMwInput.value) || 0;
+        var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
+        
+        if (sitePowerMw > 0 && powerWatt > 0) {
+            // 计算最大矿机数量 (Calculate maximum miner count)
+            // Formula: (site_power_mw * 1000) / (power_watt / 1000)
+            var maxMiners = Math.floor((sitePowerMw * 1000000) / powerWatt);
+            minerCountInput.value = maxMiners;
+            
+            // 计算总算力和总功耗
+            calculateTotalHashrateAndPower();
+        }
+        
+        // 清除标志
+        isUpdatingMinerCount = false;
+    }
+    
+    // 根据矿机数量更新矿场功率 (Update site power based on miner count)
+    function updateSitePower() {
+        try {
+            // 如果已经在更新矿机数量，则退出以防止循环
+            if (isUpdatingMinerCount) {
+                console.log("矿机数量正在更新中，跳过矿场功率更新");
+                return;
+            }
+            
+            // 设置标志，表示正在更新矿场功率
+            isUpdatingSitePower = true;
+            
+            // 获取必要的值
+            var minerCount = parseInt(minerCountInput.value) || 0;
+            var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
+            
+            console.log("矿机数量发生变化 - 更新矿场功率...");
+            console.log("  矿机数量:", minerCount);
+            console.log("  单机功率:", powerWatt);
+            console.log("  功率输入框元素:", powerConsumptionInput ? "已找到" : "未找到");
+            console.log("  矿场功率输入框元素:", sitePowerMwInput ? "已找到" : "未找到");
+            
+            if (minerCount > 0 && powerWatt > 0) {
+                // 计算所需的矿场功率 (Calculate required site power)
+                var requiredPowerMw = (minerCount * powerWatt) / 1000000;
+                
+                console.log("计算得到的新矿场功率:", requiredPowerMw.toFixed(2), "MW");
+                console.log("当前矿场功率:", parseFloat(sitePowerMwInput.value).toFixed(2), "MW");
+                
+                // 设置新的矿场功率
+                sitePowerMwInput.value = requiredPowerMw.toFixed(2);
+                console.log("矿场功率已更新为:", requiredPowerMw.toFixed(2), "MW");
+            } else {
+                console.log("无法更新矿场功率 - 矿机数量或单机功率为0");
+            }
+        } catch (error) {
+            console.error("更新矿场功率时发生错误:", error);
+        } finally {
+            // 清除标志
+            isUpdatingSitePower = false;
+        }
+    }
+    
+    // 计算总算力和总功耗
+    function calculateTotalHashrateAndPower() {
+        var minerCount = parseInt(minerCountInput.value) || 0;
+        var hashrate = parseFloat(hashrateInput.value) || 0;
+        var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
+        
+        console.log("计算总算力和总功耗 - 矿机数量:", minerCount, "单矿机算力:", hashrate, "单矿机功耗:", powerWatt);
+        
+        if (minerCount > 0 && hashrate > 0 && powerWatt > 0) {
+            // 计算总算力和总功耗
+            var totalHashrate = minerCount * hashrate;
+            var totalPower = minerCount * powerWatt;
+            
+            console.log("计算结果 - 总算力:", totalHashrate, "总功耗:", totalPower);
+            
+            // 更新隐藏字段
+            var totalHashrateInput = document.getElementById('total-hashrate');
+            var totalPowerInput = document.getElementById('total-power');
+            
+            // 更新显示字段
+            var totalHashrateDisplay = document.getElementById('total-hashrate-display');
+            var totalPowerDisplay = document.getElementById('total-power-display');
+            
+            // 日志输出字段状态
+            console.log("总算力隐藏字段:", totalHashrateInput ? "已找到" : "未找到", 
+                        "总功耗隐藏字段:", totalPowerInput ? "已找到" : "未找到");
+            console.log("总算力显示字段:", totalHashrateDisplay ? "已找到" : "未找到", 
+                        "总功耗显示字段:", totalPowerDisplay ? "已找到" : "未找到");
+            
+            // 更新隐藏字段（用于表单提交）
+            if (totalHashrateInput) {
+                totalHashrateInput.value = totalHashrate.toFixed(0);
+                console.log("总算力隐藏字段已更新为:", totalHashrate.toFixed(0));
+            }
+            
+            if (totalPowerInput) {
+                totalPowerInput.value = totalPower.toFixed(0);
+                console.log("总功耗隐藏字段已更新为:", totalPower.toFixed(0));
+            }
+            
+            // 更新显示字段（用于用户界面）
+            if (totalHashrateDisplay) {
+                totalHashrateDisplay.value = totalHashrate.toFixed(0);
+                console.log("总算力显示字段已更新为:", totalHashrate.toFixed(0));
+            }
+            
+            if (totalPowerDisplay) {
+                totalPowerDisplay.value = totalPower.toFixed(0);
+                console.log("总功耗显示字段已更新为:", totalPower.toFixed(0));
+            }
+            
+            return { totalHashrate: totalHashrate, totalPower: totalPower };
+        } else {
+            console.log("计算条件不满足 - 矿机数量、算力或功耗有一项为0");
+            return null;
+        }
+    }
+    
+    // 处理计算表单提交 (Handle calculation form submission)
+    function handleCalculateSubmit(event) {
+        event.preventDefault();
+        
+        // 在提交表单前重新计算一次总算力和总功耗
+        console.log("表单提交前重新计算总算力和总功耗");
+        calculateTotalHashrateAndPower();
+        
+        // 直接设置总算力和总功耗
+        var minerCount = parseInt(minerCountInput.value) || 0;
+        var hashrate = parseFloat(hashrateInput.value) || 0;
+        var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
+        
+        if (minerCount > 0 && hashrate > 0 && powerWatt > 0) {
+            var totalHashrate = minerCount * hashrate;
+            var totalPower = minerCount * powerWatt;
+            
+            // 获取总算力和总功耗输入框
+            var totalHashrateInput = document.getElementById('total-hashrate');
+            var totalPowerInput = document.getElementById('total-power');
+            
+            console.log("表单提交前检查总算力和总功耗输入框");
+            console.log("总算力输入框:", totalHashrateInput ? "存在" : "不存在");
+            console.log("总功耗输入框:", totalPowerInput ? "存在" : "不存在");
+            
+            if (totalHashrateInput) {
+                console.log("设置总算力为:", totalHashrate);
+                totalHashrateInput.value = totalHashrate.toFixed(0);
+            }
+            
+            if (totalPowerInput) {
+                console.log("设置总功耗为:", totalPower);
+                totalPowerInput.value = totalPower.toFixed(0);
             }
         }
         
-        // 更新计算
-        function updateCalculations() {
-            const count = parseInt(getValue('miner-count', '0')) || 0;
-            const hashrate = parseFloat(getValue('hashrate', '0')) || 0;
-            const power = parseFloat(getValue('power-consumption', '0')) || 0;
+        // 表单验证 (Form validation)
+        var hasErrors = false;
+        
+        if (minerModelSelect.value === "") {
+            if (!hashrateInput.value || parseFloat(hashrateInput.value) <= 0) {
+                showError('请输入有效的算力值。(Please enter a valid hashrate value.)');
+                hasErrors = true;
+            }
             
-            console.log('更新计算:', {count, hashrate, power});
-            
-            if (count > 0 && hashrate > 0 && power > 0) {
-                const totalHashrate = count * hashrate;
-                const totalPower = count * power;
-                
-                console.log('计算结果:', {totalHashrate, totalPower});
-                
-                safeValue('total-hashrate', totalHashrate.toFixed(0));
-                safeValue('total-power', totalPower.toFixed(0));
-                safeValue('total-hashrate-display', totalHashrate.toFixed(0));
-                safeValue('total-power-display', totalPower.toFixed(0));
-                
-                // 同时更新文本显示
-                updateText('total-hashrate-result', totalHashrate.toFixed(0) + ' TH/s');
-                updateText('total-power-result', totalPower.toFixed(0) + ' W');
+            if (!powerConsumptionInput.value || parseFloat(powerConsumptionInput.value) <= 0) {
+                showError('请输入有效的功率值。(Please enter a valid power consumption value.)');
+                hasErrors = true;
             }
         }
         
-        // 更新矿机数量
-        function updateMinerCount() {
-            const sitePower = parseFloat(getValue('site-power-mw', '0')) || 0;
-            const minerPower = parseFloat(getValue('power-consumption', '0')) || 0;
-            
-            console.log('更新矿机数量:', {sitePower, minerPower});
-            
-            if (sitePower > 0 && minerPower > 0) {
-                const maxMiners = Math.floor((sitePower * 1000000) / minerPower);
-                console.log('计算出的最大矿机数量:', maxMiners);
-                safeValue('miner-count', maxMiners);
-                updateCalculations();
-            }
+        if (!electricityCostInput.value || parseFloat(electricityCostInput.value) < 0) {
+            showError('请输入有效的电费。(Please enter a valid electricity cost.)');
+            hasErrors = true;
         }
         
-        // 切换实时数据
-        function toggleRealTime() {
-            const useRealTime = safeGet('use-real-time');
-            const btcInput = safeGet('btc-price-input');
+        if (!useRealTimeCheckbox.checked && (!btcPriceInput.value || parseFloat(btcPriceInput.value) <= 0)) {
+            showError('请输入有效的比特币价格。(Please enter a valid Bitcoin price.)');
+            hasErrors = true;
+        }
+        
+        if (hasErrors) {
+            return;
+        }
+        
+        // 显示加载状态 (Show loading state)
+        setLoadingState(true);
+        
+        // 收集表单数据 (Collect form data)
+        var formData = new FormData(calculatorForm);
+        
+        // 手动添加总算力和总功耗数据到表单
+        var minerCount = parseInt(minerCountInput.value) || 0;
+        var hashrate = parseFloat(hashrateInput.value) || 0;
+        var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
+        
+        if (minerCount > 0 && hashrate > 0 && powerWatt > 0) {
+            var totalHashrate = minerCount * hashrate;
+            var totalPower = minerCount * powerWatt;
             
-            if (useRealTime && btcInput) {
-                btcInput.disabled = useRealTime.checked;
-                if (useRealTime.checked) {
-                    loadNetworkData();
+            // 移除之前的值（如果存在）
+            if (formData.has('total_hashrate')) {
+                formData.delete('total_hashrate');
+            }
+            if (formData.has('total_power')) {
+                formData.delete('total_power');
+            }
+            
+            // 添加计算出的值
+            formData.append('total_hashrate', totalHashrate.toFixed(0));
+            formData.append('total_power', totalPower.toFixed(0));
+            
+            console.log("手动添加到表单数据 - 总算力:", totalHashrate.toFixed(0), "总功耗:", totalPower.toFixed(0));
+        }
+        
+        // 请求计算 (Request calculation)
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/calculate', true);
+        
+        // 设置30秒超时
+        xhr.timeout = 30000;
+        
+        xhr.onload = function() {
+            try {
+                if (xhr.status === 200) {
+                    // 确保响应不为空
+                    if (!xhr.responseText || xhr.responseText.trim() === '') {
+                        throw new Error('服务器返回空响应');
+                    }
+                    
+                    var data = JSON.parse(xhr.responseText);
+                    
+                    if (data && data.success) {
+                        // 显示结果 (Display results)
+                        displayResults(data);
+                    } else {
+                        showError(data && data.error ? data.error : '计算过程中发生错误。(An error occurred during calculation.)');
+                        console.error('服务器返回错误:', data && data.error ? data.error : null);
+                    }
+                } else {
+                    throw new Error('服务器返回状态码: ' + xhr.status);
                 }
+            } catch (error) {
+                console.error('计算错误:', error);
+                showError('计算过程中发生错误，请重试。(An error occurred during calculation, please try again.)');
+            } finally {
+                // 隐藏加载状态 (Hide loading state)
+                setLoadingState(false);
             }
-        }
+        };
         
-        // 加载网络数据
-        function loadNetworkData() {
-            if (window.initialData && window.initialData.network) {
-                const data = {
-                    success: true,
-                    btc_price: window.initialData.network.btc_price,
-                    difficulty: window.initialData.network.difficulty,
-                    hashrate_eh: window.initialData.network.network_hashrate,
-                    block_reward: window.initialData.network.block_reward
-                };
-                updateNetworkDisplay(data);
-            } else {
-                fetch('/network_stats')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            updateNetworkDisplay(data);
-                        }
-                    })
-                    .catch(error => {
-                        console.warn('网络数据加载失败:', error);
-                    });
-            }
-        }
+        xhr.onerror = function() {
+            console.error('请求失败');
+            showError('网络错误，请重试。(Network error, please try again.)');
+            setLoadingState(false);
+        };
         
-        // 更新网络数据显示
-        function updateNetworkDisplay(data) {
-            updateText('btc-price', '$' + formatNumber(data.btc_price || 0, 0));
-            updateText('network-difficulty', formatNumber((data.difficulty || 0) / 1e12, 2) + 'T');
-            updateText('network-hashrate', formatNumber(data.hashrate_eh || 0, 1) + ' EH/s');
-            updateText('block-reward', (data.block_reward || 0) + ' BTC');
-            
-            // 如果启用实时数据，更新BTC价格输入框
-            const useRealTime = safeGet('use-real-time');
-            if (useRealTime && useRealTime.checked && data.btc_price) {
-                safeValue('btc-price-input', Math.round(data.btc_price));
-            }
-        }
+        xhr.ontimeout = function() {
+            console.error('请求超时');
+            showError('请求超时，这可能是由于服务器繁忙。请稍后再试。(Request timed out. The server might be busy. Please try again later.)');
+            setLoadingState(false);
+        };
         
-        // 加载矿机数据
-        function loadMinerData() {
-            if (window.initialData && window.initialData.miners) {
-                const miners = window.initialData.miners;
-                localStorage.setItem('miners', JSON.stringify(miners));
-                populateMinerSelect(miners);
-                console.log("矿机列表加载成功:", miners.length);
-            } else {
-                fetch('/miners')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success && data.miners) {
-                            localStorage.setItem('miners', JSON.stringify(data.miners));
-                            populateMinerSelect(data.miners);
-                            console.log("矿机列表加载成功:", data.miners.length);
-                        }
-                    })
-                    .catch(error => {
-                        console.warn('矿机数据加载失败:', error);
-                    });
-            }
-        }
+        xhr.send(formData);
+    }
+    
+    // 获取网络状态 (Fetch network status)
+    // 用于网络统计数据自动刷新的计时器
+    var networkStatsRefreshTimer = null;
+    // 网络统计数据刷新间隔（毫秒）
+    var networkStatsRefreshInterval = 30000; // 30秒刷新一次
+    
+    // 启动网络统计数据自动刷新
+    function startNetworkStatsAutoRefresh() {
+        // 清除可能存在的旧计时器
+        stopNetworkStatsAutoRefresh();
         
-        // 填充矿机选择列表
-        function populateMinerSelect(miners) {
-            const select = safeGet('miner-model');
-            if (!select) return;
-            
-            console.log('填充矿机选择列表:', miners);
-            
-            select.innerHTML = '<option value="">选择矿机型号</option>';
-            
-            miners.forEach(miner => {
-                const option = document.createElement('option');
-                const modelName = miner.model || miner.name;
-                const hashrate = miner.hashrate || miner.hash_rate || 0;
-                const power = miner.power_consumption || miner.power_watt || 0;
-                
-                option.value = modelName;
-                option.textContent = `${modelName} (${hashrate} TH/s, ${power}W)`;
-                select.appendChild(option);
-                
-                console.log('添加矿机选项:', {modelName, hashrate, power});
+        // 设置新的自动刷新计时器
+        networkStatsRefreshTimer = setInterval(function() {
+            // 后台静默刷新，不显示加载状态
+            fetchNetworkStats(false);
+        }, networkStatsRefreshInterval);
+        
+        console.log("已启动网络统计数据自动刷新，间隔: " + (networkStatsRefreshInterval/1000) + "秒");
+    }
+    
+    // 停止网络统计数据自动刷新
+    function stopNetworkStatsAutoRefresh() {
+        if (networkStatsRefreshTimer) {
+            clearInterval(networkStatsRefreshTimer);
+            networkStatsRefreshTimer = null;
+            console.log("已停止网络统计数据自动刷新");
+        }
+    }
+    
+    function fetchNetworkStats(showLoading = true) {
+        // 显示加载状态 (Show loading state) - 只在首次加载或手动刷新时显示
+        if (showLoading) {
+            var networkStatsElements = [btcPriceEl, networkDifficultyEl, networkHashrateEl, blockRewardEl];
+            networkStatsElements.forEach(function(el) {
+                if (el) el.innerHTML = '<small class="text-muted">Loading...</small>';
             });
         }
         
-        // 启动自动刷新
-        function startAutoRefresh() {
-            setInterval(loadNetworkData, 30000);
-        }
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/network_stats', true);
         
-        // 工具函数
-        function formatNumber(value, decimals = 2) {
-            return new Intl.NumberFormat('en-US', {
-                minimumFractionDigits: decimals,
-                maximumFractionDigits: decimals
-            }).format(value);
-        }
+        // 设置15秒超时
+        xhr.timeout = 15000;
         
-        function formatCurrency(value, decimals = 2) {
-            return '$' + formatNumber(value, decimals);
-        }
+        xhr.onload = function() {
+            try {
+                if (xhr.status === 200) {
+                    // 确保响应不为空
+                    if (!xhr.responseText || xhr.responseText.trim() === '') {
+                        throw new Error('服务器返回空响应');
+                    }
+                    
+                    var data = JSON.parse(xhr.responseText);
+                    
+                    if (data && data.success) {
+                        // 更新UI (Update UI)
+                        if (btcPriceEl) btcPriceEl.textContent = formatCurrency(data.price, 2);
+                        if (networkDifficultyEl) networkDifficultyEl.textContent = formatNumber(data.difficulty) + 'T';
+                        if (networkHashrateEl) networkHashrateEl.textContent = formatNumber(data.hashrate) + ' EH/s';
+                        if (blockRewardEl) blockRewardEl.textContent = formatNumber(data.block_reward) + ' BTC';
+                        
+                        // 更新BTC价格输入框 (Update BTC price input)
+                        if (useRealTimeCheckbox && useRealTimeCheckbox.checked && btcPriceInput) {
+                            btcPriceInput.value = data.price.toFixed(2);
+                            btcPriceInput.disabled = true;
+                        }
+                        
+                        // 保存到localStorage作为备用 (Save to localStorage as backup)
+                        localStorage.setItem('last_btc_price', data.price);
+                        localStorage.setItem('last_network_difficulty', data.difficulty);
+                        localStorage.setItem('last_network_hashrate', data.hashrate);
+                        localStorage.setItem('last_block_reward', data.block_reward);
+                        
+                        // 在网络哈希率元素上添加闪烁效果来指示刷新
+                        if (networkHashrateEl) {
+                            networkHashrateEl.classList.add('refreshed-data');
+                            setTimeout(function() {
+                                networkHashrateEl.classList.remove('refreshed-data');
+                            }, 1000);
+                        }
+                    } else {
+                        useFallbackNetworkStats();
+                        console.error('获取网络状态时服务器返回错误:', data && data.error ? data.error : null);
+                    }
+                } else {
+                    throw new Error('服务器返回状态码: ' + xhr.status);
+                }
+            } catch (error) {
+                console.error('获取网络状态失败:', error);
+                useFallbackNetworkStats();
+            }
+        };
         
-        // 启动初始化
-        setTimeout(initialize, 500);
+        xhr.onerror = function() {
+            console.error('网络状态请求失败');
+            useFallbackNetworkStats();
+        };
+        
+        xhr.ontimeout = function() {
+            console.error('网络状态请求超时');
+            useFallbackNetworkStats();
+        };
+        
+        xhr.send();
     }
-})();
+    
+    // 使用备用网络状态 (Use fallback network status)
+    function useFallbackNetworkStats() {
+        var lastBtcPrice = localStorage.getItem('last_btc_price');
+        var lastDifficulty = localStorage.getItem('last_network_difficulty');
+        var lastHashrate = localStorage.getItem('last_network_hashrate');
+        var lastBlockReward = localStorage.getItem('last_block_reward');
+        
+        if (lastBtcPrice && btcPriceEl) {
+            btcPriceEl.textContent = formatCurrency(parseFloat(lastBtcPrice), 2);
+            if (useRealTimeCheckbox && useRealTimeCheckbox.checked && btcPriceInput) {
+                btcPriceInput.value = parseFloat(lastBtcPrice).toFixed(2);
+                btcPriceInput.disabled = true;
+            }
+        } else if (btcPriceEl) {
+            btcPriceEl.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
+        }
+        
+        if (lastDifficulty && networkDifficultyEl) {
+            networkDifficultyEl.textContent = formatNumber(parseFloat(lastDifficulty)) + 'T';
+        } else if (networkDifficultyEl) {
+            networkDifficultyEl.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
+        }
+        
+        if (lastHashrate && networkHashrateEl) {
+            networkHashrateEl.textContent = formatNumber(parseFloat(lastHashrate)) + ' EH/s';
+        } else if (networkHashrateEl) {
+            networkHashrateEl.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
+        }
+        
+        if (lastBlockReward && blockRewardEl) {
+            blockRewardEl.textContent = formatNumber(parseFloat(lastBlockReward), 4) + ' BTC';
+        } else if (blockRewardEl) {
+            blockRewardEl.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
+        }
+    }
+    
+    // 获取矿机列表 (Fetch miner list)
+    function fetchMiners() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/miners', true);
+        
+        // 设置10秒超时
+        xhr.timeout = 10000;
+        
+        xhr.onload = function() {
+            try {
+                if (xhr.status === 200) {
+                    // 确保响应不为空
+                    if (!xhr.responseText || xhr.responseText.trim() === '') {
+                        throw new Error('服务器返回空响应');
+                    }
+                    
+                    var data = JSON.parse(xhr.responseText);
+                    
+                    if (data && data.success && data.miners) {
+                        // 保存到localStorage (Save to localStorage)
+                        localStorage.setItem('miners', JSON.stringify(data.miners));
+                        
+                        // 清空选项 (Clear options)
+                        const currentLang = document.querySelector('meta[name="language"]')?.content || 'zh';
+                        const selectText = currentLang === 'en' ? 'Select a miner model' : '选择矿机型号';
+                        minerModelSelect.innerHTML = '<option value="">' + selectText + '</option>';
+                        
+                        // 添加矿机选项 (Add miner options)
+                        data.miners.forEach(function(miner) {
+                            var option = document.createElement('option');
+                            option.value = miner.name;
+                            option.textContent = miner.name + ' (' + miner.hashrate + ' TH/s, ' + miner.power_watt + 'W)';
+                            minerModelSelect.appendChild(option);
+                        });
+                        
+                        console.log('矿机列表加载成功:', data.miners.length);
+                        
+                        // 如果已选择了矿机型号，重新计算总算力和总功耗
+                        if (minerModelSelect.value) {
+                            updateMinerSpecs();
+                        } else {
+                            calculateTotalHashrateAndPower();
+                        }
+                    } else {
+                        console.error('获取矿机数据失败:', data);
+                        useCachedMiners();
+                    }
+                } else {
+                    throw new Error('服务器返回状态码: ' + xhr.status);
+                }
+            } catch (error) {
+                console.error('获取矿机列表失败:', error);
+                useCachedMiners();
+            }
+        };
+        
+        xhr.onerror = function() {
+            console.error('矿机列表请求失败');
+            useCachedMiners();
+        };
+        
+        xhr.ontimeout = function() {
+            console.error('矿机列表请求超时');
+            useCachedMiners();
+        };
+        
+        xhr.send();
+    }
+    
+    // 使用本地缓存的矿机列表
+    function useCachedMiners() {
+        var cachedMiners = localStorage.getItem('miners');
+        
+        if (cachedMiners) {
+            try {
+                var miners = JSON.parse(cachedMiners);
+                
+                // 清空选项
+                const currentLang = document.querySelector('meta[name="language"]')?.content || 'zh';
+                const selectText = currentLang === 'en' ? 'Select a miner model' : '选择矿机型号';
+                minerModelSelect.innerHTML = '<option value="">' + selectText + '</option>';
+                
+                // 添加矿机选项
+                miners.forEach(function(miner) {
+                    var option = document.createElement('option');
+                    option.value = miner.name;
+                    option.textContent = miner.name + ' (' + miner.hashrate + ' TH/s, ' + miner.power_watt + 'W)';
+                    minerModelSelect.appendChild(option);
+                });
+                
+                console.log('使用缓存的矿机列表:', miners.length);
+                
+                // 如果已选择了矿机型号，重新计算总算力和总功耗
+                if (minerModelSelect.value) {
+                    updateMinerSpecs();
+                } else {
+                    calculateTotalHashrateAndPower();
+                }
+            } catch (error) {
+                console.error('解析缓存的矿机列表失败:', error);
+                showError('加载矿机列表失败。(Failed to load miner list.)');
+            }
+        } else {
+            showError('无法加载矿机列表。(Unable to load miner list.)');
+        }
+    }
+    
+    // 显示计算结果 (Display calculation results)
+    function displayResults(data) {
+        // 检查数据有效性 - 更加灵活，适应不同角色的权限
+        if (!data || !data.btc_mined) {
+            showError('服务器返回的数据无效或不完整。(Invalid or incomplete data received from server.)');
+            console.error('数据结构无效 - 缺少btc_mined字段:', data);
+            return;
+        }
+        
+        try {
+            console.log('收到计算结果数据:', data);
+            
+            // 检查是否有optimization数据
+            if (data.optimization) {
+                console.log("矿机运行状态数据:", {
+                    "运行中矿机数量": data.optimization.running_miner_count,
+                    "停机矿机数量": data.optimization.shutdown_miner_count,
+                    "最佳限电比例": data.optimization.optimal_curtailment + "%"
+                });
+            } else {
+                console.warn("没有接收到矿机运行状态数据");
+            }
+            
+            // 检查输入参数
+            if (data.inputs) {
+                console.log("输入参数:", {
+                    "矿机型号": data.inputs.miner_model,
+                    "矿机数量": data.inputs.miner_count,
+                    "限电比例": data.inputs.curtailment + "%",
+                    "电费成本": "$" + data.inputs.electricity_cost + "/kWh"
+                });
+            }
+            
+            // 显示结果卡片 (Show results card)
+            if (resultsCard) resultsCard.style.display = 'block';
+            
+            // ===== 1. 基本BTC挖矿产出 =====
+            updateBtcOutputDisplay(data);
+            
+            // ===== 2. 网络和挖矿信息 =====
+            updateNetworkAndMiningInfo(data);
+            
+            // ===== 3. 矿场主(Host)数据 - 仅当有相关权限和数据时显示 =====
+            // 如果数据中有profit字段，说明用户有权限查看矿场主数据
+            if (data.profit) {
+                updateHostData(data);
+            }
+            
+            // ===== 4. 客户(Customer)数据 =====
+            // 对于client_profit进行同样的检查
+            if (data.client_profit) {
+                updateCustomerData(data);
+            }
+            
+            // 如果有估算提示，显示给用户
+            if (data.estimation_note) {
+                showError(data.estimation_note, 'warning');
+            }
+        } catch (error) {
+            console.error('显示结果时出错:', error);
+            showError('显示计算结果时发生错误。(Error displaying calculation results.)');
+        }
+    }
+    
+    // 更新BTC产出显示
+    function updateBtcOutputDisplay(data) {
+        // 算法1和算法2的BTC产出
+        var btcMethod1CardEl = document.getElementById('btc-method1-daily-card');
+        var btcMethod2CardEl = document.getElementById('btc-method2-daily-card');
+        var dailyBtcTotalEl = document.getElementById('daily-btc-total');
+        
+        // 日产BTC总量
+        if (dailyBtcTotalEl && data.btc_mined) {
+            dailyBtcTotalEl.textContent = formatNumber(data.btc_mined.daily, 8);
+        }
+        
+        // 算法1: 按算力占比
+        if (btcMethod1CardEl && data.btc_mined && data.btc_mined.method1) {
+            var method1Value = formatNumber(data.btc_mined.method1.daily, 8);
+            btcMethod1CardEl.textContent = method1Value;
+            // 月产出提示
+            var monthlyOutput1 = data.btc_mined.method1.daily * 30.5;
+            btcMethod1CardEl.title = '每月约: ' + formatNumber(monthlyOutput1, 8) + ' BTC';
+        }
+        
+        // 算法2: 按难度公式
+        if (btcMethod2CardEl && data.btc_mined && data.btc_mined.method2) {
+            var method2Value = formatNumber(data.btc_mined.method2.daily, 8);
+            btcMethod2CardEl.textContent = method2Value;
+            btcMethod2CardEl.className = "text-info";
+            // 月产出提示
+            var monthlyOutput2 = data.btc_mined.method2.daily * 30.5;
+            btcMethod2CardEl.title = '每月约: ' + formatNumber(monthlyOutput2, 8) + ' BTC';
+        }
+    }
+    
+    // 更新网络和挖矿信息
+    function updateNetworkAndMiningInfo(data) {
+        // 比特币网络信息
+        var networkDifficultyEl = document.getElementById('network-difficulty-value');
+        var networkHashrateEl = document.getElementById('network-hashrate-value');
+        var currentBtcPriceEl = document.getElementById('current-btc-price-value');
+        var blockRewardEl = document.getElementById('block-reward-value');
+        
+        // 挖矿场信息
+        var siteTotalHashrateEl = document.getElementById('site-total-hashrate');
+        var btcPerThDailyEl = document.getElementById('btc-per-th-daily');
+        var optimalElectricityRateEl = document.getElementById('optimal-electricity-rate');
+        
+        // 更新比特币网络信息
+        if (data.network_data) {
+            if (networkDifficultyEl) {
+                networkDifficultyEl.textContent = formatNumber(data.network_data.network_difficulty, 2) + ' T';
+            }
+            if (networkHashrateEl) {
+                networkHashrateEl.textContent = formatNumber(data.network_data.network_hashrate, 2) + ' EH/s';
+            }
+            if (currentBtcPriceEl) {
+                currentBtcPriceEl.textContent = formatCurrency(data.network_data.btc_price, 2);
+            }
+            if (blockRewardEl) {
+                blockRewardEl.textContent = formatNumber(data.network_data.block_reward, 4) + ' BTC';
+            }
+        }
+        
+        // 更新挖矿场信息
+        if (siteTotalHashrateEl && data.inputs) {
+            siteTotalHashrateEl.textContent = formatNumber(data.inputs.hashrate, 2) + ' TH/s';
+        }
+        if (btcPerThDailyEl && data.btc_mined) {
+            btcPerThDailyEl.textContent = formatNumber(data.btc_mined.per_th_daily, 8);
+        }
+        if (optimalElectricityRateEl && data.break_even) {
+            optimalElectricityRateEl.textContent = '$' + formatNumber(data.break_even.electricity_cost, 4) + '/kWh';
+        }
+        
+        // 其他挖矿信息
+        var minerCountEl = document.getElementById('miner-count-result');
+        var runningMinersEl = document.getElementById('running-miners');
+        var shutdownMinersEl = document.getElementById('shutdown-miners');
+        
+        if (minerCountEl && data.inputs) {
+            minerCountEl.textContent = formatNumber(data.inputs.miner_count, 0);
+        }
+        
+        // 显示运行中和停机的矿机数量
+        if (runningMinersEl && data.optimization) {
+            console.log("正在更新运行中矿机数量:", data.optimization.running_miner_count);
+            runningMinersEl.textContent = formatNumber(data.optimization.running_miner_count, 0);
+        } else {
+            console.log("无法更新运行中矿机数量:", {
+                "runningMinersEl存在": !!runningMinersEl,
+                "data.optimization存在": !!data.optimization,
+                "data包含内容": JSON.stringify(data).substring(0, 100) + "..."
+            });
+        }
+        
+        if (shutdownMinersEl && data.optimization) {
+            console.log("正在更新停机矿机数量:", data.optimization.shutdown_miner_count);
+            shutdownMinersEl.textContent = formatNumber(data.optimization.shutdown_miner_count, 0);
+        } else {
+            console.log("无法更新停机矿机数量:", {
+                "shutdownMinersEl存在": !!shutdownMinersEl,
+                "data.optimization存在": !!data.optimization,
+                "data包含内容": JSON.stringify(data).substring(0, 100) + "..."
+            });
+        }
+    }
+    
+    // 更新矿场主数据
+    function updateHostData(data) {
+        // 检查用户角色权限 - 从页面元数据中获取
+        var userRole = document.querySelector('meta[name="user-role"]')?.getAttribute('content');
+        var allowedRoles = ['owner', 'admin', 'mining_site'];
+        var hasAccess = allowedRoles.includes(userRole);
+        
+        // 如果用户没有权限，直接返回，不更新矿场主数据
+        if (!hasAccess) {
+            console.log("用户角色没有查看矿场主数据的权限");
+            return;
+        }
+        
+        // 主要指标
+        var hostProfitCardEl = document.getElementById('host-profit-card');
+        
+        // 收入和支出项
+        var hostMonthlyProfitEl = document.getElementById('host-monthly-profit');
+        var hostMonthlyProfitDisplayEl = document.getElementById('host-monthly-profit-display');
+        var hostTotalIncomeEl = document.getElementById('host-total-income');
+        var siteRevenueEl = document.getElementById('site-total-revenue');
+        var hostSelfProfitEl = document.getElementById('host-self-profit');
+        
+        // 主机利润详情
+        var hostDailyProfitEl = document.getElementById('host-daily-profit');
+        var hostYearlyProfitEl = document.getElementById('host-yearly-profit');
+        
+        // 矿场主电费和成本
+        var hostMonthlyCostEl = document.getElementById('host-monthly-cost');
+        var operationCostEl = document.getElementById('operation-cost');
+        var totalExpensesEl = document.getElementById('host-total-expenses');
+        
+        // 矿场主盈亏平衡点
+        var hostBreakEvenElectricityEl = document.getElementById('host-break-even-electricity');
+        var hostBreakEvenBtcEl = document.getElementById('host-break-even-btc');
+        var optimalCurtailmentEl = document.getElementById('optimal-curtailment');
+        
+        // 电费差计算 (Electricity differential)
+        if (data.client_electricity_cost && data.electricity_cost) {
+            // 计算电费差收益 - 客户电费减去实际电费
+            var hostElectricProfit = data.client_electricity_cost.monthly - data.electricity_cost.monthly;
+            
+            // 更新矿场主电费差收益显示
+            if (hostMonthlyProfitEl) {
+                hostMonthlyProfitEl.textContent = formatCurrency(hostElectricProfit);
+            }
+            if (hostMonthlyProfitDisplayEl) {
+                hostMonthlyProfitDisplayEl.textContent = formatCurrency(hostElectricProfit);
+            }
+            
+            // 获取运营收益和运维成本
+            var operationCostValue = data.maintenance_fee && data.maintenance_fee.monthly ? data.maintenance_fee.monthly : 0;
+            var hostSelfProfit = 0; // 这里假设为0，根据需要调整
+            
+            // 更新运营收益
+            if (hostSelfProfitEl) {
+                hostSelfProfitEl.textContent = formatCurrency(hostSelfProfit);
+            }
+            
+            // 电费差 + 运营收益 = 总站点收入
+            var siteTotalRevenue = hostElectricProfit + hostSelfProfit;
+            if (siteRevenueEl) {
+                siteRevenueEl.textContent = formatCurrency(siteTotalRevenue);
+            }
+            
+            // 总收入 = 总站点收入
+            if (hostTotalIncomeEl) {
+                hostTotalIncomeEl.textContent = formatCurrency(siteTotalRevenue);
+            }
+            
+            // 更新主卡片 - 净利润 = 电费差收益 - 运维成本
+            var hostMonthlyNetProfit = hostElectricProfit - operationCostValue;
+            if (hostProfitCardEl) {
+                hostProfitCardEl.textContent = formatCurrency(hostMonthlyNetProfit);
+            }
+            
+            // 更新矿场主利润详情
+            if (hostDailyProfitEl && data.electricity_cost) {
+                var dailyProfit = hostElectricProfit / 30.5;
+                hostDailyProfitEl.textContent = formatCurrency(dailyProfit);
+            }
+            
+            if (hostYearlyProfitEl) {
+                var yearlyProfit = hostElectricProfit * 12;
+                hostYearlyProfitEl.textContent = formatCurrency(yearlyProfit);
+            }
+            
+            // 更新矿场主成本
+            if (hostMonthlyCostEl && data.electricity_cost) {
+                hostMonthlyCostEl.textContent = formatCurrency(data.electricity_cost.monthly);
+            }
+            
+            if (operationCostEl && data.maintenance_fee) {
+                operationCostEl.textContent = formatCurrency(data.maintenance_fee.monthly);
+            }
+            
+            if (totalExpensesEl && data.electricity_cost && data.maintenance_fee) {
+                var totalExpenses = data.electricity_cost.monthly + data.maintenance_fee.monthly;
+                totalExpensesEl.textContent = formatCurrency(totalExpenses);
+            }
+        }
+        
+        // 盈亏平衡点
+        if (hostBreakEvenElectricityEl && data.break_even) {
+            hostBreakEvenElectricityEl.textContent = '$' + formatNumber(data.break_even.electricity_cost, 4) + '/kWh';
+        }
+        
+        if (hostBreakEvenBtcEl && data.break_even) {
+            hostBreakEvenBtcEl.textContent = formatCurrency(data.break_even.btc_price, 2);
+        }
+        
+        if (optimalCurtailmentEl && data.optimization) {
+            optimalCurtailmentEl.textContent = formatNumber(data.optimization.optimal_curtailment, 2) + '%';
+        }
+    }
+    
+    // 更新客户数据
+    function updateCustomerData(data) {
+        // 主要指标
+        var clientProfitCardEl = document.getElementById('client-profit-card');
+        
+        // 收入和支出项
+        var clientMonthlyBtcEl = document.getElementById('client-monthly-btc');
+        var clientMonthlyBtcRevenueEl = document.getElementById('client-monthly-btc-revenue');
+        var clientTotalIncomeEl = document.getElementById('client-total-income');
+        
+        // 客户电费和成本
+        var clientMonthlyElectricityEl = document.getElementById('client-monthly-electricity');
+        var clientTotalExpensesEl = document.getElementById('client-total-expenses');
+        
+        // 客户利润详情
+        var clientMonthlyProfitEl = document.getElementById('client-monthly-profit');
+        var clientDailyProfitEl = document.getElementById('client-daily-profit');
+        var clientYearlyProfitEl = document.getElementById('client-yearly-profit');
+        
+        // 客户盈亏平衡点
+        var clientBreakEvenElectricityEl = document.getElementById('client-break-even-electricity');
+        var clientBreakEvenBtcEl = document.getElementById('client-break-even-btc');
+        
+        // 客户矿机状态
+        var clientMinerCountEl = document.getElementById('client-miner-count');
+        var clientRunningMinersEl = document.getElementById('client-running-miners');
+        var clientShutdownMinersEl = document.getElementById('client-shutdown-miners');
+        
+        // 客户BTC产出和收入
+        var monthlyBtcOutput = data.btc_mined && data.btc_mined.monthly ? data.btc_mined.monthly : 0;
+        var monthlyBtcRevenue = 0;
+        
+        if (data.network_data && data.network_data.btc_price) {
+            monthlyBtcRevenue = monthlyBtcOutput * data.network_data.btc_price;
+        }
+        
+        console.log('月度BTC产出:', monthlyBtcOutput, 'BTC价格:', 
+                    data.network_data ? data.network_data.btc_price : 'N/A', 
+                    '计算得到月度收入:', monthlyBtcRevenue);
+        
+        // 更新客户BTC产出
+        if (clientMonthlyBtcEl) {
+            clientMonthlyBtcEl.textContent = formatNumber(monthlyBtcOutput, 8);
+        }
+        
+        // 更新客户BTC收入
+        if (clientMonthlyBtcRevenueEl) {
+            clientMonthlyBtcRevenueEl.textContent = formatCurrency(monthlyBtcRevenue);
+        }
+        
+        // 更新客户总收入 - 这是矿机挖出的BTC产生的全部收入
+        if (clientTotalIncomeEl) {
+            clientTotalIncomeEl.textContent = formatCurrency(monthlyBtcRevenue);
+            console.log('已更新客户总收入:', monthlyBtcRevenue);
+        } else {
+            console.error('无法找到客户总收入元素ID:client-total-income');
+        }
+        
+        // 客户电费和总支出
+        if (clientMonthlyElectricityEl && data.client_electricity_cost) {
+            clientMonthlyElectricityEl.textContent = formatCurrency(data.client_electricity_cost.monthly);
+        }
+        
+        if (clientTotalExpensesEl && data.client_electricity_cost) {
+            clientTotalExpensesEl.textContent = formatCurrency(data.client_electricity_cost.monthly);
+        }
+        
+        // 客户收益信息
+        if (data.client_profit) {
+            var clientMonthlyProfitValue = data.client_profit.monthly;
+            
+            // 更新客户月收益
+            if (clientMonthlyProfitEl) {
+                clientMonthlyProfitEl.textContent = formatCurrency(clientMonthlyProfitValue);
+            }
+            
+            // 更新主卡片
+            if (clientProfitCardEl) {
+                clientProfitCardEl.textContent = formatCurrency(clientMonthlyProfitValue);
+            }
+            
+            // 更新客户日收益和年收益
+            if (clientDailyProfitEl && data.client_profit.daily) {
+                clientDailyProfitEl.textContent = formatCurrency(data.client_profit.daily);
+            }
+            
+            if (clientYearlyProfitEl && data.client_profit.yearly) {
+                clientYearlyProfitEl.textContent = formatCurrency(data.client_profit.yearly);
+            }
+        }
+        
+        // 客户盈亏平衡点
+        if (clientBreakEvenElectricityEl && data.break_even) {
+            clientBreakEvenElectricityEl.textContent = '$' + formatNumber(data.break_even.electricity_cost, 4) + '/kWh';
+        }
+        
+        if (clientBreakEvenBtcEl && data.break_even) {
+            clientBreakEvenBtcEl.textContent = formatCurrency(data.break_even.btc_price, 2);
+        }
+        
+        // 更新客户矿机数量信息
+        if (clientMinerCountEl && data.inputs && data.inputs.miner_count) {
+            clientMinerCountEl.textContent = formatNumber(data.inputs.miner_count, 0);
+        }
+        
+        // 更新客户运行中和停机矿机数量
+        if (clientRunningMinersEl && data.optimization && data.optimization.running_miner_count !== undefined) {
+            console.log("正在更新客户运行中矿机数量:", data.optimization.running_miner_count);
+            clientRunningMinersEl.textContent = formatNumber(data.optimization.running_miner_count, 0);
+        } else {
+            console.log("无法更新客户运行中矿机数量:", {
+                "clientRunningMinersEl存在": !!clientRunningMinersEl,
+                "data.optimization存在": !!data.optimization,
+                "optimization数据": data.optimization ? JSON.stringify(data.optimization).substring(0, 100) : "无数据"
+            });
+        }
+        
+        if (clientShutdownMinersEl && data.optimization && data.optimization.shutdown_miner_count !== undefined) {
+            console.log("正在更新客户停机矿机数量:", data.optimization.shutdown_miner_count);
+            clientShutdownMinersEl.textContent = formatNumber(data.optimization.shutdown_miner_count, 0);
+        } else {
+            console.log("无法更新客户停机矿机数量:", {
+                "clientShutdownMinersEl存在": !!clientShutdownMinersEl,
+                "data.optimization存在": !!data.optimization,
+                "optimization数据": data.optimization ? JSON.stringify(data.optimization).substring(0, 100) : "无数据"
+            });
+        }
+    }
+    
+    // 生成利润热力图 (Generate profit heatmap)
+    function generateProfitChart(minerModel, minerCount, clientElectricityCost) {
+        // 获取图表容器 (Get chart container)
+        var chartContainer = document.getElementById('chart-container');
+        if (!chartContainer) {
+            console.error('找不到图表容器 (Chart container not found)');
+            return;
+        }
+        
+        // 显示加载状态 (Show loading state)
+        chartContainer.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div><p class="mt-3">正在生成热力图...<br>Generating chart...</p></div>';
+        
+        // 准备请求参数 (Prepare request parameters)
+        var params = 'miner_model=' + encodeURIComponent(minerModel) + 
+                     '&miner_count=' + encodeURIComponent(minerCount) + 
+                     '&client_electricity_cost=' + encodeURIComponent(clientElectricityCost);
+        
+        // 发送请求 (Send request)
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/profit_chart_data', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        
+        xhr.onload = function() {
+            try {
+                if (xhr.status === 200) {
+                    var chartData = JSON.parse(xhr.responseText);
+                    
+                    if (chartData.success && chartData.profit_data) {
+                        // 准备Canvas (Prepare canvas)
+                        chartContainer.innerHTML = '<canvas id="heatmap-canvas" width="100%" height="400"></canvas>';
+                        var canvas = document.getElementById('heatmap-canvas');
+                        
+                        // 创建散点图数据 (Create scatter data)
+                        var scatterData = [];
+                        chartData.profit_data.forEach(function(item) {
+                            if (item && typeof item.electricity_cost === 'number' && 
+                                typeof item.btc_price === 'number' && 
+                                typeof item.monthly_profit === 'number') {
+                                
+                                scatterData.push({
+                                    x: item.electricity_cost,
+                                    y: item.btc_price,
+                                    profit: item.monthly_profit
+                                });
+                            }
+                        });
+                        
+                        // 如果没有数据点 (If no data points)
+                        if (scatterData.length === 0) {
+                            chartContainer.innerHTML = '<div class="alert alert-warning text-center">没有有效的数据点来生成热力图。(No valid data points to generate heatmap.)</div>';
+                            return;
+                        }
+                        
+                        // 创建图表 (Create chart)
+                        new Chart(canvas, {
+                            type: 'scatter',
+                            data: {
+                                datasets: [{
+                                    label: '月利润 (Monthly Profit)',
+                                    data: scatterData,
+                                    backgroundColor: function(context) {
+                                        if (!context.raw) return 'rgba(128, 128, 128, 0.7)';
+                                        
+                                        var profit = context.raw.profit;
+                                        if (profit >= 0) {
+                                            return 'rgba(40, 167, 69, 0.7)';  // 绿色 (Green - profit)
+                                        } else {
+                                            return 'rgba(220, 53, 69, 0.7)';  // 红色 (Red - loss)
+                                        }
+                                    },
+                                    pointRadius: 10,
+                                    pointHoverRadius: 15
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    x: {
+                                        title: {
+                                            display: true,
+                                            text: '电价 ($/kWh)'
+                                        }
+                                    },
+                                    y: {
+                                        title: {
+                                            display: true,
+                                            text: '比特币价格 ($)'
+                                        }
+                                    }
+                                },
+                                plugins: {
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function(context) {
+                                                var profit = context.raw.profit;
+                                                return '月利润: $' + profit.toFixed(2);
+                                            }
+                                        }
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: (parseFloat(clientElectricityCost) > 0) ? 
+                                            '客户收益热力图 / Customer Profit Chart' : 
+                                            '矿场主收益热力图 / Host Profit Chart'
+                                    }
+                                }
+                            }
+                        });
+                    } else {
+                        chartContainer.innerHTML = '<div class="alert alert-warning text-center">无法生成热力图数据。(Could not generate heatmap data.)</div>';
+                    }
+                } else {
+                    throw new Error('服务器返回状态码: ' + xhr.status);
+                }
+            } catch (error) {
+                console.error('生成热力图失败:', error);
+                chartContainer.innerHTML = '<div class="alert alert-danger text-center">生成热力图时出错。(Error generating heatmap.)</div>';
+            }
+        };
+        
+        xhr.onerror = function() {
+            console.error('热力图请求失败');
+            chartContainer.innerHTML = '<div class="alert alert-danger text-center">网络错误，请重试。(Network error, please try again.)</div>';
+        };
+        
+        xhr.send(params);
+    }
+    
+    // 工具函数 (Utility functions)
+    
+    // 设置加载状态 (Set loading state)
+    function setLoadingState(isLoading) {
+        var submitButton = calculatorForm.querySelector('button[type="submit"]');
+        if (submitButton) {
+            if (isLoading) {
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 计算中... / Calculating...';
+            } else {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Calculate Profitability';
+            }
+        }
+    }
+    
+    // 显示错误信息 (Show error message)
+    function showError(message) {
+        var errorDiv = document.createElement('div');
+        errorDiv.className = 'alert alert-danger alert-dismissible fade show';
+        errorDiv.innerHTML = message + 
+            '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+        
+        var container = document.querySelector('.container');
+        if (container) {
+            container.insertBefore(errorDiv, container.firstChild);
+            
+            // 5秒后自动消失 (Auto-hide after 5 seconds)
+            setTimeout(function() {
+                errorDiv.classList.remove('show');
+                setTimeout(function() {
+                    if (errorDiv.parentNode) {
+                        errorDiv.parentNode.removeChild(errorDiv);
+                    }
+                }, 150);
+            }, 5000);
+        }
+    }
+    
+    // 格式化货币值 (Format currency value)
+    function formatCurrency(value, decimals) {
+        return '$' + formatNumber(value, decimals);
+    }
+    
+    // 格式化数字 (Format number)
+    function formatNumber(value, decimals) {
+        if (decimals === undefined) decimals = 2;
+        
+        var formatter = new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
+        });
+        
+        return formatter.format(value);
+    }
+    
+    // 调用初始化函数 (Call init function)
+    init();
+});
