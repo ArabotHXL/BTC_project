@@ -316,9 +316,11 @@ def index():
         # 获取矿机数据
         for name, specs in MINER_DATA.items():
             miners_data.append({
-                'name': name,
+                'model': name,
+                'name': name,  # 保持向后兼容
                 'hashrate': specs['hashrate'],
                 'power_consumption': specs['power_watt'],
+                'power_watt': specs['power_watt'],  # 保持向后兼容
                 'efficiency': round(specs['power_watt'] / specs['hashrate'], 2)
             })
             

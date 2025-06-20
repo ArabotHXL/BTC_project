@@ -284,13 +284,21 @@
             const select = safeGet('miner-model');
             if (!select) return;
             
+            console.log('填充矿机选择列表:', miners);
+            
             select.innerHTML = '<option value="">选择矿机型号</option>';
             
             miners.forEach(miner => {
                 const option = document.createElement('option');
-                option.value = miner.name;
-                option.textContent = `${miner.name} (${miner.hashrate} TH/s, ${miner.power_watt}W)`;
+                const modelName = miner.model || miner.name;
+                const hashrate = miner.hashrate || miner.hash_rate || 0;
+                const power = miner.power_consumption || miner.power_watt || 0;
+                
+                option.value = modelName;
+                option.textContent = `${modelName} (${hashrate} TH/s, ${power}W)`;
                 select.appendChild(option);
+                
+                console.log('添加矿机选项:', {modelName, hashrate, power});
             });
         }
         
