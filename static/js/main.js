@@ -213,6 +213,12 @@
             updateText('network-difficulty', formatNumber((data.difficulty || 0) / 1e12, 2) + 'T');
             updateText('network-hashrate', formatNumber(data.hashrate_eh || 0, 1) + ' EH/s');
             updateText('block-reward', (data.block_reward || 0) + ' BTC');
+            
+            // 如果启用实时数据，更新BTC价格输入框
+            const useRealTime = safeGet('use-real-time');
+            if (useRealTime && useRealTime.checked && data.btc_price) {
+                safeValue('btc-price-input', Math.round(data.btc_price));
+            }
         }
         
         // 加载矿机数据
