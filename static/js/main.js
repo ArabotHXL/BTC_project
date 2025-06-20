@@ -24,14 +24,27 @@ document.addEventListener('DOMContentLoaded', function() {
     var totalHashrateInput = document.getElementById('total-hashrate');
     var totalPowerInput = document.getElementById('total-power');
     
-    console.log("元素检查 - 矿机数量:", minerCountInput ? "已找到" : "未找到");
-    console.log("元素检查 - 单矿机算力:", hashrateInput ? "已找到" : "未找到");
-    console.log("元素检查 - 单矿机功耗:", powerConsumptionInput ? "已找到" : "未找到");
-    console.log("元素检查 - 总算力输入框:", totalHashrateInput ? "已找到" : "未找到");
-    console.log("元素检查 - 总功耗输入框:", totalPowerInput ? "已找到" : "未找到");
+    // 获取显示字段
+    var totalHashrateDisplay = document.getElementById('total-hashrate-display');
+    var totalPowerDisplay = document.getElementById('total-power-display');
+    
+    console.log("DOM元素获取结果:");
+    console.log("总算力隐藏输入框:", totalHashrateInput || {});
+    console.log("总功耗隐藏输入框:", totalPowerInput || {});
+    console.log("总算力显示输入框:", totalHashrateDisplay || {});
+    console.log("总功耗显示输入框:", totalPowerDisplay || {});
     
     var resultsCard = document.getElementById('results-card');
     var chartCard = document.getElementById('chart-card');
+    
+    // 安全检查函数
+    function safeElementAccess(elementId, callback) {
+        var element = document.getElementById(elementId);
+        if (element && callback) {
+            callback(element);
+        }
+        return element;
+    }
     
     // 防止无限循环的标志
     var isUpdatingMinerCount = false;
@@ -742,7 +755,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // 显示结果卡片 (Show results card)
-            if (resultsCard) resultsCard.style.display = 'block';
+            var resultsCardElement = document.getElementById('results-card');
+            if (resultsCardElement) {
+                resultsCardElement.style.display = 'block';
+            }
             
             // ===== 1. 基本BTC挖矿产出 =====
             updateBtcOutputDisplay(data);
