@@ -141,11 +141,18 @@
             }
             
             // 更新总算力和功耗结果显示
-            if (data.total_hashrate_th) {
-                updateText('total-hashrate-result', formatNumber(data.total_hashrate_th, 0) + ' TH/s');
+            if (data.inputs && data.inputs.hashrate) {
+                updateText('total-hashrate-result', formatNumber(data.inputs.hashrate, 0) + ' TH/s');
+                updateText('total-hashrate-display', formatNumber(data.inputs.hashrate, 0) + ' TH/s');
             }
-            if (data.total_power_w) {
-                updateText('total-power-result', formatNumber(data.total_power_w / 1000, 0) + ' kW');
+            if (data.inputs && data.inputs.power_consumption) {
+                updateText('total-power-result', formatNumber(data.inputs.power_consumption / 1000, 0) + ' kW');
+                updateText('total-power-display', formatNumber(data.inputs.power_consumption / 1000, 0) + ' kW');
+            }
+            
+            // 更新矿机数量显示
+            if (data.inputs && data.inputs.miner_count) {
+                updateText('miner-count-display', formatNumber(data.inputs.miner_count, 0));
             }
             
             // 更新矿机数量
