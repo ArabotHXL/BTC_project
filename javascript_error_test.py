@@ -179,6 +179,62 @@ class JavaScriptErrorTest:
             if self.driver:
                 self.driver.quit()
     
+    def run_simplified_test(self):
+        """运行简化的功能测试"""
+        print("执行简化功能测试...")
+        
+        session = requests.Session()
+        
+        try:
+            # 基本连接测试
+            response = session.get(self.base_url, timeout=10)
+            if response.status_code in [200, 302]:
+                print("✓ 基本连接正常")
+                
+                # 检查页面是否包含必要的JavaScript文件引用
+                if 'main.js' in response.text:
+                    print("✓ JavaScript文件正确引用")
+                else:
+                    print("⚠ JavaScript文件引用可能缺失")
+                    
+            else:
+                print(f"✗ 基本连接失败: {response.status_code}")
+                return False
+            
+            # 认证测试
+            auth_response = session.post(f"{self.base_url}/login", 
+                                       data={'email': 'user@example.com'},
+                                       allow_redirects=True)
+            if auth_response.status_code == 200:
+                print("✓ 用户认证正常")
+            else:
+                print(f"✗ 用户认证失败: {auth_response.status_code}")
+                return False
+            
+            # 挖矿计算测试
+            calc_data = {
+                'miner_model': 'Antminer S21 XP',
+                'miner_count': '5',
+                'electricity_cost': '0.05',
+                'use_real_time': 'on'
+            }
+            
+            calc_response = session.post(f"{self.base_url}/calculate", data=calc_data)
+            if calc_response.status_code == 200:
+                data = calc_response.json()
+                if data.get('success'):
+                    print("✓ 挖矿计算功能正常")
+                else:
+                    print(f"✗ 挖矿计算返回错误: {data.get('error', '未知错误')}")
+            else:
+                print(f"✗ 挖矿计算请求失败: {calc_response.status_code}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"功能测试失败: {str(e)}")
+            return False
+
     def run_basic_api_test(self):
         """运行基本API测试（无需浏览器）"""
         print("执行基本API功能测试...")
