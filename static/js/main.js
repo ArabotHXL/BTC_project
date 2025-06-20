@@ -2,43 +2,49 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log("页面已加载，初始化应用...");
     
-    // 元素引用 (Element references)
-    var btcPriceEl = document.getElementById('btc-price');
-    var networkDifficultyEl = document.getElementById('network-difficulty');
-    var networkHashrateEl = document.getElementById('network-hashrate');
-    var blockRewardEl = document.getElementById('block-reward');
+    // 等待DOM完全加载
+    setTimeout(function() {
+        initializeApplication();
+    }, 250);
     
-    var minerModelSelect = document.getElementById('miner-model');
-    var sitePowerMwInput = document.getElementById('site-power-mw');
-    var minerCountInput = document.getElementById('miner-count');
-    var hashrateInput = document.getElementById('hashrate');
-    var hashrateUnitSelect = document.getElementById('hashrate-unit');
-    var powerConsumptionInput = document.getElementById('power-consumption');
-    var electricityCostInput = document.getElementById('electricity-cost');
-    var clientElectricityCostInput = document.getElementById('client-electricity-cost');
-    var btcPriceInput = document.getElementById('btc-price-input');
-    var useRealTimeCheckbox = document.getElementById('use-real-time');
-    var calculatorForm = document.getElementById('mining-calculator-form');
-    
-    // 检查总算力和总功耗输入框
-    var totalHashrateInput = document.getElementById('total-hashrate');
-    var totalPowerInput = document.getElementById('total-power');
-    
-    // 获取显示字段
-    var totalHashrateDisplay = document.getElementById('total-hashrate-display');
-    var totalPowerDisplay = document.getElementById('total-power-display');
-    
-    console.log("DOM元素获取结果:");
-    console.log("总算力隐藏输入框:", totalHashrateInput || {});
-    console.log("总功耗隐藏输入框:", totalPowerInput || {});
-    console.log("总算力显示输入框:", totalHashrateDisplay || {});
-    console.log("总功耗显示输入框:", totalPowerDisplay || {});
-    
-    var resultsCard = document.getElementById('results-card');
-    var chartCard = document.getElementById('chart-card');
-    
-    // 安全检查函数
-    function safeElementAccess(elementId, callback) {
+    function initializeApplication() {
+        // 元素引用 (Element references)
+        var btcPriceEl = document.getElementById('btc-price');
+        var networkDifficultyEl = document.getElementById('network-difficulty');
+        var networkHashrateEl = document.getElementById('network-hashrate');
+        var blockRewardEl = document.getElementById('block-reward');
+        
+        var minerModelSelect = document.getElementById('miner-model');
+        var sitePowerMwInput = document.getElementById('site-power-mw');
+        var minerCountInput = document.getElementById('miner-count');
+        var hashrateInput = document.getElementById('hashrate');
+        var hashrateUnitSelect = document.getElementById('hashrate-unit');
+        var powerConsumptionInput = document.getElementById('power-consumption');
+        var electricityCostInput = document.getElementById('electricity-cost');
+        var clientElectricityCostInput = document.getElementById('client-electricity-cost');
+        var btcPriceInput = document.getElementById('btc-price-input');
+        var useRealTimeCheckbox = document.getElementById('use-real-time');
+        var calculatorForm = document.getElementById('mining-calculator-form');
+        
+        // 检查总算力和总功耗输入框
+        var totalHashrateInput = document.getElementById('total-hashrate');
+        var totalPowerInput = document.getElementById('total-power');
+        
+        // 获取显示字段
+        var totalHashrateDisplay = document.getElementById('total-hashrate-display');
+        var totalPowerDisplay = document.getElementById('total-power-display');
+        
+        console.log("DOM元素获取结果:");
+        console.log("总算力隐藏输入框:", totalHashrateInput || {});
+        console.log("总功耗隐藏输入框:", totalPowerInput || {});
+        console.log("总算力显示输入框:", totalHashrateDisplay || {});
+        console.log("总功耗显示输入框:", totalPowerDisplay || {});
+        
+        var resultsCard = document.getElementById('results-card');
+        var chartCard = document.getElementById('chart-card');
+        
+        // 安全检查函数
+        function safeElementAccess(elementId, callback) {
         try {
             var element = document.getElementById(elementId);
             if (element && callback && typeof callback === 'function') {
@@ -291,6 +297,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 计算总算力和总功耗
     function calculateTotalHashrateAndPower() {
+        if (!minerCountInput || !hashrateInput || !powerConsumptionInput) {
+            console.log("DOM elements not ready for calculation");
+            return;
+        }
+        
         var minerCount = parseInt(minerCountInput.value) || 0;
         var hashrate = parseFloat(hashrateInput.value) || 0;
         var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
@@ -776,13 +787,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // 显示结果卡片 (Show results card)
-            setTimeout(function() {
-                safeElementAccess('results-card', function(element) {
-                    if (element && element.style) {
-                        element.style.display = 'block';
-                    }
-                });
-            }, 100);
+            var resultsCardEl = document.getElementById('results-card');
+            if (resultsCardEl) {
+                resultsCardEl.style.display = 'block';
+            }
             
             // ===== 1. 基本BTC挖矿产出 =====
             updateBtcOutputDisplay(data);
@@ -1347,6 +1355,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return formatter.format(value);
     }
     
-    // 调用初始化函数 (Call init function)
-    init();
+        // 调用初始化函数 (Call init function)
+        init();
+    } // End of initializeApplication function
 });
