@@ -39,11 +39,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 安全检查函数
     function safeElementAccess(elementId, callback) {
-        var element = document.getElementById(elementId);
-        if (element && callback) {
-            callback(element);
+        try {
+            var element = document.getElementById(elementId);
+            if (element && callback && typeof callback === 'function') {
+                callback(element);
+            }
+            return element;
+        } catch (error) {
+            console.warn('Element access error for:', elementId, error);
+            return null;
         }
-        return element;
     }
     
     // 防止无限循环的标志
@@ -771,9 +776,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // 显示结果卡片 (Show results card)
-            safeElementAccess('results-card', function(element) {
-                element.style.display = 'block';
-            });
+            setTimeout(function() {
+                safeElementAccess('results-card', function(element) {
+                    if (element && element.style) {
+                        element.style.display = 'block';
+                    }
+                });
+            }, 100);
             
             // ===== 1. 基本BTC挖矿产出 =====
             updateBtcOutputDisplay(data);
