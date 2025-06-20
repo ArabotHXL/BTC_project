@@ -184,7 +184,7 @@
         
         // 加载网络数据
         function loadNetworkData() {
-            fetch('/get_network_stats')
+            fetch('/network_stats')
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -206,7 +206,7 @@
         
         // 加载矿机数据
         function loadMinerData() {
-            fetch('/get_miners')
+            fetch('/miners')
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.miners) {
