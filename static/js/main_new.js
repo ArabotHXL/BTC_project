@@ -511,7 +511,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (data.btc_mined && data.btc_mined.method1) {
             var method1Value = formatNumber(data.btc_mined.method1.daily, 8);
             var monthlyOutput1 = data.btc_mined.method1.daily * 30.5;
-            var tooltipText = '每月约: ' + formatNumber(monthlyOutput1, 8) + ' BTC';
+            var tooltipText = '基于API网络算力 - 每月约: ' + formatNumber(monthlyOutput1, 8) + ' BTC';
             
             // 更新详情表格中的元素
             if (btcMethod1CardEl) {
@@ -534,7 +534,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (data.btc_mined && data.btc_mined.method2) {
             var method2Value = formatNumber(data.btc_mined.method2.daily, 8);
             var monthlyOutput2 = data.btc_mined.method2.daily * 30.5;
-            var tooltipText = '每月约: ' + formatNumber(monthlyOutput2, 8) + ' BTC';
+            var tooltipText = '基于网络难度计算 - 每月约: ' + formatNumber(monthlyOutput2, 8) + ' BTC';
             
             // 更新详情表格中的元素
             if (btcMethod2CardEl) {
@@ -552,6 +552,53 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } else {
             console.error("无法更新算法2产出，数据缺失", data.btc_mined);
+        }
+        
+        // 计算和显示算法差异分析
+        if (data.btc_mined && data.btc_mined.method1 && data.btc_mined.method2) {
+            var method1Daily = data.btc_mined.method1.daily;
+            var method2Daily = data.btc_mined.method2.daily;
+            var difference = Math.abs(method1Daily - method2Daily);
+            var percentageDiff = method2Daily > 0 ? (difference / method2Daily * 100) : 0;
+            
+            // 更新算法差异显示
+            var algorithmDiffEl = document.getElementById('algorithm-difference');
+            if (algorithmDiffEl) {
+                var diffText = '';
+                var diffClass = 'small';
+                var tooltipText = '';
+                
+                if (percentageDiff < 0.01) {
+                    diffText = '✓ 算法一致 (差异 < 0.01%)';
+                    diffClass += ' text-success';
+                    tooltipText = '当前API网络算力与基于难度计算的算力一致，两算法产生相同结果';
+                } else if (percentageDiff < 1) {
+                    diffText = '⚠ 微小差异 (' + formatNumber(percentageDiff, 3) + '%)';
+                    diffClass += ' text-warning';
+                    tooltipText = 'API数据与难度计算存在微小差异，系统使用平均值';
+                } else if (percentageDiff < 5) {
+                    diffText = '△ 小幅差异 (' + formatNumber(percentageDiff, 2) + '%)';
+                    diffClass += ' text-info';
+                    tooltipText = 'API与难度计算存在一定差异，系统智能选择或平均';
+                } else {
+                    diffText = '! 显著差异 (' + formatNumber(percentageDiff, 2) + '%)';
+                    diffClass += ' text-danger';
+                    tooltipText = '算法差异较大，系统优先使用更稳定的难度算法';
+                }
+                
+                algorithmDiffEl.textContent = diffText;
+                algorithmDiffEl.className = diffClass;
+                algorithmDiffEl.title = tooltipText + '\n算法1: ' + formatNumber(method1Daily, 8) + ' BTC\n算法2: ' + formatNumber(method2Daily, 8) + ' BTC';
+                
+                console.log("算法差异分析:", diffText, "差异值:", difference, "百分比:", percentageDiff.toFixed(4) + "%");
+                
+                // 如果有网络数据，显示更多信息
+                if (data.network_data) {
+                    var detailText = '\n网络算力: ' + formatNumber(data.network_data.network_hashrate, 2) + ' EH/s';
+                    detailText += '\n网络难度: ' + formatNumber(data.network_data.network_difficulty, 2) + ' T';
+                    algorithmDiffEl.title += detailText;
+                }
+            }
         }
     }
     
