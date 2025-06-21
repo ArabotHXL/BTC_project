@@ -28,10 +28,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 在控制台输出所有dom元素，用于调试
     console.log("DOM元素获取结果:");
-    console.log("总算力隐藏输入框:", totalHashrateInput || "未找到");
-    console.log("总功耗隐藏输入框:", totalPowerInput || "未找到");
-    console.log("总算力显示输入框:", totalHashrateDisplay || "未找到");
-    console.log("总功耗显示输入框:", totalPowerDisplay || "未找到");
+    console.log("总算力隐藏输入框:", totalHashrateInput ? "找到" : "未找到");
+    console.log("总功耗隐藏输入框:", totalPowerInput ? "找到" : "未找到");
+    console.log("总算力显示输入框:", totalHashrateDisplay ? "找到" : "未找到");
+    console.log("总功耗显示输入框:", totalPowerDisplay ? "找到" : "未找到");
     
     var resultsCard = document.getElementById('results-card');
     var chartCard = document.getElementById('chart-card');
@@ -65,6 +65,11 @@ document.addEventListener('DOMContentLoaded', function() {
         var chartBtn = document.getElementById('generate-chart-btn');
         if (chartBtn) {
             chartBtn.addEventListener('click', function() {
+                if (!minerModelSelect || !minerCountInput || !clientElectricityCostInput) {
+                    showError('页面元素未完全加载，请刷新页面重试。(Page elements not fully loaded, please refresh.)');
+                    return;
+                }
+                
                 var minerModel = minerModelSelect.value;
                 var minerCount = minerCountInput.value || 1;
                 var clientElectricityCost = clientElectricityCostInput.value || 0;
@@ -81,6 +86,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 处理实时数据切换 (Handle real-time data toggle)
     function handleRealTimeToggle() {
+        if (!useRealTimeCheckbox || !btcPriceInput) return;
+        
         if (useRealTimeCheckbox.checked) {
             btcPriceInput.disabled = true;
             fetchNetworkStats();
@@ -91,6 +98,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 计算总算力和总功耗
     function calculateTotalHashrateAndPower() {
+        if (!minerCountInput || !hashrateInput || !powerConsumptionInput) return null;
+        
         var minerCount = parseInt(minerCountInput.value) || 0;
         var hashrate = parseFloat(hashrateInput.value) || 0;
         var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
@@ -195,24 +204,24 @@ document.addEventListener('DOMContentLoaded', function() {
         // 表单验证 (Form validation)
         var hasErrors = false;
         
-        if (minerModelSelect.value === "") {
-            if (!hashrateInput.value || parseFloat(hashrateInput.value) <= 0) {
+        if (minerModelSelect && minerModelSelect.value === "") {
+            if (!hashrateInput || !hashrateInput.value || parseFloat(hashrateInput.value) <= 0) {
                 showError('请输入有效的算力值。(Please enter a valid hashrate value.)');
                 hasErrors = true;
             }
             
-            if (!powerConsumptionInput.value || parseFloat(powerConsumptionInput.value) <= 0) {
+            if (!powerConsumptionInput || !powerConsumptionInput.value || parseFloat(powerConsumptionInput.value) <= 0) {
                 showError('请输入有效的功率值。(Please enter a valid power consumption value.)');
                 hasErrors = true;
             }
         }
         
-        if (!electricityCostInput.value || parseFloat(electricityCostInput.value) < 0) {
+        if (electricityCostInput && (!electricityCostInput.value || parseFloat(electricityCostInput.value) < 0)) {
             showError('请输入有效的电费。(Please enter a valid electricity cost.)');
             hasErrors = true;
         }
         
-        if (!useRealTimeCheckbox.checked && (!btcPriceInput.value || parseFloat(btcPriceInput.value) <= 0)) {
+        if (useRealTimeCheckbox && btcPriceInput && !useRealTimeCheckbox.checked && (!btcPriceInput.value || parseFloat(btcPriceInput.value) <= 0)) {
             showError('请输入有效的比特币价格。(Please enter a valid Bitcoin price.)');
             hasErrors = true;
         }
@@ -309,11 +318,18 @@ document.addEventListener('DOMContentLoaded', function() {
                             btcPriceInput.disabled = true;
                         }
                         
-                        // 保存到localStorage作为备用 (Save to localStorage as backup)
+                        // 清除旧的缓存并保存最新数据 (Clear old cache and save latest data)
+                        localStorage.removeItem('last_btc_price');
+                        localStorage.removeItem('last_network_difficulty');
+                        localStorage.removeItem('last_network_hashrate');
+                        localStorage.removeItem('last_block_reward');
+                        
                         localStorage.setItem('last_btc_price', data.price);
                         localStorage.setItem('last_network_difficulty', data.difficulty);
                         localStorage.setItem('last_network_hashrate', data.hashrate);
                         localStorage.setItem('last_block_reward', data.block_reward);
+                        
+                        console.log('已更新价格缓存:', data.price);
                     } else {
                         useFallbackNetworkStats();
                         console.error('获取网络状态时服务器返回错误:', data.error);
