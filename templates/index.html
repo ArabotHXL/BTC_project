@@ -869,20 +869,23 @@
             const curtailmentInput = document.getElementById('curtailment');
             const shutdownStrategyContainer = document.getElementById('shutdown-strategy-container');
             
-            // 初始检查
-            updateShutdownStrategyVisibility();
-            
-            // 添加事件监听器
-            curtailmentInput.addEventListener('input', updateShutdownStrategyVisibility);
-            
-            function updateShutdownStrategyVisibility() {
-                const curtailmentValue = parseFloat(curtailmentInput.value) || 0;
+            // 检查元素是否存在
+            if (curtailmentInput && shutdownStrategyContainer) {
+                // 初始检查
+                updateShutdownStrategyVisibility();
                 
-                // 如果curtailment > 0，显示关机策略选择
-                if (curtailmentValue > 0) {
-                    shutdownStrategyContainer.style.display = 'block';
-                } else {
-                    shutdownStrategyContainer.style.display = 'none';
+                // 添加事件监听器
+                curtailmentInput.addEventListener('input', updateShutdownStrategyVisibility);
+                
+                function updateShutdownStrategyVisibility() {
+                    const curtailmentValue = parseFloat(curtailmentInput.value) || 0;
+                    
+                    // 如果curtailment > 0，显示关机策略选择
+                    if (curtailmentValue > 0) {
+                        shutdownStrategyContainer.style.display = 'block';
+                    } else {
+                        shutdownStrategyContainer.style.display = 'none';
+                    }
                 }
             }
         });
@@ -893,10 +896,13 @@
             const hashrateManualRadio = document.getElementById('hashrate-manual');
             const manualHashrateContainer = document.getElementById('manual-hashrate-container');
             
-            if (hashrateManualRadio.checked) {
-                manualHashrateContainer.style.display = 'block';
-            } else {
-                manualHashrateContainer.style.display = 'none';
+            // 检查元素是否存在
+            if (hashrateManualRadio && manualHashrateContainer) {
+                if (hashrateManualRadio.checked) {
+                    manualHashrateContainer.style.display = 'block';
+                } else {
+                    manualHashrateContainer.style.display = 'none';
+                }
             }
         }
     </script>

@@ -28,10 +28,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 在控制台输出所有dom元素，用于调试
     console.log("DOM元素获取结果:");
-    console.log("总算力隐藏输入框:", totalHashrateInput);
-    console.log("总功耗隐藏输入框:", totalPowerInput);
-    console.log("总算力显示输入框:", totalHashrateDisplay);
-    console.log("总功耗显示输入框:", totalPowerDisplay);
+    console.log("总算力隐藏输入框:", totalHashrateInput || "未找到");
+    console.log("总功耗隐藏输入框:", totalPowerInput || "未找到");
+    console.log("总算力显示输入框:", totalHashrateDisplay || "未找到");
+    console.log("总功耗显示输入框:", totalPowerDisplay || "未找到");
     
     var resultsCard = document.getElementById('results-card');
     var chartCard = document.getElementById('chart-card');
@@ -135,6 +135,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 更新矿机规格 (Update miner specifications)
     function updateMinerSpecs() {
+        if (!minerModelSelect) return;
+        
         var selectedMiner = minerModelSelect.value;
         
         if (selectedMiner) {
@@ -143,13 +145,13 @@ document.addEventListener('DOMContentLoaded', function() {
             var miner = miners.find(function(m) { return m.name === selectedMiner; });
             
             if (miner) {
-                hashrateInput.value = miner.hashrate;
-                powerConsumptionInput.value = miner.power_watt;
+                if (hashrateInput) hashrateInput.value = miner.hashrate;
+                if (powerConsumptionInput) powerConsumptionInput.value = miner.power_watt;
                 
                 // 禁用手动输入 (Disable manual input)
-                hashrateInput.disabled = true;
-                hashrateUnitSelect.disabled = true;
-                powerConsumptionInput.disabled = true;
+                if (hashrateInput) hashrateInput.disabled = true;
+                if (hashrateUnitSelect) hashrateUnitSelect.disabled = true;
+                if (powerConsumptionInput) powerConsumptionInput.disabled = true;
                 
                 // 基于矿机功率和数量更新显示 (Update based on miner power and count)
                 updateMinerCount();
@@ -158,14 +160,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } else {
             // 启用手动输入 (Enable manual input)
-            hashrateInput.disabled = false;
-            hashrateUnitSelect.disabled = false;
-            powerConsumptionInput.disabled = false;
+            if (hashrateInput) hashrateInput.disabled = false;
+            if (hashrateUnitSelect) hashrateUnitSelect.disabled = false;
+            if (powerConsumptionInput) powerConsumptionInput.disabled = false;
         }
     }
     
     // 更新矿机数量 (Update miner count)
     function updateMinerCount() {
+        if (!sitePowerMwInput || !powerConsumptionInput || !minerCountInput) return;
+        
         var sitePowerMw = parseFloat(sitePowerMwInput.value) || 0;
         var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
         
@@ -300,7 +304,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (blockRewardEl) blockRewardEl.textContent = formatNumber(data.block_reward) + ' BTC';
                         
                         // 更新BTC价格输入框 (Update BTC price input)
-                        if (useRealTimeCheckbox && useRealTimeCheckbox.checked) {
+                        if (useRealTimeCheckbox && useRealTimeCheckbox.checked && btcPriceInput) {
                             btcPriceInput.value = data.price.toFixed(2);
                             btcPriceInput.disabled = true;
                         }
