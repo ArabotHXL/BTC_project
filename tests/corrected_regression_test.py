@@ -181,15 +181,23 @@ class CorrectedRegressionTest:
     def test_database_connection(self):
         """测试数据库连接"""
         try:
+            # 直接使用app中已初始化的数据库连接
             with app.app_context():
-                from db import db
+                # 使用app中已经初始化的数据库
+                from app import db
                 from sqlalchemy import text
                 
                 # 测试数据库连接
                 result = db.session.execute(text("SELECT 1")).scalar()
                 assert result == 1, "数据库连接应正常"
                 
-                self.test_result("Database Connection", True, "数据库连接正常")
+                # 测试一个简单的表查询
+                table_count = db.session.execute(
+                    text("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'")
+                ).scalar()
+                
+                self.test_result("Database Connection", True, 
+                               f"数据库连接正常，发现 {table_count} 个表")
                 
         except Exception as e:
             self.test_result("Database Connection", False, error=e)

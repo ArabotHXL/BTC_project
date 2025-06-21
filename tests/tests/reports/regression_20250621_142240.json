@@ -1,0 +1,76 @@
+{
+  "summary": {
+    "start_time": "2025-06-21T14:22:39.729039",
+    "end_time": "2025-06-21T14:22:40.630774",
+    "duration": 0.901735,
+    "passed": 8,
+    "failed": 1,
+    "total": 9,
+    "success_rate": 88.88888888888889
+  },
+  "results": [
+    {
+      "name": "Core Calculator",
+      "status": "PASS",
+      "details": "日收益: $5029141902919.98",
+      "error": null,
+      "time": "2025-06-21T14:22:39.730922"
+    },
+    {
+      "name": "ROI Calculation",
+      "status": "PASS",
+      "details": "ROI: 50.0%, 回本: 24.0月",
+      "error": null,
+      "time": "2025-06-21T14:22:39.731204"
+    },
+    {
+      "name": "API Connectivity",
+      "status": "PASS",
+      "details": "BTC价格: $103,566.00",
+      "error": null,
+      "time": "2025-06-21T14:22:39.823785"
+    },
+    {
+      "name": "Network Data",
+      "status": "PASS",
+      "details": "价格: $103,566.00, 难度: 126411437451912.00T",
+      "error": null,
+      "time": "2025-06-21T14:22:40.623529"
+    },
+    {
+      "name": "Authentication",
+      "status": "PASS",
+      "details": "授权邮箱数量: 3",
+      "error": null,
+      "time": "2025-06-21T14:22:40.623941"
+    },
+    {
+      "name": "Database Connection",
+      "status": "FAIL",
+      "details": "",
+      "error": "The current Flask app is not registered with this 'SQLAlchemy' instance. Did you forget to call 'init_app', or did you create multiple 'SQLAlchemy' instances?",
+      "time": "2025-06-21T14:22:40.624491"
+    },
+    {
+      "name": "Multilingual",
+      "status": "PASS",
+      "details": "中文: 登录, 英文: Login",
+      "error": null,
+      "time": "2025-06-21T14:22:40.624824"
+    },
+    {
+      "name": "Curtailment Calculator",
+      "status": "PASS",
+      "details": "削减计算正常",
+      "error": null,
+      "time": "2025-06-21T14:22:40.625347"
+    },
+    {
+      "name": "Web Application",
+      "status": "PASS",
+      "details": "登录页面可访问",
+      "error": null,
+      "time": "2025-06-21T14:22:40.630079"
+    }
+  ]
+}
