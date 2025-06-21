@@ -219,10 +219,11 @@ class RegressionTestSuite:
                     'customer', 'contact', 'lead', 'deal', 'activity'
                 ]
                 
+                from sqlalchemy import text
                 for table_name in tables_to_check:
                     result = db.session.execute(
-                        f"SELECT COUNT(*) FROM information_schema.tables "
-                        f"WHERE table_name = '{table_name}'"
+                        text(f"SELECT COUNT(*) FROM information_schema.tables "
+                             f"WHERE table_name = '{table_name}'")
                     ).scalar()
                     assert result > 0, f"表{table_name}应存在"
                 
@@ -326,13 +327,14 @@ class RegressionTestSuite:
             
             # 验证关键字段存在
             for result in [result1, result2]:
-                assert 'daily_profit' in result, "应包含日收益"
-                assert 'monthly_profit' in result, "应包含月收益"
-                assert result['daily_profit'] > 0, "日收益应为正值"
+                assert 'profit' in result, "应包含收益数据"
+                assert 'daily' in result['profit'], "应包含日收益"
+                assert 'monthly' in result['profit'], "应包含月收益"
+                assert result['profit']['daily'] > 0, "日收益应为正值"
             
             self.log_test("Algorithm Validation", True, 
-                         f"API算法日收益: ${result1['daily_profit']:.2f}, "
-                         f"手动算法日收益: ${result2['daily_profit']:.2f}")
+                         f"API算法日收益: ${result1['profit']['daily']:.2f}, "
+                         f"手动算法日收益: ${result2['profit']['daily']:.2f}")
             
         except Exception as e:
             self.log_test("Algorithm Validation", False, error=e)
