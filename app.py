@@ -1858,5 +1858,12 @@ def inject_nav_menu():
         'user_has_network_analysis_access': user_has_network_analysis_access
     }
 
+@app.route('/algorithm_test')
+@login_required
+def algorithm_test():
+    """算法差异测试工具页面"""
+    user_role = get_user_role(session.get('email'))
+    return render_template('algorithm_test.html', user_role=user_role)
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
