@@ -15,7 +15,7 @@ init_db(app)
 
 # 启动后台数据收集调度器
 try:
-    from data_collection_scheduler import start_background_collection
+    from services.data_collection_scheduler import start_background_collection
     start_background_collection()
     logging.info("网络数据收集调度器已启动")
 except Exception as e:

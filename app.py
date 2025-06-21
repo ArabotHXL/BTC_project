@@ -29,7 +29,7 @@ from mining_calculator import (
     calculate_monthly_curtailment_impact
 )
 from crm_routes import init_crm_routes
-from network_data_service import network_collector, network_analyzer
+from services.network_data_service import network_collector, network_analyzer
 from mining_broker_routes import init_broker_routes
 
 # Set up logging
