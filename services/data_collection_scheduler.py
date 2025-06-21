@@ -7,7 +7,7 @@ import threading
 import time
 import logging
 from datetime import datetime, timedelta
-from network_data_service import network_collector
+from services.network_data_service import network_collector
 from app import app
 
 class NetworkDataScheduler:
