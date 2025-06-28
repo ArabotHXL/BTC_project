@@ -283,6 +283,53 @@
                                             </div>
                                         </div>
                                     </div>
+                                    
+                                    <!-- 电费盈利分析 -->
+                                    <div class="mt-3" id="electricityProfitabilityContainer" style="display: none;">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="mb-0">
+                                                <i class="bi bi-lightning-charge"></i> 电费盈利分析
+                                            </h6>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="toggleElectricityAnalysis()">
+                                                <span id="toggleElectricityText">展开</span>
+                                            </button>
+                                        </div>
+                                        
+                                        <div id="electricitySummary">
+                                            <div class="row text-center">
+                                                <div class="col-4">
+                                                    <small class="text-muted">5¢盈利</small>
+                                                    <div class="fw-bold text-success" id="profitable5Cent">--</div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <small class="text-muted">8¢盈利</small>
+                                                    <div class="fw-bold text-warning" id="profitable8Cent">--</div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <small class="text-muted">12¢盈利</small>
+                                                    <div class="fw-bold text-danger" id="profitable12Cent">--</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- 详细分析展开面板 -->
+                                        <div id="electricityDetails" style="display: none;" class="mt-3">
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-dark">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>矿机型号</th>
+                                                            <th>盈利上限</th>
+                                                            <th>效率</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="electricityDetailsTable">
+                                                        <!-- 动态填充 -->
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1055,6 +1102,7 @@
         // Global variables to store data for insights
         let currentMarketData = null;
         let currentTechnicalData = null;
+        let electricityProfitabilityData = null;
 
         // Generate quick insights based on current data
         function generateQuickInsights() {
@@ -1188,6 +1236,88 @@
             `).join('');
 
             insightsContainer.innerHTML = insightsHtml;
+            
+            // Load electricity profitability analysis
+            loadElectricityProfitabilityAnalysis();
+        }
+
+        // 电费盈利分析相关函数
+        async function loadElectricityProfitabilityAnalysis() {
+            try {
+                const response = await fetch('/api/electricity-profitability');
+                if (!response.ok) throw new Error('Failed to load profitability data');
+                
+                const result = await response.json();
+                if (result.success) {
+                    electricityProfitabilityData = result.data;
+                    updateElectricityProfitabilityDisplay(result.data);
+                } else {
+                    console.error('Electricity profitability error:', result.error);
+                }
+            } catch (error) {
+                console.error('Failed to load electricity profitability:', error);
+            }
+        }
+
+        function updateElectricityProfitabilityDisplay(data) {
+            // 显示电费盈利分析容器
+            const container = document.getElementById('electricityProfitabilityContainer');
+            if (container) {
+                container.style.display = 'block';
+            }
+            
+            // 更新汇总统计
+            const summary = data.summary;
+            document.getElementById('profitable5Cent').textContent = `${summary.profitable_at_5cent}/${summary.total_miners}`;
+            document.getElementById('profitable8Cent').textContent = `${summary.profitable_at_8cent}/${summary.total_miners}`;
+            document.getElementById('profitable12Cent').textContent = `${summary.profitable_at_12cent}/${summary.total_miners}`;
+            
+            // 填充详细表格
+            const tableBody = document.getElementById('electricityDetailsTable');
+            if (tableBody) {
+                const rows = data.miners.map(miner => {
+                    const threshold = miner.profitability_threshold;
+                    const thresholdText = threshold ? `$${(threshold * 100).toFixed(1)}¢` : '不盈利';
+                    const thresholdClass = threshold ? (threshold >= 0.12 ? 'text-danger' : threshold >= 0.08 ? 'text-warning' : 'text-success') : 'text-muted';
+                    
+                    return `
+                        <tr>
+                            <td class="small">${miner.model.replace('Antminer ', '')}</td>
+                            <td class="small ${thresholdClass}">${thresholdText}</td>
+                            <td class="small">${miner.efficiency} W/TH</td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                tableBody.innerHTML = rows;
+            }
+        }
+
+        function toggleElectricityAnalysis() {
+            const details = document.getElementById('electricityDetails');
+            const toggleText = document.getElementById('toggleElectricityText');
+            
+            if (details.style.display === 'none') {
+                details.style.display = 'block';
+                toggleText.textContent = '收起';
+            } else {
+                details.style.display = 'none';
+                toggleText.textContent = '展开';
+            }
+        }
+
+        // Helper function to format electricity cost
+        function formatElectricityCost(cost) {
+            return `$${(cost * 100).toFixed(1)}¢/kWh`;
+        }
+
+        // Helper function to get profitability status
+        function getProfitabilityStatus(threshold) {
+            if (!threshold) return { text: '不盈利', class: 'text-muted' };
+            if (threshold >= 0.15) return { text: '优秀', class: 'text-success' };
+            if (threshold >= 0.10) return { text: '良好', class: 'text-info' };
+            if (threshold >= 0.08) return { text: '一般', class: 'text-warning' };
+            return { text: '较差', class: 'text-danger' };
         }
     </script>
 </body>
