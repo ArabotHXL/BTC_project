@@ -1896,16 +1896,37 @@ def analytics_market_data():
         return jsonify({'error': '只有拥有者可以访问分析系统'}), 403
     
     try:
-        import requests
-        # 调用分析系统API
-        response = requests.get('http://localhost:5001/api/market-data', timeout=10)
-        if response.status_code == 200:
-            return jsonify(response.json())
+        import analytics_engine
+        db_manager = analytics_engine.DatabaseManager()
+        db_manager.connect()
+        
+        # 获取最新市场数据
+        conn = db_manager.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT recorded_at, btc_price, network_hashrate, network_difficulty, 
+                   fear_greed_index, price_change_24h
+            FROM market_analytics 
+            ORDER BY recorded_at DESC LIMIT 1
+        """)
+        data = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if data:
+            return jsonify({
+                'timestamp': data[0].isoformat(),
+                'btc_price': float(data[1]) if data[1] else None,
+                'network_hashrate': float(data[2]) if data[2] else None,
+                'network_difficulty': float(data[3]) if data[3] else None,
+                'fear_greed_index': data[4],
+                'price_change_24h': float(data[5]) if data[5] else None
+            })
         else:
-            return jsonify({'error': '分析系统暂时不可用'}), 503
+            return jsonify({'error': '暂无市场数据'}), 404
     except Exception as e:
         app.logger.error(f"获取分析数据失败: {e}")
-        return jsonify({'error': '无法连接分析系统'}), 503
+        return jsonify({'error': f'获取市场数据失败: {str(e)}'}), 500
 
 @app.route('/api/analytics/latest-report')
 @login_required
@@ -1916,15 +1937,41 @@ def analytics_latest_report():
         return jsonify({'error': '只有拥有者可以访问分析系统'}), 403
     
     try:
-        import requests
-        response = requests.get('http://localhost:5001/api/latest-report', timeout=10)
-        if response.status_code == 200:
-            return jsonify(response.json())
+        import analytics_engine
+        db_manager = analytics_engine.DatabaseManager()
+        db_manager.connect()
+        
+        # 获取最新分析报告
+        conn = db_manager.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT generated_at, title, summary, key_findings, recommendations, 
+                   risk_assessment, confidence_score
+            FROM analysis_reports 
+            ORDER BY generated_at DESC LIMIT 1
+        """)
+        data = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if data:
+            return jsonify({
+                'generated_at': data[0].isoformat(),
+                'title': data[1],
+                'summary': data[2],
+                'key_findings': data[3],
+                'recommendations': data[4],
+                'risk_assessment': data[5],
+                'confidence_score': float(data[6]) if data[6] else None
+            })
         else:
-            return jsonify({'error': '暂无分析报告'}), 404
+            # 生成新报告
+            generator = analytics_engine.ReportGenerator(db_manager)
+            report = generator.generate_daily_report()
+            return jsonify(report)
     except Exception as e:
         app.logger.error(f"获取分析报告失败: {e}")
-        return jsonify({'error': '无法连接分析系统'}), 503
+        return jsonify({'error': f'获取分析报告失败: {str(e)}'}), 500
 
 @app.route('/api/analytics/technical-indicators')
 @login_required
@@ -1935,15 +1982,45 @@ def analytics_technical_indicators():
         return jsonify({'error': '只有拥有者可以访问分析系统'}), 403
     
     try:
-        import requests
-        response = requests.get('http://localhost:5001/api/technical-indicators', timeout=10)
-        if response.status_code == 200:
-            return jsonify(response.json())
+        import analytics_engine
+        import psycopg2
+        
+        # 获取最新技术指标
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT recorded_at, rsi_14, sma_20, sma_50, ema_12, ema_26, 
+                   macd, bollinger_upper, bollinger_lower, volatility_30d
+            FROM technical_indicators 
+            ORDER BY recorded_at DESC LIMIT 1
+        """)
+        data = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if data:
+            return jsonify({
+                'timestamp': data[0].isoformat(),
+                'rsi_14': float(data[1]) if data[1] else None,
+                'sma_20': float(data[2]) if data[2] else None,
+                'sma_50': float(data[3]) if data[3] else None,
+                'ema_12': float(data[4]) if data[4] else None,
+                'ema_26': float(data[5]) if data[5] else None,
+                'macd': float(data[6]) if data[6] else None,
+                'bollinger_upper': float(data[7]) if data[7] else None,
+                'bollinger_lower': float(data[8]) if data[8] else None,
+                'volatility_30d': float(data[9]) if data[9] else None
+            })
         else:
-            return jsonify({'error': '无法获取技术指标'}), 500
+            # 计算技术指标
+            db_manager = analytics_engine.DatabaseManager()
+            db_manager.connect()
+            analyzer = analytics_engine.TechnicalAnalyzer(db_manager)
+            indicators = analyzer.calculate_technical_indicators()
+            return jsonify(indicators)
     except Exception as e:
         app.logger.error(f"获取技术指标失败: {e}")
-        return jsonify({'error': '无法连接分析系统'}), 503
+        return jsonify({'error': f'获取技术指标失败: {str(e)}'}), 500
 
 @app.route('/api/analytics/price-history')
 @login_required
