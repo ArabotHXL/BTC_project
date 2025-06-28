@@ -516,17 +516,17 @@ def calculate():
         miner_model = data.get('miner_model')
         
         try:
-            miner_count = int(request.form.get('miner_count', 1))
-        except ValueError as e:
-            error_msg = f"无效的矿机数量: {request.form.get('miner_count')}"
+            miner_count = int(data.get('count', data.get('miner_count', 1)))
+        except (ValueError, TypeError) as e:
+            error_msg = f"无效的矿机数量: {data.get('count', data.get('miner_count'))}"
             logging.error(f"{error_msg} - {str(e)}")
             input_errors.append(error_msg)
             miner_count = 1
             
         try:
-            site_power_mw = float(request.form.get('site_power_mw', 1.0))
-        except ValueError as e:
-            error_msg = f"无效的站点功率值: {request.form.get('site_power_mw')}"
+            site_power_mw = float(data.get('site_power_mw', 1.0))
+        except (ValueError, TypeError) as e:
+            error_msg = f"无效的站点功率值: {data.get('site_power_mw')}"
             logging.error(f"{error_msg} - {str(e)}")
             input_errors.append(error_msg)
             site_power_mw = 1.0
