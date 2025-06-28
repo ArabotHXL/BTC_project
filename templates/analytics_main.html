@@ -69,6 +69,9 @@
             font-weight: bold;
             text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
+        .metric-value.price-display {
+            font-size: 2.5rem; /* 与右边tiles一致的大小 */
+        }
         .metric-label {
             font-size: 0.9rem;
             opacity: 0.9;
@@ -119,6 +122,15 @@
             background-color: #2d3748;
             border: 1px solid #4a5568;
             color: #ffffff;
+        }
+        .card-header h5 {
+            color: #ffffff !important;
+        }
+        .chart-container canvas {
+            background-color: transparent;
+        }
+        .price-display .metric-value {
+            font-size: 2.5rem !important; /* 与右边tiles保持一致 */
         }
     </style>
 </head>
@@ -175,7 +187,7 @@
                     <!-- Key Metrics Row -->
                     <div class="row mb-4">
                         <div class="col-md-3">
-                            <div class="card metric-card text-white">
+                            <div class="card metric-card text-white price-display">
                                 <div class="card-body text-center">
                                     <div class="metric-value" id="btcPrice">--</div>
                                     <div class="metric-label">BTC 价格 (USD)</div>
