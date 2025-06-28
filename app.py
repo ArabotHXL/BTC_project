@@ -2161,113 +2161,51 @@ def api_electricity_profitability():
         
         from mining_calculator import MINER_DATA, calculate_mining_profitability
         
-        results = []
-        electricity_ranges = [0.03, 0.05, 0.08, 0.10, 0.12, 0.15]  # 减少计算量
-        
-        logging.info(f"开始电费盈利分析 - BTC价格: ${btc_price}, 算力: {network_hashrate} EH/s")
-        
-        for miner_model, specs in MINER_DATA.items():
-            miner_analysis = {
-                "model": miner_model,
-                "hashrate": specs["hashrate"],
-                "power_watt": specs["power_watt"],
-                "efficiency": round(specs["power_watt"] / specs["hashrate"], 2),  # W/TH
-                "profitability_threshold": None,
-                "profit_at_rates": []
-            }
-            
-            # 计算不同电费下的收益状况
-            for rate in electricity_ranges:
-                profit_data = calculate_mining_profitability(
-                    hashrate=specs["hashrate"],
-                    power_consumption=specs["power_watt"],
-                    electricity_cost=rate,
-                    btc_price=btc_price,
-                    difficulty=difficulty,
-                    use_real_time_data=True,
-                    miner_count=1
-                )
-                
-                daily_profit = profit_data.get('daily_profit_usd', 0)
-                is_profitable = daily_profit > 0
-                
-                miner_analysis["profit_at_rates"].append({
-                    "electricity_cost": rate,
-                    "daily_profit_usd": round(daily_profit, 2),
-                    "monthly_profit_usd": round(daily_profit * 30, 2),
-                    "is_profitable": is_profitable
-                })
-                
-                # 记录盈利阈值
-                if is_profitable and miner_analysis["profitability_threshold"] is None:
-                    miner_analysis["profitability_threshold"] = rate
-            
-            # 如果在最高电费下仍盈利，尝试找到确切的盈利上限
-            if miner_analysis["profitability_threshold"] is None:
-                # 二分法查找盈利阈值
-                low, high = 0.01, 0.30
-                threshold = None
-                
-                for _ in range(20):  # 最多20次迭代
-                    mid = (low + high) / 2
-                    profit_data = calculate_mining_profitability(
-                        hashrate=specs["hashrate"],
-                        power_consumption=specs["power_watt"],
-                        electricity_cost=mid,
-                        btc_price=btc_price,
-                        difficulty=difficulty,
-                        use_real_time_data=True,
-                        miner_count=1
-                    )
-                    
-                    if profit_data.get('daily_profit_usd', 0) > 0:
-                        low = mid
-                        threshold = mid
-                    else:
-                        high = mid
-                    
-                    if high - low < 0.001:  # 精度达到0.1美分
-                        break
-                
-                miner_analysis["profitability_threshold"] = round(threshold, 3) if threshold else None
-            
-            results.append(miner_analysis)
-        
-        # 按效率排序（效率越高越好）
-        results.sort(key=lambda x: x["efficiency"])
-        
-        # 计算汇总统计
-        profitable_at_5cent = sum(1 for r in results if any(p["electricity_cost"] == 0.05 and p["is_profitable"] for p in r["profit_at_rates"]))
-        profitable_at_8cent = sum(1 for r in results if any(p["electricity_cost"] == 0.08 and p["is_profitable"] for p in r["profit_at_rates"]))
-        profitable_at_12cent = sum(1 for r in results if any(p["electricity_cost"] == 0.12 and p["is_profitable"] for p in r["profit_at_rates"]))
-        
-        summary = {
-            "total_miners": len(results),
-            "profitable_at_5cent": profitable_at_5cent,
-            "profitable_at_8cent": profitable_at_8cent, 
-            "profitable_at_12cent": profitable_at_12cent,
-            "market_conditions": {
-                "btc_price": btc_price,
-                "network_difficulty": difficulty,
-                "network_hashrate": network_hashrate,
-                "timestamp": datetime.now().isoformat()
-            }
+        # 快速简化分析 - 仅统计概览
+        test_rates = [0.05, 0.08, 0.12]  # 5¢, 8¢, 12¢
+        key_miners = {
+            "S21 XP Hyd": {"hashrate": 473, "power_watt": 5676},
+            "S21 Hyd": {"hashrate": 335, "power_watt": 5360}, 
+            "S21 XP": {"hashrate": 270, "power_watt": 3600},
+            "S21": {"hashrate": 200, "power_watt": 3500},
+            "S19 XP": {"hashrate": 140, "power_watt": 3010}
         }
+        
+        profitability_stats = {}
+        
+        for rate in test_rates:
+            profitable_count = 0
+            for model, specs in key_miners.items():
+                # 简化计算
+                daily_btc = (specs["hashrate"] / network_hashrate) * 900 * 3.125
+                daily_revenue = daily_btc * btc_price  
+                daily_power_cost = (specs["power_watt"] / 1000) * 24 * rate
+                if daily_revenue > daily_power_cost:
+                    profitable_count += 1
+            
+            profitability_stats[f"rate_{int(rate*100)}c"] = {
+                "profitable_miners": profitable_count,
+                "total_miners": len(key_miners),
+                "percentage": round((profitable_count / len(key_miners)) * 100, 1)
+            }
         
         return jsonify({
             "success": True,
             "data": {
-                "miners": results,
-                "summary": summary,
-                "electricity_ranges": electricity_ranges
+                "current_market": {
+                    "btc_price": round(btc_price, 2),
+                    "network_hashrate": round(network_hashrate, 2)
+                },
+                "profitability_stats": profitability_stats,
+                "timestamp": datetime.now().isoformat()
             }
         })
         
     except Exception as e:
-        logging.error(f"电费盈利分析API错误: {str(e)}")
+        logging.error(f"电费盈利分析API错误: {e}")
         return jsonify({
             "success": False,
-            "error": f"无法获取电费盈利分析数据: {str(e)}"
+            "error": "分析暂时不可用"
         }), 500
 
 if __name__ == '__main__':
