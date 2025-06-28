@@ -623,10 +623,22 @@
 
         async function loadMarketData() {
             try {
-                const response = await fetch('/api/analytics/market-data');
+                console.log('Loading market data...');
+                const response = await fetch('/api/analytics/market-data', {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                console.log('Market data response status:', response.status);
                 if (!response.ok) throw new Error('Market data unavailable');
                 
-                const data = await response.json();
+                const responseData = await response.json();
+                console.log('Market data response:', responseData);
+                const data = responseData.data || responseData;
+                console.log('Extracted data for display:', data);
                 updateMarketDataDisplay(data);
             } catch (error) {
                 console.error('Market data error:', error);
@@ -696,11 +708,18 @@
 
         // Display update functions
         function updateMarketDataDisplay(data) {
+            console.log('Updating market data display with:', data);
+            
             // Dashboard metrics
-            document.getElementById('btcPrice').textContent = formatPrice(data.btc_price);
-            document.getElementById('networkHashrate').textContent = formatNumber(data.network_hashrate, 1);
-            document.getElementById('fearGreedIndex').textContent = data.fear_greed_index || '--';
-            document.getElementById('fearGreedLabel').textContent = getFearGreedLabel(data.fear_greed_index);
+            const btcPriceElement = document.getElementById('btcPrice');
+            const networkHashrateElement = document.getElementById('networkHashrate');
+            const fearGreedIndexElement = document.getElementById('fearGreedIndex');
+            const fearGreedLabelElement = document.getElementById('fearGreedLabel');
+            
+            if (btcPriceElement) btcPriceElement.textContent = formatPrice(data.btc_price);
+            if (networkHashrateElement) networkHashrateElement.textContent = formatNumber(data.network_hashrate, 1);
+            if (fearGreedIndexElement) fearGreedIndexElement.textContent = data.fear_greed_index || '--';
+            if (fearGreedLabelElement) fearGreedLabelElement.textContent = getFearGreedLabel(data.fear_greed_index);
             
             // Price changes
             const priceChange24h = document.getElementById('priceChange24h');
