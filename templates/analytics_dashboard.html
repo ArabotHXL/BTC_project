@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin 数据分析仪表盘</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #0d1421;
+            color: #ffffff;
+        }
+        .card {
+            background-color: #1a2332;
+            border: 1px solid #2d3748;
+        }
+        .card-header {
+            background-color: #2d3748;
+            border-bottom: 1px solid #4a5568;
+        }
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        .price-up {
+            color: #48bb78;
+        }
+        .price-down {
+            color: #f56565;
+        }
+        .loading {
+            display: none;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-online {
+            background-color: #48bb78;
+            animation: pulse 2s infinite;
+        }
+        .status-offline {
+            background-color: #f56565;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        .metric-change {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        .risk-low {
+            color: #48bb78;
+        }
+        .risk-medium {
+            color: #ed8936;
+        }
+        .risk-high {
+            color: #f56565;
+        }
+        .recommendation-item {
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background-color: #2d3748;
+            border-radius: 4px;
+            border-left: 4px solid #667eea;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="bi bi-graph-up"></i>
+                Bitcoin 数据分析仪表盘
+            </span>
+            <div class="d-flex align-items-center">
+                <span class="status-indicator status-online" id="statusIndicator"></span>
+                <span id="statusText">实时监控中</span>
+                <span class="ms-3 text-muted" id="lastUpdate">--</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- 主要指标行 -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card metric-card text-white">
+                    <div class="card-body text-center">
+                        <div class="metric-value" id="btcPrice">--</div>
+                        <div class="metric-label">BTC 价格 (USD)</div>
+                        <div class="metric-change" id="priceChange24h">--</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card metric-card text-white">
+                    <div class="card-body text-center">
+                        <div class="metric-value" id="networkHashrate">--</div>
+                        <div class="metric-label">网络算力 (EH/s)</div>
+                        <div class="metric-change" id="hashrateStatus">--</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card metric-card text-white">
+                    <div class="card-body text-center">
+                        <div class="metric-value" id="fearGreedIndex">--</div>
+                        <div class="metric-label">恐惧贪婪指数</div>
+                        <div class="metric-change" id="fearGreedLabel">--</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card metric-card text-white">
+                    <div class="card-body text-center">
+                        <div class="metric-value" id="rsiValue">--</div>
+                        <div class="metric-label">RSI (14)</div>
+                        <div class="metric-change" id="rsiSignal">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图表和分析行 -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            BTC 价格趋势 (24小时)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="priceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-speedometer2"></i>
+                            技术指标
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">SMA 20</small>
+                                <div class="fw-bold" id="sma20">--</div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">SMA 50</small>
+                                <div class="fw-bold" id="sma50">--</div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">EMA 12</small>
+                                <div class="fw-bold" id="ema12">--</div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">EMA 26</small>
+                                <div class="fw-bold" id="ema26">--</div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">MACD</small>
+                                <div class="fw-bold" id="macd">--</div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">波动率 30D</small>
+                                <div class="fw-bold" id="volatility">--</div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <small class="text-muted">布林带</small>
+                            <div class="fw-bold">
+                                <span id="bollingerUpper">--</span> / <span id="bollingerLower">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分析报告行 -->
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-file-text"></i>
+                            最新分析报告
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="reportTitle" class="h6 mb-3">--</div>
+                        <div id="reportSummary" class="mb-3">--</div>
+                        
+                        <h6>关键发现</h6>
+                        <div id="keyFindings" class="mb-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small class="text-muted">价格区间</small>
+                                    <div id="priceRange">--</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted">平均价格</small>
+                                    <div id="avgPrice">--</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h6>投资建议</h6>
+                        <div id="recommendations">
+                            <!-- 动态填充建议 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-shield-exclamation"></i>
+                            风险评估
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-3">
+                            <div class="metric-value" id="riskScore">--</div>
+                            <div class="metric-label">风险评分</div>
+                            <div class="metric-change" id="riskLevel">--</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <small class="text-muted">置信度</small>
+                            <div class="fw-bold" id="confidenceScore">--</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <small class="text-muted">数据更新时间</small>
+                            <div class="fw-bold" id="reportTime">--</div>
+                        </div>
+                        
+                        <div>
+                            <small class="text-muted">市场情绪</small>
+                            <div class="fw-bold" id="marketSentiment">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let priceChart;
+        
+        // 初始化价格图表
+        function initPriceChart() {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'BTC 价格',
+                        data: [],
+                        borderColor: '#48bb78',
+                        backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#ffffff'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#ffffff',
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 格式化数字
+        function formatNumber(num, decimals = 2) {
+            if (num === null || num === undefined) return '--';
+            return num.toLocaleString('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        }
+        
+        // 格式化价格
+        function formatPrice(price) {
+            if (price === null || price === undefined) return '--';
+            return '$' + formatNumber(price, 2);
+        }
+        
+        // 格式化百分比
+        function formatPercent(percent) {
+            if (percent === null || percent === undefined) return '--';
+            const formatted = percent >= 0 ? '+' + formatNumber(percent, 2) + '%' : formatNumber(percent, 2) + '%';
+            return formatted;
+        }
+        
+        // 获取市场数据
+        async function fetchMarketData() {
+            try {
+                const response = await fetch('/api/market-data');
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error('Market data error:', data.error);
+                    return;
+                }
+                
+                // 更新BTC价格
+                document.getElementById('btcPrice').textContent = formatPrice(data.btc_price);
+                
+                // 更新价格变化
+                const priceChange = document.getElementById('priceChange24h');
+                if (data.price_change_24h !== null) {
+                    priceChange.textContent = formatPercent(data.price_change_24h);
+                    priceChange.className = data.price_change_24h >= 0 ? 'metric-change price-up' : 'metric-change price-down';
+                }
+                
+                // 更新网络算力
+                document.getElementById('networkHashrate').textContent = formatNumber(data.network_hashrate, 1);
+                document.getElementById('hashrateStatus').textContent = '网络安全';
+                
+                // 更新恐惧贪婪指数
+                if (data.fear_greed_index !== null) {
+                    document.getElementById('fearGreedIndex').textContent = data.fear_greed_index;
+                    document.getElementById('fearGreedLabel').textContent = getFearGreedLabel(data.fear_greed_index);
+                }
+                
+                // 更新最后更新时间
+                document.getElementById('lastUpdate').textContent = '更新: ' + new Date(data.timestamp).toLocaleTimeString();
+                
+            } catch (error) {
+                console.error('Error fetching market data:', error);
+                document.getElementById('statusIndicator').className = 'status-indicator status-offline';
+                document.getElementById('statusText').textContent = '连接异常';
+            }
+        }
+        
+        // 获取技术指标
+        async function fetchTechnicalIndicators() {
+            try {
+                const response = await fetch('/api/technical-indicators');
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error('Technical indicators error:', data.error);
+                    return;
+                }
+                
+                // 更新RSI
+                if (data.rsi_14 !== null) {
+                    document.getElementById('rsiValue').textContent = formatNumber(data.rsi_14, 1);
+                    document.getElementById('rsiSignal').textContent = getRSISignal(data.rsi_14);
+                }
+                
+                // 更新其他技术指标
+                document.getElementById('sma20').textContent = formatPrice(data.sma_20);
+                document.getElementById('sma50').textContent = formatPrice(data.sma_50);
+                document.getElementById('ema12').textContent = formatPrice(data.ema_12);
+                document.getElementById('ema26').textContent = formatPrice(data.ema_26);
+                document.getElementById('macd').textContent = formatNumber(data.macd, 4);
+                document.getElementById('volatility').textContent = formatPercent(data.volatility_30d);
+                document.getElementById('bollingerUpper').textContent = formatPrice(data.bollinger_upper);
+                document.getElementById('bollingerLower').textContent = formatPrice(data.bollinger_lower);
+                
+            } catch (error) {
+                console.error('Error fetching technical indicators:', error);
+            }
+        }
+        
+        // 获取价格历史
+        async function fetchPriceHistory() {
+            try {
+                const response = await fetch('/api/price-history?hours=24');
+                const data = await response.json();
+                
+                if (data.length === 0) return;
+                
+                const labels = data.map(item => new Date(item.time).toLocaleTimeString());
+                const prices = data.map(item => item.price);
+                
+                priceChart.data.labels = labels;
+                priceChart.data.datasets[0].data = prices;
+                priceChart.update();
+                
+            } catch (error) {
+                console.error('Error fetching price history:', error);
+            }
+        }
+        
+        // 获取分析报告
+        async function fetchLatestReport() {
+            try {
+                const response = await fetch('/api/latest-report');
+                const data = await response.json();
+                
+                if (data.error) {
+                    document.getElementById('reportTitle').textContent = '暂无分析报告';
+                    return;
+                }
+                
+                // 更新报告信息
+                document.getElementById('reportTitle').textContent = data.title;
+                document.getElementById('reportSummary').textContent = data.summary;
+                document.getElementById('reportTime').textContent = new Date(data.generated_at).toLocaleString();
+                document.getElementById('confidenceScore').textContent = formatPercent(data.confidence_score * 100);
+                
+                // 更新关键发现
+                if (data.key_findings) {
+                    document.getElementById('priceRange').textContent = data.key_findings.price_range || '--';
+                    document.getElementById('avgPrice').textContent = data.key_findings.avg_price || '--';
+                    document.getElementById('marketSentiment').textContent = data.key_findings.market_sentiment || '--';
+                }
+                
+                // 更新建议
+                const recommendationsDiv = document.getElementById('recommendations');
+                recommendationsDiv.innerHTML = '';
+                if (data.recommendations) {
+                    data.recommendations.forEach(rec => {
+                        const div = document.createElement('div');
+                        div.className = 'recommendation-item';
+                        div.textContent = rec;
+                        recommendationsDiv.appendChild(div);
+                    });
+                }
+                
+                // 更新风险评估
+                if (data.risk_assessment) {
+                    document.getElementById('riskScore').textContent = data.risk_assessment.risk_score || '--';
+                    const riskLevel = document.getElementById('riskLevel');
+                    riskLevel.textContent = data.risk_assessment.risk_level || '--';
+                    riskLevel.className = 'metric-change risk-' + (data.risk_assessment.risk_level || 'medium').toLowerCase();
+                }
+                
+            } catch (error) {
+                console.error('Error fetching latest report:', error);
+            }
+        }
+        
+        // 辅助函数
+        function getFearGreedLabel(index) {
+            if (index <= 25) return '极度恐惧';
+            if (index <= 45) return '恐惧';
+            if (index <= 55) return '中性';
+            if (index <= 75) return '贪婪';
+            return '极度贪婪';
+        }
+        
+        function getRSISignal(rsi) {
+            if (rsi > 70) return '超买';
+            if (rsi < 30) return '超卖';
+            return '中性';
+        }
+        
+        // 初始化和定时更新
+        document.addEventListener('DOMContentLoaded', function() {
+            initPriceChart();
+            
+            // 立即加载数据
+            fetchMarketData();
+            fetchTechnicalIndicators();
+            fetchPriceHistory();
+            fetchLatestReport();
+            
+            // 设置定时更新
+            setInterval(fetchMarketData, 60000);        // 每分钟更新市场数据
+            setInterval(fetchTechnicalIndicators, 300000); // 每5分钟更新技术指标
+            setInterval(fetchPriceHistory, 300000);      // 每5分钟更新价格图表
+            setInterval(fetchLatestReport, 900000);      // 每15分钟更新报告
+        });
+    </script>
+</body>
+</html>

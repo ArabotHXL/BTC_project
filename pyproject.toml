@@ -18,4 +18,5 @@ dependencies = [
     "psycopg2-binary>=2.9.10",
     "notion-client>=2.3.0",
     "pytz>=2025.2",
+    "schedule>=1.2.2",
 ]
