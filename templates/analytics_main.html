@@ -657,6 +657,7 @@
                     loadLatestReport()
                 ]);
                 updateConnectionStatus(true);
+                generateQuickInsights();
             } catch (error) {
                 console.error('Error loading data:', error);
                 updateConnectionStatus(false);
@@ -766,6 +767,9 @@
         function updateMarketDataDisplay(data) {
             console.log('Updating market data display with:', data);
             
+            // Store data for insights generation
+            currentMarketData = data;
+            
             // Dashboard metrics - check each element exists before updating
             const btcPriceElement = document.getElementById('btcPrice');
             const networkHashrateElement = document.getElementById('networkHashrate');
@@ -839,6 +843,9 @@
         }
 
         function updateTechnicalIndicatorsDisplay(data) {
+            // Store data for insights generation
+            currentTechnicalData = data;
+            
             // Dashboard RSI
             if (data.rsi_14 !== null) {
                 document.getElementById('rsiValue').textContent = formatNumber(data.rsi_14, 1);
@@ -1043,6 +1050,144 @@
         function showSuccessMessage(message) {
             // Could implement toast notifications here
             console.log(message);
+        }
+
+        // Global variables to store data for insights
+        let currentMarketData = null;
+        let currentTechnicalData = null;
+
+        // Generate quick insights based on current data
+        function generateQuickInsights() {
+            const insightsContainer = document.getElementById('quickInsights');
+            if (!insightsContainer) return;
+
+            // Clear loading spinner
+            insightsContainer.innerHTML = '';
+
+            if (!currentMarketData) {
+                insightsContainer.innerHTML = '<div class="text-muted">等待数据加载...</div>';
+                return;
+            }
+
+            const insights = [];
+            const data = currentMarketData;
+
+            // Price movement insights
+            if (data.price_change_24h !== null) {
+                const change = data.price_change_24h;
+                if (Math.abs(change) > 5) {
+                    insights.push({
+                        type: change > 0 ? 'success' : 'danger',
+                        icon: change > 0 ? 'bi-trending-up' : 'bi-trending-down',
+                        text: `24小时内价格${change > 0 ? '上涨' : '下跌'}${Math.abs(change).toFixed(1)}%`
+                    });
+                } else if (Math.abs(change) < 1) {
+                    insights.push({
+                        type: 'info',
+                        icon: 'bi-dash-circle',
+                        text: '价格走势相对稳定'
+                    });
+                }
+            }
+
+            // Fear & Greed insights
+            if (data.fear_greed_index) {
+                const index = data.fear_greed_index;
+                if (index <= 25) {
+                    insights.push({
+                        type: 'warning',
+                        icon: 'bi-exclamation-triangle',
+                        text: '市场情绪极度恐惧，可能是买入机会'
+                    });
+                } else if (index >= 75) {
+                    insights.push({
+                        type: 'warning',
+                        icon: 'bi-fire',
+                        text: '市场情绪极度贪婪，注意风险控制'
+                    });
+                }
+            }
+
+            // Price level insights
+            if (data.btc_price) {
+                const price = data.btc_price;
+                if (price > 110000) {
+                    insights.push({
+                        type: 'success',
+                        icon: 'bi-arrow-up-circle',
+                        text: 'BTC价格突破11万美元关键阻力位'
+                    });
+                } else if (price < 100000) {
+                    insights.push({
+                        type: 'info',
+                        icon: 'bi-info-circle',
+                        text: 'BTC价格仍在10万美元心理关口下方'
+                    });
+                }
+            }
+
+            // Network hashrate insights
+            if (data.network_hashrate) {
+                const hashrate = data.network_hashrate;
+                if (hashrate > 900) {
+                    insights.push({
+                        type: 'success',
+                        icon: 'bi-cpu',
+                        text: '网络算力超过900 EH/s，网络安全性极高'
+                    });
+                }
+            }
+
+            // Mining profitability insight
+            if (data.btc_price && data.network_hashrate) {
+                const estimatedDailyRevenue = (data.btc_price * 200 * 144) / (data.network_hashrate * 1e18 / 1e12);
+                if (estimatedDailyRevenue > 15) {
+                    insights.push({
+                        type: 'success',
+                        icon: 'bi-gem',
+                        text: '当前挖矿收益率较为可观'
+                    });
+                } else if (estimatedDailyRevenue < 10) {
+                    insights.push({
+                        type: 'warning',
+                        icon: 'bi-exclamation-circle',
+                        text: '挖矿收益率相对较低，注意成本控制'
+                    });
+                }
+            }
+
+            // Technical analysis insights (if available)
+            if (currentTechnicalData && currentTechnicalData.rsi_14) {
+                const rsi = currentTechnicalData.rsi_14;
+                if (rsi > 70) {
+                    insights.push({
+                        type: 'warning',
+                        icon: 'bi-thermometer-high',
+                        text: 'RSI指标显示超买状态'
+                    });
+                } else if (rsi < 30) {
+                    insights.push({
+                        type: 'info',
+                        icon: 'bi-thermometer-low',
+                        text: 'RSI指标显示超卖状态'
+                    });
+                }
+            }
+
+            // Generate HTML
+            if (insights.length === 0) {
+                insightsContainer.innerHTML = '<div class="text-muted">暂无特殊市场洞察</div>';
+                return;
+            }
+
+            const insightsHtml = insights.slice(0, 4).map(insight => `
+                <div class="insight-item mb-2 p-2 border-start border-${insight.type} border-3">
+                    <i class="bi ${insight.icon} text-${insight.type} me-2"></i>
+                    <span class="small">${insight.text}</span>
+                </div>
+            `).join('');
+
+            insightsContainer.innerHTML = insightsHtml;
         }
     </script>
 </body>
