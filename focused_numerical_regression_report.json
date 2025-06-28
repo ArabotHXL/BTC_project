@@ -1,0 +1,36 @@
+{
+  "test_summary": {
+    "total_tests": 13,
+    "passed_tests": 3,
+    "failed_tests": 10,
+    "success_rate": 23.1,
+    "test_duration": 6.31,
+    "test_timestamp": "2025-06-28T18:59:32.308884"
+  },
+  "layer_performance": {
+    "backend": {
+      "total": 2,
+      "passed": 1
+    },
+    "middleware": {
+      "total": 4,
+      "passed": 1
+    },
+    "frontend": {
+      "total": 3,
+      "passed": 1
+    },
+    "numerical": {
+      "total": 4,
+      "passed": 0
+    }
+  },
+  "numerical_test_count": 0,
+  "test_results": [
+    {
+      "test_name": "后端数值完整性-市场数据",
+      "status": "PASS",
+      "details": "记录数: 13, 平均价格: $107,358, 平均算力: 904.9EH/s",
+      "numerical_result": {
+        "count": 13,
+        "avg_price": 

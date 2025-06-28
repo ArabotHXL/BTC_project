@@ -2116,6 +2116,15 @@ def algorithm_test_alt():
         return redirect(url_for('index'))
     return algorithm_test()
 
+@app.route('/network_history')
+@login_required
+def network_history_alt():
+    """网络历史数据分析 - 备用路由"""
+    if not has_role(['owner', 'admin']):
+        flash('您没有权限访问网络分析', 'danger')
+        return redirect(url_for('index'))
+    return network_history()
+
 
 
 if __name__ == '__main__':
