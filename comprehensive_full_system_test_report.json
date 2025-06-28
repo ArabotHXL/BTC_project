@@ -6,13 +6,13 @@
     "errors": 1,
     "warnings": 0,
     "success_rate": 67.9,
-    "average_response_time": 0.238,
-    "test_duration": 5.59
+    "average_response_time": 0.338,
+    "test_duration": 9.03
   },
   "numerical_results": {
     "数据库表-user_access": 7,
-    "数据库表-login_records": 221,
-    "数据库表-network_snapshots": 351,
+    "数据库表-login_records": 224,
+    "数据库表-network_snapshots": 363,
     "挖矿计算精度": {
       "daily_btc": 0,
       "daily_revenue": 0,
@@ -32,16 +32,16 @@
       "content_match_percentage": 100.0
     },
     "首页加载性能": {
-      "response_time": 0.0035638809204101562
+      "response_time": 0.0036401748657226562
     },
     "计算API性能": {
-      "response_time": 0.0036606788635253906
+      "response_time": 0.8681330680847168
     },
     "分析API性能": {
-      "response_time": 0.25797271728515625
+      "response_time": 0.2492656707763672
     },
     "网络数据性能": {
-      "response_time": 1.0311880111694336
+      "response_time": 1.0375723838806152
     }
   },
   "detailed_results": [
@@ -49,46 +49,46 @@
       "test_name": "用户认证",
       "status": "PASS",
       "details": "Owner用户认证成功: hxl2022hao@gmail.com",
-      "timestamp": "2025-06-28T19:38:51.197425",
-      "response_time": 0.4118173122406006
+      "timestamp": "2025-06-28T20:16:14.705958",
+      "response_time": 0.6192605495452881
     },
     {
       "test_name": "数据库表-user_access",
       "status": "PASS",
       "details": "表存在，记录数: 7",
-      "timestamp": "2025-06-28T19:38:51.394196",
+      "timestamp": "2025-06-28T20:16:14.894138",
       "response_time": null,
       "numerical_result": 7
     },
     {
       "test_name": "数据库表-login_records",
       "status": "PASS",
-      "details": "表存在，记录数: 221",
-      "timestamp": "2025-06-28T19:38:51.422705",
+      "details": "表存在，记录数: 224",
+      "timestamp": "2025-06-28T20:16:14.918664",
       "response_time": null,
-      "numerical_result": 221
+      "numerical_result": 224
     },
     {
       "test_name": "数据库表-network_snapshots",
       "status": "PASS",
-      "details": "表存在，记录数: 351",
-      "timestamp": "2025-06-28T19:38:51.447525",
+      "details": "表存在，记录数: 363",
+      "timestamp": "2025-06-28T20:16:14.943692",
       "response_time": null,
-      "numerical_result": 351
+      "numerical_result": 363
     },
     {
       "test_name": "数据库操作",
       "status": "ERROR",
       "details": "数据库测试失败: relation \"customers\" does not exist\nLINE 1: SELECT COUNT(*) FROM customers\n                             ^\n",
-      "timestamp": "2025-06-28T19:38:51.469103",
+      "timestamp": "2025-06-28T20:16:14.963935",
       "response_time": null
     },
     {
       "test_name": "挖矿计算精度",
       "status": "PASS",
       "details": "日产BTC: 0.00000000, 日收入: $0.00, 日利润: $0.00, ROI: 0天",
-      "timestamp": "2025-06-28T19:38:51.475195",
-      "response_time": 0.0049419403076171875,
+      "timestamp": "2025-06-28T20:16:16.270658",
+      "response_time": 1.3057715892791748,
       "numerical_result": {
         "daily_btc": 0,
         "daily_revenue": 0,
@@ -106,85 +106,85 @@
       "test_name": "计算结果合理性",
       "status": "FAIL",
       "details": "存在负数或零值，计算逻辑异常",
-      "timestamp": "2025-06-28T19:38:51.475290",
+      "timestamp": "2025-06-28T20:16:16.270763",
       "response_time": null
     },
     {
       "test_name": "BTC价格API",
       "status": "PASS",
-      "details": "API响应正常，数据长度: 33",
-      "timestamp": "2025-06-28T19:38:51.528134",
-      "response_time": 0.05256795883178711
+      "details": "API响应正常，数据长度: 36",
+      "timestamp": "2025-06-28T20:16:16.364300",
+      "response_time": 0.09321403503417969
     },
     {
       "test_name": "网络统计API",
       "status": "PASS",
-      "details": "API响应正常，数据长度: 330",
-      "timestamp": "2025-06-28T19:38:52.542297",
-      "response_time": 1.0138816833496094
+      "details": "API响应正常，数据长度: 333",
+      "timestamp": "2025-06-28T20:16:17.290255",
+      "response_time": 0.9251115322113037
     },
     {
       "test_name": "矿机列表API",
       "status": "PASS",
       "details": "API响应正常，数据长度: 1171",
-      "timestamp": "2025-06-28T19:38:52.545837",
-      "response_time": 0.003369569778442383
+      "timestamp": "2025-06-28T20:16:17.294243",
+      "response_time": 0.0037810802459716797
     },
     {
       "test_name": "分析市场数据API",
       "status": "PASS",
       "details": "API响应正常，数据长度: 212",
-      "timestamp": "2025-06-28T19:38:52.800435",
-      "response_time": 0.25389575958251953
+      "timestamp": "2025-06-28T20:16:17.549152",
+      "response_time": 0.25475215911865234
     },
     {
       "test_name": "价格历史API",
       "status": "PASS",
-      "details": "API响应正常，数据长度: 1832",
-      "timestamp": "2025-06-28T19:38:53.064186",
-      "response_time": 0.2635838985443115
+      "details": "API响应正常，数据长度: 2106",
+      "timestamp": "2025-06-28T20:16:17.821278",
+      "response_time": 0.27130675315856934
     },
     {
       "test_name": "技术指标API",
       "status": "PASS",
       "details": "API响应正常，数据长度: 211",
-      "timestamp": "2025-06-28T19:38:53.320936",
-      "response_time": 0.2566218376159668
+      "timestamp": "2025-06-28T20:16:18.075783",
+      "response_time": 0.25432777404785156
     },
     {
       "test_name": "最新报告API",
       "status": "PASS",
       "details": "API响应正常，数据长度: 546",
-      "timestamp": "2025-06-28T19:38:53.573505",
-      "response_time": 0.25241708755493164
+      "timestamp": "2025-06-28T20:16:18.336309",
+      "response_time": 0.2603743076324463
     },
     {
       "test_name": "网络概览API",
       "status": "PASS",
       "details": "API响应正常，数据长度: 330",
-      "timestamp": "2025-06-28T19:38:54.606816",
-      "response_time": 1.0329983234405518
+      "timestamp": "2025-06-28T20:16:19.116304",
+      "response_time": 0.7798590660095215
     },
     {
       "test_name": "价格趋势API",
       "status": "FAIL",
       "details": "API响应失败，状态码: 404",
-      "timestamp": "2025-06-28T19:38:54.609789",
-      "response_time": 0.0028867721557617188
+      "timestamp": "2025-06-28T20:16:19.119397",
+      "response_time": 0.003015279769897461
     },
     {
       "test_name": "难度趋势API",
       "status": "FAIL",
       "details": "API响应失败，状态码: 404",
-      "timestamp": "2025-06-28T19:38:54.612702",
-      "response_time": 0.0028591156005859375
+      "timestamp": "2025-06-28T20:16:19.121691",
+      "response_time": 0.002201080322265625
     },
     {
       "test_name": "前端-主页",
       "status": "PASS",
       "details": "页面加载正常，内容匹配: 50.0%",
-      "timestamp": "2025-06-28T19:38:54.617466",
-      "response_time": 0.004220485687255859,
+      "timestamp": "2025-06-28T20:16:19.126828",
+      "response_time": 0.004389524459838867,
       "numerical_result": {
         "content_match_percentage": 50.0
       }
@@ -193,8 +193,8 @@
       "test_name": "前端-分析仪表盘",
       "status": "PASS",
       "details": "页面加载正常，内容匹配: 100.0%",
-      "timestamp": "2025-06-28T19:38:54.707455",
-      "response_time": 0.0897836685180664,
+      "timestamp": "2025-06-28T20:16:19.211193",
+      "response_time": 0.08403825759887695,
       "numerical_result": {
         "content_match_percentage": 100.0
       }
@@ -203,75 +203,75 @@
       "test_name": "前端-网络历史",
       "status": "FAIL",
       "details": "页面加载失败，状态码: 404",
-      "timestamp": "2025-06-28T19:38:54.711165",
-      "response_time": 0.0036411285400390625
+      "timestamp": "2025-06-28T20:16:19.214484",
+      "response_time": 0.0032072067260742188
     },
     {
       "test_name": "前端-CRM系统",
       "status": "FAIL",
       "details": "页面内容不完整，匹配度: 0.0%",
-      "timestamp": "2025-06-28T19:38:55.005182",
-      "response_time": 0.29389500617980957
+      "timestamp": "2025-06-28T20:16:19.615686",
+      "response_time": 0.4008958339691162
     },
     {
       "test_name": "前端-削减计算器",
       "status": "FAIL",
       "details": "页面加载失败，状态码: 404",
-      "timestamp": "2025-06-28T19:38:55.007809",
-      "response_time": 0.002551555633544922
+      "timestamp": "2025-06-28T20:16:19.618724",
+      "response_time": 0.0029168128967285156
     },
     {
       "test_name": "前端-算法测试",
       "status": "FAIL",
       "details": "页面加载失败，状态码: 404",
-      "timestamp": "2025-06-28T19:38:55.010283",
-      "response_time": 0.0023488998413085938
+      "timestamp": "2025-06-28T20:16:19.621279",
+      "response_time": 0.0024755001068115234
     },
     {
       "test_name": "数据流集成",
       "status": "FAIL",
       "details": "价格数据不一致，差异: $80000.00",
-      "timestamp": "2025-06-28T19:38:55.074186",
+      "timestamp": "2025-06-28T20:16:20.959421",
       "response_time": null
     },
     {
       "test_name": "首页加载性能",
       "status": "PASS",
       "details": "性能良好，响应时间: 0.004s",
-      "timestamp": "2025-06-28T19:38:55.077984",
-      "response_time": 0.0035638809204101562,
+      "timestamp": "2025-06-28T20:16:20.963209",
+      "response_time": 0.0036401748657226562,
       "numerical_result": {
-        "response_time": 0.0035638809204101562
+        "response_time": 0.0036401748657226562
       }
     },
     {
       "test_name": "计算API性能",
       "status": "PASS",
-      "details": "性能良好，响应时间: 0.004s",
-      "timestamp": "2025-06-28T19:38:55.081712",
-      "response_time": 0.0036606788635253906,
+      "details": "性能良好，响应时间: 0.868s",
+      "timestamp": "2025-06-28T20:16:21.831389",
+      "response_time": 0.8681330680847168,
       "numerical_result": {
-        "response_time": 0.0036606788635253906
+        "response_time": 0.8681330680847168
       }
     },
     {
       "test_name": "分析API性能",
       "status": "PASS",
-      "details": "性能良好，响应时间: 0.258s",
-      "timestamp": "2025-06-28T19:38:55.339751",
-      "response_time": 0.25797271728515625,
+      "details": "性能良好，响应时间: 0.249s",
+      "timestamp": "2025-06-28T20:16:22.080740",
+      "response_time": 0.2492656707763672,
       "numerical_result": {
-        "response_time": 0.25797271728515625
+        "response_time": 0.2492656707763672
       }
     },
     {
       "test_name": "网络数据性能",
       "status": "PASS",
-      "details": "性能良好，响应时间: 1.031s",
-      "timestamp": "2025-06-28T19:38:56.371015",
-      "response_time": 1.0311880111694336,
+      "details": "性能良好，响应时间: 1.038s",
+      "timestamp": "2025-06-28T20:16:23.118393",
+      "response_time": 1.0375723838806152,
       "numerical_result": {
-        "response_time": 1.0311880111694336
+        "response_time": 1.0375723838806152
       }
     }
   ],
@@ -281,7 +281,7 @@
     "database_status": "ISSUES"
   },
   "recommendations": [
-    "优化性能：3个端点响应时间超过1秒",
+    "优化性能：2个端点响应时间超过1秒",
     "修复问题：9个测试失败或异常",
     "提高数值精度：3个计算字段精度不足"
   ]

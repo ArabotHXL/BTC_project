@@ -95,7 +95,33 @@ def calculate_roi(investment, yearly_profit, monthly_profit, btc_price, forecast
     }
 
 def get_real_time_btc_price():
-    """Get the current Bitcoin price from CoinGecko API"""
+    """Get the current Bitcoin price from analytics database first, then CoinGecko API"""
+    try:
+        # 首先尝试从analytics数据库获取最新价格
+        import os
+        import psycopg2
+        
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT btc_price FROM market_analytics 
+            ORDER BY recorded_at DESC LIMIT 1
+        """)
+        
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if result and result[0]:
+            analytics_price = float(result[0])
+            logging.info(f"使用analytics数据库价格: ${analytics_price:,.2f}")
+            return analytics_price
+            
+    except Exception as e:
+        logging.warning(f"Analytics数据库价格获取失败: {e}")
+    
+    # 如果analytics数据库失败，尝试CoinGecko API
     try:
         response = requests.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd', timeout=10)
         response.raise_for_status()
