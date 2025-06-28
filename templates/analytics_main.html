@@ -1268,45 +1268,51 @@
                 }
             } catch (error) {
                 console.error('Failed to load electricity profitability:', error);
-                // 如果API调用失败，隐藏电费分析容器
+                // 显示基本容器，即使API失败也要显示结构
                 const container = document.getElementById('electricityProfitabilityContainer');
                 if (container) {
-                    container.style.display = 'none';
+                    container.style.display = 'block';
+                    // 显示加载失败状态
+                    document.getElementById('profitable5Cent').textContent = '--';
+                    document.getElementById('profitable8Cent').textContent = '--';
+                    document.getElementById('profitable12Cent').textContent = '--';
                 }
             }
         }
 
         function updateElectricityProfitabilityDisplay(data) {
+            console.log('Updating electricity profitability display with:', data);
+            
             // 显示电费盈利分析容器
             const container = document.getElementById('electricityProfitabilityContainer');
             if (container) {
                 container.style.display = 'block';
             }
             
-            // 更新汇总统计
-            const summary = data.summary;
-            document.getElementById('profitable5Cent').textContent = `${summary.profitable_at_5cent}/${summary.total_miners}`;
-            document.getElementById('profitable8Cent').textContent = `${summary.profitable_at_8cent}/${summary.total_miners}`;
-            document.getElementById('profitable12Cent').textContent = `${summary.profitable_at_12cent}/${summary.total_miners}`;
-            
-            // 填充详细表格
-            const tableBody = document.getElementById('electricityDetailsTable');
-            if (tableBody) {
-                const rows = data.miners.map(miner => {
-                    const threshold = miner.profitability_threshold;
-                    const thresholdText = threshold ? `$${(threshold * 100).toFixed(1)}¢` : '不盈利';
-                    const thresholdClass = threshold ? (threshold >= 0.12 ? 'text-danger' : threshold >= 0.08 ? 'text-warning' : 'text-success') : 'text-muted';
-                    
-                    return `
-                        <tr>
-                            <td class="small">${miner.model.replace('Antminer ', '')}</td>
-                            <td class="small ${thresholdClass}">${thresholdText}</td>
-                            <td class="small">${miner.efficiency} W/TH</td>
-                        </tr>
-                    `;
-                }).join('');
+            // 使用API返回的profitability_stats数据结构
+            const stats = data.profitability_stats;
+            if (stats) {
+                // 更新5¢电费统计
+                const profitable5Element = document.getElementById('profitable5Cent');
+                if (profitable5Element && stats.rate_5c) {
+                    profitable5Element.textContent = `${stats.rate_5c.profitable_miners}/${stats.rate_5c.total_miners}`;
+                }
                 
-                tableBody.innerHTML = rows;
+                // 更新8¢电费统计
+                const profitable8Element = document.getElementById('profitable8Cent');
+                if (profitable8Element && stats.rate_8c) {
+                    profitable8Element.textContent = `${stats.rate_8c.profitable_miners}/${stats.rate_8c.total_miners}`;
+                }
+                
+                // 更新12¢电费统计
+                const profitable12Element = document.getElementById('profitable12Cent');
+                if (profitable12Element && stats.rate_12c) {
+                    profitable12Element.textContent = `${stats.rate_12c.profitable_miners}/${stats.rate_12c.total_miners}`;
+                }
+                
+                console.log('Successfully updated electricity profitability display');
+            } else {
+                console.error('No profitability_stats found in data:', data);
             }
         }
 
