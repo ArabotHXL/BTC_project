@@ -1019,6 +1019,239 @@
                 }
             }
         }
+
+        // Analytics Widget Functions (Owner Only)
+        {% if session.role == 'owner' %}
+        // Load analytics data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAnalyticsWidget();
+            // Auto-refresh analytics every 5 minutes
+            setInterval(loadAnalyticsWidget, 300000);
+        });
+
+        async function loadAnalyticsWidget() {
+            try {
+                const marketData = await fetch('/api/analytics/market-data');
+                if (marketData.ok) {
+                    const data = await marketData.json();
+                    updateAnalyticsWidget(data);
+                } else {
+                    console.log('Analytics system starting up...');
+                    document.getElementById('widget-insights').textContent = 
+                        '{% if current_lang == "en" %}Analytics system initializing...{% else %}分析系统启动中...{% endif %}';
+                }
+            } catch (error) {
+                console.log('Analytics connection pending...');
+                document.getElementById('widget-insights').textContent = 
+                    '{% if current_lang == "en" %}Connecting to analytics...{% else %}连接分析系统中...{% endif %}';
+            }
+        }
+
+        function updateAnalyticsWidget(data) {
+            // Update BTC Price
+            document.getElementById('widget-btc-price').textContent = 
+                data.btc_price ? '$' + data.btc_price.toLocaleString() : '--';
+            
+            // Update price change
+            const priceChangeEl = document.getElementById('widget-price-change');
+            if (data.price_change_24h !== null) {
+                const change = data.price_change_24h;
+                priceChangeEl.textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
+                priceChangeEl.className = 'small ' + (change >= 0 ? 'text-success' : 'text-danger');
+            }
+
+            // Update Network Hashrate
+            document.getElementById('widget-hashrate').textContent = 
+                data.network_hashrate ? data.network_hashrate.toFixed(1) : '--';
+
+            // Update Fear & Greed Index
+            document.getElementById('widget-fear-greed').textContent = 
+                data.fear_greed_index || '--';
+            
+            // Update sentiment label
+            const sentiment = getFearGreedLabel(data.fear_greed_index);
+            document.getElementById('widget-sentiment').textContent = sentiment;
+
+            // Update insights
+            const insights = generateInsights(data);
+            document.getElementById('widget-insights').innerHTML = insights;
+        }
+
+        function getFearGreedLabel(index) {
+            if (!index) return '--';
+            if (index <= 25) return '{% if current_lang == "en" %}Extreme Fear{% else %}极度恐惧{% endif %}';
+            if (index <= 45) return '{% if current_lang == "en" %}Fear{% else %}恐惧{% endif %}';
+            if (index <= 55) return '{% if current_lang == "en" %}Neutral{% else %}中性{% endif %}';
+            if (index <= 75) return '{% if current_lang == "en" %}Greed{% else %}贪婪{% endif %}';
+            return '{% if current_lang == "en" %}Extreme Greed{% else %}极度贪婪{% endif %}';
+        }
+
+        function generateInsights(data) {
+            const insights = [];
+            
+            if (data.price_change_24h > 5) {
+                insights.push('{% if current_lang == "en" %}📈 Strong bullish momentum detected{% else %}📈 检测到强劲上涨动能{% endif %}');
+            } else if (data.price_change_24h < -5) {
+                insights.push('{% if current_lang == "en" %}📉 Significant price decline observed{% else %}📉 观察到显著价格下跌{% endif %}');
+            }
+
+            if (data.network_hashrate > 900) {
+                insights.push('{% if current_lang == "en" %}🔒 Network security extremely high{% else %}🔒 网络安全性极高{% endif %}');
+            }
+
+            if (data.fear_greed_index <= 25) {
+                insights.push('{% if current_lang == "en" %}💡 Potential buying opportunity{% else %}💡 潜在买入机会{% endif %}');
+            } else if (data.fear_greed_index >= 75) {
+                insights.push('{% if current_lang == "en" %}⚠️ Market overheating warning{% else %}⚠️ 市场过热警告{% endif %}');
+            }
+
+            return insights.length > 0 ? insights.join(' • ') : 
+                '{% if current_lang == "en" %}Market conditions stable{% else %}市场状况稳定{% endif %}';
+        }
+
+        function refreshAnalyticsWidget() {
+            loadAnalyticsWidget();
+        }
+
+        async function showLatestReport() {
+            const modal = new bootstrap.Modal(document.getElementById('analyticsModal'));
+            document.getElementById('analyticsModalLabel').textContent = 
+                '{% if current_lang == "en" %}Latest Analysis Report{% else %}最新分析报告{% endif %}';
+            
+            try {
+                const response = await fetch('/api/analytics/latest-report');
+                if (response.ok) {
+                    const report = await response.json();
+                    displayReport(report);
+                } else {
+                    document.getElementById('analyticsModalBody').innerHTML = 
+                        '<div class="alert alert-warning">{% if current_lang == "en" %}No reports available yet{% else %}暂无可用报告{% endif %}</div>';
+                }
+            } catch (error) {
+                document.getElementById('analyticsModalBody').innerHTML = 
+                    '<div class="alert alert-danger">{% if current_lang == "en" %}Unable to load report{% else %}无法加载报告{% endif %}</div>';
+            }
+            
+            modal.show();
+        }
+
+        async function showTechnicalIndicators() {
+            const modal = new bootstrap.Modal(document.getElementById('analyticsModal'));
+            document.getElementById('analyticsModalLabel').textContent = 
+                '{% if current_lang == "en" %}Technical Indicators{% else %}技术指标{% endif %}';
+            
+            try {
+                const response = await fetch('/api/analytics/technical-indicators');
+                if (response.ok) {
+                    const indicators = await response.json();
+                    displayTechnicalIndicators(indicators);
+                } else {
+                    document.getElementById('analyticsModalBody').innerHTML = 
+                        '<div class="alert alert-warning">{% if current_lang == "en" %}Indicators not available{% else %}技术指标不可用{% endif %}</div>';
+                }
+            } catch (error) {
+                document.getElementById('analyticsModalBody').innerHTML = 
+                    '<div class="alert alert-danger">{% if current_lang == "en" %}Unable to load indicators{% else %}无法加载技术指标{% endif %}</div>';
+            }
+            
+            modal.show();
+        }
+
+        function displayReport(report) {
+            const html = `
+                <div class="mb-3">
+                    <h6>${report.title || '{% if current_lang == "en" %}Analysis Report{% else %}分析报告{% endif %}'}</h6>
+                    <p class="text-muted small">{% if current_lang == "en" %}Generated:{% else %}生成时间:{% endif %} ${new Date(report.generated_at).toLocaleString()}</p>
+                </div>
+                <div class="mb-3">
+                    <strong>{% if current_lang == "en" %}Summary:{% else %}摘要:{% endif %}</strong>
+                    <p>${report.summary || '{% if current_lang == "en" %}No summary available{% else %}暂无摘要{% endif %}'}</p>
+                </div>
+                ${report.recommendations && report.recommendations.length > 0 ? `
+                <div class="mb-3">
+                    <strong>{% if current_lang == "en" %}Recommendations:{% else %}投资建议:{% endif %}</strong>
+                    <ul class="list-unstyled mt-2">
+                        ${report.recommendations.map(rec => `<li class="mb-1">• ${rec}</li>`).join('')}
+                    </ul>
+                </div>
+                ` : ''}
+                ${report.risk_assessment ? `
+                <div class="mb-3">
+                    <strong>{% if current_lang == "en" %}Risk Level:{% else %}风险等级:{% endif %}</strong>
+                    <span class="badge bg-${getRiskColor(report.risk_assessment.risk_level)} ms-2">
+                        ${report.risk_assessment.risk_level || 'Unknown'}
+                    </span>
+                </div>
+                ` : ''}
+            `;
+            document.getElementById('analyticsModalBody').innerHTML = html;
+        }
+
+        function displayTechnicalIndicators(indicators) {
+            const html = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>{% if current_lang == "en" %}Moving Averages{% else %}移动平均线{% endif %}</h6>
+                        <table class="table table-sm">
+                            <tr><td>SMA 20</td><td>${formatPrice(indicators.sma_20)}</td></tr>
+                            <tr><td>SMA 50</td><td>${formatPrice(indicators.sma_50)}</td></tr>
+                            <tr><td>EMA 12</td><td>${formatPrice(indicators.ema_12)}</td></tr>
+                            <tr><td>EMA 26</td><td>${formatPrice(indicators.ema_26)}</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>{% if current_lang == "en" %}Momentum{% else %}动量指标{% endif %}</h6>
+                        <table class="table table-sm">
+                            <tr><td>RSI (14)</td><td>${formatNumber(indicators.rsi_14, 1)}</td></tr>
+                            <tr><td>MACD</td><td>${formatNumber(indicators.macd, 4)}</td></tr>
+                            <tr><td>{% if current_lang == "en" %}Volatility 30D{% else %}30日波动率{% endif %}</td><td>${formatPercent(indicators.volatility_30d)}</td></tr>
+                        </table>
+                    </div>
+                </div>
+                ${indicators.bollinger_upper && indicators.bollinger_lower ? `
+                <div class="mt-3">
+                    <h6>{% if current_lang == "en" %}Bollinger Bands{% else %}布林带{% endif %}</h6>
+                    <div class="row">
+                        <div class="col-4 text-center">
+                            <small>{% if current_lang == "en" %}Upper{% else %}上轨{% endif %}</small><br>
+                            <strong>${formatPrice(indicators.bollinger_upper)}</strong>
+                        </div>
+                        <div class="col-4 text-center">
+                            <small>{% if current_lang == "en" %}Middle{% else %}中轨{% endif %}</small><br>
+                            <strong>${formatPrice(indicators.sma_20)}</strong>
+                        </div>
+                        <div class="col-4 text-center">
+                            <small>{% if current_lang == "en" %}Lower{% else %}下轨{% endif %}</small><br>
+                            <strong>${formatPrice(indicators.bollinger_lower)}</strong>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+            `;
+            document.getElementById('analyticsModalBody').innerHTML = html;
+        }
+
+        function getRiskColor(level) {
+            switch(level?.toLowerCase()) {
+                case '低': case 'low': return 'success';
+                case '中': case 'medium': return 'warning';
+                case '高': case 'high': return 'danger';
+                default: return 'secondary';
+            }
+        }
+
+        function formatPrice(price) {
+            return price ? '$' + price.toLocaleString() : '--';
+        }
+
+        function formatNumber(num, decimals = 2) {
+            return num ? num.toFixed(decimals) : '--';
+        }
+
+        function formatPercent(percent) {
+            return percent ? (percent >= 0 ? '+' : '') + percent.toFixed(2) + '%' : '--';
+        }
+        {% endif %}
     </script>
 </body>
 </html>
