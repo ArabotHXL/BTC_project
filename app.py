@@ -2137,5 +2137,18 @@ def network_history_alt():
 
 
 
+# 添加缺失的API路由修复404错误
+@app.route('/api/price-trend')
+@login_required
+def api_price_trend_missing():
+    """价格趋势API - 缺失路由修复"""
+    return api_price_trend()
+
+@app.route('/api/difficulty-trend')
+@login_required
+def api_difficulty_trend_missing():
+    """难度趋势API - 缺失路由修复"""
+    return api_difficulty_trend()
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
