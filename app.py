@@ -795,6 +795,8 @@ def calculate():
 
 # API routes with standardized URL patterns
 @app.route('/api/btc-price', methods=['GET'])
+@app.route('/api/btc_price', methods=['GET'])
+@app.route('/get_btc_price', methods=['GET'])
 @app.route('/btc_price', methods=['GET'])
 @login_required
 def get_btc_price():
@@ -813,6 +815,8 @@ def get_btc_price():
         }), 500
 
 @app.route('/api/network-stats', methods=['GET'])
+@app.route('/api/network_stats', methods=['GET'])
+@app.route('/get_network_stats', methods=['GET'])
 @app.route('/network_stats', methods=['GET'])
 @login_required
 def get_network_stats():
@@ -926,6 +930,7 @@ def get_sha256_mining_comparison():
         }), 500
 
 @app.route('/api/miners', methods=['GET'])
+@app.route('/get_miners', methods=['GET'])
 @app.route('/miners', methods=['GET'])
 @login_required
 def get_miners():

@@ -1,11 +1,11 @@
 {
   "test_summary": {
     "total_tests": 14,
-    "passed_tests": 10,
-    "failed_tests": 4,
-    "success_rate": 71.4,
-    "test_duration": 6.52,
-    "test_timestamp": "2025-06-28T19:01:44.941532"
+    "passed_tests": 13,
+    "failed_tests": 1,
+    "success_rate": 92.9,
+    "test_duration": 3.53,
+    "test_timestamp": "2025-06-28T19:07:22.993086"
   },
   "layer_performance": {
     "backend": {
@@ -15,8 +15,8 @@
     },
     "middleware": {
       "total": 4,
-      "passed": 1,
-      "success_rate": 25.0
+      "passed": 4,
+      "success_rate": 100.0
     },
     "frontend": {
       "total": 4,
@@ -41,7 +41,7 @@
         "avg_hashrate": 904.89
       },
       "test_type": "backend",
-      "timestamp": "2025-06-28T19:01:43.631972"
+      "timestamp": "2025-06-28T19:07:20.086682"
     },
     {
       "test_name": "后端数值完整性-网络快照",
@@ -49,147 +49,146 @@
       "details": "难度数值异常: 126.41143745191216",
       "numerical_result": null,
       "test_type": "backend",
-      "timestamp": "2025-06-28T19:01:43.675757"
+      "timestamp": "2025-06-28T19:07:20.107523"
     },
     {
       "test_name": "数值精度-S19 Pro单台基准测试",
       "status": "PASS",
-      "details": "算力: 33770TH/s, 功耗: 997750W, 日产: 0.017354BTC, 响应时间: 0.005s",
+      "details": "算力: 33770TH/s, 功耗: 997750W, 日产: 0.017354BTC, 响应时间: 0.013s",
       "numerical_result": {
         "hashrate": 33770.0,
         "power": 997750.0,
         "daily_btc": 0.017353653641189272,
-        "response_time": 0.005016326904296875
+        "response_time": 0.013015031814575195
       },
       "test_type": "numerical",
-      "timestamp": "2025-06-28T19:01:43.681715"
+      "timestamp": "2025-06-28T19:07:20.121683"
     },
     {
       "test_name": "数值精度-S21高效能测试",
       "status": "PASS",
-      "details": "算力: 57000TH/s, 功耗: 997500W, 日产: 0.029291BTC, 响应时间: 0.003s",
+      "details": "算力: 57000TH/s, 功耗: 997500W, 日产: 0.029291BTC, 响应时间: 0.004s",
       "numerical_result": {
         "hashrate": 57000.0,
         "power": 997500.0,
         "daily_btc": 0.02929103516576217,
-        "response_time": 0.003381490707397461
+        "response_time": 0.0035834312438964844
       },
       "test_type": "numerical",
-      "timestamp": "2025-06-28T19:01:43.685512"
+      "timestamp": "2025-06-28T19:07:20.125840"
     },
     {
       "test_name": "数值精度-多台矿机缩放测试",
       "status": "PASS",
-      "details": "算力: 33770TH/s, 功耗: 997750W, 日产: 0.017354BTC, 响应时间: 0.004s",
+      "details": "算力: 33770TH/s, 功耗: 997750W, 日产: 0.017354BTC, 响应时间: 0.006s",
       "numerical_result": {
         "hashrate": 33770.0,
         "power": 997750.0,
         "daily_btc": 0.017353653641189272,
-        "response_time": 0.0036826133728027344
+        "response_time": 0.0059702396392822266
       },
       "test_type": "numerical",
-      "timestamp": "2025-06-28T19:01:43.689481"
+      "timestamp": "2025-06-28T19:07:20.132083"
     },
     {
       "test_name": "API数值验证-BTC价格API数值验证",
-      "status": "FAIL",
-      "details": "HTTP状态码: 404",
-      "numerical_result": null,
+      "status": "PASS",
+      "details": "响应时间: 0.084s, 数值验证通过",
+      "numerical_result": 80000.0,
       "test_type": "middleware",
-      "timestamp": "2025-06-28T19:01:43.691967"
+      "timestamp": "2025-06-28T19:07:20.217240"
     },
     {
       "test_name": "API数值验证-网络统计API数值验证",
-      "status": "FAIL",
-      "details": "HTTP状态码: 404",
-      "numerical_result": null,
+      "status": "PASS",
+      "details": "响应时间: 1.226s, 数值验证通过",
+      "numerical_result": 80000.0,
       "test_type": "middleware",
-      "timestamp": "2025-06-28T19:01:43.694407"
+      "timestamp": "2025-06-28T19:07:21.442927"
     },
     {
       "test_name": "API数值验证-矿机规格API数值验证",
-      "status": "FAIL",
-      "details": "HTTP状态码: 404",
-      "numerical_result": null,
+      "status": "PASS",
+      "details": "响应时间: 0.004s, 数值验证通过",
+      "numerical_result": 10.0,
       "test_type": "middleware",
-      "timestamp": "2025-06-28T19:01:43.696965"
+      "timestamp": "2025-06-28T19:07:21.447584"
     },
     {
       "test_name": "API数值验证-分析市场数据API数值验证",
       "status": "PASS",
-      "details": "响应时间: 0.271s, 数值验证通过",
+      "details": "响应时间: 0.257s, 数值验证通过",
       "numerical_result": 107451.0,
       "test_type": "middleware",
-      "timestamp": "2025-06-28T19:01:43.968092"
+      "timestamp": "2025-06-28T19:07:21.704914"
     },
     {
       "test_name": "前端数值集成-主页计算器数值功能",
       "status": "PASS",
-      "details": "元素覆盖: 100.0%, 表单覆盖: 100.0%, 响应时间: 0.004s",
+      "details": "元素覆盖: 100.0%, 表单覆盖: 100.0%, 响应时间: 0.026s",
       "numerical_result": {
         "element_coverage": 1.0,
         "form_coverage": 1.0,
-        "response_time": 0.004303693771362305
+        "response_time": 0.0255584716796875
       },
       "test_type": "frontend",
-      "timestamp": "2025-06-28T19:01:43.973973"
+      "timestamp": "2025-06-28T19:07:21.731634"
     },
     {
       "test_name": "前端数值集成-电力削减计算器数值功能",
       "status": "PASS",
-      "details": "元素覆盖: 80.0%, 表单覆盖: 100.0%, 响应时间: 0.384s",
+      "details": "元素覆盖: 80.0%, 表单覆盖: 100.0%, 响应时间: 0.611s",
       "numerical_result": {
         "element_coverage": 0.8,
         "form_coverage": 1.0,
-        "response_time": 0.38376784324645996
+        "response_time": 0.6113409996032715
       },
       "test_type": "frontend",
-      "timestamp": "2025-06-28T19:01:44.358031"
+      "timestamp": "2025-06-28T19:07:22.343313"
     },
     {
       "test_name": "前端数值集成-CRM客户管理界面",
       "status": "PASS",
-      "details": "元素覆盖: 100.0%, 表单覆盖: 100.0%, 响应时间: 0.484s",
+      "details": "元素覆盖: 100.0%, 表单覆盖: 100.0%, 响应时间: 0.498s",
       "numerical_result": {
         "element_coverage": 1.0,
         "form_coverage": 1.0,
-        "response_time": 0.4840812683105469
+        "response_time": 0.4978928565979004
       },
       "test_type": "frontend",
-      "timestamp": "2025-06-28T19:01:44.842403"
+      "timestamp": "2025-06-28T19:07:22.841489"
     },
     {
       "test_name": "前端数值集成-算法差异测试工具",
       "status": "PASS",
-      "details": "元素覆盖: 100.0%, 表单覆盖: 100.0%, 响应时间: 0.095s",
+      "details": "元素覆盖: 100.0%, 表单覆盖: 100.0%, 响应时间: 0.092s",
       "numerical_result": {
         "element_coverage": 1.0,
         "form_coverage": 1.0,
-        "response_time": 0.09462809562683105
+        "response_time": 0.09205317497253418
       },
       "test_type": "frontend",
-      "timestamp": "2025-06-28T19:01:44.937466"
+      "timestamp": "2025-06-28T19:07:22.933988"
     },
     {
       "test_name": "端到端数值流程-完整性验证",
       "status": "PASS",
-      "details": "3台S19 Pro: 算力=33770TH/s, 功耗=997750W, 日产=0.017354BTC, 月产=0.529286BTC, 年产=6.351437BTC, 处理时间=0.003s",
+      "details": "3台S19 Pro: 算力=33770TH/s, 功耗=997750W, 日产=0.017354BTC, 月产=0.529286BTC, 年产=6.351437BTC, 处理时间=0.041s",
       "numerical_result": {
         "hashrate": 33770.0,
         "power": 997750.0,
         "daily_btc": 0.017353653641189272,
         "monthly_btc": 0.5292864360562728,
         "yearly_btc": 6.3514372326752735,
-        "processing_time": 0.00347900390625,
+        "processing_time": 0.040700674057006836,
         "daily_monthly_ratio": 30.5,
         "monthly_yearly_ratio": 12.0
       },
       "test_type": "numerical",
-      "timestamp": "2025-06-28T19:01:44.941345"
+      "timestamp": "2025-06-28T19:07:22.976437"
     }
   ],
   "recommendations": [
-    "后端数据库: 优化SQL查询和数据完整性验证",
-    "中端API: 检查API端点路径和响应格式"
+    "后端数据库: 优化SQL查询和数据完整性验证"
   ]
 }
