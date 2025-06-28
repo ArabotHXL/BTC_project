@@ -901,13 +901,15 @@ def get_sha256_mining_comparison():
         if comparison_data:
             return jsonify({
                 'success': True,
-                'data': comparison_data,
+                'coins': comparison_data,  # 修复：添加coins字段
+                'data': comparison_data,   # 保持向后兼容
                 'api_calls_remaining': api_status.get('ApiUsageAvailable', 0),
                 'daily_calls_remaining': api_status.get('DailyUsageAvailable', 0)
             })
         else:
             return jsonify({
                 'success': False,
+                'coins': [],  # 修复：空数据时也返回coins字段
                 'error': 'Unable to fetch mining comparison data'
             }), 500
             
@@ -1189,6 +1191,7 @@ def migrate_to_crm():
         flash(f'迁移失败: {str(e)}', 'danger')
         return redirect(url_for('user_access'))
 
+@app.route('/api/profit-chart-data', methods=['POST'])
 @app.route('/profit_chart_data', methods=['POST'])
 @login_required
 def get_profit_chart_data():
@@ -2069,6 +2072,19 @@ def analytics_price_history():
     except Exception as e:
         app.logger.error(f"获取价格历史失败: {e}")
         return jsonify({'error': f'获取价格历史失败: {str(e)}'}), 500
+
+# Missing frontend routes that were causing 404 errors
+@app.route('/crm/dashboard')
+@login_required
+def crm_dashboard_redirect():
+    """CRM系统仪表盘重定向"""
+    user_role = get_user_role(session.get('email'))
+    if user_role not in ['owner', 'admin', 'mining_site']:
+        flash('您没有权限访问CRM系统', 'danger')
+        return redirect(url_for('index'))
+    return redirect(url_for('crm.dashboard'))
+
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
