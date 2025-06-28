@@ -458,57 +458,62 @@ def login_dashboard():
 def calculate():
     """Handle the calculation request and return results as JSON"""
     try:
-        # Log full form data for debugging
-        logging.info(f"Received calculate request form data: {request.form}")
+        # Handle both JSON and form data
+        if request.is_json:
+            data = request.get_json()
+            logging.info(f"Received calculate request JSON data: {data}")
+        else:
+            data = request.form
+            logging.info(f"Received calculate request form data: {data}")
         
         # 初始化错误收集列表
         input_errors = []
         
-        # Get values from the form submission with detailed error handling
+        # Get values from the request data with detailed error handling
         try:
-            hashrate = float(request.form.get('hashrate', 0))
-        except ValueError as e:
-            error_msg = f"无效的算力值: {request.form.get('hashrate')}"
+            hashrate = float(data.get('hashrate', 0))
+        except (ValueError, TypeError) as e:
+            error_msg = f"无效的算力值: {data.get('hashrate')}"
             logging.error(f"{error_msg} - {str(e)}")
             input_errors.append(error_msg)
             hashrate = 0
             
-        hashrate_unit = request.form.get('hashrate_unit', 'TH/s')
+        hashrate_unit = data.get('hashrate_unit', 'TH/s')
         
         try:
-            power_consumption = float(request.form.get('power_consumption', 0))
-        except ValueError as e:
-            error_msg = f"无效的功耗值: {request.form.get('power_consumption')}"
+            power_consumption = float(data.get('power_consumption', 0))
+        except (ValueError, TypeError) as e:
+            error_msg = f"无效的功耗值: {data.get('power_consumption')}"
             logging.error(f"{error_msg} - {str(e)}")
             input_errors.append(error_msg)
             power_consumption = 0
             
         try:
-            electricity_cost = float(request.form.get('electricity_cost', 0))
-        except ValueError as e:
-            error_msg = f"无效的电费值: {request.form.get('electricity_cost')}"
+            electricity_cost = float(data.get('electricity_cost', 0))
+        except (ValueError, TypeError) as e:
+            error_msg = f"无效的电费值: {data.get('electricity_cost')}"
             logging.error(f"{error_msg} - {str(e)}")
             input_errors.append(error_msg)
             electricity_cost = 0.05  # Default value
             
         try:
-            client_electricity_cost = float(request.form.get('client_electricity_cost', 0))
-        except ValueError as e:
-            error_msg = f"无效的客户电费值: {request.form.get('client_electricity_cost')}"
+            client_electricity_cost = float(data.get('client_electricity_cost', 0))
+        except (ValueError, TypeError) as e:
+            error_msg = f"无效的客户电费值: {data.get('client_electricity_cost')}"
             logging.error(f"{error_msg} - {str(e)}")
             input_errors.append(error_msg)
             client_electricity_cost = 0
             
         try:
-            btc_price = float(request.form.get('btc_price', 0))
-        except ValueError as e:
-            error_msg = f"无效的BTC价格值: {request.form.get('btc_price')}"
+            btc_price = float(data.get('btc_price', 0))
+        except (ValueError, TypeError) as e:
+            error_msg = f"无效的BTC价格值: {data.get('btc_price')}"
             logging.error(f"{error_msg} - {str(e)}")
             input_errors.append(error_msg)
             btc_price = 0
             
-        use_real_time = request.form.get('use_real_time') == 'on'
-        miner_model = request.form.get('miner_model')
+        use_real_time = data.get('use_real_time_data', data.get('use_real_time')) in ['on', True, 'true', '1']
+        miner_model = data.get('miner_model')
         
         try:
             miner_count = int(request.form.get('miner_count', 1))
