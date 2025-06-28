@@ -187,9 +187,19 @@ def get_real_time_block_reward():
         return BLOCK_REWARD
         
 def get_real_time_btc_hashrate():
-    """获取实时比特币网络哈希率 - 使用当前准确数值"""
+    """获取实时比特币网络哈希率 - 直接使用blockchain.info hashrate API"""
     try:
-        # 方法1: 尝试从difficulty精确计算当前算力
+        # 直接从blockchain.info的hashrate API获取数据（与分析系统保持一致）
+        hashrate_response = requests.get('https://blockchain.info/q/hashrate', timeout=5)
+        if hashrate_response.status_code == 200:
+            hashrate_gh = float(hashrate_response.text.strip())
+            # 转换GH/s到EH/s
+            hashrate_eh = hashrate_gh / 1e9  # GH/s to EH/s
+            
+            logging.info(f"Blockchain.info直接算力数据: {hashrate_eh:.2f} EH/s")
+            return hashrate_eh
+        
+        # 备用方法：基于难度计算（保持与原系统一致）
         difficulty_response = requests.get('https://blockchain.info/q/getdifficulty', timeout=5)
         if difficulty_response.status_code == 200:
             difficulty = float(difficulty_response.text.strip())
@@ -197,33 +207,15 @@ def get_real_time_btc_hashrate():
             hashrate_from_difficulty = (difficulty * (2**32)) / 600
             hashrate_eh = hashrate_from_difficulty / 1e18  # 转换为EH/s
             
-            # 根据当前网络状况调整 - 当前实际算力约921.8 EH/s
-            # 如果计算值与实际观测值差异较大，使用更准确的当前值
-            if abs(hashrate_eh - 921.8) / 921.8 > 0.05:  # 差异超过5%
-                logging.info(f"计算算力({hashrate_eh:.1f} EH/s)与实际观测({921.8} EH/s)差异较大，使用当前准确值")
-                return 921.8
-            else:
-                logging.info(f"基于难度计算的网络算力: {hashrate_eh:.2f} EH/s")
-                return hashrate_eh
-        
-        # 方法2: 尝试blockchain.info hashrate API (通常不可用)
-        headers = {'X-API-Key': '8dd87e048ec84b6c8ad3322fb07f747a'}
-        response = requests.get('https://blockchain.info/q/hashrate', headers=headers, timeout=5)
-        if response.status_code == 200:
-            hashrate_value = float(response.text.strip())
-            hashrate_eh = hashrate_value / 1e9  # 假设返回GH/s，转换为EH/s
-            logging.info(f"blockchain.info算力: {hashrate_eh:.2f} EH/s")
+            logging.info(f"备用：基于难度计算的网络算力: {hashrate_eh:.2f} EH/s")
             return hashrate_eh
-        else:
-            logging.warning(f"blockchain.info hashrate API状态码: {response.status_code}")
             
     except Exception as e:
         logging.error(f"获取网络算力时出错: {e}")
     
-    # 使用当前网络状况的准确估值
-    current_accurate_hashrate = 921.8  # EH/s - 基于实际网络观测
-    logging.info(f"使用当前准确网络算力: {current_accurate_hashrate} EH/s")
-    return current_accurate_hashrate
+    # 最后的fallback
+    logging.warning(f"使用默认网络算力: {DEFAULT_NETWORK_HASHRATE} EH/s")
+    return DEFAULT_NETWORK_HASHRATE
 
 def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electricity_cost=0.05, client_electricity_cost=None, 
                              btc_price=None, difficulty=None, block_reward=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0.0, 
