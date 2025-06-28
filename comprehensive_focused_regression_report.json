@@ -1,0 +1,209 @@
+{
+  "test_summary": {
+    "total_tests": 26,
+    "passed": 11,
+    "failed": 15,
+    "warnings": 0,
+    "success_rate": "42.3%"
+  },
+  "numerical_analysis": {
+    "total_numerical_tests": 9,
+    "average_numerical_value": 12068.235712290481,
+    "numerical_precision_achieved": true
+  },
+  "coverage_analysis": {
+    "backend_database": 8,
+    "api_endpoints": 7,
+    "frontend_pages": 6,
+    "data_flow": 2,
+    "performance": 3
+  },
+  "test_duration": "4.41秒",
+  "detailed_results": [
+    {
+      "test_name": "数据库表查询-market_analytics",
+      "status": "PASS",
+      "details": "记录数: 13",
+      "numerical_result": 13,
+      "timestamp": "2025-06-28T18:45:13.217531"
+    },
+    {
+      "test_name": "数据库表查询-network_snapshots",
+      "status": "PASS",
+      "details": "记录数: 348",
+      "numerical_result": 348,
+      "timestamp": "2025-06-28T18:45:13.247138"
+    },
+    {
+      "test_name": "数据库表查询-users",
+      "status": "FAIL",
+      "details": "错误: relation \"users\" does not exist\nLINE 1: SELECT COUNT(*) FROM users\n                             ^\n",
+      "numerical_result": null,
+      "timestamp": "2025-06-28T18:45:13.268026"
+    },
+    {
+      "test_name": "数据库表查询-customers",
+      "status": "FAIL",
+      "details": "错误: current transaction is aborted, commands ignored until end of transaction block\n",
+      "numerical_result": null,
+      "timestamp": "2025-06-28T18:45:13.290256"
+    },
+    {
+      "test_name": "数据库表查询-leads",
+      "status": "FAIL",
+      "details": "错误: current transaction is aborted, commands ignored until end of transaction block\n",
+      "numerical_result": null,
+      "timestamp": "2025-06-28T18:45:13.311812"
+    },
+    {
+      "test_name": "数据库表查询-deals",
+      "status": "FAIL",
+      "details": "错误: current transaction is aborted, commands ignored until end of transaction block\n",
+      "numerical_result": null,
+      "timestamp": "2025-06-28T18:45:13.332553"
+    },
+    {
+      "test_name": "数据库表查询-login_records",
+      "status": "FAIL",
+      "details": "错误: current transaction is aborted, commands ignored until end of transaction block\n",
+      "numerical_result": null,
+      "timestamp": "2025-06-28T18:45:13.353089"
+    },
+    {
+      "test_name": "数据库连接",
+      "status": "FAIL",
+      "details": "连接失败: current transaction is aborted, commands ignored until end of transaction block\n",
+      "numerical_result": null,
+      "timestamp": "2025-06-28T18:45:13.375150"
+    },
+    {
+      "test_name": "挖矿计算精度-Antminer S19 Pro - 标准案例",
+      "status": "FAIL",
+      "details": "日产BTC超出预期范围: 0.000000",
+      "numerical_result": null,
+      "timestamp": "2025-06-28T18:45:13.381805"
+    },
+    {
+      "test_name": "挖矿计算精度-Antminer S21 - 高效能案例",
+      "status": "FAIL",
+      "details": "日产BTC超出预期范围: 0.000000",
+      "numerical_result": null,
+      "timestamp": "2025-06-28T18:45:13.393444"
+    },
+    {
+      "test_name": "API端点-BTC价格API",
+      "status": "PASS",
+      "details": "响应正常, price: 107337.0",
+      "numerical_result": 107337.0,
+      "timestamp": "2025-06-28T18:45:13.482431"
+    },
+    {
+      "test_name": "API端点-网络统计API",
+      "status": "PASS",
+      "details": "响应正常, hashrate: 904.8883161605193",
+      "numerical_result": 904.8883161605193,
+      "timestamp": "2025-06-28T18:45:14.326059"
+    },
+    {
+      "test_name": "API端点-矿机列表API",
+      "status": "PASS",
+      "details": "响应正常, miners数量: 10",
+      "numerical_result": 10,
+      "timestamp": "2025-06-28T18:45:14.329997"
+    },
+    {
+      "test_name": "API端点-SHA256对比API",
+      "status": "PASS",
+      "details": "响应正常, coins数量: 0",
+      "numerical_result": 0,
+      "timestamp": "2025-06-28T18:45:14.680921"
+    },
+    {
+      "test_name": "API端点-分析系统市场数据API",
+      "status": "FAIL",
+      "details": "缺少字段: ['success', 'data']",
+      "numerical_result": null,
+      "timestamp": "2025-06-28T18:45:14.942101"
+    },
+    {
+      "test_name": "前端页面-主页",
+      "status": "PASS",
+      "details": "页面加载正常, 找到关键词: ['矿机型号']",
+      "numerical_result": null,
+      "timestamp": "2025-06-28T18:45:14.947960"
+    },
+    {
+      "test_name": "前端页面-CRM仪表盘",
+      "status": "PASS",
+      "details": "页面加载正常, 找到关键词: ['客户管理', '仪表盘']",
+      "numerical_result": null,
+      "timestamp": "2025-06-28T18:45:15.417836"
+    },
+    {
+      "test_name": "前端页面-网络历史分析",
+      "status": "FAIL",
+      "details": "HTTP错误: 404",
+      "numerical_result": null,
+      "timestamp": "2025-06-28T18:45:15.431252"
+    },
+    {
+      "test_name": "前端页面-电力削减计算器",
+      "status": "FAIL",
+      "details": "HTTP错误: 404",
+      "numerical_result": null,
+      "timestamp": "2025-06-28T18:45:15.437910"
+    },
+    {
+      "test_name": "前端页面-数据分析仪表盘",
+      "status": "FAIL",
+      "details": "HTTP错误: 404",
+      "numerical_result": null,
+      "timestamp": "2025-06-28T18:45:15.444373"
+    },
+    {
+      "test_name": "前端页面-算法差异测试",
+      "status": "FAIL",
+      "details": "HTTP错误: 404",
+      "numerical_result": null,
+      "timestamp": "2025-06-28T18:45:15.448713"
+    },
+    {
+      "test_name": "数据流集成-挖矿计算",
+      "status": "FAIL",
+      "details": "缺少字段: ['daily_btc', 'client_monthly_profit', 'host_monthly_profit', 'algorithm1_btc', 'algorithm2_btc']",
+      "numerical_result": null,
+      "timestamp": "2025-06-28T18:45:15.454202"
+    },
+    {
+      "test_name": "数据流集成-分析系统",
+      "status": "FAIL",
+      "details": "分析数据获取失败",
+      "numerical_result": null,
+      "timestamp": "2025-06-28T18:45:15.718276"
+    },
+    {
+      "test_name": "性能测试-挖矿计算性能",
+      "status": "PASS",
+      "details": "响应时间: 0.005秒",
+      "numerical_result": 0.005391836166381836,
+      "timestamp": "2025-06-28T18:45:15.723996"
+    },
+    {
+      "test_name": "性能测试-BTC价格API性能",
+      "status": "PASS",
+      "details": "响应时间: 0.084秒",
+      "numerical_result": 0.08350324630737305,
+      "timestamp": "2025-06-28T18:45:15.807728"
+    },
+    {
+      "test_name": "性能测试-网络统计API性能",
+      "status": "PASS",
+      "details": "响应时间: 1.144秒",
+      "numerical_result": 1.1441993713378906,
+      "timestamp": "2025-06-28T18:45:16.952272"
+    }
+  ],
+  "recommendations": [
+    "修复失败的测试用例以提高系统稳定性"
+  ]
+}
