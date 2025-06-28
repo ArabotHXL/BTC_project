@@ -1,0 +1,112 @@
+{
+  "test_summary": {
+    "start_time": "2025-06-28T05:59:12.170660",
+    "end_time": "2025-06-28T05:59:13.456862",
+    "total_time": 1.286202,
+    "total_tests": 14,
+    "passed": 8,
+    "failed": 5,
+    "warned": 1,
+    "success_rate": 57.14285714285714
+  },
+  "test_results": [
+    {
+      "test_name": "Database Connection",
+      "status": "PASS",
+      "details": "连接正常",
+      "response_time": 0.19475293159484863,
+      "timestamp": "2025-06-28T05:59:12.365575"
+    },
+    {
+      "test_name": "Database Tables",
+      "status": "WARN",
+      "details": "缺少表: ['users', 'customers', 'contacts', 'leads', 'deals', 'activities', 'mining_broker_deals']",
+      "response_time": 0.20676159858703613,
+      "timestamp": "2025-06-28T05:59:12.572552"
+    },
+    {
+      "test_name": "Web Server",
+      "status": "PASS",
+      "details": "服务器响应正常 (状态码: 200)",
+      "response_time": 0.029865741729736328,
+      "timestamp": "2025-06-28T05:59:12.602841"
+    },
+    {
+      "test_name": "API - BTC价格API",
+      "status": "FAIL",
+      "details": "请求失败: Expecting value: line 1 column 1 (char 0)",
+      "response_time": 0.011487722396850586,
+      "timestamp": "2025-06-28T05:59:12.614909"
+    },
+    {
+      "test_name": "API - 网络统计API",
+      "status": "FAIL",
+      "details": "请求失败: Expecting value: line 1 column 1 (char 0)",
+      "response_time": 0.007982969284057617,
+      "timestamp": "2025-06-28T05:59:12.622993"
+    },
+    {
+      "test_name": "API - 矿机列表API",
+      "status": "FAIL",
+      "details": "请求失败: Expecting value: line 1 column 1 (char 0)",
+      "response_time": 0.008496522903442383,
+      "timestamp": "2025-06-28T05:59:12.631593"
+    },
+    {
+      "test_name": "API - SHA256对比API",
+      "status": "FAIL",
+      "details": "请求失败: Expecting value: line 1 column 1 (char 0)",
+      "response_time": 0.011620044708251953,
+      "timestamp": "2025-06-28T05:59:12.643632"
+    },
+    {
+      "test_name": "Mining Calculation",
+      "status": "FAIL",
+      "details": "计算请求异常: Expecting value: line 1 column 1 (char 0)",
+      "response_time": 0.00777435302734375,
+      "timestamp": "2025-06-28T05:59:12.651560"
+    },
+    {
+      "test_name": "External API - CoinGecko",
+      "status": "PASS",
+      "details": "BTC价格获取成功: $107,320.00",
+      "response_time": 0.07754850387573242,
+      "timestamp": "2025-06-28T05:59:12.729282"
+    },
+    {
+      "test_name": "External API - Blockchain.info",
+      "status": "PASS",
+      "details": "网络难度获取成功: 126411437451912.00T",
+      "response_time": 0.34694886207580566,
+      "timestamp": "2025-06-28T05:59:13.076334"
+    },
+    {
+      "test_name": "Analytics System",
+      "status": "PASS",
+      "details": "数据正常: 4条市场数据, 4条技术指标",
+      "response_time": 0.19092559814453125,
+      "timestamp": "2025-06-28T05:59:13.267513"
+    },
+    {
+      "test_name": "Data Quality",
+      "status": "PASS",
+      "details": "24小时内11条记录, 平均价格: $107314.91, 平均算力: 752.9EH/s",
+      "response_time": 0.1735854148864746,
+      "timestamp": "2025-06-28T05:59:13.441243"
+    },
+    {
+      "test_name": "Performance - Page Load",
+      "status": "PASS",
+      "details": "主页加载时间: 0.01s",
+      "response_time": 0.00758051872253418,
+      "timestamp": "2025-06-28T05:59:13.448942"
+    },
+    {
+      "test_name": "Performance - API",
+      "status": "PASS",
+      "details": "API响应时间: 0.01s",
+      "response_time": 0.007555246353149414,
+      "timestamp": "2025-06-28T05:59:13.456643"
+    }
+  ]
+}
