@@ -1896,12 +1896,10 @@ def analytics_market_data():
         return jsonify({'error': '只有拥有者可以访问分析系统'}), 403
     
     try:
-        import analytics_engine
-        db_manager = analytics_engine.DatabaseManager()
-        db_manager.connect()
+        import psycopg2
         
-        # 获取最新市场数据
-        conn = db_manager.get_connection()
+        # 直接连接数据库获取最新市场数据
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
         cursor = conn.cursor()
         cursor.execute("""
             SELECT recorded_at, btc_price, network_hashrate, network_difficulty, 
@@ -1937,12 +1935,11 @@ def analytics_latest_report():
         return jsonify({'error': '只有拥有者可以访问分析系统'}), 403
     
     try:
+        import psycopg2
         import analytics_engine
-        db_manager = analytics_engine.DatabaseManager()
-        db_manager.connect()
         
-        # 获取最新分析报告
-        conn = db_manager.get_connection()
+        # 直接连接数据库获取最新分析报告
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
         cursor = conn.cursor()
         cursor.execute("""
             SELECT generated_at, title, summary, key_findings, recommendations, 
@@ -1966,6 +1963,8 @@ def analytics_latest_report():
             })
         else:
             # 生成新报告
+            db_manager = analytics_engine.DatabaseManager()
+            db_manager.connect()
             generator = analytics_engine.ReportGenerator(db_manager)
             report = generator.generate_daily_report()
             return jsonify(report)
@@ -2031,16 +2030,45 @@ def analytics_price_history():
         return jsonify({'error': '只有拥有者可以访问分析系统'}), 403
     
     try:
-        import requests
+        import psycopg2
+        
         hours = request.args.get('hours', 24, type=int)
-        response = requests.get(f'http://localhost:5001/api/price-history?hours={hours}', timeout=10)
-        if response.status_code == 200:
-            return jsonify(response.json())
+        
+        # 直接从数据库获取价格历史数据
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT recorded_at, btc_price, network_hashrate, network_difficulty
+            FROM market_analytics 
+            WHERE recorded_at > NOW() - INTERVAL '%s hours'
+            ORDER BY recorded_at ASC
+        """, (hours,))
+        
+        data = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        if data:
+            price_history = []
+            for row in data:
+                price_history.append({
+                    'timestamp': row[0].isoformat(),
+                    'btc_price': float(row[1]) if row[1] else None,
+                    'network_hashrate': float(row[2]) if row[2] else None,
+                    'network_difficulty': float(row[3]) if row[3] else None
+                })
+            
+            return jsonify({
+                'hours': hours,
+                'data_points': len(price_history),
+                'price_history': price_history
+            })
         else:
-            return jsonify({'error': '无法获取价格历史'}), 500
+            return jsonify({'error': f'未找到过去{hours}小时的价格数据'}), 404
+            
     except Exception as e:
         app.logger.error(f"获取价格历史失败: {e}")
-        return jsonify({'error': '无法连接分析系统'}), 503
+        return jsonify({'error': f'获取价格历史失败: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
