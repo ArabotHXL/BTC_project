@@ -228,9 +228,24 @@ class DataCollector:
             return None
 
     def collect_blockchain_hashrate_data(self) -> Optional[Dict]:
-        """从Blockchain.info收集算力数据"""
+        """从Blockchain.info收集算力数据 - 使用与计算器相同的方法"""
         try:
-            # Blockchain.info 算力API
+            # 首先尝试difficulty计算方法（与计算器保持一致）
+            difficulty_response = self.session.get('https://blockchain.info/q/getdifficulty', timeout=15)
+            if difficulty_response.status_code == 200:
+                difficulty = float(difficulty_response.text.strip())
+                # 使用与计算器相同的公式: hashrate = difficulty * 2^32 / 600
+                hashrate_from_difficulty = (difficulty * (2**32)) / 600
+                hashrate_eh = hashrate_from_difficulty / 1e18  # 转换为EH/s
+                
+                logger.info(f"基于难度计算的网络算力: {hashrate_eh:.2f} EH/s")
+                return {
+                    'network_hashrate': hashrate_eh,
+                    'hashrate_timestamp': int(time.time()),
+                    'source': 'difficulty_calculation'
+                }
+            
+            # 备用方法：Blockchain.info 算力API
             hashrate_url = "https://api.blockchain.info/charts/hash-rate?timespan=1days&format=json"
             
             response = self.session.get(hashrate_url, timeout=15)
