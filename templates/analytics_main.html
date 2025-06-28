@@ -31,9 +31,23 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
             transition: transform 0.2s ease-in-out;
+            color: #ffffff !important;
         }
         .metric-card:hover {
             transform: translateY(-2px);
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffffff !important;
+        }
+        .metric-label {
+            font-size: 0.9rem;
+            color: #e2e8f0 !important;
+        }
+        .metric-change {
+            font-size: 0.8rem;
+            color: #cbd5e0 !important;
         }
         .price-up {
             color: #48bb78;
@@ -44,6 +58,18 @@
         .chart-container {
             position: relative;
             height: 400px;
+        }
+        /* Ensure all text is visible */
+        .card-body, .card-header, .h1, .h2, .h3, .h4, .h5, .h6,
+        .text-white, .small, .fw-bold, div, span, p {
+            color: #ffffff !important;
+        }
+        .text-muted {
+            color: #cbd5e0 !important;
+        }
+        .loading-spinner {
+            text-align: center;
+            color: #ffffff;
         }
         .status-indicator {
             width: 12px;
