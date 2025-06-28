@@ -13,13 +13,13 @@ app.secret_key = os.environ.get("SESSION_SECRET", "bitcoin_mining_calculator_sec
 # 初始化数据库
 init_db(app)
 
-# 启动后台数据收集调度器
+# 启动统一数据管道
 try:
-    from services.data_collection_scheduler import start_background_collection
-    start_background_collection()
-    logging.info("网络数据收集调度器已启动")
+    from unified_data_pipeline import start_unified_pipeline
+    start_unified_pipeline()
+    logging.info("统一数据管道已启动")
 except Exception as e:
-    logging.error(f"启动数据收集调度器失败: {e}")
+    logging.error(f"启动统一数据管道失败: {e}")
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
