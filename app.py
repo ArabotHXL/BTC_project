@@ -2151,7 +2151,6 @@ def api_difficulty_trend_missing():
     return api_difficulty_trend()
 
 @app.route('/api/electricity-profitability')
-@login_required
 def api_electricity_profitability():
     """电费盈利分析API - 计算在当前市场条件下各矿机的盈利电费阈值"""
     try:
@@ -2163,7 +2162,9 @@ def api_electricity_profitability():
         from mining_calculator import MINER_DATA, calculate_mining_profitability
         
         results = []
-        electricity_ranges = [0.03, 0.05, 0.08, 0.10, 0.12, 0.15, 0.18, 0.20]
+        electricity_ranges = [0.03, 0.05, 0.08, 0.10, 0.12, 0.15]  # 减少计算量
+        
+        logging.info(f"开始电费盈利分析 - BTC价格: ${btc_price}, 算力: {network_hashrate} EH/s")
         
         for miner_model, specs in MINER_DATA.items():
             miner_analysis = {

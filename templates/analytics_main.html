@@ -1244,10 +1244,22 @@
         // 电费盈利分析相关函数
         async function loadElectricityProfitabilityAnalysis() {
             try {
-                const response = await fetch('/api/electricity-profitability');
-                if (!response.ok) throw new Error('Failed to load profitability data');
+                const response = await fetch('/api/electricity-profitability', {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    console.log('Electricity profitability API response status:', response.status);
+                    throw new Error(`Failed to load profitability data: ${response.status}`);
+                }
                 
                 const result = await response.json();
+                console.log('Electricity profitability response:', result);
+                
                 if (result.success) {
                     electricityProfitabilityData = result.data;
                     updateElectricityProfitabilityDisplay(result.data);
@@ -1256,6 +1268,11 @@
                 }
             } catch (error) {
                 console.error('Failed to load electricity profitability:', error);
+                // 如果API调用失败，隐藏电费分析容器
+                const container = document.getElementById('electricityProfitabilityContainer');
+                if (container) {
+                    container.style.display = 'none';
+                }
             }
         }
 
