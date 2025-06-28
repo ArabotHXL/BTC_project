@@ -1,0 +1,57 @@
+{
+  "test_summary": {
+    "start_time": "2025-06-28T06:07:20.655343",
+    "end_time": "2025-06-28T06:07:29.742747",
+    "total_time": 9.087404,
+    "total_tests": 6,
+    "passed": 1,
+    "failed": 4,
+    "warned": 1,
+    "analytics_health": 25.0,
+    "system_status": "需要修复"
+  },
+  "test_results": [
+    {
+      "test_name": "Analytics Database Integrity",
+      "status": "FAIL",
+      "details": "数据库测试异常: column \"recorded_at\" does not exist\nLINE 2:                         SELECT MAX(recorded_at) FROM analysi...\n                                           ^\n",
+      "response_time": 0.3750474452972412,
+      "timestamp": "2025-06-28T06:07:21.030592"
+    },
+    {
+      "test_name": "Data Collection Functionality",
+      "status": "FAIL",
+      "details": "数据收集测试失败: connection already closed",
+      "response_time": 1.2363629341125488,
+      "timestamp": "2025-06-28T06:07:22.267531"
+    },
+    {
+      "test_name": "Technical Analysis Accuracy",
+      "status": "FAIL",
+      "details": "技术分析不准确 - 问题: ",
+      "response_time": 1.6209564208984375,
+      "timestamp": "2025-06-28T06:07:23.888668"
+    },
+    {
+      "test_name": "Analytics Integration Status",
+      "status": "FAIL",
+      "details": "分析系统集成问题 - API状态: {'/api/analytics/market-data': 503, '/api/analytics/latest-report': 503, '/api/analytics/technical-indicators': 503}",
+      "response_time": 0.9231505393981934,
+      "timestamp": "2025-06-28T06:07:24.812051"
+    },
+    {
+      "test_name": "Data Quality Validation",
+      "status": "WARN",
+      "details": "数据质量良好但有小问题: 更新频率低",
+      "response_time": 0.25241804122924805,
+      "timestamp": "2025-06-28T06:07:25.064688"
+    },
+    {
+      "test_name": "Analytics Performance Metrics",
+      "status": "PASS",
+      "details": "性能优秀(评分: 80/100) - 数据收集快速(2.0s); 技术分析快速(0.2s)",
+      "response_time": 4.677037000656128,
+      "timestamp": "2025-06-28T06:07:29.741918"
+    }
+  ]
+}

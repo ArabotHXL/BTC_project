@@ -1,0 +1,82 @@
+{
+  "test_summary": {
+    "start_time": "2025-06-28T06:04:59.061264",
+    "end_time": "2025-06-28T06:05:07.261258",
+    "total_time": 8.199994,
+    "total_tests": 9,
+    "passed": 3,
+    "failed": 3,
+    "warned": 3,
+    "analytics_health_score": 50.0,
+    "system_status": "需要修复"
+  },
+  "test_results": [
+    {
+      "test_name": "Analytics Database Structure",
+      "status": "PASS",
+      "details": "分析表结构完整 - market_analytics: 存在(4条记录); technical_indicators: 存在(4条记录); analysis_reports: 存在(2条记录); mining_metrics: 存在(0条记录)",
+      "response_time": 0.4712033271789551,
+      "timestamp": "2025-06-28T06:04:59.532683"
+    },
+    {
+      "test_name": "Analytics Data Collection",
+      "status": "FAIL",
+      "details": "数据收集测试失败: column \"timestamp\" does not exist\nLINE 2:                 SELECT timestamp, btc_price, network_hashrat...\n                               ^\n",
+      "response_time": 2.1399896144866943,
+      "timestamp": "2025-06-28T06:05:01.672853"
+    },
+    {
+      "test_name": "Technical Indicators Calculation",
+      "status": "WARN",
+      "details": "技术指标部分可用: []",
+      "response_time": 0.6558489799499512,
+      "timestamp": "2025-06-28T06:05:02.330070"
+    },
+    {
+      "test_name": "Report Generation",
+      "status": "PASS",
+      "details": "报告生成成功 - 摘要: 90字符, 建议: 2条, 风险: 中",
+      "response_time": 0.6801810264587402,
+      "timestamp": "2025-06-28T06:05:03.010373"
+    },
+    {
+      "test_name": "Analytics API Integration",
+      "status": "FAIL",
+      "details": "API集成失败 - 无可用端点: 市场数据API: HTTP503; 最新报告API: HTTP503; 技术指标API: HTTP503; 价格历史API: HTTP503",
+      "response_time": 0.8419268131256104,
+      "timestamp": "2025-06-28T06:05:03.852433"
+    },
+    {
+      "test_name": "Analytics Widget Integration",
+      "status": "WARN",
+      "details": "小组件部分集成 - 找到元素: 3/5",
+      "response_time": 0.470534086227417,
+      "timestamp": "2025-06-28T06:05:04.323217"
+    },
+    {
+      "test_name": "Data Quality and Accuracy",
+      "status": "FAIL",
+      "details": "数据质量检查异常: column \"timestamp\" does not exist\nLINE 5:                 WHERE timestamp > NOW() - INTERVAL '24 hours...\n                              ^\n",
+      "response_time": 0.20603013038635254,
+      "timestamp": "2025-06-28T06:05:04.529409"
+    },
+    {
+      "test_name": "Analytics Performance",
+      "status": "PASS",
+      "details": "性能优秀 - 收集: 1.2s, 计算: 0.2s, 报告: 0.2s",
+      "response_time": 2.392909288406372,
+      "timestamp": "2025-06-28T06:05:06.922839"
+    },
+    {
+      "test_name": "Analytics Automation",
+      "status": "WARN",
+      "details": "调度器未运行或未初始化",
+      "response_time": 0.3370628356933594,
+      "timestamp": "2025-06-28T06:05:07.260799"
+    }
+  ],
+  "analytics_recommendations": [
+    "验证数据收集流程和外部API连接",
+    "检查定时任务配置和调度器状态"
+  ]
+}
