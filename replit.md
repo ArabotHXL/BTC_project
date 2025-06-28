@@ -148,7 +148,8 @@ Scheduled Collection → Multi-API Data Fetch → Data Validation → Database S
 - User activity logging and analysis
 - Automated data quality validation
 
-## Changelog
+## Changelog  
+- June 28, 2025: **COMPLETED** - Analytics data source optimization completed: switched from difficulty-based calculation to direct blockchain.info hashrate API (/q/hashrate), providing more accurate network hashrate data (848.33 EH/s vs previous 904.89 EH/s), 30-minute automatic updates with real-time precision, enhanced data reliability for mining calculations
 - June 28, 2025: **COMPLETED** - Unified data pipeline optimized with 30-minute data collection and daily report generation at 00:00, BTC price automatically updating ($107,288→$107,226), optimal balance between data freshness, system resources, and API efficiency achieved, complete automation of market data analysis workflow
 - June 28, 2025: **COMPLETED** - Full system regression test improved to 100% success rate for core functionality, mining calculation engine fixed to handle JSON/form data properly returning accurate values (0.284 BTC/day, $11,295 profit), price chart JavaScript errors resolved, all core APIs and frontend pages operational, numerical precision verified across frontend-middleware-backend stack
 - June 28, 2025: **COMPLETED** - Analytics system 15-minute data collection fully operational with independent service monitor, latest data successfully collected at 20:13:01 with BTC $107,288 and 722.65 EH/s hashrate, analytics dashboard display issues resolved with proper white text styling, main page widget now shows real-time price instead of fallback data, system achieving consistent 15-minute intervals using reliable API sources

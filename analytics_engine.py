@@ -228,9 +228,23 @@ class DataCollector:
             return None
 
     def collect_blockchain_hashrate_data(self) -> Optional[Dict]:
-        """从Blockchain.info收集算力数据 - 使用与计算器相同的方法"""
+        """从Blockchain.info收集算力数据 - 直接使用hashrate API"""
         try:
-            # 首先尝试difficulty计算方法（与计算器保持一致）
+            # 直接从blockchain.info的hashrate API获取数据
+            hashrate_response = self.session.get('https://blockchain.info/q/hashrate', timeout=15)
+            if hashrate_response.status_code == 200:
+                hashrate_gh = float(hashrate_response.text.strip())
+                # 转换GH/s到EH/s
+                hashrate_eh = hashrate_gh / 1e9  # GH/s to EH/s
+                
+                logger.info(f"Blockchain.info直接算力数据: {hashrate_eh:.2f} EH/s")
+                return {
+                    'network_hashrate': hashrate_eh,
+                    'hashrate_timestamp': int(time.time()),
+                    'source': 'blockchain_info_direct'
+                }
+            
+            # 备用方法：基于难度计算（保持与计算器一致）
             difficulty_response = self.session.get('https://blockchain.info/q/getdifficulty', timeout=15)
             if difficulty_response.status_code == 200:
                 difficulty = float(difficulty_response.text.strip())
@@ -238,32 +252,13 @@ class DataCollector:
                 hashrate_from_difficulty = (difficulty * (2**32)) / 600
                 hashrate_eh = hashrate_from_difficulty / 1e18  # 转换为EH/s
                 
-                logger.info(f"基于难度计算的网络算力: {hashrate_eh:.2f} EH/s")
+                logger.info(f"备用：基于难度计算的网络算力: {hashrate_eh:.2f} EH/s")
                 return {
                     'network_hashrate': hashrate_eh,
                     'hashrate_timestamp': int(time.time()),
                     'source': 'difficulty_calculation'
                 }
             
-            # 备用方法：Blockchain.info 算力API
-            hashrate_url = "https://api.blockchain.info/charts/hash-rate?timespan=1days&format=json"
-            
-            response = self.session.get(hashrate_url, timeout=15)
-            response.raise_for_status()
-            data = response.json()
-            
-            values = data.get('values', [])
-            if values:
-                latest_value = values[-1]
-                # 转换TH/s到EH/s
-                hashrate_th = latest_value.get('y', 0)
-                hashrate_eh = hashrate_th / 1000000  # TH/s to EH/s
-                
-                return {
-                    'network_hashrate': hashrate_eh,
-                    'hashrate_timestamp': latest_value.get('x', 0),
-                    'source': 'blockchain_info'
-                }
             return None
                 
         except Exception as e:
