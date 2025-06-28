@@ -684,8 +684,20 @@
                 });
                 if (!response.ok) throw new Error('Price history unavailable');
                 
-                const data = await response.json();
-                updatePriceChart(data);
+                const responseData = await response.json();
+                console.log('Price history response:', responseData);
+                
+                // Extract price_history array from response
+                const data = responseData.price_history || responseData.data || responseData;
+                
+                // Check if data is array and has items
+                if (Array.isArray(data) && data.length > 0) {
+                    console.log('Found valid price history data with', data.length, 'records');
+                    updatePriceChart(data);
+                } else {
+                    console.warn('Price history data is empty or not an array:', data);
+                    showErrorMessage('dashboard', '价格历史数据暂时不可用');
+                }
             } catch (error) {
                 console.error('Price history error:', error);
                 showErrorMessage('dashboard', '价格历史数据暂时不可用');
@@ -809,14 +821,29 @@
         }
 
         function updatePriceChart(data) {
-            if (data.length === 0) return;
+            console.log('updatePriceChart called with:', data);
             
-            const labels = data.map(item => new Date(item.time).toLocaleTimeString());
-            const prices = data.map(item => item.price);
+            // Check if data is valid array
+            if (!Array.isArray(data) || data.length === 0) {
+                console.warn('Price chart data is not a valid array or is empty:', data);
+                return;
+            }
             
-            priceChart.data.labels = labels;
-            priceChart.data.datasets[0].data = prices;
-            priceChart.update();
+            try {
+                const labels = data.map(item => new Date(item.timestamp || item.time).toLocaleTimeString());
+                const prices = data.map(item => item.btc_price || item.price);
+                
+                if (priceChart && priceChart.data) {
+                    priceChart.data.labels = labels;
+                    priceChart.data.datasets[0].data = prices;
+                    priceChart.update();
+                    console.log('Price chart updated successfully');
+                } else {
+                    console.error('Price chart not initialized');
+                }
+            } catch (error) {
+                console.error('Error updating price chart:', error);
+            }
         }
 
         function updateReportDisplay(data) {
