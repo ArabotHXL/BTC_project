@@ -51,8 +51,8 @@ class UnifiedDataPipeline:
         # 每30分钟更新analytics数据
         schedule.every(30).minutes.do(self._collect_analytics_data)
         
-        # 每小时生成分析报告
-        schedule.every().hour.do(self._generate_analytics_report)
+        # 每天生成分析报告
+        schedule.every().day.at("00:00").do(self._generate_analytics_report)
         
         # 立即执行一次数据收集
         self._collect_network_data()
