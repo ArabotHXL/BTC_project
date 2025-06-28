@@ -19,4 +19,7 @@ dependencies = [
     "notion-client>=2.3.0",
     "pytz>=2025.2",
     "schedule>=1.2.2",
+    "flask-dance>=7.1.0",
+    "oauthlib>=3.3.1",
+    "pyjwt>=2.10.1",
 ]
