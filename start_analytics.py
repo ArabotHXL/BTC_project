@@ -1,75 +1,53 @@
 #!/usr/bin/env python3
 """
-分析系统启动脚本
-同时启动数据收集引擎和Web仪表盘
+Analytics Engine后台服务启动器
+确保分析引擎持续运行，每15分钟收集数据
 """
 
-import os
 import time
-import threading
-import subprocess
+import schedule
 import logging
 from analytics_engine import AnalyticsEngine
 
-logging.basicConfig(level=logging.INFO)
+# 配置日志
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('analytics_service.log'),
+        logging.StreamHandler()
+    ]
+)
+
 logger = logging.getLogger(__name__)
 
-def start_analytics_engine():
-    """启动分析引擎"""
-    logger.info("启动数据分析引擎...")
-    engine = AnalyticsEngine()
+def run_analytics_service():
+    """运行分析服务"""
+    logger.info("启动Analytics Engine后台服务...")
     
     try:
-        engine.start_scheduler()
-    except KeyboardInterrupt:
-        logger.info("分析引擎接收到停止信号")
-        engine.stop()
-    except Exception as e:
-        logger.error(f"分析引擎异常: {e}")
-
-def start_dashboard():
-    """启动仪表盘"""
-    logger.info("启动Web仪表盘...")
-    try:
-        # 等待几秒确保数据库表已创建
-        time.sleep(5)
+        # 初始化分析引擎
+        engine = AnalyticsEngine()
         
-        # 启动Flask应用
-        subprocess.run([
-            "python", "analytics_dashboard.py"
-        ])
-    except Exception as e:
-        logger.error(f"仪表盘启动失败: {e}")
-
-def main():
-    """主函数"""
-    logger.info("正在启动Bitcoin分析系统...")
-    
-    # 创建并启动线程
-    engine_thread = threading.Thread(target=start_analytics_engine)
-    dashboard_thread = threading.Thread(target=start_dashboard)
-    
-    # 设置为守护线程
-    engine_thread.daemon = True
-    dashboard_thread.daemon = True
-    
-    # 启动线程
-    engine_thread.start()
-    dashboard_thread.start()
-    
-    logger.info("分析系统已启动")
-    logger.info("- 数据收集引擎: 每15分钟收集数据")
-    logger.info("- 分析报告生成: 每天8:00和20:00")
-    logger.info("- Web仪表盘: http://localhost:5001")
-    
-    try:
-        # 保持主线程运行
+        # 立即执行一次数据收集
+        logger.info("执行初始数据收集...")
+        engine.collect_and_analyze()
+        
+        # 设置15分钟间隔的数据收集
+        schedule.every(15).minutes.do(engine.collect_and_analyze)
+        logger.info("已设置15分钟间隔的数据收集任务")
+        
+        # 主循环
         while True:
-            time.sleep(1)
+            schedule.run_pending()
+            time.sleep(60)  # 每分钟检查一次
+            
     except KeyboardInterrupt:
-        logger.info("接收到停止信号，正在关闭系统...")
-    
-    logger.info("Bitcoin分析系统已关闭")
+        logger.info("收到停止信号，正在关闭服务...")
+    except Exception as e:
+        logger.error(f"Analytics服务发生错误: {e}")
+        time.sleep(300)  # 出错时等待5分钟再重试
+        run_analytics_service()  # 重新启动
 
 if __name__ == "__main__":
-    main()
+    run_analytics_service()
