@@ -13,7 +13,7 @@ from app import app
 class NetworkDataScheduler:
     """网络数据自动收集调度器"""
     
-    def __init__(self, interval_minutes=30):
+    def __init__(self, interval_minutes=15):
         self.interval_minutes = interval_minutes
         self.running = False
         self.thread = None
@@ -55,7 +55,7 @@ class NetworkDataScheduler:
             time.sleep(self.interval_minutes * 60)
 
 # 全局调度器实例
-scheduler = NetworkDataScheduler(interval_minutes=30)
+scheduler = NetworkDataScheduler(interval_minutes=15)
 
 def start_background_collection():
     """启动后台数据收集"""
