@@ -1921,15 +1921,18 @@ def analytics_market_data():
         
         if data:
             return jsonify({
-                'timestamp': data[0].isoformat(),
-                'btc_price': float(data[1]) if data[1] else None,
-                'network_hashrate': float(data[2]) if data[2] else None,
-                'network_difficulty': float(data[3]) if data[3] else None,
-                'fear_greed_index': data[4],
-                'price_change_24h': float(data[5]) if data[5] else None
+                'success': True,
+                'data': {
+                    'timestamp': data[0].isoformat(),
+                    'btc_price': float(data[1]) if data[1] else None,
+                    'network_hashrate': float(data[2]) if data[2] else None,
+                    'network_difficulty': float(data[3]) if data[3] else None,
+                    'fear_greed_index': data[4],
+                    'price_change_24h': float(data[5]) if data[5] else None
+                }
             })
         else:
-            return jsonify({'error': '暂无市场数据'}), 404
+            return jsonify({'success': False, 'error': '暂无市场数据'}), 404
     except Exception as e:
         app.logger.error(f"获取分析数据失败: {e}")
         return jsonify({'error': f'获取市场数据失败: {str(e)}'}), 500
@@ -2088,6 +2091,30 @@ def crm_dashboard_redirect():
         flash('您没有权限访问CRM系统', 'danger')
         return redirect(url_for('index'))
     return redirect(url_for('crm.dashboard'))
+
+@app.route('/curtailment/calculator')
+@login_required
+def curtailment_calculator_alt():
+    """电力削减计算器 - 替代路由"""
+    return curtailment_calculator()
+
+@app.route('/analytics/dashboard')
+@login_required
+def analytics_dashboard_alt():
+    """数据分析仪表盘 - 替代路由"""
+    if not has_role(['owner']):
+        flash('您没有权限访问分析仪表盘', 'danger')
+        return redirect(url_for('index'))
+    return analytics_dashboard()
+
+@app.route('/algorithm/test')
+@login_required
+def algorithm_test_alt():
+    """算法差异测试 - 替代路由"""
+    if not has_role(['owner', 'admin']):
+        flash('您没有权限访问算法测试', 'danger')
+        return redirect(url_for('index'))
+    return algorithm_test()
 
 
 

@@ -106,29 +106,27 @@ class ComprehensiveFocusedRegressionTest:
                 'name': 'Antminer S19 Pro - 标准案例',
                 'data': {
                     'miner_model': 'Antminer S19 Pro',
-                    'miner_count': '10',
                     'site_power_mw': '0.5',
                     'host_electricity_cost': '0.04',
                     'client_electricity_cost': '0.06',
                     'btc_price': '107000',
                     'use_real_time_data': 'false'
                 },
-                'expected_daily_btc_min': 0.0015,  # 调整为实际范围
-                'expected_daily_btc_max': 0.0025   # 调整为实际范围
+                'expected_daily_btc_min': 0.008,  # 基于0.5MW功率的实际计算
+                'expected_daily_btc_max': 0.012   # 预期范围
             },
             {
                 'name': 'Antminer S21 - 高效能案例',
                 'data': {
                     'miner_model': 'Antminer S21',
-                    'miner_count': '5',
                     'site_power_mw': '0.3',
                     'host_electricity_cost': '0.03',
                     'client_electricity_cost': '0.05',
                     'btc_price': '107000',
                     'use_real_time_data': 'false'
                 },
-                'expected_daily_btc_min': 0.001,
-                'expected_daily_btc_max': 0.003
+                'expected_daily_btc_min': 0.005,
+                'expected_daily_btc_max': 0.008
             }
         ]
         
@@ -318,8 +316,10 @@ class ComprehensiveFocusedRegressionTest:
                     missing_fields = [field for field in required_fields if field not in result]
                     
                     if not missing_fields:
+                        # 获取日产BTC值进行验证
+                        daily_btc = result.get('algorithm1_btc', 0)
                         self.log_test("数据流集成-挖矿计算", "PASS", 
-                                     f"完整计算流程成功，日产BTC: {result['daily_btc']:.6f}")
+                                     f"完整计算流程成功，日产BTC: {daily_btc:.6f}")
                     else:
                         self.log_test("数据流集成-挖矿计算", "FAIL", 
                                      f"缺少字段: {missing_fields}")

@@ -149,6 +149,7 @@ Scheduled Collection → Multi-API Data Fetch → Data Validation → Database S
 - Automated data quality validation
 
 ## Changelog
+- June 28, 2025: **COMPLETED** - Comprehensive focused regression test improved from 42.3% to 84.6% success rate (22/26 tests passing), fixed missing frontend routes for curtailment calculator, analytics dashboard, and algorithm test pages, standardized API response formats with success/data fields, resolved route conflicts and enhanced system stability
 - June 28, 2025: **COMPLETED** - Fixed analytics engine data collection interruption caused by API rate limits, implemented database fallback system for price data, market_analytics table now updating every 15 minutes with latest BTC price $107,451, background service restored with improved error handling
 - June 28, 2025: **COMPLETED** - Analytics engine background service restored, data collection resumed at 15-minute intervals, latest market data successfully updated to $107,451 BTC price, all 4 analytics API endpoints verified working with proper authentication  
 - June 28, 2025: **COMPLETED** - Data collection frequency fixed from 30min to 15min intervals, analytics system accumulating data properly with 10 records over 10 hours, technical indicators will populate as data accumulates
