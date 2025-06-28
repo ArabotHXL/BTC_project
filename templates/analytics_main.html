@@ -536,10 +536,16 @@
 
         // Initialize the page
         document.addEventListener('DOMContentLoaded', function() {
-            initPriceChart();
-            setupTabs();
-            setupAutoRefresh();
-            loadAllData();
+            console.log('Analytics page DOM loaded, initializing...');
+            
+            // Give the page a moment to fully render
+            setTimeout(() => {
+                console.log('Starting analytics initialization...');
+                initPriceChart();
+                setupTabs();
+                setupAutoRefresh();
+                loadAllData();
+            }, 200);
         });
 
         // Tab management
@@ -710,16 +716,42 @@
         function updateMarketDataDisplay(data) {
             console.log('Updating market data display with:', data);
             
-            // Dashboard metrics
+            // Dashboard metrics - check each element exists before updating
             const btcPriceElement = document.getElementById('btcPrice');
             const networkHashrateElement = document.getElementById('networkHashrate');
             const fearGreedIndexElement = document.getElementById('fearGreedIndex');
             const fearGreedLabelElement = document.getElementById('fearGreedLabel');
             
-            if (btcPriceElement) btcPriceElement.textContent = formatPrice(data.btc_price);
-            if (networkHashrateElement) networkHashrateElement.textContent = formatNumber(data.network_hashrate, 1);
-            if (fearGreedIndexElement) fearGreedIndexElement.textContent = data.fear_greed_index || '--';
-            if (fearGreedLabelElement) fearGreedLabelElement.textContent = getFearGreedLabel(data.fear_greed_index);
+            console.log('Element check:', {
+                btcPrice: btcPriceElement ? 'found' : 'missing',
+                networkHashrate: networkHashrateElement ? 'found' : 'missing',
+                fearGreedIndex: fearGreedIndexElement ? 'found' : 'missing',
+                fearGreedLabel: fearGreedLabelElement ? 'found' : 'missing'
+            });
+            
+            if (btcPriceElement && data.btc_price) {
+                const formattedPrice = formatPrice(data.btc_price);
+                console.log('Setting BTC price:', formattedPrice);
+                btcPriceElement.textContent = formattedPrice;
+            }
+            
+            if (networkHashrateElement && data.network_hashrate) {
+                const formattedHashrate = formatNumber(data.network_hashrate, 1);
+                console.log('Setting hashrate:', formattedHashrate);
+                networkHashrateElement.textContent = formattedHashrate;
+            }
+            
+            if (fearGreedIndexElement) {
+                const indexValue = data.fear_greed_index || '--';
+                console.log('Setting fear greed index:', indexValue);
+                fearGreedIndexElement.textContent = indexValue;
+            }
+            
+            if (fearGreedLabelElement) {
+                const labelValue = getFearGreedLabel(data.fear_greed_index);
+                console.log('Setting fear greed label:', labelValue);
+                fearGreedLabelElement.textContent = labelValue;
+            }
             
             // Price changes
             const priceChange24h = document.getElementById('priceChange24h');
@@ -728,12 +760,18 @@
                 priceChange24h.className = 'metric-change ' + (data.price_change_24h >= 0 ? 'price-up' : 'price-down');
             }
 
-            // Market tab details
-            document.getElementById('marketCurrentPrice').textContent = formatPrice(data.btc_price);
-            document.getElementById('marketCap').textContent = formatCurrency(data.btc_market_cap);
-            document.getElementById('marketHashrate').textContent = formatNumber(data.network_hashrate, 1) + ' EH/s';
-            document.getElementById('marketDifficulty').textContent = formatNumber(data.network_difficulty / 1e12, 2) + 'T';
-            document.getElementById('marketVolume').textContent = formatCurrency(data.btc_volume_24h);
+            // Market tab details (check if elements exist)
+            const marketCurrentPrice = document.getElementById('marketCurrentPrice');
+            const marketCap = document.getElementById('marketCap');
+            const marketHashrate = document.getElementById('marketHashrate');
+            const marketDifficulty = document.getElementById('marketDifficulty');
+            const marketVolume = document.getElementById('marketVolume');
+            
+            if (marketCurrentPrice) marketCurrentPrice.textContent = formatPrice(data.btc_price);
+            if (marketCap) marketCap.textContent = formatCurrency(data.btc_market_cap);
+            if (marketHashrate) marketHashrate.textContent = formatNumber(data.network_hashrate, 1) + ' EH/s';
+            if (marketDifficulty) marketDifficulty.textContent = formatNumber(data.network_difficulty / 1e12, 2) + 'T';
+            if (marketVolume) marketVolume.textContent = formatCurrency(data.btc_volume_24h);
             
             if (data.price_change_1h !== null) {
                 const change1h = document.getElementById('priceChange1h');
