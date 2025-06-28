@@ -1,0 +1,101 @@
+{
+  "test_summary": {
+    "start_time": "2025-06-28T06:00:46.302123",
+    "end_time": "2025-06-28T06:00:53.728486",
+    "total_time": 7.426363,
+    "total_tests": 12,
+    "passed": 11,
+    "failed": 0,
+    "warned": 1,
+    "success_rate": 91.66666666666666,
+    "health_score": 95.83333333333334,
+    "system_status": "优秀"
+  },
+  "test_results": [
+    {
+      "test_name": "User Authentication",
+      "status": "PASS",
+      "details": "拥有者权限认证成功",
+      "response_time": 4.991798162460327,
+      "timestamp": "2025-06-28T06:00:51.299836"
+    },
+    {
+      "test_name": "Database System",
+      "status": "PASS",
+      "details": "数据库检查完成 - 网络快照数据: 321条; 用户访问权限: 7条; 登录记录: 191条; 市场分析数据: 4条; 技术指标数据: 4条",
+      "response_time": 0.3135664463043213,
+      "timestamp": "2025-06-28T06:00:51.613554"
+    },
+    {
+      "test_name": "API - BTC价格API",
+      "status": "PASS",
+      "details": "BTC价格: $107,320.00",
+      "response_time": 0.07487964630126953,
+      "timestamp": "2025-06-28T06:00:51.688723"
+    },
+    {
+      "test_name": "API - 网络统计API",
+      "status": "PASS",
+      "details": "网络算力: 904.9 EH/s",
+      "response_time": 0.7949068546295166,
+      "timestamp": "2025-06-28T06:00:52.484174"
+    },
+    {
+      "test_name": "API - 矿机列表API",
+      "status": "PASS",
+      "details": "矿机型号: 10种",
+      "response_time": 0.003492593765258789,
+      "timestamp": "2025-06-28T06:00:52.487809"
+    },
+    {
+      "test_name": "API - SHA256对比API",
+      "status": "PASS",
+      "details": "SHA256币种: 4种",
+      "response_time": 0.3683648109436035,
+      "timestamp": "2025-06-28T06:00:52.856289"
+    },
+    {
+      "test_name": "Mining Calculation",
+      "status": "PASS",
+      "details": "计算成功 - 日收入: $0.00, 月利润: $0.00, 日产BTC: 0.000139",
+      "response_time": 0.006270647048950195,
+      "timestamp": "2025-06-28T06:00:52.862785"
+    },
+    {
+      "test_name": "Analytics Integration",
+      "status": "WARN",
+      "details": "分析页面可访问，但API端点不可用",
+      "response_time": 0.36913466453552246,
+      "timestamp": "2025-06-28T06:00:53.232044"
+    },
+    {
+      "test_name": "External - CoinGecko API",
+      "status": "PASS",
+      "details": "BTC价格: $107,320.00",
+      "response_time": 0.060808420181274414,
+      "timestamp": "2025-06-28T06:00:53.292994"
+    },
+    {
+      "test_name": "External - Blockchain.info API",
+      "status": "PASS",
+      "details": "网络难度: 1.26e+14",
+      "response_time": 0.35359930992126465,
+      "timestamp": "2025-06-28T06:00:53.646983"
+    },
+    {
+      "test_name": "Performance - Page Load",
+      "status": "PASS",
+      "details": "主页加载: 0.01s",
+      "response_time": 0.008565425872802734,
+      "timestamp": "2025-06-28T06:00:53.655822"
+    },
+    {
+      "test_name": "Performance - API Response",
+      "status": "PASS",
+      "details": "API响应: 0.07s",
+      "response_time": 0.0724482536315918,
+      "timestamp": "2025-06-28T06:00:53.728357"
+    }
+  ],
+  "recommendations": []
+}
