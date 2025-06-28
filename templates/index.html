@@ -1064,17 +1064,36 @@
         }
         
         function updateAnalyticsWidgetFallback() {
-            // Use current price cache as fallback
-            const currentPrice = window.currentPriceCache || 80000;
-            const fallbackData = {
-                btc_price: currentPrice,
-                network_hashrate: 904.9,
-                fear_greed_index: null,
-                price_change_24h: null
-            };
-            updateAnalyticsWidget(fallbackData);
-            document.getElementById('widget-insights').textContent = 
-                '{% if current_lang == "en" %}Using current market data{% else %}使用当前市场数据{% endif %}';
+            // Try to get real analytics data from database first
+            fetch('/api/analytics/market-data', {
+                method: 'GET',
+                credentials: 'same-origin'
+            }).then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Analytics API unavailable');
+            }).then(data => {
+                if (data.success && data.data) {
+                    updateAnalyticsWidget(data.data);
+                    document.getElementById('widget-insights').textContent = 
+                        '{% if current_lang == "en" %}Real-time analytics data{% else %}实时分析数据{% endif %}';
+                } else {
+                    throw new Error('No analytics data');
+                }
+            }).catch(() => {
+                // Only use fallback if analytics truly unavailable
+                const currentPrice = window.currentPriceCache || 80000;
+                const fallbackData = {
+                    btc_price: currentPrice,
+                    network_hashrate: 904.9,
+                    fear_greed_index: null,
+                    price_change_24h: null
+                };
+                updateAnalyticsWidget(fallbackData);
+                document.getElementById('widget-insights').textContent = 
+                    '{% if current_lang == "en" %}Analytics temporarily unavailable{% else %}分析系统暂时不可用{% endif %}';
+            });
         }
 
         function updateAnalyticsWidget(data) {
