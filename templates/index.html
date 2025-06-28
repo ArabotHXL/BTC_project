@@ -112,6 +112,10 @@
                                     
                                     <!-- 拥有者可以查看登录记录 -->
                                     {% if session.role == 'owner' %}
+                                    <li><a class="dropdown-item" href="{{ url_for('analytics_dashboard') }}">
+                                        <i class="bi bi-graph-up-arrow me-1"></i> 
+                                        {% if current_lang == 'en' %}Data Analytics Center{% else %}数据分析中心{% endif %}
+                                    </a></li>
                                     <li><a class="dropdown-item" href="{{ url_for('login_records') }}">
                                         <i class="bi bi-file-text me-1"></i> 
                                         {% if current_lang == 'en' %}View Login Records{% else %}查看登录记录{% endif %}
@@ -168,6 +172,104 @@
                 </div>
             </div>
         </header>
+
+        <!-- Analytics Quick Access Widget (Owner Only) -->
+        {% if session.role == 'owner' %}
+        <div class="container mb-4">
+            <div class="card bg-dark border-primary">
+                <div class="card-header bg-primary bg-opacity-20">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="bi bi-graph-up-arrow me-2"></i>
+                            {% if current_lang == 'en' %}Analytics Dashboard{% else %}数据分析仪表盘{% endif %}
+                        </h6>
+                        <div class="btn-group btn-group-sm">
+                            <a href="/analytics" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-fullscreen"></i> 
+                                {% if current_lang == 'en' %}Full Dashboard{% else %}完整仪表盘{% endif %}
+                            </a>
+                            <button class="btn btn-outline-light btn-sm" onclick="refreshAnalyticsWidget()">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-3">
+                    <div class="row g-3">
+                        <!-- Live BTC Price -->
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h5 mb-1" id="widget-btc-price">--</div>
+                                <small class="text-muted">BTC Price</small>
+                                <div class="small" id="widget-price-change">--</div>
+                            </div>
+                        </div>
+                        <!-- Network Hashrate -->
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h5 mb-1" id="widget-hashrate">--</div>
+                                <small class="text-muted">{% if current_lang == 'en' %}Network Hashrate{% else %}网络算力{% endif %}</small>
+                                <div class="small text-success">EH/s</div>
+                            </div>
+                        </div>
+                        <!-- Fear & Greed Index -->
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h5 mb-1" id="widget-fear-greed">--</div>
+                                <small class="text-muted">{% if current_lang == 'en' %}Fear & Greed{% else %}恐惧贪婪指数{% endif %}</small>
+                                <div class="small" id="widget-sentiment">--</div>
+                            </div>
+                        </div>
+                        <!-- Quick Actions -->
+                        <div class="col-md-3">
+                            <div class="d-grid gap-1">
+                                <button class="btn btn-sm btn-outline-info" onclick="showLatestReport()">
+                                    <i class="bi bi-file-text"></i> 
+                                    {% if current_lang == 'en' %}Latest Report{% else %}最新报告{% endif %}
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning" onclick="showTechnicalIndicators()">
+                                    <i class="bi bi-bar-chart"></i> 
+                                    {% if current_lang == 'en' %}Indicators{% else %}技术指标{% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Insights Panel -->
+                    <div class="mt-3 pt-3 border-top">
+                        <div id="widget-insights" class="small text-muted">
+                            {% if current_lang == 'en' %}Loading market insights...{% else %}正在加载市场洞察...{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Modal for Quick View -->
+        <div class="modal fade" id="analyticsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content bg-dark">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="analyticsModalLabel">Analytics Data</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" id="analyticsModalBody">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="/analytics" class="btn btn-primary">
+                            {% if current_lang == 'en' %}Open Full Dashboard{% else %}打开完整仪表盘{% endif %}
+                        </a>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
         <main class="container mb-5">
             <!-- 消息提示条 -->

@@ -1852,10 +1852,18 @@ def inject_nav_menu():
             return False
         role = session.get('role')
         return role in ['owner', 'admin', 'mining_site']
+    
+    def user_has_analytics_access():
+        """检查用户是否有访问数据分析的权限"""
+        if not session.get('authenticated'):
+            return False
+        role = session.get('role')
+        return role == 'owner'
         
     return {
         'user_has_crm_access': user_has_crm_access,
-        'user_has_network_analysis_access': user_has_network_analysis_access
+        'user_has_network_analysis_access': user_has_network_analysis_access,
+        'user_has_analytics_access': user_has_analytics_access
     }
 
 @app.route('/algorithm_test')
@@ -1864,6 +1872,93 @@ def algorithm_test():
     """算法差异测试工具页面"""
     user_role = get_user_role(session.get('email'))
     return render_template('algorithm_test.html', user_role=user_role)
+
+@app.route('/analytics')
+@login_required
+def analytics_dashboard():
+    """数据分析仪表盘 - 仅限拥有者"""
+    user_role = get_user_role(session.get('email'))
+    if user_role != 'owner':
+        return render_template('unauthorized.html', message='只有拥有者可以访问数据分析系统'), 403
+    return render_template('analytics_main.html', user_role=user_role)
+
+@app.route('/api/analytics/market-data')
+@login_required
+def analytics_market_data():
+    """获取分析系统的市场数据"""
+    user_role = get_user_role(session.get('email'))
+    if user_role != 'owner':
+        return jsonify({'error': '只有拥有者可以访问分析系统'}), 403
+    
+    try:
+        import requests
+        # 调用分析系统API
+        response = requests.get('http://localhost:5001/api/market-data', timeout=10)
+        if response.status_code == 200:
+            return jsonify(response.json())
+        else:
+            return jsonify({'error': '分析系统暂时不可用'}), 503
+    except Exception as e:
+        app.logger.error(f"获取分析数据失败: {e}")
+        return jsonify({'error': '无法连接分析系统'}), 503
+
+@app.route('/api/analytics/latest-report')
+@login_required
+def analytics_latest_report():
+    """获取最新分析报告"""
+    user_role = get_user_role(session.get('email'))
+    if user_role != 'owner':
+        return jsonify({'error': '只有拥有者可以访问分析系统'}), 403
+    
+    try:
+        import requests
+        response = requests.get('http://localhost:5001/api/latest-report', timeout=10)
+        if response.status_code == 200:
+            return jsonify(response.json())
+        else:
+            return jsonify({'error': '暂无分析报告'}), 404
+    except Exception as e:
+        app.logger.error(f"获取分析报告失败: {e}")
+        return jsonify({'error': '无法连接分析系统'}), 503
+
+@app.route('/api/analytics/technical-indicators')
+@login_required
+def analytics_technical_indicators():
+    """获取技术指标"""
+    user_role = get_user_role(session.get('email'))
+    if user_role != 'owner':
+        return jsonify({'error': '只有拥有者可以访问分析系统'}), 403
+    
+    try:
+        import requests
+        response = requests.get('http://localhost:5001/api/technical-indicators', timeout=10)
+        if response.status_code == 200:
+            return jsonify(response.json())
+        else:
+            return jsonify({'error': '无法获取技术指标'}), 500
+    except Exception as e:
+        app.logger.error(f"获取技术指标失败: {e}")
+        return jsonify({'error': '无法连接分析系统'}), 503
+
+@app.route('/api/analytics/price-history')
+@login_required
+def analytics_price_history():
+    """获取价格历史数据"""
+    user_role = get_user_role(session.get('email'))
+    if user_role != 'owner':
+        return jsonify({'error': '只有拥有者可以访问分析系统'}), 403
+    
+    try:
+        import requests
+        hours = request.args.get('hours', 24, type=int)
+        response = requests.get(f'http://localhost:5001/api/price-history?hours={hours}', timeout=10)
+        if response.status_code == 200:
+            return jsonify(response.json())
+        else:
+            return jsonify({'error': '无法获取价格历史'}), 500
+    except Exception as e:
+        app.logger.error(f"获取价格历史失败: {e}")
+        return jsonify({'error': '无法连接分析系统'}), 503
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
