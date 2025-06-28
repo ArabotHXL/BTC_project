@@ -887,13 +887,18 @@ def get_sha256_mining_comparison():
     try:
         from coinwarz_api import get_sha256_coins_comparison, check_coinwarz_api_status
         
-        # 检查API状态
+        # 检查API状态（移除严格检查，允许降级服务）
         api_status = check_coinwarz_api_status()
         if not api_status or not api_status.get('Approved'):
+            # 返回空数据而不是503错误
             return jsonify({
-                'success': False,
-                'error': 'CoinWarz API not available or not approved'
-            }), 503
+                'success': True,
+                'coins': [],
+                'data': [],
+                'error': 'CoinWarz API temporarily unavailable',
+                'api_calls_remaining': 0,
+                'daily_calls_remaining': 0
+            })
         
         # 获取SHA-256币种对比数据
         comparison_data = get_sha256_coins_comparison()
