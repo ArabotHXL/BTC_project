@@ -2091,6 +2091,30 @@ def analytics_price_history():
         app.logger.error(f"获取价格历史失败: {e}")
         return jsonify({'error': f'获取价格历史失败: {str(e)}'}), 500
 
+@app.route('/api/electricity-breakeven')
+@login_required
+def get_electricity_breakeven():
+    """获取每个矿机的盈亏平衡电费分析"""
+    try:
+        from mining_calculator import calculate_breakeven_electricity_costs
+        
+        # 调用盈亏平衡计算函数
+        result = calculate_breakeven_electricity_costs()
+        
+        if result['success']:
+            logging.info(f"盈亏平衡电费计算成功，包含{len(result['data']['breakeven_analysis'])}个矿机型号")
+            return jsonify(result)
+        else:
+            logging.error(f"盈亏平衡电费计算失败: {result.get('error', '未知错误')}")
+            return jsonify(result), 500
+            
+    except Exception as e:
+        logging.error(f"获取盈亏平衡电费数据失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 # Missing frontend routes that were causing 404 errors
 @app.route('/crm/dashboard')
 @login_required

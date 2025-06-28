@@ -789,6 +789,148 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
             'error': str(e)
         }
         
+def calculate_breakeven_electricity_costs():
+    """
+    计算在当前市场条件下每个矿机的盈亏平衡电费
+    使用双算法验证确保准确性
+    
+    Returns:
+    - Dictionary containing breakeven analysis for all miner models
+    """
+    try:
+        # 获取当前市场数据
+        current_btc_price = get_real_time_btc_price()
+        current_difficulty = get_real_time_difficulty()
+        current_block_reward = get_real_time_block_reward()
+        current_hashrate = get_real_time_btc_hashrate()
+        
+        logging.info(f"计算盈亏平衡电费 - BTC: ${current_btc_price}, 难度: {current_difficulty/1e12:.2f}T, 算力: {current_hashrate:.2f}EH/s")
+        
+        breakeven_results = {}
+        
+        # 遍历所有矿机型号
+        for miner_model, miner_specs in MINER_DATA.items():
+            # 获取矿机参数
+            hashrate_th = miner_specs['hashrate']  # TH/s
+            power_watts = miner_specs['power_watt']  # 瓦特
+            daily_power_kwh = power_watts * 24 / 1000  # 每日耗电量(kWh)
+            
+            # 方法1: 使用API实时算力计算
+            try:
+                # 计算每TH的日产出 (基于API算力)
+                if current_hashrate > 0:
+                    btc_per_th_per_day_api = (current_block_reward * 144) / (current_hashrate * 1e6)  # EH/s转TH/s
+                    daily_btc_output_api = btc_per_th_per_day_api * hashrate_th
+                    daily_revenue_api = daily_btc_output_api * current_btc_price
+                    
+                    # 盈亏平衡电费 = 日收益 / 日耗电量
+                    breakeven_api = daily_revenue_api / daily_power_kwh if daily_power_kwh > 0 else 0
+                else:
+                    breakeven_api = 0
+                    daily_btc_output_api = 0
+            except Exception as e:
+                logging.error(f"API算力计算失败: {e}")
+                breakeven_api = 0
+                daily_btc_output_api = 0
+            
+            # 方法2: 使用难度计算
+            try:
+                if current_difficulty > 0:
+                    # 基于难度的算力计算
+                    calculated_hashrate_eh = (current_difficulty * (2**32)) / (600 * 1e18)  # EH/s
+                    btc_per_th_per_day_difficulty = (current_block_reward * 144) / (calculated_hashrate_eh * 1e6)
+                    daily_btc_output_difficulty = btc_per_th_per_day_difficulty * hashrate_th
+                    daily_revenue_difficulty = daily_btc_output_difficulty * current_btc_price
+                    
+                    # 盈亏平衡电费
+                    breakeven_difficulty = daily_revenue_difficulty / daily_power_kwh if daily_power_kwh > 0 else 0
+                else:
+                    breakeven_difficulty = 0
+                    daily_btc_output_difficulty = 0
+            except Exception as e:
+                logging.error(f"难度计算失败: {e}")
+                breakeven_difficulty = 0
+                daily_btc_output_difficulty = 0
+            
+            # 计算平均值和差异
+            if breakeven_api > 0 and breakeven_difficulty > 0:
+                average_breakeven = (breakeven_api + breakeven_difficulty) / 2
+                difference_percentage = abs(breakeven_api - breakeven_difficulty) / average_breakeven * 100
+            else:
+                average_breakeven = max(breakeven_api, breakeven_difficulty)
+                difference_percentage = 0
+            
+            # 保存结果
+            breakeven_results[miner_model] = {
+                'hashrate_th': hashrate_th,
+                'power_watts': power_watts,
+                'daily_power_kwh': round(daily_power_kwh, 2),
+                'algorithm1': {
+                    'method': 'API算力',
+                    'daily_btc_output': round(daily_btc_output_api, 8),
+                    'breakeven_cost': round(breakeven_api, 4)
+                },
+                'algorithm2': {
+                    'method': '难度计算',
+                    'daily_btc_output': round(daily_btc_output_difficulty, 8),
+                    'breakeven_cost': round(breakeven_difficulty, 4)
+                },
+                'analysis': {
+                    'average_breakeven': round(average_breakeven, 4),
+                    'difference_percentage': round(difference_percentage, 2),
+                    'is_profitable_at_5c': average_breakeven > 0.05,
+                    'is_profitable_at_8c': average_breakeven > 0.08,
+                    'is_profitable_at_12c': average_breakeven > 0.12
+                }
+            }
+            
+            logging.info(f"{miner_model}: 盈亏平衡电费 {average_breakeven:.4f} $/kWh (API: {breakeven_api:.4f}, 难度: {breakeven_difficulty:.4f})")
+        
+        # 计算统计信息
+        total_miners = len(breakeven_results)
+        profitable_at_5c = sum(1 for result in breakeven_results.values() if result['analysis']['is_profitable_at_5c'])
+        profitable_at_8c = sum(1 for result in breakeven_results.values() if result['analysis']['is_profitable_at_8c'])
+        profitable_at_12c = sum(1 for result in breakeven_results.values() if result['analysis']['is_profitable_at_12c'])
+        
+        return {
+            'success': True,
+            'data': {
+                'current_market': {
+                    'btc_price': current_btc_price,
+                    'network_hashrate': current_hashrate,
+                    'network_difficulty': current_difficulty,
+                    'block_reward': current_block_reward,
+                    'timestamp': datetime.now().isoformat()
+                },
+                'breakeven_analysis': breakeven_results,
+                'profitability_stats': {
+                    'rate_5c': {
+                        'profitable_miners': profitable_at_5c,
+                        'total_miners': total_miners,
+                        'percentage': round(profitable_at_5c / total_miners * 100) if total_miners > 0 else 0
+                    },
+                    'rate_8c': {
+                        'profitable_miners': profitable_at_8c,
+                        'total_miners': total_miners,
+                        'percentage': round(profitable_at_8c / total_miners * 100) if total_miners > 0 else 0
+                    },
+                    'rate_12c': {
+                        'profitable_miners': profitable_at_12c,
+                        'total_miners': total_miners,
+                        'percentage': round(profitable_at_12c / total_miners * 100) if total_miners > 0 else 0
+                    }
+                }
+            }
+        }
+        
+    except Exception as e:
+        logging.error(f"计算盈亏平衡电费时出错: {str(e)}")
+        return {
+            'success': False,
+            'error': str(e)
+        }
+
+
 def calculate_monthly_curtailment_impact(
     miners_data, 
     curtailment_percentage, 
