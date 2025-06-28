@@ -195,8 +195,68 @@ class DataCollector:
             logger.error(f"CoinGecko数据收集失败: {e}")
             return None
     
+    def collect_mempool_data(self) -> Optional[Dict]:
+        """从Mempool.space收集数据"""
+        try:
+            # Mempool.space API - 最新区块数据
+            blocks_url = "https://mempool.space/api/v1/blocks"
+            
+            response = self.session.get(blocks_url, timeout=15)
+            response.raise_for_status()
+            blocks = response.json()
+            
+            if blocks and len(blocks) > 0:
+                latest_block = blocks[0]
+                
+                # 计算区块奖励（satoshi转换为BTC）
+                block_reward_satoshi = latest_block.get('extras', {}).get('reward', 0)
+                block_reward_btc = block_reward_satoshi / 100000000  # satoshi to BTC
+                
+                return {
+                    'block_height': latest_block.get('height', 0),
+                    'block_timestamp': latest_block.get('timestamp', 0),
+                    'network_difficulty': latest_block.get('difficulty', 0),
+                    'tx_count': latest_block.get('tx_count', 0),
+                    'block_reward': block_reward_btc,
+                    'total_fees': latest_block.get('extras', {}).get('totalFees', 0) / 100000000,  # satoshi to BTC
+                    'source': 'mempool'
+                }
+            return None
+                
+        except Exception as e:
+            logger.error(f"Mempool.space数据收集失败: {e}")
+            return None
+
+    def collect_blockchain_hashrate_data(self) -> Optional[Dict]:
+        """从Blockchain.info收集算力数据"""
+        try:
+            # Blockchain.info 算力API
+            hashrate_url = "https://api.blockchain.info/charts/hash-rate?timespan=1days&format=json"
+            
+            response = self.session.get(hashrate_url, timeout=15)
+            response.raise_for_status()
+            data = response.json()
+            
+            values = data.get('values', [])
+            if values:
+                latest_value = values[-1]
+                # 转换TH/s到EH/s
+                hashrate_th = latest_value.get('y', 0)
+                hashrate_eh = hashrate_th / 1000000  # TH/s to EH/s
+                
+                return {
+                    'network_hashrate': hashrate_eh,
+                    'hashrate_timestamp': latest_value.get('x', 0),
+                    'source': 'blockchain_info'
+                }
+            return None
+                
+        except Exception as e:
+            logger.error(f"Blockchain.info算力数据收集失败: {e}")
+            return None
+
     def collect_blockchain_info_data(self) -> Optional[Dict]:
-        """从Blockchain.info收集网络数据"""
+        """从Blockchain.info收集网络数据 - 备用方法"""
         try:
             # 网络难度
             difficulty_response = self.session.get("https://blockchain.info/q/getdifficulty", timeout=15)
@@ -217,6 +277,27 @@ class DataCollector:
         except Exception as e:
             logger.error(f"Blockchain.info数据收集失败: {e}")
             return None
+
+    def collect_coingecko_simple_data(self) -> Optional[Dict]:
+        """从CoinGecko收集简单价格数据 - 较少限制"""
+        try:
+            # 简单价格API（限制较少）
+            price_url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
+            
+            response = self.session.get(price_url, timeout=15)
+            response.raise_for_status()
+            data = response.json()
+            
+            bitcoin_data = data.get('bitcoin', {})
+            
+            return {
+                'btc_price': bitcoin_data.get('usd', 0),
+                'source': 'coingecko_simple'
+            }
+                
+        except Exception as e:
+            logger.error(f"CoinGecko简单API数据收集失败: {e}")
+            return None
     
     def collect_fear_greed_index(self) -> Optional[int]:
         """收集恐惧贪婪指数"""
@@ -233,25 +314,44 @@ class DataCollector:
             return None
     
     def collect_all_data(self) -> Optional[MarketData]:
-        """收集所有数据"""
+        """收集所有数据 - 使用新的可靠API源"""
         logger.info("开始收集市场数据...")
         
-        # 收集各种数据
-        coingecko_data = self.collect_coingecko_data()
-        blockchain_data = self.collect_blockchain_info_data()
+        # 优先使用Mempool.space获取最新区块数据
+        mempool_data = self.collect_mempool_data()
+        
+        # 使用Blockchain.info获取算力数据
+        hashrate_data = self.collect_blockchain_hashrate_data()
+        
+        # 尝试简单CoinGecko API获取价格
+        price_data = self.collect_coingecko_simple_data()
+        
+        # 收集恐惧贪婪指数
         fear_greed = self.collect_fear_greed_index()
         
-        # 如果CoinGecko受限，使用备用价格数据源
-        if not coingecko_data:
-            logger.warning("CoinGecko API受限，使用备用价格数据")
+        # 如果主要数据源失败，使用备用源
+        if not mempool_data:
+            logger.info("Mempool.space失败，使用备用Blockchain.info数据")
+            blockchain_data = self.collect_blockchain_info_data()
+        else:
+            blockchain_data = None
+        
+        # 如果简单价格API失败，尝试完整CoinGecko API
+        if not price_data:
+            logger.info("简单价格API失败，尝试完整CoinGecko API")
+            price_data = self.collect_coingecko_data()
+        
+        # 如果仍然没有价格数据，从数据库获取最新数据
+        if not price_data:
+            logger.warning("所有价格API受限，使用数据库最新价格")
             try:
-                # 直接查询数据库获取最新价格数据
                 conn = self.db_manager.connect()
                 if conn:
                     cursor = conn.cursor()
                     cursor.execute("""
                         SELECT btc_price, btc_market_cap, btc_volume_24h 
                         FROM market_analytics 
+                        WHERE btc_price > 0
                         ORDER BY recorded_at DESC 
                         LIMIT 1
                     """)
@@ -259,55 +359,65 @@ class DataCollector:
                     conn.close()
                     
                     if result:
-                        coingecko_data = {
-                            'price': float(result[0]),
+                        price_data = {
+                            'btc_price': float(result[0]),
                             'market_cap': int(result[1]) if result[1] else 2120000000000,
-                            'volume_24h': int(result[2]) if result[2] else 20000000000,
-                            'price_change_1h': 0.0,
-                            'price_change_24h': 0.0,
-                            'price_change_7d': 0.0
+                            'volume_24h': int(result[2]) if result[2] else 20000000000
                         }
-                        logger.info(f"使用数据库最新价格: ${coingecko_data['price']:,.2f}")
-                    else:
-                        # 如果数据库也没有数据，使用合理的默认值
-                        coingecko_data = {
-                            'price': 107000,
-                            'market_cap': 2120000000000,
-                            'volume_24h': 20000000000,
-                            'price_change_1h': 0.0,
-                            'price_change_24h': 0.0,
-                            'price_change_7d': 0.0
-                        }
-                        logger.info("使用默认价格数据: $107,000")
-                else:
-                    raise Exception("数据库连接失败")
+                        logger.info(f"使用数据库最新价格: ${price_data['btc_price']:,.2f}")
             except Exception as e:
-                logger.error(f"备用价格获取失败: {e}")
-                # 使用固定默认值继续运行
-                coingecko_data = {
-                    'price': 107000,
-                    'market_cap': 2120000000000,
-                    'volume_24h': 20000000000,
-                    'price_change_1h': 0.0,
-                    'price_change_24h': 0.0,
-                    'price_change_7d': 0.0
-                }
-                logger.info("使用固定默认价格: $107,000")
+                logger.error(f"数据库价格获取失败: {e}")
         
-        if not blockchain_data:
-            logger.error("区块链网络数据收集失败")
+        # 确保至少有基础网络数据
+        if not mempool_data and not blockchain_data:
+            logger.error("所有网络数据源都失败")
             return None
         
-        # 组合数据
+        # 整合数据
+        current_time = datetime.now()
+        
+        # 从最佳可用源获取数据
+        if mempool_data:
+            difficulty = mempool_data.get('network_difficulty', 0)
+            block_reward = mempool_data.get('block_reward', 3.125)
+            logger.info(f"使用Mempool数据: 难度={difficulty:.0f}, 奖励={block_reward}")
+        else:
+            difficulty = blockchain_data.get('network_difficulty', 0)
+            block_reward = blockchain_data.get('block_reward', 3.125)
+            logger.info(f"使用Blockchain.info数据: 难度={difficulty:.0f}, 奖励={block_reward}")
+        
+        # 算力优先从专用API获取
+        if hashrate_data:
+            network_hashrate = hashrate_data.get('network_hashrate', 0)
+            logger.info(f"使用Blockchain.info算力: {network_hashrate:.2f} EH/s")
+        elif mempool_data:
+            # 如果没有专用算力数据，从难度计算
+            network_hashrate = (difficulty * (2**32)) / (10 * 60) / 1e18 if difficulty else 0
+            logger.info(f"从难度计算算力: {network_hashrate:.2f} EH/s")
+        else:
+            network_hashrate = blockchain_data.get('network_hashrate', 0) if blockchain_data else 0
+        
+        # 价格数据
+        if price_data:
+            btc_price = price_data.get('btc_price', 0) or price_data.get('price', 0)
+            market_cap = price_data.get('market_cap', 0)
+            volume_24h = price_data.get('volume_24h', 0)
+            logger.info(f"使用价格数据: ${btc_price:,.2f}")
+        else:
+            logger.error("无法获取任何价格数据")
+            return None
+        
+        # 创建市场数据对象
         market_data = MarketData(
-            timestamp=datetime.now(),
-            btc_price=coingecko_data['price'],
-            btc_market_cap=coingecko_data['market_cap'],
-            btc_volume_24h=coingecko_data['volume_24h'],
-            network_hashrate=blockchain_data['network_hashrate'],
-            network_difficulty=blockchain_data['network_difficulty'],
-            block_reward=blockchain_data['block_reward'],
-            fear_greed_index=fear_greed
+            timestamp=current_time,
+            btc_price=btc_price,
+            btc_market_cap=market_cap,
+            btc_volume_24h=volume_24h,
+            network_hashrate=network_hashrate,
+            network_difficulty=difficulty,
+            block_reward=block_reward,
+            fear_greed_index=fear_greed,
+            source="mempool+blockchain" if mempool_data else "blockchain_fallback"
         )
         
         logger.info(f"数据收集完成: BTC=${market_data.btc_price:,.2f}, 算力={market_data.network_hashrate:.2f}EH/s")
