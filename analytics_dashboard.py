@@ -24,7 +24,11 @@ def get_user_role(email):
     try:
         conn = psycopg2.connect(db_url)
         cursor = conn.cursor()
-        cursor.execute("SELECT role FROM user_access WHERE email = %s AND is_active = true", [email])
+        # 检查用户是否存在且未过期
+        cursor.execute("""
+            SELECT role FROM user_access 
+            WHERE email = %s AND expires_at > NOW()
+        """, [email])
         result = cursor.fetchone()
         cursor.close()
         conn.close()
