@@ -799,6 +799,7 @@ def calculate():
         }), 500
 
 # API routes with standardized URL patterns
+@app.route('/api/get_btc_price', methods=['GET'])
 @app.route('/api/btc-price', methods=['GET'])
 @app.route('/api/btc_price', methods=['GET'])
 @app.route('/get_btc_price', methods=['GET'])
@@ -819,6 +820,7 @@ def get_btc_price():
             'error': 'Could not fetch BTC price.'
         }), 500
 
+@app.route('/api/get_network_stats', methods=['GET'])
 @app.route('/api/network-stats', methods=['GET'])
 @app.route('/api/network_stats', methods=['GET'])
 @app.route('/get_network_stats', methods=['GET'])
@@ -888,7 +890,9 @@ def get_network_stats():
             'api_calls_remaining': 0
         }), 500
 
+@app.route('/api/get_sha256_mining_comparison', methods=['GET'])
 @app.route('/api/sha256-comparison', methods=['GET'])
+@app.route('/get_sha256_mining_comparison', methods=['GET'])
 @app.route('/mining/sha256_comparison', methods=['GET'])
 @login_required
 def get_sha256_mining_comparison():
@@ -934,6 +938,7 @@ def get_sha256_mining_comparison():
             'error': 'Internal server error while fetching comparison data'
         }), 500
 
+@app.route('/api/get_miners', methods=['GET'])
 @app.route('/api/miners', methods=['GET'])
 @app.route('/get_miners', methods=['GET'])
 @app.route('/miners', methods=['GET'])
