@@ -804,9 +804,15 @@ def calculate():
 @app.route('/api/btc_price', methods=['GET'])
 @app.route('/get_btc_price', methods=['GET'])
 @app.route('/btc_price', methods=['GET'])
-@login_required
 def get_btc_price():
     """Get the current Bitcoin price from API"""
+    # Check authentication for API endpoints
+    if not session.get('email'):
+        return jsonify({
+            'success': False,
+            'error': 'Authentication required'
+        }), 401
+        
     try:
         current_btc_price = get_real_time_btc_price()
         return jsonify({
@@ -825,9 +831,15 @@ def get_btc_price():
 @app.route('/api/network_stats', methods=['GET'])
 @app.route('/get_network_stats', methods=['GET'])
 @app.route('/network_stats', methods=['GET'])
-@login_required
 def get_network_stats():
     """Get current Bitcoin network statistics using smart API switching"""
+    # Check authentication for API endpoints
+    if not session.get('email'):
+        return jsonify({
+            'success': False,
+            'error': 'Authentication required'
+        }), 401
+        
     try:
         from coinwarz_api import get_enhanced_network_data
         
@@ -894,9 +906,15 @@ def get_network_stats():
 @app.route('/api/sha256-comparison', methods=['GET'])
 @app.route('/get_sha256_mining_comparison', methods=['GET'])
 @app.route('/mining/sha256_comparison', methods=['GET'])
-@login_required
 def get_sha256_mining_comparison():
     """Get SHA-256 mining profitability comparison from CoinWarz"""
+    # Check authentication for API endpoints
+    if not session.get('email'):
+        return jsonify({
+            'success': False,
+            'error': 'Authentication required'
+        }), 401
+        
     try:
         from coinwarz_api import get_sha256_coins_comparison, check_coinwarz_api_status
         
