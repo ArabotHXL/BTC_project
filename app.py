@@ -2176,8 +2176,9 @@ def api_electricity_profitability():
         for rate in test_rates:
             profitable_count = 0
             for model, specs in key_miners.items():
-                # 简化计算
-                daily_btc = (specs["hashrate"] / network_hashrate) * 900 * 3.125
+                # 正确的计算方法：使用network_hashrate的EH/s转换为TH/s
+                network_th = network_hashrate * 1000000  # EH/s转换为TH/s
+                daily_btc = (specs["hashrate"] / network_th) * 144 * 3.125  # 144个区块/天
                 daily_revenue = daily_btc * btc_price  
                 daily_power_cost = (specs["power_watt"] / 1000) * 24 * rate
                 if daily_revenue > daily_power_cost:
