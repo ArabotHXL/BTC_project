@@ -1056,6 +1056,51 @@
         let currentMarketData = null;
         let currentTechnicalData = null;
 
+        // Miner specifications from mining calculator
+        const MINER_DATA = {
+            "Antminer S21 XP Hyd": {"hashrate": 473, "power_watt": 5676},
+            "Antminer S21 XP": {"hashrate": 270, "power_watt": 3645},
+            "Antminer S21": {"hashrate": 200, "power_watt": 3500},
+            "Antminer S21 Hyd": {"hashrate": 335, "power_watt": 5360},
+            "Antminer S19": {"hashrate": 95, "power_watt": 3250},
+            "Antminer S19 Pro": {"hashrate": 110, "power_watt": 3250},
+            "Antminer S19j Pro": {"hashrate": 100, "power_watt": 3050},
+            "Antminer S19 XP": {"hashrate": 140, "power_watt": 3010},
+            "Antminer S19 Hydro": {"hashrate": 158, "power_watt": 5451},
+            "Antminer S19 Pro+ Hyd": {"hashrate": 198, "power_watt": 5445}
+        };
+
+        // Calculate breakeven electricity costs for all miners
+        function calculateMinerBreakevens(hashPrice) {
+            const breakevens = [];
+            
+            for (const [name, specs] of Object.entries(MINER_DATA)) {
+                // Daily revenue = hashPrice * hashrate
+                const dailyRevenue = hashPrice * specs.hashrate;
+                
+                // Daily power consumption in kWh
+                const dailyPowerKwh = (specs.power_watt / 1000) * 24;
+                
+                // Breakeven electricity cost = daily revenue / daily power consumption
+                const breakevenElectricity = dailyRevenue / dailyPowerKwh;
+                
+                // Calculate efficiency (W/TH)
+                const efficiency = specs.power_watt / specs.hashrate;
+                
+                breakevens.push({
+                    name: name,
+                    hashrate: specs.hashrate,
+                    power_watt: specs.power_watt,
+                    efficiency: efficiency,
+                    breakeven: breakevenElectricity,
+                    dailyRevenue: dailyRevenue
+                });
+            }
+            
+            // Sort by efficiency (lower W/TH is better)
+            return breakevens.sort((a, b) => a.efficiency - b.efficiency);
+        }
+
         // Generate quick insights based on current data
         function generateQuickInsights() {
             const insightsContainer = document.getElementById('quickInsights');
@@ -1174,20 +1219,38 @@
                     });
                 }
                 
-                // Electricity cost breakeven analysis
-                const breakevenElectricity = hashPrice * 24 / 3000; // Assuming 3kW typical miner
-                if (breakevenElectricity < 0.05) {
-                    insights.push({
-                        type: 'danger',
-                        icon: 'bi-lightning-charge',
-                        text: `盈亏平衡电价仅$${breakevenElectricity.toFixed(3)}/kWh，多数矿场面临亏损`
-                    });
-                } else if (breakevenElectricity > 0.08) {
-                    insights.push({
-                        type: 'success',
-                        icon: 'bi-battery-charging',
-                        text: `盈亏平衡电价$${breakevenElectricity.toFixed(3)}/kWh，电费优势明显`
-                    });
+                // Advanced miner-specific breakeven analysis
+                const minerBreakevenAnalysis = calculateMinerBreakevens(hashPrice);
+                if (minerBreakevenAnalysis.length > 0) {
+                    // Display most efficient miner
+                    const topMiner = minerBreakevenAnalysis[0];
+                    if (topMiner.breakeven > 0.08) {
+                        insights.push({
+                            type: 'success',
+                            icon: 'bi-cpu-fill',
+                            text: `${topMiner.name}盈亏平衡: $${topMiner.breakeven.toFixed(3)}/kWh，高效机型优势明显`
+                        });
+                    }
+                    
+                    // Display mainstream miner
+                    const mainstreamMiner = minerBreakevenAnalysis.find(m => m.name.includes('S21')) || minerBreakevenAnalysis[2];
+                    if (mainstreamMiner && mainstreamMiner.breakeven > 0.05) {
+                        insights.push({
+                            type: 'info',
+                            icon: 'bi-gear-fill',
+                            text: `${mainstreamMiner.name}盈亏平衡: $${mainstreamMiner.breakeven.toFixed(3)}/kWh，主流机型表现`
+                        });
+                    }
+                    
+                    // Check for at-risk miners
+                    const riskMiner = minerBreakevenAnalysis.find(m => m.breakeven < 0.05);
+                    if (riskMiner) {
+                        insights.push({
+                            type: 'danger',
+                            icon: 'bi-exclamation-triangle-fill',
+                            text: `${riskMiner.name}盈亏平衡: $${riskMiner.breakeven.toFixed(3)}/kWh，低效机型面临亏损风险`
+                        });
+                    }
                 }
             }
 
