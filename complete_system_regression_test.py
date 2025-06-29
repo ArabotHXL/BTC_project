@@ -321,11 +321,11 @@ class CompleteSystemRegressionTest:
                     # 验证计算结果的完整性
                     if self.validate_calculation_result(data):
                         btc_daily = data.get('btc_mined', {}).get('daily', 0)
-                        profit_daily = data.get('profit_daily', 0)
-                        efficiency = data.get('efficiency_wth', 0)
+                        profit_daily = data.get('profit', {}).get('daily', 0)
+                        network_hashrate = data.get('network_data', {}).get('network_hashrate', 0)
                         
                         self.log_test("挖矿计算", "基础挖矿计算", "PASS", 
-                                    f"日产BTC: {btc_daily:.6f}, 日收益: ${profit_daily:.2f}, 效率: {efficiency:.2f}W/TH", response_time)
+                                    f"日产BTC: {btc_daily:.6f}, 日收益: ${profit_daily:.2f}, 网络算力: {network_hashrate:.1f}EH/s", response_time)
                         
                         # 验证关键业务逻辑
                         self.validate_business_logic(data)
@@ -377,10 +377,10 @@ class CompleteSystemRegressionTest:
 
     def validate_business_logic(self, data):
         """验证业务逻辑正确性"""
-        # 验证盈亏平衡分析
-        if 'breakeven_analysis' in data:
-            breakeven = data['breakeven_analysis']
-            breakeven_cost = breakeven.get('breakeven_electricity_cost', 0)
+        # 验证盈亏平衡分析 - 使用实际响应字段名
+        if 'break_even' in data:
+            breakeven = data['break_even']
+            breakeven_cost = breakeven.get('electricity_cost', 0)
             
             if breakeven_cost > 0:
                 self.log_test("挖矿计算", "盈亏平衡逻辑", "PASS", 
@@ -389,15 +389,20 @@ class CompleteSystemRegressionTest:
                 self.log_test("挖矿计算", "盈亏平衡逻辑", "WARN", "盈亏平衡计算数据异常")
         
         # 验证ROI分析
-        if 'roi_data' in data:
-            roi_data = data['roi_data']
-            if isinstance(roi_data, dict) and 'client' in roi_data:
-                roi_months = roi_data['client'].get('roi_months', 0)
-                if roi_months > 0:
-                    self.log_test("挖矿计算", "ROI分析逻辑", "PASS", 
-                                f"客户投资回报周期: {roi_months:.1f}个月")
+        if 'roi' in data:
+            roi_data = data['roi']
+            if roi_data is not None and isinstance(roi_data, dict):
+                if 'client' in roi_data and roi_data['client'] is not None:
+                    roi_months = roi_data['client'].get('roi_months', 0)
+                    if roi_months > 0:
+                        self.log_test("挖矿计算", "ROI分析逻辑", "PASS", 
+                                    f"客户投资回报周期: {roi_months:.1f}个月")
+                    else:
+                        self.log_test("挖矿计算", "ROI分析逻辑", "INFO", "无投资，ROI为null")
                 else:
-                    self.log_test("挖矿计算", "ROI分析逻辑", "WARN", "ROI计算异常")
+                    self.log_test("挖矿计算", "ROI分析逻辑", "INFO", "无投资，ROI为null")
+            else:
+                self.log_test("挖矿计算", "ROI分析逻辑", "INFO", "无投资数据")
 
     def test_all_miner_models(self):
         """测试所有矿机型号"""
@@ -447,10 +452,11 @@ class CompleteSystemRegressionTest:
             if response.status_code == 200:
                 data = response.json()
                 if self.validate_calculation_result(data):
-                    breakeven = data.get('breakeven_analysis', {})
-                    breakeven_cost = breakeven.get('breakeven_electricity_cost', 0)
+                    breakeven = data.get('break_even', {})
+                    breakeven_cost = breakeven.get('electricity_cost', 0)
+                    daily_btc = data.get('btc_mined', {}).get('daily', 0)
                     self.log_test("挖矿计算", f"{miner_name}计算", "PASS", 
-                                f"盈亏平衡: ${breakeven_cost:.6f}/kWh")
+                                f"盈亏平衡: ${breakeven_cost:.6f}/kWh, 日产BTC: {daily_btc:.6f}")
                     return True
                 else:
                     self.log_test("挖矿计算", f"{miner_name}计算", "FAIL", "计算结果验证失败")
