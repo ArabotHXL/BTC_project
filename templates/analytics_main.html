@@ -1219,59 +1219,35 @@
                     });
                 }
                 
-                // Advanced miner-specific breakeven analysis
+                // Advanced miner-specific breakeven analysis - Show all 10 miners
                 const minerBreakevenAnalysis = calculateMinerBreakevens(hashPrice);
                 if (minerBreakevenAnalysis.length > 0) {
-                    // Group miners by efficiency tiers
-                    const topTier = minerBreakevenAnalysis.slice(0, 2); // Top 2 most efficient
-                    const midTier = minerBreakevenAnalysis.slice(2, 5); // Middle tier
-                    const lowTier = minerBreakevenAnalysis.slice(-3); // Bottom 3
-                    
-                    // Show top tier miners
-                    topTier.forEach(miner => {
+                    // Show all miners with appropriate color coding
+                    minerBreakevenAnalysis.forEach((miner, index) => {
                         const shortName = miner.name.replace('Antminer ', '');
+                        
+                        // Determine color and icon based on breakeven price
+                        let type, icon;
+                        if (miner.breakeven > 0.08) {
+                            type = 'success';
+                            icon = 'bi-trophy-fill';
+                        } else if (miner.breakeven > 0.06) {
+                            type = 'info';
+                            icon = 'bi-cpu-fill';
+                        } else if (miner.breakeven > 0.04) {
+                            type = 'warning';
+                            icon = 'bi-gear-fill';
+                        } else {
+                            type = 'danger';
+                            icon = 'bi-exclamation-triangle-fill';
+                        }
+                        
                         insights.push({
-                            type: 'success',
-                            icon: 'bi-trophy-fill',
+                            type: type,
+                            icon: icon,
                             text: `${shortName}: $${miner.breakeven.toFixed(3)}/kWh (${miner.efficiency.toFixed(1)}W/TH)`
                         });
                     });
-                    
-                    // Show one representative from mid tier
-                    if (midTier.length > 0) {
-                        const midMiner = midTier.find(m => m.name.includes('S21')) || midTier[0];
-                        const shortName = midMiner.name.replace('Antminer ', '');
-                        insights.push({
-                            type: 'info',
-                            icon: 'bi-gear-fill',
-                            text: `${shortName}: $${midMiner.breakeven.toFixed(3)}/kWh (${midMiner.efficiency.toFixed(1)}W/TH)`
-                        });
-                    }
-                    
-                    // Show S19 series specifically (popular older generation)
-                    const s19Models = minerBreakevenAnalysis.filter(m => m.name.includes('S19'));
-                    if (s19Models.length > 0) {
-                        const bestS19 = s19Models[0]; // Most efficient S19
-                        const shortName = bestS19.name.replace('Antminer ', '');
-                        if (bestS19.breakeven > 0.03) {
-                            insights.push({
-                                type: bestS19.breakeven > 0.05 ? 'warning' : 'danger',
-                                icon: 'bi-cpu',
-                                text: `${shortName}: $${bestS19.breakeven.toFixed(3)}/kWh (${bestS19.efficiency.toFixed(1)}W/TH)`
-                            });
-                        }
-                    }
-                    
-                    // Show worst performer as warning
-                    const worstMiner = lowTier[lowTier.length - 1];
-                    if (worstMiner && worstMiner.breakeven < 0.04) {
-                        const shortName = worstMiner.name.replace('Antminer ', '');
-                        insights.push({
-                            type: 'danger',
-                            icon: 'bi-x-circle-fill',
-                            text: `${shortName}: $${worstMiner.breakeven.toFixed(3)}/kWh，亏损风险`
-                        });
-                    }
                 }
             }
 
@@ -1336,8 +1312,8 @@
                 return;
             }
 
-            const insightsHtml = insights.slice(0, 6).map(insight => `
-                <div class="insight-item mb-2 p-2 border-start border-${insight.type} border-3">
+            const insightsHtml = insights.slice(0, 12).map(insight => `
+                <div class="insight-item mb-1 p-2 border-start border-${insight.type} border-3">
                     <i class="bi ${insight.icon} text-${insight.type} me-2"></i>
                     <span class="small">${insight.text}</span>
                 </div>
