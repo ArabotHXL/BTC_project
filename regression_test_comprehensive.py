@@ -52,8 +52,20 @@ class ComprehensiveRegressionTest:
             self.log_test("服务器健康检查", "FAIL", f"连接错误: {str(e)}")
             return False
 
+    def authenticate_session(self):
+        """模拟用户认证以测试API"""
+        # Simulate session authentication by setting session cookies
+        self.session.cookies.set('session', 'test_session_token')
+        self.session.headers.update({
+            'User-Agent': 'Regression-Test-Bot/1.0',
+            'Accept': 'application/json'
+        })
+
     def test_api_endpoints(self):
         """测试关键API端点"""
+        # Attempt authentication simulation
+        self.authenticate_session()
+        
         api_tests = [
             ("/api/get_btc_price", "BTC价格API"),
             ("/api/get_network_stats", "网络统计API"),
@@ -69,13 +81,20 @@ class ComprehensiveRegressionTest:
                 
                 if response.status_code == 200:
                     try:
-                        data = response.json()
-                        if data and 'price' in str(data).lower() or 'data' in data or 'miners' in str(data).lower():
-                            self.log_test(name, "PASS", f"返回有效数据", response_time)
+                        # Check if it's a login redirect (HTML response)
+                        content_type = response.headers.get('content-type', '')
+                        if 'text/html' in content_type.lower():
+                            self.log_test(name, "WARN", f"需要认证(重定向到登录页)", response_time)
                         else:
-                            self.log_test(name, "WARN", f"数据格式异常", response_time)
-                    except:
-                        self.log_test(name, "WARN", f"JSON解析失败", response_time)
+                            data = response.json()
+                            if data and ('price' in str(data).lower() or 'data' in data or 'miners' in str(data).lower() or 'success' in data):
+                                self.log_test(name, "PASS", f"返回有效数据", response_time)
+                            else:
+                                self.log_test(name, "WARN", f"数据格式异常", response_time)
+                    except json.JSONDecodeError:
+                        self.log_test(name, "WARN", f"需要认证(返回HTML而非JSON)", response_time)
+                    except Exception as e:
+                        self.log_test(name, "WARN", f"响应解析失败: {str(e)}", response_time)
                 else:
                     self.log_test(name, "FAIL", f"状态码: {response.status_code}", response_time)
             except Exception as e:

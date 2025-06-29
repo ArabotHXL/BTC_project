@@ -1894,12 +1894,29 @@ def inject_nav_menu():
         'user_has_analytics_access': user_has_analytics_access
     }
 
+@app.route('/algorithm-test')
 @app.route('/algorithm_test')
 @login_required
 def algorithm_test():
     """算法差异测试工具页面"""
     user_role = get_user_role(session.get('email'))
     return render_template('algorithm_test.html', user_role=user_role)
+
+@app.route('/curtailment-calculator')
+@login_required
+def curtailment_calculator_alt():
+    """月度电力削减(Curtailment)计算器页面 - 备用路由"""
+    user_role = get_user_role(session.get('email'))
+    return render_template('curtailment_calculator.html', user_role=user_role)
+
+@app.route('/network-history')
+@login_required
+def network_history_main():
+    """网络历史数据分析页面 - 主路由"""
+    user_role = get_user_role(session.get('email'))
+    if user_role not in ['owner', 'admin', 'mining_site']:
+        return render_template('unauthorized.html', message='需要矿场主或管理员权限'), 403
+    return render_template('network_history.html', user_role=user_role)
 
 @app.route('/analytics')
 @login_required
@@ -2109,9 +2126,9 @@ def crm_dashboard_redirect():
 
 @app.route('/curtailment/calculator')
 @login_required
-def curtailment_calculator_alt():
-    """电力削减计算器 - 替代路由"""
-    return curtailment_calculator()
+def curtailment_calculator_redirect():
+    """电力削减计算器 - 重定向路由"""
+    return redirect(url_for('curtailment_calculator'))
 
 @app.route('/analytics/dashboard')
 @login_required
