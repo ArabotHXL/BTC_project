@@ -2159,6 +2159,95 @@ def network_history_alt():
 
 
 
+# 添加缺失分析系统API路由修复404错误
+@app.route('/analytics/api/latest-report')
+@login_required
+def analytics_latest_report_api():
+    """获取最新分析报告API"""
+    if not has_role(['owner']):
+        return jsonify({'error': '需要拥有者权限'}), 403
+    
+    try:
+        from analytics_engine import DatabaseManager
+        db_manager = DatabaseManager()
+        db_manager.connect()
+        
+        cursor = db_manager.connection.cursor()
+        cursor.execute("""
+            SELECT report_data, created_at
+            FROM analysis_reports 
+            ORDER BY created_at DESC 
+            LIMIT 1
+        """)
+        result = cursor.fetchone()
+        
+        if result:
+            return jsonify({'success': True, 'data': result[0]})
+        else:
+            return jsonify({'success': False, 'error': '暂无报告'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/analytics/api/technical-indicators')
+@login_required
+def analytics_technical_indicators_api():
+    """获取技术指标API"""
+    if not has_role(['owner']):
+        return jsonify({'error': '需要拥有者权限'}), 403
+    
+    try:
+        from analytics_engine import DatabaseManager
+        db_manager = DatabaseManager()
+        db_manager.connect()
+        
+        cursor = db_manager.connection.cursor()
+        cursor.execute("""
+            SELECT indicators_data, calculated_at
+            FROM technical_indicators 
+            ORDER BY calculated_at DESC 
+            LIMIT 1
+        """)
+        result = cursor.fetchone()
+        
+        if result:
+            return jsonify({'success': True, 'data': result[0]})
+        else:
+            return jsonify({'success': False, 'error': '暂无技术指标数据'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/analytics/api/price-history')
+@login_required
+def analytics_price_history_api():
+    """获取价格历史数据API"""
+    if not has_role(['owner']):
+        return jsonify({'error': '需要拥有者权限'}), 403
+    
+    try:
+        from analytics_engine import DatabaseManager
+        db_manager = DatabaseManager()
+        db_manager.connect()
+        
+        cursor = db_manager.connection.cursor()
+        cursor.execute("""
+            SELECT btc_price, timestamp
+            FROM market_analytics 
+            ORDER BY timestamp DESC 
+            LIMIT 100
+        """)
+        results = cursor.fetchall()
+        
+        if results:
+            data = [{'price': row[0], 'timestamp': row[1].isoformat() if row[1] else None} for row in results]
+            return jsonify({'success': True, 'data': data})
+        else:
+            return jsonify({'success': False, 'error': '暂无价格历史数据'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
 # 添加缺失的API路由修复404错误
 @app.route('/api/price-trend')
 @login_required
