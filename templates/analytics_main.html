@@ -1138,20 +1138,92 @@
                 }
             }
 
-            // Mining profitability insight
+            // Enhanced mining analysis insights
             if (data.btc_price && data.network_hashrate) {
+                // Hash price calculation ($/TH/day)
+                const hashPrice = (data.btc_price * 3.125 * 144) / (data.network_hashrate * 1e6);
+                
+                // Mining profitability insight with hash price
                 const estimatedDailyRevenue = (data.btc_price * 200 * 144) / (data.network_hashrate * 1e18 / 1e12);
                 if (estimatedDailyRevenue > 15) {
                     insights.push({
                         type: 'success',
                         icon: 'bi-gem',
-                        text: '当前挖矿收益率较为可观'
+                        text: `挖矿收益较好，Hash Price: $${hashPrice.toFixed(4)}/TH/天`
                     });
                 } else if (estimatedDailyRevenue < 10) {
                     insights.push({
                         type: 'warning',
                         icon: 'bi-exclamation-circle',
-                        text: '挖矿收益率相对较低，注意成本控制'
+                        text: `收益承压，Hash Price: $${hashPrice.toFixed(4)}/TH/天，注意电费成本`
+                    });
+                }
+                
+                // Network competition analysis
+                if (data.network_hashrate > 950) {
+                    insights.push({
+                        type: 'warning',
+                        icon: 'bi-people-fill',
+                        text: '网络竞争异常激烈，个体矿工收益下降'
+                    });
+                } else if (data.network_hashrate < 800) {
+                    insights.push({
+                        type: 'success',
+                        icon: 'bi-target',
+                        text: '网络竞争相对缓和，挖矿机会较好'
+                    });
+                }
+                
+                // Electricity cost breakeven analysis
+                const breakevenElectricity = hashPrice * 24 / 3000; // Assuming 3kW typical miner
+                if (breakevenElectricity < 0.05) {
+                    insights.push({
+                        type: 'danger',
+                        icon: 'bi-lightning-charge',
+                        text: `盈亏平衡电价仅$${breakevenElectricity.toFixed(3)}/kWh，多数矿场面临亏损`
+                    });
+                } else if (breakevenElectricity > 0.08) {
+                    insights.push({
+                        type: 'success',
+                        icon: 'bi-battery-charging',
+                        text: `盈亏平衡电价$${breakevenElectricity.toFixed(3)}/kWh，电费优势明显`
+                    });
+                }
+            }
+
+            // Difficulty adjustment prediction
+            if (data.network_difficulty && data.network_hashrate) {
+                // Estimate next difficulty adjustment (simplified)
+                const currentDifficulty = data.network_difficulty;
+                const targetHashrate = currentDifficulty * Math.pow(2, 32) / 600 / 1e18; // Target hashrate in EH/s
+                const actualHashrate = data.network_hashrate;
+                const difficultyChangeEstimate = ((actualHashrate - targetHashrate) / targetHashrate) * 100;
+                
+                if (Math.abs(difficultyChangeEstimate) > 3) {
+                    const direction = difficultyChangeEstimate > 0 ? '上调' : '下调';
+                    const impact = difficultyChangeEstimate > 0 ? '收益将进一步下降' : '收益有望改善';
+                    insights.push({
+                        type: difficultyChangeEstimate > 0 ? 'warning' : 'success',
+                        icon: difficultyChangeEstimate > 0 ? 'bi-arrow-up' : 'bi-arrow-down',
+                        text: `预计下次难度${direction}${Math.abs(difficultyChangeEstimate).toFixed(1)}%，${impact}`
+                    });
+                }
+            }
+
+            // Hash rate trend analysis
+            if (data.network_hashrate) {
+                const hashrate = data.network_hashrate;
+                if (hashrate > 1000) {
+                    insights.push({
+                        type: 'info',
+                        icon: 'bi-graph-up-arrow',
+                        text: '网络算力突破1000 EH/s历史新高，行业进入新阶段'
+                    });
+                } else if (hashrate > 900) {
+                    insights.push({
+                        type: 'success',
+                        icon: 'bi-shield-check',
+                        text: '网络算力超过900 EH/s，安全性达到极高水平'
                     });
                 }
             }
