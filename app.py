@@ -454,9 +454,15 @@ def login_dashboard():
                           geo_data=geo_data)
 
 @app.route('/calculate', methods=['POST'])
-@login_required
 def calculate():
     """Handle the calculation request and return results as JSON"""
+    # Check authentication for API endpoints
+    if not session.get('email'):
+        return jsonify({
+            'success': False,
+            'error': 'Authentication required'
+        }), 401
+        
     try:
         # Handle both JSON and form data
         if request.is_json:
@@ -960,9 +966,15 @@ def get_sha256_mining_comparison():
 @app.route('/api/miners', methods=['GET'])
 @app.route('/get_miners', methods=['GET'])
 @app.route('/miners', methods=['GET'])
-@login_required
 def get_miners():
     """Get the list of available miner models and their specifications"""
+    # Check authentication for API endpoints
+    if not session.get('email'):
+        return jsonify({
+            'success': False,
+            'error': 'Authentication required'
+        }), 401
+        
     try:
         # 确保使用的是从mining_calculator导入的MINER_DATA
         miners_list = []
