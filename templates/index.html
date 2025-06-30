@@ -1185,30 +1185,15 @@
                 '{% if current_lang == "en" %}Latest Analysis Report{% else %}最新分析报告{% endif %}';
             
             try {
-                console.log('Loading latest report from API...');
                 const response = await fetch('/api/analytics/latest-report');
-                console.log('Report API response status:', response.status);
-                
                 if (response.ok) {
                     const report = await response.json();
-                    console.log('Report data received:', report);
-                    
-                    // Handle both direct report object and wrapped response
-                    const reportData = report.data || report;
-                    if (reportData && (reportData.title || reportData.summary)) {
-                        displayReport(reportData);
-                    } else {
-                        console.log('No valid report data found');
-                        document.getElementById('analyticsModalBody').innerHTML = 
-                            '<div class="alert alert-warning">{% if current_lang == "en" %}No reports available yet{% else %}暂无可用报告{% endif %}</div>';
-                    }
+                    displayReport(report);
                 } else {
-                    console.log('Report API failed:', response.status);
                     document.getElementById('analyticsModalBody').innerHTML = 
                         '<div class="alert alert-warning">{% if current_lang == "en" %}No reports available yet{% else %}暂无可用报告{% endif %}</div>';
                 }
             } catch (error) {
-                console.error('Report loading error:', error);
                 document.getElementById('analyticsModalBody').innerHTML = 
                     '<div class="alert alert-danger">{% if current_lang == "en" %}Unable to load report{% else %}无法加载报告{% endif %}</div>';
             }
