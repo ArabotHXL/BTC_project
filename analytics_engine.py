@@ -72,7 +72,7 @@ class DatabaseManager:
                     btc_price DECIMAL(12,2) NOT NULL,
                     btc_market_cap BIGINT,
                     btc_volume_24h BIGINT,
-                    network_hashrate DECIMAL(10,2),
+                    network_hashrate DECIMAL(15,2),
                     network_difficulty DECIMAL(20,2),
                     block_reward DECIMAL(8,4),
                     fear_greed_index INTEGER,
@@ -228,9 +228,31 @@ class DataCollector:
             return None
 
     def collect_blockchain_hashrate_data(self) -> Optional[Dict]:
-        """从多个数据源收集算力数据，优先使用minerstat专业挖矿API"""
+        """从多个数据源收集算力数据，优先使用实时blockchain.info API"""
         try:
-            # 方法1: 从minerstat API获取专业挖矿数据（优先）
+            # 方法1: 使用blockchain.info直接算力API（更实时）
+            try:
+                blockchain_response = self.session.get('https://blockchain.info/q/hashrate', timeout=15)
+                if blockchain_response.status_code == 200:
+                    # blockchain.info返回的是GH/s，需要转换为EH/s
+                    hashrate_gh = float(blockchain_response.text.strip())
+                    hashrate_eh = hashrate_gh / 1000000000  # GH/s to EH/s
+                    
+                    # 获取难度数据
+                    difficulty_response = self.session.get('https://blockchain.info/q/getdifficulty', timeout=15)
+                    difficulty = float(difficulty_response.text.strip()) if difficulty_response.status_code == 200 else 0
+                    
+                    logger.info(f"Blockchain.info实时算力: {hashrate_eh:.2f} EH/s (原始: {hashrate_hs:.0f} H/s)")
+                    return {
+                        'network_hashrate': hashrate_eh,
+                        'network_difficulty': difficulty,
+                        'hashrate_timestamp': int(time.time()),
+                        'source': 'blockchain.info'
+                    }
+            except Exception as e:
+                logger.debug(f"Blockchain.info算力获取失败: {e}")
+            
+            # 方法2: 备用minerstat API
             try:
                 minerstat_response = self.session.get('https://api.minerstat.com/v2/coins?list=BTC', timeout=15)
                 if minerstat_response.status_code == 200:
@@ -242,7 +264,7 @@ class DataCollector:
                         hashrate_eh = hashrate_hs / 1e18  # H/s to EH/s
                         difficulty = float(btc_data.get('difficulty', 0))
                         
-                        logger.info(f"Minerstat算力数据: {hashrate_eh:.2f} EH/s")
+                        logger.info(f"Minerstat备用算力数据: {hashrate_eh:.2f} EH/s")
                         return {
                             'network_hashrate': hashrate_eh,
                             'network_difficulty': difficulty,
