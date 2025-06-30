@@ -1971,7 +1971,7 @@ def analytics_dashboard():
         cursor.execute("""
             SELECT rsi_14, sma_20, sma_50, ema_12, ema_26, macd, 
                    volatility_30d, bollinger_upper, bollinger_lower, recorded_at
-            FROM market_technical_indicators 
+            FROM technical_indicators 
             ORDER BY recorded_at DESC LIMIT 1
         """)
         tech_data = cursor.fetchone()
