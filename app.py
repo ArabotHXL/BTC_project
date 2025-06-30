@@ -1956,7 +1956,70 @@ def analytics_dashboard():
     user_role = get_user_role(session.get('email'))
     if user_role != 'owner':
         return render_template('unauthorized.html', message='只有拥有者可以访问数据分析系统'), 403
-    return render_template('analytics_main.html', user_role=user_role)
+    
+    # 直接在服务器端获取技术指标和分析报告数据
+    technical_indicators = None
+    latest_report = None
+    
+    try:
+        from analytics_engine import DatabaseManager
+        db_manager = DatabaseManager()
+        db_manager.connect()
+        
+        # 获取技术指标
+        cursor = db_manager.connection.cursor()
+        cursor.execute("""
+            SELECT rsi_14, sma_20, sma_50, ema_12, ema_26, macd, 
+                   volatility_30d, bollinger_upper, bollinger_lower, recorded_at
+            FROM market_technical_indicators 
+            ORDER BY recorded_at DESC LIMIT 1
+        """)
+        tech_data = cursor.fetchone()
+        
+        if tech_data:
+            technical_indicators = {
+                'rsi_14': tech_data[0],
+                'sma_20': tech_data[1],
+                'sma_50': tech_data[2],
+                'ema_12': tech_data[3],
+                'ema_26': tech_data[4],
+                'macd': tech_data[5],
+                'volatility_30d': tech_data[6],
+                'bollinger_upper': tech_data[7],
+                'bollinger_lower': tech_data[8],
+                'recorded_at': tech_data[9].isoformat() if tech_data[9] else None
+            }
+        
+        # 获取最新分析报告
+        cursor.execute("""
+            SELECT title, summary, generated_at, confidence_score, recommendations,
+                   risk_assessment, content
+            FROM analysis_reports 
+            ORDER BY generated_at DESC LIMIT 1
+        """)
+        report_data = cursor.fetchone()
+        
+        if report_data:
+            latest_report = {
+                'title': report_data[0],
+                'summary': report_data[1],
+                'generated_at': report_data[2].isoformat() if report_data[2] else None,
+                'confidence_score': report_data[3],
+                'recommendations': report_data[4],
+                'risk_assessment': report_data[5],
+                'content': report_data[6]
+            }
+        
+        cursor.close()
+        db_manager.connection.close()
+        
+    except Exception as e:
+        print(f"获取分析数据时出错: {e}")
+    
+    return render_template('analytics_main.html', 
+                          user_role=user_role,
+                          technical_indicators=technical_indicators,
+                          latest_report=latest_report)
 
 @app.route('/api/analytics/market-data')
 @login_required

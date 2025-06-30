@@ -578,6 +578,63 @@
             return '中性';
         }
         
+        // 加载服务器端传递的数据
+        function loadServerSideData() {
+            console.log('Loading server-side technical indicators and reports...');
+            
+            // 技术指标数据来自服务器端
+            {% if technical_indicators %}
+            const techData = {{ technical_indicators | tojsonfilter | safe }};
+            console.log('Technical indicators from server:', techData);
+            
+            // 更新RSI
+            if (techData.rsi_14 !== null) {
+                document.getElementById('rsiValue').textContent = formatNumber(techData.rsi_14, 1);
+                document.getElementById('rsiSignal').textContent = getRSISignal(techData.rsi_14);
+            }
+            
+            // 更新其他技术指标
+            if (techData.sma_20) document.getElementById('sma20').textContent = formatPrice(techData.sma_20);
+            if (techData.sma_50) document.getElementById('sma50').textContent = formatPrice(techData.sma_50);
+            if (techData.ema_12) document.getElementById('ema12').textContent = formatPrice(techData.ema_12);
+            if (techData.ema_26) document.getElementById('ema26').textContent = formatPrice(techData.ema_26);
+            if (techData.macd) document.getElementById('macd').textContent = formatNumber(techData.macd, 4);
+            if (techData.volatility_30d) document.getElementById('volatility').textContent = formatPercent(techData.volatility_30d);
+            if (techData.bollinger_upper) document.getElementById('bollingerUpper').textContent = formatPrice(techData.bollinger_upper);
+            if (techData.bollinger_lower) document.getElementById('bollingerLower').textContent = formatPrice(techData.bollinger_lower);
+            {% endif %}
+            
+            // 分析报告数据来自服务器端
+            {% if latest_report %}
+            const reportData = {{ latest_report | tojsonfilter | safe }};
+            console.log('Report from server:', reportData);
+            
+            // 更新报告信息
+            document.getElementById('reportTitle').textContent = reportData.title || '暂无报告';
+            document.getElementById('reportSummary').textContent = reportData.summary || '暂无摘要';
+            
+            // 修复日期显示
+            let reportTime = '未知时间';
+            if (reportData.generated_at) {
+                try {
+                    const date = new Date(reportData.generated_at);
+                    if (!isNaN(date.getTime())) {
+                        reportTime = date.toLocaleString();
+                    }
+                } catch (e) {
+                    console.log('Date parsing error:', e);
+                }
+            }
+            document.getElementById('reportTime').textContent = reportTime;
+            
+            if (reportData.confidence_score) {
+                document.getElementById('confidenceScore').textContent = formatPercent(reportData.confidence_score * 100);
+            }
+            {% endif %}
+            
+            console.log('Server-side data loading completed');
+        }
+        
         // 初始化和定时更新
         document.addEventListener('DOMContentLoaded', function() {
             initPriceChart();
@@ -585,24 +642,9 @@
             // 立即加载数据
             fetchMarketData();
             
-            // 立即加载所有数据，不延迟
-            console.log('Starting immediate data loading...');
-            console.log('About to call fetchTechnicalIndicators...');
-            try {
-                fetchTechnicalIndicators();
-                console.log('fetchTechnicalIndicators called successfully');
-            } catch (e) {
-                console.error('Error calling fetchTechnicalIndicators:', e);
-            }
-            
-            console.log('About to call fetchLatestReport...');
-            try {
-                fetchLatestReport();
-                console.log('fetchLatestReport called successfully');
-            } catch (e) {
-                console.error('Error calling fetchLatestReport:', e);
-            }
-            console.log('All immediate loading calls made');
+            // 加载服务器端传递的数据
+            console.log('Loading server-side data...');
+            loadServerSideData();
             
             fetchPriceHistory();
             
