@@ -2026,7 +2026,8 @@ def analytics_latest_report():
         conn.close()
         
         if data:
-            return jsonify({
+            latest_report = {
+                'date': data[0].isoformat(),
                 'generated_at': data[0].isoformat(),
                 'title': data[1],
                 'summary': data[2],
@@ -2034,14 +2035,18 @@ def analytics_latest_report():
                 'recommendations': data[4],
                 'risk_assessment': data[5],
                 'confidence_score': float(data[6]) if data[6] else None
+            }
+            return jsonify({
+                'latest_report': latest_report,
+                'success': True
             })
         else:
-            # 生成新报告
-            db_manager = analytics_engine.DatabaseManager()
-            db_manager.connect()
-            generator = analytics_engine.ReportGenerator(db_manager)
-            report = generator.generate_daily_report()
-            return jsonify(report)
+            # Return empty but valid format when no data
+            return jsonify({
+                'latest_report': None,
+                'success': True,
+                'message': '暂无分析报告数据'
+            })
     except Exception as e:
         app.logger.error(f"获取分析报告失败: {e}")
         return jsonify({'error': f'获取分析报告失败: {str(e)}'}), 500
@@ -2072,7 +2077,7 @@ def analytics_technical_indicators():
         conn.close()
         
         if data:
-            return jsonify({
+            indicators_data = {
                 'timestamp': data[0].isoformat(),
                 'rsi_14': float(data[1]) if data[1] else None,
                 'sma_20': float(data[2]) if data[2] else None,
@@ -2083,14 +2088,18 @@ def analytics_technical_indicators():
                 'bollinger_upper': float(data[7]) if data[7] else None,
                 'bollinger_lower': float(data[8]) if data[8] else None,
                 'volatility_30d': float(data[9]) if data[9] else None
+            }
+            return jsonify({
+                'indicators': [indicators_data],
+                'latest_indicators': indicators_data
             })
         else:
-            # 计算技术指标
-            db_manager = analytics_engine.DatabaseManager()
-            db_manager.connect()
-            analyzer = analytics_engine.TechnicalAnalyzer(db_manager)
-            indicators = analyzer.calculate_technical_indicators()
-            return jsonify(indicators)
+            # Return empty but valid format when no data
+            return jsonify({
+                'indicators': [],
+                'latest_indicators': None,
+                'message': '指标数据为空(正常，需要时间积累)'
+            })
     except Exception as e:
         app.logger.error(f"获取技术指标失败: {e}")
         return jsonify({'error': f'获取技术指标失败: {str(e)}'}), 500
