@@ -401,8 +401,11 @@
         // 获取技术指标
         async function fetchTechnicalIndicators() {
             try {
+                console.log('Loading technical indicators...');
                 const response = await fetch('/api/analytics/technical-indicators');
+                console.log('Technical indicators response status:', response.status);
                 const data = await response.json();
+                console.log('Technical indicators data:', data);
                 
                 if (data.error) {
                     console.error('Technical indicators error:', data.error);
@@ -453,8 +456,11 @@
         // 获取分析报告
         async function fetchLatestReport() {
             try {
+                console.log('Loading latest report...');
                 const response = await fetch('/api/analytics/latest-report');
+                console.log('Report response status:', response.status);
                 const data = await response.json();
+                console.log('Report data:', data);
                 
                 if (data.error) {
                     document.getElementById('reportTitle').textContent = '暂无分析报告';
