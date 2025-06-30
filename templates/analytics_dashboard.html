@@ -402,7 +402,7 @@
         async function fetchTechnicalIndicators() {
             try {
                 console.log('Loading technical indicators...');
-                const response = await fetch('/api/analytics/technical-indicators');
+                const response = await fetch('/analytics/api/technical-indicators');
                 console.log('Technical indicators response status:', response.status);
                 const data = await response.json();
                 console.log('Technical indicators data:', data);
@@ -430,6 +430,14 @@
                 
             } catch (error) {
                 console.error('Error fetching technical indicators:', error);
+                // 显示权限错误提示
+                const errorMsg = error.toString().includes('401') || error.toString().includes('403') ? 
+                                '需要拥有者权限' : '加载失败';
+                document.getElementById('smaValue').textContent = errorMsg;
+                document.getElementById('emaValue').textContent = errorMsg;
+                document.getElementById('rsiValue').textContent = errorMsg;
+                document.getElementById('macdValue').textContent = errorMsg;
+                document.getElementById('bbValue').textContent = errorMsg;
             }
         }
         
@@ -457,7 +465,7 @@
         async function fetchLatestReport() {
             try {
                 console.log('Loading latest report...');
-                const response = await fetch('/api/analytics/latest-report');
+                const response = await fetch('/analytics/api/latest-report');
                 console.log('Report response status:', response.status);
                 const data = await response.json();
                 console.log('Report data:', data);
