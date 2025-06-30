@@ -1043,7 +1043,14 @@
             if (marketCap) marketCap.textContent = data.btc_market_cap ? formatCurrency(data.btc_market_cap) : '$2.12T';
             if (marketHashrate) marketHashrate.textContent = formatNumber(data.network_hashrate, 1) + ' EH/s';
             if (marketDifficulty) marketDifficulty.textContent = formatNumber(data.network_difficulty / 1e12, 2) + 'T';
-            if (marketVolume) marketVolume.textContent = data.btc_volume_24h ? formatCurrency(data.btc_volume_24h) : '$20.0B';
+            if (marketVolume) {
+                if (data.btc_volume_24h && data.btc_volume_24h > 0) {
+                    marketVolume.textContent = formatCurrency(data.btc_volume_24h);
+                } else {
+                    marketVolume.textContent = '数据收集中';
+                    marketVolume.className = 'text-muted';
+                }
+            }
             
             // Handle price changes with fallback displays
             const change1h = document.getElementById('priceChange1h');
