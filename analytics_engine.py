@@ -579,17 +579,18 @@ class TechnicalAnalyzer:
             # MACD
             macd = (ema_12 - ema_26) if ema_12 and ema_26 else None
             
+            # Convert NumPy types to Python types for PostgreSQL compatibility
             return {
                 'recorded_at': latest_timestamp,
-                'sma_20': sma_20,
-                'sma_50': sma_50,
-                'ema_12': ema_12,
-                'ema_26': ema_26,
-                'rsi_14': rsi_14,
-                'macd': macd,
-                'bollinger_upper': bollinger_upper,
-                'bollinger_lower': bollinger_lower,
-                'volatility_30d': volatility_30d
+                'sma_20': float(sma_20) if sma_20 is not None and not pd.isna(sma_20) else None,
+                'sma_50': float(sma_50) if sma_50 is not None and not pd.isna(sma_50) else None,
+                'ema_12': float(ema_12) if ema_12 is not None and not pd.isna(ema_12) else None,
+                'ema_26': float(ema_26) if ema_26 is not None and not pd.isna(ema_26) else None,
+                'rsi_14': float(rsi_14) if rsi_14 is not None and not pd.isna(rsi_14) else None,
+                'macd': float(macd) if macd is not None and not pd.isna(macd) else None,
+                'bollinger_upper': float(bollinger_upper) if bollinger_upper is not None and not pd.isna(bollinger_upper) else None,
+                'bollinger_lower': float(bollinger_lower) if bollinger_lower is not None and not pd.isna(bollinger_lower) else None,
+                'volatility_30d': float(volatility_30d) if volatility_30d is not None and not pd.isna(volatility_30d) else None
             }
             
         except Exception as e:

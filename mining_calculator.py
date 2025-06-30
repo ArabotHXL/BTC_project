@@ -513,6 +513,11 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         return {
             'success': True,
             'timestamp': datetime.now().isoformat(),
+            # Add regression test expected fields
+            'site_daily_btc_output': daily_btc,
+            'daily_profit_usd': daily_profit,
+            'network_hashrate_eh': real_time_btc_hashrate,
+            'btc_price': btc_price,
             'network_data': {
                 'btc_price': btc_price,
                 'network_difficulty': difficulty / 10**12,  # Convert to more readable format (T)

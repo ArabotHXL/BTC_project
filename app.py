@@ -909,6 +909,7 @@ def get_network_stats():
         }), 500
 
 @app.route('/api/get_sha256_mining_comparison', methods=['GET'])
+@app.route('/api/sha256_mining_comparison', methods=['GET'])
 @app.route('/api/sha256-comparison', methods=['GET'])
 @app.route('/get_sha256_mining_comparison', methods=['GET'])
 @app.route('/mining/sha256_comparison', methods=['GET'])
