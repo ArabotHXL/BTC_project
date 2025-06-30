@@ -439,10 +439,13 @@ class DataCollector:
             block_reward = blockchain_data.get('block_reward', 3.125)
             logger.info(f"使用Blockchain.info数据: 难度={difficulty:.0f}, 奖励={block_reward}")
         
-        # 算力优先从专用API获取
-        if hashrate_data:
+        # 统一使用Minerstat算力数据，确保与主系统一致
+        if hashrate_data and hashrate_data.get('source') == 'minerstat':
             network_hashrate = hashrate_data.get('network_hashrate', 0)
-            logger.info(f"使用Blockchain.info算力: {network_hashrate:.2f} EH/s")
+            logger.info(f"使用Minerstat算力: {network_hashrate:.2f} EH/s")
+        elif hashrate_data:
+            network_hashrate = hashrate_data.get('network_hashrate', 0)
+            logger.info(f"使用备用算力源: {network_hashrate:.2f} EH/s")
         elif mempool_data:
             # 如果没有专用算力数据，从难度计算
             network_hashrate = (difficulty * (2**32)) / (10 * 60) / 1e18 if difficulty else 0
