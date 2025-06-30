@@ -678,14 +678,46 @@
                                     <h5 class="mb-0">最新分析报告</h5>
                                 </div>
                                 <div class="card-body">
-                                    <div id="reportTitle" class="h5 mb-3">--</div>
-                                    <div id="reportSummary" class="mb-4">--</div>
+                                    <div id="reportTitle" class="h5 mb-3">
+                                        {% if latest_report %}
+                                            {{ latest_report.title }}
+                                        {% else %}
+                                            暂无报告
+                                        {% endif %}
+                                    </div>
+                                    <div id="reportSummary" class="mb-4">
+                                        {% if latest_report %}
+                                            {{ latest_report.summary }}
+                                        {% else %}
+                                            暂无关键发现
+                                        {% endif %}
+                                    </div>
                                     
                                     <h6>关键发现</h6>
-                                    <div id="reportFindings" class="mb-4">--</div>
+                                    <div id="reportFindings" class="mb-4">
+                                        {% if latest_report and latest_report.key_findings %}
+                                            {% for key, value in latest_report.key_findings.items() %}
+                                                <div class="mb-2">
+                                                    <strong>{{ key }}:</strong> {{ value }}
+                                                </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            暂无关键发现
+                                        {% endif %}
+                                    </div>
 
                                     <h6>投资建议</h6>
-                                    <div id="reportRecommendations">--</div>
+                                    <div id="reportRecommendations">
+                                        {% if latest_report and latest_report.recommendations %}
+                                            {% for recommendation in latest_report.recommendations %}
+                                                <div class="mb-2">
+                                                    <i class="bi bi-check-circle-fill text-success"></i> {{ recommendation }}
+                                                </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            暂无投资建议
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -696,19 +728,43 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="text-center mb-3">
-                                        <div class="display-6" id="reportRiskScore">--</div>
+                                        <div class="display-6" id="reportRiskScore">
+                                            {% if latest_report and latest_report.risk_assessment %}
+                                                {{ latest_report.risk_assessment.risk_score or '--' }}
+                                            {% else %}
+                                                --
+                                            {% endif %}
+                                        </div>
                                         <div class="text-muted">风险评分</div>
-                                        <div id="reportRiskLevel" class="fw-bold">--</div>
+                                        <div id="reportRiskLevel" class="fw-bold">
+                                            {% if latest_report and latest_report.risk_assessment %}
+                                                {{ latest_report.risk_assessment.risk_level or '--' }}
+                                            {% else %}
+                                                --
+                                            {% endif %}
+                                        </div>
                                     </div>
                                     
                                     <div class="mb-3">
                                         <small class="text-muted">报告置信度</small>
-                                        <div class="fw-bold" id="reportConfidence">--</div>
+                                        <div class="fw-bold" id="reportConfidence">
+                                            {% if latest_report and latest_report.confidence_score %}
+                                                {{ latest_report.confidence_score }}%
+                                            {% else %}
+                                                --
+                                            {% endif %}
+                                        </div>
                                     </div>
                                     
                                     <div>
                                         <small class="text-muted">生成时间</small>
-                                        <div class="fw-bold" id="reportGeneratedAt">--</div>
+                                        <div class="fw-bold" id="reportGeneratedAt">
+                                            {% if latest_report and latest_report.generated_at %}
+                                                {{ latest_report.generated_at }}
+                                            {% else %}
+                                                --
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
