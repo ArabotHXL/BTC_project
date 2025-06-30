@@ -299,6 +299,68 @@
                         <i class="bi bi-graph-up"></i> 市场数据详情
                     </h4>
 
+                    <!-- Price and Network Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">价格信息</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <small class="text-muted">当前价格</small>
+                                            <div class="h4" id="marketCurrentPrice">--</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">市值</small>
+                                            <div class="h5" id="marketCap">--</div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-4">
+                                            <small class="text-muted">1小时变化</small>
+                                            <div id="priceChange1h">--</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <small class="text-muted">24小时变化</small>
+                                            <div id="priceChange24hDetail">--</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <small class="text-muted">7天变化</small>
+                                            <div id="priceChange7d">--</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">网络信息</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <small class="text-muted">网络算力</small>
+                                            <div class="h4" id="marketHashrate">--</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">网络难度</small>
+                                            <div class="h5" id="marketDifficulty">--</div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-12">
+                                            <small class="text-muted">24小时交易量</small>
+                                            <div class="h5" id="marketVolume">--</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Investment Decision Support Panel -->
                     <div class="row mt-4">
                         <div class="col-md-12">
@@ -510,67 +572,7 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="row mt-4">
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="mb-0">价格信息</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <small class="text-muted">当前价格</small>
-                                            <div class="h4" id="marketCurrentPrice">--</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <small class="text-muted">市值</small>
-                                            <div class="h5" id="marketCap">--</div>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-3">
-                                        <div class="col-4">
-                                            <small class="text-muted">1小时变化</small>
-                                            <div id="priceChange1h">--</div>
-                                        </div>
-                                        <div class="col-4">
-                                            <small class="text-muted">24小时变化</small>
-                                            <div id="priceChange24hDetail">--</div>
-                                        </div>
-                                        <div class="col-4">
-                                            <small class="text-muted">7天变化</small>
-                                            <div id="priceChange7d">--</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="mb-0">网络信息</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <small class="text-muted">网络算力</small>
-                                            <div class="h4" id="marketHashrate">--</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <small class="text-muted">网络难度</small>
-                                            <div class="h5" id="marketDifficulty">--</div>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-3">
-                                        <div class="col-12">
-                                            <small class="text-muted">24小时交易量</small>
-                                            <div class="h5" id="marketVolume">--</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
 
                 <!-- Technical Analysis Tab -->
