@@ -477,7 +477,20 @@
                 // 更新报告信息
                 document.getElementById('reportTitle').textContent = data.title;
                 document.getElementById('reportSummary').textContent = data.summary;
-                document.getElementById('reportTime').textContent = new Date(data.generated_at).toLocaleString();
+                
+                // 修复日期解析问题
+                let reportTime = '未知时间';
+                if (data.generated_at) {
+                    try {
+                        const date = new Date(data.generated_at);
+                        if (!isNaN(date.getTime())) {
+                            reportTime = date.toLocaleString();
+                        }
+                    } catch (e) {
+                        console.log('Date parsing error:', e);
+                    }
+                }
+                document.getElementById('reportTime').textContent = reportTime;
                 document.getElementById('confidenceScore').textContent = formatPercent(data.confidence_score * 100);
                 
                 // 更新关键发现
@@ -534,15 +547,10 @@
             // 立即加载数据
             fetchMarketData();
             
-            // 延迟加载其他数据以确保页面准备完毕
-            setTimeout(() => {
-                console.log('Starting delayed data loading...');
-                console.log('About to call fetchTechnicalIndicators');
-                fetchTechnicalIndicators();
-                console.log('About to call fetchLatestReport');
-                fetchLatestReport();
-                console.log('Delayed loading calls completed');
-            }, 2000);
+            // 立即加载所有数据，不延迟
+            console.log('Starting immediate data loading...');
+            fetchTechnicalIndicators();
+            fetchLatestReport();
             
             fetchPriceHistory();
             
