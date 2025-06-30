@@ -242,7 +242,7 @@ class DataCollector:
                     difficulty_response = self.session.get('https://blockchain.info/q/getdifficulty', timeout=15)
                     difficulty = float(difficulty_response.text.strip()) if difficulty_response.status_code == 200 else 0
                     
-                    logger.info(f"Blockchain.info实时算力: {hashrate_eh:.2f} EH/s (原始: {hashrate_hs:.0f} H/s)")
+                    logger.info(f"Blockchain.info实时算力: {hashrate_eh:.2f} EH/s (原始: {hashrate_gh:.0f} GH/s)")
                     return {
                         'network_hashrate': hashrate_eh,
                         'network_difficulty': difficulty,
