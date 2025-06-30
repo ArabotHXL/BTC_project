@@ -463,6 +463,13 @@
                 console.log('Report data:', data);
                 
                 if (data.error) {
+                    console.log('Report error:', data.error);
+                    document.getElementById('reportTitle').textContent = '暂无分析报告';
+                    return;
+                }
+                
+                if (!data || !data.title) {
+                    console.log('No report data available');
                     document.getElementById('reportTitle').textContent = '暂无分析报告';
                     return;
                 }
@@ -526,9 +533,15 @@
             
             // 立即加载数据
             fetchMarketData();
-            fetchTechnicalIndicators();
+            
+            // 延迟加载其他数据以确保页面准备完毕
+            setTimeout(() => {
+                console.log('Starting delayed data loading...');
+                fetchTechnicalIndicators();
+                fetchLatestReport();
+            }, 2000);
+            
             fetchPriceHistory();
-            fetchLatestReport();
             
             // 设置定时更新
             setInterval(fetchMarketData, 60000);        // 每分钟更新市场数据
