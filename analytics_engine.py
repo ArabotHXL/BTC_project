@@ -228,9 +228,31 @@ class DataCollector:
             return None
 
     def collect_blockchain_hashrate_data(self) -> Optional[Dict]:
-        """从多个数据源收集算力数据，优先获取变化的数据"""
+        """从多个数据源收集算力数据，优先使用minerstat专业挖矿API"""
         try:
-            # 方法1: 尝试从mempool.space获取最新算力数据
+            # 方法1: 从minerstat API获取专业挖矿数据（优先）
+            try:
+                minerstat_response = self.session.get('https://api.minerstat.com/v2/coins?list=BTC', timeout=15)
+                if minerstat_response.status_code == 200:
+                    data = minerstat_response.json()
+                    if data and len(data) > 0:
+                        btc_data = data[0]
+                        # minerstat返回的是H/s格式的科学记数法
+                        hashrate_hs = float(btc_data.get('network_hashrate', 0))
+                        hashrate_eh = hashrate_hs / 1e18  # H/s to EH/s
+                        difficulty = float(btc_data.get('difficulty', 0))
+                        
+                        logger.info(f"Minerstat算力数据: {hashrate_eh:.2f} EH/s")
+                        return {
+                            'network_hashrate': hashrate_eh,
+                            'network_difficulty': difficulty,
+                            'hashrate_timestamp': int(time.time()),
+                            'source': 'minerstat'
+                        }
+            except Exception as e:
+                logger.debug(f"Minerstat算力获取失败: {e}")
+            
+            # 方法2: 尝试从mempool.space获取最新算力数据
             try:
                 mempool_response = self.session.get('https://mempool.space/api/v1/difficulty-adjustment', timeout=15)
                 if mempool_response.status_code == 200:
@@ -249,17 +271,13 @@ class DataCollector:
             except Exception as e:
                 logger.debug(f"Mempool.space算力获取失败: {e}")
             
-            # 方法2: 从blockchain.info获取最新难度并计算算力
+            # 方法3: 从blockchain.info获取最新难度并计算算力
             difficulty_response = self.session.get('https://blockchain.info/q/getdifficulty', timeout=15)
             if difficulty_response.status_code == 200:
                 difficulty = float(difficulty_response.text.strip())
                 
-                # 添加随机变化以模拟真实网络波动 (±2%)
-                import random
-                variation = random.uniform(0.98, 1.02)
-                
                 # 使用与计算器相同的公式: hashrate = difficulty * 2^32 / 600
-                hashrate_from_difficulty = (difficulty * (2**32)) / 600 * variation
+                hashrate_from_difficulty = (difficulty * (2**32)) / 600
                 hashrate_eh = hashrate_from_difficulty / 1e18  # 转换为EH/s
                 
                 logger.info(f"基于难度计算的网络算力: {hashrate_eh:.2f} EH/s (难度: {difficulty:.2f}T)")
@@ -267,17 +285,15 @@ class DataCollector:
                     'network_hashrate': hashrate_eh,
                     'network_difficulty': difficulty,
                     'hashrate_timestamp': int(time.time()),
-                    'source': 'difficulty_calculation_dynamic'
+                    'source': 'difficulty_calculation'
                 }
             
-            # 方法3: 备用 - 直接从blockchain.info的hashrate API获取
+            # 方法4: 备用 - 直接从blockchain.info的hashrate API获取
             hashrate_response = self.session.get('https://blockchain.info/q/hashrate', timeout=15)
             if hashrate_response.status_code == 200:
                 hashrate_gh = float(hashrate_response.text.strip())
-                # 转换GH/s到EH/s，并添加小幅变化
-                import random
-                variation = random.uniform(0.995, 1.005)
-                hashrate_eh = (hashrate_gh / 1e9) * variation  # GH/s to EH/s
+                # 转换GH/s到EH/s
+                hashrate_eh = hashrate_gh / 1e9  # GH/s to EH/s
                 
                 logger.info(f"Blockchain.info直接算力数据: {hashrate_eh:.2f} EH/s")
                 return {

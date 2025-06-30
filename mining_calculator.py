@@ -187,19 +187,32 @@ def get_real_time_block_reward():
         return BLOCK_REWARD
         
 def get_real_time_btc_hashrate():
-    """获取实时比特币网络哈希率 - 直接使用blockchain.info hashrate API"""
+    """获取实时比特币网络哈希率 - 使用minerstat API作为主要数据源"""
     try:
-        # 直接从blockchain.info的hashrate API获取数据（与分析系统保持一致）
+        # 方法1：从minerstat API获取数据（专业挖矿数据源）
+        minerstat_response = requests.get('https://api.minerstat.com/v2/coins?list=BTC', timeout=10)
+        if minerstat_response.status_code == 200:
+            data = minerstat_response.json()
+            if data and len(data) > 0:
+                btc_data = data[0]
+                # minerstat返回的是H/s格式的科学记数法
+                hashrate_hs = float(btc_data.get('network_hashrate', 0))
+                hashrate_eh = hashrate_hs / 1e18  # H/s to EH/s
+                
+                logging.info(f"Minerstat算力数据: {hashrate_eh:.2f} EH/s")
+                return hashrate_eh
+        
+        # 方法2：备用 - blockchain.info hashrate API
         hashrate_response = requests.get('https://blockchain.info/q/hashrate', timeout=5)
         if hashrate_response.status_code == 200:
             hashrate_gh = float(hashrate_response.text.strip())
             # 转换GH/s到EH/s
             hashrate_eh = hashrate_gh / 1e9  # GH/s to EH/s
             
-            logging.info(f"Blockchain.info直接算力数据: {hashrate_eh:.2f} EH/s")
+            logging.info(f"Blockchain.info备用算力数据: {hashrate_eh:.2f} EH/s")
             return hashrate_eh
         
-        # 备用方法：基于难度计算（保持与原系统一致）
+        # 方法3：基于难度计算（最后备用）
         difficulty_response = requests.get('https://blockchain.info/q/getdifficulty', timeout=5)
         if difficulty_response.status_code == 200:
             difficulty = float(difficulty_response.text.strip())
@@ -207,7 +220,7 @@ def get_real_time_btc_hashrate():
             hashrate_from_difficulty = (difficulty * (2**32)) / 600
             hashrate_eh = hashrate_from_difficulty / 1e18  # 转换为EH/s
             
-            logging.info(f"备用：基于难度计算的网络算力: {hashrate_eh:.2f} EH/s")
+            logging.info(f"基于难度计算的网络算力: {hashrate_eh:.2f} EH/s")
             return hashrate_eh
             
     except Exception as e:

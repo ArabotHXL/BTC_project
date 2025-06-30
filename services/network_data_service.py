@@ -89,12 +89,23 @@ class NetworkDataCollector:
         return None
     
     def _get_network_hashrate(self) -> Optional[float]:
-        """从Blockchain.info获取网络算力"""
+        """从minerstat API获取网络算力（专业挖矿数据源）"""
         try:
+            # 优先使用minerstat API
+            response = requests.get("https://api.minerstat.com/v2/coins?list=BTC", timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                if data and len(data) > 0:
+                    btc_data = data[0]
+                    hashrate_hs = float(btc_data.get('network_hashrate', 0))
+                    return hashrate_hs / 1e18  # H/s to EH/s
+            
+            # 备用：blockchain.info hashrate API
             response = requests.get("https://blockchain.info/q/hashrate", timeout=10)
             if response.status_code == 200:
                 hashrate_gh = float(response.text)
-                return hashrate_gh / 1e9  # 转换为EH/s
+                return hashrate_gh / 1e9  # GH/s to EH/s
+                
         except Exception as e:
             self.logger.error(f"获取网络算力失败: {e}")
         return None
