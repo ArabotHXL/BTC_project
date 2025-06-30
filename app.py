@@ -1974,7 +1974,8 @@ def analytics_market_data():
         cursor = conn.cursor()
         cursor.execute("""
             SELECT recorded_at, btc_price, network_hashrate, network_difficulty, 
-                   fear_greed_index, price_change_24h
+                   fear_greed_index, price_change_24h, btc_market_cap, btc_volume_24h,
+                   price_change_1h, price_change_7d
             FROM market_analytics 
             ORDER BY recorded_at DESC LIMIT 1
         """)
@@ -1991,7 +1992,11 @@ def analytics_market_data():
                     'network_hashrate': float(data[2]) if data[2] else None,
                     'network_difficulty': float(data[3]) if data[3] else None,
                     'fear_greed_index': data[4],
-                    'price_change_24h': float(data[5]) if data[5] else None
+                    'price_change_24h': float(data[5]) if data[5] else None,
+                    'btc_market_cap': float(data[6]) if data[6] else None,
+                    'btc_volume_24h': float(data[7]) if data[7] else None,
+                    'price_change_1h': float(data[8]) if data[8] else None,
+                    'price_change_7d': float(data[9]) if data[9] else None
                 }
             })
         else:
