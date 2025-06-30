@@ -2000,14 +2000,25 @@ def analytics_dashboard():
         report_data = cursor.fetchone()
         
         if report_data:
+            import json
+            # 安全地解析JSON字段
+            try:
+                recommendations = json.loads(report_data[4]) if report_data[4] else []
+                risk_assessment = json.loads(report_data[5]) if report_data[5] else {}
+                key_findings = json.loads(report_data[6]) if report_data[6] else {}
+            except (json.JSONDecodeError, TypeError):
+                recommendations = []
+                risk_assessment = {}
+                key_findings = {}
+            
             latest_report = {
                 'title': report_data[0],
                 'summary': report_data[1],
                 'generated_at': report_data[2].isoformat() if report_data[2] else None,
                 'confidence_score': report_data[3],
-                'recommendations': report_data[4],
-                'risk_assessment': report_data[5],
-                'key_findings': report_data[6]
+                'recommendations': recommendations,
+                'risk_assessment': risk_assessment,
+                'key_findings': key_findings
             }
         
         cursor.close()
