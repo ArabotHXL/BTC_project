@@ -459,7 +459,7 @@
         // 获取价格历史
         async function fetchPriceHistory() {
             try {
-                const response = await fetch('/api/analytics/price-history?hours=24');
+                const response = await fetch('/analytics/api/price-history?hours=24');
                 const data = await response.json();
                 
                 if (data.length === 0) return;
@@ -588,9 +588,20 @@
             // 立即加载所有数据，不延迟
             console.log('Starting immediate data loading...');
             console.log('About to call fetchTechnicalIndicators...');
-            fetchTechnicalIndicators();
+            try {
+                fetchTechnicalIndicators();
+                console.log('fetchTechnicalIndicators called successfully');
+            } catch (e) {
+                console.error('Error calling fetchTechnicalIndicators:', e);
+            }
+            
             console.log('About to call fetchLatestReport...');
-            fetchLatestReport();
+            try {
+                fetchLatestReport();
+                console.log('fetchLatestReport called successfully');
+            } catch (e) {
+                console.error('Error calling fetchLatestReport:', e);
+            }
             console.log('All immediate loading calls made');
             
             fetchPriceHistory();
