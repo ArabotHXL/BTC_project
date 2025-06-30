@@ -288,11 +288,11 @@
                         </div>
                     </div>
 
-                    <!-- Mining Decision Support Panel -->
+                    <!-- Investment Decision Support Panel -->
                     <div class="row mt-4">
                         <div class="col-md-12">
                             <h4 class="mb-3">
-                                <i class="bi bi-lightning"></i> 挖矿决策支持中心
+                                <i class="bi bi-graph-up-arrow"></i> 投资决策分析中心
                             </h4>
                         </div>
                     </div>
@@ -303,33 +303,34 @@
                             <div class="card">
                                 <div class="card-header">
                                     <h5 class="mb-0">
-                                        <i class="bi bi-speedometer2"></i>
-                                        实时收益监控
+                                        <i class="bi bi-calculator"></i>
+                                        投资收益预测
                                     </h5>
                                 </div>
                                 <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label small">投资金额 (USD)</label>
+                                        <input type="number" class="form-control form-control-sm" id="investmentAmount" value="25000" min="1000" step="1000">
+                                    </div>
                                     <div class="row text-center">
                                         <div class="col-6">
-                                            <small class="text-muted">日产出(BTC)</small>
-                                            <div class="h5 text-success" id="dailyBtcOutput">--</div>
+                                            <small class="text-muted">预期日收益</small>
+                                            <div class="h5 text-success" id="expectedDailyProfit">--</div>
                                         </div>
                                         <div class="col-6">
-                                            <small class="text-muted">日收益(USD)</small>
-                                            <div class="h5 text-success" id="dailyProfitUsd">--</div>
+                                            <small class="text-muted">月收益</small>
+                                            <div class="h5 text-success" id="expectedMonthlyProfit">--</div>
                                         </div>
                                     </div>
                                     <div class="row text-center mt-3">
                                         <div class="col-6">
-                                            <small class="text-muted">电费成本</small>
-                                            <div class="h6 text-warning" id="dailyElectricityCost">--</div>
+                                            <small class="text-muted">年收益率</small>
+                                            <div class="h6" id="expectedAnnualROI">--</div>
                                         </div>
                                         <div class="col-6">
-                                            <small class="text-muted">净利润率</small>
-                                            <div class="h6" id="profitMargin">--</div>
+                                            <small class="text-muted">回收期</small>
+                                            <div class="h6" id="expectedPaybackTime">--</div>
                                         </div>
-                                    </div>
-                                    <div class="mt-3">
-                                        <canvas id="profitTrendChart" height="100"></canvas>
                                     </div>
                                 </div>
                             </div>
@@ -339,75 +340,79 @@
                             <div class="card">
                                 <div class="card-header">
                                     <h5 class="mb-0">
-                                        <i class="bi bi-power"></i>
-                                        停机决策助手
+                                        <i class="bi bi-lightning"></i>
+                                        电价敏感性分析
                                     </h5>
                                 </div>
                                 <div class="card-body">
-                                    <div class="text-center mb-3">
-                                        <div class="alert alert-success" id="operationStatus">
-                                            <i class="bi bi-check-circle"></i>
-                                            <strong>建议运行</strong>
+                                    <div class="mb-3">
+                                        <label class="form-label small">电价范围 (USD/kWh)</label>
+                                        <input type="range" class="form-range" id="electricityRange" min="0.02" max="0.15" step="0.01" value="0.05">
+                                        <div class="d-flex justify-content-between small text-muted">
+                                            <span>$0.02</span>
+                                            <span id="currentElectricityPrice">$0.05</span>
+                                            <span>$0.15</span>
                                         </div>
                                     </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <small class="text-muted">盈亏平衡电价</small>
-                                            <div class="h6" id="breakevenElectricity">--</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <small class="text-muted">当前电价</small>
-                                            <div class="h6" id="currentElectricity">$0.05/kWh</div>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3">
-                                        <small class="text-muted">收益安全边际</small>
-                                        <div class="progress mt-1">
-                                            <div class="progress-bar bg-success" id="safetyMarginBar" style="width: 75%"></div>
-                                        </div>
-                                        <small class="text-muted" id="safetyMarginText">75% 安全</small>
-                                    </div>
-                                    <div class="mt-3">
-                                        <button class="btn btn-sm btn-outline-primary w-100" onclick="calculateOptimalElectricity()">
-                                            <i class="bi bi-calculator"></i> 电价优化计算
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="mb-0">
-                                        <i class="bi bi-graph-up-arrow"></i>
-                                        投资回报分析
-                                    </h5>
-                                </div>
-                                <div class="card-body">
                                     <div class="row text-center">
                                         <div class="col-6">
-                                            <small class="text-muted">当前ROI</small>
-                                            <div class="h5 text-info" id="currentRoi">--</div>
+                                            <small class="text-muted">盈亏平衡点</small>
+                                            <div class="h6" id="breakevenPoint">--</div>
                                         </div>
                                         <div class="col-6">
-                                            <small class="text-muted">年化收益率</small>
-                                            <div class="h5 text-info" id="annualizedReturn">--</div>
+                                            <small class="text-muted">投资建议</small>
+                                            <div class="h6" id="investmentRecommendation">--</div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <small class="text-muted">风险评估</small>
+                                        <div class="progress mt-1">
+                                            <div class="progress-bar" id="riskAssessmentBar" style="width: 50%"></div>
+                                        </div>
+                                        <small class="text-muted" id="riskLevel">中等风险</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-pie-chart"></i>
+                                        矿机型号对比
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label small">选择矿机型号</label>
+                                        <select class="form-select form-select-sm" id="minerModelSelect">
+                                            <option value="antminer_s19_pro">Antminer S19 Pro (110TH/s)</option>
+                                            <option value="antminer_s19j_pro">Antminer S19j Pro (104TH/s)</option>
+                                            <option value="antminer_s19_xp">Antminer S19 XP (140TH/s)</option>
+                                            <option value="whatsminer_m30s">WhatsMiner M30S+ (112TH/s)</option>
+                                            <option value="whatsminer_m50">WhatsMiner M50 (114TH/s)</option>
+                                        </select>
+                                    </div>
+                                    <div class="row text-center">
+                                        <div class="col-6">
+                                            <small class="text-muted">矿机成本</small>
+                                            <div class="h6" id="minerCost">--</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">每日收益</small>
+                                            <div class="h6 text-success" id="minerDailyProfit">--</div>
                                         </div>
                                     </div>
                                     <div class="row text-center mt-3">
                                         <div class="col-6">
                                             <small class="text-muted">回收期</small>
-                                            <div class="h6" id="paybackPeriod">--</div>
+                                            <div class="h6" id="minerPaybackPeriod">--</div>
                                         </div>
                                         <div class="col-6">
-                                            <small class="text-muted">风险等级</small>
-                                            <div class="h6" id="riskLevel">中等</div>
+                                            <small class="text-muted">效率评级</small>
+                                            <div class="h6" id="minerEfficiencyRating">--</div>
                                         </div>
-                                    </div>
-                                    <div class="mt-3">
-                                        <small class="text-muted">收益预测趋势</small>
-                                        <canvas id="roiTrendChart" height="80"></canvas>
                                     </div>
                                 </div>
                             </div>
@@ -1098,184 +1103,282 @@
             updateMiningDecisionModules(data);
         }
 
-        // Mining Decision Support Functions
+        // Investment Decision Support Functions
         async function updateMiningDecisionModules(marketData) {
             try {
-                // Calculate mining metrics using current market data
-                const miningData = await calculateMiningMetrics(marketData);
+                // Update investment prediction modules for potential customers
+                updateInvestmentPrediction(marketData);
                 
-                // Update real-time mining monitoring
-                updateRealTimeMiningMonitor(miningData);
+                // Update electricity sensitivity analysis
+                updateElectricitySensitivity(marketData);
                 
-                // Update shutdown decision assistant
-                updateShutdownDecisionAssistant(miningData);
+                // Update miner model comparison
+                updateMinerModelComparison(marketData);
                 
-                // Update ROI analysis
-                updateROIAnalysis(miningData);
-                
-                // Update performance metrics
-                updatePerformanceMetrics(miningData);
+                // Setup interactive elements
+                setupInvestmentInteractions();
                 
             } catch (error) {
-                console.error('Error updating mining decision modules:', error);
+                console.error('Error updating investment decision modules:', error);
             }
         }
 
-        async function calculateMiningMetrics(marketData) {
-            // Use the main mining calculator API with current market data
-            const params = {
-                hashrate: 110, // Default Antminer S19 Pro hashrate (TH/s)
-                power: 3250,   // Default power consumption (W)
-                electricity_cost: 0.05, // Default electricity cost ($/kWh)
-                btc_price: marketData.btc_price,
-                network_hashrate: marketData.network_hashrate,
-                network_difficulty: marketData.network_difficulty
+        function updateInvestmentPrediction(marketData) {
+            const investmentAmount = parseFloat(document.getElementById('investmentAmount')?.value || 25000);
+            
+            // Calculate how many miners this investment can buy
+            const avgMinerCost = 2500; // Average miner cost
+            const minerCount = Math.floor(investmentAmount / avgMinerCost);
+            
+            if (minerCount > 0) {
+                // Calculate daily profit per miner (using S19 Pro as reference)
+                const dailyProfitPerMiner = calculateDailyProfitForMiner('antminer_s19_pro', marketData);
+                const totalDailyProfit = dailyProfitPerMiner * minerCount;
+                const monthlyProfit = totalDailyProfit * 30;
+                const annualROI = (totalDailyProfit * 365 / investmentAmount) * 100;
+                const paybackDays = investmentAmount / totalDailyProfit;
+                
+                // Update display
+                const expectedDailyProfit = document.getElementById('expectedDailyProfit');
+                const expectedMonthlyProfit = document.getElementById('expectedMonthlyProfit');
+                const expectedAnnualROI = document.getElementById('expectedAnnualROI');
+                const expectedPaybackTime = document.getElementById('expectedPaybackTime');
+                
+                if (expectedDailyProfit) expectedDailyProfit.textContent = '$' + formatNumber(totalDailyProfit, 2);
+                if (expectedMonthlyProfit) expectedMonthlyProfit.textContent = '$' + formatNumber(monthlyProfit, 0);
+                if (expectedAnnualROI) expectedAnnualROI.textContent = formatNumber(annualROI, 1) + '%';
+                if (expectedPaybackTime) {
+                    if (paybackDays < 365) {
+                        expectedPaybackTime.textContent = Math.round(paybackDays) + ' 天';
+                    } else {
+                        expectedPaybackTime.textContent = formatNumber(paybackDays / 365, 1) + ' 年';
+                    }
+                }
+            }
+        }
+
+        function calculateDailyProfitForMiner(minerType, marketData) {
+            // Miner specifications
+            const minerSpecs = {
+                'antminer_s19_pro': { hashrate: 110, power: 3250, cost: 2500 },
+                'antminer_s19j_pro': { hashrate: 104, power: 3068, cost: 2200 },
+                'antminer_s19_xp': { hashrate: 140, power: 3010, cost: 3200 },
+                'whatsminer_m30s': { hashrate: 112, power: 3472, cost: 2400 },
+                'whatsminer_m50': { hashrate: 114, power: 3276, cost: 2600 }
             };
             
-            const response = await fetch('/api/calculate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(params)
-            });
+            const spec = minerSpecs[minerType] || minerSpecs['antminer_s19_pro'];
+            const electricityCost = 0.05; // Default electricity cost
             
-            if (!response.ok) throw new Error('Mining calculation failed');
-            return await response.json();
+            // Calculate daily BTC production
+            const hashrateInEH = spec.hashrate / 1000000; // Convert TH/s to EH/s
+            const networkHashrateEH = marketData.network_hashrate;
+            const dailyBtc = (hashrateInEH / networkHashrateEH) * 144 * 3.125; // 144 blocks per day, 3.125 BTC reward
+            
+            // Calculate daily costs and revenue
+            const dailyPowerCost = (spec.power / 1000) * 24 * electricityCost;
+            const dailyRevenue = dailyBtc * marketData.btc_price;
+            const dailyProfit = dailyRevenue - dailyPowerCost;
+            
+            return dailyProfit;
         }
 
-        function updateRealTimeMiningMonitor(miningData) {
-            // Daily BTC output
-            const dailyBtcOutput = document.getElementById('dailyBtcOutput');
-            if (dailyBtcOutput && miningData.daily_btc) {
-                dailyBtcOutput.textContent = formatNumber(miningData.daily_btc, 6) + ' BTC';
-            }
+        function updateElectricitySensitivity(marketData) {
+            const electricityRange = document.getElementById('electricityRange');
+            const currentElectricityPrice = document.getElementById('currentElectricityPrice');
+            const breakevenPoint = document.getElementById('breakevenPoint');
+            const investmentRecommendation = document.getElementById('investmentRecommendation');
+            const riskAssessmentBar = document.getElementById('riskAssessmentBar');
+            const riskLevelText = document.getElementById('riskLevel');
             
-            // Daily profit USD
-            const dailyProfitUsd = document.getElementById('dailyProfitUsd');
-            if (dailyProfitUsd && miningData.daily_profit_usd) {
-                dailyProfitUsd.textContent = '$' + formatNumber(miningData.daily_profit_usd, 2);
-            }
-            
-            // Daily electricity cost
-            const dailyElectricityCost = document.getElementById('dailyElectricityCost');
-            if (dailyElectricityCost && miningData.daily_electricity_cost) {
-                dailyElectricityCost.textContent = '$' + formatNumber(miningData.daily_electricity_cost, 2);
-            }
-            
-            // Profit margin
-            const profitMargin = document.getElementById('profitMargin');
-            if (profitMargin && miningData.daily_profit_usd && miningData.daily_revenue) {
-                const margin = ((miningData.daily_profit_usd / miningData.daily_revenue) * 100);
-                profitMargin.textContent = formatNumber(margin, 1) + '%';
-                profitMargin.className = 'h6 ' + (margin > 0 ? 'text-success' : 'text-danger');
-            }
-        }
-
-        function updateShutdownDecisionAssistant(miningData) {
-            // Operation status
-            const operationStatus = document.getElementById('operationStatus');
-            const isProfit = miningData.daily_profit_usd > 0;
-            
-            if (operationStatus) {
-                if (isProfit) {
-                    operationStatus.innerHTML = '<i class="bi bi-check-circle"></i> <strong>建议运行</strong>';
-                    operationStatus.className = 'alert alert-success';
-                } else {
-                    operationStatus.innerHTML = '<i class="bi bi-x-circle"></i> <strong>建议停机</strong>';
-                    operationStatus.className = 'alert alert-danger';
-                }
-            }
-            
-            // Breakeven electricity price
-            const breakevenElectricity = document.getElementById('breakevenElectricity');
-            if (breakevenElectricity && miningData.breakeven_electricity_cost) {
-                breakevenElectricity.textContent = '$' + formatNumber(miningData.breakeven_electricity_cost, 4) + '/kWh';
-            }
-            
-            // Safety margin
-            const currentElectricity = 0.05; // Default current electricity cost
-            const breakeven = miningData.breakeven_electricity_cost || 0.04;
-            const safetyMargin = Math.max(0, ((breakeven - currentElectricity) / breakeven) * 100);
-            
-            const safetyMarginBar = document.getElementById('safetyMarginBar');
-            const safetyMarginText = document.getElementById('safetyMarginText');
-            
-            if (safetyMarginBar && safetyMarginText) {
-                safetyMarginBar.style.width = Math.min(100, safetyMargin) + '%';
-                safetyMarginText.textContent = formatNumber(safetyMargin, 0) + '% 安全';
+            if (electricityRange && currentElectricityPrice) {
+                const electricityCost = parseFloat(electricityRange.value);
+                currentElectricityPrice.textContent = '$' + electricityCost.toFixed(3);
                 
-                if (safetyMargin > 50) {
-                    safetyMarginBar.className = 'progress-bar bg-success';
-                } else if (safetyMargin > 20) {
-                    safetyMarginBar.className = 'progress-bar bg-warning';
-                } else {
-                    safetyMarginBar.className = 'progress-bar bg-danger';
+                // Calculate breakeven for current electricity cost
+                const dailyProfit = calculateDailyProfitForMiner('antminer_s19_pro', marketData, electricityCost);
+                const breakevenElectricityRate = calculateBreakevenElectricity('antminer_s19_pro', marketData);
+                
+                if (breakevenPoint) {
+                    breakevenPoint.textContent = '$' + breakevenElectricityRate.toFixed(4);
+                }
+                
+                // Investment recommendation
+                if (investmentRecommendation) {
+                    if (electricityCost < breakevenElectricityRate * 0.7) {
+                        investmentRecommendation.textContent = '强烈推荐';
+                        investmentRecommendation.className = 'h6 text-success';
+                    } else if (electricityCost < breakevenElectricityRate * 0.9) {
+                        investmentRecommendation.textContent = '推荐';
+                        investmentRecommendation.className = 'h6 text-info';
+                    } else if (electricityCost < breakevenElectricityRate) {
+                        investmentRecommendation.textContent = '谨慎';
+                        investmentRecommendation.className = 'h6 text-warning';
+                    } else {
+                        investmentRecommendation.textContent = '不推荐';
+                        investmentRecommendation.className = 'h6 text-danger';
+                    }
+                }
+                
+                // Risk assessment
+                const riskPercent = Math.min(100, (electricityCost / breakevenElectricityRate) * 100);
+                if (riskAssessmentBar && riskLevelText) {
+                    riskAssessmentBar.style.width = riskPercent + '%';
+                    
+                    if (riskPercent < 50) {
+                        riskAssessmentBar.className = 'progress-bar bg-success';
+                        riskLevelText.textContent = '低风险';
+                    } else if (riskPercent < 80) {
+                        riskAssessmentBar.className = 'progress-bar bg-warning';
+                        riskLevelText.textContent = '中等风险';
+                    } else {
+                        riskAssessmentBar.className = 'progress-bar bg-danger';
+                        riskLevelText.textContent = '高风险';
+                    }
                 }
             }
         }
 
-        function updateROIAnalysis(miningData) {
-            // Current ROI (annualized)
-            const currentRoi = document.getElementById('currentRoi');
-            if (currentRoi && miningData.daily_profit_usd) {
-                const minerCost = 2500; // Default miner cost
-                const annualProfit = miningData.daily_profit_usd * 365;
-                const roi = (annualProfit / minerCost) * 100;
-                currentRoi.textContent = formatNumber(roi, 1) + '%';
-            }
+        function calculateDailyProfitForMiner(minerType, marketData, electricityCost = 0.05) {
+            // Updated function with custom electricity cost
+            const minerSpecs = {
+                'antminer_s19_pro': { hashrate: 110, power: 3250, cost: 2500 },
+                'antminer_s19j_pro': { hashrate: 104, power: 3068, cost: 2200 },
+                'antminer_s19_xp': { hashrate: 140, power: 3010, cost: 3200 },
+                'whatsminer_m30s': { hashrate: 112, power: 3472, cost: 2400 },
+                'whatsminer_m50': { hashrate: 114, power: 3276, cost: 2600 }
+            };
             
-            // Annualized return
-            const annualizedReturn = document.getElementById('annualizedReturn');
-            if (annualizedReturn && miningData.daily_profit_usd) {
-                const annual = miningData.daily_profit_usd * 365;
-                annualizedReturn.textContent = '$' + formatNumber(annual, 0);
-            }
+            const spec = minerSpecs[minerType] || minerSpecs['antminer_s19_pro'];
             
-            // Payback period
-            const paybackPeriod = document.getElementById('paybackPeriod');
-            if (paybackPeriod && miningData.daily_profit_usd > 0) {
-                const minerCost = 2500;
-                const days = minerCost / miningData.daily_profit_usd;
-                if (days < 365) {
-                    paybackPeriod.textContent = formatNumber(days, 0) + ' 天';
-                } else {
-                    paybackPeriod.textContent = formatNumber(days / 365, 1) + ' 年';
+            // Calculate daily BTC production
+            const hashrateInEH = spec.hashrate / 1000000;
+            const networkHashrateEH = marketData.network_hashrate;
+            const dailyBtc = (hashrateInEH / networkHashrateEH) * 144 * 3.125;
+            
+            // Calculate daily costs and revenue
+            const dailyPowerCost = (spec.power / 1000) * 24 * electricityCost;
+            const dailyRevenue = dailyBtc * marketData.btc_price;
+            const dailyProfit = dailyRevenue - dailyPowerCost;
+            
+            return dailyProfit;
+        }
+
+        function calculateBreakevenElectricity(minerType, marketData) {
+            const minerSpecs = {
+                'antminer_s19_pro': { hashrate: 110, power: 3250, cost: 2500 },
+                'antminer_s19j_pro': { hashrate: 104, power: 3068, cost: 2200 },
+                'antminer_s19_xp': { hashrate: 140, power: 3010, cost: 3200 },
+                'whatsminer_m30s': { hashrate: 112, power: 3472, cost: 2400 },
+                'whatsminer_m50': { hashrate: 114, power: 3276, cost: 2600 }
+            };
+            
+            const spec = minerSpecs[minerType] || minerSpecs['antminer_s19_pro'];
+            
+            // Calculate daily BTC production
+            const hashrateInEH = spec.hashrate / 1000000;
+            const networkHashrateEH = marketData.network_hashrate;
+            const dailyBtc = (hashrateInEH / networkHashrateEH) * 144 * 3.125;
+            const dailyRevenue = dailyBtc * marketData.btc_price;
+            
+            // Calculate breakeven electricity cost
+            const dailyPowerConsumption = (spec.power / 1000) * 24; // kWh per day
+            const breakevenElectricity = dailyRevenue / dailyPowerConsumption;
+            
+            return breakevenElectricity;
+        }
+
+        function updateMinerModelComparison(marketData) {
+            const minerModelSelect = document.getElementById('minerModelSelect');
+            const minerCost = document.getElementById('minerCost');
+            const minerDailyProfit = document.getElementById('minerDailyProfit');
+            const minerPaybackPeriod = document.getElementById('minerPaybackPeriod');
+            const minerEfficiencyRating = document.getElementById('minerEfficiencyRating');
+            
+            if (minerModelSelect) {
+                const selectedMiner = minerModelSelect.value;
+                const minerSpecs = {
+                    'antminer_s19_pro': { hashrate: 110, power: 3250, cost: 2500 },
+                    'antminer_s19j_pro': { hashrate: 104, power: 3068, cost: 2200 },
+                    'antminer_s19_xp': { hashrate: 140, power: 3010, cost: 3200 },
+                    'whatsminer_m30s': { hashrate: 112, power: 3472, cost: 2400 },
+                    'whatsminer_m50': { hashrate: 114, power: 3276, cost: 2600 }
+                };
+                
+                const spec = minerSpecs[selectedMiner] || minerSpecs['antminer_s19_pro'];
+                const dailyProfit = calculateDailyProfitForMiner(selectedMiner, marketData);
+                
+                // Update display
+                if (minerCost) minerCost.textContent = '$' + formatNumber(spec.cost, 0);
+                if (minerDailyProfit) minerDailyProfit.textContent = '$' + formatNumber(dailyProfit, 2);
+                
+                if (minerPaybackPeriod && dailyProfit > 0) {
+                    const days = spec.cost / dailyProfit;
+                    if (days < 365) {
+                        minerPaybackPeriod.textContent = Math.round(days) + ' 天';
+                    } else {
+                        minerPaybackPeriod.textContent = formatNumber(days / 365, 1) + ' 年';
+                    }
                 }
-            }
-            
-            // Risk level based on profit margin
-            const riskLevel = document.getElementById('riskLevel');
-            if (riskLevel && miningData.daily_profit_usd) {
-                const margin = miningData.daily_profit_usd / (miningData.daily_revenue || 1);
-                if (margin > 0.3) {
-                    riskLevel.textContent = '低风险';
-                    riskLevel.className = 'h6 text-success';
-                } else if (margin > 0.1) {
-                    riskLevel.textContent = '中等风险';
-                    riskLevel.className = 'h6 text-warning';
-                } else {
-                    riskLevel.textContent = '高风险';
-                    riskLevel.className = 'h6 text-danger';
+                
+                // Calculate efficiency rating (based on profit per watt)
+                if (minerEfficiencyRating) {
+                    const profitPerWatt = dailyProfit / spec.power;
+                    const efficiency = Math.min(5, Math.max(1, profitPerWatt * 1000));
+                    const stars = '★'.repeat(Math.round(efficiency)) + '☆'.repeat(5 - Math.round(efficiency));
+                    minerEfficiencyRating.textContent = stars;
                 }
             }
         }
 
-        function updatePerformanceMetrics(miningData) {
-            // Hashrate efficiency (simulated based on profitability)
+        function setupInvestmentInteractions() {
+            // Investment amount change handler
+            const investmentAmount = document.getElementById('investmentAmount');
+            if (investmentAmount) {
+                investmentAmount.addEventListener('input', function() {
+                    if (currentMarketData) {
+                        updateInvestmentPrediction(currentMarketData);
+                    }
+                });
+            }
+            
+            // Electricity range change handler
+            const electricityRange = document.getElementById('electricityRange');
+            if (electricityRange) {
+                electricityRange.addEventListener('input', function() {
+                    if (currentMarketData) {
+                        updateElectricitySensitivity(currentMarketData);
+                    }
+                });
+            }
+            
+            // Miner model change handler
+            const minerModelSelect = document.getElementById('minerModelSelect');
+            if (minerModelSelect) {
+                minerModelSelect.addEventListener('change', function() {
+                    if (currentMarketData) {
+                        updateMinerModelComparison(currentMarketData);
+                    }
+                });
+            }
+        }
+
+        function updatePerformanceMetrics(marketData) {
+            // Update performance metrics with realistic values based on market conditions
             const hashrateEfficiency = document.getElementById('hashrateEfficiency');
-            if (hashrateEfficiency && miningData.daily_profit_usd) {
-                const efficiency = miningData.daily_profit_usd > 0 ? 
-                    Math.min(99.9, 85 + (miningData.daily_profit_usd / 50) * 10) : 
-                    Math.max(70, 85 - Math.abs(miningData.daily_profit_usd) / 10);
+            if (hashrateEfficiency) {
+                // Base efficiency on current profitability
+                const dailyProfit = calculateDailyProfitForMiner('antminer_s19_pro', marketData);
+                const efficiency = dailyProfit > 0 ? 
+                    Math.min(99.9, 90 + (dailyProfit / 50) * 8) : 
+                    Math.max(85, 90 - Math.abs(dailyProfit) / 20);
                 hashrateEfficiency.textContent = formatNumber(efficiency, 1) + '%';
             }
             
             // Power efficiency
             const powerEfficiency = document.getElementById('powerEfficiency');
             if (powerEfficiency) {
-                // Simulate based on current profitability
-                const efficiency = 92 + Math.random() * 6; // 92-98%
+                const efficiency = 94 + Math.random() * 4; // 94-98%
                 powerEfficiency.textContent = formatNumber(efficiency, 1) + '%';
             }
             
