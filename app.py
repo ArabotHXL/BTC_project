@@ -1993,7 +1993,7 @@ def analytics_dashboard():
         # 获取最新分析报告
         cursor.execute("""
             SELECT title, summary, generated_at, confidence_score, recommendations,
-                   risk_assessment, content
+                   risk_assessment, key_findings
             FROM analysis_reports 
             ORDER BY generated_at DESC LIMIT 1
         """)
@@ -2007,7 +2007,7 @@ def analytics_dashboard():
                 'confidence_score': report_data[3],
                 'recommendations': report_data[4],
                 'risk_assessment': report_data[5],
-                'content': report_data[6]
+                'key_findings': report_data[6]
             }
         
         cursor.close()
