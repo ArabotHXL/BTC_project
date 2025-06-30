@@ -402,8 +402,23 @@
         async function fetchTechnicalIndicators() {
             try {
                 console.log('Loading technical indicators...');
-                const response = await fetch('/analytics/api/technical-indicators');
+                const response = await fetch('/analytics/api/technical-indicators', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
                 console.log('Technical indicators response status:', response.status);
+                
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        console.error('Authentication/authorization error for technical indicators');
+                        throw new Error(`认证错误: ${response.status}`);
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const data = await response.json();
                 console.log('Technical indicators data:', data);
                 
@@ -465,8 +480,23 @@
         async function fetchLatestReport() {
             try {
                 console.log('Loading latest report...');
-                const response = await fetch('/analytics/api/latest-report');
+                const response = await fetch('/analytics/api/latest-report', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
                 console.log('Report response status:', response.status);
+                
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        console.error('Authentication/authorization error for latest report');
+                        throw new Error(`认证错误: ${response.status}`);
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const data = await response.json();
                 console.log('Report data:', data);
                 
@@ -557,8 +587,11 @@
             
             // 立即加载所有数据，不延迟
             console.log('Starting immediate data loading...');
+            console.log('About to call fetchTechnicalIndicators...');
             fetchTechnicalIndicators();
+            console.log('About to call fetchLatestReport...');
             fetchLatestReport();
+            console.log('All immediate loading calls made');
             
             fetchPriceHistory();
             
