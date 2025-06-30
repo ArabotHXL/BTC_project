@@ -537,8 +537,11 @@
             // 延迟加载其他数据以确保页面准备完毕
             setTimeout(() => {
                 console.log('Starting delayed data loading...');
+                console.log('About to call fetchTechnicalIndicators');
                 fetchTechnicalIndicators();
+                console.log('About to call fetchLatestReport');
                 fetchLatestReport();
+                console.log('Delayed loading calls completed');
             }, 2000);
             
             fetchPriceHistory();
