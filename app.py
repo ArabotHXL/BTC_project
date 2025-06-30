@@ -2248,15 +2248,28 @@ def analytics_technical_indicators_api():
         
         cursor = db_manager.connection.cursor()
         cursor.execute("""
-            SELECT indicators_data, calculated_at
+            SELECT sma_20, sma_50, ema_12, ema_26, rsi_14, macd, 
+                   bollinger_upper, bollinger_lower, volatility_30d, created_at
             FROM technical_indicators 
-            ORDER BY calculated_at DESC 
+            ORDER BY created_at DESC 
             LIMIT 1
         """)
         result = cursor.fetchone()
         
         if result:
-            return jsonify({'success': True, 'data': result[0]})
+            indicators_data = {
+                'sma_20': float(result[0]) if result[0] else None,
+                'sma_50': float(result[1]) if result[1] else None,
+                'ema_12': float(result[2]) if result[2] else None,
+                'ema_26': float(result[3]) if result[3] else None,
+                'rsi_14': float(result[4]) if result[4] else None,
+                'macd': float(result[5]) if result[5] else None,
+                'bollinger_upper': float(result[6]) if result[6] else None,
+                'bollinger_lower': float(result[7]) if result[7] else None,
+                'volatility_30d': float(result[8]) if result[8] else None,
+                'timestamp': result[9].isoformat() if result[9] else None
+            }
+            return jsonify({'success': True, 'data': indicators_data})
         else:
             return jsonify({'success': False, 'error': '暂无技术指标数据'})
             
