@@ -1118,6 +1118,10 @@
             
             // Update mining decision support modules
             updateMiningDecisionModules(data);
+            
+            // Update smart alerts and AI recommendations with real-time data
+            updateSmartAlerts(data);
+            updateAIRecommendations(data);
         }
 
         // Investment Decision Support Functions
@@ -1426,6 +1430,197 @@
 
         function generateDetailedReport() {
             alert('详细报告生成功能开发中...\n\n报告将包含：\n- 完整市场分析\n- 投资建议\n- 风险评估\n- 运营优化建议');
+        }
+
+        function updateSmartAlerts(marketData) {
+            const alertsContainer = document.getElementById('smartAlerts');
+            if (!alertsContainer) return;
+
+            const alerts = generateSmartAlerts(marketData);
+            alertsContainer.innerHTML = alerts.map(alert => `
+                <div class="alert alert-${alert.type} d-flex align-items-center" role="alert">
+                    <i class="bi bi-${alert.icon} me-2"></i>
+                    <div>
+                        <strong>${alert.title}:</strong> ${alert.message}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function generateSmartAlerts(marketData) {
+            const alerts = [];
+            const price = marketData.btc_price;
+            const hashrate = marketData.network_hashrate;
+            const fearGreed = marketData.fear_greed_index;
+
+            // Price alerts
+            if (price > 110000) {
+                alerts.push({
+                    type: 'warning',
+                    icon: 'exclamation-triangle',
+                    title: '价格警报',
+                    message: `BTC突破$${formatNumber(price, 0)}，接近历史高位，注意回调风险`
+                });
+            } else if (price < 95000) {
+                alerts.push({
+                    type: 'info',
+                    icon: 'info-circle',
+                    title: '价格机会',
+                    message: `BTC价格$${formatNumber(price, 0)}，可能是较好的入场时机`
+                });
+            }
+
+            // Hashrate alerts
+            if (hashrate > 900) {
+                alerts.push({
+                    type: 'success',
+                    icon: 'check-circle',
+                    title: '网络强劲',
+                    message: `网络算力${formatNumber(hashrate, 1)} EH/s，网络安全性极高`
+                });
+            } else if (hashrate < 600) {
+                alerts.push({
+                    type: 'warning',
+                    icon: 'exclamation-triangle',
+                    title: '算力警报',
+                    message: `网络算力${formatNumber(hashrate, 1)} EH/s 偏低，请关注网络稳定性`
+                });
+            }
+
+            // Fear & Greed alerts
+            if (fearGreed > 75) {
+                alerts.push({
+                    type: 'warning',
+                    icon: 'exclamation-triangle',
+                    title: '贪婪警告',
+                    message: `恐惧贪婪指数${fearGreed}（极度贪婪），市场可能过热`
+                });
+            } else if (fearGreed < 25) {
+                alerts.push({
+                    type: 'info',
+                    icon: 'info-circle',
+                    title: '恐惧机会',
+                    message: `恐惧贪婪指数${fearGreed}（极度恐惧），可能是投资机会`
+                });
+            }
+
+            return alerts.length > 0 ? alerts : [{
+                type: 'info',
+                icon: 'info-circle',
+                title: '市场稳定',
+                message: '当前市场指标正常，无特殊警报'
+            }];
+        }
+
+        function updateAIRecommendations(marketData) {
+            const recommendationsContainer = document.getElementById('aiRecommendations');
+            if (!recommendationsContainer) return;
+
+            const recommendations = generateAIRecommendations(marketData);
+            recommendationsContainer.innerHTML = recommendations.map(rec => `
+                <div class="mb-3">
+                    <h6 class="text-${rec.type}">
+                        <i class="bi bi-${rec.icon}"></i> ${rec.category}
+                    </h6>
+                    <p class="small text-muted mb-2">${rec.message}</p>
+                </div>
+            `).join('');
+        }
+
+        function calculateDailyProfitForMiner(minerModel, marketData) {
+            // Simplified miner specifications
+            const miners = {
+                'antminer_s19_pro': { hashrate: 110, power: 3250 },
+                'antminer_s19j_pro': { hashrate: 104, power: 3068 },
+                'antminer_s19_xp': { hashrate: 140, power: 3010 },
+                'whatsminer_m30s': { hashrate: 112, power: 3472 },
+                'whatsminer_m50': { hashrate: 114, power: 3276 }
+            };
+            
+            const miner = miners[minerModel] || miners['antminer_s19_pro'];
+            const hashrateTerahash = miner.hashrate; // TH/s
+            const powerKW = miner.power / 1000; // Convert to kW
+            const electricityCost = 0.05; // $0.05 per kWh
+            
+            // Calculate daily mining rewards
+            const networkHashrateEH = marketData.network_hashrate || 800;
+            const networkHashrateGH = networkHashrateEH * 1e9; // Convert EH/s to GH/s
+            const minerHashrateGH = hashrateTerahash * 1000; // Convert TH/s to GH/s
+            
+            const blockReward = 3.125; // Current BTC block reward
+            const blocksPerDay = 144; // 6 blocks per hour * 24 hours
+            const btcPrice = marketData.btc_price || 100000;
+            
+            // Miner's share of total network hashrate
+            const hashrateFraction = minerHashrateGH / networkHashrateGH;
+            
+            // Daily BTC rewards
+            const dailyBTC = hashrateFraction * blockReward * blocksPerDay;
+            const dailyRevenue = dailyBTC * btcPrice;
+            
+            // Daily electricity cost
+            const dailyElectricityCost = powerKW * 24 * electricityCost;
+            
+            // Daily profit
+            const dailyProfit = dailyRevenue - dailyElectricityCost;
+            
+            return dailyProfit;
+        }
+
+        function generateAIRecommendations(marketData) {
+            const recommendations = [];
+            const price = marketData.btc_price;
+            const hashrate = marketData.network_hashrate;
+            const fearGreed = marketData.fear_greed_index;
+            
+            // Market opportunity analysis
+            if (fearGreed >= 50 && hashrate > 700) {
+                recommendations.push({
+                    type: 'success',
+                    icon: 'arrow-up-circle',
+                    category: '市场机会',
+                    message: `当前恐惧贪婪指数${fearGreed}，网络算力稳定在${formatNumber(hashrate, 1)} EH/s，建议保持或增加投资运营。`
+                });
+            } else if (fearGreed < 30) {
+                recommendations.push({
+                    type: 'info',
+                    icon: 'lightning',
+                    category: '低位机会',
+                    message: `市场情绪偏向恐惧（指数${fearGreed}），历史数据显示这可能是较好的投资时机。`
+                });
+            }
+
+            // Risk assessment
+            if (price > 100000) {
+                recommendations.push({
+                    type: 'warning',
+                    icon: 'exclamation-circle',
+                    category: '风险提醒',
+                    message: `BTC价格已达$${formatNumber(price, 0)}，建议适当控制仓位，分批投资降低风险。`
+                });
+            }
+
+            // Operational recommendations
+            const electricityCost = 0.05; // Assumed electricity cost
+            const dailyProfit = calculateDailyProfitForMiner('antminer_s19_pro', marketData);
+            
+            if (dailyProfit > 15) {
+                recommendations.push({
+                    type: 'info',
+                    icon: 'gear',
+                    category: '运营建议',
+                    message: `当前挖矿收益率良好（预计日收益$${formatNumber(dailyProfit, 2)}），可考虑扩大规模或优化电力合约。`
+                });
+            } else if (dailyProfit < 5) {
+                recommendations.push({
+                    type: 'warning',
+                    icon: 'gear',
+                    category: '成本优化',
+                    message: `当前收益率偏低，建议优化电费成本或暂缓扩张计划。`
+                });
+            }
+
+            return recommendations;
         }
 
         function updateTechnicalIndicatorsDisplay(data) {
