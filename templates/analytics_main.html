@@ -1078,7 +1078,8 @@
                 
                 const data = await response.json();
                 console.log('Report data received:', data);
-                updateReportDisplay(data);
+                console.log('Calling updateReportDisplay with:', data.latest_report || data.data || data);
+                updateReportDisplay(data.latest_report || data.data || data);
             } catch (error) {
                 console.error('Report error:', error);
                 showErrorMessage('reports', '分析报告暂时不可用');
@@ -1086,10 +1087,12 @@
         }
 
         function updateReportDisplay(data) {
+            console.log('updateReportDisplay function called!');
             console.log('Updating report display with:', data);
             
             // Check if data contains the report
             const report = data.data || data;
+            console.log('Extracted report object:', report);
             
             if (!report) {
                 showErrorMessage('reports', '暂无可用的分析报告');
@@ -1098,8 +1101,11 @@
             
             // Update report title
             const reportTitleElement = document.getElementById('reportTitle');
+            console.log('reportTitle element:', reportTitleElement ? 'found' : 'missing');
+            console.log('report.title:', report.title);
             if (reportTitleElement && report.title) {
                 reportTitleElement.textContent = report.title;
+                console.log('Updated title to:', report.title);
             }
             
             // Update report summary
