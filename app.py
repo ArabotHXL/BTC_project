@@ -2405,35 +2405,29 @@ def api_generate_detailed_report():
                 'error': '需要管理员权限'
             }), 403
         
-        # 获取市场数据
-        try:
-            btc_price = get_btc_price()
-            network_stats = get_network_stats()
-            
-            market_data = {
-                'btc_price': btc_price.get('usd', 105000),
-                'btc_market_cap': 2120000000000,  # 简化数据
-                'btc_volume_24h': 20000000000,
-                'network_hashrate': network_stats.get('hashrate_eh', 755),
-                'network_difficulty': network_stats.get('difficulty', 116958512019762.1),
-                'fear_greed_index': 63
-            }
-        except:
-            # 使用默认数据
-            market_data = {
-                'btc_price': 105673,
-                'btc_market_cap': 2120000000000,
-                'btc_volume_24h': 20000000000,
-                'network_hashrate': 755.83,
-                'network_difficulty': 116958512019762.1,
-                'fear_greed_index': 63
-            }
+        # 使用简化的市场数据
+        market_data = {
+            'btc_price': 105673,
+            'btc_market_cap': 2120000000000,
+            'btc_volume_24h': 20000000000,
+            'network_hashrate': 767.45,
+            'network_difficulty': 116958512019762.1,
+            'fear_greed_index': 63
+        }
         
         # 获取价格历史数据
+        price_history = []
         try:
-            from services.network_data_service import get_network_history_data
-            price_history = get_network_history_data(hours=168)  # 7天数据
-        except:
+            # 从数据库获取历史数据
+            snapshots = NetworkSnapshot.query.order_by(NetworkSnapshot.timestamp.desc()).limit(168).all()
+            price_history = [{
+                'btc_price': s.btc_price,
+                'network_hashrate': s.network_hashrate,
+                'network_difficulty': s.network_difficulty,
+                'timestamp': s.timestamp.isoformat()
+            } for s in snapshots if s.btc_price]
+        except Exception as e:
+            logging.error(f"获取价格历史数据失败: {e}")
             price_history = []
         
         # 生成详细报告
@@ -2448,10 +2442,10 @@ def api_generate_detailed_report():
         })
         
     except Exception as e:
-        logger.error(f"生成详细报告失败: {e}")
+        logging.error(f"生成详细报告失败: {e}")
         return jsonify({
             'success': False,
-            'error': '详细报告生成失败'
+            'error': f'详细报告生成失败: {str(e)}'
         }), 500
 
 if __name__ == '__main__':
