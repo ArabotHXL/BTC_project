@@ -427,21 +427,38 @@
                     return;
                 }
                 
-                // 更新RSI
-                if (data.rsi_14 !== null) {
-                    document.getElementById('rsiValue').textContent = formatNumber(data.rsi_14, 1);
-                    document.getElementById('rsiSignal').textContent = getRSISignal(data.rsi_14);
+                // 添加安全更新函数
+                function updateElementSafely(elementId, value) {
+                    const element = document.getElementById(elementId);
+                    if (element) {
+                        element.textContent = value || '--';
+                    } else {
+                        console.warn(`Element with ID '${elementId}' not found`);
+                    }
                 }
                 
-                // 更新其他技术指标
-                document.getElementById('sma20').textContent = formatPrice(data.sma_20);
-                document.getElementById('sma50').textContent = formatPrice(data.sma_50);
-                document.getElementById('ema12').textContent = formatPrice(data.ema_12);
-                document.getElementById('ema26').textContent = formatPrice(data.ema_26);
-                document.getElementById('macd').textContent = formatNumber(data.macd, 4);
-                document.getElementById('volatility').textContent = formatPercent(data.volatility_30d);
-                document.getElementById('bollingerUpper').textContent = formatPrice(data.bollinger_upper);
-                document.getElementById('bollingerLower').textContent = formatPrice(data.bollinger_lower);
+                // 更新移动平均线
+                updateElementSafely('sma20', formatPrice(data.sma_20));
+                updateElementSafely('sma50', formatPrice(data.sma_50));
+                updateElementSafely('ema12', formatPrice(data.ema_12));
+                updateElementSafely('ema26', formatPrice(data.ema_26));
+                
+                // 更新动量指标
+                updateElementSafely('rsiValue', formatNumber(data.rsi_14, 1));
+                updateElementSafely('macd', formatNumber(data.macd, 4));
+                updateElementSafely('volatility', formatPercent(data.volatility_30d));
+                
+                // 更新布林带
+                updateElementSafely('bollingerUpper', formatPrice(data.bollinger_upper));
+                updateElementSafely('bollingerLower', formatPrice(data.bollinger_lower));
+                
+                // 更新RSI信号
+                if (data.rsi_14 !== null) {
+                    const rsiSignal = getRSISignal(data.rsi_14);
+                    updateElementSafely('rsiSignal', rsiSignal);
+                }
+                
+                console.log('Technical indicators updated successfully');
                 
             } catch (error) {
                 console.error('Error fetching technical indicators:', error);
