@@ -1585,8 +1585,202 @@
             alert('警报配置功能开发中...\n\n可配置项目：\n- 价格突破警报\n- 收益率下降警报\n- 网络难度变化警报\n- 算力异常警报');
         }
 
-        function generateDetailedReport() {
-            alert('详细报告生成功能开发中...\n\n报告将包含：\n- 完整市场分析\n- 投资建议\n- 风险评估\n- 运营优化建议');
+        async function generateDetailedReport() {
+            const reportButton = document.querySelector('.btn-outline-primary');
+            const originalText = reportButton.innerHTML;
+            
+            try {
+                // 显示加载状态
+                reportButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>生成中...';
+                reportButton.disabled = true;
+                
+                // 调用详细报告API
+                const response = await fetch('/api/analytics/detailed-report', {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('详细报告生成失败');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.detailed_report) {
+                    showDetailedReportModal(data.detailed_report);
+                } else {
+                    throw new Error(data.error || '详细报告生成失败');
+                }
+                
+            } catch (error) {
+                console.error('详细报告生成错误:', error);
+                alert('详细报告生成失败，请稍后重试。');
+            } finally {
+                // 恢复按钮状态
+                reportButton.innerHTML = originalText;
+                reportButton.disabled = false;
+            }
+        }
+        
+        function showDetailedReportModal(report) {
+            // 创建详细报告模态框
+            const modalHtml = `
+                <div class="modal fade" id="detailedReportModal" tabindex="-1" aria-labelledby="detailedReportModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content bg-dark">
+                            <div class="modal-header border-secondary">
+                                <h5 class="modal-title text-white" id="detailedReportModalLabel">
+                                    <i class="bi bi-file-earmark-text"></i> ${report.report_metadata.title}
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-white" style="max-height: 70vh; overflow-y: auto;">
+                                ${formatDetailedReport(report)}
+                            </div>
+                            <div class="modal-footer border-secondary">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                                <button type="button" class="btn btn-primary" onclick="downloadReport()">
+                                    <i class="bi bi-download"></i> 下载报告
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 移除现有模态框并添加新的
+            const existingModal = document.getElementById('detailedReportModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('detailedReportModal'));
+            modal.show();
+        }
+        
+        function formatDetailedReport(report) {
+            let html = '';
+            
+            // 执行摘要
+            if (report.executive_summary) {
+                html += `
+                    <div class="mb-4">
+                        <h6 class="text-primary"><i class="bi bi-star"></i> 执行摘要</h6>
+                        <div class="p-3 bg-secondary rounded">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>当前市场状况:</strong><br>
+                                    <span class="text-success">BTC: $${report.executive_summary.current_btc_price.toLocaleString()}</span><br>
+                                    <span class="text-info">算力: ${report.executive_summary.network_hashrate} EH/s</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>投资建议:</strong><br>
+                                    <span class="text-warning">${report.executive_summary.investment_outlook}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // 盈利性分析
+            if (report.profitability_analysis && report.profitability_analysis.best_scenario) {
+                const best = report.profitability_analysis.best_scenario;
+                html += `
+                    <div class="mb-4">
+                        <h6 class="text-primary"><i class="bi bi-graph-up"></i> 最佳投资方案</h6>
+                        <div class="p-3 bg-secondary rounded">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <strong>推荐矿机:</strong> ${best.miner_model}<br>
+                                    <strong>日收益:</strong> <span class="text-success">$${best.daily_profit.toFixed(2)}</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>月收益:</strong> <span class="text-success">$${best.monthly_profit.toFixed(2)}</span><br>
+                                    <strong>年化ROI:</strong> <span class="text-warning">${best.annual_roi.toFixed(1)}%</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>回本周期:</strong> ${best.roi_months.toFixed(1)} 个月<br>
+                                    <strong>盈亏平衡电价:</strong> $${best.breakeven_electricity_cost.toFixed(3)}/kWh
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // 技术分析
+            if (report.technical_analysis) {
+                html += `
+                    <div class="mb-4">
+                        <h6 class="text-primary"><i class="bi bi-bar-chart"></i> 技术分析</h6>
+                        <div class="p-3 bg-secondary rounded">
+                `;
+                
+                if (report.technical_analysis.rsi_14) {
+                    html += `<p><strong>RSI (14天):</strong> ${report.technical_analysis.rsi_14.toFixed(1)}</p>`;
+                }
+                
+                if (report.technical_analysis.trend_analysis) {
+                    const trend = report.technical_analysis.trend_analysis;
+                    html += `<p><strong>趋势分析:</strong> ${trend.short_term_trend || '中性'} (${trend.trend_consistency || '一般'})</p>`;
+                }
+                
+                html += `</div></div>`;
+            }
+            
+            // 风险评估
+            if (report.risk_assessment && report.risk_assessment.overall_risk) {
+                const risk = report.risk_assessment.overall_risk;
+                html += `
+                    <div class="mb-4">
+                        <h6 class="text-primary"><i class="bi bi-shield-exclamation"></i> 风险评估</h6>
+                        <div class="p-3 bg-secondary rounded">
+                            <p><strong>整体风险等级:</strong> 
+                                <span class="badge bg-${risk.risk_level === 'high' ? 'danger' : risk.risk_level === 'low' ? 'success' : 'warning'}">
+                                    ${risk.risk_level === 'high' ? '高风险' : risk.risk_level === 'low' ? '低风险' : '中等风险'}
+                                </span>
+                            </p>
+                            <p><strong>风险评分:</strong> ${risk.risk_score}/10</p>
+                            <p><strong>评估说明:</strong> ${risk.assessment}</p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // 可操作建议
+            if (report.actionable_recommendations && report.actionable_recommendations.length > 0) {
+                html += `
+                    <div class="mb-4">
+                        <h6 class="text-primary"><i class="bi bi-lightbulb"></i> 可操作建议</h6>
+                        <div class="p-3 bg-secondary rounded">
+                            <ul class="mb-0">
+                `;
+                
+                report.actionable_recommendations.forEach(recommendation => {
+                    html += `<li>${recommendation}</li>`;
+                });
+                
+                html += `
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            return html;
+        }
+        
+        function downloadReport() {
+            // 简单的下载功能 - 可以扩展为PDF生成
+            alert('PDF下载功能开发中...\n\n当前可通过浏览器打印功能保存报告');
         }
 
         function updateSmartAlerts(marketData) {
