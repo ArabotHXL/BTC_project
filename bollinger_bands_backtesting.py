@@ -65,19 +65,19 @@ class BollingerBandsBacktester:
             # 获取市场数据和技术指标
             query = """
             SELECT 
-                ma.timestamp,
+                ma.recorded_at as timestamp,
                 ma.btc_price,
                 ti.bollinger_upper,
                 ti.bollinger_lower,
                 ti.sma_20,
                 ti.rsi_14
             FROM market_analytics ma
-            LEFT JOIN technical_indicators ti ON DATE(ma.timestamp) = DATE(ti.timestamp)
-            WHERE ma.timestamp >= %s
+            LEFT JOIN technical_indicators ti ON DATE(ma.recorded_at) = DATE(ti.recorded_at)
+            WHERE ma.recorded_at >= %s
             AND ma.btc_price IS NOT NULL
             AND ti.bollinger_upper IS NOT NULL
             AND ti.bollinger_lower IS NOT NULL
-            ORDER BY ma.timestamp ASC
+            ORDER BY ma.recorded_at ASC
             """
             
             start_date = datetime.now() - timedelta(days=days)
