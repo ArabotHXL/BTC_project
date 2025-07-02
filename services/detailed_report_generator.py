@@ -954,6 +954,10 @@ class ComprehensiveReportGenerator:
         # 电价梯度
         electricity_costs = [0.03, 0.05, 0.07, 0.10, 0.15]
         
+        # 确保price_history不为None
+        if price_history is None:
+            price_history = []
+        
         # 生成各类分析
         profitability_data = self.calculate_mining_profitability(
             btc_price, network_hashrate, difficulty, electricity_costs
@@ -963,8 +967,14 @@ class ComprehensiveReportGenerator:
         investment_analysis = self.generate_investment_analysis(profitability_data)
         risk_assessment = self.generate_risk_assessment(profitability_data)
         
+        # 技术分析和其他高级分析
+        technical_analysis = self.calculate_technical_indicators(price_history)
+        market_structure = self.analyze_market_structure(market_data)
+        macro_analysis = self.generate_macro_analysis(market_data)
+        risk_models = self.generate_risk_models(market_data, price_history)
+        
         # 组装完整报告
-        detailed_report = {
+        comprehensive_report = {
             'report_metadata': {
                 'title': f'专业矿业分析报告 - {datetime.now().strftime("%Y年%m月%d日")}',
                 'generation_time': datetime.now().isoformat(),
@@ -974,16 +984,21 @@ class ComprehensiveReportGenerator:
             'executive_summary': self._generate_executive_summary(
                 profitability_data, operational_strategies, investment_analysis
             ),
+            'technical_analysis': technical_analysis,
+            'market_structure_analysis': market_structure,
+            'macro_environment_analysis': macro_analysis,
             'profitability_analysis': profitability_data,
             'operational_strategies': operational_strategies,
             'investment_analysis': investment_analysis,
             'risk_assessment': risk_assessment,
-            'actionable_recommendations': self._generate_recommendations(
-                operational_strategies, investment_analysis, risk_assessment
+            'advanced_risk_models': risk_models,
+            'actionable_recommendations': self._generate_comprehensive_recommendations(
+                operational_strategies, investment_analysis, risk_assessment, 
+                technical_analysis, market_structure, macro_analysis
             )
         }
         
-        return detailed_report
+        return comprehensive_report
     
     def _generate_executive_summary(self, profitability_data: Dict, 
                                   operational_strategies: Dict, 
@@ -1063,10 +1078,80 @@ class ComprehensiveReportGenerator:
         recommendations.append("定期监控：建议每周更新收益分析，及时调整运营策略")
         
         return recommendations
+    
+    def _generate_comprehensive_recommendations(self, operational_strategies: Dict, 
+                                              investment_analysis: Dict, 
+                                              risk_assessment: Dict,
+                                              technical_analysis: Dict,
+                                              market_structure: Dict,
+                                              macro_analysis: Dict) -> List[str]:
+        """生成全面的可操作建议"""
+        
+        recommendations = []
+        
+        # 技术分析建议
+        if technical_analysis.get('rsi_14'):
+            rsi = technical_analysis['rsi_14']
+            if rsi > 70:
+                recommendations.append("技术面：RSI显示超买状态，建议谨慎追高，关注回调机会")
+            elif rsi < 30:
+                recommendations.append("技术面：RSI显示超卖状态，可考虑逢低布局")
+            else:
+                recommendations.append("技术面：RSI处于中性区间，保持观望或执行既定策略")
+        
+        # 趋势分析建议
+        trend_analysis = technical_analysis.get('trend_analysis', {})
+        if trend_analysis.get('trend_consistency') == 'consistent':
+            if trend_analysis.get('short_term_trend') == 'up':
+                recommendations.append("趋势分析：短中期趋势一致向上，可适度增加仓位")
+            else:
+                recommendations.append("趋势分析：短中期趋势一致向下，建议减仓观望")
+        
+        # 支撑阻力建议
+        support_resistance = technical_analysis.get('support_resistance', {})
+        if support_resistance:
+            position = support_resistance.get('position_in_range', 50)
+            if position > 80:
+                recommendations.append(f"技术位：价格接近阻力位${support_resistance.get('resistance_level', 0):,.0f}，注意回调风险")
+            elif position < 20:
+                recommendations.append(f"技术位：价格接近支撑位${support_resistance.get('support_level', 0):,.0f}，可关注反弹机会")
+        
+        # 宏观环境建议
+        institutional_adoption = macro_analysis.get('institutional_adoption', {})
+        adoption_score = institutional_adoption.get('adoption_score', 5)
+        if adoption_score > 7:
+            recommendations.append("宏观环境：机构采纳积极，长期前景看好，适合长期配置")
+        elif adoption_score < 4:
+            recommendations.append("宏观环境：机构采纳缓慢，短期谨慎，关注政策变化")
+        
+        # 风险管理建议
+        overall_risk = risk_assessment.get('overall_risk', {})
+        risk_level = overall_risk.get('risk_level', 'medium')
+        if risk_level == 'high':
+            recommendations.append("风险管理：整体风险偏高，建议降低仓位，加强对冲")
+        elif risk_level == 'low':
+            recommendations.append("风险管理：风险水平较低，可适度提高仓位配置")
+        
+        # 市场结构建议
+        liquidity = market_structure.get('liquidity_analysis', {})
+        liquidity_score = liquidity.get('liquidity_score', 5)
+        if liquidity_score < 6:
+            recommendations.append("市场结构：流动性偏低，大额交易需分批执行")
+        
+        # 投资组合建议
+        best_scenario = investment_analysis.get('best_scenario')
+        if best_scenario:
+            recommendations.append(f"投资配置：推荐{best_scenario['miner_model']}组合，预期年化ROI {best_scenario['annual_roi']:.1f}%")
+        
+        # 定期评估建议
+        recommendations.append("监控策略：建议每周进行一次全面评估，动态调整投资策略")
+        recommendations.append("数据跟踪：重点关注网络算力变化、电价波动和监管动态")
+        
+        return recommendations
 
 def main():
-    """测试详细报告生成器"""
-    generator = DetailedReportGenerator()
+    """测试全面分析报告生成器"""
+    generator = ComprehensiveReportGenerator()
     
     # 模拟市场数据
     market_data = {
@@ -1076,7 +1161,7 @@ def main():
     }
     
     # 生成详细报告
-    report = generator.generate_detailed_report(market_data)
+    report = generator.generate_comprehensive_report(market_data)
     
     print("=== 专业矿业分析报告 ===")
     print(f"标题: {report['report_metadata']['title']}")

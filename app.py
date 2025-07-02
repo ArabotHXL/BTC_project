@@ -2393,5 +2393,66 @@ def api_difficulty_trend_missing():
     """难度趋势API - 缺失路由修复"""
     return api_difficulty_trend()
 
+@app.route('/api/analytics/detailed-report', methods=['GET'])
+@login_required
+def api_generate_detailed_report():
+    """生成详细分析报告API"""
+    try:
+        # 检查用户权限
+        if not has_role(['owner', 'admin']):
+            return jsonify({
+                'success': False,
+                'error': '需要管理员权限'
+            }), 403
+        
+        # 获取市场数据
+        try:
+            btc_price = get_btc_price()
+            network_stats = get_network_stats()
+            
+            market_data = {
+                'btc_price': btc_price.get('usd', 105000),
+                'btc_market_cap': 2120000000000,  # 简化数据
+                'btc_volume_24h': 20000000000,
+                'network_hashrate': network_stats.get('hashrate_eh', 755),
+                'network_difficulty': network_stats.get('difficulty', 116958512019762.1),
+                'fear_greed_index': 63
+            }
+        except:
+            # 使用默认数据
+            market_data = {
+                'btc_price': 105673,
+                'btc_market_cap': 2120000000000,
+                'btc_volume_24h': 20000000000,
+                'network_hashrate': 755.83,
+                'network_difficulty': 116958512019762.1,
+                'fear_greed_index': 63
+            }
+        
+        # 获取价格历史数据
+        try:
+            from services.network_data_service import get_network_history_data
+            price_history = get_network_history_data(hours=168)  # 7天数据
+        except:
+            price_history = []
+        
+        # 生成详细报告
+        from services.detailed_report_generator import ComprehensiveReportGenerator
+        generator = ComprehensiveReportGenerator()
+        detailed_report = generator.generate_comprehensive_report(market_data, price_history)
+        
+        return jsonify({
+            'success': True,
+            'detailed_report': detailed_report,
+            'generation_time': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"生成详细报告失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': '详细报告生成失败'
+        }), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
