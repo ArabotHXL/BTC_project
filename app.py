@@ -823,7 +823,8 @@ def get_btc_price():
         current_btc_price = get_real_time_btc_price()
         return jsonify({
             'success': True,
-            'price': current_btc_price
+            'btc_price': current_btc_price,
+            'price': current_btc_price  # 兼容性字段
         })
     except Exception as e:
         logging.error(f"Error fetching BTC price: {str(e)}")
