@@ -744,7 +744,7 @@
                                                 </span>
                                             </h5>
                                             <small class="text-light opacity-75">
-                                                <i class="bi bi-info-circle me-1"></i>基于布林带技术指标的量化交易策略回测分析
+                                                <i class="bi bi-info-circle me-1"></i>基于历史价格数据的布林带技术指标分析
                                             </small>
                                         </div>
                                         <div class="text-end">
@@ -786,7 +786,7 @@
                                     <div class="d-flex justify-content-center gap-3 mb-4">
                                         <button class="btn btn-warning text-dark fw-bold px-4 py-2 rounded-pill shadow" 
                                                 id="runBacktestBtn" onclick="runBollingerBacktest()">
-                                            <i class="bi bi-play-circle-fill me-2"></i>运行策略回测
+                                            <i class="bi bi-play-circle-fill me-2"></i>运行技术分析
                                         </button>
                                         <button class="btn btn-outline-light btn-sm px-3 py-2 rounded-pill" 
                                                 onclick="refreshTechnicalIndicators()">
@@ -799,7 +799,7 @@
                                         <!-- 结果标题 -->
                                         <div class="text-center mb-4">
                                             <h6 class="text-warning mb-2">
-                                                <i class="bi bi-graph-up-arrow me-2"></i>策略回测结果 & 交易信号
+                                                <i class="bi bi-graph-up-arrow me-2"></i>技术分析结果 & 价格信号
                                             </h6>
                                             <div class="border-bottom border-secondary opacity-50"></div>
                                         </div>
@@ -856,7 +856,7 @@
                                         <div class="card bg-secondary border-secondary mb-4">
                                             <div class="card-header bg-transparent border-bottom border-secondary">
                                                 <h6 class="mb-0 text-light">
-                                                    <i class="bi bi-graph-up me-2"></i>策略收益曲线 & 交易信号
+                                                    <i class="bi bi-graph-up me-2"></i>价格分析曲线 & 技术信号
                                                 </h6>
                                             </div>
                                             <div class="card-body bg-dark">
@@ -922,21 +922,21 @@
                                                         <div class="mb-3">
                                                             <div class="d-flex align-items-center mb-2">
                                                                 <span class="badge bg-success rounded-circle me-2" style="width: 12px; height: 12px;"></span>
-                                                                <span class="text-light">买入信号: 价格跌破布林带下轨</span>
+                                                                <span class="text-light">买入信号: 价格接近布林带下轨</span>
                                                             </div>
                                                             <div class="d-flex align-items-center mb-2">
                                                                 <span class="badge bg-danger rounded-circle me-2" style="width: 12px; height: 12px;"></span>
-                                                                <span class="text-light">卖出信号: 价格突破布林带上轨</span>
+                                                                <span class="text-light">卖出信号: 价格接近布林带上轨</span>
                                                             </div>
                                                             <div class="d-flex align-items-center mb-2">
                                                                 <span class="badge bg-info rounded-circle me-2" style="width: 12px; height: 12px;"></span>
-                                                                <span class="text-light">对比基准: Buy & Hold策略</span>
+                                                                <span class="text-light">数据来源: 历史价格爬取数据</span>
                                                             </div>
                                                         </div>
                                                         <div class="alert alert-dark border-secondary mb-0">
                                                             <small class="text-muted">
                                                                 <i class="bi bi-lightbulb me-1"></i>
-                                                                布林带策略利用价格的均值回归特性，在价格超买/超卖时进行反向操作
+                                                                布林带技术分析基于历史价格数据，识别价格趋势和超买/超卖区域
                                                             </small>
                                                         </div>
                                                     </div>
@@ -953,10 +953,10 @@
                                                     <span class="visually-hidden">Loading...</span>
                                                 </div>
                                                 <h6 class="text-warning mb-2">
-                                                    <i class="bi bi-cpu me-2"></i>正在运行策略回测
+                                                    <i class="bi bi-cpu me-2"></i>正在运行技术分析
                                                 </h6>
                                                 <p class="text-light mb-0 small">
-                                                    正在分析历史数据并计算布林带交易信号...
+                                                    正在分析历史价格数据并计算布林带技术指标...
                                                 </p>
                                             </div>
                                         </div>
@@ -3038,12 +3038,17 @@
             // 准备数据
             const labels = equityCurve.map(point => {
                 const date = new Date(point.timestamp);
-                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                return date.toLocaleDateString('zh-CN', {month: 'short', day: 'numeric'}) + ' ' + 
+                       date.toLocaleTimeString('zh-CN', {hour: '2-digit', minute:'2-digit'});
             });
             
             const strategyData = equityCurve.map(point => point.strategy_equity);
             const buyHoldData = equityCurve.map(point => point.buy_hold_equity);
             const priceData = equityCurve.map(point => point.btc_price);
+            
+            // 布林带数据（如果可用）
+            const bbUpper = equityCurve.map(point => point.bb_upper || null);
+            const bbLower = equityCurve.map(point => point.bb_lower || null);
             
             // 买卖信号点
             const buySignals = [];
@@ -3051,10 +3056,10 @@
             
             equityCurve.forEach((point, index) => {
                 if (point.buy_signal === 1) {
-                    buySignals.push({x: index, y: point.strategy_equity});
+                    buySignals.push({x: index, y: point.btc_price});
                 }
                 if (point.sell_signal === 1) {
-                    sellSignals.push({x: index, y: point.strategy_equity});
+                    sellSignals.push({x: index, y: point.btc_price});
                 }
             });
             
