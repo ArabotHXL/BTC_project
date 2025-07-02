@@ -419,11 +419,19 @@
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
-                const data = await response.json();
-                console.log('Technical indicators data:', data);
+                const response_data = await response.json();
+                console.log('Technical indicators response:', response_data);
                 
-                if (data.error) {
-                    console.error('Technical indicators error:', data.error);
+                if (response_data.error || !response_data.success) {
+                    console.error('Technical indicators error:', response_data.error || '获取失败');
+                    return;
+                }
+                
+                const data = response_data.data;
+                console.log('Technical indicators data extracted:', data);
+                
+                if (!data) {
+                    console.error('No technical indicators data received');
                     return;
                 }
                 
