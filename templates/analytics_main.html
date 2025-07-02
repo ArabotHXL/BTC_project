@@ -1064,6 +1064,7 @@
 
         async function loadLatestReport() {
             try {
+                console.log('Loading latest report...');
                 const response = await fetch('/api/analytics/latest-report', {
                     method: 'GET',
                     credentials: 'same-origin',
@@ -1072,9 +1073,11 @@
                         'Content-Type': 'application/json'
                     }
                 });
+                console.log('Report response status:', response.status);
                 if (!response.ok) throw new Error('Report unavailable');
                 
                 const data = await response.json();
+                console.log('Report data received:', data);
                 updateReportDisplay(data);
             } catch (error) {
                 console.error('Report error:', error);
