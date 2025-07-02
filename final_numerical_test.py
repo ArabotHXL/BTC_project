@@ -192,7 +192,9 @@ class FinalNumericalTest:
                         result = response.json()
                         daily_profit = result.get('daily_profit_usd', 0)
                         btc_output = result.get('site_daily_btc_output', 0)
-                        electricity_cost_daily = result.get('daily_electricity_cost', 0)
+                        # 正确解析电费数据结构
+                        electricity_cost_data = result.get('electricity_cost', {})
+                        electricity_cost_daily = electricity_cost_data.get('daily', 0) if isinstance(electricity_cost_data, dict) else 0
                         
                         # 验证计算结果合理性
                         if daily_profit != 0 and btc_output > 0 and electricity_cost_daily > 0:

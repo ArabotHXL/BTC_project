@@ -537,23 +537,23 @@ def calculate():
             input_errors.append(error_msg)
             site_power_mw = 1.0
             
-        # 从表单获取总算力和总功耗值
+        # 从表单或JSON数据获取总算力和总功耗值
         try:
-            total_hashrate = float(request.form.get('total_hashrate') or 0)
+            total_hashrate = float(data.get('total_hashrate') or request.form.get('total_hashrate') or 0)
         except (ValueError, TypeError) as e:
-            logging.info(f"表单中的总算力格式无效或未提供: {request.form.get('total_hashrate')} - {str(e)}")
+            logging.info(f"总算力格式无效或未提供: {data.get('total_hashrate')} - {str(e)}")
             total_hashrate = 0
             
         try:
-            total_power = float(request.form.get('total_power') or 0)
+            total_power = float(data.get('total_power') or request.form.get('total_power') or 0)
         except (ValueError, TypeError) as e:
-            logging.info(f"表单中的总功耗格式无效或未提供: {request.form.get('total_power')} - {str(e)}")
+            logging.info(f"总功耗格式无效或未提供: {data.get('total_power')} - {str(e)}")
             total_power = 0
             
         # 如果没有提供或无效，根据矿机型号和数量计算总算力和总功耗
-        if (total_hashrate <= 0 or total_power <= 0) and miner_model:
-            # 使用矿机数据
-            if miner_model in MINER_DATA:
+        if (total_hashrate <= 0 or total_power <= 0):
+            if miner_model and miner_model in MINER_DATA:
+                # 使用矿机数据
                 miner_data = MINER_DATA[miner_model]
                 if total_hashrate <= 0:
                     total_hashrate = miner_data['hashrate'] * miner_count
@@ -563,7 +563,7 @@ def calculate():
                     total_power = miner_data['power_watt'] * miner_count
                     logging.info(f"已计算总功耗: {total_power} W")
             else:
-                # 如果没有找到矿机模型，使用表单中的单位hashrate和power_consumption来计算
+                # 如果没有找到矿机模型，使用单位hashrate和power_consumption来计算
                 if total_hashrate <= 0 and hashrate > 0:
                     total_hashrate = hashrate * miner_count
                     logging.info(f"已根据单位算力计算总算力: {total_hashrate} TH/s")
