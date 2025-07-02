@@ -60,7 +60,7 @@ def generate_simple_detailed_report(market_data: Dict, price_history: List = Non
                 roi_months = miner['price'] / monthly_profit
                 annual_roi = (monthly_profit * 12 / miner['price']) * 100
             else:
-                roi_months = float('inf')
+                roi_months = 999.0  # 用大数字代替无穷大
                 annual_roi = -100
             
             # 盈亏平衡电价 (USD/kWh)

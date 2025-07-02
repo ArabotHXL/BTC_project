@@ -2440,11 +2440,22 @@ def api_generate_detailed_report():
         detailed_report = generate_simple_detailed_report(market_data, price_history)
         logging.info("详细报告生成完成")
         
-        return jsonify({
-            'success': True,
-            'detailed_report': detailed_report,
-            'generation_time': datetime.now().isoformat()
-        })
+        # 确保返回数据可以序列化为JSON
+        import json
+        try:
+            # 测试序列化
+            json.dumps(detailed_report)
+            return jsonify({
+                'success': True,
+                'detailed_report': detailed_report,
+                'generation_time': datetime.now().isoformat()
+            })
+        except (TypeError, ValueError) as e:
+            logging.error(f"JSON序列化错误: {e}")
+            return jsonify({
+                'success': False,
+                'error': f'报告数据序列化错误: {str(e)}'
+            }), 500
         
     except Exception as e:
         logging.error(f"生成详细报告失败: {e}")
