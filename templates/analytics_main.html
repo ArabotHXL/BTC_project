@@ -1033,7 +1033,7 @@
 
         async function loadTechnicalIndicators() {
             try {
-                const response = await fetch('/api/analytics/technical-indicators', {
+                const response = await fetch('/analytics/api/technical-indicators', {
                     method: 'GET',
                     credentials: 'same-origin',
                     headers: {
@@ -1043,8 +1043,14 @@
                 });
                 if (!response.ok) throw new Error('Technical indicators unavailable');
                 
-                const data = await response.json();
-                updateTechnicalIndicatorsDisplay(data);
+                const response_data = await response.json();
+                console.log('Technical indicators response:', response_data);
+                
+                if (!response_data.success || !response_data.data) {
+                    throw new Error(response_data.error || 'No technical data available');
+                }
+                
+                updateTechnicalIndicatorsDisplay(response_data.data);
             } catch (error) {
                 console.error('Technical indicators error:', error);
                 showErrorMessage('technical', '技术指标暂时不可用');
@@ -2686,6 +2692,22 @@
 
             insightsContainer.innerHTML = insightsHtml;
         }
+        
+        // 初始化服务器端技术指标数据
+        function initServerSideTechnicalData() {
+            {% if technical_indicators %}
+            const serverTechData = {{ technical_indicators | tojsonfilter | safe }};
+            console.log('Loading server-side technical indicators:', serverTechData);
+            updateTechnicalIndicatorsDisplay(serverTechData);
+            {% else %}
+            console.log('No server-side technical indicators available');
+            {% endif %}
+        }
+        
+        // 页面加载完成后立即初始化服务器端数据
+        document.addEventListener('DOMContentLoaded', function() {
+            initServerSideTechnicalData();
+        });
     </script>
 </body>
 </html>
