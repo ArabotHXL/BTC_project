@@ -17,6 +17,7 @@ from typing import Dict, List, Optional
 import threading
 from dataclasses import dataclass
 import schedule
+import pytz
 
 # 配置日志
 logging.basicConfig(
@@ -448,8 +449,9 @@ class DataCollector:
             logger.error("所有网络数据源都失败")
             return None
         
-        # 整合数据
-        current_time = datetime.now()
+        # 整合数据 - 使用EST时区
+        est_tz = pytz.timezone('US/Eastern')
+        current_time = datetime.now(est_tz)
         
         # 从最佳可用源获取数据
         if mempool_data:
@@ -905,8 +907,16 @@ class AnalyticsEngine:
         self.running = False
     
     def collect_and_analyze(self):
-        """收集数据并分析"""
+        """收集数据并分析 - 仅在30分钟间隔时执行"""
         try:
+            from datetime import datetime
+            now = datetime.now()
+            
+            # 检查是否是30分钟间隔（0分或30分）
+            if now.minute not in [0, 30]:
+                logger.info(f"跳过数据收集，当前时间 {now.strftime('%H:%M')} 不在30分钟间隔内")
+                return
+            
             # 收集市场数据
             market_data = self.data_collector.collect_all_data()
             if market_data:
@@ -917,7 +927,7 @@ class AnalyticsEngine:
             if tech_indicators:
                 self.technical_analyzer.save_technical_indicators(tech_indicators)
             
-            logger.info("数据收集和分析完成")
+            logger.info(f"数据收集和分析完成 - {now.strftime('%Y-%m-%d %H:%M')}")
             
         except Exception as e:
             logger.error(f"数据收集分析失败: {e}")
@@ -939,8 +949,8 @@ class AnalyticsEngine:
         """启动调度器"""
         self.running = True
         
-        # 每30分钟收集一次数据
-        schedule.every(30).minutes.do(self.collect_and_analyze)
+        # 每15分钟检查一次，但只在30分钟间隔时实际收集数据
+        schedule.every(15).minutes.do(self.collect_and_analyze)
         
         # 每天早上8点生成日报
         schedule.every().day.at("08:00").do(self.generate_daily_report)
