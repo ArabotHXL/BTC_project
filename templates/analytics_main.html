@@ -1330,8 +1330,20 @@
                 const dailyProfitPerMiner = calculateDailyProfitForMiner(selectedMiner, marketData);
                 const totalDailyProfit = dailyProfitPerMiner * minerCount;
                 const monthlyProfit = totalDailyProfit * 30;
-                const annualROI = (totalDailyProfit * 365 / investmentAmount) * 100;
-                const paybackDays = investmentAmount / totalDailyProfit;
+                
+                // Safe calculation with checks for valid values
+                const annualROI = totalDailyProfit > 0 ? (totalDailyProfit * 365 / investmentAmount) * 100 : 0;
+                const paybackDays = totalDailyProfit > 0 ? investmentAmount / totalDailyProfit : Infinity;
+                
+                console.log('Investment calculation debug:', {
+                    selectedMiner,
+                    investmentAmount,
+                    minerCount,
+                    dailyProfitPerMiner,
+                    totalDailyProfit,
+                    annualROI,
+                    paybackDays
+                });
                 
                 // Update display
                 const expectedDailyProfit = document.getElementById('expectedDailyProfit');
@@ -1340,11 +1352,20 @@
                 const expectedPaybackTime = document.getElementById('expectedPaybackTime');
                 const availableMinerCount = document.getElementById('availableMinerCount');
                 
-                if (expectedDailyProfit) expectedDailyProfit.textContent = '$' + formatNumber(totalDailyProfit, 2);
-                if (expectedMonthlyProfit) expectedMonthlyProfit.textContent = '$' + formatNumber(monthlyProfit, 0);
-                if (expectedAnnualROI) expectedAnnualROI.textContent = formatNumber(annualROI, 1) + '%';
+                // Safe display with validation
+                if (expectedDailyProfit) {
+                    expectedDailyProfit.textContent = totalDailyProfit > 0 ? '$' + formatNumber(totalDailyProfit, 2) : '$0.00';
+                }
+                if (expectedMonthlyProfit) {
+                    expectedMonthlyProfit.textContent = monthlyProfit > 0 ? '$' + formatNumber(monthlyProfit, 0) : '$0';
+                }
+                if (expectedAnnualROI) {
+                    expectedAnnualROI.textContent = isFinite(annualROI) && annualROI > 0 ? formatNumber(annualROI, 1) + '%' : '0.0%';
+                }
                 if (expectedPaybackTime) {
-                    if (paybackDays < 365) {
+                    if (!isFinite(paybackDays) || paybackDays <= 0) {
+                        expectedPaybackTime.textContent = '无收益';
+                    } else if (paybackDays < 365) {
                         expectedPaybackTime.textContent = Math.round(paybackDays) + ' 天';
                     } else {
                         expectedPaybackTime.textContent = formatNumber(paybackDays / 365, 1) + ' 年';
@@ -1384,8 +1405,20 @@
             // Calculate daily revenue and costs
             const dailyRevenue = dailyBtc * marketData.btc_price;
             const dailyPowerCost = (spec.power / 1000) * 24 * electricityCost;
+            const profit = dailyRevenue - dailyPowerCost;
             
-            return dailyRevenue - dailyPowerCost;
+            // Debug logging
+            console.log('Miner calculation debug:', {
+                minerType,
+                hashrateInTH: spec.hashrate,
+                networkHashrateTH,
+                dailyBtc,
+                dailyRevenue,
+                dailyPowerCost,
+                profit
+            });
+            
+            return profit;
         }
 
         function updateElectricitySensitivity(marketData) {
