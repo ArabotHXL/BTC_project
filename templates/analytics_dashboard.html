@@ -360,7 +360,7 @@
         // 获取市场数据
         async function fetchMarketData() {
             try {
-                const response = await fetch('/api/market-data');
+                const response = await fetch('/api/analytics/market-data');
                 const data = await response.json();
                 
                 if (data.error) {
@@ -662,20 +662,19 @@
         document.addEventListener('DOMContentLoaded', function() {
             initPriceChart();
             
-            // 立即加载数据
-            fetchMarketData();
-            
             // 加载服务器端传递的数据
             console.log('Loading server-side data...');
             loadServerSideData();
             
-            fetchPriceHistory();
+            // 注释掉会导致认证错误的API调用，因为数据已通过服务器端加载
+            // fetchMarketData(); // 需要认证，数据已通过服务器端加载
+            // fetchPriceHistory();
             
-            // 设置定时更新
-            setInterval(fetchMarketData, 60000);        // 每分钟更新市场数据
-            setInterval(fetchTechnicalIndicators, 300000); // 每5分钟更新技术指标
-            setInterval(fetchPriceHistory, 300000);      // 每5分钟更新价格图表
-            setInterval(fetchLatestReport, 900000);      // 每15分钟更新报告
+            // 注释掉定时更新，避免认证错误
+            // setInterval(fetchMarketData, 60000);        // 需要认证
+            // setInterval(fetchTechnicalIndicators, 300000); // 技术指标已通过服务器端加载
+            // setInterval(fetchPriceHistory, 300000);      // 价格历史已通过服务器端加载
+            // setInterval(fetchLatestReport, 900000);      // 报告已通过服务器端加载
         });
     </script>
 </body>
