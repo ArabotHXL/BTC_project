@@ -672,12 +672,12 @@
             
             // 立即加载数据
             fetchMarketData();
+            fetchTechnicalIndicators(); // 立即加载技术指标
+            fetchPriceHistory();
             
             // 加载服务器端传递的数据
             console.log('Loading server-side data...');
             loadServerSideData();
-            
-            fetchPriceHistory();
             
             // 设置定时更新
             setInterval(fetchMarketData, 60000);        // 每分钟更新市场数据
