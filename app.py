@@ -2404,6 +2404,8 @@ def api_generate_detailed_report():
                 'success': False,
                 'error': '需要管理员权限'
             }), 403
+            
+        logging.info("开始生成详细报告...")
         
         # 使用简化的市场数据
         market_data = {
@@ -2414,11 +2416,11 @@ def api_generate_detailed_report():
             'network_difficulty': 116958512019762.1,
             'fear_greed_index': 63
         }
+        logging.info(f"准备市场数据: BTC=${market_data['btc_price']}")
         
         # 获取价格历史数据
         price_history = []
         try:
-            # 从数据库获取历史数据
             snapshots = NetworkSnapshot.query.order_by(NetworkSnapshot.recorded_at.desc()).limit(168).all()
             price_history = [{
                 'btc_price': s.btc_price,
@@ -2426,14 +2428,17 @@ def api_generate_detailed_report():
                 'network_difficulty': s.network_difficulty,
                 'timestamp': s.recorded_at.isoformat()
             } for s in snapshots if s.btc_price]
+            logging.info(f"获取历史数据成功: {len(price_history)}条记录")
         except Exception as e:
             logging.error(f"获取价格历史数据失败: {e}")
             price_history = []
         
-        # 生成详细报告
-        from services.detailed_report_generator import ComprehensiveReportGenerator
-        generator = ComprehensiveReportGenerator()
-        detailed_report = generator.generate_comprehensive_report(market_data, price_history)
+        # 生成详细报告 - 使用简化版本
+        logging.info("开始调用简化详细报告生成器...")
+        from simple_detailed_report import generate_simple_detailed_report
+        
+        detailed_report = generate_simple_detailed_report(market_data, price_history)
+        logging.info("详细报告生成完成")
         
         return jsonify({
             'success': True,
