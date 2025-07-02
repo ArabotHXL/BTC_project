@@ -611,20 +611,37 @@
             console.log('Technical indicators from server:', techData);
             
             // 更新RSI
-            if (techData.rsi_14 !== null) {
-                document.getElementById('rsiValue').textContent = formatNumber(techData.rsi_14, 1);
-                document.getElementById('rsiSignal').textContent = getRSISignal(techData.rsi_14);
+            if (techData.rsi_14 !== null && techData.rsi_14 !== undefined) {
+                const rsiValue = parseFloat(techData.rsi_14);
+                document.getElementById('rsiValue').textContent = formatNumber(rsiValue, 1);
+                document.getElementById('rsiSignal').textContent = getRSISignal(rsiValue);
             }
             
             // 更新其他技术指标
-            if (techData.sma_20) document.getElementById('sma20').textContent = formatPrice(techData.sma_20);
-            if (techData.sma_50) document.getElementById('sma50').textContent = formatPrice(techData.sma_50);
-            if (techData.ema_12) document.getElementById('ema12').textContent = formatPrice(techData.ema_12);
-            if (techData.ema_26) document.getElementById('ema26').textContent = formatPrice(techData.ema_26);
-            if (techData.macd) document.getElementById('macd').textContent = formatNumber(techData.macd, 4);
-            if (techData.volatility_30d) document.getElementById('volatility').textContent = formatPercent(techData.volatility_30d);
-            if (techData.bollinger_upper) document.getElementById('bollingerUpper').textContent = formatPrice(techData.bollinger_upper);
-            if (techData.bollinger_lower) document.getElementById('bollingerLower').textContent = formatPrice(techData.bollinger_lower);
+            if (techData.sma_20) {
+                document.getElementById('sma20').textContent = formatPrice(parseFloat(techData.sma_20));
+            }
+            if (techData.sma_50) {
+                document.getElementById('sma50').textContent = formatPrice(parseFloat(techData.sma_50));
+            }
+            if (techData.ema_12) {
+                document.getElementById('ema12').textContent = formatPrice(parseFloat(techData.ema_12));
+            }
+            if (techData.ema_26) {
+                document.getElementById('ema26').textContent = formatPrice(parseFloat(techData.ema_26));
+            }
+            if (techData.macd) {
+                document.getElementById('macd').textContent = formatNumber(parseFloat(techData.macd), 4);
+            }
+            if (techData.volatility_30d) {
+                document.getElementById('volatility').textContent = formatPercent(parseFloat(techData.volatility_30d) * 100);
+            }
+            if (techData.bollinger_upper) {
+                document.getElementById('bollingerUpper').textContent = formatPrice(parseFloat(techData.bollinger_upper));
+            }
+            if (techData.bollinger_lower) {
+                document.getElementById('bollingerLower').textContent = formatPrice(parseFloat(techData.bollinger_lower));
+            }
             {% endif %}
             
             // 分析报告数据来自服务器端
