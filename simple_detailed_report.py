@@ -33,9 +33,21 @@ def generate_simple_detailed_report(market_data: Dict, price_history: List = Non
     
     for miner in miners:
         for elec_cost in electricity_costs:
-            # 计算日产出BTC
-            miner_hashrate = miner['hashrate'] * 1e12  # TH/s to H/s
-            daily_btc = (miner_hashrate * 86400 * 6.25) / (network_difficulty * 2**32 / 1e12)
+            # 使用挖矿计算器中的正确算法
+            miner_hashrate_th = miner['hashrate']  # TH/s
+            network_hashrate_eh = market_data.get('network_hashrate', 750)  # EH/s
+            network_hashrate_th = network_hashrate_eh * 1e6  # 转换为TH/s
+            
+            # 全网日产出计算
+            blocks_per_day = 144
+            block_reward = 3.125
+            network_daily_btc = block_reward * blocks_per_day
+            
+            # 每TH每日产出 = 全网日产出 / 全网TH
+            btc_per_th = network_daily_btc / network_hashrate_th
+            
+            # 矿机每日产出 = 矿机TH * 每TH产出
+            daily_btc = miner_hashrate_th * btc_per_th
             
             # 计算收益
             daily_revenue = daily_btc * btc_price
@@ -44,11 +56,19 @@ def generate_simple_detailed_report(market_data: Dict, price_history: List = Non
             monthly_profit = daily_profit * 30
             
             # ROI计算
-            roi_months = miner['price'] / monthly_profit if monthly_profit > 0 else float('inf')
-            annual_roi = (monthly_profit * 12 / miner['price']) * 100 if miner['price'] > 0 else 0
+            if monthly_profit > 0:
+                roi_months = miner['price'] / monthly_profit
+                annual_roi = (monthly_profit * 12 / miner['price']) * 100
+            else:
+                roi_months = float('inf')
+                annual_roi = -100
             
-            # 盈亏平衡电价
-            breakeven_cost = daily_revenue / ((miner['power'] / 1000) * 24) if miner['power'] > 0 else 0
+            # 盈亏平衡电价 (USD/kWh)
+            if miner['power'] > 0:
+                daily_power_kwh = (miner['power'] / 1000) * 24
+                breakeven_cost = daily_revenue / daily_power_kwh
+            else:
+                breakeven_cost = 0
             
             profitability_results.append({
                 'miner_model': miner['name'],
@@ -114,14 +134,27 @@ def generate_simple_detailed_report(market_data: Dict, price_history: List = Non
         'regulatory_risk': '监管政策变化可能影响挖矿业务'
     }
     
-    # 投资建议
-    recommendations = [
-        '建议选择高效矿机型号，如Antminer S19 XP',
-        '控制电力成本在$0.05/kWh以下以确保盈利',
-        '密切关注BTC价格和网络难度变化',
-        '分批投资，降低单次投资风险',
-        '建立完善的风险管理机制'
-    ]
+    # 基于实际分析生成准确的投资建议
+    recommendations = []
+    
+    if best_scenario:
+        recommendations.append(f'推荐使用{best_scenario["miner_model"]}，年化ROI达{best_scenario["annual_roi"]:.1f}%')
+        recommendations.append(f'确保电价低于${best_scenario["breakeven_electricity_cost"]:.4f}/kWh保持盈利')
+        if best_scenario["roi_months"] < 24:
+            recommendations.append(f'回本周期约{best_scenario["roi_months"]:.1f}个月，投资回报良好')
+        else:
+            recommendations.append(f'回本周期较长({best_scenario["roi_months"]:.1f}个月)，需谨慎评估')
+    else:
+        recommendations.append('当前市场条件下挖矿盈利困难，建议等待更好时机')
+        recommendations.append('考虑寻找更低电价或更高效的矿机设备')
+    
+    if btc_price > 100000:
+        recommendations.append('BTC价格处于高位，但要防范价格回调风险')
+    elif btc_price < 80000:
+        recommendations.append('BTC价格相对较低，可能是投资挖矿的好时机')
+    
+    recommendations.append('密切关注网络难度调整，影响挖矿收益')
+    recommendations.append('建议分批投资，降低市场波动风险')
     
     # 构建完整报告
     report = {
