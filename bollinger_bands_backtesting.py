@@ -148,6 +148,10 @@ class BollingerBandsBacktester:
             current_price = row['btc_price']
             current_time = row['timestamp']
             
+            # 计算Buy & Hold策略的权益
+            first_price = df.iloc[0]['btc_price']
+            buy_hold_equity = initial_capital * (current_price / first_price)
+            
             # 买入信号且当前空仓
             if row['buy_signal'] == 1 and position == 0:
                 position = 1
@@ -156,8 +160,8 @@ class BollingerBandsBacktester:
                 
                 # 记录买入交易
                 trade = Trade(
-                    entry_time=current_time,
-                    entry_price=current_price,
+                    entry_time=entry_time,
+                    entry_price=entry_price,
                     trade_type="buy"
                 )
                 trades.append(trade)
@@ -170,8 +174,7 @@ class BollingerBandsBacktester:
                 
                 # 计算收益
                 profit_pct = (exit_price - entry_price) / entry_price
-                capital *= (1 + profit_pct)
-                equity = capital
+                equity *= (1 + profit_pct)
                 
                 # 更新最后一笔交易
                 if trades:
