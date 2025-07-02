@@ -454,7 +454,13 @@
                 
                 // 更新RSI信号
                 if (data.rsi_14 !== null) {
-                    const rsiSignal = getRSISignal(data.rsi_14);
+                    const rsi = data.rsi_14;
+                    let rsiSignal = '--';
+                    if (rsi < 30) rsiSignal = '超卖';
+                    else if (rsi > 70) rsiSignal = '超买';
+                    else if (rsi < 50) rsiSignal = '偏弱';
+                    else rsiSignal = '偏强';
+                    
                     updateElementSafely('rsiSignal', rsiSignal);
                 }
                 
