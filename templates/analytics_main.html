@@ -533,11 +533,16 @@
                                     <div class="mb-3">
                                         <label class="form-label small">选择矿机型号</label>
                                         <select class="form-select form-select-sm" id="minerModelSelect">
-                                            <option value="antminer_s19_pro">Antminer S19 Pro (110TH/s)</option>
-                                            <option value="antminer_s19j_pro">Antminer S19j Pro (104TH/s)</option>
-                                            <option value="antminer_s19_xp">Antminer S19 XP (140TH/s)</option>
-                                            <option value="whatsminer_m30s">WhatsMiner M30S+ (112TH/s)</option>
-                                            <option value="whatsminer_m50">WhatsMiner M50 (114TH/s)</option>
+                                            <option value="Antminer S21 XP Hyd">Antminer S21 XP Hyd (473TH/s)</option>
+                                            <option value="Antminer S21 XP">Antminer S21 XP (270TH/s)</option>
+                                            <option value="Antminer S21">Antminer S21 (200TH/s)</option>
+                                            <option value="Antminer S21 Hyd">Antminer S21 Hyd (335TH/s)</option>
+                                            <option value="Antminer S19">Antminer S19 (95TH/s)</option>
+                                            <option value="Antminer S19 Pro" selected>Antminer S19 Pro (110TH/s)</option>
+                                            <option value="Antminer S19j Pro">Antminer S19j Pro (100TH/s)</option>
+                                            <option value="Antminer S19 XP">Antminer S19 XP (140TH/s)</option>
+                                            <option value="Antminer S19 Hydro">Antminer S19 Hydro (158TH/s)</option>
+                                            <option value="Antminer S19 Pro+ Hyd">Antminer S19 Pro+ Hyd (198TH/s)</option>
                                         </select>
                                     </div>
                                     <div class="row text-center">
@@ -1476,14 +1481,19 @@
             if (minerModelSelect) {
                 const selectedMiner = minerModelSelect.value;
                 const minerSpecs = {
-                    'antminer_s19_pro': { hashrate: 110, power: 3250, cost: 2500 },
-                    'antminer_s19j_pro': { hashrate: 104, power: 3068, cost: 2200 },
-                    'antminer_s19_xp': { hashrate: 140, power: 3010, cost: 3200 },
-                    'whatsminer_m30s': { hashrate: 112, power: 3472, cost: 2400 },
-                    'whatsminer_m50': { hashrate: 114, power: 3276, cost: 2600 }
+                    'Antminer S21 XP Hyd': { hashrate: 473, power: 5676, cost: 15000 },
+                    'Antminer S21 XP': { hashrate: 270, power: 3645, cost: 8500 },
+                    'Antminer S21': { hashrate: 200, power: 3500, cost: 6500 },
+                    'Antminer S21 Hyd': { hashrate: 335, power: 5360, cost: 12000 },
+                    'Antminer S19': { hashrate: 95, power: 3250, cost: 2200 },
+                    'Antminer S19 Pro': { hashrate: 110, power: 3250, cost: 2800 },
+                    'Antminer S19j Pro': { hashrate: 100, power: 3050, cost: 2600 },
+                    'Antminer S19 XP': { hashrate: 140, power: 3010, cost: 3500 },
+                    'Antminer S19 Hydro': { hashrate: 158, power: 5451, cost: 4200 },
+                    'Antminer S19 Pro+ Hyd': { hashrate: 198, power: 5445, cost: 5500 }
                 };
                 
-                const spec = minerSpecs[selectedMiner] || minerSpecs['antminer_s19_pro'];
+                const spec = minerSpecs[selectedMiner] || minerSpecs['Antminer S19 Pro'];
                 const dailyProfit = calculateDailyProfitForMiner(selectedMiner, marketData);
                 
                 // Update display
