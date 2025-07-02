@@ -1421,11 +1421,12 @@
                 }
             }
             
-            // Update timestamp
+            // Update timestamp - 显示系统本地时间
             const reportTimestampElement = document.getElementById('reportTimestamp');
             if (reportTimestampElement && report.created_at) {
                 const date = new Date(report.created_at);
-                reportTimestampElement.textContent = '生成时间: ' + date.toLocaleString('zh-CN');
+                // 使用系统本地时间格式
+                reportTimestampElement.textContent = '生成时间: ' + date.toLocaleString();
             }
             
             console.log('Report display updated successfully');
@@ -2484,7 +2485,17 @@
             }
             
             try {
-                const labels = data.map(item => new Date(item.timestamp || item.time).toLocaleTimeString());
+                // 转换为用户系统的本地时间
+                const labels = data.map(item => {
+                    const date = new Date(item.timestamp || item.time);
+                    // 使用用户系统的本地时间格式，显示月日时分
+                    return date.toLocaleString('zh-CN', {
+                        month: '2-digit',
+                        day: '2-digit', 
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                });
                 const prices = data.map(item => item.btc_price || item.price);
                 
                 if (priceChart && priceChart.data) {
