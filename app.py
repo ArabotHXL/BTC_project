@@ -2027,7 +2027,7 @@ def analytics_dashboard():
     except Exception as e:
         print(f"获取分析数据时出错: {e}")
     
-    return render_template('analytics_main.html', 
+    return render_template('analytics_dashboard.html', 
                           user_role=user_role,
                           technical_indicators=technical_indicators,
                           latest_report=latest_report)
