@@ -462,6 +462,18 @@
                                         <small class="text-muted">可购买矿机数量</small>
                                         <div class="fw-bold text-info" id="availableMinerCount">--</div>
                                     </div>
+                                    <!-- Electricity Cost Breakdown -->
+                                    <div class="row text-center mb-3" style="background-color: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px;">
+                                        <div class="col-6">
+                                            <small class="text-muted">日电费成本</small>
+                                            <div class="text-warning" id="dailyElectricityCost">--</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">净日收益</small>
+                                            <div class="text-success fw-bold" id="netDailyProfit">--</div>
+                                        </div>
+                                    </div>
+                                    
                                     <div class="row text-center">
                                         <div class="col-6">
                                             <small class="text-muted">预期日收益</small>
@@ -1345,12 +1357,26 @@
                     paybackDays
                 });
                 
+                // Calculate electricity cost details
+                const electricityCost = 0.05; // Default electricity cost
+                const dailyElectricityCostTotal = (spec.power / 1000) * 24 * electricityCost * minerCount;
+                
                 // Update display
                 const expectedDailyProfit = document.getElementById('expectedDailyProfit');
                 const expectedMonthlyProfit = document.getElementById('expectedMonthlyProfit');
                 const expectedAnnualROI = document.getElementById('expectedAnnualROI');
                 const expectedPaybackTime = document.getElementById('expectedPaybackTime');
                 const availableMinerCount = document.getElementById('availableMinerCount');
+                const dailyElectricityCost = document.getElementById('dailyElectricityCost');
+                const netDailyProfit = document.getElementById('netDailyProfit');
+                
+                // Update electricity cost details
+                if (dailyElectricityCost) {
+                    dailyElectricityCost.textContent = '-$' + formatNumber(dailyElectricityCostTotal, 2);
+                }
+                if (netDailyProfit) {
+                    netDailyProfit.textContent = '$' + formatNumber(totalDailyProfit, 2);
+                }
                 
                 // Safe display with validation
                 if (expectedDailyProfit) {
