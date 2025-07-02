@@ -1556,7 +1556,7 @@
             const hashrateEfficiency = document.getElementById('hashrateEfficiency');
             if (hashrateEfficiency) {
                 // Base efficiency on current profitability
-                const dailyProfit = calculateDailyProfitForMiner('antminer_s19_pro', marketData);
+                const dailyProfit = calculateDailyProfitForMiner('Antminer S19 Pro', marketData);
                 const efficiency = dailyProfit > 0 ? 
                     Math.min(99.9, 90 + (dailyProfit / 50) * 8) : 
                     Math.max(85, 90 - Math.abs(dailyProfit) / 20);
