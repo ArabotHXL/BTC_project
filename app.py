@@ -854,11 +854,15 @@ def get_network_stats():
         network_data = get_enhanced_network_data()
         
         if network_data and network_data.get('btc_price'):
+            # 确保难度值正确转换为T单位
+            difficulty_raw = network_data['difficulty']
+            difficulty_t = difficulty_raw / 1e12 if difficulty_raw and difficulty_raw > 1000 else difficulty_raw
+            
             response_data = {
                 'success': True,
                 'btc_price': network_data['btc_price'],
                 'price': network_data['btc_price'],  # 兼容性字段
-                'difficulty': network_data['difficulty'],
+                'difficulty': difficulty_t,  # 确保返回T单位的难度
                 'network_hashrate': network_data['hashrate'],
                 'hashrate': network_data['hashrate'],  # 兼容性字段
                 'block_reward': network_data['block_reward'],
