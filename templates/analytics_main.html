@@ -1289,14 +1289,8 @@
         // Investment Decision Support Functions
         async function updateMiningDecisionModules(marketData) {
             try {
-                // Update investment prediction modules for potential customers
-                updateInvestmentPrediction(marketData);
-                
-                // Update electricity sensitivity analysis
-                updateElectricitySensitivity(marketData);
-                
-                // Update miner model comparison
-                updateMinerModelComparison(marketData);
+                // Update all investment components with unified data
+                updateAllInvestmentComponents(marketData);
                 
                 // Setup interactive elements
                 setupInvestmentInteractions();
@@ -1309,13 +1303,27 @@
         function updateInvestmentPrediction(marketData) {
             const investmentAmount = parseFloat(document.getElementById('investmentAmount')?.value || 25000);
             
-            // Calculate how many miners this investment can buy
-            const avgMinerCost = 2500; // Average miner cost
-            const minerCount = Math.floor(investmentAmount / avgMinerCost);
+            // Get selected miner specifications
+            const selectedMiner = document.getElementById('minerModelSelect')?.value || 'Antminer S19 Pro';
+            const minerSpecs = {
+                'Antminer S21 XP Hyd': { hashrate: 473, power: 5676, cost: 15000 },
+                'Antminer S21 XP': { hashrate: 270, power: 3645, cost: 8500 },
+                'Antminer S21': { hashrate: 200, power: 3500, cost: 6500 },
+                'Antminer S21 Hyd': { hashrate: 335, power: 5360, cost: 12000 },
+                'Antminer S19': { hashrate: 95, power: 3250, cost: 2200 },
+                'Antminer S19 Pro': { hashrate: 110, power: 3250, cost: 2800 },
+                'Antminer S19j Pro': { hashrate: 100, power: 3050, cost: 2600 },
+                'Antminer S19 XP': { hashrate: 140, power: 3010, cost: 3500 },
+                'Antminer S19 Hydro': { hashrate: 158, power: 5451, cost: 4200 },
+                'Antminer S19 Pro+ Hyd': { hashrate: 198, power: 5445, cost: 5500 }
+            };
+            
+            const spec = minerSpecs[selectedMiner] || minerSpecs['Antminer S19 Pro'];
+            const minerCount = Math.floor(investmentAmount / spec.cost);
             
             if (minerCount > 0) {
-                // Calculate daily profit per miner (using S19 Pro as reference)
-                const dailyProfitPerMiner = calculateDailyProfitForMiner('antminer_s19_pro', marketData);
+                // Calculate daily profit per miner using selected miner
+                const dailyProfitPerMiner = calculateDailyProfitForMiner(selectedMiner, marketData);
                 const totalDailyProfit = dailyProfitPerMiner * minerCount;
                 const monthlyProfit = totalDailyProfit * 30;
                 const annualROI = (totalDailyProfit * 365 / investmentAmount) * 100;
@@ -1378,9 +1386,12 @@
                 const electricityCost = parseFloat(electricityRange.value);
                 currentElectricityPrice.textContent = '$' + electricityCost.toFixed(3);
                 
-                // Calculate breakeven for current electricity cost
-                const dailyProfit = calculateDailyProfitForMiner('antminer_s19_pro', marketData, electricityCost);
-                const breakevenElectricityRate = calculateBreakevenElectricity('antminer_s19_pro', marketData);
+                // Get selected miner model
+                const selectedMiner = document.getElementById('minerModelSelect')?.value || 'Antminer S19 Pro';
+                
+                // Calculate breakeven for current electricity cost using selected miner
+                const dailyProfit = calculateDailyProfitForMiner(selectedMiner, marketData, electricityCost);
+                const breakevenElectricityRate = calculateBreakevenElectricity(selectedMiner, marketData);
                 
                 if (breakevenPoint) {
                     breakevenPoint.textContent = '$' + breakevenElectricityRate.toFixed(4);
@@ -1519,13 +1530,20 @@
             }
         }
 
+        function updateAllInvestmentComponents(marketData) {
+            // 统一更新所有投资组件，确保数据一致性
+            updateInvestmentPrediction(marketData);
+            updateElectricitySensitivity(marketData);
+            updateMinerModelComparison(marketData);
+        }
+
         function setupInvestmentInteractions() {
             // Investment amount change handler
             const investmentAmount = document.getElementById('investmentAmount');
             if (investmentAmount) {
                 investmentAmount.addEventListener('input', function() {
                     if (currentMarketData) {
-                        updateInvestmentPrediction(currentMarketData);
+                        updateAllInvestmentComponents(currentMarketData);
                     }
                 });
             }
@@ -1535,7 +1553,7 @@
             if (electricityRange) {
                 electricityRange.addEventListener('input', function() {
                     if (currentMarketData) {
-                        updateElectricitySensitivity(currentMarketData);
+                        updateAllInvestmentComponents(currentMarketData);
                     }
                 });
             }
@@ -1545,7 +1563,7 @@
             if (minerModelSelect) {
                 minerModelSelect.addEventListener('change', function() {
                     if (currentMarketData) {
-                        updateMinerModelComparison(currentMarketData);
+                        updateAllInvestmentComponents(currentMarketData);
                     }
                 });
             }
