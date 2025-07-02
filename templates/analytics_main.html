@@ -458,6 +458,10 @@
                                         <label class="form-label small">投资金额 (USD)</label>
                                         <input type="number" class="form-control form-control-sm" id="investmentAmount" value="25000" min="1000" step="1000">
                                     </div>
+                                    <div class="mb-2 text-center">
+                                        <small class="text-muted">可购买矿机数量</small>
+                                        <div class="fw-bold text-info" id="availableMinerCount">--</div>
+                                    </div>
                                     <div class="row text-center">
                                         <div class="col-6">
                                             <small class="text-muted">预期日收益</small>
@@ -1334,6 +1338,7 @@
                 const expectedMonthlyProfit = document.getElementById('expectedMonthlyProfit');
                 const expectedAnnualROI = document.getElementById('expectedAnnualROI');
                 const expectedPaybackTime = document.getElementById('expectedPaybackTime');
+                const availableMinerCount = document.getElementById('availableMinerCount');
                 
                 if (expectedDailyProfit) expectedDailyProfit.textContent = '$' + formatNumber(totalDailyProfit, 2);
                 if (expectedMonthlyProfit) expectedMonthlyProfit.textContent = '$' + formatNumber(monthlyProfit, 0);
@@ -1344,6 +1349,9 @@
                     } else {
                         expectedPaybackTime.textContent = formatNumber(paybackDays / 365, 1) + ' 年';
                     }
+                }
+                if (availableMinerCount) {
+                    availableMinerCount.textContent = formatNumber(minerCount, 0) + ' 台 ' + selectedMiner.replace('Antminer ', '');
                 }
             }
         }
