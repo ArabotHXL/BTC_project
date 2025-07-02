@@ -13,13 +13,18 @@ def generate_simple_detailed_report(market_data: Dict, price_history: List = Non
     if price_history is None:
         price_history = []
     
-    # 基础矿机数据
+    # 基础矿机数据 - 使用主计算器中的真实矿机列表
     miners = [
-        {'name': 'Antminer S19 Pro', 'hashrate': 110, 'power': 3250, 'efficiency': 29.5, 'price': 2500},
-        {'name': 'Antminer S19j Pro', 'hashrate': 104, 'power': 3068, 'efficiency': 29.5, 'price': 2300},
+        {'name': 'Antminer S21 XP Hyd', 'hashrate': 473, 'power': 5676, 'efficiency': 12.0, 'price': 15000},
+        {'name': 'Antminer S21 XP', 'hashrate': 270, 'power': 3645, 'efficiency': 13.5, 'price': 8500},
+        {'name': 'Antminer S21', 'hashrate': 200, 'power': 3500, 'efficiency': 17.5, 'price': 6500},
+        {'name': 'Antminer S21 Hyd', 'hashrate': 335, 'power': 5360, 'efficiency': 16.0, 'price': 12000},
+        {'name': 'Antminer S19', 'hashrate': 95, 'power': 3250, 'efficiency': 34.2, 'price': 2200},
+        {'name': 'Antminer S19 Pro', 'hashrate': 110, 'power': 3250, 'efficiency': 29.5, 'price': 2800},
+        {'name': 'Antminer S19j Pro', 'hashrate': 100, 'power': 3050, 'efficiency': 30.5, 'price': 2600},
         {'name': 'Antminer S19 XP', 'hashrate': 140, 'power': 3010, 'efficiency': 21.5, 'price': 3500},
-        {'name': 'WhatsMiner M30S++', 'hashrate': 112, 'power': 3472, 'efficiency': 31.0, 'price': 2400},
-        {'name': 'WhatsMiner M31S+', 'hashrate': 82, 'power': 3220, 'efficiency': 39.3, 'price': 1800}
+        {'name': 'Antminer S19 Hydro', 'hashrate': 158, 'power': 5451, 'efficiency': 34.5, 'price': 4200},
+        {'name': 'Antminer S19 Pro+ Hyd', 'hashrate': 198, 'power': 5445, 'efficiency': 27.5, 'price': 5500}
     ]
     
     # 计算盈利性分析
