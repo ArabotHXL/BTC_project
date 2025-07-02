@@ -1425,8 +1425,15 @@
             const reportTimestampElement = document.getElementById('reportTimestamp');
             if (reportTimestampElement && report.created_at) {
                 const date = new Date(report.created_at);
-                // 使用系统本地时间格式
-                reportTimestampElement.textContent = '生成时间: ' + date.toLocaleString();
+                // 使用12小时制系统本地时间格式
+                reportTimestampElement.textContent = '生成时间: ' + date.toLocaleString(undefined, {
+                    year: 'numeric',
+                    month: '2-digit', 
+                    day: '2-digit',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
             }
             
             console.log('Report display updated successfully');
@@ -2488,12 +2495,13 @@
                 // 转换为用户系统的本地时间
                 const labels = data.map(item => {
                     const date = new Date(item.timestamp || item.time);
-                    // 使用用户系统的本地时间格式，显示月日时分
-                    return date.toLocaleString('zh-CN', {
+                    // 使用系统本地时间格式，12小时制显示
+                    return date.toLocaleString(undefined, {
                         month: '2-digit',
                         day: '2-digit', 
-                        hour: '2-digit',
-                        minute: '2-digit'
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
                     });
                 });
                 const prices = data.map(item => item.btc_price || item.price);
