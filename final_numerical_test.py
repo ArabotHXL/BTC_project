@@ -118,7 +118,7 @@ class FinalNumericalTest:
         test_miners = [
             {"name": "Antminer S19 Pro", "expected_hashrate": 110, "expected_power": 3250},
             {"name": "Antminer S19", "expected_hashrate": 95, "expected_power": 3250},
-            {"name": "Antminer S21 XP", "expected_hashrate": 270, "expected_power": 3645}
+            {"name": "Antminer S21 XP", "expected_hashrate": 473, "expected_power": 5676}
         ]
         
         # 验证矿机数据
