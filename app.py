@@ -2469,9 +2469,9 @@ def api_generate_detailed_report():
 def api_bollinger_backtest():
     """布林带策略回测API"""
     try:
-        # 检查用户权限
-        if session.get('user_email') != 'hxl2022hao@gmail.com':
-            return jsonify({'success': False, 'error': '需要拥有者权限'})
+        # 检查用户权限 - 允许所有已认证用户使用布林带回测
+        if not session.get('authenticated'):
+            return jsonify({'success': False, 'error': '需要登录'})
         
         from bollinger_bands_backtesting import BollingerBandsBacktester
         

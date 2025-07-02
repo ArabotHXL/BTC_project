@@ -729,6 +729,122 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- 布林带策略回测 -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-graph-up-arrow me-2"></i>布林带策略回测
+                                        <span class="badge bg-warning text-dark ms-2">Professional</span>
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <!-- 回测参数设置 -->
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label small">回测天数</label>
+                                            <select class="form-select form-select-sm" id="backtestDays">
+                                                <option value="7" selected>7天</option>
+                                                <option value="14">14天</option>
+                                                <option value="21">21天</option>
+                                                <option value="30">30天</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small">初始资金 (USD)</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="initialCapital" value="10000" min="1000" max="1000000" step="1000">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 回测按钮 -->
+                                    <div class="text-center mb-3">
+                                        <button class="btn btn-primary btn-sm" id="runBacktestBtn" onclick="runBollingerBacktest()">
+                                            <i class="bi bi-play-circle me-2"></i>运行策略回测
+                                        </button>
+                                        <button class="btn btn-outline-secondary btn-sm ms-2" onclick="refreshTechnicalIndicators()">
+                                            <i class="bi bi-arrow-clockwise"></i> 刷新技术指标
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- 回测结果 -->
+                                    <div id="backtestResults" style="display: none;">
+                                        <div class="row mb-3">
+                                            <div class="col-md-3">
+                                                <div class="card bg-light border-0">
+                                                    <div class="card-body text-center p-2">
+                                                        <h6 class="text-success mb-1 small">策略收益</h6>
+                                                        <h6 class="mb-0" id="strategyReturn">--%</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="card bg-light border-0">
+                                                    <div class="card-body text-center p-2">
+                                                        <h6 class="text-info mb-1 small">持有收益</h6>
+                                                        <h6 class="mb-0" id="buyHoldReturn">--%</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="card bg-light border-0">
+                                                    <div class="card-body text-center p-2">
+                                                        <h6 class="text-warning mb-1 small">超额收益</h6>
+                                                        <h6 class="mb-0" id="outperformance">--%</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="card bg-light border-0">
+                                                    <div class="card-body text-center p-2">
+                                                        <h6 class="text-dark mb-1 small">胜率</h6>
+                                                        <h6 class="mb-0" id="winRate">--%</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- 策略收益图表 -->
+                                        <div class="chart-container mb-3" style="height: 300px;">
+                                            <canvas id="backtestChart"></canvas>
+                                        </div>
+                                        
+                                        <!-- 交易记录 -->
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6 class="small">交易统计</h6>
+                                                <div class="text-muted small">
+                                                    <div>总交易: <span id="totalTrades">--</span></div>
+                                                    <div>盈利交易: <span id="winningTrades">--</span></div>
+                                                    <div>亏损交易: <span id="losingTrades">--</span></div>
+                                                    <div>最大回撤: <span id="maxDrawdown">--%</span></div>
+                                                    <div>夏普比率: <span id="sharpeRatio">--</span></div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6 class="small">策略说明</h6>
+                                                <div class="text-muted small">
+                                                    <div><span class="text-success">●</span> 买入信号: 价格跌破布林带下轨</div>
+                                                    <div><span class="text-danger">●</span> 卖出信号: 价格突破布林带上轨</div>
+                                                    <div><span class="text-info">●</span> 对比基准: Buy & Hold策略</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 加载状态 -->
+                                    <div id="backtestLoading" class="text-center" style="display: none;">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <div class="mt-2 text-muted small">正在运行回测...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Reports Tab -->
@@ -904,118 +1020,7 @@
                 </div>
             </div>
             
-            <!-- 布林带策略回测 -->
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="card bg-dark border-secondary h-100">
-                        <div class="card-header bg-gradient border-bottom border-secondary">
-                            <h5 class="mb-0 text-white">
-                                <i class="bi bi-graph-up-arrow me-2"></i>布林带策略回测
-                                <span class="badge bg-warning text-dark ms-2">Professional</span>
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <!-- 回测参数设置 -->
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label class="form-label text-light">回测天数</label>
-                                    <select class="form-select bg-dark text-white border-secondary" id="backtestDays">
-                                        <option value="7" selected>7天</option>
-                                        <option value="14">14天</option>
-                                        <option value="21">21天</option>
-                                        <option value="30">30天</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-light">初始资金 (USD)</label>
-                                    <input type="number" class="form-control bg-dark text-white border-secondary" 
-                                           id="initialCapital" value="10000" min="1000" max="1000000" step="1000">
-                                </div>
-                            </div>
-                            
-                            <!-- 回测按钮 -->
-                            <div class="text-center mb-3">
-                                <button class="btn btn-primary" id="runBacktestBtn" onclick="runBollingerBacktest()">
-                                    <i class="bi bi-play-circle me-2"></i>运行策略回测
-                                </button>
-                            </div>
-                            
-                            <!-- 回测结果 -->
-                            <div id="backtestResults" style="display: none;">
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <div class="card bg-secondary border-0">
-                                            <div class="card-body text-center p-2">
-                                                <h6 class="text-success mb-1">策略收益</h6>
-                                                <h5 class="mb-0" id="strategyReturn">--%</h5>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="card bg-secondary border-0">
-                                            <div class="card-body text-center p-2">
-                                                <h6 class="text-info mb-1">持有收益</h6>
-                                                <h5 class="mb-0" id="buyHoldReturn">--%</h5>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="card bg-secondary border-0">
-                                            <div class="card-body text-center p-2">
-                                                <h6 class="text-warning mb-1">超额收益</h6>
-                                                <h5 class="mb-0" id="outperformance">--%</h5>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="card bg-secondary border-0">
-                                            <div class="card-body text-center p-2">
-                                                <h6 class="text-light mb-1">胜率</h6>
-                                                <h5 class="mb-0" id="winRate">--%</h5>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- 策略收益图表 -->
-                                <div class="chart-container mb-3">
-                                    <canvas id="backtestChart" width="400" height="200"></canvas>
-                                </div>
-                                
-                                <!-- 交易记录 -->
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <h6 class="text-light">交易统计</h6>
-                                        <div class="text-muted small">
-                                            <div>总交易: <span id="totalTrades">--</span></div>
-                                            <div>盈利交易: <span id="winningTrades">--</span></div>
-                                            <div>亏损交易: <span id="losingTrades">--</span></div>
-                                            <div>最大回撤: <span id="maxDrawdown">--%</span></div>
-                                            <div>夏普比率: <span id="sharpeRatio">--</span></div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <h6 class="text-light">策略说明</h6>
-                                        <div class="text-muted small">
-                                            <div><span class="text-success">●</span> 买入信号: 价格跌破布林带下轨</div>
-                                            <div><span class="text-danger">●</span> 卖出信号: 价格突破布林带上轨</div>
-                                            <div><span class="text-info">●</span> 对比基准: Buy & Hold策略</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- 加载状态 -->
-                            <div id="backtestLoading" class="text-center" style="display: none;">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <div class="mt-2 text-light">正在运行回测...</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
         </div>
     </div>
 
