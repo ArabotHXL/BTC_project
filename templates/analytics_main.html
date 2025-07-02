@@ -2696,7 +2696,7 @@
         // 初始化服务器端技术指标数据
         function initServerSideTechnicalData() {
             {% if technical_indicators %}
-            const serverTechData = {{ technical_indicators | tojsonfilter | safe }};
+            const serverTechData = {{ technical_indicators | tojson | safe }};
             console.log('Loading server-side technical indicators:', serverTechData);
             updateTechnicalIndicatorsDisplay(serverTechData);
             {% else %}
