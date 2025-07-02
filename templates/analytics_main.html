@@ -3069,13 +3069,48 @@
                     labels: labels,
                     datasets: [
                         {
-                            label: '布林带策略',
+                            label: 'BTC价格',
+                            data: priceData,
+                            borderColor: '#ffc107',
+                            backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            yAxisID: 'y1',
+                            order: 3
+                        },
+                        {
+                            label: '布林带上轨',
+                            data: bbUpper,
+                            borderColor: '#6c757d',
+                            backgroundColor: 'rgba(108, 117, 125, 0.1)',
+                            borderWidth: 1,
+                            borderDash: [5, 5],
+                            fill: false,
+                            yAxisID: 'y1',
+                            pointRadius: 0,
+                            order: 4
+                        },
+                        {
+                            label: '布林带下轨',
+                            data: bbLower,
+                            borderColor: '#6c757d',
+                            backgroundColor: 'rgba(108, 117, 125, 0.1)',
+                            borderWidth: 1,
+                            borderDash: [5, 5],
+                            fill: '+1',
+                            yAxisID: 'y1',
+                            pointRadius: 0,
+                            order: 5
+                        },
+                        {
+                            label: '策略收益',
                             data: strategyData,
                             borderColor: '#28a745',
                             backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                            borderWidth: 2,
+                            borderWidth: 3,
                             fill: false,
-                            yAxisID: 'y'
+                            yAxisID: 'y',
+                            order: 1
                         },
                         {
                             label: 'Buy & Hold',
@@ -3084,100 +3119,153 @@
                             backgroundColor: 'rgba(23, 162, 184, 0.1)',
                             borderWidth: 2,
                             fill: false,
-                            yAxisID: 'y'
-                        },
-                        {
-                            label: 'BTC价格',
-                            data: priceData,
-                            borderColor: '#ffc107',
-                            backgroundColor: 'rgba(255, 193, 7, 0.1)',
-                            borderWidth: 1,
-                            fill: false,
-                            yAxisID: 'y1'
+                            yAxisID: 'y',
+                            order: 2
                         },
                         {
                             label: '买入信号',
                             data: buySignals,
                             backgroundColor: '#28a745',
-                            borderColor: '#28a745',
-                            pointRadius: 6,
-                            pointHoverRadius: 8,
+                            borderColor: '#ffffff',
+                            borderWidth: 2,
+                            pointRadius: 8,
+                            pointHoverRadius: 10,
                             showLine: false,
-                            yAxisID: 'y'
+                            yAxisID: 'y1',
+                            order: 0
                         },
                         {
                             label: '卖出信号',
                             data: sellSignals,
                             backgroundColor: '#dc3545',
-                            borderColor: '#dc3545',
-                            pointRadius: 6,
-                            pointHoverRadius: 8,
+                            borderColor: '#ffffff',
+                            borderWidth: 2,
+                            pointRadius: 8,
+                            pointHoverRadius: 10,
                             showLine: false,
-                            yAxisID: 'y'
+                            yAxisID: 'y1',
+                            order: 0
                         }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
                     plugins: {
-                        legend: {
-                            labels: {
-                                color: '#ffffff'
-                            }
-                        },
                         title: {
                             display: true,
-                            text: '策略收益对比 & 交易信号',
-                            color: '#ffffff'
+                            text: '布林带技术分析 & 价格信号图表',
+                            color: '#ffffff',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#ffffff',
+                                usePointStyle: true,
+                                padding: 15,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: '#ffc107',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.dataset.yAxisID === 'y') {
+                                        label += '$' + context.parsed.y.toLocaleString();
+                                    } else {
+                                        label += '$' + context.parsed.y.toLocaleString();
+                                    }
+                                    return label;
+                                }
+                            }
                         }
                     },
                     scales: {
                         x: {
+                            display: true,
                             ticks: {
                                 color: '#ffffff',
-                                maxTicksLimit: 8
+                                maxTicksLimit: 8,
+                                font: {
+                                    size: 11
+                                }
                             },
                             grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
+                                color: 'rgba(255, 255, 255, 0.1)',
+                                lineWidth: 1
                             }
                         },
                         y: {
                             type: 'linear',
                             display: true,
                             position: 'left',
+                            title: {
+                                display: true,
+                                text: '策略收益 (USD)',
+                                color: '#ffffff',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
                             ticks: {
                                 color: '#ffffff',
+                                font: {
+                                    size: 11
+                                },
                                 callback: function(value) {
                                     return '$' + value.toLocaleString();
                                 }
                             },
                             grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            title: {
-                                display: true,
-                                text: '资金 (USD)',
-                                color: '#ffffff'
+                                color: 'rgba(255, 255, 255, 0.1)',
+                                lineWidth: 1
                             }
                         },
                         y1: {
                             type: 'linear',
                             display: true,
                             position: 'right',
+                            title: {
+                                display: true,
+                                text: 'BTC价格 & 布林带 (USD)',
+                                color: '#ffffff',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
                             ticks: {
-                                color: '#ffc107',
+                                color: '#ffffff',
+                                font: {
+                                    size: 11
+                                },
                                 callback: function(value) {
                                     return '$' + value.toLocaleString();
                                 }
                             },
                             grid: {
                                 drawOnChartArea: false,
-                            },
-                            title: {
-                                display: true,
-                                text: 'BTC价格 (USD)',
-                                color: '#ffc107'
+                                color: 'rgba(255, 255, 255, 0.1)',
+                                lineWidth: 1
                             }
                         }
                     },
