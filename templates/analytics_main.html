@@ -1397,10 +1397,14 @@
             const spec = minerSpecs[minerType] || minerSpecs['Antminer S19 Pro'];
             const electricityCost = customElectricityCost || 0.05;
             
-            // Calculate daily BTC production using correct network data
+            // Calculate daily BTC production using CORRECT mining formula
             const hashrateInTH = spec.hashrate; // Already in TH/s
-            const networkHashrateTH = marketData.network_hashrate * 1000; // Convert EH/s to TH/s
-            const dailyBtc = (hashrateInTH / networkHashrateTH) * 144 * 3.125;
+            const networkHashrateTH = marketData.network_hashrate * 1000000; // Convert EH/s to TH/s (1 EH = 1,000,000 TH)
+            
+            // Correct formula: 全网日产出 / 全网算力 * 矿机算力
+            const networkDailyBtc = 144 * 3.125; // 144 blocks per day * 3.125 BTC reward
+            const btcPerTH = networkDailyBtc / networkHashrateTH; // BTC per TH per day
+            const dailyBtc = hashrateInTH * btcPerTH;
             
             // Calculate daily revenue and costs
             const dailyRevenue = dailyBtc * marketData.btc_price;
@@ -1498,10 +1502,14 @@
             
             const spec = minerSpecs[minerType] || minerSpecs['Antminer S19 Pro'];
             
-            // Calculate daily BTC production
+            // Calculate daily BTC production using CORRECT mining formula
             const hashrateInTH = spec.hashrate;
-            const networkHashrateTH = marketData.network_hashrate * 1000;
-            const dailyBtc = (hashrateInTH / networkHashrateTH) * 144 * 3.125;
+            const networkHashrateTH = marketData.network_hashrate * 1000000; // Convert EH/s to TH/s (1 EH = 1,000,000 TH)
+            
+            // Correct formula: 全网日产出 / 全网算力 * 矿机算力
+            const networkDailyBtc = 144 * 3.125; // 144 blocks per day * 3.125 BTC reward
+            const btcPerTH = networkDailyBtc / networkHashrateTH; // BTC per TH per day
+            const dailyBtc = hashrateInTH * btcPerTH;
             const dailyRevenue = dailyBtc * marketData.btc_price;
             
             // Breakeven when revenue equals power cost
