@@ -2419,12 +2419,12 @@ def api_generate_detailed_report():
         price_history = []
         try:
             # 从数据库获取历史数据
-            snapshots = NetworkSnapshot.query.order_by(NetworkSnapshot.timestamp.desc()).limit(168).all()
+            snapshots = NetworkSnapshot.query.order_by(NetworkSnapshot.recorded_at.desc()).limit(168).all()
             price_history = [{
                 'btc_price': s.btc_price,
                 'network_hashrate': s.network_hashrate,
                 'network_difficulty': s.network_difficulty,
-                'timestamp': s.timestamp.isoformat()
+                'timestamp': s.recorded_at.isoformat()
             } for s in snapshots if s.btc_price]
         except Exception as e:
             logging.error(f"获取价格历史数据失败: {e}")
