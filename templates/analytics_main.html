@@ -1356,30 +1356,36 @@
             }
         }
 
-        function calculateDailyProfitForMiner(minerType, marketData) {
-            // Miner specifications
+        function calculateDailyProfitForMiner(minerType, marketData, customElectricityCost = null) {
+            // Updated miner specifications matching main calculator
             const minerSpecs = {
-                'antminer_s19_pro': { hashrate: 110, power: 3250, cost: 2500 },
-                'antminer_s19j_pro': { hashrate: 104, power: 3068, cost: 2200 },
-                'antminer_s19_xp': { hashrate: 140, power: 3010, cost: 3200 },
-                'whatsminer_m30s': { hashrate: 112, power: 3472, cost: 2400 },
-                'whatsminer_m50': { hashrate: 114, power: 3276, cost: 2600 }
+                'Antminer S21 XP Hyd': { hashrate: 473, power: 5676, cost: 15000 },
+                'Antminer S21 XP': { hashrate: 270, power: 3645, cost: 8500 },
+                'Antminer S21': { hashrate: 200, power: 3500, cost: 6500 },
+                'Antminer S21 Hyd': { hashrate: 335, power: 5360, cost: 12000 },
+                'Antminer S19': { hashrate: 95, power: 3250, cost: 2200 },
+                'Antminer S19 Pro': { hashrate: 110, power: 3250, cost: 2800 },
+                'Antminer S19j Pro': { hashrate: 100, power: 3050, cost: 2600 },
+                'Antminer S19 XP': { hashrate: 140, power: 3010, cost: 3500 },
+                'Antminer S19 Hydro': { hashrate: 158, power: 5451, cost: 4200 },
+                'Antminer S19 Pro+ Hyd': { hashrate: 198, power: 5445, cost: 5500 },
+                // Legacy compatibility
+                'antminer_s19_pro': { hashrate: 110, power: 3250, cost: 2800 }
             };
             
-            const spec = minerSpecs[minerType] || minerSpecs['antminer_s19_pro'];
-            const electricityCost = 0.05; // Default electricity cost
+            const spec = minerSpecs[minerType] || minerSpecs['Antminer S19 Pro'];
+            const electricityCost = customElectricityCost || 0.05;
             
-            // Calculate daily BTC production
-            const hashrateInEH = spec.hashrate / 1000000; // Convert TH/s to EH/s
-            const networkHashrateEH = marketData.network_hashrate;
-            const dailyBtc = (hashrateInEH / networkHashrateEH) * 144 * 3.125; // 144 blocks per day, 3.125 BTC reward
+            // Calculate daily BTC production using correct network data
+            const hashrateInTH = spec.hashrate; // Already in TH/s
+            const networkHashrateTH = marketData.network_hashrate * 1000; // Convert EH/s to TH/s
+            const dailyBtc = (hashrateInTH / networkHashrateTH) * 144 * 3.125;
             
-            // Calculate daily costs and revenue
-            const dailyPowerCost = (spec.power / 1000) * 24 * electricityCost;
+            // Calculate daily revenue and costs
             const dailyRevenue = dailyBtc * marketData.btc_price;
-            const dailyProfit = dailyRevenue - dailyPowerCost;
+            const dailyPowerCost = (spec.power / 1000) * 24 * electricityCost;
             
-            return dailyProfit;
+            return dailyRevenue - dailyPowerCost;
         }
 
         function updateElectricitySensitivity(marketData) {
@@ -1441,29 +1447,33 @@
             }
         }
 
-        function calculateDailyProfitForMiner(minerType, marketData, electricityCost = 0.05) {
-            // Updated function with custom electricity cost
+        function calculateBreakevenElectricity(minerType, marketData) {
+            // Calculate breakeven electricity rate for a specific miner
             const minerSpecs = {
-                'antminer_s19_pro': { hashrate: 110, power: 3250, cost: 2500 },
-                'antminer_s19j_pro': { hashrate: 104, power: 3068, cost: 2200 },
-                'antminer_s19_xp': { hashrate: 140, power: 3010, cost: 3200 },
-                'whatsminer_m30s': { hashrate: 112, power: 3472, cost: 2400 },
-                'whatsminer_m50': { hashrate: 114, power: 3276, cost: 2600 }
+                'Antminer S21 XP Hyd': { hashrate: 473, power: 5676, cost: 15000 },
+                'Antminer S21 XP': { hashrate: 270, power: 3645, cost: 8500 },
+                'Antminer S21': { hashrate: 200, power: 3500, cost: 6500 },
+                'Antminer S21 Hyd': { hashrate: 335, power: 5360, cost: 12000 },
+                'Antminer S19': { hashrate: 95, power: 3250, cost: 2200 },
+                'Antminer S19 Pro': { hashrate: 110, power: 3250, cost: 2800 },
+                'Antminer S19j Pro': { hashrate: 100, power: 3050, cost: 2600 },
+                'Antminer S19 XP': { hashrate: 140, power: 3010, cost: 3500 },
+                'Antminer S19 Hydro': { hashrate: 158, power: 5451, cost: 4200 },
+                'Antminer S19 Pro+ Hyd': { hashrate: 198, power: 5445, cost: 5500 },
+                'antminer_s19_pro': { hashrate: 110, power: 3250, cost: 2800 }
             };
             
-            const spec = minerSpecs[minerType] || minerSpecs['antminer_s19_pro'];
+            const spec = minerSpecs[minerType] || minerSpecs['Antminer S19 Pro'];
             
             // Calculate daily BTC production
-            const hashrateInEH = spec.hashrate / 1000000;
-            const networkHashrateEH = marketData.network_hashrate;
-            const dailyBtc = (hashrateInEH / networkHashrateEH) * 144 * 3.125;
-            
-            // Calculate daily costs and revenue
-            const dailyPowerCost = (spec.power / 1000) * 24 * electricityCost;
+            const hashrateInTH = spec.hashrate;
+            const networkHashrateTH = marketData.network_hashrate * 1000;
+            const dailyBtc = (hashrateInTH / networkHashrateTH) * 144 * 3.125;
             const dailyRevenue = dailyBtc * marketData.btc_price;
-            const dailyProfit = dailyRevenue - dailyPowerCost;
             
-            return dailyProfit;
+            // Breakeven when revenue equals power cost
+            const dailyPowerKWh = (spec.power / 1000) * 24;
+            return dailyRevenue / dailyPowerKWh; // Breakeven electricity rate
         }
 
         function calculateBreakevenElectricity(minerType, marketData) {
@@ -2072,45 +2082,7 @@
             `).join('');
         }
 
-        function calculateDailyProfitForMiner(minerModel, marketData) {
-            // Simplified miner specifications
-            const miners = {
-                'antminer_s19_pro': { hashrate: 110, power: 3250 },
-                'antminer_s19j_pro': { hashrate: 104, power: 3068 },
-                'antminer_s19_xp': { hashrate: 140, power: 3010 },
-                'whatsminer_m30s': { hashrate: 112, power: 3472 },
-                'whatsminer_m50': { hashrate: 114, power: 3276 }
-            };
-            
-            const miner = miners[minerModel] || miners['antminer_s19_pro'];
-            const hashrateTerahash = miner.hashrate; // TH/s
-            const powerKW = miner.power / 1000; // Convert to kW
-            const electricityCost = 0.05; // $0.05 per kWh
-            
-            // Calculate daily mining rewards
-            const networkHashrateEH = marketData.network_hashrate || 800;
-            const networkHashrateGH = networkHashrateEH * 1e9; // Convert EH/s to GH/s
-            const minerHashrateGH = hashrateTerahash * 1000; // Convert TH/s to GH/s
-            
-            const blockReward = 3.125; // Current BTC block reward
-            const blocksPerDay = 144; // 6 blocks per hour * 24 hours
-            const btcPrice = marketData.btc_price || 100000;
-            
-            // Miner's share of total network hashrate
-            const hashrateFraction = minerHashrateGH / networkHashrateGH;
-            
-            // Daily BTC rewards
-            const dailyBTC = hashrateFraction * blockReward * blocksPerDay;
-            const dailyRevenue = dailyBTC * btcPrice;
-            
-            // Daily electricity cost
-            const dailyElectricityCost = powerKW * 24 * electricityCost;
-            
-            // Daily profit
-            const dailyProfit = dailyRevenue - dailyElectricityCost;
-            
-            return dailyProfit;
-        }
+
 
         function generateAIRecommendations(marketData) {
             const recommendations = [];
