@@ -939,8 +939,8 @@ class AnalyticsEngine:
         """启动调度器"""
         self.running = True
         
-        # 每15分钟收集一次数据
-        schedule.every(15).minutes.do(self.collect_and_analyze)
+        # 每30分钟收集一次数据
+        schedule.every(30).minutes.do(self.collect_and_analyze)
         
         # 每天早上8点生成日报
         schedule.every().day.at("08:00").do(self.generate_daily_report)
@@ -949,7 +949,7 @@ class AnalyticsEngine:
         schedule.every().day.at("20:00").do(self.generate_daily_report)
         
         logger.info("分析引擎调度器已启动")
-        logger.info("数据收集频率: 每15分钟")
+        logger.info("数据收集频率: 每30分钟")
         logger.info("报告生成: 每天8:00和20:00")
         
         # 立即执行一次
