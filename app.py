@@ -856,9 +856,11 @@ def get_network_stats():
         if network_data and network_data.get('btc_price'):
             response_data = {
                 'success': True,
-                'price': network_data['btc_price'],
-                'difficulty': network_data['difficulty'] / 10**12 if network_data['difficulty'] > 1000 else network_data['difficulty'],
-                'hashrate': network_data['hashrate'],
+                'btc_price': network_data['btc_price'],
+                'price': network_data['btc_price'],  # 兼容性字段
+                'difficulty': network_data['difficulty'],
+                'network_hashrate': network_data['hashrate'],
+                'hashrate': network_data['hashrate'],  # 兼容性字段
                 'block_reward': network_data['block_reward'],
                 'data_source': network_data['data_source'],
                 'profit_ratio': network_data.get('profit_ratio', 100),
