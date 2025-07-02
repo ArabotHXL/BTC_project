@@ -360,7 +360,7 @@
         // 获取市场数据
         async function fetchMarketData() {
             try {
-                const response = await fetch('/api/analytics/market-data');
+                const response = await fetch('/api/market-data');
                 const data = await response.json();
                 
                 if (data.error) {
@@ -607,46 +607,29 @@
             
             // 技术指标数据来自服务器端
             {% if technical_indicators %}
-            const techData = {{ technical_indicators | tojson | safe }};
+            const techData = {{ technical_indicators | tojsonfilter | safe }};
             console.log('Technical indicators from server:', techData);
             
             // 更新RSI
-            if (techData.rsi_14 !== null && techData.rsi_14 !== undefined) {
-                const rsiValue = parseFloat(techData.rsi_14);
-                document.getElementById('rsiValue').textContent = formatNumber(rsiValue, 1);
-                document.getElementById('rsiSignal').textContent = getRSISignal(rsiValue);
+            if (techData.rsi_14 !== null) {
+                document.getElementById('rsiValue').textContent = formatNumber(techData.rsi_14, 1);
+                document.getElementById('rsiSignal').textContent = getRSISignal(techData.rsi_14);
             }
             
             // 更新其他技术指标
-            if (techData.sma_20) {
-                document.getElementById('sma20').textContent = formatPrice(parseFloat(techData.sma_20));
-            }
-            if (techData.sma_50) {
-                document.getElementById('sma50').textContent = formatPrice(parseFloat(techData.sma_50));
-            }
-            if (techData.ema_12) {
-                document.getElementById('ema12').textContent = formatPrice(parseFloat(techData.ema_12));
-            }
-            if (techData.ema_26) {
-                document.getElementById('ema26').textContent = formatPrice(parseFloat(techData.ema_26));
-            }
-            if (techData.macd) {
-                document.getElementById('macd').textContent = formatNumber(parseFloat(techData.macd), 4);
-            }
-            if (techData.volatility_30d) {
-                document.getElementById('volatility').textContent = formatPercent(parseFloat(techData.volatility_30d) * 100);
-            }
-            if (techData.bollinger_upper) {
-                document.getElementById('bollingerUpper').textContent = formatPrice(parseFloat(techData.bollinger_upper));
-            }
-            if (techData.bollinger_lower) {
-                document.getElementById('bollingerLower').textContent = formatPrice(parseFloat(techData.bollinger_lower));
-            }
+            if (techData.sma_20) document.getElementById('sma20').textContent = formatPrice(techData.sma_20);
+            if (techData.sma_50) document.getElementById('sma50').textContent = formatPrice(techData.sma_50);
+            if (techData.ema_12) document.getElementById('ema12').textContent = formatPrice(techData.ema_12);
+            if (techData.ema_26) document.getElementById('ema26').textContent = formatPrice(techData.ema_26);
+            if (techData.macd) document.getElementById('macd').textContent = formatNumber(techData.macd, 4);
+            if (techData.volatility_30d) document.getElementById('volatility').textContent = formatPercent(techData.volatility_30d);
+            if (techData.bollinger_upper) document.getElementById('bollingerUpper').textContent = formatPrice(techData.bollinger_upper);
+            if (techData.bollinger_lower) document.getElementById('bollingerLower').textContent = formatPrice(techData.bollinger_lower);
             {% endif %}
             
             // 分析报告数据来自服务器端
             {% if latest_report %}
-            const reportData = {{ latest_report | tojson | safe }};
+            const reportData = {{ latest_report | tojsonfilter | safe }};
             console.log('Report from server:', reportData);
             
             // 更新报告信息
@@ -679,19 +662,20 @@
         document.addEventListener('DOMContentLoaded', function() {
             initPriceChart();
             
+            // 立即加载数据
+            fetchMarketData();
+            
             // 加载服务器端传递的数据
             console.log('Loading server-side data...');
             loadServerSideData();
             
-            // 注释掉会导致认证错误的API调用，因为数据已通过服务器端加载
-            // fetchMarketData(); // 需要认证，数据已通过服务器端加载
-            // fetchPriceHistory();
+            fetchPriceHistory();
             
-            // 注释掉定时更新，避免认证错误
-            // setInterval(fetchMarketData, 60000);        // 需要认证
-            // setInterval(fetchTechnicalIndicators, 300000); // 技术指标已通过服务器端加载
-            // setInterval(fetchPriceHistory, 300000);      // 价格历史已通过服务器端加载
-            // setInterval(fetchLatestReport, 900000);      // 报告已通过服务器端加载
+            // 设置定时更新
+            setInterval(fetchMarketData, 60000);        // 每分钟更新市场数据
+            setInterval(fetchTechnicalIndicators, 300000); // 每5分钟更新技术指标
+            setInterval(fetchPriceHistory, 300000);      // 每5分钟更新价格图表
+            setInterval(fetchLatestReport, 900000);      // 每15分钟更新报告
         });
     </script>
 </body>
