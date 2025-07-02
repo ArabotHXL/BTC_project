@@ -2464,5 +2464,37 @@ def api_generate_detailed_report():
             'error': f'详细报告生成失败: {str(e)}'
         }), 500
 
+@app.route('/analytics/api/bollinger-backtest')
+@login_required
+def api_bollinger_backtest():
+    """布林带策略回测API"""
+    try:
+        # 检查用户权限
+        if session.get('user_email') != 'hxl2022hao@gmail.com':
+            return jsonify({'success': False, 'error': '需要拥有者权限'})
+        
+        from bollinger_bands_backtesting import BollingerBandsBacktester
+        
+        # 获取参数
+        days = request.args.get('days', 7, type=int)
+        initial_capital = request.args.get('capital', 10000, type=float)
+        
+        # 限制参数范围
+        days = max(3, min(days, 30))  # 3-30天
+        initial_capital = max(1000, min(initial_capital, 1000000))  # 1K-1M
+        
+        # 运行回测
+        backtester = BollingerBandsBacktester()
+        result = backtester.run_backtest(days=days, initial_capital=initial_capital)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logging.error(f"布林带回测失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'回测失败: {str(e)}'
+        })
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
