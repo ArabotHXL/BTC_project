@@ -607,8 +607,12 @@ class TechnicalAnalyzer:
             macd = (ema_12 - ema_26) if ema_12 and ema_26 else None
             
             # Convert NumPy types to Python types for PostgreSQL compatibility
+            # 将时间戳转换为EST时区
+            est_tz = pytz.timezone('US/Eastern')
+            est_timestamp = datetime.now(est_tz)
+            
             return {
-                'recorded_at': latest_timestamp,
+                'recorded_at': est_timestamp,
                 'sma_20': float(sma_20) if sma_20 is not None and not pd.isna(sma_20) else None,
                 'sma_50': float(sma_50) if sma_50 is not None and not pd.isna(sma_50) else None,
                 'ema_12': float(ema_12) if ema_12 is not None and not pd.isna(ema_12) else None,
@@ -727,11 +731,14 @@ class ReportGenerator:
             
             tech_data = cursor.fetchone()
             
-            # 生成报告
+            # 生成报告 - 使用EST时区
+            est_tz = pytz.timezone('US/Eastern')
+            est_now = datetime.now(est_tz)
+            
             report = {
                 'report_type': 'daily',
-                'generated_at': datetime.now(),
-                'title': f'Bitcoin Daily Analysis - {datetime.now().strftime("%Y-%m-%d")}',
+                'generated_at': est_now,
+                'title': f'Bitcoin Daily Analysis - {est_now.strftime("%Y-%m-%d")}',
                 'summary': self._generate_daily_summary(market_stats, tech_data),
                 'key_findings': {
                     'price_range': f"${market_stats[1]:,.2f} - ${market_stats[2]:,.2f}",
@@ -742,8 +749,8 @@ class ReportGenerator:
                 },
                 'recommendations': self._generate_recommendations(market_stats, tech_data),
                 'risk_assessment': self._assess_risk(market_stats, tech_data),
-                'data_period_start': datetime.now() - timedelta(days=1),
-                'data_period_end': datetime.now(),
+                'data_period_start': est_now - timedelta(days=1),
+                'data_period_end': est_now,
                 'confidence_score': 0.85
             }
             
@@ -909,12 +916,13 @@ class AnalyticsEngine:
     def collect_and_analyze(self):
         """收集数据并分析 - 仅在30分钟间隔时执行"""
         try:
-            from datetime import datetime
-            now = datetime.now()
+            # 使用EST时区获取当前时间
+            est_tz = pytz.timezone('US/Eastern')
+            now = datetime.now(est_tz)
             
             # 检查是否是30分钟间隔（0分或30分）
             if now.minute not in [0, 30]:
-                logger.info(f"跳过数据收集，当前时间 {now.strftime('%H:%M')} 不在30分钟间隔内")
+                logger.info(f"跳过数据收集，当前EST时间 {now.strftime('%H:%M')} 不在30分钟间隔内")
                 return
             
             # 收集市场数据
