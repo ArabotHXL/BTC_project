@@ -1082,6 +1082,92 @@
             }
         }
 
+        function updateReportDisplay(data) {
+            console.log('Updating report display with:', data);
+            
+            // Check if data contains the report
+            const report = data.data || data;
+            
+            if (!report) {
+                showErrorMessage('reports', '暂无可用的分析报告');
+                return;
+            }
+            
+            // Update report title
+            const reportTitleElement = document.getElementById('reportTitle');
+            if (reportTitleElement && report.title) {
+                reportTitleElement.textContent = report.title;
+            }
+            
+            // Update report summary
+            const reportSummaryElement = document.getElementById('reportSummary');
+            if (reportSummaryElement && report.summary) {
+                reportSummaryElement.textContent = report.summary;
+            }
+            
+            // Update key findings
+            const reportFindingsElement = document.getElementById('reportFindings');
+            if (reportFindingsElement && report.key_findings) {
+                let findingsHtml = '';
+                try {
+                    const findings = typeof report.key_findings === 'string' 
+                        ? JSON.parse(report.key_findings) 
+                        : report.key_findings;
+                    
+                    for (const [key, value] of Object.entries(findings)) {
+                        const displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        findingsHtml += `
+                            <div class="mb-2">
+                                <strong>${displayKey}:</strong> ${value}
+                            </div>
+                        `;
+                    }
+                    reportFindingsElement.innerHTML = findingsHtml;
+                } catch (error) {
+                    console.error('Error parsing key findings:', error);
+                    reportFindingsElement.innerHTML = '<div class="text-muted">关键发现解析中...</div>';
+                }
+            }
+            
+            // Update report recommendations if available
+            const reportRecommendationsElement = document.getElementById('reportRecommendations');
+            if (reportRecommendationsElement && report.recommendations) {
+                let recommendationsHtml = '';
+                const recommendations = Array.isArray(report.recommendations) 
+                    ? report.recommendations 
+                    : [report.recommendations];
+                
+                recommendations.forEach(rec => {
+                    recommendationsHtml += `<li class="mb-2">${rec}</li>`;
+                });
+                
+                reportRecommendationsElement.innerHTML = recommendationsHtml;
+            }
+            
+            // Update risk assessment if available
+            if (report.risk_assessment) {
+                const riskScoreElement = document.getElementById('reportRiskScore');
+                const riskLevelElement = document.getElementById('reportRiskLevel');
+                
+                if (riskScoreElement && report.risk_assessment.risk_score) {
+                    riskScoreElement.textContent = report.risk_assessment.risk_score;
+                }
+                
+                if (riskLevelElement && report.risk_assessment.risk_level) {
+                    riskLevelElement.textContent = report.risk_assessment.risk_level;
+                }
+            }
+            
+            // Update timestamp
+            const reportTimestampElement = document.getElementById('reportTimestamp');
+            if (reportTimestampElement && report.created_at) {
+                const date = new Date(report.created_at);
+                reportTimestampElement.textContent = '生成时间: ' + date.toLocaleString('zh-CN');
+            }
+            
+            console.log('Report display updated successfully');
+        }
+
         // Display update functions
         function updateMarketDataDisplay(data) {
             console.log('Updating market data display with:', data);
