@@ -5,6 +5,8 @@ CoinWarz API集成模块
 
 import requests
 import logging
+import os
+import psycopg2
 from config import Config
 
 # CoinWarz API配置
@@ -151,6 +153,36 @@ def calculate_hashrate_from_difficulty(difficulty, block_time=600):
         logging.error(f"从难度计算算力失败: {e}")
         return None
 
+def get_analytics_hashrate():
+    """
+    从分析系统获取网络算力数据
+    优先使用分析仪表盘的算力数据
+    """
+    try:
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT network_hashrate, btc_price, network_difficulty
+            FROM market_analytics 
+            ORDER BY recorded_at DESC LIMIT 1
+        """)
+        data = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if data and data[0]:
+            logging.info(f"使用分析系统算力数据: {data[0]} EH/s")
+            return {
+                'hashrate': float(data[0]),
+                'btc_price': float(data[1]) if data[1] else None,
+                'difficulty': float(data[2]) if data[2] else None,
+                'source': 'analytics_dashboard'
+            }
+    except Exception as e:
+        logging.warning(f"无法获取分析系统算力数据: {e}")
+    
+    return None
+
 def get_enhanced_network_data():
     """
     获取增强的网络数据，智能切换CoinWarz和blockchain.info
@@ -160,6 +192,9 @@ def get_enhanced_network_data():
     - 综合网络数据字典
     """
     try:
+        # 优先尝试从分析系统获取算力数据
+        analytics_data = get_analytics_hashrate()
+        
         # 首先检查CoinWarz API状态
         api_status = check_coinwarz_api_status()
         coinwarz_available = api_status and api_status.get('Approved') and api_status.get('ApiUsageAvailable', 0) > 0
@@ -172,12 +207,16 @@ def get_enhanced_network_data():
             coinwarz_btc = get_bitcoin_data_from_coinwarz()
             
             if coinwarz_btc:
-                # 直接使用blockchain.info的hashrate API（与系统其他部分保持一致）
-                blockchain_hashrate = get_real_time_btc_hashrate()
-                final_hashrate = blockchain_hashrate
-                hashrate_source = "blockchain.info (direct API)"
-                
-                logging.info(f"使用统一hashrate数据源: {blockchain_hashrate:.1f} EH/s")
+                # 优先使用分析系统算力数据，其次使用blockchain.info
+                if analytics_data and analytics_data.get('hashrate'):
+                    final_hashrate = analytics_data['hashrate']
+                    hashrate_source = "analytics_dashboard (priority)"
+                    logging.info(f"使用分析仪表盘算力数据: {final_hashrate:.1f} EH/s")
+                else:
+                    blockchain_hashrate = get_real_time_btc_hashrate()
+                    final_hashrate = blockchain_hashrate
+                    hashrate_source = "blockchain.info (fallback)"
+                    logging.info(f"使用blockchain.info算力数据: {blockchain_hashrate:.1f} EH/s")
                 
                 # 使用CoinWarz作为主要数据源
                 network_data = {
@@ -198,7 +237,17 @@ def get_enhanced_network_data():
         # CoinWarz不可用或调用次数用完时，使用blockchain.info
         logging.warning(f"CoinWarz API不可用 (剩余调用: {api_status.get('ApiUsageAvailable', 0) if api_status else 0})，切换到blockchain.info")
         
-        blockchain_hashrate = get_real_time_btc_hashrate()
+        # 优先使用分析系统算力数据
+        if analytics_data and analytics_data.get('hashrate'):
+            final_hashrate = analytics_data['hashrate']
+            hashrate_source = "analytics_dashboard (priority)"
+            logging.info(f"使用分析仪表盘算力数据: {final_hashrate:.1f} EH/s")
+        else:
+            blockchain_hashrate = get_real_time_btc_hashrate()
+            final_hashrate = blockchain_hashrate
+            hashrate_source = 'blockchain.info (direct API)'
+            logging.info(f"使用blockchain.info算力数据: {blockchain_hashrate:.1f} EH/s")
+        
         blockchain_difficulty = get_real_time_difficulty()
         blockchain_price = get_real_time_btc_price()
         
@@ -206,16 +255,16 @@ def get_enhanced_network_data():
             'btc_price': blockchain_price,
             'difficulty': blockchain_difficulty,
             'block_reward': 3.125,
-            'hashrate': blockchain_hashrate,
-            'hashrate_source': 'blockchain.info (direct API)',
+            'hashrate': final_hashrate,
+            'hashrate_source': hashrate_source,
             'data_source': 'blockchain.info (fallback)',
             'profit_ratio': 100,
-            'health_status': 'Healthy' if blockchain_price and blockchain_difficulty and blockchain_hashrate else 'Warning',
+            'health_status': 'Healthy' if blockchain_price and blockchain_difficulty and final_hashrate else 'Warning',
             'api_calls_remaining': api_status.get('ApiUsageAvailable', 0) if api_status else 0,
             'fallback_reason': 'CoinWarz API exhausted' if api_status else 'CoinWarz API unavailable'
         }
         
-        logging.info(f"已切换到blockchain.info备用数据源: 价格=${blockchain_price}, 难度={blockchain_difficulty}T, 算力={blockchain_hashrate}EH/s")
+        logging.info(f"已切换到blockchain.info备用数据源: 价格=${blockchain_price}, 难度={blockchain_difficulty}T, 算力={final_hashrate}EH/s")
         return network_data
             
     except Exception as e:
