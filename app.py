@@ -2042,47 +2042,42 @@ def analytics_dashboard():
 @app.route('/api/analytics/market-data')
 @login_required
 def analytics_market_data():
-    """获取分析系统的市场数据 - 使用与主页相同的实时数据源"""
+    """获取分析系统的市场数据"""
     user_role = get_user_role(session.get('email'))
     if user_role != 'owner':
         return jsonify({'error': '只有拥有者可以访问分析系统'}), 403
     
     try:
-        from coinwarz_api import get_enhanced_network_data
-        from datetime import datetime
         import psycopg2
         
-        # 获取实时网络数据（与主页使用相同的数据源）
-        network_data = get_enhanced_network_data()
-        
-        # 从数据库获取额外的分析数据（价格变化等）
+        # 直接连接数据库获取最新市场数据
         conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT recorded_at, fear_greed_index, price_change_24h, btc_market_cap, btc_volume_24h,
+            SELECT recorded_at, btc_price, network_hashrate, network_difficulty, 
+                   fear_greed_index, price_change_24h, btc_market_cap, btc_volume_24h,
                    price_change_1h, price_change_7d
             FROM market_analytics 
             ORDER BY recorded_at DESC LIMIT 1
         """)
-        db_data = cursor.fetchone()
+        data = cursor.fetchone()
         cursor.close()
         conn.close()
         
-        if network_data and network_data.get('btc_price'):
-            # 使用实时网络数据作为主要数据源，数据库数据作为补充
+        if data:
             return jsonify({
                 'success': True,
                 'data': {
-                    'timestamp': datetime.now().isoformat(),  # 使用当前时间戳表示实时数据
-                    'btc_price': float(network_data['btc_price']),
-                    'network_hashrate': float(network_data['hashrate']),  # 使用实时算力
-                    'network_difficulty': float(network_data['difficulty']),
-                    'fear_greed_index': db_data[1] if db_data and db_data[1] else None,
-                    'price_change_24h': float(db_data[2]) if db_data and db_data[2] else None,
-                    'btc_market_cap': float(db_data[3]) if db_data and db_data[3] else None,
-                    'btc_volume_24h': float(db_data[4]) if db_data and db_data[4] else None,
-                    'price_change_1h': float(db_data[5]) if db_data and db_data[5] else None,
-                    'price_change_7d': float(db_data[6]) if db_data and db_data[6] else None
+                    'timestamp': data[0].isoformat(),
+                    'btc_price': float(data[1]) if data[1] else None,
+                    'network_hashrate': float(data[2]) if data[2] else None,
+                    'network_difficulty': float(data[3]) if data[3] else None,
+                    'fear_greed_index': data[4],
+                    'price_change_24h': float(data[5]) if data[5] else None,
+                    'btc_market_cap': float(data[6]) if data[6] else None,
+                    'btc_volume_24h': float(data[7]) if data[7] else None,
+                    'price_change_1h': float(data[8]) if data[8] else None,
+                    'price_change_7d': float(data[9]) if data[9] else None
                 }
             })
         else:
