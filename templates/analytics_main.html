@@ -3035,31 +3035,46 @@
                 backtestChart.destroy();
             }
             
+            // 数据抽样 - 减少显示点数以提高可读性
+            const sampleRate = Math.max(1, Math.floor(equityCurve.length / 200)); // 最多显示200个点
+            const sampledData = equityCurve.filter((_, index) => index % sampleRate === 0);
+            
             // 准备数据
-            const labels = equityCurve.map(point => {
+            const labels = sampledData.map(point => {
                 const date = new Date(point.timestamp);
                 return date.toLocaleDateString('zh-CN', {month: 'short', day: 'numeric'}) + ' ' + 
                        date.toLocaleTimeString('zh-CN', {hour: '2-digit', minute:'2-digit'});
             });
             
-            const strategyData = equityCurve.map(point => point.strategy_equity);
-            const buyHoldData = equityCurve.map(point => point.buy_hold_equity);
-            const priceData = equityCurve.map(point => point.btc_price);
+            const strategyData = sampledData.map(point => point.strategy_equity);
+            const buyHoldData = sampledData.map(point => point.buy_hold_equity);
+            const priceData = sampledData.map(point => point.btc_price);
             
             // 布林带数据（如果可用）
-            const bbUpper = equityCurve.map(point => point.bb_upper || null);
-            const bbLower = equityCurve.map(point => point.bb_lower || null);
+            const bbUpper = sampledData.map(point => point.bb_upper || null);
+            const bbLower = sampledData.map(point => point.bb_lower || null);
             
-            // 买卖信号点
+            // 买卖信号点 - 只显示重要信号
             const buySignals = [];
             const sellSignals = [];
             
+            // 从原始数据中筛选信号，但减少密度
+            let lastBuySignal = -100;
+            let lastSellSignal = -100;
+            
             equityCurve.forEach((point, index) => {
-                if (point.buy_signal === 1) {
-                    buySignals.push({x: index, y: point.btc_price});
+                const sampledIndex = Math.floor(index / sampleRate);
+                
+                // 买入信号：间隔至少20个原始数据点
+                if (point.buy_signal === 1 && index - lastBuySignal > 20) {
+                    buySignals.push({x: sampledIndex, y: point.btc_price});
+                    lastBuySignal = index;
                 }
-                if (point.sell_signal === 1) {
-                    sellSignals.push({x: index, y: point.btc_price});
+                
+                // 卖出信号：间隔至少20个原始数据点
+                if (point.sell_signal === 1 && index - lastSellSignal > 20) {
+                    sellSignals.push({x: sampledIndex, y: point.btc_price});
+                    lastSellSignal = index;
                 }
             });
             
@@ -3073,34 +3088,38 @@
                             data: priceData,
                             borderColor: '#ffc107',
                             backgroundColor: 'rgba(255, 193, 7, 0.1)',
-                            borderWidth: 2,
+                            borderWidth: 2.5,
                             fill: false,
                             yAxisID: 'y1',
-                            order: 3
+                            order: 3,
+                            pointRadius: 0,
+                            tension: 0.1
                         },
                         {
                             label: '布林带上轨',
                             data: bbUpper,
-                            borderColor: '#6c757d',
-                            backgroundColor: 'rgba(108, 117, 125, 0.1)',
-                            borderWidth: 1,
-                            borderDash: [5, 5],
+                            borderColor: '#8d9096',
+                            backgroundColor: 'rgba(141, 144, 150, 0.05)',
+                            borderWidth: 1.5,
+                            borderDash: [8, 4],
                             fill: false,
                             yAxisID: 'y1',
                             pointRadius: 0,
-                            order: 4
+                            order: 4,
+                            tension: 0.1
                         },
                         {
                             label: '布林带下轨',
                             data: bbLower,
-                            borderColor: '#6c757d',
-                            backgroundColor: 'rgba(108, 117, 125, 0.1)',
-                            borderWidth: 1,
-                            borderDash: [5, 5],
+                            borderColor: '#8d9096',
+                            backgroundColor: 'rgba(141, 144, 150, 0.02)',
+                            borderWidth: 1.5,
+                            borderDash: [8, 4],
                             fill: '+1',
                             yAxisID: 'y1',
                             pointRadius: 0,
-                            order: 5
+                            order: 5,
+                            tension: 0.1
                         },
                         {
                             label: '策略收益',
@@ -3128,8 +3147,8 @@
                             backgroundColor: '#28a745',
                             borderColor: '#ffffff',
                             borderWidth: 2,
-                            pointRadius: 8,
-                            pointHoverRadius: 10,
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
                             showLine: false,
                             yAxisID: 'y1',
                             order: 0
@@ -3140,8 +3159,8 @@
                             backgroundColor: '#dc3545',
                             borderColor: '#ffffff',
                             borderWidth: 2,
-                            pointRadius: 8,
-                            pointHoverRadius: 10,
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
                             showLine: false,
                             yAxisID: 'y1',
                             order: 0
@@ -3203,10 +3222,12 @@
                             display: true,
                             ticks: {
                                 color: '#ffffff',
-                                maxTicksLimit: 8,
+                                maxTicksLimit: 6,
                                 font: {
                                     size: 11
-                                }
+                                },
+                                maxRotation: 45,
+                                minRotation: 0
                             },
                             grid: {
                                 color: 'rgba(255, 255, 255, 0.1)',
