@@ -831,10 +831,12 @@ def get_btc_price():
         
     try:
         current_btc_price = get_real_time_btc_price()
+        # 确保价格精度为两位小数
+        formatted_price = round(float(current_btc_price), 2)
         return jsonify({
             'success': True,
-            'btc_price': current_btc_price,
-            'price': current_btc_price  # 兼容性字段
+            'btc_price': formatted_price,
+            'price': formatted_price  # 兼容性字段
         })
     except Exception as e:
         logging.error(f"Error fetching BTC price: {str(e)}")
@@ -864,15 +866,16 @@ def get_network_stats():
         network_data = get_enhanced_network_data()
         
         if network_data and network_data.get('btc_price'):
-            # 确保难度值正确转换为T单位
+            # 确保难度值保持原始值，前端显示时再格式化
             difficulty_raw = network_data['difficulty']
-            difficulty_t = difficulty_raw / 1e12 if difficulty_raw and difficulty_raw > 1000 else difficulty_raw
+            # 保持原始值，不在API层面进行单位转换
+            difficulty_value = difficulty_raw
             
             response_data = {
                 'success': True,
                 'btc_price': network_data['btc_price'],
                 'price': network_data['btc_price'],  # 兼容性字段
-                'difficulty': difficulty_t,  # 确保返回T单位的难度
+                'difficulty': difficulty_value,  # 保持原始难度值
                 'network_hashrate': network_data['hashrate'],
                 'hashrate': network_data['hashrate'],  # 兼容性字段
                 'block_reward': network_data['block_reward'],
