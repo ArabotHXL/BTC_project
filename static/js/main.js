@@ -43,6 +43,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const currentLang = document.querySelector('meta[name="language"]')?.content || 'zh';
         console.log("当前语言设置 (Current language):", currentLang);
         
+        // 清除旧的缓存数据以确保显示最新算力 (Clear old cache to show latest hashrate)
+        localStorage.removeItem('last_network_hashrate');
+        
         // 加载网络数据 (Load network data)
         fetchNetworkStats();
         
