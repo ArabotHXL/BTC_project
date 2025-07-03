@@ -2414,15 +2414,38 @@ def api_generate_detailed_report():
             
         logging.info("开始生成详细报告...")
         
-        # 使用简化的市场数据
-        market_data = {
-            'btc_price': 105673,
-            'btc_market_cap': 2120000000000,
-            'btc_volume_24h': 20000000000,
-            'network_hashrate': 767.45,
-            'network_difficulty': 116958512019762.1,
-            'fear_greed_index': 63
-        }
+        # 获取实时市场数据 - 使用和主页面相同的数据源
+        try:
+            from analytics_engine import AnalyticsEngine
+            analytics = AnalyticsEngine()
+            # 获取最新的市场数据
+            latest_market_data = analytics.data_collector.collect_all_data()
+            
+            if latest_market_data:
+                market_data = {
+                    'btc_price': latest_market_data.btc_price,
+                    'btc_market_cap': latest_market_data.btc_market_cap or 2120000000000,
+                    'btc_volume_24h': latest_market_data.btc_volume_24h or 20000000000,
+                    'network_hashrate': latest_market_data.network_hashrate,
+                    'network_difficulty': latest_market_data.network_difficulty,
+                    'fear_greed_index': latest_market_data.fear_greed_index or 63
+                }
+                logging.info(f"使用实时市场数据: BTC=${market_data['btc_price']}")
+            else:
+                raise Exception("无法获取实时数据")
+                
+        except Exception as e:
+            logging.warning(f"获取实时数据失败，使用备用数据: {e}")
+            # 备用数据作为最后保障
+            market_data = {
+                'btc_price': 108842,  # 更新为当前价格
+                'btc_market_cap': 2120000000000,
+                'btc_volume_24h': 20000000000,
+                'network_hashrate': 837.22,  # 更新为当前算力
+                'network_difficulty': 116958512019762.1,
+                'fear_greed_index': 73  # 更新为当前指数
+            }
+        
         logging.info(f"准备市场数据: BTC=${market_data['btc_price']}")
         
         # 获取价格历史数据
