@@ -38,7 +38,8 @@ def get_authorized_emails():
     default_emails = [
         'admin@example.com',
         'support@example.com',
-        'btc@example.com'
+        'btc@example.com',
+        'test@example.com'  # 添加测试邮箱
     ]
     logging.debug(f"使用默认的 {len(default_emails)} 个授权邮箱")
     return default_emails

@@ -1,0 +1,397 @@
+{
+  "test_summary": {
+    "start_time": "2025-07-03T01:49:01.648069",
+    "end_time": "2025-07-03T01:49:02.416487",
+    "duration_seconds": 0.768418,
+    "total_tests": 43,
+    "passed_tests": 18,
+    "failed_tests": 25,
+    "warnings": 0,
+    "success_rate": 41.86046511627907,
+    "rating": "🔴 需要改进"
+  },
+  "category_stats": {
+    "Authentication": {
+      "total": 1,
+      "passed": 1
+    },
+    "Database": {
+      "total": 9,
+      "passed": 9
+    },
+    "Static": {
+      "total": 4,
+      "passed": 4
+    },
+    "UI": {
+      "total": 5,
+      "passed": 4
+    },
+    "API": {
+      "total": 5,
+      "passed": 0
+    },
+    "Mining": {
+      "total": 12,
+      "passed": 0
+    },
+    "Advanced": {
+      "total": 3,
+      "passed": 0
+    },
+    "Security": {
+      "total": 3,
+      "passed": 0
+    },
+    "External": {
+      "total": 1,
+      "passed": 0
+    }
+  },
+  "detailed_results": [
+    {
+      "timestamp": "2025-07-03T01:49:02.130743",
+      "category": "Authentication",
+      "test_name": "login",
+      "status": "PASS",
+      "details": "系统认证成功",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.149037",
+      "category": "Database",
+      "test_name": "table_user_access",
+      "status": "PASS",
+      "details": "表检查成功",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.158954",
+      "category": "Database",
+      "test_name": "table_login_records",
+      "status": "PASS",
+      "details": "表检查成功",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.169917",
+      "category": "Database",
+      "test_name": "table_network_snapshots",
+      "status": "PASS",
+      "details": "表检查成功",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.178593",
+      "category": "Database",
+      "test_name": "table_crm_customers",
+      "status": "PASS",
+      "details": "表检查成功",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.186676",
+      "category": "Database",
+      "test_name": "table_crm_leads",
+      "status": "PASS",
+      "details": "表检查成功",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.194739",
+      "category": "Database",
+      "test_name": "table_activities",
+      "status": "PASS",
+      "details": "表检查成功",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.202099",
+      "category": "Database",
+      "test_name": "table_market_analytics",
+      "status": "PASS",
+      "details": "表检查成功",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.209969",
+      "category": "Database",
+      "test_name": "table_technical_indicators",
+      "status": "PASS",
+      "details": "表检查成功",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.216857",
+      "category": "Database",
+      "test_name": "table_analysis_reports",
+      "status": "PASS",
+      "details": "表检查成功",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.220481",
+      "category": "Static",
+      "test_name": "style.css",
+      "status": "PASS",
+      "details": "资源可访问 (3090 bytes)",
+      "response_time": 0.0035152435302734375
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.224135",
+      "category": "Static",
+      "test_name": "script.js",
+      "status": "PASS",
+      "details": "资源可访问 (9160 bytes)",
+      "response_time": 0.0035359859466552734
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.228344",
+      "category": "Static",
+      "test_name": "css_styles.css",
+      "status": "PASS",
+      "details": "资源可访问 (2342 bytes)",
+      "response_time": 0.0038843154907226562
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.233119",
+      "category": "Static",
+      "test_name": "js_main.js",
+      "status": "PASS",
+      "details": "资源可访问 (60821 bytes)",
+      "response_time": 0.004288434982299805
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.241789",
+      "category": "UI",
+      "test_name": "page__",
+      "status": "PASS",
+      "details": "页面加载成功 (4103 bytes)",
+      "response_time": 0.008527517318725586
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.247723",
+      "category": "UI",
+      "test_name": "page__analytics_main",
+      "status": "FAIL",
+      "details": "页面访问失败 (404)",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.254372",
+      "category": "UI",
+      "test_name": "page__network_history",
+      "status": "PASS",
+      "details": "页面加载成功 (4103 bytes)",
+      "response_time": 0.006587028503417969
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.261549",
+      "category": "UI",
+      "test_name": "page__algorithm_test",
+      "status": "PASS",
+      "details": "页面加载成功 (4103 bytes)",
+      "response_time": 0.006846427917480469
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.271038",
+      "category": "UI",
+      "test_name": "page__curtailment_calculator",
+      "status": "PASS",
+      "details": "页面加载成功 (4103 bytes)",
+      "response_time": 0.009324789047241211
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.274400",
+      "category": "API",
+      "test_name": "Price_API",
+      "status": "FAIL",
+      "details": "HTTP错误: 401",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.277762",
+      "category": "API",
+      "test_name": "Network_API",
+      "status": "FAIL",
+      "details": "HTTP错误: 401",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.280929",
+      "category": "API",
+      "test_name": "Miners_API",
+      "status": "FAIL",
+      "details": "HTTP错误: 401",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.284145",
+      "category": "API",
+      "test_name": "Comparison_API",
+      "status": "FAIL",
+      "details": "HTTP错误: 401",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.290874",
+      "category": "API",
+      "test_name": "Analytics_Market",
+      "status": "FAIL",
+      "details": "JSON解析失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.297368",
+      "category": "Mining",
+      "test_name": "basic_calculation",
+      "status": "FAIL",
+      "details": "计算请求失败: 401",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.300354",
+      "category": "Mining",
+      "test_name": "miner_Antminer_S19",
+      "status": "FAIL",
+      "details": "计算失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.303599",
+      "category": "Mining",
+      "test_name": "miner_Antminer_S19_Pro",
+      "status": "FAIL",
+      "details": "计算失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.306492",
+      "category": "Mining",
+      "test_name": "miner_Antminer_S19_XP",
+      "status": "FAIL",
+      "details": "计算失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.309345",
+      "category": "Mining",
+      "test_name": "miner_Antminer_S21",
+      "status": "FAIL",
+      "details": "计算失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.312039",
+      "category": "Mining",
+      "test_name": "miner_Antminer_S21_Pro",
+      "status": "FAIL",
+      "details": "计算失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.314674",
+      "category": "Mining",
+      "test_name": "miner_Antminer_S21_XP",
+      "status": "FAIL",
+      "details": "计算失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.317558",
+      "category": "Mining",
+      "test_name": "miner_Antminer_S21_Hyd",
+      "status": "FAIL",
+      "details": "计算失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.320555",
+      "category": "Mining",
+      "test_name": "miner_Antminer_S21_Pro_Hyd",
+      "status": "FAIL",
+      "details": "计算失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.323791",
+      "category": "Mining",
+      "test_name": "miner_Antminer_S21_XP_Hyd",
+      "status": "FAIL",
+      "details": "计算失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.340573",
+      "category": "Mining",
+      "test_name": "miner_WhatsMiner_M50",
+      "status": "FAIL",
+      "details": "计算失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.340657",
+      "category": "Mining",
+      "test_name": "all_miner_models",
+      "status": "FAIL",
+      "details": "矿机计算成功率过低: 0.0%",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.343512",
+      "category": "Advanced",
+      "test_name": "curtailment_calculation",
+      "status": "FAIL",
+      "details": "限电计算失败 (401)",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.346731",
+      "category": "Advanced",
+      "test_name": "investment_analysis",
+      "status": "FAIL",
+      "details": "投资分析失败 (401)",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.364305",
+      "category": "Advanced",
+      "test_name": "multiple_electricity_costs",
+      "status": "FAIL",
+      "details": "多电价计算成功率过低: 0%",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.392824",
+      "category": "Security",
+      "test_name": "authentication_protection",
+      "status": "FAIL",
+      "details": "认证保护不完整: 3/4",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.404447",
+      "category": "Security",
+      "test_name": "role_based_access",
+      "status": "FAIL",
+      "details": "拥有者权限异常: 1/2",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.413061",
+      "category": "Security",
+      "test_name": "input_validation",
+      "status": "FAIL",
+      "details": "输入验证不足: 0/3",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:49:02.416412",
+      "category": "External",
+      "test_name": "professional_report",
+      "status": "FAIL",
+      "details": "专业报告生成失败: 404",
+      "response_time": null
+    }
+  ]
+}

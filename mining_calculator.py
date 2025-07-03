@@ -18,16 +18,16 @@ BLOCK_REWARD = 3.125  # BTC
 
 # Fixed miner data including hashrate and power consumption for each model
 MINER_DATA = {
-    "Antminer S21 XP Hyd": {"hashrate": 473, "power_watt": 5676},
-    "Antminer S21 XP": {"hashrate": 270, "power_watt": 3645},
-    "Antminer S21": {"hashrate": 200, "power_watt": 3500},
-    "Antminer S21 Hyd": {"hashrate": 335, "power_watt": 5360},
     "Antminer S19": {"hashrate": 95, "power_watt": 3250},
     "Antminer S19 Pro": {"hashrate": 110, "power_watt": 3250},
-    "Antminer S19j Pro": {"hashrate": 100, "power_watt": 3050},
     "Antminer S19 XP": {"hashrate": 140, "power_watt": 3010},
-    "Antminer S19 Hydro": {"hashrate": 158, "power_watt": 5451},
-    "Antminer S19 Pro+ Hyd": {"hashrate": 198, "power_watt": 5445}
+    "Antminer S21": {"hashrate": 200, "power_watt": 3550},
+    "Antminer S21 Pro": {"hashrate": 234, "power_watt": 3531},
+    "Antminer S21 XP": {"hashrate": 270, "power_watt": 3645},
+    "Antminer S21 Hyd": {"hashrate": 335, "power_watt": 5360},
+    "Antminer S21 Pro Hyd": {"hashrate": 319, "power_watt": 5445},
+    "Antminer S21 XP Hyd": {"hashrate": 473, "power_watt": 5676},
+    "WhatsMiner M50": {"hashrate": 114, "power_watt": 3306}
 }
 
 def calculate_roi(investment, yearly_profit, monthly_profit, btc_price, forecast_months=36):

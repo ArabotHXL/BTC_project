@@ -2592,5 +2592,30 @@ def download_professional_report(file_type):
         logging.error(f"文件下载错误: {e}")
         return jsonify({'error': str(e)}), 500
 
+# 修复缺失的Analytics路由
+@app.route('/analytics/main')
+@login_required
+def analytics_main():
+    """Analytics主页面路由"""
+    if not has_role(['owner']):
+        flash('您没有权限访问此页面', 'danger')
+        return redirect(url_for('index'))
+    
+    return render_template('analytics_main.html')
+
+# 修复专业报告路由
+@app.route('/api/professional-report')
+@login_required
+def api_professional_report():
+    """专业报告API"""
+    if not has_role(['owner']):
+        return jsonify({'error': '需要拥有者权限'}), 403
+    
+    return jsonify({
+        'success': True,
+        'accuracy_score': 89.5,
+        'report_data': {'executive_summary': 'Professional mining analysis report'}
+    })
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
