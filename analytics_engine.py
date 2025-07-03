@@ -914,26 +914,25 @@ class AnalyticsEngine:
         self.running = False
     
     def collect_and_analyze(self):
-        """收集数据并分析 - 仅在30分钟间隔时执行"""
+        """收集数据并分析 - 由统一数据管道调度控制30分钟间隔"""
         try:
             # 使用EST时区获取当前时间
             est_tz = pytz.timezone('US/Eastern')
             now = datetime.now(est_tz)
             
-            # 检查是否是30分钟间隔（0分或30分）
-            if now.minute not in [0, 30]:
-                logger.info(f"跳过数据收集，当前EST时间 {now.strftime('%H:%M')} 不在30分钟间隔内")
-                return
+            logger.info(f"开始数据收集和分析 - {now.strftime('%Y-%m-%d %H:%M')}")
             
             # 收集市场数据
             market_data = self.data_collector.collect_all_data()
             if market_data:
                 self.data_collector.save_market_data(market_data)
+                logger.info(f"市场数据已保存: BTC=${market_data.btc_price:,.0f}, 算力={market_data.network_hashrate:.2f}EH/s")
             
             # 计算技术指标
             tech_indicators = self.technical_analyzer.calculate_technical_indicators()
             if tech_indicators:
                 self.technical_analyzer.save_technical_indicators(tech_indicators)
+                logger.info("技术指标已更新")
             
             logger.info(f"数据收集和分析完成 - {now.strftime('%Y-%m-%d %H:%M')}")
             
