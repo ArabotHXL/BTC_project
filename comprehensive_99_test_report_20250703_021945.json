@@ -1,0 +1,171 @@
+{
+  "test_summary": {
+    "total_tests": 14,
+    "passed_tests": 11,
+    "warning_tests": 3,
+    "failed_tests": 0,
+    "accuracy_rate": 78.57142857142857,
+    "functional_rate": 100.0,
+    "grade": "🔴 需要改进",
+    "target_achieved": false
+  },
+  "module_statistics": {
+    "Authentication": {
+      "total": 1,
+      "passed": 1,
+      "warning": 0,
+      "failed": 0
+    },
+    "Numerical": {
+      "total": 3,
+      "passed": 2,
+      "warning": 1,
+      "failed": 0
+    },
+    "Calculation": {
+      "total": 3,
+      "passed": 1,
+      "warning": 2,
+      "failed": 0
+    },
+    "Miners": {
+      "total": 3,
+      "passed": 3,
+      "warning": 0,
+      "failed": 0
+    },
+    "Analytics": {
+      "total": 1,
+      "passed": 1,
+      "warning": 0,
+      "failed": 0
+    },
+    "Performance": {
+      "total": 1,
+      "passed": 1,
+      "warning": 0,
+      "failed": 0
+    },
+    "Consistency": {
+      "total": 2,
+      "passed": 2,
+      "warning": 0,
+      "failed": 0
+    }
+  },
+  "detailed_results": [
+    {
+      "category": "Authentication",
+      "test_name": "owner_login",
+      "status": "PASS",
+      "details": "拥有者认证成功",
+      "response_time": 0.4272191524505615,
+      "timestamp": "2025-07-03T02:19:37.161227"
+    },
+    {
+      "category": "Numerical",
+      "test_name": "btc_price_precision",
+      "status": "PASS",
+      "details": "BTC价格: $108,839.00 (合理范围)",
+      "response_time": 0.20762920379638672,
+      "timestamp": "2025-07-03T02:19:37.369221"
+    },
+    {
+      "category": "Numerical",
+      "test_name": "hashrate_precision",
+      "status": "PASS",
+      "details": "网络算力: 854.66 EH/s (合理范围)",
+      "response_time": 0.7174081802368164,
+      "timestamp": "2025-07-03T02:19:38.086790"
+    },
+    {
+      "category": "Numerical",
+      "test_name": "difficulty_precision",
+      "status": "WARN",
+      "details": "难度格式: 117 (可能正常)",
+      "response_time": 0.7174081802368164,
+      "timestamp": "2025-07-03T02:19:38.087003"
+    },
+    {
+      "category": "Calculation",
+      "test_name": "mining_computation",
+      "status": "PASS",
+      "details": "挖矿计算成功返回",
+      "response_time": 0.9836809635162354,
+      "timestamp": "2025-07-03T02:19:39.070992"
+    },
+    {
+      "category": "Calculation",
+      "test_name": "btc_output_range",
+      "status": "WARN",
+      "details": "日产BTC: 0.000000 (可能异常)",
+      "response_time": null,
+      "timestamp": "2025-07-03T02:19:39.071352"
+    },
+    {
+      "category": "Calculation",
+      "test_name": "profit_positive",
+      "status": "WARN",
+      "details": "日利润: $0.00 (亏损)",
+      "response_time": null,
+      "timestamp": "2025-07-03T02:19:39.071580"
+    },
+    {
+      "category": "Miners",
+      "test_name": "model_count",
+      "status": "PASS",
+      "details": "矿机型号: 10种",
+      "response_time": 0.005233287811279297,
+      "timestamp": "2025-07-03T02:19:39.077507"
+    },
+    {
+      "category": "Miners",
+      "test_name": "key_models",
+      "status": "PASS",
+      "details": "关键矿机型号完整",
+      "response_time": null,
+      "timestamp": "2025-07-03T02:19:39.077664"
+    },
+    {
+      "category": "Miners",
+      "test_name": "spec_accuracy",
+      "status": "PASS",
+      "details": "矿机参数准确率: 100.0%",
+      "response_time": null,
+      "timestamp": "2025-07-03T02:19:39.077908"
+    },
+    {
+      "category": "Analytics",
+      "test_name": "market_data_accuracy",
+      "status": "PASS",
+      "details": "市场数据准确率: 100.0%",
+      "response_time": 0.26627016067504883,
+      "timestamp": "2025-07-03T02:19:39.344618"
+    },
+    {
+      "category": "Performance",
+      "test_name": "response_time",
+      "status": "PASS",
+      "details": "平均响应: 0.006s, 成功率: 100.0%",
+      "response_time": null,
+      "timestamp": "2025-07-03T02:19:39.382612"
+    },
+    {
+      "category": "Consistency",
+      "test_name": "btc_price",
+      "status": "PASS",
+      "details": "价格一致性: 100.0%",
+      "response_time": null,
+      "timestamp": "2025-07-03T02:19:45.311634"
+    },
+    {
+      "category": "Consistency",
+      "test_name": "network_hashrate",
+      "status": "PASS",
+      "details": "算力一致性: 100.0%",
+      "response_time": null,
+      "timestamp": "2025-07-03T02:19:45.311902"
+    }
+  ],
+  "timestamp": "2025-07-03T02:19:45.312212"
+}
