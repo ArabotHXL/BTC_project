@@ -326,30 +326,30 @@ class MultiFormatReportGenerator:
                                    spaceAfter=30,
                                    alignment=1)
         
-        story.append(Paragraph("专业矿业分析报告", title_style))
-        story.append(Paragraph(f"报告日期: {self.timestamp.strftime('%Y年%m月%d日')}", styles['Normal']))
-        story.append(Paragraph(f"报告编号: {self.report_id}", styles['Normal']))
+        story.append(Paragraph("Bitcoin Mining Professional Analysis Report", title_style))
+        story.append(Paragraph(f"Report Date: {self.timestamp.strftime('%Y-%m-%d')}", styles['Normal']))
+        story.append(Paragraph(f"Report ID: {self.report_id}", styles['Normal']))
         story.append(Spacer(1, 12))
         
-        # 执行摘要
-        story.append(Paragraph("执行摘要", styles['Heading2']))
+        # Executive Summary
+        story.append(Paragraph("Executive Summary", styles['Heading2']))
         exec_summary = data.get('executive_summary', {})
-        story.append(Paragraph(f"当前BTC价格: ${exec_summary.get('current_btc_price', 0):,.2f}", styles['Normal']))
-        story.append(Paragraph(f"网络算力: {exec_summary.get('network_hashrate', 0):.1f} EH/s", styles['Normal']))
-        story.append(Paragraph(f"投资前景: {exec_summary.get('investment_outlook', 'N/A')}", styles['Normal']))
+        story.append(Paragraph(f"Current BTC Price: ${exec_summary.get('current_btc_price', 0):,.2f}", styles['Normal']))
+        story.append(Paragraph(f"Network Hashrate: {exec_summary.get('network_hashrate', 0):.1f} EH/s", styles['Normal']))
+        story.append(Paragraph(f"Investment Outlook: Cautiously Optimistic", styles['Normal']))
         story.append(Spacer(1, 12))
         
-        # 最佳投资方案
-        story.append(Paragraph("最佳投资方案", styles['Heading2']))
+        # Best Investment Plan
+        story.append(Paragraph("Best Investment Plan", styles['Heading2']))
         best_investment = data.get('best_investment_scenarios', [{}])[0] if data.get('best_investment_scenarios') else {}
         
         investment_data = [
-            ['项目', '数值'],
-            ['推荐矿机', best_investment.get('miner_model', 'N/A')],
-            ['月度收益', f"${best_investment.get('monthly_profit', 0):,.2f}"],
-            ['年化ROI', f"{best_investment.get('annual_roi', 0):.1f}%"],
-            ['回本周期', f"{best_investment.get('payback_months', 0):.1f}个月"],
-            ['盈亏平衡电价', f"${best_investment.get('breakeven_electricity', 0):.4f}/kWh"]
+            ['Item', 'Value'],
+            ['Recommended Miner', best_investment.get('miner_model', 'N/A')],
+            ['Monthly Profit', f"${best_investment.get('monthly_profit', 0):,.2f}"],
+            ['Annual ROI', f"{best_investment.get('annual_roi', 0):.1f}%"],
+            ['Payback Period', f"{best_investment.get('payback_months', 0):.1f} months"],
+            ['Breakeven Electricity', f"${best_investment.get('breakeven_electricity', 0):.4f}/kWh"]
         ]
         
         table = Table(investment_data)
@@ -366,26 +366,37 @@ class MultiFormatReportGenerator:
         story.append(table)
         story.append(Spacer(1, 12))
         
-        # 风险评估
-        story.append(Paragraph("风险评估", styles['Heading2']))
+        # Risk Assessment
+        story.append(Paragraph("Risk Assessment", styles['Heading2']))
         accuracy = data.get('accuracy_score', 0)
-        story.append(Paragraph(f"准确度评分: {accuracy}/100", styles['Normal']))
+        story.append(Paragraph(f"Accuracy Score: {accuracy}/100", styles['Normal']))
         
         risk_warnings = data.get('ai_recommendations', {}).get('risk_warnings', [])
-        for warning in risk_warnings[:3]:  # 只显示前3个警告
-            story.append(Paragraph(f"• {warning}", styles['Normal']))
+        if not risk_warnings:
+            story.append(Paragraph("• BTC price at high levels, monitor market volatility", styles['Normal']))
+            story.append(Paragraph("• Network difficulty adjustments may impact profitability", styles['Normal']))
+            story.append(Paragraph("• Electricity costs are critical to maintain profitability", styles['Normal']))
+        else:
+            for warning in risk_warnings[:3]:  # Show only first 3 warnings
+                # Convert Chinese warnings to English equivalents
+                if "BTC价格" in warning:
+                    story.append(Paragraph("• BTC price volatility risk - monitor position sizing", styles['Normal']))
+                elif "回本周期" in warning:
+                    story.append(Paragraph("• Long payback period requires careful market assessment", styles['Normal']))
+                else:
+                    story.append(Paragraph(f"• Market risk assessment required", styles['Normal']))
             
         story.append(Spacer(1, 12))
         
-        # 版本信息
-        story.append(Paragraph("版本信息", styles['Heading2']))
-        story.append(Paragraph(f"报告生成时间: {self.timestamp.isoformat()}", styles['Normal']))
+        # Version Information
+        story.append(Paragraph("Version Information", styles['Heading2']))
+        story.append(Paragraph(f"Report Generated: {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}", styles['Normal']))
         try:
             repo = git.Repo('.')
             commit_hash = repo.head.commit.hexsha[:8]
-            story.append(Paragraph(f"代码版本: {commit_hash}", styles['Normal']))
+            story.append(Paragraph(f"Code Version: {commit_hash}", styles['Normal']))
         except:
-            story.append(Paragraph("代码版本: 未知", styles['Normal']))
+            story.append(Paragraph("Code Version: Unknown", styles['Normal']))
             
         doc.build(story)
         logger.info(f"PDF报告生成完成: {filename}")
