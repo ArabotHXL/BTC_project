@@ -661,6 +661,16 @@ def calculate():
                 maintenance_fee=maintenance_fee,
                 manual_network_hashrate=manual_hashrate  # 新增参数：手动全网算力
             )
+            
+            # 确保返回完整的计算结果格式
+            if result and isinstance(result, dict):
+                return jsonify(result)
+            else:
+                logging.error("计算函数返回无效结果")
+                return jsonify({
+                    'success': False,
+                    'error': '计算函数返回无效结果'
+                }), 500
         except Exception as calc_error:
             # 如果计算过程中出错，使用基本估算
             logging.error(f"计算过程中出错，使用基本估算: {calc_error}")

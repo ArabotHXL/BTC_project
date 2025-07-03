@@ -1,0 +1,424 @@
+{
+  "test_summary": {
+    "start_time": "2025-07-03T01:42:07.843859",
+    "end_time": "2025-07-03T01:42:17.239013",
+    "duration_seconds": 9.395154,
+    "total_tests": 46,
+    "passed_tests": 22,
+    "failed_tests": 24,
+    "warning_tests": 0,
+    "success_rate": 47.82608695652174
+  },
+  "module_statistics": {
+    "Authentication": {
+      "total": 1,
+      "passed": 1
+    },
+    "Infrastructure": {
+      "total": 1,
+      "passed": 1
+    },
+    "Database": {
+      "total": 9,
+      "passed": 9
+    },
+    "Static": {
+      "total": 2,
+      "passed": 2
+    },
+    "API": {
+      "total": 8,
+      "passed": 3
+    },
+    "Mining": {
+      "total": 11,
+      "passed": 0
+    },
+    "Advanced": {
+      "total": 4,
+      "passed": 0
+    },
+    "UI": {
+      "total": 6,
+      "passed": 5
+    },
+    "External": {
+      "total": 1,
+      "passed": 1
+    },
+    "Security": {
+      "total": 3,
+      "passed": 0
+    }
+  },
+  "detailed_results": [
+    {
+      "timestamp": "2025-07-03T01:42:08.258804",
+      "module": "Authentication",
+      "function": "login",
+      "status": "PASS",
+      "details": "登录成功 (200)",
+      "response_time": 0.41472887992858887
+    },
+    {
+      "timestamp": "2025-07-03T01:42:08.264729",
+      "module": "Infrastructure",
+      "function": "main_page",
+      "status": "PASS",
+      "details": "主页可访问",
+      "response_time": 0.005570411682128906
+    },
+    {
+      "timestamp": "2025-07-03T01:42:08.453118",
+      "module": "Database",
+      "function": "table_user_access",
+      "status": "PASS",
+      "details": "表存在，7条记录",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:08.473598",
+      "module": "Database",
+      "function": "table_login_records",
+      "status": "PASS",
+      "details": "表存在，303条记录",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:08.494243",
+      "module": "Database",
+      "function": "table_network_snapshots",
+      "status": "PASS",
+      "details": "表存在，895条记录",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:08.514747",
+      "module": "Database",
+      "function": "table_customers",
+      "status": "PASS",
+      "details": "表存在，0条记录",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:08.535394",
+      "module": "Database",
+      "function": "table_leads",
+      "status": "PASS",
+      "details": "表存在，0条记录",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:08.556290",
+      "module": "Database",
+      "function": "table_activities",
+      "status": "PASS",
+      "details": "表存在，0条记录",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:08.577615",
+      "module": "Database",
+      "function": "table_market_analytics",
+      "status": "PASS",
+      "details": "表存在，94条记录",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:08.598315",
+      "module": "Database",
+      "function": "table_technical_indicators",
+      "status": "PASS",
+      "details": "表存在，115条记录",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:08.618852",
+      "module": "Database",
+      "function": "table_analysis_reports",
+      "status": "PASS",
+      "details": "表存在，10条记录",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:08.623971",
+      "module": "Static",
+      "function": "style.css",
+      "status": "PASS",
+      "details": "资源可访问 (3090 bytes)",
+      "response_time": 0.0047113895416259766
+    },
+    {
+      "timestamp": "2025-07-03T01:42:08.628008",
+      "module": "Static",
+      "function": "script.js",
+      "status": "PASS",
+      "details": "资源可访问 (9160 bytes)",
+      "response_time": 0.0039691925048828125
+    },
+    {
+      "timestamp": "2025-07-03T01:42:08.816836",
+      "module": "API",
+      "function": "Price",
+      "status": "PASS",
+      "details": "BTC价格: $109,106",
+      "response_time": 0.18854737281799316
+    },
+    {
+      "timestamp": "2025-07-03T01:42:09.776410",
+      "module": "API",
+      "function": "Network",
+      "status": "PASS",
+      "details": "网络数据完整: 难度=117.0T, 算力=872.1EH/s",
+      "response_time": 0.959338903427124
+    },
+    {
+      "timestamp": "2025-07-03T01:42:09.780265",
+      "module": "API",
+      "function": "Miners",
+      "status": "FAIL",
+      "details": "数据验证失败: 矿机数据不足，仅0种型号",
+      "response_time": 0.003727436065673828
+    },
+    {
+      "timestamp": "2025-07-03T01:42:10.038447",
+      "module": "API",
+      "function": "Comparison",
+      "status": "FAIL",
+      "details": "数据验证失败: SHA256对比数据为空",
+      "response_time": 0.2580742835998535
+    },
+    {
+      "timestamp": "2025-07-03T01:42:10.289174",
+      "module": "API",
+      "function": "Analytics_Market",
+      "status": "PASS",
+      "details": "市场数据: BTC=$109,106, 算力=872.1EH/s",
+      "response_time": 0.25057125091552734
+    },
+    {
+      "timestamp": "2025-07-03T01:42:10.542513",
+      "module": "API",
+      "function": "Analytics_Report",
+      "status": "FAIL",
+      "details": "数据验证失败: 分析报告数据格式错误",
+      "response_time": 0.25313687324523926
+    },
+    {
+      "timestamp": "2025-07-03T01:42:10.806716",
+      "module": "API",
+      "function": "Analytics_Indicators",
+      "status": "FAIL",
+      "details": "数据验证失败: 技术指标数据格式错误",
+      "response_time": 0.26402878761291504
+    },
+    {
+      "timestamp": "2025-07-03T01:42:11.079114",
+      "module": "API",
+      "function": "Analytics_History",
+      "status": "FAIL",
+      "details": "数据验证失败: 价格历史数据格式错误",
+      "response_time": 0.2719426155090332
+    },
+    {
+      "timestamp": "2025-07-03T01:42:11.085446",
+      "module": "Mining",
+      "function": "basic_calculation",
+      "status": "FAIL",
+      "details": "计算结果验证失败",
+      "response_time": 0.006006717681884766
+    },
+    {
+      "timestamp": "2025-07-03T01:42:11.091140",
+      "module": "Mining",
+      "function": "miner_Antminer_S19",
+      "status": "FAIL",
+      "details": "矿机计算失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:11.098260",
+      "module": "Mining",
+      "function": "miner_Antminer_S19_Pro",
+      "status": "FAIL",
+      "details": "矿机计算失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:11.102493",
+      "module": "Mining",
+      "function": "miner_Antminer_S19_XP",
+      "status": "FAIL",
+      "details": "矿机计算失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:11.110832",
+      "module": "Mining",
+      "function": "miner_Antminer_S21",
+      "status": "FAIL",
+      "details": "矿机计算失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:11.115756",
+      "module": "Mining",
+      "function": "miner_Antminer_S21_Pro",
+      "status": "FAIL",
+      "details": "矿机计算失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:11.120172",
+      "module": "Mining",
+      "function": "miner_Antminer_S21_XP",
+      "status": "FAIL",
+      "details": "矿机计算失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:11.125511",
+      "module": "Mining",
+      "function": "miner_Antminer_S21_Hyd",
+      "status": "FAIL",
+      "details": "矿机计算失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:11.130711",
+      "module": "Mining",
+      "function": "miner_Antminer_S21_Pro_Hyd",
+      "status": "FAIL",
+      "details": "矿机计算失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:11.136091",
+      "module": "Mining",
+      "function": "miner_Antminer_S21_XP_Hyd",
+      "status": "FAIL",
+      "details": "矿机计算失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:11.140297",
+      "module": "Mining",
+      "function": "miner_WhatsMiner_M50",
+      "status": "FAIL",
+      "details": "矿机计算失败",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:11.144048",
+      "module": "Advanced",
+      "function": "curtailment_calculation",
+      "status": "FAIL",
+      "details": "限电计算失败 (404)",
+      "response_time": 0.0036783218383789062
+    },
+    {
+      "timestamp": "2025-07-03T01:42:11.147659",
+      "module": "Advanced",
+      "function": "investment_analysis",
+      "status": "FAIL",
+      "details": "投资分析失败 (404)",
+      "response_time": 0.003470182418823242
+    },
+    {
+      "timestamp": "2025-07-03T01:42:11.170767",
+      "module": "Advanced",
+      "function": "multiple_electricity_costs",
+      "status": "FAIL",
+      "details": "仅0/5电价计算成功",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:11.173966",
+      "module": "Advanced",
+      "function": "breakeven_analysis",
+      "status": "FAIL",
+      "details": "盈亏分析失败 (404)",
+      "response_time": 0.0031011104583740234
+    },
+    {
+      "timestamp": "2025-07-03T01:42:11.179203",
+      "module": "UI",
+      "function": "page_Main",
+      "status": "PASS",
+      "details": "页面加载成功 (74325 bytes)",
+      "response_time": 0.0049779415130615234
+    },
+    {
+      "timestamp": "2025-07-03T01:42:11.832458",
+      "module": "UI",
+      "function": "page_Analytics",
+      "status": "PASS",
+      "details": "页面加载成功 (186817 bytes)",
+      "response_time": 0.6531846523284912
+    },
+    {
+      "timestamp": "2025-07-03T01:42:11.837097",
+      "module": "UI",
+      "function": "page_Curtailment",
+      "status": "FAIL",
+      "details": "页面访问失败 (404)",
+      "response_time": 0.0045320987701416016
+    },
+    {
+      "timestamp": "2025-07-03T01:42:11.931345",
+      "module": "UI",
+      "function": "page_Network_History",
+      "status": "PASS",
+      "details": "页面加载成功 (34518 bytes)",
+      "response_time": 0.09414196014404297
+    },
+    {
+      "timestamp": "2025-07-03T01:42:12.019973",
+      "module": "UI",
+      "function": "page_Algorithm_Test",
+      "status": "PASS",
+      "details": "页面加载成功 (14204 bytes)",
+      "response_time": 0.08856463432312012
+    },
+    {
+      "timestamp": "2025-07-03T01:42:12.024314",
+      "module": "UI",
+      "function": "responsive_design",
+      "status": "PASS",
+      "details": "检测到响应式设计元素",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:17.155405",
+      "module": "External",
+      "function": "professional_report",
+      "status": "PASS",
+      "details": "专业报告生成成功: 准确度48.9",
+      "response_time": 5.1309075355529785
+    },
+    {
+      "timestamp": "2025-07-03T01:42:17.213832",
+      "module": "Security",
+      "function": "authentication_protection",
+      "status": "FAIL",
+      "details": "仅0/4端点受保护",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:17.222107",
+      "module": "Security",
+      "function": "role_based_access",
+      "status": "FAIL",
+      "details": "拥有者权限异常: 0/2",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T01:42:17.238675",
+      "module": "Security",
+      "function": "input_validation",
+      "status": "FAIL",
+      "details": "输入验证不足: 1/3",
+      "response_time": null
+    }
+  ]
+}

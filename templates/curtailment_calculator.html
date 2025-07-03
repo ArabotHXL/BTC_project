@@ -1,755 +1,269 @@
 {% extends "base.html" %}
 
-{% block title %}月度电力削减计算器 | BTC Mining Calculator{% endblock %}
-
-{% block header_title %}月度电力削减(Curtailment)计算器{% endblock %}
-
-{% block extra_head %}
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-{% endblock %}
+{% block title %}{{ translate('power_curtailment_calculator') }} - {{ translate('bitcoin_mining_profitability_calculator') }}{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container-fluid">
+    <!-- 页面标题 -->
     <div class="row">
         <div class="col-12">
-            <div class="alert alert-info">
-                <i class="bi bi-info-circle"></i> 
-                <strong>什么是电力削减(Curtailment)?</strong> 
-                电力削减是指在特定时期内主动减少矿场用电量的策略，通常用于应对电价高峰或电网限制。
-                本计算器帮助您评估不同削减比例下的经济影响，优化运营决策。
-            </div>
+            <h1 class="text-center mb-4">
+                <i class="bi bi-lightning-charge text-warning"></i>
+                {{ translate('power_curtailment_calculator') }}
+            </h1>
+            <p class="text-center text-muted mb-5">
+                {{ translate('curtailment_description') }}
+            </p>
         </div>
     </div>
-    
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card shadow">
-                <div class="card-header bg-primary bg-opacity-10">
-                    <h4><i class="bi bi-lightning-charge"></i> 月度电力削减(Curtailment)分析工具</h4>
+
+    <!-- 限电计算表单 -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header bg-warning text-dark">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-calculator"></i>
+                        {{ translate('curtailment_parameters') }}
+                    </h3>
                 </div>
                 <div class="card-body">
-                    <form id="curtailment-form">
+                    <form id="curtailment-form" class="needs-validation" novalidate>
                         <div class="row">
-                            <!-- 第一列：矿机参数 -->
-                            <div class="col-md-4">
-                                <h5 class="mb-3">矿机参数</h5>
-                                
-                                <!-- 矿机选择区域 -->
-                                <div class="card mb-3 bg-light">
-                                    <div class="card-header bg-primary bg-opacity-10">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span>矿机配置</span>
-                                            <button type="button" class="btn btn-sm btn-primary" id="add-miner-btn">
-                                                <i class="bi bi-plus"></i> 添加矿机
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="card-body" id="miners-container">
-                                        <div class="alert alert-info">
-                                            添加您的矿场中使用的矿机型号和数量。
-                                        </div>
-                                        <div class="miner-entry mb-2">
-                                            <div class="row g-2 align-items-center">
-                                                <div class="col-7">
-                                                    <select class="form-select miner-model-select" required>
-                                                        <option value="">选择矿机...</option>
-                                                        <!-- 使用JavaScript填充 -->
-                                                    </select>
-                                                </div>
-                                                <div class="col-4">
-                                                    <div class="input-group">
-                                                        <input type="number" class="form-control miner-count-input" value="100" min="1">
-                                                        <span class="input-group-text">台</span>
-                                                    </div>
-                                                </div>
-                                                <div class="col-1">
-                                                    <button type="button" class="btn btn-sm btn-outline-danger remove-miner-btn" disabled>
-                                                        <i class="bi bi-x"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <input type="hidden" name="miners_data" id="miners-data-input">
-                                </div>
+                            <!-- 矿机配置 -->
+                            <div class="col-md-6">
+                                <h5 class="text-warning mb-3">
+                                    <i class="bi bi-cpu"></i>
+                                    {{ translate('miner_configuration') }}
+                                </h5>
                                 
                                 <div class="mb-3">
-                                    <label for="curtailment-percentage" class="form-label">月度削减比例 (%)</label>
-                                    <input type="number" class="form-control" id="curtailment-percentage" name="curtailment_percentage" value="20" min="0" max="100">
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="shutdown-strategy" class="form-label">关机策略</label>
-                                    <select class="form-select" id="shutdown-strategy" name="shutdown_strategy">
-                                        <option value="efficiency" selected>按效率关机 (先关效率低的)</option>
-                                        <option value="proportional">按比例关机 (每种型号同比例)</option>
-                                        <option value="random">随机关机</option>
+                                    <label for="miner_model" class="form-label">{{ translate('miner_model') }}</label>
+                                    <select class="form-select bg-dark text-light border-secondary" id="miner_model" name="miner_model" required>
+                                        <option value="">{{ translate('select_miner') }}</option>
+                                        <option value="Antminer S19">Antminer S19 (95TH/s, 3250W)</option>
+                                        <option value="Antminer S19 Pro">Antminer S19 Pro (110TH/s, 3250W)</option>
+                                        <option value="Antminer S19 XP">Antminer S19 XP (140TH/s, 3010W)</option>
+                                        <option value="Antminer S21">Antminer S21 (200TH/s, 3550W)</option>
+                                        <option value="Antminer S21 Pro">Antminer S21 Pro (234TH/s, 3531W)</option>
+                                        <option value="Antminer S21 XP">Antminer S21 XP (270TH/s, 3645W)</option>
+                                        <option value="Antminer S21 Hyd">Antminer S21 Hyd (335TH/s, 5360W)</option>
+                                        <option value="Antminer S21 Pro Hyd">Antminer S21 Pro Hyd (319TH/s, 5445W)</option>
+                                        <option value="Antminer S21 XP Hyd">Antminer S21 XP Hyd (473TH/s, 5676W)</option>
+                                        <option value="WhatsMiner M50">WhatsMiner M50 (114TH/s, 3306W)</option>
                                     </select>
-                                    <div class="form-text">选择在电力削减时，关闭矿机的策略方式</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="miner_count" class="form-label">{{ translate('miner_count') }}</label>
+                                    <input type="number" class="form-control bg-dark text-light border-secondary" 
+                                           id="miner_count" name="miner_count" value="100" min="1" max="10000" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="electricity_cost" class="form-label">{{ translate('electricity_cost') }} ($/kWh)</label>
+                                    <input type="number" class="form-control bg-dark text-light border-secondary" 
+                                           id="electricity_cost" name="electricity_cost" value="0.05" 
+                                           min="0.01" max="1.00" step="0.001" required>
                                 </div>
                             </div>
-                            
-                            <!-- 第二列：经济参数 -->
-                            <div class="col-md-4">
-                                <h5 class="mb-3">经济参数</h5>
-                                <div class="mb-3">
-                                    <label for="electricity-cost" class="form-label">电价 ($/kWh)</label>
-                                    <input type="number" class="form-control" id="electricity-cost" name="electricity_cost" value="0.05" step="0.001" min="0">
-                                </div>
+
+                            <!-- 限电参数 -->
+                            <div class="col-md-6">
+                                <h5 class="text-warning mb-3">
+                                    <i class="bi bi-lightning-charge"></i>
+                                    {{ translate('curtailment_parameters') }}
+                                </h5>
                                 
                                 <div class="mb-3">
-                                    <label for="btc-price" class="form-label">BTC价格 ($)</label>
-                                    <input type="number" class="form-control" id="btc-price" name="btc_price" value="{{ btc_price }}" step="1" min="1">
+                                    <label for="curtailment" class="form-label">{{ translate('curtailment_percentage') }} (%)</label>
+                                    <input type="range" class="form-range" id="curtailment" name="curtailment" 
+                                           value="20" min="0" max="80" step="5" 
+                                           oninput="updateCurtailmentValue(this.value)">
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-muted">0%</small>
+                                        <span id="curtailment-value" class="text-warning fw-bold">20%</span>
+                                        <small class="text-muted">80%</small>
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <!-- 第三列：网络参数 -->
-                            <div class="col-md-4">
-                                <h5 class="mb-3">网络参数</h5>
+
                                 <div class="mb-3">
-                                    <label for="network-difficulty" class="form-label">网络难度 (T)</label>
-                                    <input type="number" class="form-control" id="network-difficulty" name="network_difficulty" value="{{ network_difficulty }}" step="0.01" min="0.01">
+                                    <label for="shutdown_strategy" class="form-label">{{ translate('shutdown_strategy') }}</label>
+                                    <select class="form-select bg-dark text-light border-secondary" id="shutdown_strategy" name="shutdown_strategy">
+                                        <option value="efficiency">{{ translate('efficiency_based') }}</option>
+                                        <option value="proportional">{{ translate('proportional') }}</option>
+                                        <option value="random">{{ translate('random') }}</option>
+                                    </select>
+                                    <div class="form-text text-muted">
+                                        {{ translate('shutdown_strategy_description') }}
+                                    </div>
                                 </div>
-                                
+
                                 <div class="mb-3">
-                                    <label for="block-reward" class="form-label">区块奖励 (BTC)</label>
-                                    <input type="number" class="form-control" id="block-reward" name="block_reward" value="{{ block_reward }}" step="0.001" min="0.001">
+                                    <label for="btc_price" class="form-label">{{ translate('btc_price') }} ($)</label>
+                                    <input type="number" class="form-control bg-dark text-light border-secondary" 
+                                           id="btc_price" name="btc_price" value="100000" 
+                                           min="10000" max="1000000" step="100">
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" id="use_real_time_btc" name="use_real_time_btc" checked>
+                                        <label class="form-check-label text-muted" for="use_real_time_btc">
+                                            {{ translate('use_real_time_data') }}
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="text-center mt-3">
-                            <button type="submit" class="btn btn-primary" id="calculate-btn">
-                                <i class="bi bi-calculator"></i> 计算削减影响
-                            </button>
+
+                        <!-- 计算按钮 -->
+                        <div class="row">
+                            <div class="col-12 text-center">
+                                <button type="submit" class="btn btn-warning btn-lg px-5 py-3">
+                                    <i class="bi bi-calculator"></i>
+                                    {{ translate('calculate_curtailment_impact') }}
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
             </div>
-            
-            <!-- 结果卡片 -->
-            <div class="card shadow mt-4" id="curtailment-results" style="display: none;">
-                <div class="card-header bg-success bg-opacity-10">
-                    <h4><i class="bi bi-graph-up"></i> 削减计划分析结果</h4>
+        </div>
+    </div>
+
+    <!-- 计算结果 -->
+    <div id="results-section" class="row mt-5" style="display: none;">
+        <div class="col-12">
+            <div class="card bg-dark border-success">
+                <div class="card-header bg-success text-dark">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-graph-up"></i>
+                        {{ translate('curtailment_analysis_results') }}
+                    </h3>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <!-- 主要指标卡片 -->
-                        <div class="col-md-4 mb-3">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <h6>需关闭矿机数量</h6>
-                                    <h3 id="miners-to-shutdown">0</h3>
-                                    <small class="text-muted">使用<span id="miner-model-display">-</span>型号矿机</small>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-4 mb-3">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <h6>节省电费</h6>
-                                    <h3 id="saved-electricity-cost">$0.00</h3>
-                                    <small class="text-muted">每月节省<span id="saved-electricity-kwh">0</span> kWh电量</small>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-4 mb-3">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <h6>净影响</h6>
-                                    <h3 id="net-impact">$0.00</h3>
-                                    <small id="net-impact-desc" class="text-muted">-</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 详细分析表格 -->
-                    <div class="row mt-3">
-                        <div class="col-md-7">
-                            <h5>削减前 vs 削减后</h5>
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>指标</th>
-                                        <th>削减前</th>
-                                        <th>削减后</th>
-                                        <th>变化</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="comparison-table">
-                                    <!-- 用JavaScript填充 -->
-                                </tbody>
-                            </table>
-                            
-                            <h5 class="mt-4">要关闭的矿机</h5>
-                            <div class="table-responsive">
-                                <table class="table table-sm table-bordered">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>矿机型号</th>
-                                            <th>数量</th>
-                                            <th>总算力 (TH/s)</th>
-                                            <th>总功耗 (kW)</th>
-                                            <th>效率 (W/TH)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="shutdown-miners-table">
-                                        <!-- 用JavaScript填充 -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-5">
-                            <h5>经济影响分析</h5>
-                            <div id="impact-chart" style="height: 250px;"></div>
-                            
-                            <div class="alert mt-3" id="curtailment-recommendation">
-                                <!-- 用JavaScript填充建议 -->
-                            </div>
-                        </div>
-                    </div>
+                <div class="card-body" id="results-content">
+                    <!-- 结果将通过JavaScript动态插入 -->
                 </div>
             </div>
         </div>
     </div>
-</div>
-{% endblock %}
 
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 加载矿机列表
-    loadMinerModels();
-    
-    // 表单提交处理
-    const curtailmentForm = document.getElementById('curtailment-form');
-    if (curtailmentForm) {
-        curtailmentForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // 显示加载状态
-            const calculateBtn = document.getElementById('calculate-btn');
-            const originalBtnHtml = calculateBtn.innerHTML;
-            calculateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 计算中...';
-            calculateBtn.disabled = true;
-            
-            calculateCurtailment().finally(() => {
-                // 恢复按钮状态
-                calculateBtn.innerHTML = originalBtnHtml;
-                calculateBtn.disabled = false;
-            });
-        });
-    }
-    
-    // 调整矿场功率和矿机数量的联动关系
-    const sitePowerInput = document.getElementById('site-power');
-    const minerCountInput = document.getElementById('miner-count');
-    const minerModelSelect = document.getElementById('miner-model');
-    
-    if (sitePowerInput && minerCountInput && minerModelSelect) {
-        sitePowerInput.addEventListener('input', function() {
-            updateMinerCount();
-        });
-        
-        minerModelSelect.addEventListener('change', function() {
-            if (sitePowerInput.value) {
-                updateMinerCount();
-            }
-        });
-    }
-});
-
-// 存储矿机数据
-let minersData = [];
-
-// 加载矿机型号列表
-function loadMinerModels() {
-    fetch('/miners')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && data.miners) {
-                // 保存矿机数据供后续使用
-                minersData = data.miners;
-                
-                // 填充所有矿机选择下拉框
-                const selects = document.querySelectorAll('.miner-model-select');
-                selects.forEach(select => populateMinerSelect(select));
-                
-                // 设置添加矿机按钮事件
-                setupAddMinerButton();
-                
-                // 设置移除矿机按钮事件
-                setupRemoveMinerButtons();
-            }
-        })
-        .catch(error => console.error('加载矿机失败:', error));
-}
-
-// 填充单个矿机选择下拉框
-function populateMinerSelect(select) {
-    // 清空现有选项（保留第一个"选择矿机..."选项）
-    while (select.options.length > 1) {
-        select.remove(1);
-    }
-    
-    // 添加矿机选项
-    minersData.forEach(miner => {
-        const option = document.createElement('option');
-        option.value = miner.name;
-        option.textContent = `${miner.name} (${miner.hashrate} TH/s, ${miner.power_watt}W)`;
-        select.appendChild(option);
-    });
-}
-
-// 设置添加矿机按钮
-function setupAddMinerButton() {
-    const addMinerBtn = document.getElementById('add-miner-btn');
-    if (addMinerBtn) {
-        addMinerBtn.addEventListener('click', function() {
-            addMinerEntry();
-        });
-    }
-}
-
-// 添加新的矿机条目
-function addMinerEntry(model = '', count = 100) {
-    const minersContainer = document.getElementById('miners-container');
-    const entries = minersContainer.querySelectorAll('.miner-entry');
-    
-    // 创建新的矿机条目
-    const newEntry = document.createElement('div');
-    newEntry.className = 'miner-entry mb-2';
-    newEntry.innerHTML = `
-        <div class="row g-2 align-items-center">
-            <div class="col-7">
-                <select class="form-select miner-model-select" required>
-                    <option value="">选择矿机...</option>
-                </select>
-            </div>
-            <div class="col-4">
-                <div class="input-group">
-                    <input type="number" class="form-control miner-count-input" value="${count}" min="1">
-                    <span class="input-group-text">台</span>
-                </div>
-            </div>
-            <div class="col-1">
-                <button type="button" class="btn btn-sm btn-outline-danger remove-miner-btn">
-                    <i class="bi bi-x"></i>
-                </button>
+    <!-- 错误信息 -->
+    <div id="error-section" class="row mt-3" style="display: none;">
+        <div class="col-12">
+            <div class="alert alert-danger" role="alert" id="error-message">
+                <!-- 错误信息将通过JavaScript动态插入 -->
             </div>
         </div>
-    `;
-    
-    // 如果已经有条目，则移除提示信息
-    const infoAlert = minersContainer.querySelector('.alert-info');
-    if (infoAlert && entries.length > 0) {
-        infoAlert.style.display = 'none';
-    }
-    
-    // 添加到容器
-    minersContainer.appendChild(newEntry);
-    
-    // 填充矿机选择器
-    const select = newEntry.querySelector('.miner-model-select');
-    populateMinerSelect(select);
-    
-    // 如果有预设值，设置它
-    if (model) {
-        select.value = model;
-    }
-    
-    // 添加移除事件
-    const removeBtn = newEntry.querySelector('.remove-miner-btn');
-    removeBtn.addEventListener('click', function() {
-        minersContainer.removeChild(newEntry);
-        
-        // 如果没有条目了，显示提示信息
-        const remainingEntries = minersContainer.querySelectorAll('.miner-entry');
-        if (remainingEntries.length === 0 && infoAlert) {
-            infoAlert.style.display = 'block';
-        }
-        
-        // 更新miners_data隐藏字段
-        updateMinersDataInput();
-    });
-    
-    // 为第一个entry的移除按钮添加禁用
-    updateRemoveButtonStates();
-    
-    // 添加改变事件
-    select.addEventListener('change', updateMinersDataInput);
-    newEntry.querySelector('.miner-count-input').addEventListener('input', updateMinersDataInput);
-    
-    // 更新miners_data隐藏字段
-    updateMinersDataInput();
+    </div>
+</div>
+
+<script>
+function updateCurtailmentValue(value) {
+    document.getElementById('curtailment-value').textContent = value + '%';
 }
 
-// 设置所有移除矿机按钮
-function setupRemoveMinerButtons() {
-    const removeButtons = document.querySelectorAll('.remove-miner-btn');
-    removeButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const entry = this.closest('.miner-entry');
-            const container = document.getElementById('miners-container');
-            container.removeChild(entry);
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('curtailment-form');
+    const resultsSection = document.getElementById('results-section');
+    const errorSection = document.getElementById('error-section');
+    const resultsContent = document.getElementById('results-content');
+    const errorMessage = document.getElementById('error-message');
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+        
+        try {
+            // 显示加载状态
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> {{ translate("calculating") }}...';
             
-            // 更新显示状态
-            updateRemoveButtonStates();
+            // 隐藏之前的结果和错误
+            resultsSection.style.display = 'none';
+            errorSection.style.display = 'none';
             
-            // 更新miners_data隐藏字段
-            updateMinersDataInput();
-        });
-    });
-    
-    // 更新按钮状态
-    updateRemoveButtonStates();
-}
-
-// 更新移除按钮状态（至少保留一个矿机条目）
-function updateRemoveButtonStates() {
-    const entries = document.querySelectorAll('.miner-entry');
-    if (entries.length <= 1) {
-        // 如果只有一个条目，禁用其移除按钮
-        entries[0].querySelector('.remove-miner-btn').disabled = true;
-    } else {
-        // 否则启用所有移除按钮
-        entries.forEach(entry => {
-            entry.querySelector('.remove-miner-btn').disabled = false;
-        });
-    }
-}
-
-// 更新miners_data隐藏字段
-function updateMinersDataInput() {
-    const entries = document.querySelectorAll('.miner-entry');
-    const minersData = [];
-    
-    entries.forEach(entry => {
-        const model = entry.querySelector('.miner-model-select').value;
-        const count = parseInt(entry.querySelector('.miner-count-input').value) || 0;
-        
-        if (model && count > 0) {
-            minersData.push({
-                model: model,
-                count: count
+            const formData = new FormData(form);
+            
+            const response = await fetch('/calculate', {
+                method: 'POST',
+                body: formData
             });
-        }
-    });
-    
-    // 更新隐藏字段
-    document.getElementById('miners-data-input').value = JSON.stringify(minersData);
-}
-
-// 计算月度削减影响
-function calculateCurtailment() {
-    const formData = new FormData(document.getElementById('curtailment-form'));
-    
-    // 发送请求到后端
-    return fetch('/calculate_curtailment', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.error) {
-            showError(data.error);
-            return;
-        }
-        
-        // 显示结果区域
-        document.getElementById('curtailment-results').style.display = 'block';
-        
-        // 更新主要指标
-        document.getElementById('miners-to-shutdown').textContent = data.after_curtailment.shutdown_miners;
-        document.getElementById('saved-electricity-cost').textContent = '$' + formatNumber(data.impact.saved_electricity_cost);
-        document.getElementById('saved-electricity-kwh').textContent = formatNumber(data.impact.saved_electricity_kwh);
-        
-        // 更新矿机型号显示（可能有多个型号）
-        const minerModelDisplay = document.getElementById('miner-model-display');
-        if (data.shutdown_details && data.shutdown_details.length > 0) {
-            if (data.shutdown_details.length === 1) {
-                // 单种型号
-                minerModelDisplay.textContent = data.shutdown_details[0].model;
+            
+            const result = await response.json();
+            
+            if (result.success && result.curtailment_details) {
+                displayResults(result.curtailment_details);
+                resultsSection.style.display = 'block';
             } else {
-                // 多种型号
-                minerModelDisplay.textContent = '多种型号';
+                showError(result.error || '{{ translate("calculation_failed") }}');
             }
-        } else {
-            minerModelDisplay.textContent = '-';
-        }
-        
-        const netImpactEl = document.getElementById('net-impact');
-        const netImpactDescEl = document.getElementById('net-impact-desc');
-        netImpactEl.textContent = '$' + formatNumber(Math.abs(data.impact.net_impact));
-        netImpactEl.classList.remove('text-success', 'text-danger');
-        netImpactEl.classList.add(data.impact.net_impact >= 0 ? 'text-success' : 'text-danger');
-        
-        if (data.impact.net_impact >= 0) {
-            netImpactDescEl.textContent = "节省大于收入损失";
-        } else {
-            netImpactDescEl.textContent = "收入损失大于节省";
-        }
-        
-        // 更新要关闭的矿机表格
-        const shutdownMinersTable = document.getElementById('shutdown-miners-table');
-        shutdownMinersTable.innerHTML = '';
-        
-        if (data.shutdown_details && data.shutdown_details.length > 0) {
-            // 显示每种型号要关闭的矿机
-            data.shutdown_details.forEach(item => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${item.model}</td>
-                    <td>${item.count}</td>
-                    <td>${formatNumber(item.hashrate_th)}</td>
-                    <td>${formatNumber(item.power_kw)}</td>
-                    <td>${formatNumber(item.efficiency)}</td>
-                `;
-                shutdownMinersTable.appendChild(row);
-            });
             
-            // 如果有多个型号，添加总计行
-            if (data.shutdown_details.length > 1) {
-                const totalRow = document.createElement('tr');
-                totalRow.className = 'table-secondary fw-bold';
-                
-                const totalCount = data.shutdown_details.reduce((sum, item) => sum + item.count, 0);
-                const totalHashrate = data.shutdown_details.reduce((sum, item) => sum + item.hashrate_th, 0);
-                const totalPower = data.shutdown_details.reduce((sum, item) => sum + item.power_kw, 0);
-                
-                totalRow.innerHTML = `
-                    <td>总计</td>
-                    <td>${totalCount}</td>
-                    <td>${formatNumber(totalHashrate)}</td>
-                    <td>${formatNumber(totalPower)}</td>
-                    <td>-</td>
-                `;
-                shutdownMinersTable.appendChild(totalRow);
-            }
-        } else {
-            // 没有关闭矿机的情况
-            const row = document.createElement('tr');
-            row.innerHTML = '<td colspan="5" class="text-center">没有矿机需要关闭</td>';
-            shutdownMinersTable.appendChild(row);
-        }
-        
-        // 更新比较表格
-        const comparisonTable = document.getElementById('comparison-table');
-        comparisonTable.innerHTML = '';
-        
-        // 添加行: 算力
-        addComparisonRow(comparisonTable, 
-            '总算力 (TH/s)', 
-            formatNumber(data.before_curtailment.total_hashrate_th),
-            formatNumber(data.after_curtailment.hashrate_th),
-            formatNumber(data.impact.hashrate_reduction_th) + ' ↓'
-        );
-        
-        // 添加行: 功耗
-        addComparisonRow(comparisonTable, 
-            '功耗 (kW)', 
-            formatNumber(data.before_curtailment.total_power_kw),
-            formatNumber(data.after_curtailment.power_kw),
-            formatNumber(data.impact.power_reduction_kw) + ' ↓'
-        );
-        
-        // 添加行: 月度电量
-        addComparisonRow(comparisonTable, 
-            '月度电量 (kWh)', 
-            formatNumber(data.before_curtailment.monthly_power_kwh),
-            formatNumber(data.after_curtailment.monthly_power_kwh),
-            formatNumber(data.impact.saved_electricity_kwh) + ' ↓'
-        );
-        
-        // 添加行: 月度电费
-        addComparisonRow(comparisonTable, 
-            '月度电费 ($)', 
-            '$' + formatNumber(data.before_curtailment.monthly_electricity_cost),
-            '$' + formatNumber(data.after_curtailment.monthly_electricity_cost),
-            '$' + formatNumber(data.impact.saved_electricity_cost) + ' ↓'
-        );
-        
-        // 添加行: 月度BTC产出
-        addComparisonRow(comparisonTable, 
-            '月度BTC产出', 
-            formatNumber(data.before_curtailment.monthly_btc, 8),
-            formatNumber(data.after_curtailment.monthly_btc, 8),
-            formatNumber(data.before_curtailment.monthly_btc - data.after_curtailment.monthly_btc, 8) + ' ↓'
-        );
-        
-        // 添加行: 月度收入
-        addComparisonRow(comparisonTable, 
-            '月度收入 ($)', 
-            '$' + formatNumber(data.before_curtailment.monthly_revenue),
-            '$' + formatNumber(data.after_curtailment.monthly_revenue),
-            '$' + formatNumber(data.impact.revenue_loss) + ' ↓'
-        );
-        
-        // 添加行: 月度利润
-        addComparisonRow(comparisonTable, 
-            '月度利润 ($)', 
-            '$' + formatNumber(data.before_curtailment.monthly_profit),
-            '$' + formatNumber(data.after_curtailment.monthly_profit),
-            '$' + formatNumber(data.before_curtailment.monthly_profit - data.after_curtailment.monthly_profit) + ' ' + 
-            (data.impact.net_impact >= 0 ? '↑' : '↓')
-        );
-        
-        // 添加行：利润率
-        addComparisonRow(comparisonTable, 
-            '利润率 (%)', 
-            formatNumber(data.before_curtailment.profit_ratio) + '%',
-            formatNumber(data.after_curtailment.profit_ratio) + '%',
-            formatNumber(data.after_curtailment.profit_ratio - data.before_curtailment.profit_ratio) + '% ' + 
-            (data.after_curtailment.profit_ratio >= data.before_curtailment.profit_ratio ? '↑' : '↓')
-        );
-        
-        // 更新推荐
-        const recommendationEl = document.getElementById('curtailment-recommendation');
-        if (data.impact.is_profitable) {
-            recommendationEl.className = 'alert alert-success';
-            recommendationEl.innerHTML = `
-                <i class="bi bi-check-circle"></i> <strong>推荐采用此削减方案</strong><br>
-                在当前BTC价格($${formatNumber(data.inputs.btc_price)})和电价($${data.inputs.electricity_cost}/kWh)下，
-                削减${data.inputs.curtailment_percentage}%的电力是经济合理的。
-                每月将节省$${formatNumber(data.impact.saved_electricity_cost)}的电费，
-                净收益为$${formatNumber(data.impact.net_impact)}。
-            `;
-        } else {
-            recommendationEl.className = 'alert alert-warning';
-            recommendationEl.innerHTML = `
-                <i class="bi bi-exclamation-triangle"></i> <strong>此削减方案存在经济损失</strong><br>
-                在当前BTC价格($${formatNumber(data.inputs.btc_price)})和电价($${data.inputs.electricity_cost}/kWh)下，
-                削减${data.inputs.curtailment_percentage}%的电力会导致净损失$${formatNumber(Math.abs(data.impact.net_impact))}。
-                建议降低削减比例或等待电价上升/BTC价格下降。
-            `;
-        }
-        
-        // 盈亏平衡分析
-        recommendationEl.innerHTML += `<div class="mt-2">
-            <strong>盈亏平衡分析:</strong> 当电价高于 $${formatNumber(data.impact.break_even_electricity, 5)}/kWh 时，削减电力是经济合理的。
-        </div>`;
-        
-        // 绘制图表
-        drawImpactChart({
-            savedCost: data.impact.saved_electricity_cost,
-            revenueLoss: data.impact.revenue_loss,
-            netImpact: data.impact.net_impact
-        });
-        
-        // 滚动到结果区域
-        document.getElementById('curtailment-results').scrollIntoView({ behavior: 'smooth' });
-    })
-    .catch(error => {
-        console.error('计算削减影响时出错:', error);
-        showError('请求失败: ' + error.message);
-    });
-}
-
-// 添加比较表格行
-function addComparisonRow(table, label, before, after, change) {
-    const row = document.createElement('tr');
-    
-    const labelCell = document.createElement('td');
-    labelCell.textContent = label;
-    
-    const beforeCell = document.createElement('td');
-    beforeCell.textContent = before;
-    
-    const afterCell = document.createElement('td');
-    afterCell.textContent = after;
-    
-    const changeCell = document.createElement('td');
-    changeCell.textContent = change;
-    // 为变化添加颜色标识
-    if (change.includes('↑')) {
-        changeCell.classList.add('text-success');
-    } else if (change.includes('↓')) {
-        // 对于电费和功耗减少是好事
-        if (label.includes('电费') || label.includes('电量') || label.includes('功耗')) {
-            changeCell.classList.add('text-success');
-        } else {
-            changeCell.classList.add('text-danger');
-        }
-    }
-    
-    row.appendChild(labelCell);
-    row.appendChild(beforeCell);
-    row.appendChild(afterCell);
-    row.appendChild(changeCell);
-    
-    table.appendChild(row);
-}
-
-// 绘制影响分析图表
-function drawImpactChart(data) {
-    const ctx = document.getElementById('impact-chart').getContext('2d');
-    
-    // 如果已有图表，销毁它
-    if (window.impactChart) {
-        window.impactChart.destroy();
-    }
-    
-    window.impactChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['节省电费', '损失收入', '净影响'],
-            datasets: [{
-                label: '经济影响 ($)',
-                data: [
-                    data.savedCost,
-                    -data.revenueLoss,  // 负值表示损失
-                    data.netImpact
-                ],
-                backgroundColor: [
-                    'rgba(75, 192, 192, 0.6)',
-                    'rgba(255, 99, 132, 0.6)',
-                    data.netImpact >= 0 ? 'rgba(54, 162, 235, 0.6)' : 'rgba(255, 159, 64, 0.6)'
-                ],
-                borderColor: [
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(255, 99, 132, 1)',
-                    data.netImpact >= 0 ? 'rgba(54, 162, 235, 1)' : 'rgba(255, 159, 64, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: '金额 ($)'
-                    }
-                }
-            }
+        } catch (error) {
+            console.error('计算请求失败:', error);
+            showError('{{ translate("request_failed") }}');
+        } finally {
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalText;
         }
     });
-}
-
-// 格式化数字
-function formatNumber(value, decimals = 2) {
-    return new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals
-    }).format(value);
-}
-
-// 显示错误消息
-function showError(message) {
-    alert('错误: ' + message);
-}
+    
+    function displayResults(curtailmentData) {
+        const html = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="text-success mb-3">{{ translate('operation_summary') }}</h5>
+                    <table class="table table-dark table-striped">
+                        <tr>
+                            <td>{{ translate('total_miners') }}</td>
+                            <td class="text-warning">${curtailmentData.total_miners || 0}</td>
+                        </tr>
+                        <tr>
+                            <td>{{ translate('running_miners') }}</td>
+                            <td class="text-success">${curtailmentData.running_miners || 0}</td>
+                        </tr>
+                        <tr>
+                            <td>{{ translate('shutdown_miners') }}</td>
+                            <td class="text-danger">${curtailmentData.shutdown_miners || 0}</td>
+                        </tr>
+                        <tr>
+                            <td>{{ translate('power_reduction') }}</td>
+                            <td class="text-info">${((curtailmentData.power_reduction || 0) * 100).toFixed(1)}%</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h5 class="text-success mb-3">{{ translate('financial_impact') }}</h5>
+                    <table class="table table-dark table-striped">
+                        <tr>
+                            <td>{{ translate('monthly_revenue_loss') }}</td>
+                            <td class="text-danger">$${(curtailmentData.monthly_revenue_loss || 0).toLocaleString()}</td>
+                        </tr>
+                        <tr>
+                            <td>{{ translate('monthly_cost_savings') }}</td>
+                            <td class="text-success">$${(curtailmentData.monthly_cost_savings || 0).toLocaleString()}</td>
+                        </tr>
+                        <tr>
+                            <td>{{ translate('net_monthly_impact') }}</td>
+                            <td class="${(curtailmentData.net_monthly_impact || 0) >= 0 ? 'text-success' : 'text-danger'}">
+                                $${(curtailmentData.net_monthly_impact || 0).toLocaleString()}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>{{ translate('efficiency_improvement') }}</td>
+                            <td class="text-info">${((curtailmentData.efficiency_improvement || 0) * 100).toFixed(2)}%</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        `;
+        resultsContent.innerHTML = html;
+    }
+    
+    function showError(message) {
+        errorMessage.textContent = message;
+        errorSection.style.display = 'block';
+    }
+});
 </script>
 {% endblock %}
