@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ translate('power_curtailment_calculator') }} - {{ translate('bitcoin_mining_profitability_calculator') }}{% endblock %}
+{% block title %}电力削减计算器 - BTC挖矿计算器{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -9,10 +9,10 @@
         <div class="col-12">
             <h1 class="text-center mb-4">
                 <i class="bi bi-lightning-charge text-warning"></i>
-                {{ translate('power_curtailment_calculator') }}
+                电力削减计算器
             </h1>
             <p class="text-center text-muted mb-5">
-                {{ translate('curtailment_description') }}
+                分析电力削减对挖矿收益的影响
             </p>
         </div>
     </div>
@@ -24,7 +24,7 @@
                 <div class="card-header bg-warning text-dark">
                     <h3 class="card-title mb-0">
                         <i class="bi bi-calculator"></i>
-                        {{ translate('curtailment_parameters') }}
+                        削减参数配置
                     </h3>
                 </div>
                 <div class="card-body">
@@ -34,13 +34,13 @@
                             <div class="col-md-6">
                                 <h5 class="text-warning mb-3">
                                     <i class="bi bi-cpu"></i>
-                                    {{ translate('miner_configuration') }}
+                                    矿机配置
                                 </h5>
                                 
                                 <div class="mb-3">
-                                    <label for="miner_model" class="form-label">{{ translate('miner_model') }}</label>
+                                    <label for="miner_model" class="form-label">矿机型号</label>
                                     <select class="form-select bg-dark text-light border-secondary" id="miner_model" name="miner_model" required>
-                                        <option value="">{{ translate('select_miner') }}</option>
+                                        <option value="">选择矿机型号</option>
                                         <option value="Antminer S19">Antminer S19 (95TH/s, 3250W)</option>
                                         <option value="Antminer S19 Pro">Antminer S19 Pro (110TH/s, 3250W)</option>
                                         <option value="Antminer S19 XP">Antminer S19 XP (140TH/s, 3010W)</option>
@@ -55,13 +55,13 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="miner_count" class="form-label">{{ translate('miner_count') }}</label>
+                                    <label for="miner_count" class="form-label">矿机数量</label>
                                     <input type="number" class="form-control bg-dark text-light border-secondary" 
                                            id="miner_count" name="miner_count" value="100" min="1" max="10000" required>
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="electricity_cost" class="form-label">{{ translate('electricity_cost') }} ($/kWh)</label>
+                                    <label for="electricity_cost" class="form-label">电费成本 ($/kWh)</label>
                                     <input type="number" class="form-control bg-dark text-light border-secondary" 
                                            id="electricity_cost" name="electricity_cost" value="0.05" 
                                            min="0.01" max="1.00" step="0.001" required>
@@ -72,11 +72,11 @@
                             <div class="col-md-6">
                                 <h5 class="text-warning mb-3">
                                     <i class="bi bi-lightning-charge"></i>
-                                    {{ translate('curtailment_parameters') }}
+                                    削减参数配置
                                 </h5>
                                 
                                 <div class="mb-3">
-                                    <label for="curtailment" class="form-label">{{ translate('curtailment_percentage') }} (%)</label>
+                                    <label for="curtailment" class="form-label">削减百分比 (%)</label>
                                     <input type="range" class="form-range" id="curtailment" name="curtailment" 
                                            value="20" min="0" max="80" step="5" 
                                            oninput="updateCurtailmentValue(this.value)">
@@ -88,26 +88,26 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="shutdown_strategy" class="form-label">{{ translate('shutdown_strategy') }}</label>
+                                    <label for="shutdown_strategy" class="form-label">关机策略</label>
                                     <select class="form-select bg-dark text-light border-secondary" id="shutdown_strategy" name="shutdown_strategy">
-                                        <option value="efficiency">{{ translate('efficiency_based') }}</option>
-                                        <option value="proportional">{{ translate('proportional') }}</option>
-                                        <option value="random">{{ translate('random') }}</option>
+                                        <option value="efficiency">基于效率</option>
+                                        <option value="proportional">按比例</option>
+                                        <option value="random">随机</option>
                                     </select>
                                     <div class="form-text text-muted">
-                                        {{ translate('shutdown_strategy_description') }}
+                                        选择关机策略
                                     </div>
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="btc_price" class="form-label">{{ translate('btc_price') }} ($)</label>
+                                    <label for="btc_price" class="form-label">BTC价格 ($)</label>
                                     <input type="number" class="form-control bg-dark text-light border-secondary" 
                                            id="btc_price" name="btc_price" value="100000" 
                                            min="10000" max="1000000" step="100">
                                     <div class="form-check mt-2">
                                         <input class="form-check-input" type="checkbox" id="use_real_time_btc" name="use_real_time_btc" checked>
                                         <label class="form-check-label text-muted" for="use_real_time_btc">
-                                            {{ translate('use_real_time_data') }}
+                                            使用实时数据
                                         </label>
                                     </div>
                                 </div>
@@ -119,7 +119,7 @@
                             <div class="col-12 text-center">
                                 <button type="submit" class="btn btn-warning btn-lg px-5 py-3">
                                     <i class="bi bi-calculator"></i>
-                                    {{ translate('calculate_curtailment_impact') }}
+                                    计算削减影响
                                 </button>
                             </div>
                         </div>
@@ -136,7 +136,7 @@
                 <div class="card-header bg-success text-dark">
                     <h3 class="card-title mb-0">
                         <i class="bi bi-graph-up"></i>
-                        {{ translate('curtailment_analysis_results') }}
+                        削减分析结果
                     </h3>
                 </div>
                 <div class="card-body" id="results-content">
@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             // 显示加载状态
             submitButton.disabled = true;
-            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> {{ translate("calculating") }}...';
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> 计算中...';
             
             // 隐藏之前的结果和错误
             resultsSection.style.display = 'none';
@@ -196,12 +196,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 displayResults(result.curtailment_details);
                 resultsSection.style.display = 'block';
             } else {
-                showError(result.error || '{{ translate("calculation_failed") }}');
+                showError(result.error || '计算失败');
             }
             
         } catch (error) {
             console.error('计算请求失败:', error);
-            showError('{{ translate("request_failed") }}');
+            showError('请求失败');
         } finally {
             submitButton.disabled = false;
             submitButton.innerHTML = originalText;
@@ -212,45 +212,45 @@ document.addEventListener('DOMContentLoaded', function() {
         const html = `
             <div class="row">
                 <div class="col-md-6">
-                    <h5 class="text-success mb-3">{{ translate('operation_summary') }}</h5>
+                    <h5 class="text-success mb-3">运行概况</h5>
                     <table class="table table-dark table-striped">
                         <tr>
-                            <td>{{ translate('total_miners') }}</td>
+                            <td>总矿机数</td>
                             <td class="text-warning">${curtailmentData.total_miners || 0}</td>
                         </tr>
                         <tr>
-                            <td>{{ translate('running_miners') }}</td>
+                            <td>运行矿机</td>
                             <td class="text-success">${curtailmentData.running_miners || 0}</td>
                         </tr>
                         <tr>
-                            <td>{{ translate('shutdown_miners') }}</td>
+                            <td>关机矿机</td>
                             <td class="text-danger">${curtailmentData.shutdown_miners || 0}</td>
                         </tr>
                         <tr>
-                            <td>{{ translate('power_reduction') }}</td>
+                            <td>功率削减</td>
                             <td class="text-info">${((curtailmentData.power_reduction || 0) * 100).toFixed(1)}%</td>
                         </tr>
                     </table>
                 </div>
                 <div class="col-md-6">
-                    <h5 class="text-success mb-3">{{ translate('financial_impact') }}</h5>
+                    <h5 class="text-success mb-3">财务影响</h5>
                     <table class="table table-dark table-striped">
                         <tr>
-                            <td>{{ translate('monthly_revenue_loss') }}</td>
+                            <td>月收入损失</td>
                             <td class="text-danger">$${(curtailmentData.monthly_revenue_loss || 0).toLocaleString()}</td>
                         </tr>
                         <tr>
-                            <td>{{ translate('monthly_cost_savings') }}</td>
+                            <td>月成本节省</td>
                             <td class="text-success">$${(curtailmentData.monthly_cost_savings || 0).toLocaleString()}</td>
                         </tr>
                         <tr>
-                            <td>{{ translate('net_monthly_impact') }}</td>
+                            <td>月净影响</td>
                             <td class="${(curtailmentData.net_monthly_impact || 0) >= 0 ? 'text-success' : 'text-danger'}">
                                 $${(curtailmentData.net_monthly_impact || 0).toLocaleString()}
                             </td>
                         </tr>
                         <tr>
-                            <td>{{ translate('efficiency_improvement') }}</td>
+                            <td>效率提升</td>
                             <td class="text-info">${((curtailmentData.efficiency_improvement || 0) * 100).toFixed(2)}%</td>
                         </tr>
                     </table>

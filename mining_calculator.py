@@ -271,6 +271,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             # Apply miner count to get total specs
             hashrate = single_hashrate * miner_count
             power_consumption = single_power_watt * miner_count
+            logging.info(f"Miner model {miner_model}: single={single_hashrate}TH/s, count={miner_count}, total={hashrate}TH/s")
         
         # Get real-time data if requested
         if use_real_time_data:

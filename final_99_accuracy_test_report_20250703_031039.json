@@ -1,0 +1,118 @@
+{
+  "timestamp": "2025-07-03T03:10:39.987784",
+  "test_email": "hxl2022hao@gmail.com",
+  "total_tests": 13,
+  "successful_tests": 9,
+  "warning_tests": 2,
+  "failed_tests": 2,
+  "functional_success_rate": 84.61538461538461,
+  "strict_success_rate": 69.23076923076923,
+  "accuracy_level": "🥉 及格级别 (80-90%)",
+  "target_achieved": false,
+  "test_duration": 4.159162282943726,
+  "detailed_results": {
+    "authentication": [
+      {
+        "timestamp": "2025-07-03T03:10:36.246370",
+        "test_name": "邮箱认证登录",
+        "status": "成功",
+        "details": "认证邮箱: hxl2022hao@gmail.com, 内容指标: 4/5",
+        "response_time": 417.94371604919434
+      }
+    ],
+    "core_functionality": [
+      {
+        "timestamp": "2025-07-03T03:10:36.252333",
+        "test_name": "主页核心功能",
+        "status": "警告",
+        "details": "功能完整性: 66.7% (4/6)",
+        "response_time": 5.341529846191406
+      }
+    ],
+    "mining_calculations": [
+      {
+        "timestamp": "2025-07-03T03:10:36.257145",
+        "test_name": "S19 Pro标准计算",
+        "status": "失败",
+        "details": "缺失字段: ['monthly_profit_usd', 'annual_roi_percentage', 'breakeven_electricity_cost', 'network_hashrate']",
+        "response_time": 4.649639129638672
+      }
+    ],
+    "api_endpoints": [
+      {
+        "timestamp": "2025-07-03T03:10:36.429739",
+        "test_name": "BTC价格API",
+        "status": "成功",
+        "details": "BTC价格: $108,742.00",
+        "response_time": 172.50680923461914
+      },
+      {
+        "timestamp": "2025-07-03T03:10:37.370619",
+        "test_name": "网络统计API",
+        "status": "成功",
+        "details": "网络算力: 895.36 EH/s, 价格: $108,742.00",
+        "response_time": 940.8009052276611
+      },
+      {
+        "timestamp": "2025-07-03T03:10:37.374239",
+        "test_name": "矿机列表API",
+        "status": "警告",
+        "details": "数据验证问题: 矿机数据不足",
+        "response_time": 3.5555362701416016
+      },
+      {
+        "timestamp": "2025-07-03T03:10:37.638690",
+        "test_name": "分析市场数据API",
+        "status": "成功",
+        "details": "分析价格: $108,742.00",
+        "response_time": 264.39356803894043
+      }
+    ],
+    "ui_completeness": [
+      {
+        "timestamp": "2025-07-03T03:10:37.644719",
+        "test_name": "主页页面",
+        "status": "成功",
+        "details": "关键词匹配: 75.0%, 结构完整",
+        "response_time": 5.237340927124023
+      },
+      {
+        "timestamp": "2025-07-03T03:10:38.282654",
+        "test_name": "分析仪表盘页面",
+        "status": "成功",
+        "details": "关键词匹配: 100.0%, 结构完整",
+        "response_time": 636.1997127532959
+      },
+      {
+        "timestamp": "2025-07-03T03:10:38.368816",
+        "test_name": "网络历史页面",
+        "status": "成功",
+        "details": "关键词匹配: 100.0%, 结构完整",
+        "response_time": 86.02190017700195
+      },
+      {
+        "timestamp": "2025-07-03T03:10:38.457157",
+        "test_name": "限电计算器页面",
+        "status": "失败",
+        "details": "HTTP 500",
+        "response_time": 88.31501007080078
+      },
+      {
+        "timestamp": "2025-07-03T03:10:38.543526",
+        "test_name": "算法测试页面",
+        "status": "成功",
+        "details": "关键词匹配: 100.0%, 结构完整",
+        "response_time": 86.23886108398438
+      }
+    ],
+    "data_accuracy": [
+      {
+        "timestamp": "2025-07-03T03:10:39.987118",
+        "test_name": "价格数据一致性",
+        "status": "成功",
+        "details": "方差: 0.000%, 数据源: 价格API: $108,742.00, 网络统计: $108,742.00, 分析系统: $108,742.00",
+        "response_time": null
+      }
+    ]
+  }
+}

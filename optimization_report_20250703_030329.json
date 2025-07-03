@@ -1,0 +1,228 @@
+{
+  "timestamp": "2025-07-03T03:03:29.208331",
+  "overall_success_rate": 30.0,
+  "total_tasks": 30,
+  "successful_tasks": 9,
+  "results": {
+    "database": [
+      {
+        "timestamp": "2025-07-03T03:03:28.777377",
+        "task": "创建索引 market_analytics.timestamp",
+        "status": "失败",
+        "details": "column \"timestamp\" does not exist\n",
+        "improvement": ""
+      },
+      {
+        "timestamp": "2025-07-03T03:03:28.798470",
+        "task": "创建索引 network_snapshots.timestamp",
+        "status": "失败",
+        "details": "current transaction is aborted, commands ignored until end of transaction block\n",
+        "improvement": ""
+      },
+      {
+        "timestamp": "2025-07-03T03:03:28.818874",
+        "task": "创建索引 login_records.timestamp",
+        "status": "失败",
+        "details": "current transaction is aborted, commands ignored until end of transaction block\n",
+        "improvement": ""
+      },
+      {
+        "timestamp": "2025-07-03T03:03:28.839665",
+        "task": "创建索引 crm_activities.created_at",
+        "status": "失败",
+        "details": "current transaction is aborted, commands ignored until end of transaction block\n",
+        "improvement": ""
+      },
+      {
+        "timestamp": "2025-07-03T03:03:28.859600",
+        "task": "创建索引 technical_indicators.timestamp",
+        "status": "失败",
+        "details": "current transaction is aborted, commands ignored until end of transaction block\n",
+        "improvement": ""
+      },
+      {
+        "timestamp": "2025-07-03T03:03:28.879900",
+        "task": "数据去重",
+        "status": "失败",
+        "details": "current transaction is aborted, commands ignored until end of transaction block\n",
+        "improvement": ""
+      },
+      {
+        "timestamp": "2025-07-03T03:03:28.906427",
+        "task": "数据去重",
+        "status": "失败",
+        "details": "current transaction is aborted, commands ignored until end of transaction block\n",
+        "improvement": ""
+      },
+      {
+        "timestamp": "2025-07-03T03:03:28.927905",
+        "task": "分析表 market_analytics",
+        "status": "失败",
+        "details": "current transaction is aborted, commands ignored until end of transaction block\n",
+        "improvement": ""
+      },
+      {
+        "timestamp": "2025-07-03T03:03:28.947990",
+        "task": "分析表 network_snapshots",
+        "status": "失败",
+        "details": "current transaction is aborted, commands ignored until end of transaction block\n",
+        "improvement": ""
+      },
+      {
+        "timestamp": "2025-07-03T03:03:28.970067",
+        "task": "分析表 login_records",
+        "status": "失败",
+        "details": "current transaction is aborted, commands ignored until end of transaction block\n",
+        "improvement": ""
+      },
+      {
+        "timestamp": "2025-07-03T03:03:28.990244",
+        "task": "分析表 crm_customers",
+        "status": "失败",
+        "details": "current transaction is aborted, commands ignored until end of transaction block\n",
+        "improvement": ""
+      },
+      {
+        "timestamp": "2025-07-03T03:03:29.010390",
+        "task": "分析表 technical_indicators",
+        "status": "失败",
+        "details": "current transaction is aborted, commands ignored until end of transaction block\n",
+        "improvement": ""
+      }
+    ],
+    "api_performance": [
+      {
+        "timestamp": "2025-07-03T03:03:29.022013",
+        "task": "BTC价格API",
+        "status": "失败",
+        "details": "HTTP 401",
+        "improvement": ""
+      },
+      {
+        "timestamp": "2025-07-03T03:03:29.037439",
+        "task": "网络统计API",
+        "status": "失败",
+        "details": "HTTP 401",
+        "improvement": ""
+      },
+      {
+        "timestamp": "2025-07-03T03:03:29.043385",
+        "task": "矿机列表API",
+        "status": "失败",
+        "details": "HTTP 401",
+        "improvement": ""
+      },
+      {
+        "timestamp": "2025-07-03T03:03:29.047398",
+        "task": "SHA256对比API",
+        "status": "失败",
+        "details": "HTTP 401",
+        "improvement": ""
+      },
+      {
+        "timestamp": "2025-07-03T03:03:29.052090",
+        "task": "分析市场数据API",
+        "status": "失败",
+        "details": "HTTP 404",
+        "improvement": ""
+      },
+      {
+        "timestamp": "2025-07-03T03:03:29.073726",
+        "task": "最新报告API",
+        "status": "成功",
+        "details": "响应时间: 21.49ms",
+        "improvement": "性能等级: 优秀"
+      }
+    ],
+    "data_accuracy": [
+      {
+        "timestamp": "2025-07-03T03:03:29.099792",
+        "task": "挖矿计算准确性",
+        "status": "失败",
+        "details": "HTTP 401",
+        "improvement": ""
+      }
+    ],
+    "ui_optimization": [
+      {
+        "timestamp": "2025-07-03T03:03:29.122068",
+        "task": "主页页面",
+        "status": "成功",
+        "details": "加载时间: 21.68ms, 内容完整性: ✓",
+        "improvement": "性能: 优秀"
+      },
+      {
+        "timestamp": "2025-07-03T03:03:29.137890",
+        "task": "分析仪表盘页面",
+        "status": "成功",
+        "details": "加载时间: 15.58ms, 内容完整性: ✓",
+        "improvement": "性能: 优秀"
+      },
+      {
+        "timestamp": "2025-07-03T03:03:29.148234",
+        "task": "网络历史页面",
+        "status": "成功",
+        "details": "加载时间: 10.17ms, 内容完整性: ✓",
+        "improvement": "性能: 优秀"
+      },
+      {
+        "timestamp": "2025-07-03T03:03:29.157126",
+        "task": "限电计算器页面",
+        "status": "成功",
+        "details": "加载时间: 8.21ms, 内容完整性: ✓",
+        "improvement": "性能: 优秀"
+      },
+      {
+        "timestamp": "2025-07-03T03:03:29.167285",
+        "task": "算法测试页面",
+        "status": "成功",
+        "details": "加载时间: 9.52ms, 内容完整性: ✓",
+        "improvement": "性能: 优秀"
+      }
+    ],
+    "security": [
+      {
+        "timestamp": "2025-07-03T03:03:29.179865",
+        "task": "访问保护 /analytics",
+        "status": "警告",
+        "details": "HTTP 200",
+        "improvement": "可能存在安全风险"
+      },
+      {
+        "timestamp": "2025-07-03T03:03:29.184498",
+        "task": "访问保护 /user-access",
+        "status": "警告",
+        "details": "HTTP 404",
+        "improvement": "可能存在安全风险"
+      },
+      {
+        "timestamp": "2025-07-03T03:03:29.188702",
+        "task": "访问保护 /mine-customer-management",
+        "status": "警告",
+        "details": "HTTP 404",
+        "improvement": "可能存在安全风险"
+      },
+      {
+        "timestamp": "2025-07-03T03:03:29.193368",
+        "task": "输入验证",
+        "status": "良好",
+        "details": "恶意输入被处理",
+        "improvement": "基础防护有效"
+      },
+      {
+        "timestamp": "2025-07-03T03:03:29.197862",
+        "task": "输入验证",
+        "status": "良好",
+        "details": "恶意输入被处理",
+        "improvement": "基础防护有效"
+      },
+      {
+        "timestamp": "2025-07-03T03:03:29.204660",
+        "task": "输入验证",
+        "status": "良好",
+        "details": "恶意输入被处理",
+        "improvement": "基础防护有效"
+      }
+    ]
+  }
+}
