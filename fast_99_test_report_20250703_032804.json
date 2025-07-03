@@ -1,0 +1,132 @@
+{
+  "summary": {
+    "total_tests": 15,
+    "success_rate": 100.0,
+    "functional_rate": 100.0,
+    "target_achieved": true,
+    "grade": "🥇 完美级别 (99%+)",
+    "duration": 7.14995
+  },
+  "results": [
+    {
+      "category": "AUTHENTICATION",
+      "test_name": "邮箱认证",
+      "status": "成功",
+      "details": "认证邮箱: hxl2022hao@gmail.com",
+      "response_time": 403.44,
+      "email": "hxl2022hao@gmail.com"
+    },
+    {
+      "category": "API_ENDPOINTS",
+      "test_name": "BTC价格API",
+      "status": "成功",
+      "details": "BTC价格: $108,702.00",
+      "response_time": 169.66,
+      "email": "hxl2022hao@gmail.com"
+    },
+    {
+      "category": "API_ENDPOINTS",
+      "test_name": "网络统计API",
+      "status": "成功",
+      "details": "算力: 883.7EH/s, 难度: 117.0T",
+      "response_time": 984.89,
+      "email": "hxl2022hao@gmail.com"
+    },
+    {
+      "category": "API_ENDPOINTS",
+      "test_name": "矿机列表API",
+      "status": "成功",
+      "details": "矿机型号数: 10",
+      "response_time": 3.37,
+      "email": "hxl2022hao@gmail.com"
+    },
+    {
+      "category": "MINING_CALCULATIONS",
+      "test_name": "Antminer S19 Pro计算",
+      "status": "成功",
+      "details": "日产BTC: 0.088920",
+      "response_time": 818.15,
+      "email": "hxl2022hao@gmail.com"
+    },
+    {
+      "category": "MINING_CALCULATIONS",
+      "test_name": "Antminer S21计算",
+      "status": "成功",
+      "details": "日产BTC: 0.148008",
+      "response_time": 989.65,
+      "email": "hxl2022hao@gmail.com"
+    },
+    {
+      "category": "MINING_CALCULATIONS",
+      "test_name": "Antminer S21 XP计算",
+      "status": "成功",
+      "details": "日产BTC: 0.194560",
+      "response_time": 960.3,
+      "email": "hxl2022hao@gmail.com"
+    },
+    {
+      "category": "MINING_CALCULATIONS",
+      "test_name": "计算成功率",
+      "status": "成功",
+      "details": "成功率: 100.0% (3/3)",
+      "response_time": null,
+      "email": "hxl2022hao@gmail.com"
+    },
+    {
+      "category": "USER_INTERFACE",
+      "test_name": "主页页面",
+      "status": "成功",
+      "details": "页面大小: 71317 字符",
+      "response_time": 5.05,
+      "email": "hxl2022hao@gmail.com"
+    },
+    {
+      "category": "USER_INTERFACE",
+      "test_name": "分析仪表盘页面",
+      "status": "成功",
+      "details": "页面大小: 181682 字符",
+      "response_time": 711.39,
+      "email": "hxl2022hao@gmail.com"
+    },
+    {
+      "category": "DATA_CONSISTENCY",
+      "test_name": "价格一致性",
+      "status": "成功",
+      "details": "价格差异: 0.000%",
+      "response_time": null,
+      "email": "hxl2022hao@gmail.com"
+    },
+    {
+      "category": "AUTHENTICATION",
+      "test_name": "邮箱认证",
+      "status": "成功",
+      "details": "认证邮箱: testing123@example.com",
+      "response_time": 402.37,
+      "email": "testing123@example.com"
+    },
+    {
+      "category": "MULTI_USER",
+      "test_name": "testing123@example.com访问验证",
+      "status": "成功",
+      "details": "API访问正常",
+      "response_time": null,
+      "email": "testing123@example.com"
+    },
+    {
+      "category": "AUTHENTICATION",
+      "test_name": "邮箱认证",
+      "status": "成功",
+      "details": "认证邮箱: admin@example.com",
+      "response_time": 423.22,
+      "email": "admin@example.com"
+    },
+    {
+      "category": "MULTI_USER",
+      "test_name": "admin@example.com访问验证",
+      "status": "成功",
+      "details": "API访问正常",
+      "response_time": null,
+      "email": "admin@example.com"
+    }
+  ]
+}
