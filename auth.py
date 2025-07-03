@@ -121,6 +121,26 @@ def verify_email(email):
     logging.warning(f"邮箱 {email} 验证失败")
     return False
 
+def get_user_role(email=None):
+    """获取用户角色"""
+    # 首先尝试从会话中获取角色
+    if session.get('role'):
+        return session.get('role')
+    
+    # 如果会话中没有角色且提供了邮箱，从数据库查询
+    if email:
+        try:
+            user = UserAccess.query.filter_by(email=email.lower().strip()).first()
+            if user and user.has_access:
+                # 将角色存储到会话中
+                session['role'] = user.role
+                return user.role
+        except Exception as e:
+            logging.error(f"查询用户角色时出错: {str(e)}")
+    
+    # 默认返回guest角色
+    return 'guest'
+
 def login_required(view_function):
     """装饰器：要求用户登录才能访问特定路由"""
     @wraps(view_function)
