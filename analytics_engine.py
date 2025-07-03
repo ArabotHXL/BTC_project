@@ -914,7 +914,7 @@ class AnalyticsEngine:
         self.running = False
     
     def collect_and_analyze(self):
-        """收集数据并分析 - 由统一数据管道调度控制30分钟间隔"""
+        """收集数据并分析 - 由统一数据管道调度控制每整点执行"""
         try:
             # 使用EST时区获取当前时间
             est_tz = pytz.timezone('US/Eastern')
