@@ -1362,43 +1362,60 @@
 
         function updateReportDisplay(data) {
             // Check if data contains the report
-            const report = data.data || data;
+            const report = data.detailed_report || data.data || data;
             
             if (!report) {
                 showErrorMessage('reports', '暂无可用的分析报告');
                 return;
             }
             
-            // Update report title
+            // Update report title - use correct path
             const reportTitleElement = document.getElementById('reportTitle');
-            if (reportTitleElement && report.title) {
-                reportTitleElement.textContent = report.title;
+            const title = report.report_metadata?.title || report.title || '专业矿业分析报告';
+            if (reportTitleElement) {
+                reportTitleElement.textContent = title;
+                console.log('Updated report title to:', title);
             }
             
             // Update report summary
             const reportSummaryElement = document.getElementById('reportSummary');
-            if (reportSummaryElement && report.summary) {
-                reportSummaryElement.textContent = report.summary;
+            const summary = report.executive_summary?.investment_outlook || report.summary || '市场分析摘要';
+            if (reportSummaryElement) {
+                reportSummaryElement.textContent = summary;
+                console.log('Updated report summary to:', summary);
             }
             
             // Update key findings
             const reportFindingsElement = document.getElementById('reportFindings');
-            if (reportFindingsElement && report.key_findings) {
+            const findings = report.actionable_recommendations || report.key_findings;
+            if (reportFindingsElement && findings) {
                 let findingsHtml = '';
                 try {
-                    const findings = typeof report.key_findings === 'string' 
-                        ? JSON.parse(report.key_findings) 
-                        : report.key_findings;
-                    
-                    for (const [key, value] of Object.entries(findings)) {
-                        const displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                        findingsHtml += `
-                            <div class="mb-2">
-                                <strong>${displayKey}:</strong> ${value}
-                            </div>
-                        `;
+                    if (Array.isArray(findings)) {
+                        // Handle array of recommendations
+                        findings.forEach((finding, index) => {
+                            findingsHtml += `
+                                <div class="mb-2">
+                                    <strong>${index + 1}.</strong> ${finding}
+                                </div>
+                            `;
+                        });
+                    } else if (typeof findings === 'object') {
+                        // Handle object structure
+                        for (const [key, value] of Object.entries(findings)) {
+                            const displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            findingsHtml += `
+                                <div class="mb-2">
+                                    <strong>${displayKey}:</strong> ${value}
+                                </div>
+                            `;
+                        }
+                    } else {
+                        // Handle string
+                        findingsHtml = `<div class="mb-2">${findings}</div>`;
                     }
                     reportFindingsElement.innerHTML = findingsHtml;
+                    console.log('Updated report findings:', findings);
                 } catch (error) {
                     console.error('Error parsing key findings:', error);
                     reportFindingsElement.innerHTML = '<div class="text-muted">关键发现解析中...</div>';
