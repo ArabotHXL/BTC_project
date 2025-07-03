@@ -1673,7 +1673,7 @@
             };
             
             const spec = minerSpecs[minerType] || minerSpecs['Antminer S19 Pro'];
-            const electricityCost = customElectricityCost || 0.05;
+            const electricityCost = customElectricityCost || 0.025;
             
             // Calculate daily BTC production using CORRECT mining formula
             const hashrateInTH = spec.hashrate; // Already in TH/s
