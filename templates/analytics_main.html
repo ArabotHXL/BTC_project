@@ -205,6 +205,17 @@
         .analytics-tab.active {
             display: block;
         }
+        #dataUpdateIndicator {
+            transition: background-color 0.3s ease;
+        }
+        .update-flash {
+            animation: updateFlash 0.5s ease-in-out;
+        }
+        @keyframes updateFlash {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
         .recommendation-item {
             padding: 0.75rem;
             margin: 0.5rem 0;
@@ -370,6 +381,8 @@
                 <div id="market" class="analytics-tab">
                     <h4 class="mb-4">
                         <i class="bi bi-graph-up"></i> 市场数据详情
+                        <span class="badge bg-success ms-2" id="dataUpdateIndicator">实时更新</span>
+                        <small class="text-muted ms-2" id="lastUpdateTime">最后更新: --</small>
                     </h4>
 
                     <!-- Price and Network Information -->
@@ -1442,6 +1455,9 @@
         // Display update functions
         function updateMarketDataDisplay(data) {
             console.log('Updating market data display with:', data);
+            
+            // 显示数据更新指示器
+            showDataUpdateIndicator();
             
             // Store data for insights generation
             currentMarketData = data;
@@ -2655,6 +2671,35 @@
 
         function refreshAllData() {
             loadAllData();
+        }
+        
+        function showDataUpdateIndicator() {
+            const indicator = document.getElementById('dataUpdateIndicator');
+            const timeElement = document.getElementById('lastUpdateTime');
+            
+            if (indicator) {
+                // 闪烁效果显示更新
+                indicator.style.backgroundColor = '#28a745';
+                indicator.textContent = '数据更新中...';
+                
+                setTimeout(() => {
+                    indicator.style.backgroundColor = '#198754';
+                    indicator.textContent = '实时更新';
+                }, 1000);
+            }
+            
+            if (timeElement) {
+                const now = new Date();
+                timeElement.textContent = '最后更新: ' + now.toLocaleString('zh-CN', {
+                    hour12: true,
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+            }
         }
 
         function updateSettings() {
