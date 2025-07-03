@@ -308,7 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.success) {
                         // 更新UI (Update UI)
                         if (btcPriceEl) btcPriceEl.textContent = formatCurrency(data.price);
-                        if (networkDifficultyEl) networkDifficultyEl.textContent = formatNumber(data.difficulty) + 'T';
+                        if (networkDifficultyEl) networkDifficultyEl.textContent = formatNumber(data.difficulty / 1e12, 1) + 'T';
                         if (networkHashrateEl) networkHashrateEl.textContent = formatNumber(data.hashrate) + ' EH/s';
                         if (blockRewardEl) blockRewardEl.textContent = formatNumber(data.block_reward) + ' BTC';
                         
@@ -369,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (lastDifficulty && networkDifficultyEl) {
-            networkDifficultyEl.textContent = formatNumber(parseFloat(lastDifficulty)) + 'T';
+            networkDifficultyEl.textContent = formatNumber(parseFloat(lastDifficulty) / 1e12, 1) + 'T';
         } else if (networkDifficultyEl) {
             networkDifficultyEl.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
         }

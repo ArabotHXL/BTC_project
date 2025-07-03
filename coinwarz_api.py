@@ -264,7 +264,9 @@ def get_enhanced_network_data():
             'fallback_reason': 'CoinWarz API exhausted' if api_status else 'CoinWarz API unavailable'
         }
         
-        logging.info(f"已切换到blockchain.info备用数据源: 价格=${blockchain_price}, 难度={blockchain_difficulty}T, 算力={final_hashrate}EH/s")
+        # 将难度转换为T单位（万亿）
+        difficulty_t = blockchain_difficulty / 1000000000000  # 转换为T单位
+        logging.info(f"已切换到blockchain.info备用数据源: 价格=${blockchain_price}, 难度={difficulty_t:.1f}T, 算力={final_hashrate}EH/s")
         return network_data
             
     except Exception as e:
