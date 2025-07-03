@@ -1,0 +1,218 @@
+{
+  "test_summary": {
+    "start_time": "2025-07-03T02:16:36.163663",
+    "end_time": "2025-07-03T02:16:36.594121",
+    "duration_seconds": 0.430458,
+    "total_tests": 20,
+    "passed_tests": 12,
+    "warnings": 8,
+    "failed_tests": 0,
+    "success_rate": 60.0,
+    "functional_rate": 100.0,
+    "rating": "🟢 优秀"
+  },
+  "category_stats": {
+    "Authentication": {
+      "total": 1,
+      "passed": 1,
+      "warnings": 0
+    },
+    "Infrastructure": {
+      "total": 5,
+      "passed": 5,
+      "warnings": 0
+    },
+    "Pages": {
+      "total": 5,
+      "passed": 5,
+      "warnings": 0
+    },
+    "API": {
+      "total": 3,
+      "passed": 0,
+      "warnings": 3
+    },
+    "Calculation": {
+      "total": 1,
+      "passed": 0,
+      "warnings": 1
+    },
+    "Miners": {
+      "total": 1,
+      "passed": 0,
+      "warnings": 1
+    },
+    "Analytics": {
+      "total": 3,
+      "passed": 0,
+      "warnings": 3
+    },
+    "Performance": {
+      "total": 1,
+      "passed": 1,
+      "warnings": 0
+    }
+  },
+  "detailed_results": [
+    {
+      "timestamp": "2025-07-03T02:16:36.309442",
+      "category": "Authentication",
+      "test_name": "login",
+      "status": "PASS",
+      "details": "系统认证成功",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T02:16:36.316101",
+      "category": "Infrastructure",
+      "test_name": "server_response",
+      "status": "PASS",
+      "details": "服务器正常响应 (4103 bytes)",
+      "response_time": 0.006537199020385742
+    },
+    {
+      "timestamp": "2025-07-03T02:16:36.319193",
+      "category": "Infrastructure",
+      "test_name": "static_main_css",
+      "status": "PASS",
+      "details": "资源可用 (3.0KB)",
+      "response_time": 0.0029997825622558594
+    },
+    {
+      "timestamp": "2025-07-03T02:16:36.322944",
+      "category": "Infrastructure",
+      "test_name": "static_main_js",
+      "status": "PASS",
+      "details": "资源可用 (8.9KB)",
+      "response_time": 0.0036513805389404297
+    },
+    {
+      "timestamp": "2025-07-03T02:16:36.327469",
+      "category": "Infrastructure",
+      "test_name": "static_styles_css",
+      "status": "PASS",
+      "details": "资源可用 (2.3KB)",
+      "response_time": 0.0044138431549072266
+    },
+    {
+      "timestamp": "2025-07-03T02:16:36.332152",
+      "category": "Infrastructure",
+      "test_name": "static_app_js",
+      "status": "PASS",
+      "details": "资源可用 (59.4KB)",
+      "response_time": 0.004590272903442383
+    },
+    {
+      "timestamp": "2025-07-03T02:16:36.341170",
+      "category": "Pages",
+      "test_name": "page_home",
+      "status": "PASS",
+      "details": "页面加载成功",
+      "response_time": 0.008870124816894531
+    },
+    {
+      "timestamp": "2025-07-03T02:16:36.352932",
+      "category": "Pages",
+      "test_name": "page_analytics",
+      "status": "PASS",
+      "details": "页面加载成功",
+      "response_time": 0.011268854141235352
+    },
+    {
+      "timestamp": "2025-07-03T02:16:36.362031",
+      "category": "Pages",
+      "test_name": "page_network_history",
+      "status": "PASS",
+      "details": "页面加载成功",
+      "response_time": 0.006832599639892578
+    },
+    {
+      "timestamp": "2025-07-03T02:16:36.369085",
+      "category": "Pages",
+      "test_name": "page_algorithm_test",
+      "status": "PASS",
+      "details": "页面加载成功",
+      "response_time": 0.006594181060791016
+    },
+    {
+      "timestamp": "2025-07-03T02:16:36.385252",
+      "category": "Pages",
+      "test_name": "page_curtailment",
+      "status": "PASS",
+      "details": "页面加载成功",
+      "response_time": 0.015503168106079102
+    },
+    {
+      "timestamp": "2025-07-03T02:16:36.393174",
+      "category": "API",
+      "test_name": "btc_price",
+      "status": "WARN",
+      "details": "API需要认证",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T02:16:36.399883",
+      "category": "API",
+      "test_name": "network_stats",
+      "status": "WARN",
+      "details": "API需要认证",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T02:16:36.403959",
+      "category": "API",
+      "test_name": "miners_list",
+      "status": "WARN",
+      "details": "API需要认证",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T02:16:36.415385",
+      "category": "Calculation",
+      "test_name": "basic_mining",
+      "status": "WARN",
+      "details": "计算功能需要认证",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T02:16:36.418903",
+      "category": "Miners",
+      "test_name": "model_availability",
+      "status": "WARN",
+      "details": "无法获取矿机列表: 401",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T02:16:36.427692",
+      "category": "Analytics",
+      "test_name": "market_data",
+      "status": "WARN",
+      "details": "市场数据返回非JSON",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T02:16:36.445504",
+      "category": "Analytics",
+      "test_name": "technical_indicators",
+      "status": "WARN",
+      "details": "技术指标返回非JSON",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T02:16:36.456218",
+      "category": "Analytics",
+      "test_name": "price_history",
+      "status": "WARN",
+      "details": "价格历史返回非JSON",
+      "response_time": null
+    },
+    {
+      "timestamp": "2025-07-03T02:16:36.593398",
+      "category": "Performance",
+      "test_name": "load_handling",
+      "status": "PASS",
+      "details": "负载测试: 100%成功率, 平均响应0.014s",
+      "response_time": null
+    }
+  ]
+}
