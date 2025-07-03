@@ -2526,5 +2526,61 @@ def api_bollinger_backtest():
             'error': f'回测失败: {str(e)}'
         })
 
+@app.route('/api/professional-report/generate', methods=['POST'])
+@login_required
+def generate_professional_report():
+    """生成专业5步报告"""
+    try:
+        # 验证用户权限 (仅限拥有者)
+        if get_user_role(session.get('email')) != 'owner':
+            return jsonify({'error': '权限不足，仅限拥有者使用'}), 403
+            
+        from professional_report_generator import Professional5StepReportGenerator
+        
+        data = request.get_json() or {}
+        generator = Professional5StepReportGenerator()
+        
+        output_formats = data.get('output_formats', ['web', 'pdf'])
+        distribution_methods = data.get('distribution_methods', [])
+        
+        result = generator.generate_comprehensive_report(
+            output_formats=output_formats,
+            distribution_methods=distribution_methods
+        )
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logging.error(f"专业报告生成错误: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/professional-report/download/<file_type>')
+@login_required
+def download_professional_report(file_type):
+    """下载专业报告文件"""
+    try:
+        # 验证用户权限
+        if get_user_role(session.get('email')) != 'owner':
+            return jsonify({'error': '权限不足'}), 403
+            
+        from flask import send_file
+        from datetime import datetime
+        
+        if file_type == 'pdf':
+            filename = f"mining_report_{datetime.now().strftime('%Y-%m-%d')}.pdf"
+        elif file_type == 'pptx':
+            filename = f"mining_presentation_{datetime.now().strftime('%Y-%m-%d')}.pptx"
+        else:
+            return jsonify({'error': '不支持的文件类型'}), 400
+            
+        if os.path.exists(filename):
+            return send_file(filename, as_attachment=True)
+        else:
+            return jsonify({'error': '文件未找到，请先生成报告'}), 404
+            
+    except Exception as e:
+        logging.error(f"文件下载错误: {e}")
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

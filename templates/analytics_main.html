@@ -986,6 +986,117 @@
                         <i class="bi bi-file-text"></i> 自动分析报告
                     </h4>
                     
+                    <!-- 专业5步报告生成区 -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card bg-gradient text-white border-0 shadow-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <div class="card-header bg-transparent border-0">
+                                    <h5 class="mb-0 fw-bold">
+                                        <i class="bi bi-gear-wide-connected me-2"></i>
+                                        专业5步报告生成系统
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <p class="mb-3">
+                                                <strong>全自动、专业级矿业分析报告</strong><br>
+                                                <small class="opacity-75">① 采数 → ② 建模 → ③ 风险打分 → ④ 可视化 → ⑤ 自动分发</small>
+                                            </p>
+                                            
+                                            <!-- 功能特点 -->
+                                            <div class="row g-2 mb-3">
+                                                <div class="col-6 col-md-3">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-database-check me-2"></i>
+                                                        <small>多源数据验证</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 col-md-3">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-graph-up-arrow me-2"></i>
+                                                        <small>ARIMA/Monte Carlo</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 col-md-3">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-shield-check me-2"></i>
+                                                        <small>准确度评分</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 col-md-3">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-file-earmark-pdf me-2"></i>
+                                                        <small>PDF/PPT输出</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- 输出格式选择 -->
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <label class="form-label text-white">
+                                                        <i class="bi bi-file-earmark me-1"></i>输出格式
+                                                    </label>
+                                                    <div class="d-flex gap-2 flex-wrap">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" id="outputWeb" checked>
+                                                            <label class="form-check-label text-white small" for="outputWeb">Web</label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" id="outputPDF" checked>
+                                                            <label class="form-check-label text-white small" for="outputPDF">PDF</label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" id="outputPPT">
+                                                            <label class="form-check-label text-white small" for="outputPPT">PPT</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label text-white">
+                                                        <i class="bi bi-send me-1"></i>分发方式
+                                                    </label>
+                                                    <div class="d-flex gap-2 flex-wrap">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" id="sendEmail">
+                                                            <label class="form-check-label text-white small" for="sendEmail">邮件</label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" id="sendSlack">
+                                                            <label class="form-check-label text-white small" for="sendSlack">Slack</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 text-center">
+                                            <button class="btn btn-light btn-lg mb-3" onclick="generate5StepReport()" id="generate5StepBtn">
+                                                <i class="bi bi-lightning-charge me-2"></i>
+                                                生成专业报告
+                                            </button>
+                                            <div id="professional-report-status" class="small opacity-75">
+                                                点击生成全自动专业分析报告
+                                            </div>
+                                            
+                                            <!-- 下载按钮区域 -->
+                                            <div id="professional-download-section" style="display: none;" class="mt-3">
+                                                <div class="d-flex flex-column gap-2">
+                                                    <button class="btn btn-outline-light btn-sm" onclick="downloadProfessionalReport('pdf')">
+                                                        <i class="bi bi-file-pdf me-1"></i> 下载PDF
+                                                    </button>
+                                                    <button class="btn btn-outline-light btn-sm" onclick="downloadProfessionalReport('pptx')">
+                                                        <i class="bi bi-file-ppt me-1"></i> 下载PPT
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="row">
                         <div class="col-md-8">
                             <div class="card">
@@ -1981,6 +2092,110 @@
 
         function configureAlerts() {
             alert('警报配置功能开发中...\n\n可配置项目：\n- 价格突破警报\n- 收益率下降警报\n- 网络难度变化警报\n- 算力异常警报');
+        }
+
+        // 专业5步报告生成函数
+        async function generate5StepReport() {
+            const generateBtn = document.getElementById('generate5StepBtn');
+            const statusDiv = document.getElementById('professional-report-status');
+            const downloadSection = document.getElementById('professional-download-section');
+            
+            const originalText = generateBtn.innerHTML;
+            
+            try {
+                // 更新UI状态
+                generateBtn.disabled = true;
+                generateBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>生成中...';
+                statusDiv.innerHTML = '<i class="bi bi-cpu text-warning"></i> 正在执行5步生成流程...';
+                
+                // 获取用户选择的输出格式和分发方式
+                const outputFormats = [];
+                if (document.getElementById('outputWeb').checked) outputFormats.push('web');
+                if (document.getElementById('outputPDF').checked) outputFormats.push('pdf');
+                if (document.getElementById('outputPPT').checked) outputFormats.push('ppt');
+                
+                const distributionMethods = [];
+                if (document.getElementById('sendEmail').checked) distributionMethods.push('email');
+                if (document.getElementById('sendSlack').checked) distributionMethods.push('slack');
+                
+                // 调用专业报告生成API
+                const response = await fetch('/api/professional-report/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        output_formats: outputFormats,
+                        distribution_methods: distributionMethods
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 显示成功状态
+                    statusDiv.innerHTML = `
+                        <div class="text-success">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            生成成功！
+                        </div>
+                        <div class="small mt-1">
+                            <div>准确度评分: <strong>${result.summary.accuracy_score}/100</strong></div>
+                            <div>数据源: ${result.summary.data_sources_count}个</div>
+                            <div>生成文件: ${result.summary.files_generated}个</div>
+                            ${result.summary.distributions_sent > 0 ? `<div>已发送: ${result.summary.distributions_sent}个通知</div>` : ''}
+                        </div>
+                    `;
+                    
+                    // 显示下载按钮
+                    if (result.generated_files && Object.keys(result.generated_files).length > 0) {
+                        downloadSection.style.display = 'block';
+                    }
+                    
+                    console.log('专业报告生成完成:', result);
+                } else {
+                    throw new Error(result.error || '报告生成失败');
+                }
+                
+            } catch (error) {
+                console.error('专业报告生成错误:', error);
+                statusDiv.innerHTML = `
+                    <div class="text-danger">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        生成失败: ${error.message}
+                    </div>
+                `;
+            } finally {
+                // 恢复按钮状态
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = originalText;
+            }
+        }
+        
+        // 下载专业报告文件
+        async function downloadProfessionalReport(fileType) {
+            try {
+                const response = await fetch(`/api/professional-report/download/${fileType}`);
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `mining_report_${new Date().toISOString().split('T')[0]}.${fileType}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.error || '下载失败');
+                }
+            } catch (error) {
+                console.error('文件下载错误:', error);
+                alert('下载失败: ' + error.message);
+            }
         }
 
         async function generateDetailedReport() {
