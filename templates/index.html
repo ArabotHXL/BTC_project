@@ -1187,13 +1187,25 @@
             try {
                 const response = await fetch('/api/analytics/latest-report');
                 if (response.ok) {
-                    const report = await response.json();
-                    displayReport(report);
+                    const responseData = await response.json();
+                    console.log('Latest report API response:', responseData);
+                    
+                    // Extract report data from wrapped response
+                    const report = responseData.success && responseData.data ? responseData.data : responseData;
+                    console.log('Latest report data:', report);
+                    
+                    if (report && (report.title || report.summary || report.generated_at)) {
+                        displayReport(report);
+                    } else {
+                        document.getElementById('analyticsModalBody').innerHTML = 
+                            '<div class="alert alert-warning">{% if current_lang == "en" %}No report data available{% else %}暂无报告数据{% endif %}</div>';
+                    }
                 } else {
                     document.getElementById('analyticsModalBody').innerHTML = 
                         '<div class="alert alert-warning">{% if current_lang == "en" %}No reports available yet{% else %}暂无可用报告{% endif %}</div>';
                 }
             } catch (error) {
+                console.error('Error loading latest report:', error);
                 document.getElementById('analyticsModalBody').innerHTML = 
                     '<div class="alert alert-danger">{% if current_lang == "en" %}Unable to load report{% else %}无法加载报告{% endif %}</div>';
             }
@@ -1209,13 +1221,35 @@
             try {
                 const response = await fetch('/api/analytics/technical-indicators');
                 if (response.ok) {
-                    const indicators = await response.json();
-                    displayTechnicalIndicators(indicators);
+                    const responseData = await response.json();
+                    console.log('Technical indicators API response:', responseData);
+                    
+                    // Extract indicators data from wrapped response
+                    let indicators = responseData.success && responseData.data ? responseData.data : responseData;
+                    
+                    // Handle different response formats
+                    if (indicators && indicators.latest_indicators) {
+                        // Use latest_indicators if available
+                        indicators = indicators.latest_indicators;
+                    } else if (indicators && indicators.indicators && indicators.indicators.length > 0) {
+                        // Use first indicator from array
+                        indicators = indicators.indicators[0];
+                    }
+                    
+                    console.log('Technical indicators data:', indicators);
+                    
+                    if (indicators && Object.keys(indicators).length > 0) {
+                        displayTechnicalIndicators(indicators);
+                    } else {
+                        document.getElementById('analyticsModalBody').innerHTML = 
+                            '<div class="alert alert-warning">{% if current_lang == "en" %}No indicators data available{% else %}暂无技术指标数据{% endif %}</div>';
+                    }
                 } else {
                     document.getElementById('analyticsModalBody').innerHTML = 
                         '<div class="alert alert-warning">{% if current_lang == "en" %}Indicators not available{% else %}技术指标不可用{% endif %}</div>';
                 }
             } catch (error) {
+                console.error('Error loading technical indicators:', error);
                 document.getElementById('analyticsModalBody').innerHTML = 
                     '<div class="alert alert-danger">{% if current_lang == "en" %}Unable to load indicators{% else %}无法加载技术指标{% endif %}</div>';
             }
@@ -1254,23 +1288,38 @@
         }
 
         function displayTechnicalIndicators(indicators) {
+            console.log('Displaying indicators:', indicators);
+            
+            // Safe formatting functions that handle null/undefined values
+            function safeFormatPrice(value) {
+                return value !== null && value !== undefined ? formatPrice(value) : '--';
+            }
+            
+            function safeFormatNumber(value, decimals = 2) {
+                return value !== null && value !== undefined ? formatNumber(value, decimals) : '--';
+            }
+            
+            function safeFormatPercent(value) {
+                return value !== null && value !== undefined ? formatPercent(value) : '--';
+            }
+            
             const html = `
                 <div class="row">
                     <div class="col-md-6">
                         <h6>{% if current_lang == "en" %}Moving Averages{% else %}移动平均线{% endif %}</h6>
                         <table class="table table-sm">
-                            <tr><td>SMA 20</td><td>${formatPrice(indicators.sma_20)}</td></tr>
-                            <tr><td>SMA 50</td><td>${formatPrice(indicators.sma_50)}</td></tr>
-                            <tr><td>EMA 12</td><td>${formatPrice(indicators.ema_12)}</td></tr>
-                            <tr><td>EMA 26</td><td>${formatPrice(indicators.ema_26)}</td></tr>
+                            <tr><td>SMA 20</td><td>${safeFormatPrice(indicators.sma_20)}</td></tr>
+                            <tr><td>SMA 50</td><td>${safeFormatPrice(indicators.sma_50)}</td></tr>
+                            <tr><td>EMA 12</td><td>${safeFormatPrice(indicators.ema_12)}</td></tr>
+                            <tr><td>EMA 26</td><td>${safeFormatPrice(indicators.ema_26)}</td></tr>
                         </table>
                     </div>
                     <div class="col-md-6">
                         <h6>{% if current_lang == "en" %}Momentum{% else %}动量指标{% endif %}</h6>
                         <table class="table table-sm">
-                            <tr><td>RSI (14)</td><td>${formatNumber(indicators.rsi_14, 1)}</td></tr>
-                            <tr><td>MACD</td><td>${formatNumber(indicators.macd, 4)}</td></tr>
-                            <tr><td>{% if current_lang == "en" %}Volatility 30D{% else %}30日波动率{% endif %}</td><td>${formatPercent(indicators.volatility_30d)}</td></tr>
+                            <tr><td>RSI (14)</td><td>${safeFormatNumber(indicators.rsi_14, 1)}</td></tr>
+                            <tr><td>MACD</td><td>${safeFormatNumber(indicators.macd, 4)}</td></tr>
+                            <tr><td>{% if current_lang == "en" %}30D Volatility{% else %}30日波动率{% endif %}</td><td>${safeFormatPercent(indicators.volatility_30d)}</td></tr>
                         </table>
                     </div>
                 </div>
