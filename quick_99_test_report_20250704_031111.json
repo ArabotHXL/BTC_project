@@ -1,0 +1,42 @@
+{
+  "timestamp": "2025-07-04T03:11:11.351577",
+  "summary": {
+    "total_tests": 5,
+    "passed_tests": 5,
+    "success_rate": 100.0,
+    "average_accuracy": 100.0,
+    "grade": "A+ (完美)"
+  },
+  "detailed_results": [
+    {
+      "test_name": "BTC价格API",
+      "status": "PASS",
+      "accuracy": 100.0,
+      "details": "100.0%"
+    },
+    {
+      "test_name": "网络统计API",
+      "status": "PASS",
+      "accuracy": 100.0,
+      "details": "100.0%"
+    },
+    {
+      "test_name": "矿机数据API",
+      "status": "PASS",
+      "accuracy": 100.0,
+      "details": "100.0%"
+    },
+    {
+      "test_name": "挖矿计算",
+      "status": "PASS",
+      "accuracy": 100.0,
+      "details": "100.0%"
+    },
+    {
+      "test_name": "分析数据API",
+      "status": "PASS",
+      "accuracy": 100.0,
+      "details": "100.0%"
+    }
+  ]
+}
