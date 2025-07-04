@@ -2676,5 +2676,10 @@ def api_professional_report():
         'report_data': {'executive_summary': 'Professional mining analysis report'}
     })
 
+@app.route('/legal')
+def legal_terms():
+    """法律条款和使用条件页面 - 公开访问，无需登录"""
+    return render_template('legal_simple.html')
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

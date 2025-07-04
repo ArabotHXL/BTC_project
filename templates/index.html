@@ -1427,5 +1427,19 @@
         }
         {% endif %}
     </script>
+
+    <!-- Footer with Legal Link -->
+    <footer class="bg-dark text-center py-3 mt-5">
+        <div class="container">
+            <div class="text-muted">
+                <a href="{{ url_for('legal_terms') }}" class="text-light text-decoration-none">
+                    <i class="bi bi-shield-check me-1"></i>
+                    法律条款 Legal Terms
+                </a>
+                <span class="mx-2">|</span>
+                <small>© 2025 BTC Mining Calculator. 最后更新 Last Updated: 2025-07-04</small>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>

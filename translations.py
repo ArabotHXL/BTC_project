@@ -154,7 +154,25 @@ translations = {
     "server_error": "服务器错误",
     "unauthorized": "未授权访问",
     "access_denied": "访问被拒绝",
-    "session_expired": "会话已过期"
+    "session_expired": "会话已过期",
+    
+    # 法律条款页面 / Legal Terms Page
+    "legal_terms": "法律条款",
+    "legal_compliance_documentation": "法律合规文档",
+    "terms_of_use": "使用条款",
+    "earnings_disclaimer": "收益免责声明",
+    "data_usage_notice": "数据使用说明",
+    "last_updated": "最后更新",
+    "back_to_calculator": "返回计算器",
+    "home": "主页",
+    "legal_disclaimer": "法律免责声明",
+    "risk_warning": "风险提示",
+    "third_party_apis": "第三方API",
+    "api_terms_compliance": "API条款合规",
+    "commercial_license": "商业许可",
+    "data_accuracy": "数据准确性",
+    "no_investment_advice": "非投资建议",
+    "liability_limitation": "责任限制"
 }
 
 # 获取翻译函数，如果没有找到对应翻译，返回原文

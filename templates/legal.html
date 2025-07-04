@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>法律条款 Legal Terms - Bitcoin Mining Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --bs-dark: #121212;
+            --bs-dark-rgb: 18, 18, 18;
+            --bs-secondary: #1e1e1e;
+            --bs-accent: #2d4356;
+            --bs-light-gray: #f8f9fa;
+            --bs-warning: #ffc107;
+            --gradient-primary: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+
+        body {
+            background: var(--bs-dark);
+            color: #e9ecef;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: var(--gradient-primary) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .navbar-brand {
+            color: white !important;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 500;
+        }
+
+        .main-container {
+            background: var(--bs-secondary);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            margin: 2rem 0;
+            overflow: hidden;
+        }
+
+        .legal-header {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .legal-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        }
+
+        .legal-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .legal-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        .language-tabs {
+            background: #1a1a1a;
+            padding: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-tabs {
+            border-bottom: none;
+            justify-content: center;
+        }
+
+        .nav-tabs .nav-link {
+            background: transparent;
+            border: none;
+            color: #adb5bd;
+            padding: 1rem 2rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #fff;
+            background: rgba(45, 67, 86, 0.3);
+            border-bottom: 3px solid #007bff;
+        }
+
+        .legal-content {
+            padding: 2rem;
+            line-height: 1.7;
+            color: #e9ecef;
+        }
+
+        .section-title {
+            color: #007bff;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 2rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid rgba(0, 123, 255, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .warning-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--bs-warning);
+        }
+
+        .warning-box .warning-icon {
+            color: var(--bs-warning);
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+            vertical-align: top;
+        }
+
+        .warning-title {
+            color: var(--bs-warning);
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .legal-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .legal-list li {
+            background: rgba(255, 255, 255, 0.05);
+            margin: 0.8rem 0;
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+            transition: all 0.3s ease;
+        }
+
+        .legal-list li:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(5px);
+        }
+
+        .legal-list li strong {
+            color: #17a2b8;
+            display: block;
+            margin-bottom: 0.3rem;
+            font-size: 1.05rem;
+        }
+
+        .api-list {
+            background: rgba(0, 123, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .api-item {
+            display: flex;
+            align-items: center;
+            margin: 0.8rem 0;
+            padding: 0.8rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .api-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .api-item i {
+            color: #007bff;
+            font-size: 1.3rem;
+            margin-right: 1rem;
+        }
+
+        .api-item a {
+            color: #17a2b8;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .api-item a:hover {
+            color: #20c997;
+            text-decoration: underline;
+        }
+
+        .back-button {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 2rem 0 1rem 0;
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+
+        .footer-note {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            margin-top: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            color: #adb5bd;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .legal-header h1 {
+                font-size: 2rem;
+            }
+            
+            .legal-content {
+                padding: 1.5rem;
+            }
+            
+            .nav-tabs .nav-link {
+                padding: 0.8rem 1rem;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-calculator me-2"></i>
+                Bitcoin Mining Calculator
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">
+                    <i class="bi bi-house me-1"></i>
+                    主页 Home
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="legal-header">
+                <h1>
+                    <i class="bi bi-shield-check me-3"></i>
+                    法律条款 Legal Terms
+                </h1>
+                <p>法律合规文档 Legal Compliance Documentation</p>
+            </div>
+
+            <!-- Language Tabs -->
+            <div class="language-tabs">
+                <ul class="nav nav-tabs" id="languageTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="chinese-tab" data-bs-toggle="tab" data-bs-target="#chinese-content" type="button" role="tab">
+                            <i class="bi bi-translate me-2"></i>中文版本
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="english-tab" data-bs-toggle="tab" data-bs-target="#english-content" type="button" role="tab">
+                            <i class="bi bi-globe me-2"></i>English Version
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content legal-content" id="languageTabContent">
+                <!-- Chinese Content -->
+                <div class="tab-pane fade show active" id="chinese-content" role="tabpanel">
+                    <div class="section-title">
+                        <i class="bi bi-file-text"></i>
+                        一、使用条款
+                    </div>
+
+                    <ul class="legal-list">
+                        <li>
+                            <strong>非投资建议</strong>
+                            本应用仅用于信息参考和教育目的，不构成任何形式的财务、投资或法律建议。
+                        </li>
+                        <li>
+                            <strong>数据准确性</strong>
+                            我们努力保持信息的准确与更新，但不对数据的完整性和准确性作出保证。
+                        </li>
+                        <li>
+                            <strong>第三方数据源</strong>
+                            本应用集成了如 CoinGecko、Blockchain.info、CoinWarz 等外部数据源。使用者需遵守各API提供方的服务协议。
+                        </li>
+                        <li>
+                            <strong>免责声明</strong>
+                            您使用本应用所造成的任何损失（包括但不限于投资损失），我们概不负责。
+                        </li>
+                        <li>
+                            <strong>使用范围限制</strong>
+                            本应用仅供个人或内部分析使用，未经许可禁止任何形式的商业再分发或销售。
+                        </li>
+                    </ul>
+
+                    <div class="warning-box">
+                        <div class="warning-title">
+                            <i class="bi bi-exclamation-triangle warning-icon"></i>
+                            客户使用免责声明
+                        </div>
+                        <p>本平台所提供之所有挖矿回报、收益预测、ROI 计算结果，仅供参考。受比特币价格波动、网络难度、电力成本、设备损耗等因素影响，实际结果可能与计算模型存在显著差异。使用本平台即表示您理解并同意：本系统不对任何财务决策或投资结果承担任何责任，一切风险由使用者自行承担。</p>
+                    </div>
+
+                    <div class="section-title">
+                        <i class="bi bi-graph-down"></i>
+                        二、收益免责声明
+                    </div>
+
+                    <p>所有回报率计算、收益模拟和挖矿预测均基于公开数据与标准模型，不构成任何形式的收益保证。</p>
+                    
+                    <div class="warning-box">
+                        <div class="warning-title">
+                            <i class="bi bi-info-circle warning-icon"></i>
+                            风险提示
+                        </div>
+                        <p>真实收益会受到BTC价格波动、网络难度、电价、停机、设备老化等多种因素影响。</p>
+                    </div>
+
+                    <div class="section-title">
+                        <i class="bi bi-cloud-arrow-down"></i>
+                        三、数据使用说明
+                    </div>
+
+                    <p>本应用依赖以下外部数据源：</p>
+
+                    <div class="api-list">
+                        <div class="api-item">
+                            <i class="bi bi-link-45deg"></i>
+                            <div>
+                                <strong>CoinGecko API</strong><br>
+                                <a href="https://www.coingecko.com/en/api" target="_blank">https://www.coingecko.com/en/api</a>
+                            </div>
+                        </div>
+                        <div class="api-item">
+                            <i class="bi bi-link-45deg"></i>
+                            <div>
+                                <strong>Blockchain.info</strong><br>
+                                <a href="https://blockchain.info/api" target="_blank">https://blockchain.info/api</a>
+                            </div>
+                        </div>
+                        <div class="api-item">
+                            <i class="bi bi-link-45deg"></i>
+                            <div>
+                                <strong>CoinWarz Mining API</strong><br>
+                                <a href="https://www.coinwarz.com" target="_blank">https://www.coinwarz.com</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p>如需商业部署或二次开发许可，请联系我们获取授权。</p>
+                </div>
+
+                <!-- English Content -->
+                <div class="tab-pane fade" id="english-content" role="tabpanel">
+                    <div class="section-title">
+                        <i class="bi bi-file-text"></i>
+                        1. Terms of Use
+                    </div>
+
+                    <ul class="legal-list">
+                        <li>
+                            <strong>No Investment Advice</strong>
+                            This App is for informational and educational purposes only. It does not constitute financial, investment, or legal advice.
+                        </li>
+                        <li>
+                            <strong>Data Accuracy</strong>
+                            While we strive to keep information accurate and up-to-date, we do not guarantee the reliability or completeness of any data presented.
+                        </li>
+                        <li>
+                            <strong>Third-party APIs</strong>
+                            The App uses data from external sources including but not limited to CoinGecko, Blockchain.info, and CoinWarz. Users must comply with the respective API Terms of Service.
+                        </li>
+                        <li>
+                            <strong>No Liability</strong>
+                            We are not liable for any loss or damage resulting from your use of this App, including but not limited to investment losses.
+                        </li>
+                        <li>
+                            <strong>Usage Limitation</strong>
+                            The App is intended for personal and internal business analysis. Any commercial redistribution or resale is prohibited without explicit permission.
+                        </li>
+                    </ul>
+
+                    <div class="warning-box">
+                        <div class="warning-title">
+                            <i class="bi bi-exclamation-triangle warning-icon"></i>
+                            Client Reference Disclaimer
+                        </div>
+                        <p>All mining return forecasts, profitability estimates, and ROI calculations provided by this platform are for reference only. Actual results may differ significantly due to factors such as BTC price volatility, network difficulty, electricity rates, equipment degradation, and downtime. By using this platform, you acknowledge and agree that the system assumes no responsibility for any financial decisions or outcomes. All risks are solely borne by the user.</p>
+                    </div>
+
+                    <div class="section-title">
+                        <i class="bi bi-graph-down"></i>
+                        2. Earnings Disclaimer
+                    </div>
+
+                    <p>All ROI calculations, profitability simulations, and mining forecasts provided by this App are based on public data and standard formulas. They do not represent guaranteed returns.</p>
+                    
+                    <div class="warning-box">
+                        <div class="warning-title">
+                            <i class="bi bi-info-circle warning-icon"></i>
+                            Risk Warning
+                        </div>
+                        <p>Actual mining returns vary depending on BTC price volatility, network difficulty, electricity rates, downtime, and hardware wear.</p>
+                    </div>
+
+                    <div class="section-title">
+                        <i class="bi bi-cloud-arrow-down"></i>
+                        3. Data Usage Notice
+                    </div>
+
+                    <p>This App relies on the following external APIs:</p>
+
+                    <div class="api-list">
+                        <div class="api-item">
+                            <i class="bi bi-link-45deg"></i>
+                            <div>
+                                <strong>CoinGecko API</strong><br>
+                                <a href="https://www.coingecko.com/en/api" target="_blank">https://www.coingecko.com/en/api</a>
+                            </div>
+                        </div>
+                        <div class="api-item">
+                            <i class="bi bi-link-45deg"></i>
+                            <div>
+                                <strong>Blockchain.info</strong><br>
+                                <a href="https://blockchain.info/api" target="_blank">https://blockchain.info/api</a>
+                            </div>
+                        </div>
+                        <div class="api-item">
+                            <i class="bi bi-link-45deg"></i>
+                            <div>
+                                <strong>CoinWarz Mining API</strong><br>
+                                <a href="https://www.coinwarz.com" target="_blank">https://www.coinwarz.com</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p>Users are expected to adhere to their respective rate limits and commercial terms. For any redistribution or commercial use of API data, you must acquire proper licensing from the data provider.</p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer-note">
+                <p>
+                    <i class="bi bi-shield-check me-2"></i>
+                    最后更新 Last Updated: {{ datetime.now().strftime('%Y-%m-%d') }}
+                </p>
+                <a href="/" class="back-button">
+                    <i class="bi bi-arrow-left me-2"></i>
+                    返回计算器 Back to Calculator
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Smooth scroll for internal links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Auto-switch language based on browser language
+        document.addEventListener('DOMContentLoaded', function() {
+            const browserLang = navigator.language || navigator.userLanguage;
+            if (browserLang.startsWith('en') && !browserLang.startsWith('zh')) {
+                // Switch to English if browser language is English
+                const englishTab = document.getElementById('english-tab');
+                const chineseTab = document.getElementById('chinese-tab');
+                
+                if (englishTab && chineseTab) {
+                    englishTab.click();
+                }
+            }
+        });
+
+        // Add animation effects
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe elements for animation
+        document.querySelectorAll('.legal-list li, .warning-box, .api-item').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
