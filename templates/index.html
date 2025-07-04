@@ -1191,7 +1191,13 @@
                     console.log('Latest report API response:', responseData);
                     
                     // Extract report data from wrapped response
-                    const report = responseData.success && responseData.data ? responseData.data : responseData;
+                    let report = responseData.success && responseData.data ? responseData.data : responseData;
+                    
+                    // Handle nested report structure
+                    if (report && report.latest_report) {
+                        report = report.latest_report;
+                    }
+                    
                     console.log('Latest report data:', report);
                     
                     if (report && (report.title || report.summary || report.generated_at)) {
@@ -1258,29 +1264,82 @@
         }
 
         function displayReport(report) {
+            console.log('Formatting report for display:', report);
+            
+            // Safe access to nested properties
+            const keyFindings = report.key_findings || {};
+            const riskAssessment = report.risk_assessment || {};
+            
             const html = `
                 <div class="mb-3">
                     <h6>${report.title || '{% if current_lang == "en" %}Analysis Report{% else %}分析报告{% endif %}'}</h6>
-                    <p class="text-muted small">{% if current_lang == "en" %}Generated:{% else %}生成时间:{% endif %} ${new Date(report.generated_at).toLocaleString()}</p>
+                    <p class="text-muted small">
+                        {% if current_lang == "en" %}Generated:{% else %}生成时间:{% endif %} 
+                        ${report.generated_at ? new Date(report.generated_at).toLocaleString() : '--'}
+                        ${report.confidence_score ? ` | {% if current_lang == "en" %}Confidence:{% else %}置信度:{% endif %} ${(report.confidence_score * 100).toFixed(0)}%` : ''}
+                    </p>
                 </div>
+                
+                ${report.summary ? `
                 <div class="mb-3">
-                    <strong>{% if current_lang == "en" %}Summary:{% else %}摘要:{% endif %}</strong>
-                    <p>${report.summary || '{% if current_lang == "en" %}No summary available{% else %}暂无摘要{% endif %}'}</p>
+                    <strong>{% if current_lang == "en" %}Market Summary:{% else %}市场摘要:{% endif %}</strong>
+                    <p class="mt-1">${report.summary}</p>
                 </div>
+                ` : ''}
+                
+                ${Object.keys(keyFindings).length > 0 ? `
+                <div class="mb-3">
+                    <strong>{% if current_lang == "en" %}Key Findings:{% else %}关键发现:{% endif %}</strong>
+                    <div class="row mt-2">
+                        ${keyFindings.price_range ? `
+                        <div class="col-6">
+                            <small class="text-muted">{% if current_lang == "en" %}Price Range{% else %}价格区间{% endif %}</small><br>
+                            <strong>${keyFindings.price_range}</strong>
+                        </div>` : ''}
+                        ${keyFindings.avg_price ? `
+                        <div class="col-6">
+                            <small class="text-muted">{% if current_lang == "en" %}Avg Price{% else %}平均价格{% endif %}</small><br>
+                            <strong>${keyFindings.avg_price}</strong>
+                        </div>` : ''}
+                        ${keyFindings.avg_hashrate ? `
+                        <div class="col-6 mt-2">
+                            <small class="text-muted">{% if current_lang == "en" %}Network Hashrate{% else %}网络算力{% endif %}</small><br>
+                            <strong>${keyFindings.avg_hashrate}</strong>
+                        </div>` : ''}
+                        ${keyFindings.market_sentiment ? `
+                        <div class="col-6 mt-2">
+                            <small class="text-muted">{% if current_lang == "en" %}Market Sentiment{% else %}市场情绪{% endif %}</small><br>
+                            <strong>${keyFindings.market_sentiment}</strong>
+                        </div>` : ''}
+                    </div>
+                    ${keyFindings.rsi_signal ? `
+                    <div class="mt-2">
+                        <small class="text-muted">RSI {% if current_lang == "en" %}Signal{% else %}信号{% endif %}</small><br>
+                        <span class="badge bg-info">${keyFindings.rsi_signal}</span>
+                    </div>` : ''}
+                </div>
+                ` : ''}
+                
                 ${report.recommendations && report.recommendations.length > 0 ? `
                 <div class="mb-3">
-                    <strong>{% if current_lang == "en" %}Recommendations:{% else %}投资建议:{% endif %}</strong>
+                    <strong>{% if current_lang == "en" %}Investment Recommendations:{% else %}投资建议:{% endif %}</strong>
                     <ul class="list-unstyled mt-2">
-                        ${report.recommendations.map(rec => `<li class="mb-1">• ${rec}</li>`).join('')}
+                        ${report.recommendations.map(rec => `<li class="mb-1"><i class="bi bi-check-circle text-success me-2"></i>${rec}</li>`).join('')}
                     </ul>
                 </div>
                 ` : ''}
-                ${report.risk_assessment ? `
+                
+                ${Object.keys(riskAssessment).length > 0 ? `
                 <div class="mb-3">
-                    <strong>{% if current_lang == "en" %}Risk Level:{% else %}风险等级:{% endif %}</strong>
-                    <span class="badge bg-${getRiskColor(report.risk_assessment.risk_level)} ms-2">
-                        ${report.risk_assessment.risk_level || 'Unknown'}
-                    </span>
+                    <strong>{% if current_lang == "en" %}Risk Assessment:{% else %}风险评估:{% endif %}</strong>
+                    <div class="mt-2">
+                        ${riskAssessment.risk_level ? `
+                        <span class="badge ${riskAssessment.risk_level === '低' || riskAssessment.risk_level === 'Low' ? 'bg-success' : 
+                                                     riskAssessment.risk_level === '中' || riskAssessment.risk_level === 'Medium' ? 'bg-warning' : 'bg-danger'}">
+                            ${riskAssessment.risk_level} {% if current_lang == "en" %}Risk{% else %}风险{% endif %}
+                        </span>` : ''}
+                        ${riskAssessment.risk_score ? ` <span class="ms-2">${riskAssessment.risk_score}/100</span>` : ''}
+                    </div>
                 </div>
                 ` : ''}
             `;
