@@ -826,7 +826,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // 获取电力削减详情部分
             const curtailmentSection = document.getElementById('curtailment-details-section');
             if (!curtailmentSection) {
-                console.warn('找不到电力削减详情部分元素');
+                // 静默处理，可能因为权限限制而不显示此元素
+                console.debug('电力削减详情部分不可用 (可能因权限限制)');
                 return;
             }
             
@@ -1437,7 +1438,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // 查找容器
             var container = document.getElementById(elementId);
             if (!container) {
-                console.error('找不到ROI图表容器:', elementId);
+                // 静默处理，可能因为权限限制而不显示此元素
+                console.debug('ROI图表容器不可用:', elementId, '(可能因权限限制)');
                 return;
             }
             
