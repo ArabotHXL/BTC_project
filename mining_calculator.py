@@ -483,12 +483,20 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         logging.info(f"ROI计算输入数据 - 客户月利润: ${client_monthly_profit}, 年利润: ${client_yearly_profit}")
         
         if host_investment > 0:
-            host_roi_data = calculate_roi(host_investment, yearly_profit, monthly_profit, btc_price)
-            logging.info(f"矿场主ROI计算结果 - 年化回报率: {host_roi_data['roi_percent_annual']}%, 回收期: {host_roi_data['payback_period_months']}月")
+            try:
+                host_roi_data = calculate_roi(host_investment, yearly_profit, monthly_profit, btc_price)
+                logging.info(f"矿场主ROI计算结果 - 年化回报率: {host_roi_data.get('roi_percent_annual', 0)}%, 回收期: {host_roi_data.get('payback_period_months', 'inf')}月")
+            except Exception as e:
+                logging.error(f"矿场主ROI计算失败: {e}")
+                host_roi_data = None
             
         if client_investment > 0:
-            client_roi_data = calculate_roi(client_investment, client_yearly_profit, client_monthly_profit, btc_price)
-            logging.info(f"客户ROI计算结果 - 年化回报率: {client_roi_data['roi_percent_annual']}%, 回收期: {client_roi_data['payback_period_months']}月")
+            try:
+                client_roi_data = calculate_roi(client_investment, client_yearly_profit, client_monthly_profit, btc_price)
+                logging.info(f"客户ROI计算结果 - 年化回报率: {client_roi_data.get('roi_percent_annual', 0)}%, 回收期: {client_roi_data.get('payback_period_months', 'inf')}月")
+            except Exception as e:
+                logging.error(f"客户ROI计算失败: {e}")
+                client_roi_data = None
             
         # 准备削减详情（仅当使用了高级削减计算时）
         curtailment_details = {}
@@ -598,6 +606,8 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
                 'client': client_roi_data
             }
         }
+        
+        return result
         
     except Exception as e:
         logging.error(f"Error in calculation: {str(e)}")
