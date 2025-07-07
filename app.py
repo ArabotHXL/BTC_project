@@ -663,10 +663,15 @@ def calculate():
             )
             
             # 确保返回完整的计算结果格式
+            logging.info(f"计算结果类型: {type(result)}, 是否为字典: {isinstance(result, dict)}")
+            if result:
+                logging.info(f"计算结果键: {list(result.keys()) if isinstance(result, dict) else 'Not a dict'}")
+            
             if result and isinstance(result, dict):
+                logging.info("返回计算结果成功")
                 return jsonify(result)
             else:
-                logging.error("计算函数返回无效结果")
+                logging.error(f"计算函数返回无效结果: {result}")
                 return jsonify({
                     'success': False,
                     'error': '计算函数返回无效结果'
