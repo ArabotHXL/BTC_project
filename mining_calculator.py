@@ -431,11 +431,17 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             # 计算电费差价收益 = (客户电费 - 矿场电费) * 电力消耗
             monthly_electricity_markup = (client_electricity_cost - electricity_cost) * monthly_power_consumption
             logging.info(f"电费差价收益: ${monthly_electricity_markup} = (${client_electricity_cost} - ${electricity_cost}) * {monthly_power_consumption}kWh")
+        elif client_electricity_cost and client_electricity_cost <= electricity_cost:
+            # 客户电费低于或等于矿场电费，没有电费差价收益
+            logging.info(f"客户电费 ${client_electricity_cost} <= 矿场电费 ${electricity_cost}，无电费差价收益")
         
-        # 矿场主总收益 = 挖矿收益 + 电费差价收益
-        monthly_profit = monthly_mining_profit
-        if client_electricity_cost:  # 如果是托管模式，使用电费差价作为收益
+        # 矿场主总收益计算
+        if client_electricity_cost and client_electricity_cost > electricity_cost:
+            # 如果是托管模式且有电费差价，使用电费差价作为收益
             monthly_profit = monthly_electricity_markup
+        else:
+            # 否则使用挖矿收益
+            monthly_profit = monthly_mining_profit
         
         # 客户收益需要减去电费和维护费（与矿场主挖矿收益计算方式一样）
         client_monthly_profit = monthly_revenue - client_electricity_expense - maintenance_fee
