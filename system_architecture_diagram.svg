@@ -2,14 +2,14 @@
 <svg width="1400" height="1120" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <style>
-      .title { font-family: 'Segoe UI', Arial, sans-serif; font-size: 28px; font-weight: bold; fill: #1a202c; }
-      .subtitle { font-family: 'Segoe UI', Arial, sans-serif; font-size: 18px; font-weight: 600; fill: #2d3748; }
-      .layer-title { font-family: 'Segoe UI', Arial, sans-serif; font-size: 16px; font-weight: 600; fill: #1a202c; }
-      .text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; fill: #1a202c; }
-      .small-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10px; fill: #4a5568; }
-      .tiny-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 9px; fill: #718096; }
-      .white-text { fill: white; font-weight: 600; }
-      .black-text { fill: #1a202c; font-weight: 600; }
+      .title { font-family: 'Segoe UI', Arial, sans-serif; font-size: 32px; font-weight: bold; fill: #000000; }
+      .subtitle { font-family: 'Segoe UI', Arial, sans-serif; font-size: 20px; font-weight: 600; fill: #000000; }
+      .layer-title { font-family: 'Segoe UI', Arial, sans-serif; font-size: 18px; font-weight: bold; fill: #000000; }
+      .text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 600; fill: #000000; }
+      .small-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: 500; fill: #000000; }
+      .tiny-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; font-weight: 500; fill: #000000; }
+      .white-text { fill: #000000; font-weight: bold; font-size: 14px; }
+      .black-text { fill: #000000; font-weight: bold; font-size: 14px; }
       
       /* 渐变定义 */
       .user-gradient { fill: url(#userGrad); stroke: #6b46c1; stroke-width: 2; rx: 12; }
@@ -208,176 +208,158 @@
   
   <!-- 第一行数据表 -->
   <g transform="translate(120, 605)">
-    <rect x="0" y="0" width="150" height="60" class="database-gradient shadow"/>
-    <text x="75" y="18" text-anchor="middle" class="black-text">👤 UserAccess</text>
-    <text x="75" y="32" text-anchor="middle" class="tiny-text" fill="#1a202c">用户权限表</text>
-    <text x="75" y="45" text-anchor="middle" class="tiny-text" fill="#4a5568">email, role, access_days</text>
-    <text x="75" y="55" text-anchor="middle" class="tiny-text" fill="#4a5568">has_access, created_at</text>
+    <rect x="0" y="0" width="180" height="70" class="database-gradient shadow"/>
+    <text x="90" y="20" text-anchor="middle" class="black-text">👤 UserAccess</text>
+    <text x="90" y="35" text-anchor="middle" class="tiny-text">用户权限表</text>
+    <text x="90" y="50" text-anchor="middle" class="tiny-text">email, role, access_days</text>
+    <text x="90" y="65" text-anchor="middle" class="tiny-text">has_access, created_at</text>
   </g>
   
-  <g transform="translate(290, 605)">
-    <rect x="0" y="0" width="150" height="60" class="database-gradient shadow"/>
-    <text x="75" y="18" text-anchor="middle" class="black-text">🏢 Customer</text>
-    <text x="75" y="32" text-anchor="middle" class="tiny-text" fill="#1a202c">客户信息表</text>
-    <text x="75" y="45" text-anchor="middle" class="tiny-text" fill="#4a5568">company_name, contact</text>
-    <text x="75" y="55" text-anchor="middle" class="tiny-text" fill="#4a5568">email, phone, industry</text>
+  <g transform="translate(320, 605)">
+    <rect x="0" y="0" width="180" height="70" class="database-gradient shadow"/>
+    <text x="90" y="20" text-anchor="middle" class="black-text">🏢 Customer</text>
+    <text x="90" y="35" text-anchor="middle" class="tiny-text">客户信息表</text>
+    <text x="90" y="50" text-anchor="middle" class="tiny-text">company_name, contact</text>
+    <text x="90" y="65" text-anchor="middle" class="tiny-text">email, phone, industry</text>
   </g>
   
-  <g transform="translate(460, 605)">
-    <rect x="0" y="0" width="150" height="60" class="database-gradient shadow"/>
-    <text x="75" y="18" text-anchor="middle" class="black-text">📞 Contact</text>
-    <text x="75" y="32" text-anchor="middle" class="tiny-text" fill="#1a202c">联系人表</text>
-    <text x="75" y="45" text-anchor="middle" class="tiny-text" fill="#4a5568">first_name, last_name</text>
-    <text x="75" y="55" text-anchor="middle" class="tiny-text" fill="#4a5568">position, customer_id</text>
+  <g transform="translate(520, 605)">
+    <rect x="0" y="0" width="180" height="70" class="database-gradient shadow"/>
+    <text x="90" y="20" text-anchor="middle" class="black-text">📞 Contact</text>
+    <text x="90" y="35" text-anchor="middle" class="tiny-text">联系人表</text>
+    <text x="90" y="50" text-anchor="middle" class="tiny-text">first_name, last_name</text>
+    <text x="90" y="65" text-anchor="middle" class="tiny-text">position, customer_id</text>
   </g>
   
-  <g transform="translate(630, 605)">
-    <rect x="0" y="0" width="150" height="60" class="database-gradient shadow"/>
-    <text x="75" y="18" text-anchor="middle" class="black-text">🎯 Lead</text>
-    <text x="75" y="32" text-anchor="middle" class="tiny-text" fill="#1a202c">商机表</text>
-    <text x="75" y="45" text-anchor="middle" class="tiny-text" fill="#4a5568">title, status, value</text>
-    <text x="75" y="55" text-anchor="middle" class="tiny-text" fill="#4a5568">probability, close_date</text>
+  <g transform="translate(720, 605)">
+    <rect x="0" y="0" width="180" height="70" class="database-gradient shadow"/>
+    <text x="90" y="20" text-anchor="middle" class="black-text">🎯 Lead</text>
+    <text x="90" y="35" text-anchor="middle" class="tiny-text">商机表</text>
+    <text x="90" y="50" text-anchor="middle" class="tiny-text">title, status, value</text>
+    <text x="90" y="65" text-anchor="middle" class="tiny-text">probability, close_date</text>
   </g>
   
-  <g transform="translate(800, 605)">
-    <rect x="0" y="0" width="150" height="60" class="database-gradient shadow"/>
-    <text x="75" y="18" text-anchor="middle" class="black-text">💼 Deal</text>
-    <text x="75" y="32" text-anchor="middle" class="tiny-text" fill="#1a202c">交易表</text>
-    <text x="75" y="45" text-anchor="middle" class="tiny-text" fill="#4a5568">amount, commission</text>
-    <text x="75" y="55" text-anchor="middle" class="tiny-text" fill="#4a5568">status, closed_at</text>
+  <g transform="translate(920, 605)">
+    <rect x="0" y="0" width="180" height="70" class="database-gradient shadow"/>
+    <text x="90" y="20" text-anchor="middle" class="black-text">💼 Deal</text>
+    <text x="90" y="35" text-anchor="middle" class="tiny-text">交易表</text>
+    <text x="90" y="50" text-anchor="middle" class="tiny-text">amount, commission</text>
+    <text x="90" y="65" text-anchor="middle" class="tiny-text">status, closed_at</text>
   </g>
   
-  <g transform="translate(970, 605)">
-    <rect x="0" y="0" width="150" height="60" class="database-gradient shadow"/>
-    <text x="75" y="18" text-anchor="middle" class="black-text">📊 MarketAnalytics</text>
-    <text x="75" y="32" text-anchor="middle" class="tiny-text" fill="#1a202c">市场分析表</text>
-    <text x="75" y="45" text-anchor="middle" class="tiny-text" fill="#4a5568">btc_price, hashrate</text>
-    <text x="75" y="55" text-anchor="middle" class="tiny-text" fill="#4a5568">difficulty, fear_greed</text>
-  </g>
-  
-  <g transform="translate(1140, 605)">
-    <rect x="0" y="0" width="150" height="60" class="database-gradient shadow"/>
-    <text x="75" y="18" text-anchor="middle" class="black-text">📷 NetworkSnapshot</text>
-    <text x="75" y="32" text-anchor="middle" class="tiny-text" fill="#1a202c">网络快照表</text>
-    <text x="75" y="45" text-anchor="middle" class="tiny-text" fill="#4a5568">timestamp, context</text>
-    <text x="75" y="55" text-anchor="middle" class="tiny-text" fill="#4a5568">block_reward, difficulty</text>
+  <g transform="translate(1120, 605)">
+    <rect x="0" y="0" width="180" height="70" class="database-gradient shadow"/>
+    <text x="90" y="20" text-anchor="middle" class="black-text">📊 Analytics</text>
+    <text x="90" y="35" text-anchor="middle" class="tiny-text">市场分析表</text>
+    <text x="90" y="50" text-anchor="middle" class="tiny-text">btc_price, hashrate</text>
+    <text x="90" y="65" text-anchor="middle" class="tiny-text">difficulty, fear_greed</text>
   </g>
 
   <!-- 第二行数据表 -->
-  <g transform="translate(120, 675)">
-    <rect x="0" y="0" width="150" height="60" class="database-gradient shadow"/>
-    <text x="75" y="18" text-anchor="middle" class="black-text">📝 Activity</text>
-    <text x="75" y="32" text-anchor="middle" class="tiny-text" fill="#1a202c">活动记录表</text>
-    <text x="75" y="45" text-anchor="middle" class="tiny-text" fill="#4a5568">type, description</text>
-    <text x="75" y="55" text-anchor="middle" class="tiny-text" fill="#4a5568">customer_id, created_by</text>
+  <g transform="translate(120, 690)">
+    <rect x="0" y="0" width="180" height="70" class="database-gradient shadow"/>
+    <text x="90" y="20" text-anchor="middle" class="black-text">📝 Activity</text>
+    <text x="90" y="35" text-anchor="middle" class="tiny-text">活动记录表</text>
+    <text x="90" y="50" text-anchor="middle" class="tiny-text">type, description</text>
+    <text x="90" y="65" text-anchor="middle" class="tiny-text">customer_id, created_by</text>
   </g>
   
-  <g transform="translate(290, 675)">
-    <rect x="0" y="0" width="150" height="60" class="database-gradient shadow"/>
-    <text x="75" y="18" text-anchor="middle" class="black-text">📊 LoginRecord</text>
-    <text x="75" y="32" text-anchor="middle" class="tiny-text" fill="#1a202c">登录记录表</text>
-    <text x="75" y="45" text-anchor="middle" class="tiny-text" fill="#4a5568">user_email, ip_address</text>
-    <text x="75" y="55" text-anchor="middle" class="tiny-text" fill="#4a5568">login_time, location</text>
+  <g transform="translate(320, 690)">
+    <rect x="0" y="0" width="180" height="70" class="database-gradient shadow"/>
+    <text x="90" y="20" text-anchor="middle" class="black-text">📊 LoginRecord</text>
+    <text x="90" y="35" text-anchor="middle" class="tiny-text">登录记录表</text>
+    <text x="90" y="50" text-anchor="middle" class="tiny-text">user_email, ip_address</text>
+    <text x="90" y="65" text-anchor="middle" class="tiny-text">login_time, location</text>
   </g>
   
-  <g transform="translate(460, 675)">
-    <rect x="0" y="0" width="150" height="60" class="database-gradient shadow"/>
-    <text x="75" y="18" text-anchor="middle" class="black-text">💰 BrokerDeal</text>
-    <text x="75" y="32" text-anchor="middle" class="tiny-text" fill="#1a202c">中介交易表</text>
-    <text x="75" y="45" text-anchor="middle" class="tiny-text" fill="#4a5568">broker_id, client_id</text>
-    <text x="75" y="55" text-anchor="middle" class="tiny-text" fill="#4a5568">commission_rate, status</text>
+  <g transform="translate(520, 690)">
+    <rect x="0" y="0" width="180" height="70" class="database-gradient shadow"/>
+    <text x="90" y="20" text-anchor="middle" class="black-text">💰 BrokerDeal</text>
+    <text x="90" y="35" text-anchor="middle" class="tiny-text">中介交易表</text>
+    <text x="90" y="50" text-anchor="middle" class="tiny-text">broker_id, client_id</text>
+    <text x="90" y="65" text-anchor="middle" class="tiny-text">commission_rate, status</text>
+  </g>
+  
+  <g transform="translate(720, 690)">
+    <rect x="0" y="0" width="180" height="70" class="database-gradient shadow"/>
+    <text x="90" y="20" text-anchor="middle" class="black-text">📷 Snapshot</text>
+    <text x="90" y="35" text-anchor="middle" class="tiny-text">网络快照表</text>
+    <text x="90" y="50" text-anchor="middle" class="tiny-text">timestamp, context</text>
+    <text x="90" y="65" text-anchor="middle" class="tiny-text">block_reward, difficulty</text>
   </g>
 
   <!-- 外部API层 -->
-  <rect x="80" y="750" width="1240" height="140" class="layer-bg shadow"/>
-  <text x="100" y="775" class="layer-title">🔗 外部API层 (External APIs)</text>
-  <text x="100" y="795" class="small-text">智能多源数据策略 - 自动故障转移 | 4个主要数据源</text>
+  <rect x="80" y="780" width="1240" height="120" class="layer-bg shadow"/>
+  <text x="100" y="805" class="layer-title">🔗 外部API层 (External APIs)</text>
+  <text x="100" y="825" class="small-text">智能多源数据策略 - 自动故障转移 | 5个主要数据源</text>
   
   <!-- API服务 -->
-  <g transform="translate(150, 815)">
-    <rect x="0" y="0" width="200" height="60" class="api-gradient shadow"/>
-    <text x="100" y="18" text-anchor="middle" class="black-text">⛏️ CoinWarz API</text>
-    <text x="100" y="32" text-anchor="middle" class="tiny-text" fill="#1a202c">专业挖矿数据源</text>
-    <text x="100" y="45" text-anchor="middle" class="tiny-text" fill="#4a5568">coinwarz_api.py</text>
-    <text x="100" y="55" text-anchor="middle" class="tiny-text" fill="#4a5568">剩余调用: 732/1000</text>
+  <g transform="translate(120, 845)">
+    <rect x="0" y="0" width="220" height="45" class="api-gradient shadow"/>
+    <text x="110" y="18" text-anchor="middle" class="black-text">⛏️ CoinWarz API</text>
+    <text x="110" y="32" text-anchor="middle" class="tiny-text">专业挖矿数据源 | 剩余731/1000</text>
   </g>
   
-  <g transform="translate(370, 815)">
-    <rect x="0" y="0" width="200" height="60" class="api-gradient shadow"/>
-    <text x="100" y="18" text-anchor="middle" class="black-text">💰 CoinGecko API</text>
-    <text x="100" y="32" text-anchor="middle" class="tiny-text" fill="#1a202c">加密货币价格</text>
-    <text x="100" y="45" text-anchor="middle" class="tiny-text" fill="#4a5568">实时BTC价格</text>
-    <text x="100" y="55" text-anchor="middle" class="tiny-text" fill="#4a5568">市场数据备用源</text>
+  <g transform="translate(360, 845)">
+    <rect x="0" y="0" width="220" height="45" class="api-gradient shadow"/>
+    <text x="110" y="18" text-anchor="middle" class="black-text">💰 CoinGecko API</text>
+    <text x="110" y="32" text-anchor="middle" class="tiny-text">实时BTC价格 | 市场数据备用</text>
   </g>
   
-  <g transform="translate(590, 815)">
-    <rect x="0" y="0" width="200" height="60" class="api-gradient shadow"/>
-    <text x="100" y="18" text-anchor="middle" class="black-text">⛓️ Blockchain.info</text>
-    <text x="100" y="32" text-anchor="middle" class="tiny-text" fill="#1a202c">Bitcoin网络统计</text>
-    <text x="100" y="45" text-anchor="middle" class="tiny-text" fill="#4a5568">难度+算力数据</text>
-    <text x="100" y="55" text-anchor="middle" class="tiny-text" fill="#4a5568">网络状态验证</text>
+  <g transform="translate(600, 845)">
+    <rect x="0" y="0" width="220" height="45" class="api-gradient shadow"/>
+    <text x="110" y="18" text-anchor="middle" class="black-text">⛓️ Blockchain.info</text>
+    <text x="110" y="32" text-anchor="middle" class="tiny-text">网络难度+算力 | 状态验证</text>
   </g>
   
-  <g transform="translate(810, 815)">
-    <rect x="0" y="0" width="200" height="60" class="api-gradient shadow"/>
-    <text x="100" y="18" text-anchor="middle" class="black-text">📡 Minerstat API</text>
-    <text x="100" y="32" text-anchor="middle" class="tiny-text" fill="#1a202c">挖矿网络数据</text>
-    <text x="100" y="45" text-anchor="middle" class="tiny-text" fill="#4a5568">实时算力: 947.69 EH/s</text>
-    <text x="100" y="55" text-anchor="middle" class="tiny-text" fill="#4a5568">智能故障转移</text>
+  <g transform="translate(840, 845)">
+    <rect x="0" y="0" width="220" height="45" class="api-gradient shadow"/>
+    <text x="110" y="18" text-anchor="middle" class="black-text">📡 Minerstat API</text>
+    <text x="110" y="32" text-anchor="middle" class="tiny-text">实时算力936EH/s | 智能故障转移</text>
   </g>
   
-  <g transform="translate(1030, 815)">
-    <rect x="0" y="0" width="200" height="60" class="api-gradient shadow"/>
-    <text x="100" y="18" text-anchor="middle" class="black-text">🌍 IP-API</text>
-    <text x="100" y="32" text-anchor="middle" class="tiny-text" fill="#1a202c">地理位置服务</text>
-    <text x="100" y="45" text-anchor="middle" class="tiny-text" fill="#4a5568">登录位置追踪</text>
-    <text x="100" y="55" text-anchor="middle" class="tiny-text" fill="#4a5568">安全审计支持</text>
+  <g transform="translate(1080, 845)">
+    <rect x="0" y="0" width="220" height="45" class="api-gradient shadow"/>
+    <text x="110" y="18" text-anchor="middle" class="black-text">🌍 IP-API</text>
+    <text x="110" y="32" text-anchor="middle" class="tiny-text">地理位置 | 登录追踪</text>
   </g>
 
   <!-- 基础设施层 -->
-  <rect x="80" y="900" width="1240" height="100" class="layer-bg shadow"/>
-  <text x="100" y="925" class="layer-title">🏗️ 基础设施层 (Infrastructure Layer)</text>
-  <text x="100" y="945" class="small-text">生产环境部署 - 高可用性架构 | Replit平台托管</text>
+  <rect x="80" y="920" width="1240" height="80" class="layer-bg shadow"/>
+  <text x="100" y="945" class="layer-title">🏗️ 基础设施层 (Infrastructure Layer)</text>
+  <text x="100" y="965" class="small-text">生产环境部署 - 高可用性架构 | Replit平台托管</text>
   
   <!-- 基础设施组件 -->
-  <g transform="translate(150, 965)">
-    <rect x="0" y="0" width="200" height="25" class="infra-gradient shadow"/>
-    <text x="100" y="17" text-anchor="middle" class="black-text">🚀 Gunicorn WSGI Server</text>
+  <g transform="translate(150, 975)">
+    <rect x="0" y="0" width="240" height="20" class="infra-gradient shadow"/>
+    <text x="120" y="14" text-anchor="middle" class="black-text">🚀 Gunicorn WSGI Server</text>
   </g>
   
-  <g transform="translate(370, 965)">
-    <rect x="0" y="0" width="200" height="25" class="infra-gradient shadow"/>
-    <text x="100" y="17" text-anchor="middle" class="black-text">🔗 SQLAlchemy ORM</text>
+  <g transform="translate(410, 975)">
+    <rect x="0" y="0" width="240" height="20" class="infra-gradient shadow"/>
+    <text x="120" y="14" text-anchor="middle" class="black-text">🔗 SQLAlchemy ORM</text>
   </g>
   
-  <g transform="translate(590, 965)">
-    <rect x="0" y="0" width="200" height="25" class="infra-gradient shadow"/>
-    <text x="100" y="17" text-anchor="middle" class="black-text">⏰ 统一数据管道</text>
+  <g transform="translate(670, 975)">
+    <rect x="0" y="0" width="240" height="20" class="infra-gradient shadow"/>
+    <text x="120" y="14" text-anchor="middle" class="black-text">⏰ 统一数据管道</text>
   </g>
   
-  <g transform="translate(810, 965)">
-    <rect x="0" y="0" width="200" height="25" class="infra-gradient shadow"/>
-    <text x="100" y="17" text-anchor="middle" class="black-text">📅 定时任务调度</text>
+  <g transform="translate(930, 975)">
+    <rect x="0" y="0" width="240" height="20" class="infra-gradient shadow"/>
+    <text x="120" y="14" text-anchor="middle" class="black-text">📅 定时任务调度</text>
   </g>
 
   <!-- 数据流连接线 -->
   <line x1="700" y1="220" x2="700" y2="240" class="connector"/>
   <line x1="700" y1="360" x2="700" y2="380" class="connector"/>
   <line x1="700" y1="520" x2="700" y2="540" class="connector"/>
-  <line x1="700" y1="745" x2="700" y2="750" class="connector"/>
-  <line x1="700" y1="890" x2="700" y2="900" class="connector"/>
-
-  <!-- 模块文件列表 -->
-  <g transform="translate(630, 675)">
-    <rect x="0" y="0" width="700" height="60" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" rx="8" class="shadow"/>
-    <text x="10" y="20" class="text">📁 核心模块文件 (Core Module Files):</text>
-    <text x="10" y="35" class="small-text">app.py (1900+行) | mining_calculator.py | auth.py | crm_routes.py | analytics_engine.py</text>
-    <text x="10" y="50" class="small-text">models.py | coinwarz_api.py | translations.py | config.py | mining_broker_routes.py</text>
-  </g>
+  <line x1="700" y1="775" x2="700" y2="780" class="connector"/>
+  <line x1="700" y1="915" x2="700" y2="920" class="connector"/>
 
   <!-- 系统特性和状态信息 -->
   <g transform="translate(100, 1020)">
-    <rect x="0" y="0" width="1200" height="80" fill="white" stroke="#e2e8f0" stroke-width="2" rx="10" class="shadow"/>
+    <rect x="0" y="0" width="1200" height="80" fill="white" stroke="#2d3748" stroke-width="2" rx="10" class="shadow"/>
     <text x="20" y="25" class="text">💡 系统特性:</text>
     <text x="20" y="45" class="small-text">✅ 99.9%高可用性 ✅ 5级权限控制 ✅ 多源API冗余 ✅ 实时数据更新 ✅ 智能故障转移 ✅ 双语言支持</text>
     <text x="20" y="65" class="small-text">✅ 10种矿机模型 ✅ 10个数据表 ✅ 6个前端模块 ✅ 6个后端服务 ✅ 5个外部API</text>
@@ -389,8 +371,8 @@
     <text x="670" y="45" class="small-text">数据流</text>
     
     <text x="800" y="25" class="text">🎯 实时状态:</text>
-    <text x="800" y="45" class="small-text">BTC $109,176 | 算力 941.87 EH/s | 恐惧贪婪指数 73</text>
-    <text x="800" y="65" class="small-text">CoinWarz API: 731/1000 | 系统运行时间: 正常 | 数据收集: 活跃</text>
+    <text x="800" y="45" class="small-text">BTC $109,154 | 算力 936.06 EH/s | 恐惧贪婪指数 73</text>
+    <text x="800" y="65" class="small-text">CoinWarz API: 730/1000 | 系统运行时间: 正常 | 数据收集: 活跃</text>
   </g>
 
   <!-- 背景渐变定义 -->
