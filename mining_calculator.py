@@ -519,7 +519,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
                 logging.info(f"Curtailment impact data: {impact_data}")
         
         # Return results in a consistent format with our previous implementation
-        return {
+        result = {
             'success': True,
             'timestamp': datetime.now().isoformat(),
             # Add regression test expected fields
