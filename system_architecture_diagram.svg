@@ -78,31 +78,31 @@
   <g transform="translate(120, 165)">
     <rect x="0" y="0" width="180" height="45" class="user-gradient shadow"/>
     <text x="90" y="20" text-anchor="middle" class="white-text">Owner 所有者</text>
-    <text x="90" y="35" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.8)">完全访问权限</text>
+    <text x="90" y="35" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,1)">完全访问权限</text>
   </g>
   
   <g transform="translate(320, 165)">
     <rect x="0" y="0" width="180" height="45" class="user-gradient shadow"/>
     <text x="90" y="20" text-anchor="middle" class="white-text">Admin 管理员</text>
-    <text x="90" y="35" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.8)">高级管理权限</text>
+    <text x="90" y="35" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,1)">高级管理权限</text>
   </g>
   
   <g transform="translate(520, 165)">
     <rect x="0" y="0" width="180" height="45" class="user-gradient shadow"/>
     <text x="90" y="20" text-anchor="middle" class="white-text">Mining Site 矿场主</text>
-    <text x="90" y="35" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.8)">业务操作权限</text>
+    <text x="90" y="35" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.8)">业务操作权限</text>
   </g>
   
   <g transform="translate(720, 165)">
     <rect x="0" y="0" width="180" height="45" class="user-gradient shadow"/>
     <text x="90" y="20" text-anchor="middle" class="white-text">Manager 经理</text>
-    <text x="90" y="35" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.8)">CRM专用权限</text>
+    <text x="90" y="35" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.8)">CRM专用权限</text>
   </g>
   
   <g transform="translate(920, 165)">
     <rect x="0" y="0" width="180" height="45" class="user-gradient shadow"/>
     <text x="90" y="20" text-anchor="middle" class="white-text">Guest 访客</text>
-    <text x="90" y="35" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.8)">基础功能权限</text>
+    <text x="90" y="35" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.8)">基础功能权限</text>
   </g>
 
   <!-- 前端展示层 -->
@@ -114,43 +114,43 @@
   <g transform="translate(120, 300)">
     <rect x="0" y="0" width="160" height="50" class="frontend-gradient shadow"/>
     <text x="80" y="20" text-anchor="middle" class="white-text">⚡ 挖矿计算器</text>
-    <text x="80" y="35" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.8)">Mining Calculator</text>
-    <text x="80" y="45" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.6)">10种矿机模型</text>
+    <text x="80" y="35" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.8)">Mining Calculator</text>
+    <text x="80" y="45" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.6)">10种矿机模型</text>
   </g>
   
   <g transform="translate(300, 300)">
     <rect x="0" y="0" width="160" height="50" class="frontend-gradient shadow"/>
     <text x="80" y="20" text-anchor="middle" class="white-text">👥 CRM系统</text>
-    <text x="80" y="35" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.8)">Customer Management</text>
-    <text x="80" y="45" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.6)">客户关系管理</text>
+    <text x="80" y="35" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.8)">Customer Management</text>
+    <text x="80" y="45" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.6)">客户关系管理</text>
   </g>
   
   <g transform="translate(480, 300)">
     <rect x="0" y="0" width="160" height="50" class="frontend-gradient shadow"/>
     <text x="80" y="20" text-anchor="middle" class="white-text">📊 数据分析</text>
-    <text x="80" y="35" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.8)">Analytics Dashboard</text>
-    <text x="80" y="45" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.6)">Chart.js可视化</text>
+    <text x="80" y="35" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.8)">Analytics Dashboard</text>
+    <text x="80" y="45" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.6)">Chart.js可视化</text>
   </g>
   
   <g transform="translate(660, 300)">
     <rect x="0" y="0" width="160" height="50" class="frontend-gradient shadow"/>
     <text x="80" y="20" text-anchor="middle" class="white-text">📈 网络分析</text>
-    <text x="80" y="35" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.8)">Network Analysis</text>
-    <text x="80" y="45" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.6)">历史数据趋势</text>
+    <text x="80" y="35" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.8)">Network Analysis</text>
+    <text x="80" y="45" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.6)">历史数据趋势</text>
   </g>
   
   <g transform="translate(840, 300)">
     <rect x="0" y="0" width="160" height="50" class="frontend-gradient shadow"/>
     <text x="80" y="20" text-anchor="middle" class="white-text">🔬 算法测试</text>
-    <text x="80" y="35" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.8)">Algorithm Test</text>
-    <text x="80" y="45" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.6)">双算法验证</text>
+    <text x="80" y="35" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.8)">Algorithm Test</text>
+    <text x="80" y="45" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.6)">双算法验证</text>
   </g>
   
   <g transform="translate(1020, 300)">
     <rect x="0" y="0" width="160" height="50" class="frontend-gradient shadow"/>
     <text x="80" y="20" text-anchor="middle" class="white-text">🌍 多语言</text>
-    <text x="80" y="35" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.8)">i18n Support</text>
-    <text x="80" y="45" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.6)">中英文切换</text>
+    <text x="80" y="35" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.8)">i18n Support</text>
+    <text x="80" y="45" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.6)">中英文切换</text>
   </g>
 
   <!-- Flask应用层 -->
@@ -162,43 +162,43 @@
   <g transform="translate(120, 445)">
     <rect x="0" y="0" width="140" height="60" class="backend-gradient shadow"/>
     <text x="70" y="20" text-anchor="middle" class="white-text">🔐 认证系统</text>
-    <text x="70" y="35" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.8)">auth.py</text>
-    <text x="70" y="50" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.6)">邮箱验证+权限</text>
+    <text x="70" y="35" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.8)">auth.py</text>
+    <text x="70" y="50" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.6)">邮箱验证+权限</text>
   </g>
   
   <g transform="translate(280, 445)">
     <rect x="0" y="0" width="140" height="60" class="backend-gradient shadow"/>
     <text x="70" y="20" text-anchor="middle" class="white-text">⚙️ 挖矿引擎</text>
-    <text x="70" y="35" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.8)">mining_calculator.py</text>
-    <text x="70" y="50" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.6)">双算法计算</text>
+    <text x="70" y="35" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.8)">mining_calculator.py</text>
+    <text x="70" y="50" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.6)">双算法计算</text>
   </g>
   
   <g transform="translate(440, 445)">
     <rect x="0" y="0" width="140" height="60" class="backend-gradient shadow"/>
     <text x="70" y="20" text-anchor="middle" class="white-text">🛒 CRM路由</text>
-    <text x="70" y="35" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.8)">crm_routes.py</text>
-    <text x="70" y="50" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.6)">客户业务逻辑</text>
+    <text x="70" y="35" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.8)">crm_routes.py</text>
+    <text x="70" y="50" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.6)">客户业务逻辑</text>
   </g>
   
   <g transform="translate(600, 445)">
     <rect x="0" y="0" width="140" height="60" class="backend-gradient shadow"/>
     <text x="70" y="20" text-anchor="middle" class="white-text">📊 分析引擎</text>
-    <text x="70" y="35" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.8)">analytics_engine.py</text>
-    <text x="70" y="50" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.6)">15分钟数据更新</text>
+    <text x="70" y="35" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.8)">analytics_engine.py</text>
+    <text x="70" y="50" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.6)">15分钟数据更新</text>
   </g>
   
   <g transform="translate(760, 445)">
     <rect x="0" y="0" width="140" height="60" class="backend-gradient shadow"/>
     <text x="70" y="20" text-anchor="middle" class="white-text">🌐 数据服务</text>
-    <text x="70" y="35" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.8)">network_data_service.py</text>
-    <text x="70" y="50" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.6)">自动化采集</text>
+    <text x="70" y="35" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.8)">network_data_service.py</text>
+    <text x="70" y="50" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.6)">自动化采集</text>
   </g>
   
   <g transform="translate(920, 445)">
     <rect x="0" y="0" width="140" height="60" class="backend-gradient shadow"/>
     <text x="70" y="20" text-anchor="middle" class="white-text">🌏 翻译系统</text>
-    <text x="70" y="35" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.8)">translations.py</text>
-    <text x="70" y="50" text-anchor="middle" class="tiny-text" fill="rgba(255,255,255,0.6)">动态语言切换</text>
+    <text x="70" y="35" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.8)">translations.py</text>
+    <text x="70" y="50" text-anchor="middle" class="tiny-text" fill="rgba(0,0,0,0.6)">动态语言切换</text>
   </g>
 
   <!-- 数据存储层 -->
