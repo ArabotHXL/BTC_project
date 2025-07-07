@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="900" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; fill: #2c3e50; }
+      .subtitle { font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; fill: #34495e; }
+      .text { font-family: Arial, sans-serif; font-size: 12px; fill: #2c3e50; }
+      .small-text { font-family: Arial, sans-serif; font-size: 10px; fill: #7f8c8d; }
+      .layer-box { fill: #ecf0f1; stroke: #bdc3c7; stroke-width: 2; rx: 10; }
+      .module-box { fill: #3498db; stroke: #2980b9; stroke-width: 2; rx: 8; }
+      .api-box { fill: #e74c3c; stroke: #c0392b; stroke-width: 2; rx: 8; }
+      .db-box { fill: #27ae60; stroke: #229954; stroke-width: 2; rx: 8; }
+      .service-box { fill: #f39c12; stroke: #e67e22; stroke-width: 2; rx: 8; }
+      .auth-box { fill: #9b59b6; stroke: #8e44ad; stroke-width: 2; rx: 8; }
+      .white-text { fill: white; font-weight: bold; }
+      .connector { stroke: #34495e; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .data-flow { stroke: #e67e22; stroke-width: 2; fill: none; stroke-dasharray: 5,5; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#34495e" />
+    </marker>
+  </defs>
+
+  <!-- 标题 -->
+  <text x="600" y="30" text-anchor="middle" class="title">Bitcoin挖矿计算器系统架构图</text>
+  <text x="600" y="55" text-anchor="middle" class="subtitle">Bitcoin Mining Calculator System Architecture</text>
+
+  <!-- 用户层 -->
+  <rect x="50" y="80" width="1100" height="80" class="layer-box"/>
+  <text x="60" y="100" class="subtitle">用户层 (User Layer)</text>
+  
+  <!-- 用户角色 -->
+  <rect x="80" y="110" width="120" height="40" class="auth-box"/>
+  <text x="140" y="125" text-anchor="middle" class="white-text">Owner</text>
+  <text x="140" y="140" text-anchor="middle" class="white-text">所有者</text>
+  
+  <rect x="220" y="110" width="120" height="40" class="auth-box"/>
+  <text x="280" y="125" text-anchor="middle" class="white-text">Admin</text>
+  <text x="280" y="140" text-anchor="middle" class="white-text">管理员</text>
+  
+  <rect x="360" y="110" width="120" height="40" class="auth-box"/>
+  <text x="420" y="125" text-anchor="middle" class="white-text">Mining Site</text>
+  <text x="420" y="140" text-anchor="middle" class="white-text">矿场主</text>
+  
+  <rect x="500" y="110" width="120" height="40" class="auth-box"/>
+  <text x="560" y="125" text-anchor="middle" class="white-text">Manager</text>
+  <text x="560" y="140" text-anchor="middle" class="white-text">经理</text>
+  
+  <rect x="640" y="110" width="120" height="40" class="auth-box"/>
+  <text x="700" y="125" text-anchor="middle" class="white-text">Guest</text>
+  <text x="700" y="140" text-anchor="middle" class="white-text">访客</text>
+
+  <!-- 前端界面层 -->
+  <rect x="50" y="180" width="1100" height="120" class="layer-box"/>
+  <text x="60" y="200" class="subtitle">前端界面层 (Frontend Layer)</text>
+  
+  <!-- 前端模块 -->
+  <rect x="80" y="220" width="140" height="60" class="module-box"/>
+  <text x="150" y="240" text-anchor="middle" class="white-text">挖矿计算器</text>
+  <text x="150" y="255" text-anchor="middle" class="white-text">Mining Calculator</text>
+  <text x="150" y="270" text-anchor="middle" class="small-text">Jinja2 + Bootstrap</text>
+  
+  <rect x="240" y="220" width="140" height="60" class="module-box"/>
+  <text x="310" y="240" text-anchor="middle" class="white-text">CRM系统</text>
+  <text x="310" y="255" text-anchor="middle" class="white-text">CRM System</text>
+  <text x="310" y="270" text-anchor="middle" class="small-text">客户关系管理</text>
+  
+  <rect x="400" y="220" width="140" height="60" class="module-box"/>
+  <text x="470" y="240" text-anchor="middle" class="white-text">数据分析</text>
+  <text x="470" y="255" text-anchor="middle" class="white-text">Analytics</text>
+  <text x="470" y="270" text-anchor="middle" class="small-text">Chart.js可视化</text>
+  
+  <rect x="560" y="220" width="140" height="60" class="module-box"/>
+  <text x="630" y="240" text-anchor="middle" class="white-text">网络分析</text>
+  <text x="630" y="255" text-anchor="middle" class="white-text">Network Analysis</text>
+  <text x="630" y="270" text-anchor="middle" class="small-text">历史数据趋势</text>
+  
+  <rect x="720" y="220" width="140" height="60" class="module-box"/>
+  <text x="790" y="240" text-anchor="middle" class="white-text">算法测试</text>
+  <text x="790" y="255" text-anchor="middle" class="white-text">Algorithm Test</text>
+  <text x="790" y="270" text-anchor="middle" class="small-text">双算法验证</text>
+  
+  <rect x="880" y="220" width="140" height="60" class="module-box"/>
+  <text x="950" y="240" text-anchor="middle" class="white-text">多语言支持</text>
+  <text x="950" y="255" text-anchor="middle" class="white-text">i18n Support</text>
+  <text x="950" y="270" text-anchor="middle" class="small-text">中英文切换</text>
+
+  <!-- Flask应用层 -->
+  <rect x="50" y="320" width="1100" height="160" class="layer-box"/>
+  <text x="60" y="340" class="subtitle">Flask应用层 (Application Layer)</text>
+  
+  <!-- 认证系统 -->
+  <rect x="80" y="360" width="130" height="50" class="auth-box"/>
+  <text x="145" y="380" text-anchor="middle" class="white-text">认证系统</text>
+  <text x="145" y="395" text-anchor="middle" class="white-text">auth.py</text>
+  
+  <!-- 核心模块 -->
+  <rect x="230" y="360" width="130" height="50" class="service-box"/>
+  <text x="295" y="380" text-anchor="middle" class="white-text">挖矿引擎</text>
+  <text x="295" y="395" text-anchor="middle" class="white-text">mining_calculator.py</text>
+  
+  <rect x="380" y="360" width="130" height="50" class="service-box"/>
+  <text x="445" y="380" text-anchor="middle" class="white-text">CRM路由</text>
+  <text x="445" y="395" text-anchor="middle" class="white-text">crm_routes.py</text>
+  
+  <rect x="530" y="360" width="130" height="50" class="service-box"/>
+  <text x="595" y="380" text-anchor="middle" class="white-text">分析引擎</text>
+  <text x="595" y="395" text-anchor="middle" class="white-text">analytics_engine.py</text>
+  
+  <rect x="680" y="360" width="130" height="50" class="service-box"/>
+  <text x="745" y="380" text-anchor="middle" class="white-text">数据服务</text>
+  <text x="745" y="395" text-anchor="middle" class="white-text">network_data_service.py</text>
+  
+  <rect x="830" y="360" width="130" height="50" class="service-box"/>
+  <text x="895" y="380" text-anchor="middle" class="white-text">翻译系统</text>
+  <text x="895" y="395" text-anchor="middle" class="white-text">translations.py</text>
+  
+  <!-- 主应用控制器 -->
+  <rect x="380" y="420" width="280" height="40" class="module-box"/>
+  <text x="520" y="440" text-anchor="middle" class="white-text">主应用控制器 (app.py)</text>
+  <text x="520" y="455" text-anchor="middle" class="white-text">路由管理 + 业务逻辑</text>
+
+  <!-- 数据库层 -->
+  <rect x="50" y="500" width="550" height="120" class="layer-box"/>
+  <text x="60" y="520" class="subtitle">数据库层 (Database Layer - PostgreSQL)</text>
+  
+  <rect x="80" y="540" width="100" height="60" class="db-box"/>
+  <text x="130" y="560" text-anchor="middle" class="white-text">用户表</text>
+  <text x="130" y="575" text-anchor="middle" class="white-text">UserAccess</text>
+  <text x="130" y="590" text-anchor="middle" class="small-text">权限管理</text>
+  
+  <rect x="200" y="540" width="100" height="60" class="db-box"/>
+  <text x="250" y="560" text-anchor="middle" class="white-text">客户表</text>
+  <text x="250" y="575" text-anchor="middle" class="white-text">Customer</text>
+  <text x="250" y="590" text-anchor="middle" class="small-text">CRM核心</text>
+  
+  <rect x="320" y="540" width="100" height="60" class="db-box"/>
+  <text x="370" y="560" text-anchor="middle" class="white-text">市场数据</text>
+  <text x="370" y="575" text-anchor="middle" class="white-text">MarketAnalytics</text>
+  <text x="370" y="590" text-anchor="middle" class="small-text">实时数据</text>
+  
+  <rect x="440" y="540" width="100" height="60" class="db-box"/>
+  <text x="490" y="560" text-anchor="middle" class="white-text">网络快照</text>
+  <text x="490" y="575" text-anchor="middle" class="white-text">NetworkSnapshot</text>
+  <text x="490" y="590" text-anchor="middle" class="small-text">历史记录</text>
+
+  <!-- 外部API层 -->
+  <rect x="620" y="500" width="530" height="120" class="layer-box"/>
+  <text x="630" y="520" class="subtitle">外部API层 (External APIs)</text>
+  
+  <rect x="650" y="540" width="120" height="60" class="api-box"/>
+  <text x="710" y="560" text-anchor="middle" class="white-text">CoinWarz API</text>
+  <text x="710" y="575" text-anchor="middle" class="white-text">挖矿数据</text>
+  <text x="710" y="590" text-anchor="middle" class="small-text">主要数据源</text>
+  
+  <rect x="790" y="540" width="120" height="60" class="api-box"/>
+  <text x="850" y="560" text-anchor="middle" class="white-text">CoinGecko API</text>
+  <text x="850" y="575" text-anchor="middle" class="white-text">价格数据</text>
+  <text x="850" y="590" text-anchor="middle" class="small-text">备用数据源</text>
+  
+  <rect x="930" y="540" width="120" height="60" class="api-box"/>
+  <text x="990" y="560" text-anchor="middle" class="white-text">Blockchain.info</text>
+  <text x="990" y="575" text-anchor="middle" class="white-text">网络统计</text>
+  <text x="990" y="590" text-anchor="middle" class="small-text">难度算力</text>
+
+  <!-- 基础设施层 -->
+  <rect x="50" y="640" width="1100" height="80" class="layer-box"/>
+  <text x="60" y="660" class="subtitle">基础设施层 (Infrastructure Layer)</text>
+  
+  <rect x="150" y="680" width="150" height="30" class="service-box"/>
+  <text x="225" y="700" text-anchor="middle" class="white-text">Gunicorn WSGI服务器</text>
+  
+  <rect x="350" y="680" width="150" height="30" class="service-box"/>
+  <text x="425" y="700" text-anchor="middle" class="white-text">SQLAlchemy ORM</text>
+  
+  <rect x="550" y="680" width="150" height="30" class="service-box"/>
+  <text x="625" y="700" text-anchor="middle" class="white-text">统一数据管道</text>
+  
+  <rect x="750" y="680" width="150" height="30" class="service-box"/>
+  <text x="825" y="700" text-anchor="middle" class="white-text">定时任务调度</text>
+
+  <!-- 数据流连接线 -->
+  <!-- 用户到前端 -->
+  <line x1="420" y1="160" x2="470" y2="220" class="connector"/>
+  
+  <!-- 前端到Flask -->
+  <line x1="470" y1="280" x2="520" y2="360" class="connector"/>
+  
+  <!-- Flask到数据库 -->
+  <line x1="460" y1="460" x2="325" y2="540" class="connector"/>
+  
+  <!-- Flask到外部API -->
+  <line x1="580" y1="460" x2="780" y2="540" class="connector"/>
+
+  <!-- 数据流标识 -->
+  <text x="100" y="850" class="text">数据流说明:</text>
+  <line x1="100" y1="860" x2="150" y2="860" class="connector"/>
+  <text x="160" y="865" class="small-text">系统调用</text>
+  
+  <line x1="250" y1="860" x2="300" y2="860" class="data-flow"/>
+  <text x="310" y="865" class="small-text">数据流</text>
+
+  <text x="400" y="850" class="text">权限层级: Owner > Admin > Mining_site/Manager > Guest</text>
+  <text x="400" y="870" class="small-text">每个角色拥有不同的模块访问权限</text>
+
+</svg>
