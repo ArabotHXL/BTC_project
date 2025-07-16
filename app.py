@@ -1485,11 +1485,17 @@ def get_profit_chart_data():
                         logging.warning(f"Blocked NaN/Infinity value after conversion: {client_electricity_cost}")
                         client_electricity_cost = 0
             else:
-                client_electricity_cost = float(client_electricity_cost_raw)
-                # Additional check for NaN/Infinity after conversion
-                if not (client_electricity_cost == client_electricity_cost) or abs(client_electricity_cost) == float('inf'):
-                    logging.warning(f"Blocked NaN/Infinity value after conversion: {client_electricity_cost}")
+                # Apply same NaN protection for non-string inputs
+                client_electricity_cost_str = str(client_electricity_cost_raw).lower()
+                if 'nan' in client_electricity_cost_str or 'inf' in client_electricity_cost_str:
+                    logging.warning(f"Blocked NaN/Infinity injection attempt in non-string input: {client_electricity_cost_raw}")
                     client_electricity_cost = 0
+                else:
+                    client_electricity_cost = float(client_electricity_cost_raw)
+                    # Additional check for NaN/Infinity after conversion
+                    if not (client_electricity_cost == client_electricity_cost) or abs(client_electricity_cost) == float('inf'):
+                        logging.warning(f"Blocked NaN/Infinity value after conversion: {client_electricity_cost}")
+                        client_electricity_cost = 0
         except (ValueError, TypeError) as e:
             logging.error(f"Error parsing client electricity cost: {request.form.get('client_electricity_cost')} - {str(e)}")
             client_electricity_cost = 0
