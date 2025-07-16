@@ -66,6 +66,39 @@ app = Flask(__name__)
 # 设置安全的会话密钥
 app.secret_key = os.environ.get("SESSION_SECRET", secrets.token_hex(32))
 
+# Health check route for deployment - no authentication required
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Simple health check endpoint for deployment monitoring"""
+    try:
+        # Basic health check - verify database connection
+        from db import db
+        from sqlalchemy import text
+        db.session.execute(text('SELECT 1'))
+        
+        return jsonify({
+            "status": "healthy",
+            "timestamp": datetime.utcnow().isoformat(),
+            "service": "btc_mining_calculator",
+            "database": "connected"
+        }), 200
+    except Exception as e:
+        logging.error(f"Health check failed: {e}")
+        return jsonify({
+            "status": "unhealthy",
+            "timestamp": datetime.utcnow().isoformat(),
+            "service": "btc_mining_calculator",
+            "error": str(e)
+        }), 500
+
+# Simple status endpoint without authentication for load balancer
+@app.route('/status', methods=['GET'])
+def status_check():
+    """Basic status endpoint for load balancer health checks"""
+    return jsonify({"status": "ok"}), 200
+
+
+
 # 添加自定义过滤器
 @app.template_filter('nl2br')
 def nl2br_filter(s):
@@ -323,7 +356,18 @@ def logout():
 @login_required
 def index():
     """渲染BTC挖矿计算器主页"""
-    return render_template('index.html')
+    try:
+        # 验证关键环境变量
+        if not os.environ.get("DATABASE_URL"):
+            logging.error("DATABASE_URL environment variable not set")
+        
+        return render_template('index.html')
+    except Exception as e:
+        logging.error(f"Index route error: {e}")
+        # 对于健康检查，返回简单状态而不是错误页面
+        if request.headers.get('User-Agent', '').startswith('curl') or 'health' in request.args:
+            return jsonify({"status": "error", "message": str(e)}), 500
+        return render_template('error.html', error=str(e)), 500
 
 @app.route('/admin/login_records')
 @app.route('/login-records')

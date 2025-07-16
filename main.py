@@ -1,27 +1,57 @@
 import os
 import logging
+import sys
 
 # 配置日志
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)  # 降低日志级别提升启动速度
 
-from app import app
-from db import init_db
+# 优化启动性能 - 延迟导入重型依赖
+def create_app():
+    """Factory function to create and configure the Flask app"""
+    # 验证关键环境变量
+    required_env_vars = ["DATABASE_URL", "SESSION_SECRET"]
+    missing_vars = [var for var in required_env_vars if not os.environ.get(var)]
+    
+    if missing_vars:
+        logging.warning(f"Missing environment variables: {missing_vars}")
+        # 设置默认值以避免应用崩溃
+        if not os.environ.get("SESSION_SECRET"):
+            os.environ["SESSION_SECRET"] = "bitcoin_mining_calculator_secret"
+    
+    from app import app
+    from db import init_db
+    
+    # 配置应用密钥
+    app.secret_key = os.environ.get("SESSION_SECRET", "bitcoin_mining_calculator_secret")
+    
+    # 初始化数据库
+    try:
+        init_db(app)
+        logging.info("Database initialized successfully")
+    except Exception as e:
+        logging.error(f"Database initialization failed: {e}")
+        # 不要因为数据库问题让应用崩溃
+        pass
+    
+    # 启动统一数据管道 - 在后台线程中进行
+    def start_background_services():
+        try:
+            from unified_data_pipeline import start_unified_pipeline
+            start_unified_pipeline()
+            logging.info("Background services started successfully")
+        except Exception as e:
+            logging.error(f"Background services failed to start: {e}")
+    
+    # 在单独线程中启动后台服务，避免阻塞应用启动
+    import threading
+    background_thread = threading.Thread(target=start_background_services, daemon=True)
+    background_thread.start()
+    
+    return app
 
-# 配置应用密钥
-app.secret_key = os.environ.get("SESSION_SECRET", "bitcoin_mining_calculator_secret")
+# 创建应用实例
+app = create_app()
 
-# 初始化数据库
-init_db(app)
-
-# 启动统一数据管道
-try:
-    from unified_data_pipeline import start_unified_pipeline
-    start_unified_pipeline()
-    logging.info("统一数据管道已启动")
-except Exception as e:
-    logging.error(f"启动统一数据管道失败: {e}")
-
-# For gunicorn compatibility, the app is exposed as 'app'
-# If running directly with python main.py, uncomment the lines below:
-# if __name__ == "__main__":
-#     app.run(host='0.0.0.0', port=5000, debug=True)
+# 确保在直接运行时可以启动
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=False)
