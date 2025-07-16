@@ -734,9 +734,17 @@ def calculate():
         
         if hashrate_source == 'manual':
             try:
-                manual_hashrate = float(request.form.get('manual_hashrate', 800.0))
+                manual_hashrate_raw = request.form.get('manual_hashrate', 800.0)
+                # Guard against NaN injection
+                if isinstance(manual_hashrate_raw, str) and manual_hashrate_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
+                    raise ValueError(f"Invalid numeric value: {manual_hashrate_raw}")
+                manual_hashrate = float(manual_hashrate_raw)
+                # Additional check for NaN/inf after conversion
+                if not (manual_hashrate == manual_hashrate and abs(manual_hashrate) != float('inf')):
+                    raise ValueError("NaN or infinite value detected")
                 logging.info(f"使用手动输入的全网算力: {manual_hashrate} EH/s")
-            except ValueError:
+            except ValueError as e:
+                logging.error(f"Invalid manual hashrate value: {request.form.get('manual_hashrate')} - {str(e)}")
                 logging.warning("手动全网算力输入无效，回退到API获取")
                 hashrate_source = 'api'
                 manual_hashrate = None
