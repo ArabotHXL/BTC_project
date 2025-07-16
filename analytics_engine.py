@@ -566,26 +566,37 @@ class TechnicalAnalyzer:
     def __init__(self, db_manager: DatabaseManager):
         self.db_manager = db_manager
     
-    def get_recent_prices(self, days: int = 50) -> pd.DataFrame:
-        """获取最近价格数据"""
+    def get_recent_prices(self, days: int = 30) -> pd.DataFrame:
+        """获取最近价格数据 - 优化内存使用"""
         conn = self.db_manager.connect()
         if not conn:
             return pd.DataFrame()
         
         try:
+            # 减少数据量以避免内存问题
             query = """
                 SELECT recorded_at, btc_price 
                 FROM market_analytics 
-                WHERE recorded_at >= %s 
-                ORDER BY recorded_at ASC
+                WHERE recorded_at >= %s AND btc_price > 0
+                ORDER BY recorded_at DESC
+                LIMIT 200
             """
             start_date = datetime.now() - timedelta(days=days)
             
-            df = pd.read_sql_query(query, conn, params=[start_date])
-            df['recorded_at'] = pd.to_datetime(df['recorded_at'])
-            df.set_index('recorded_at', inplace=True)
+            # 使用cursor避免pandas警告
+            cursor = conn.cursor()
+            cursor.execute(query, [start_date])
+            results = cursor.fetchall()
+            cursor.close()
             
-            return df
+            if results:
+                df = pd.DataFrame(results, columns=['recorded_at', 'btc_price'])
+                df['recorded_at'] = pd.to_datetime(df['recorded_at'])
+                df.set_index('recorded_at', inplace=True)
+                df = df.sort_index()
+                return df
+            else:
+                return pd.DataFrame()
             
         except Exception as e:
             logger.error(f"获取价格数据失败: {e}")
@@ -594,8 +605,8 @@ class TechnicalAnalyzer:
             conn.close()
     
     def calculate_technical_indicators(self) -> Optional[Dict]:
-        """计算技术指标"""
-        df = self.get_recent_prices(50)
+        """计算技术指标 - 内存优化版本"""
+        df = self.get_recent_prices(30)  # 减少数据量
         if df.empty:
             logger.warning("没有足够的价格数据进行技术分析")
             return None

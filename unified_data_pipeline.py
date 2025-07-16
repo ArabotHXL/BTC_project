@@ -45,13 +45,13 @@ class UnifiedDataPipeline:
         
     def _setup_scheduled_tasks(self):
         """设置定时任务"""
-        # 每30分钟收集网络数据（00分钟和30分钟）
+        # 每30分钟收集网络数据（00分钟和30分钟）- 内存优化
         schedule.every().hour.at(":00").do(self._collect_network_data)
         schedule.every().hour.at(":30").do(self._collect_network_data)
         
-        # 每30分钟更新analytics数据（00分钟和30分钟）
-        schedule.every().hour.at(":00").do(self._collect_analytics_data)
-        schedule.every().hour.at(":30").do(self._collect_analytics_data)
+        # 每30分钟更新analytics数据（00分钟和30分钟）- 错开5分钟避免并发
+        schedule.every().hour.at(":05").do(self._collect_analytics_data)
+        schedule.every().hour.at(":35").do(self._collect_analytics_data)
         
         # 每天生成分析报告
         schedule.every().day.at("00:00").do(self._generate_analytics_report)
