@@ -641,7 +641,13 @@ def calculate():
             
         try:
             curtailment_str = request.form.get('curtailment', '0')
+            # Guard against NaN injection
+            if isinstance(curtailment_str, str) and curtailment_str.lower() in ['nan', 'inf', '-inf', '+inf']:
+                raise ValueError(f"Invalid numeric value: {curtailment_str}")
             curtailment = float(curtailment_str)
+            # Additional check for NaN/inf after conversion
+            if not (curtailment == curtailment and abs(curtailment) != float('inf')):
+                raise ValueError("NaN or infinite value detected")
             logging.info(f"解析限电率: 原始值='{curtailment_str}'，转换后={curtailment}%")
         except ValueError as e:
             logging.error(f"Invalid curtailment value: {request.form.get('curtailment')} - {str(e)}")
@@ -656,20 +662,41 @@ def calculate():
             logging.info(f"电力削减关机策略: {shutdown_strategy}")
             
         try:
-            maintenance_fee = float(request.form.get('maintenance_fee', 0))
+            maintenance_fee_raw = request.form.get('maintenance_fee', 0)
+            # Guard against NaN injection
+            if isinstance(maintenance_fee_raw, str) and maintenance_fee_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
+                raise ValueError(f"Invalid numeric value: {maintenance_fee_raw}")
+            maintenance_fee = float(maintenance_fee_raw)
+            # Additional check for NaN/inf after conversion
+            if not (maintenance_fee == maintenance_fee and abs(maintenance_fee) != float('inf')):
+                raise ValueError("NaN or infinite value detected")
         except ValueError as e:
             logging.error(f"Invalid maintenance fee value: {request.form.get('maintenance_fee')} - {str(e)}")
             maintenance_fee = 0
             
         # 获取投资金额参数
         try:
-            host_investment = float(request.form.get('host_investment', 0))
+            host_investment_raw = request.form.get('host_investment', 0)
+            # Guard against NaN injection
+            if isinstance(host_investment_raw, str) and host_investment_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
+                raise ValueError(f"Invalid numeric value: {host_investment_raw}")
+            host_investment = float(host_investment_raw)
+            # Additional check for NaN/inf after conversion
+            if not (host_investment == host_investment and abs(host_investment) != float('inf')):
+                raise ValueError("NaN or infinite value detected")
         except ValueError as e:
             logging.error(f"Invalid host investment value: {request.form.get('host_investment')} - {str(e)}")
             host_investment = 0
             
         try:
-            client_investment = float(request.form.get('client_investment', 0))
+            client_investment_raw = request.form.get('client_investment', 0)
+            # Guard against NaN injection
+            if isinstance(client_investment_raw, str) and client_investment_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
+                raise ValueError(f"Invalid numeric value: {client_investment_raw}")
+            client_investment = float(client_investment_raw)
+            # Additional check for NaN/inf after conversion
+            if not (client_investment == client_investment and abs(client_investment) != float('inf')):
+                raise ValueError("NaN or infinite value detected")
         except ValueError as e:
             logging.error(f"Invalid client investment value: {request.form.get('client_investment')} - {str(e)}")
             client_investment = 0
