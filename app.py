@@ -1469,9 +1469,27 @@ def get_profit_chart_data():
             logging.error(f"Error parsing miner count: {request.form.get('miner_count')} - {str(e)}")
             miner_count = 1
             
-        # Parse client electricity cost with error handling
+        # Parse client electricity cost with error handling and NaN protection
         try:
-            client_electricity_cost = float(request.form.get('client_electricity_cost', 0))
+            client_electricity_cost_raw = request.form.get('client_electricity_cost', 0)
+            # Guard against NaN injection - check for all capitalizations of 'nan' and 'inf'
+            if isinstance(client_electricity_cost_raw, str):
+                client_electricity_cost_raw_lower = client_electricity_cost_raw.lower()
+                if 'nan' in client_electricity_cost_raw_lower or 'inf' in client_electricity_cost_raw_lower:
+                    logging.warning(f"Blocked NaN/Infinity injection attempt: {client_electricity_cost_raw}")
+                    client_electricity_cost = 0
+                else:
+                    client_electricity_cost = float(client_electricity_cost_raw)
+                    # Additional check for NaN/Infinity after conversion
+                    if not (client_electricity_cost == client_electricity_cost) or abs(client_electricity_cost) == float('inf'):
+                        logging.warning(f"Blocked NaN/Infinity value after conversion: {client_electricity_cost}")
+                        client_electricity_cost = 0
+            else:
+                client_electricity_cost = float(client_electricity_cost_raw)
+                # Additional check for NaN/Infinity after conversion
+                if not (client_electricity_cost == client_electricity_cost) or abs(client_electricity_cost) == float('inf'):
+                    logging.warning(f"Blocked NaN/Infinity value after conversion: {client_electricity_cost}")
+                    client_electricity_cost = 0
         except (ValueError, TypeError) as e:
             logging.error(f"Error parsing client electricity cost: {request.form.get('client_electricity_cost')} - {str(e)}")
             client_electricity_cost = 0
