@@ -265,5 +265,5 @@ function showLoading(element) {
 }
 
 function hideLoading(element, originalText) {
-    element.innerHTML = originalText;
+    element.textContent = originalText;
 }
