@@ -153,6 +153,7 @@ Scheduled Collection → Multi-API Data Fetch → Data Validation → Database S
 - **Detailed Architecture Documentation**: `SYSTEM_ARCHITECTURE.md` - Comprehensive technical documentation covering all layers
 
 ## Changelog  
+- July 16, 2025: **CRITICAL SECURITY VULNERABILITY FIXED #4** - 修复app.py第1968行及5个额外位置NaN注入安全漏洞: 解决电力削减计算器(curtailment_percentage,electricity_cost,btc_price,network_difficulty,block_reward,mining_capacity)用户输入直接进入float()类型转换的安全问题，实现统一safe_float_conversion()函数防护包含预转换字符串检测、后转换NaN验证、类型异常处理，消除财务计算中NaN传播风险，防止挖矿盈利分析腐败和undefined行为，加强CRM客户记录数据完整性，系统现在完全防护恶意数值注入攻击，要求部署前全面测试挖矿计算器功能
 - July 16, 2025: **CRITICAL SECURITY VULNERABILITY FIXED #3** - 修复app.py第1474行NaN注入安全漏洞: 解决client_electricity_cost用户输入直接进入float()类型转换的安全问题，实现与其他变量一致的安全防护机制(client_electricity_cost_raw字符串检测、NaN/Infinity验证、后转换检测)，消除挖矿计算引擎中NaN传播风险，防止财务盈利计算腐败和undefined行为，确保投资决策计算的数值完整性，系统现在全面防护恶意数值注入攻击
 - July 16, 2025: **CRITICAL SECURITY VULNERABILITY FIXED #2** - 修复app.py第737行NaN注入安全漏洞: 解决manual_hashrate用户输入直接进入float()类型转换的安全问题，实现与其他变量一致的安全防护机制(manual_hashrate_raw字符串检测、NaN/Infinity验证、后转换检测)，消除挖矿计算引擎中NaN传播风险，防止财务盈利计算腐败和undefined行为，确保投资决策计算的数值完整性，系统现在全面防护恶意数值注入攻击
 - July 16, 2025: **CRITICAL SECURITY VULNERABILITY FIXED** - 修复NaN注入安全漏洞: 解决mining_broker_routes.py中用户输入直接进入float()类型转换的安全问题(lines 241, 150, 164, 165)，实现safe_float()函数防护包含NaN/Infinity字符串检测、数值验证、类型异常处理，消除财务计算中NaN传播风险(佣金计算commission_amount = client_monthly_profit * commission_rate)，防止数据库腐败和业务逻辑失败，加强仅限owner角色访问的矿场中介CRM系统安全性，系统现在可安全处理恶意数值输入

@@ -35,6 +35,25 @@ from mining_broker_routes import init_broker_routes
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
+def safe_float_conversion(value, default=0):
+    """
+    安全的float转换函数，防护NaN注入攻击
+    Safe float conversion function to prevent NaN injection attacks
+    """
+    try:
+        value_str = str(value)
+        # 防护NaN注入攻击
+        if value_str.lower() in ['nan', 'inf', '-inf', 'infinity', '-infinity']:
+            return default
+        
+        result = float(value_str)
+        # 后转换验证
+        if not (result == result):  # NaN检测
+            return default
+        return result
+    except (ValueError, TypeError):
+        return default
+
 # 默认网络参数
 DEFAULT_HASHRATE_EH = 900  # 默认哈希率，单位: EH/s
 DEFAULT_BTC_PRICE = 80000  # 默认比特币价格，单位: USD
@@ -1717,7 +1736,7 @@ def add_mine_customer():
                 email=email,
                 created_by_id=user_id,  # 设置创建者ID
                 customer_type='个人' if not company else '企业',
-                mining_capacity=float(request.form.get('mining_capacity', 0)) if request.form.get('mining_capacity') else None
+                mining_capacity=safe_float_conversion(request.form.get('mining_capacity', 0)) if request.form.get('mining_capacity') else None
             )
             db.session.add(customer)
             db.session.commit()
@@ -1965,39 +1984,79 @@ def calculate_curtailment():
             
         # 从表单获取基本数据
         try:
-            curtailment_percentage = float(request.form.get('curtailment_percentage', 0))
-            if curtailment_percentage < 0:
+            curtailment_percentage_raw = str(request.form.get('curtailment_percentage', 0))
+            # 防护NaN注入攻击
+            if curtailment_percentage_raw.lower() in ['nan', 'inf', '-inf', 'infinity', '-infinity']:
                 curtailment_percentage = 0
-            elif curtailment_percentage > 100:
-                curtailment_percentage = 100
+            else:
+                curtailment_percentage = float(curtailment_percentage_raw)
+                # 后转换验证
+                if not (curtailment_percentage == curtailment_percentage):  # NaN检测
+                    curtailment_percentage = 0
+                elif curtailment_percentage < 0:
+                    curtailment_percentage = 0
+                elif curtailment_percentage > 100:
+                    curtailment_percentage = 100
         except:
             curtailment_percentage = 0
             
         try:
-            electricity_cost = float(request.form.get('electricity_cost', 0.05))
-            if electricity_cost < 0:
-                electricity_cost = 0
+            electricity_cost_raw = str(request.form.get('electricity_cost', 0.05))
+            # 防护NaN注入攻击
+            if electricity_cost_raw.lower() in ['nan', 'inf', '-inf', 'infinity', '-infinity']:
+                electricity_cost = 0.05
+            else:
+                electricity_cost = float(electricity_cost_raw)
+                # 后转换验证
+                if not (electricity_cost == electricity_cost):  # NaN检测
+                    electricity_cost = 0.05
+                elif electricity_cost < 0:
+                    electricity_cost = 0
         except:
             electricity_cost = 0.05
             
         try:
-            btc_price = float(request.form.get('btc_price', 80000))
-            if btc_price < 0:
+            btc_price_raw = str(request.form.get('btc_price', 80000))
+            # 防护NaN注入攻击
+            if btc_price_raw.lower() in ['nan', 'inf', '-inf', 'infinity', '-infinity']:
                 btc_price = 80000
+            else:
+                btc_price = float(btc_price_raw)
+                # 后转换验证
+                if not (btc_price == btc_price):  # NaN检测
+                    btc_price = 80000
+                elif btc_price < 0:
+                    btc_price = 80000
         except:
             btc_price = 80000
             
         try:
-            network_difficulty = float(request.form.get('network_difficulty', 120))
-            if network_difficulty <= 0:
+            network_difficulty_raw = str(request.form.get('network_difficulty', 120))
+            # 防护NaN注入攻击
+            if network_difficulty_raw.lower() in ['nan', 'inf', '-inf', 'infinity', '-infinity']:
                 network_difficulty = 120
+            else:
+                network_difficulty = float(network_difficulty_raw)
+                # 后转换验证
+                if not (network_difficulty == network_difficulty):  # NaN检测
+                    network_difficulty = 120
+                elif network_difficulty <= 0:
+                    network_difficulty = 120
         except:
             network_difficulty = 120
             
         try:
-            block_reward = float(request.form.get('block_reward', 3.125))
-            if block_reward <= 0:
+            block_reward_raw = str(request.form.get('block_reward', 3.125))
+            # 防护NaN注入攻击
+            if block_reward_raw.lower() in ['nan', 'inf', '-inf', 'infinity', '-infinity']:
                 block_reward = 3.125
+            else:
+                block_reward = float(block_reward_raw)
+                # 后转换验证
+                if not (block_reward == block_reward):  # NaN检测
+                    block_reward = 3.125
+                elif block_reward <= 0:
+                    block_reward = 3.125
         except:
             block_reward = 3.125
             
