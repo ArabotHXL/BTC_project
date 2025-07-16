@@ -1386,8 +1386,19 @@ document.addEventListener('DOMContentLoaded', function() {
     function showError(message) {
         var errorDiv = document.createElement('div');
         errorDiv.className = 'alert alert-danger alert-dismissible fade show';
-        errorDiv.innerHTML = message + 
-            '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+        
+        // 安全地设置错误消息文本，防止XSS攻击
+        var messageSpan = document.createElement('span');
+        messageSpan.textContent = message;
+        errorDiv.appendChild(messageSpan);
+        
+        // 添加关闭按钮
+        var closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = 'btn-close';
+        closeButton.setAttribute('data-bs-dismiss', 'alert');
+        closeButton.setAttribute('aria-label', 'Close');
+        errorDiv.appendChild(closeButton);
         
         var container = document.querySelector('.container');
         if (container) {
