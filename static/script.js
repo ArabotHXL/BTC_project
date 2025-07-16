@@ -151,30 +151,111 @@ class BitcoinMiningCalculator {
         const resultsContainer = document.querySelector('#calculation-results');
         if (!resultsContainer) return;
 
-        const html = `
-            <div class="card">
-                <h3>计算结果</h3>
-                <div class="row">
-                    <div class="col-md-6">
-                        <h4>收益分析</h4>
-                        <p><strong>日产BTC:</strong> ${result.daily_btc_output?.toFixed(6) || 'N/A'}</p>
-                        <p><strong>日收益:</strong> $${result.daily_profit?.toFixed(2) || 'N/A'}</p>
-                        <p><strong>月收益:</strong> $${result.monthly_profit?.toFixed(2) || 'N/A'}</p>
-                        <p><strong>年收益:</strong> $${result.yearly_profit?.toFixed(2) || 'N/A'}</p>
-                    </div>
-                    <div class="col-md-6">
-                        <h4>成本分析</h4>
-                        <p><strong>日电费:</strong> $${result.daily_electricity_cost?.toFixed(2) || 'N/A'}</p>
-                        <p><strong>月电费:</strong> $${result.monthly_electricity_cost?.toFixed(2) || 'N/A'}</p>
-                        <p><strong>年电费:</strong> $${result.yearly_electricity_cost?.toFixed(2) || 'N/A'}</p>
-                    </div>
-                </div>
-                ${result.roi_analysis ? this.generateROIAnalysis(result.roi_analysis) : ''}
-            </div>
-        `;
-
-        resultsContainer.innerHTML = html;
+        // Safely create elements to prevent XSS
+        resultsContainer.innerHTML = ''; // Clear previous results
+        
+        const cardDiv = document.createElement('div');
+        cardDiv.className = 'card';
+        
+        const title = document.createElement('h3');
+        title.textContent = '计算结果';
+        cardDiv.appendChild(title);
+        
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'row';
+        
+        // Revenue analysis column
+        const revenueCol = document.createElement('div');
+        revenueCol.className = 'col-md-6';
+        const revenueTitle = document.createElement('h4');
+        revenueTitle.textContent = '收益分析';
+        revenueCol.appendChild(revenueTitle);
+        
+        // Safely add revenue data
+        const revenueData = [
+            ['日产BTC:', result.daily_btc_output?.toFixed(6) || 'N/A'],
+            ['日收益:', '$' + (result.daily_profit?.toFixed(2) || 'N/A')],
+            ['月收益:', '$' + (result.monthly_profit?.toFixed(2) || 'N/A')],
+            ['年收益:', '$' + (result.yearly_profit?.toFixed(2) || 'N/A')]
+        ];
+        
+        revenueData.forEach(([label, value]) => {
+            const p = document.createElement('p');
+            const strong = document.createElement('strong');
+            strong.textContent = label;
+            p.appendChild(strong);
+            p.appendChild(document.createTextNode(' ' + value));
+            revenueCol.appendChild(p);
+        });
+        
+        // Cost analysis column
+        const costCol = document.createElement('div');
+        costCol.className = 'col-md-6';
+        const costTitle = document.createElement('h4');
+        costTitle.textContent = '成本分析';
+        costCol.appendChild(costTitle);
+        
+        // Safely add cost data
+        const costData = [
+            ['日电费:', '$' + (result.daily_electricity_cost?.toFixed(2) || 'N/A')],
+            ['月电费:', '$' + (result.monthly_electricity_cost?.toFixed(2) || 'N/A')],
+            ['年电费:', '$' + (result.yearly_electricity_cost?.toFixed(2) || 'N/A')]
+        ];
+        
+        costData.forEach(([label, value]) => {
+            const p = document.createElement('p');
+            const strong = document.createElement('strong');
+            strong.textContent = label;
+            p.appendChild(strong);
+            p.appendChild(document.createTextNode(' ' + value));
+            costCol.appendChild(p);
+        });
+        
+        rowDiv.appendChild(revenueCol);
+        rowDiv.appendChild(costCol);
+        cardDiv.appendChild(rowDiv);
+        
+        // Add ROI analysis if present
+        if (result.roi_analysis) {
+            const roiDiv = this.generateROIAnalysisSafe(result.roi_analysis);
+            cardDiv.appendChild(roiDiv);
+        }
+        
+        resultsContainer.appendChild(cardDiv);
         resultsContainer.style.display = 'block';
+    }
+
+    generateROIAnalysisSafe(roi) {
+        const roiDiv = document.createElement('div');
+        roiDiv.className = 'mt-4';
+        
+        const title = document.createElement('h4');
+        title.textContent = '投资回报分析';
+        roiDiv.appendChild(title);
+        
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'row';
+        
+        const roiData = [
+            ['年化ROI:', (roi.annual_roi?.toFixed(2) || 'N/A') + '%'],
+            ['回本周期:', (roi.payback_months?.toFixed(1) || 'N/A') + ' 个月'],
+            ['盈亏平衡电价:', '$' + (roi.breakeven_electricity?.toFixed(4) || 'N/A') + '/kWh']
+        ];
+        
+        roiData.forEach(([label, value]) => {
+            const colDiv = document.createElement('div');
+            colDiv.className = 'col-md-4';
+            const p = document.createElement('p');
+            const strong = document.createElement('strong');
+            strong.textContent = label;
+            p.appendChild(strong);
+            p.appendChild(document.createTextNode(' ' + value));
+            colDiv.appendChild(p);
+            rowDiv.appendChild(colDiv);
+        });
+        
+        roiDiv.appendChild(rowDiv);
+        return roiDiv;
     }
 
     generateROIAnalysis(roi) {
