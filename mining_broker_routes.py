@@ -146,8 +146,24 @@ def add_commission():
             flash('交易不存在', 'danger')
             return redirect(url_for('broker.commissions'))
         
+        # 安全的数值转换函数
+        def safe_float(value, default=0):
+            """安全地将输入转换为float，防止NaN注入"""
+            if not value:
+                return default
+            try:
+                str_val = str(value).lower().strip()
+                if 'nan' in str_val or 'inf' in str_val:
+                    return default
+                result = float(value)
+                if result != result:  # NaN检查 (NaN != NaN 为True)
+                    return default
+                return result
+            except (ValueError, TypeError):
+                return default
+        
         record_month = request.form.get('record_month')
-        client_monthly_profit = float(request.form.get('client_monthly_profit', 0))
+        client_monthly_profit = safe_float(request.form.get('client_monthly_profit'))
         
         # 计算佣金
         if deal.commission_type == 'percentage':
@@ -161,8 +177,8 @@ def add_commission():
             customer_id=deal.customer_id,
             record_month=record_month,
             client_monthly_profit=client_monthly_profit,
-            client_btc_mined=float(request.form.get('client_btc_mined', 0)),
-            btc_price=float(request.form.get('btc_price', 0)),
+            client_btc_mined=safe_float(request.form.get('client_btc_mined')),
+            btc_price=safe_float(request.form.get('btc_price')),
             commission_type=deal.commission_type,
             commission_rate=deal.commission_rate,
             commission_amount=commission_amount,
@@ -228,17 +244,33 @@ def edit_commission(record_id):
         # 获取修改原因
         change_reason = request.form.get('change_reason', '')
         
+        # 安全的数值转换函数
+        def safe_float(value, default=0):
+            """安全地将输入转换为float，防止NaN注入"""
+            if not value:
+                return default
+            try:
+                str_val = str(value).lower().strip()
+                if 'nan' in str_val or 'inf' in str_val:
+                    return default
+                result = float(value)
+                if result != result:  # NaN检查 (NaN != NaN 为True)
+                    return default
+                return result
+            except (ValueError, TypeError):
+                return default
+        
         # 记录所有字段变更
         old_profit = record.client_monthly_profit
-        new_profit = float(request.form.get('client_monthly_profit', 0))
+        new_profit = safe_float(request.form.get('client_monthly_profit'))
         record_change('client_monthly_profit', old_profit, new_profit, change_reason)
         
         old_btc = record.client_btc_mined
-        new_btc = float(request.form.get('client_btc_mined', 0)) if request.form.get('client_btc_mined') else 0
+        new_btc = safe_float(request.form.get('client_btc_mined')) if request.form.get('client_btc_mined') else 0
         record_change('client_btc_mined', old_btc, new_btc, change_reason)
         
         old_price = record.btc_price
-        new_price = float(request.form.get('btc_price', 0)) if request.form.get('btc_price') else 0
+        new_price = safe_float(request.form.get('btc_price')) if request.form.get('btc_price') else 0
         record_change('btc_price', old_price, new_price, change_reason)
         
         old_notes = record.notes
