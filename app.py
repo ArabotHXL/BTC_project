@@ -142,33 +142,50 @@ def login():
                     elif client_ip.startswith('192.168.') or client_ip.startswith('10.'):
                         location = "中国, 内部网络, 局域网"
                     else:
-                        # 使用IP-API获取地理位置信息
+                        # 使用IP-API获取地理位置信息 - 安全SSRF防护版本
                         # 免费版的ip-api.com，不需要API密钥
-                        # 验证IP地址格式，防止SSRF攻击
                         import re
-                        ip_pattern = re.compile(r'^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$')
-                        ip_match = ip_pattern.match(client_ip)
+                        import ipaddress
                         
-                        if ip_match:
-                            # 确保IP地址的每个部分都是有效的（0-255）
-                            is_valid = True
-                            for i in range(1, 5):
-                                octet = int(ip_match.group(i))
-                                if octet < 0 or octet > 255:
-                                    is_valid = False
-                                    break
+                        try:
+                            # 严格验证IP地址格式和范围，防止SSRF攻击
+                            ip_obj = ipaddress.ip_address(client_ip)
                             
-                            if is_valid:
-                                ip_api_url = f"http://ip-api.com/json/{client_ip}?fields=status,message,country,regionName,city,query"
-                                response = requests.get(ip_api_url, timeout=3)
-                            else:
-                                logging.warning(f"无效的IP地址格式: {client_ip}")
-                                location = "未知位置 (无效IP格式)"
+                            # 检查是否为私有IP或特殊用途IP
+                            if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local or ip_obj.is_multicast or ip_obj.is_reserved:
+                                if ip_obj.is_private:
+                                    if str(ip_obj).startswith('10.'):
+                                        location = "内部网络 (10.x.x.x)"
+                                    elif str(ip_obj).startswith('192.168.'):
+                                        location = "局域网 (192.168.x.x)"
+                                    elif str(ip_obj).startswith('172.'):
+                                        location = "企业网络 (172.x.x.x)"
+                                    else:
+                                        location = "私有网络"
+                                elif ip_obj.is_loopback:
+                                    location = "本地环回地址"
+                                else:
+                                    location = "特殊用途IP地址"
                                 response = None
-                        else:
-                            logging.warning(f"无效的IP地址格式: {client_ip}")
+                                logging.info(f"检测到私有/特殊IP地址: {client_ip}, 跳过外部查询")
+                            else:
+                                # 只对公网IP进行外部查询，并使用安全的URL构造
+                                # 使用URL编码确保安全性
+                                from urllib.parse import quote
+                                safe_ip = quote(str(ip_obj), safe='.')
+                                
+                                # 白名单验证：只允许查询ip-api.com
+                                allowed_host = "ip-api.com"
+                                ip_api_url = f"http://{allowed_host}/json/{safe_ip}?fields=status,message,country,regionName,city,query"
+                                
+                                response = requests.get(ip_api_url, timeout=3)
+                                logging.info(f"对公网IP {client_ip} 进行地理位置查询")
+                        
+                        except (ipaddress.AddressValueError, ValueError) as e:
+                            logging.warning(f"无效的IP地址格式: {client_ip}, 错误: {str(e)}")
                             location = "未知位置 (无效IP格式)"
                             response = None
+                        
                         if response and response.status_code == 200:
                             data = response.json()
                             if data.get('status') == 'success':
