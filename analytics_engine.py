@@ -224,6 +224,12 @@ class DataCollector:
                 }
             return None
                 
+        except requests.exceptions.Timeout:
+            logger.warning("Mempool.space请求超时，跳过数据收集")
+            return None
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"Mempool.space网络请求失败: {e}")
+            return None
         except Exception as e:
             logger.error(f"Mempool.space数据收集失败: {e}")
             return None
@@ -371,6 +377,12 @@ class DataCollector:
                 'source': 'coingecko_simple'
             }
                 
+        except requests.exceptions.Timeout:
+            logger.warning("CoinGecko API请求超时")
+            return None
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"CoinGecko API网络请求失败: {e}")
+            return None
         except Exception as e:
             logger.error(f"CoinGecko简单API数据收集失败: {e}")
             return None
@@ -385,6 +397,12 @@ class DataCollector:
             
             return int(data['data'][0]['value'])
             
+        except requests.exceptions.Timeout:
+            logger.warning("恐惧贪婪指数API请求超时")
+            return None
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"恐惧贪婪指数API网络请求失败: {e}")
+            return None  
         except Exception as e:
             logger.error(f"恐惧贪婪指数收集失败: {e}")
             return None
