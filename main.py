@@ -21,5 +21,7 @@ try:
 except Exception as e:
     logging.error(f"启动统一数据管道失败: {e}")
 
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True)
+# For gunicorn compatibility, the app is exposed as 'app'
+# If running directly with python main.py, uncomment the lines below:
+# if __name__ == "__main__":
+#     app.run(host='0.0.0.0', port=5000, debug=True)
