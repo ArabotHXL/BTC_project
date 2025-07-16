@@ -2219,6 +2219,7 @@ def network_history_main():
     return render_template('network_history.html', user_role=user_role)
 
 @app.route('/analytics')
+@app.route('/analytics_dashboard')
 @login_required
 def analytics_dashboard():
     """数据分析仪表盘 - 仅限拥有者"""
@@ -2303,6 +2304,7 @@ def analytics_dashboard():
 
 @app.route('/analytics/api/market-data')
 @app.route('/api/analytics/market-data')
+@app.route('/analytics/market-data')
 @login_required
 def analytics_market_data():
     """获取分析系统的市场数据"""
@@ -2352,6 +2354,7 @@ def analytics_market_data():
 
 
 @app.route('/api/analytics/latest-report')
+@app.route('/analytics/latest-report')
 @login_required
 def analytics_latest_report():
     """获取最新分析报告"""
@@ -2403,6 +2406,7 @@ def analytics_latest_report():
         return jsonify({'error': f'获取分析报告失败: {str(e)}'}), 500
 
 @app.route('/api/analytics/technical-indicators')
+@app.route('/analytics/technical-indicators')
 @login_required
 def analytics_technical_indicators():
     """获取技术指标"""
