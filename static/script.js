@@ -200,11 +200,14 @@ class BitcoinMiningCalculator {
         const errorContainer = document.querySelector('#error-messages');
         if (!errorContainer) return;
 
-        errorContainer.innerHTML = `
-            <div class="alert alert-danger" role="alert">
-                ${message}
-            </div>
-        `;
+        // Create elements safely to prevent XSS
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger';
+        alertDiv.setAttribute('role', 'alert');
+        alertDiv.textContent = message; // Use textContent instead of innerHTML
+        
+        errorContainer.innerHTML = ''; // Clear previous errors
+        errorContainer.appendChild(alertDiv);
         errorContainer.style.display = 'block';
     }
 
