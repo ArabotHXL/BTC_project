@@ -1235,20 +1235,32 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         });
                     } else {
-                        chartContainer.innerHTML = '<div class="alert alert-warning text-center">无法生成热力图数据。(Could not generate heatmap data.)</div>';
+                        chartContainer.innerHTML = '';  // Clear container first
+                        const warningDiv = document.createElement('div');
+                        warningDiv.className = 'alert alert-warning text-center';
+                        warningDiv.textContent = '无法生成热力图数据。(Could not generate heatmap data.)';
+                        chartContainer.appendChild(warningDiv);
                     }
                 } else {
                     throw new Error('服务器返回状态码: ' + xhr.status);
                 }
             } catch (error) {
                 console.error('生成热力图失败:', error);
-                chartContainer.innerHTML = '<div class="alert alert-danger text-center">生成热力图时出错。(Error generating heatmap.)</div>';
+                chartContainer.innerHTML = '';  // Clear container first
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger text-center';
+                errorDiv.textContent = '生成热力图时出错。(Error generating heatmap.)';
+                chartContainer.appendChild(errorDiv);
             }
         };
         
         xhr.onerror = function() {
             console.error('热力图请求失败');
-            chartContainer.innerHTML = '<div class="alert alert-danger text-center">网络错误，请重试。(Network error, please try again.)</div>';
+            chartContainer.innerHTML = '';  // Clear container first
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger text-center';
+            errorDiv.textContent = '网络错误，请重试。(Network error, please try again.)';
+            chartContainer.appendChild(errorDiv);
         };
         
         xhr.send(params);
@@ -1262,7 +1274,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (submitButton) {
             if (isLoading) {
                 submitButton.disabled = true;
-                submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 计算中... / Calculating...';
+                submitButton.innerHTML = '';  // Clear content first
+                const spinner = document.createElement('span');
+                spinner.className = 'spinner-border spinner-border-sm';
+                spinner.setAttribute('role', 'status');
+                spinner.setAttribute('aria-hidden', 'true');
+                submitButton.appendChild(spinner);
+                submitButton.appendChild(document.createTextNode(' 计算中... / Calculating...'));
             } else {
                 submitButton.disabled = false;
                 submitButton.textContent = 'Calculate Profitability';
@@ -1274,8 +1292,19 @@ document.addEventListener('DOMContentLoaded', function() {
     function showError(message) {
         var errorDiv = document.createElement('div');
         errorDiv.className = 'alert alert-danger alert-dismissible fade show';
-        errorDiv.innerHTML = message + 
-            '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+        
+        // 安全地设置错误消息文本，防止XSS攻击
+        var messageSpan = document.createElement('span');
+        messageSpan.textContent = message;
+        errorDiv.appendChild(messageSpan);
+        
+        // 添加关闭按钮
+        var closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = 'btn-close';
+        closeButton.setAttribute('data-bs-dismiss', 'alert');
+        closeButton.setAttribute('aria-label', 'Close');
+        errorDiv.appendChild(closeButton);
         
         var container = document.querySelector('.container');
         if (container) {

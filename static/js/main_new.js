@@ -294,7 +294,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // 显示加载状态 (Show loading state)
         var networkStatsElements = [btcPriceEl, networkDifficultyEl, networkHashrateEl, blockRewardEl];
         networkStatsElements.forEach(function(el) {
-            if (el) el.innerHTML = '<small class="text-muted">Loading...</small>';
+            if (el) {
+                el.innerHTML = '';  // Clear content first
+                const loadingElement = document.createElement('small');
+                loadingElement.className = 'text-muted';
+                loadingElement.textContent = 'Loading...';
+                el.appendChild(loadingElement);
+            }
         });
         
         var xhr = new XMLHttpRequest();

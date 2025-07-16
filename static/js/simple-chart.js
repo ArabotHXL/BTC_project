@@ -27,7 +27,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // 显示加载中
-        chartContainer.innerHTML = '<div class="d-flex justify-content-center align-items-center" style="height:300px"><div class="spinner-border text-primary"></div><span class="ms-3">正在生成热力图...</span></div>';
+        chartContainer.innerHTML = '';  // Clear container first
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'd-flex justify-content-center align-items-center';
+        loadingDiv.style.height = '300px';
+        
+        const spinnerDiv = document.createElement('div');
+        spinnerDiv.className = 'spinner-border text-primary';
+        
+        const loadingText = document.createElement('span');
+        loadingText.className = 'ms-3';
+        loadingText.textContent = '正在生成热力图...';
+        
+        loadingDiv.appendChild(spinnerDiv);
+        loadingDiv.appendChild(loadingText);
+        chartContainer.appendChild(loadingDiv);
         
         // 创建请求参数
         const params = new URLSearchParams();
@@ -66,8 +80,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             // 准备Canvas
-            chartContainer.innerHTML = '<canvas id="heatmap-canvas" width="100%" height="400"></canvas>';
-            const canvas = document.getElementById('heatmap-canvas');
+            chartContainer.innerHTML = '';  // Clear container first
+            const canvas = document.createElement('canvas');
+            canvas.id = 'heatmap-canvas';
+            canvas.width = '100%';
+            canvas.height = '400';
+            chartContainer.appendChild(canvas);
             
             // 创建图表
             new Chart(canvas, {

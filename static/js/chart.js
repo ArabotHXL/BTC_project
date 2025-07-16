@@ -37,11 +37,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // 显示加载状态
-        chartContainer.innerHTML = 
-            '<div class="d-flex justify-content-center my-5">' +
-            '<div class="spinner-border text-primary" role="status"></div>' +
-            '<span class="ms-3">正在生成热力图...</span>' +
-            '</div>';
+        chartContainer.innerHTML = '';  // Clear container first
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'd-flex justify-content-center my-5';
+        
+        const spinnerDiv = document.createElement('div');
+        spinnerDiv.className = 'spinner-border text-primary';
+        spinnerDiv.setAttribute('role', 'status');
+        
+        const loadingText = document.createElement('span');
+        loadingText.className = 'ms-3';
+        loadingText.textContent = '正在生成热力图...';
+        
+        loadingDiv.appendChild(spinnerDiv);
+        loadingDiv.appendChild(loadingText);
+        chartContainer.appendChild(loadingDiv);
         
         try {
             // 清理之前的图表
@@ -79,8 +89,12 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("热力图数据获取成功:", data);
             
             // 准备图表容器
-            chartContainer.innerHTML = '<canvas id="profit-chart" width="800" height="400"></canvas>';
-            const canvas = document.getElementById('profit-chart');
+            chartContainer.innerHTML = '';  // Clear container first
+            const canvas = document.createElement('canvas');
+            canvas.id = 'profit-chart';
+            canvas.width = '800';
+            canvas.height = '400';
+            chartContainer.appendChild(canvas);
             
             // 准备散点图数据
             const chartData = [];

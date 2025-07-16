@@ -119,7 +119,11 @@ class BitcoinMiningCalculator {
         try {
             // 显示加载状态
             submitButton.disabled = true;
-            submitButton.innerHTML = '<span class="loading"></span> 计算中...';
+            submitButton.innerHTML = '';  // Clear content first
+            const loadingSpan = document.createElement('span');
+            loadingSpan.className = 'loading';
+            submitButton.appendChild(loadingSpan);
+            submitButton.appendChild(document.createTextNode(' 计算中...'));
 
             // 收集表单数据
             const formData = new FormData(event.target);
