@@ -4,6 +4,7 @@ import requests
 import logging
 import json
 import calendar
+import os
 from datetime import datetime
 
 # Set up logging
@@ -133,8 +134,9 @@ def get_real_time_btc_price():
 
 def get_real_time_difficulty():
     """Get the current Bitcoin network difficulty with fallback options"""
-    # 使用API密钥获取更准确的难度数据
-    headers = {'X-API-Key': '8dd87e048ec84b6c8ad3322fb07f747a'}
+    # blockchain.info public APIs don't require authentication, but use env var if needed
+    api_key = os.getenv('BLOCKCHAIN_API_KEY')
+    headers = {'X-API-Key': api_key} if api_key else {}
     apis = [
         'https://blockchain.info/q/getdifficulty',
         'https://api.blockchain.info/stats'  # 备用API提供一个包含difficulty的JSON
