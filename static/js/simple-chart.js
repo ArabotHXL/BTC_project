@@ -126,12 +126,23 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(function(error) {
             console.error("热力图生成失败:", error);
-            chartContainer.innerHTML = `
-                <div class="alert alert-danger text-center">
-                    <strong>热力图生成失败:</strong><br>
-                    ${error.message || '未知错误'}
-                </div>
-            `;
+            // Create elements safely to prevent XSS
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger text-center';
+            
+            const strongElement = document.createElement('strong');
+            strongElement.textContent = '热力图生成失败:';
+            
+            const brElement = document.createElement('br');
+            
+            const errorText = document.createTextNode(error.message || '未知错误');
+            
+            errorDiv.appendChild(strongElement);
+            errorDiv.appendChild(brElement);
+            errorDiv.appendChild(errorText);
+            
+            chartContainer.innerHTML = '';
+            chartContainer.appendChild(errorDiv);
         });
     }
 });
