@@ -1,0 +1,113 @@
+{
+  "timestamp": "2025-07-16T02:35:08.281222",
+  "total_time": 8.317204713821411,
+  "summary": {
+    "total_tests": 11,
+    "success_rate": 100.0,
+    "completion_rate": 100.0,
+    "accuracy_rate": 100.0,
+    "display_rate": 100.0,
+    "avg_response_time": 1.1115536039525813
+  },
+  "targets_met": {
+    "成功率": true,
+    "完成率": true,
+    "准确率": true,
+    "显示率": true
+  },
+  "grade": "A++ (99%+完美级别)",
+  "performance": "⚡ 快速",
+  "results": [
+    {
+      "name": "Antminer S19 Pro计算",
+      "status": "✅ 成功",
+      "completion": 100.0,
+      "accuracy": 100.0,
+      "display": 100.0,
+      "time": 0.2171790599822998,
+      "btc_output": 0.017353653641189272
+    },
+    {
+      "name": "Antminer S21计算",
+      "status": "✅ 成功",
+      "completion": 100.0,
+      "accuracy": 100.0,
+      "display": 100.0,
+      "time": 3.4730613231658936,
+      "btc_output": 0.02887993291782165
+    },
+    {
+      "name": "主页",
+      "status": "✅ 成功",
+      "completion": 100.0,
+      "accuracy": 100.0,
+      "display": 100.0,
+      "time": 0.014194011688232422
+    },
+    {
+      "name": "Analytics",
+      "status": "✅ 成功",
+      "completion": 100.0,
+      "accuracy": 100.0,
+      "display": 100.0,
+      "time": 0.8590641021728516
+    },
+    {
+      "name": "CRM",
+      "status": "✅ 成功",
+      "completion": 100.0,
+      "accuracy": 100.0,
+      "display": 100.0,
+      "time": 3.1687662601470947
+    },
+    {
+      "name": "计算器",
+      "status": "✅ 成功",
+      "completion": 100.0,
+      "accuracy": 100.0,
+      "display": 100.0,
+      "time": 0.0935814380645752
+    },
+    {
+      "name": "价格API",
+      "status": "✅ 成功",
+      "completion": 100.0,
+      "accuracy": 100.0,
+      "display": 100.0,
+      "time": 0.2169942855834961
+    },
+    {
+      "name": "网络API",
+      "status": "✅ 成功",
+      "completion": 100.0,
+      "accuracy": 100.0,
+      "display": 100.0,
+      "time": 3.4730377197265625
+    },
+    {
+      "name": "矿机API",
+      "status": "✅ 成功",
+      "completion": 100.0,
+      "accuracy": 100.0,
+      "display": 100.0,
+      "time": 0.35506248474121094
+    },
+    {
+      "name": "Analytics数据",
+      "status": "✅ 成功",
+      "completion": 100.0,
+      "accuracy": 100.0,
+      "display": 100.0,
+      "time": 0.35614895820617676
+    },
+    {
+      "name": "BTC价格一致性",
+      "status": "✅ 成功",
+      "completion": 100.0,
+      "accuracy": 100.0,
+      "display": 100.0,
+      "time": 0,
+      "details": "价格范围: $117348.00 - $117348.00"
+    }
+  ]
+}
