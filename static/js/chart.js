@@ -149,10 +149,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
         } catch (error) {
             console.error("热力图生成错误:", error);
-            chartContainer.innerHTML = 
-                `<div class="alert alert-danger">
-                    热力图生成失败: ${error.message}
-                </div>`;
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger';
+            errorDiv.textContent = '热力图生成失败: ' + error.message;
+            chartContainer.innerHTML = '';
+            chartContainer.appendChild(errorDiv);
         }
     }
 });
