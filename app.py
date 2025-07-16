@@ -326,6 +326,7 @@ def index():
     return render_template('index.html')
 
 @app.route('/admin/login_records')
+@app.route('/login-records')
 @login_required
 def login_records():
     """拥有者查看登录记录"""
@@ -339,6 +340,7 @@ def login_records():
     return render_template('login_records.html', records=records)
     
 @app.route('/admin/login_dashboard')
+@app.route('/login-dashboard')
 @login_required
 def login_dashboard():
     """拥有者查看登录数据分析仪表盘"""
@@ -1207,6 +1209,7 @@ def get_miners():
 
 # 用户访问管理系统路由
 @app.route('/admin/user_access')
+@app.route('/user-access')
 @login_required
 def user_access():
     """管理员管理用户访问权限"""
@@ -1917,8 +1920,16 @@ init_crm_routes(app)
 # 初始化矿场中介业务路由
 init_broker_routes(app)
 
+# 添加矿场中介业务路由别名
+@app.route('/mining-broker')
+@login_required
+def mining_broker_redirect():
+    """矿场中介业务重定向"""
+    return redirect(url_for('broker.dashboard'))
+
 # 添加调试信息页面
 @app.route('/debug_info')
+@app.route('/debug-info')
 @login_required
 def debug_info():
     """显示调试信息页面，用于排查会话问题"""
