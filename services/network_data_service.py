@@ -135,9 +135,10 @@ class NetworkDataCollector:
                 network_difficulty=data['network_difficulty'],
                 network_hashrate=data['network_hashrate'],
                 block_reward=data['block_reward'],
-                api_response_time=data['api_response_time'],
-                recorded_at=data['recorded_at']  # 已经是EST时间
+                api_response_time=data['api_response_time']
             )
+            # 设置记录时间
+            snapshot.recorded_at = data['recorded_at']
             
             db.session.add(snapshot)
             db.session.commit()
@@ -163,8 +164,10 @@ class NetworkDataAnalyzer:
             start_date = end_date - timedelta(days=days)
             
             snapshots = NetworkSnapshot.query.filter(
-                NetworkSnapshot.recorded_at >= start_date,
-                NetworkSnapshot.is_valid == True
+                and_(
+                    NetworkSnapshot.recorded_at >= start_date,
+                    NetworkSnapshot.is_valid == True
+                )
             ).order_by(asc(NetworkSnapshot.recorded_at)).all()
             
             if not snapshots:
@@ -204,8 +207,10 @@ class NetworkDataAnalyzer:
             start_date = end_date - timedelta(days=days)
             
             snapshots = NetworkSnapshot.query.filter(
-                NetworkSnapshot.recorded_at >= start_date,
-                NetworkSnapshot.is_valid == True
+                and_(
+                    NetworkSnapshot.recorded_at >= start_date,
+                    NetworkSnapshot.is_valid == True
+                )
             ).order_by(asc(NetworkSnapshot.recorded_at)).all()
             
             if not snapshots:
@@ -242,8 +247,10 @@ class NetworkDataAnalyzer:
             start_date = end_date - timedelta(days=days)
             
             snapshots = NetworkSnapshot.query.filter(
-                NetworkSnapshot.recorded_at >= start_date,
-                NetworkSnapshot.is_valid == True
+                and_(
+                    NetworkSnapshot.recorded_at >= start_date,
+                    NetworkSnapshot.is_valid == True
+                )
             ).order_by(asc(NetworkSnapshot.recorded_at)).all()
             
             if not snapshots:
@@ -297,8 +304,10 @@ class NetworkDataAnalyzer:
             start_date = end_date - timedelta(days=days_back)
             
             snapshots = NetworkSnapshot.query.filter(
-                NetworkSnapshot.recorded_at >= start_date,
-                NetworkSnapshot.is_valid == True
+                and_(
+                    NetworkSnapshot.recorded_at >= start_date,
+                    NetworkSnapshot.is_valid == True
+                )
             ).order_by(desc(NetworkSnapshot.recorded_at)).limit(50).all()
             
             if not snapshots:
