@@ -42,6 +42,17 @@ class NetworkSnapshot(db.Model):
     is_valid = db.Column(db.Boolean, default=True)
     api_response_time = db.Column(db.Float, nullable=True)  # API响应时间(秒)
     
+    def __init__(self, btc_price, network_difficulty, network_hashrate, block_reward=3.125, 
+                 price_source='coingecko', data_source='blockchain.info', is_valid=True, api_response_time=None):
+        self.btc_price = btc_price
+        self.network_difficulty = network_difficulty
+        self.network_hashrate = network_hashrate
+        self.block_reward = block_reward
+        self.price_source = price_source
+        self.data_source = data_source
+        self.is_valid = is_valid
+        self.api_response_time = api_response_time
+    
     def __repr__(self):
         return f"<NetworkSnapshot {self.recorded_at}: BTC=${self.btc_price}, Difficulty={self.network_difficulty}T>"
     
@@ -69,6 +80,12 @@ class LoginRecord(db.Model):
     successful = db.Column(db.Boolean, default=True, nullable=False)
     ip_address = db.Column(db.String(50), nullable=True)
     login_location = db.Column(db.String(512), nullable=True)
+    
+    def __init__(self, email, successful=True, ip_address=None, login_location=None):
+        self.email = email
+        self.successful = successful
+        self.ip_address = ip_address
+        self.login_location = login_location
     
     def __repr__(self):
         """格式化模型的字符串表示"""
@@ -168,6 +185,19 @@ class Customer(db.Model):
     leads = db.relationship('Lead', backref='customer', lazy=True, cascade="all, delete-orphan")
     deals = db.relationship('Deal', backref='customer', lazy=True, cascade="all, delete-orphan")
     
+    def __init__(self, name, company=None, email=None, phone=None, address=None, tags=None, 
+                 customer_type="企业", mining_capacity=None, notes=None, created_by_id=None):
+        self.name = name
+        self.company = company
+        self.email = email
+        self.phone = phone
+        self.address = address
+        self.tags = tags
+        self.customer_type = customer_type
+        self.mining_capacity = mining_capacity
+        self.notes = notes
+        self.created_by_id = created_by_id
+    
     def __repr__(self):
         return f"<Customer {self.name} - {self.company}>"
 
@@ -184,6 +214,15 @@ class Contact(db.Model):
     primary = db.Column(db.Boolean, default=False, nullable=False)  # 是否为主要联系人
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     notes = db.Column(db.Text, nullable=True)
+    
+    def __init__(self, customer_id, name, position=None, email=None, phone=None, primary=False, notes=None):
+        self.customer_id = customer_id
+        self.name = name
+        self.position = position
+        self.email = email
+        self.phone = phone
+        self.primary = primary
+        self.notes = notes
     
     def __repr__(self):
         return f"<Contact {self.name} - {self.position}>"
@@ -215,6 +254,19 @@ class Lead(db.Model):
     
     # 关联
     activities = db.relationship('Activity', backref='lead', lazy=True, cascade="all, delete-orphan")
+    
+    def __init__(self, customer_id, title, status=LeadStatus.NEW, source=None, estimated_value=0.0, 
+                 assigned_to_id=None, assigned_to=None, created_by_id=None, description=None, next_follow_up=None):
+        self.customer_id = customer_id
+        self.title = title
+        self.status = status
+        self.source = source
+        self.estimated_value = estimated_value
+        self.assigned_to_id = assigned_to_id
+        self.assigned_to = assigned_to
+        self.created_by_id = created_by_id
+        self.description = description
+        self.next_follow_up = next_follow_up
     
     def __repr__(self):
         return f"<Lead {self.title} - {self.status.value}>"
@@ -338,6 +390,17 @@ class Activity(db.Model):
     
     # 关联到客户
     customer = db.relationship('Customer', backref=db.backref('activities', lazy=True))
+    
+    def __init__(self, customer_id, summary, type="备注", lead_id=None, deal_id=None, details=None, 
+                 created_by_id=None, created_by=None):
+        self.customer_id = customer_id
+        self.summary = summary
+        self.type = type
+        self.lead_id = lead_id
+        self.deal_id = deal_id
+        self.details = details
+        self.created_by_id = created_by_id
+        self.created_by = created_by
     
     def __repr__(self):
         return f"<Activity {self.type} - {self.summary}>"

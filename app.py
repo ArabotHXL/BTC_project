@@ -260,7 +260,8 @@ def login():
                                 else:
                                     location = f"外部网络 ({client_ip})"
                         else:
-                            logging.warning(f"IP-API请求失败，状态码: {response.status_code}")
+                            status_code = response.status_code if response else "无响应"
+                            logging.warning(f"IP-API请求失败，状态码: {status_code}")
                             location = f"外部网络 ({client_ip})"
                     
                     # 记录请求头信息以便调试
@@ -966,9 +967,10 @@ def calculate():
                         btc_price=network_data.get('btc_price', 0),
                         network_difficulty=network_data.get('network_difficulty', 0),
                         network_hashrate=network_data.get('network_hashrate', 0),
-                        block_reward=network_data.get('block_reward', 3.125),
-                        recorded_at=est_time.replace(tzinfo=None)
+                        block_reward=network_data.get('block_reward', 3.125)
                     )
+                    # Set the recorded_at time after creation
+                    snapshot.recorded_at = est_time.replace(tzinfo=None)
                     db.session.add(snapshot)
                     db.session.commit()
                     logging.info(f"网络快照已记录: BTC=${network_data.get('btc_price')}, 难度={network_data.get('network_difficulty')}T")
@@ -1433,9 +1435,10 @@ def migrate_to_crm():
                 company=user.company,
                 email=user.email,
                 customer_type="企业" if user.company else "个人",
-                tags="已迁移用户,授权用户",
-                created_at=user.created_at
+                tags="已迁移用户,授权用户"
             )
+            # Set the created_at time after creation
+            customer.created_at = user.created_at
             db.session.add(customer)
             db.session.flush()  # 获取ID而不提交事务
             
@@ -1454,7 +1457,7 @@ def migrate_to_crm():
             lead = Lead(
                 customer_id=customer.id,
                 title=f"{user.name} 访问授权",
-                status="QUALIFIED" if user.has_access else "LOST",  # 访问has_access属性
+                status=LeadStatus.QUALIFIED if user.has_access else LeadStatus.LOST,  # 使用LeadStatus枚举
                 source="系统迁移",
                 estimated_value=0.0,  # 授权访问没有直接价值
                 assigned_to="系统管理员",
@@ -2292,14 +2295,17 @@ def analytics_dashboard():
         db_manager.connect()
         
         # 获取技术指标
-        cursor = db_manager.connection.cursor()
-        cursor.execute("""
-            SELECT rsi_14, sma_20, sma_50, ema_12, ema_26, macd, 
-                   volatility_30d, bollinger_upper, bollinger_lower, recorded_at
-            FROM technical_indicators 
-            ORDER BY recorded_at DESC LIMIT 1
-        """)
-        tech_data = cursor.fetchone()
+        cursor = None
+        tech_data = None
+        if db_manager.connection:
+            cursor = db_manager.connection.cursor()
+            cursor.execute("""
+                SELECT rsi_14, sma_20, sma_50, ema_12, ema_26, macd, 
+                       volatility_30d, bollinger_upper, bollinger_lower, recorded_at
+                FROM technical_indicators 
+                ORDER BY recorded_at DESC LIMIT 1
+            """)
+            tech_data = cursor.fetchone()
         
         if tech_data:
             technical_indicators = {
@@ -2316,13 +2322,15 @@ def analytics_dashboard():
             }
         
         # 获取最新分析报告
-        cursor.execute("""
-            SELECT title, summary, generated_at, confidence_score, recommendations,
-                   risk_assessment, key_findings
-            FROM analysis_reports 
-            ORDER BY generated_at DESC LIMIT 1
-        """)
-        report_data = cursor.fetchone()
+        report_data = None
+        if db_manager.connection and cursor:
+            cursor.execute("""
+                SELECT title, summary, generated_at, confidence_score, recommendations,
+                       risk_assessment, key_findings
+                FROM analysis_reports 
+                ORDER BY generated_at DESC LIMIT 1
+            """)
+            report_data = cursor.fetchone()
         
         if report_data:
             import json
@@ -2346,8 +2354,10 @@ def analytics_dashboard():
                 'key_findings': key_findings
             }
         
-        cursor.close()
-        db_manager.connection.close()
+        if cursor:
+            cursor.close()
+        if db_manager.connection:
+            db_manager.connection.close()
         
     except Exception as e:
         print(f"获取分析数据时出错: {e}")
@@ -2622,14 +2632,17 @@ def analytics_latest_report_api():
         db_manager = DatabaseManager()
         db_manager.connect()
         
-        cursor = db_manager.connection.cursor()
-        cursor.execute("""
-            SELECT report_data, created_at
-            FROM analysis_reports 
-            ORDER BY created_at DESC 
-            LIMIT 1
-        """)
-        result = cursor.fetchone()
+        cursor = None
+        result = None
+        if db_manager.connection:
+            cursor = db_manager.connection.cursor()
+            cursor.execute("""
+                SELECT report_data, created_at
+                FROM analysis_reports 
+                ORDER BY created_at DESC 
+                LIMIT 1
+            """)
+            result = cursor.fetchone()
         
         if result:
             return jsonify({'success': True, 'data': result[0]})
@@ -2651,15 +2664,18 @@ def analytics_technical_indicators_api():
         db_manager = DatabaseManager()
         db_manager.connect()
         
-        cursor = db_manager.connection.cursor()
-        cursor.execute("""
-            SELECT sma_20, sma_50, ema_12, ema_26, rsi_14, macd, 
-                   bollinger_upper, bollinger_lower, volatility_30d, created_at
-            FROM technical_indicators 
-            ORDER BY created_at DESC 
-            LIMIT 1
-        """)
-        result = cursor.fetchone()
+        cursor = None
+        result = None
+        if db_manager.connection:
+            cursor = db_manager.connection.cursor()
+            cursor.execute("""
+                SELECT sma_20, sma_50, ema_12, ema_26, rsi_14, macd, 
+                       bollinger_upper, bollinger_lower, volatility_30d, created_at
+                FROM technical_indicators 
+                ORDER BY created_at DESC 
+                LIMIT 1
+            """)
+            result = cursor.fetchone()
         
         if result:
             indicators_data = {
@@ -2693,14 +2709,17 @@ def analytics_price_history_api():
         db_manager = DatabaseManager()
         db_manager.connect()
         
-        cursor = db_manager.connection.cursor()
-        cursor.execute("""
-            SELECT btc_price, timestamp
-            FROM market_analytics 
-            ORDER BY timestamp DESC 
-            LIMIT 100
-        """)
-        results = cursor.fetchall()
+        cursor = None
+        results = None
+        if db_manager.connection:
+            cursor = db_manager.connection.cursor()
+            cursor.execute("""
+                SELECT btc_price, timestamp
+                FROM market_analytics 
+                ORDER BY timestamp DESC 
+                LIMIT 100
+            """)
+            results = cursor.fetchall()
         
         if results:
             data = [{'price': row[0], 'timestamp': row[1].isoformat() if row[1] else None} for row in results]
