@@ -39,59 +39,37 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 初始化 (Initialization)
     function init() {
+        console.log("初始化主要功能...");
+        
         // 获取当前语言设置 (Get current language setting)
         const currentLang = document.querySelector('meta[name="language"]')?.content || 'zh';
         console.log("当前语言设置 (Current language):", currentLang);
         
-        // 清除旧的缓存数据以确保显示最新算力 (Clear old cache to show latest hashrate)
-        localStorage.removeItem('last_network_hashrate');
+        // 检查是否有预加载的网络数据
+        var cachedData = window.getNetworkDataCache && window.getNetworkDataCache();
+        if (cachedData && cachedData.data && (Date.now() - cachedData.lastUpdate < 30000)) {
+            console.log("使用预加载的网络数据");
+            updateNetworkStatsDisplay(cachedData.data);
+        } else {
+            // 加载网络数据 (Load network data)
+            fetchNetworkStats();
+        }
         
-        // 加载网络数据 (Load network data)
-        fetchNetworkStats();
-        
-        // 启动网络统计数据自动刷新（包括网络算力）
-        startNetworkStatsAutoRefresh();
-        
-        // 加载矿机型号列表 (Load miner models)
-        fetchMiners();
-        
-        // 延迟计算以确保元素已加载完成
-        console.log("在init函数中等待1秒后开始计算总算力和总功耗");
+        // 延迟启动自动刷新
         setTimeout(function() {
-            console.log("即将计算总算力和总功耗");
-            
-            // 初始化总算力和总功耗字段
-            var totalHashrateInput = document.getElementById('total-hashrate');
-            var totalPowerInput = document.getElementById('total-power');
-            
-            console.log("总算力输入框存在:", !!totalHashrateInput);
-            console.log("总功耗输入框存在:", !!totalPowerInput);
-            
-            // 如果有初始值，先设置一下
-            var minerCount = parseInt(minerCountInput.value) || 0;
-            var hashrate = parseFloat(hashrateInput.value) || 0;
-            var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
-            
-            console.log("初始值 - 矿机数量:", minerCount, "单机算力:", hashrate, "单机功耗:", powerWatt);
-            
-            if (minerCount > 0 && hashrate > 0 && powerWatt > 0) {
-                var totalHashrate = minerCount * hashrate;
-                var totalPower = minerCount * powerWatt;
-                
-                if (totalHashrateInput) {
-                    totalHashrateInput.value = totalHashrate.toFixed(0);
-                    console.log("初始化总算力为:", totalHashrate.toFixed(0));
-                }
-                
-                if (totalPowerInput) {
-                    totalPowerInput.value = totalPower.toFixed(0);
-                    console.log("初始化总功耗为:", totalPower.toFixed(0));
-                }
-            }
-            
-            // 然后正常调用计算函数
-            calculateTotalHashrateAndPower();
-        }, 1000);
+            startNetworkStatsAutoRefresh();
+        }, 2000);
+        
+        // 延迟加载矿机型号列表 (Load miner models)
+        setTimeout(function() {
+            fetchMiners();
+        }, 500);
+        
+        // 优化的计算初始化 - 减少延迟
+        setTimeout(function() {
+            console.log("初始化计算功能");
+            initializeCalculations();
+        }, 200);
         
         // 事件绑定 (Event bindings)
         if (calculatorForm) {
@@ -1338,6 +1316,47 @@ document.addEventListener('DOMContentLoaded', function() {
         
         return formatter.format(value);
     }
+    
+    // 独立的计算初始化函数 - 优化加载速度
+    function initializeCalculations() {
+        var totalHashrateInput = getCachedElement('total-hashrate');
+        var totalPowerInput = getCachedElement('total-power');
+        
+        if (minerCountInput && hashrateInput && powerConsumptionInput) {
+            var minerCount = parseInt(minerCountInput.value) || 0;
+            var hashrate = parseFloat(hashrateInput.value) || 0;
+            var powerWatt = parseFloat(powerConsumptionInput.value) || 0;
+            
+            if (minerCount > 0 && hashrate > 0 && powerWatt > 0) {
+                var totalHashrate = minerCount * hashrate;
+                var totalPower = minerCount * powerWatt;
+                
+                if (totalHashrateInput) {
+                    totalHashrateInput.value = totalHashrate.toFixed(0);
+                }
+                if (totalPowerInput) {
+                    totalPowerInput.value = totalPower.toFixed(0);
+                }
+            }
+        }
+        
+        if (typeof calculateTotalHashrateAndPower === 'function') {
+            calculateTotalHashrateAndPower();
+        }
+    }
+    
+    // 使用缓存的元素获取函数 - 提升性能
+    function getCachedElement(id) {
+        return window.getCachedElement ? window.getCachedElement(id) : document.getElementById(id);
+    }
+    
+    // 导出关键函数到全局作用域，便于优化器使用
+    window.fetchNetworkStats = fetchNetworkStats;
+    window.fetchMiners = fetchMiners;
+    window.initializeCharts = function() {
+        // 图表初始化逻辑可以放在这里
+        console.log("图表初始化完成");
+    };
     
     // 调用初始化函数 (Call init function)
     init();
