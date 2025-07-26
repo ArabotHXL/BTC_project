@@ -615,11 +615,14 @@ def calculate():
             # Additional check for NaN/inf after conversion
             if not (client_electricity_cost == client_electricity_cost and abs(client_electricity_cost) != float('inf')):
                 raise ValueError("NaN or infinite value detected")
+            # 添加合理性检查 - 客户电费不能是负数或极端值
+            if client_electricity_cost < 0 or client_electricity_cost > 1000:
+                raise ValueError(f"客户电费超出合理范围 (0-1000): {client_electricity_cost}")
         except (ValueError, TypeError) as e:
             error_msg = f"无效的客户电费值: {data.get('client_electricity_cost')}"
             logging.error(f"{error_msg} - {str(e)}")
             input_errors.append(error_msg)
-            client_electricity_cost = 0
+            client_electricity_cost = 0.08
             
         try:
             btc_price_raw = data.get('btc_price', 0)
