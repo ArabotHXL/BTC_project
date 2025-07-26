@@ -1,0 +1,152 @@
+{
+  "summary": {
+    "total_tests": 20,
+    "passed_tests": 11,
+    "success_rate": 55.00000000000001,
+    "grade": "C 需要改进",
+    "total_time": 11.349810600280762,
+    "timestamp": "2025-07-26T02:26:45.967571"
+  },
+  "test_results": [
+    {
+      "test_name": "Health Check",
+      "success": true,
+      "details": "Status: healthy",
+      "response_time": 2.5153825283050537,
+      "timestamp": "2025-07-26T02:26:37.129091"
+    },
+    {
+      "test_name": "Status Check",
+      "success": true,
+      "details": "Ready",
+      "response_time": 0.003455638885498047,
+      "timestamp": "2025-07-26T02:26:37.132792"
+    },
+    {
+      "test_name": "Login - testing@example.com",
+      "success": false,
+      "details": "HTTP 200",
+      "response_time": 0,
+      "timestamp": "2025-07-26T02:26:37.329263"
+    },
+    {
+      "test_name": "Login - admin@example.com",
+      "success": false,
+      "details": "HTTP 200",
+      "response_time": 0,
+      "timestamp": "2025-07-26T02:26:37.562524"
+    },
+    {
+      "test_name": "Login - site@example.com",
+      "success": false,
+      "details": "HTTP 200",
+      "response_time": 0,
+      "timestamp": "2025-07-26T02:26:38.069880"
+    },
+    {
+      "test_name": "Login - hxl2022hao@gmail.com",
+      "success": false,
+      "details": "HTTP 200",
+      "response_time": 0,
+      "timestamp": "2025-07-26T02:26:38.079132"
+    },
+    {
+      "test_name": "Login - owner@example.com",
+      "success": false,
+      "details": "HTTP 200",
+      "response_time": 0,
+      "timestamp": "2025-07-26T02:26:38.088630"
+    },
+    {
+      "test_name": "Authentication System",
+      "success": false,
+      "details": "0.0% success rate",
+      "response_time": 0,
+      "timestamp": "2025-07-26T02:26:38.088822"
+    },
+    {
+      "test_name": "API - Network Stats",
+      "success": true,
+      "details": "Valid response",
+      "response_time": 2.713428020477295,
+      "timestamp": "2025-07-26T02:26:40.810661"
+    },
+    {
+      "test_name": "API - Miner Models",
+      "success": true,
+      "details": "Valid response",
+      "response_time": 0.003947257995605469,
+      "timestamp": "2025-07-26T02:26:40.814861"
+    },
+    {
+      "test_name": "API - Mining Calculator",
+      "success": false,
+      "details": "HTTP 404",
+      "response_time": 0,
+      "timestamp": "2025-07-26T02:26:40.818906"
+    },
+    {
+      "test_name": "API - Analytics Market Data",
+      "success": false,
+      "details": "HTTP 403",
+      "response_time": 0,
+      "timestamp": "2025-07-26T02:26:40.906970"
+    },
+    {
+      "test_name": "Mining Calculation",
+      "success": true,
+      "details": "BTC: 0.016612, Profit: $478.92",
+      "response_time": 3.112301826477051,
+      "timestamp": "2025-07-26T02:26:44.029439"
+    },
+    {
+      "test_name": "Page - Main Page",
+      "success": true,
+      "details": "53319 chars",
+      "response_time": 0.005209207534790039,
+      "timestamp": "2025-07-26T02:26:44.042526"
+    },
+    {
+      "test_name": "Page - Analytics Dashboard",
+      "success": false,
+      "details": "HTTP 403",
+      "response_time": 0,
+      "timestamp": "2025-07-26T02:26:44.131200"
+    },
+    {
+      "test_name": "Page - Curtailment Calculator",
+      "success": true,
+      "details": "19482 chars",
+      "response_time": 0.6602442264556885,
+      "timestamp": "2025-07-26T02:26:44.791636"
+    },
+    {
+      "test_name": "Page - CRM Dashboard",
+      "success": true,
+      "details": "20189 chars",
+      "response_time": 0.5156235694885254,
+      "timestamp": "2025-07-26T02:26:45.307495"
+    },
+    {
+      "test_name": "Real-time Data",
+      "success": true,
+      "details": "BTC: $117,342, Hashrate: 954.1 EH/s",
+      "response_time": 0.6161484718322754,
+      "timestamp": "2025-07-26T02:26:45.938955"
+    },
+    {
+      "test_name": "Language - Chinese",
+      "success": true,
+      "details": "Content localized",
+      "response_time": 0.01424407958984375,
+      "timestamp": "2025-07-26T02:26:45.954577"
+    },
+    {
+      "test_name": "Language - English",
+      "success": true,
+      "details": "Content localized",
+      "response_time": 0.007725954055786133,
+      "timestamp": "2025-07-26T02:26:45.962791"
+    }
+  ]
+}
