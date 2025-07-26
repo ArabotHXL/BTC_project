@@ -28,11 +28,11 @@ class Ultimate99AccuracyTest:
         
         # 认证用户邮箱（实际生产环境邮箱）
         self.production_emails = [
-            "testing@example.com",
-            "admin@example.com", 
+            "admin@example.com",
+            "hxl2022hao@gmail.com", 
+            "user@example.com",
             "site@example.com",
-            "hxl2022hao@gmail.com",
-            "owner@example.com"
+            "testing123@example.com"
         ]
         
         # 真实矿机测试案例（基于实际市场数据）
@@ -100,7 +100,9 @@ class Ultimate99AccuracyTest:
             if response.status_code in [200, 302]:
                 # 验证是否成功登录（检查dashboard访问）
                 dashboard_response = self.session.get(f"{self.base_url}/", timeout=5)
-                if dashboard_response.status_code == 200 and "login" not in dashboard_response.url:
+                if (dashboard_response.status_code == 200 and 
+                    "login" not in dashboard_response.url and 
+                    "unauthorized" not in dashboard_response.url):
                     return True, response_time
             
             return False, response_time

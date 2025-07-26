@@ -1,0 +1,378 @@
+{
+  "summary": {
+    "overall_accuracy": 95.5594219501798,
+    "grade": "A 优秀",
+    "status": "🟡 VERY_GOOD",
+    "total_time": 22.366065502166748,
+    "test_success_rate": 92.3076923076923,
+    "meets_99_standard": false,
+    "timestamp": "2025-07-26T02:40:36.689060"
+  },
+  "accuracy_breakdown": {
+    "authentication": "80.0% (weight: 20%)",
+    "api_consistency": "99.9% (weight: 25%)",
+    "calculation": "99.0% (weight: 30%)",
+    "real_time_data": "99.2% (weight: 15%)",
+    "performance": "100.0% (weight: 5%)",
+    "security": "100.0% (weight: 5%)"
+  },
+  "accuracy_metrics": {
+    "authentication": 80.0,
+    "api_consistency": 99.927143860636,
+    "calculation": 99.00034977795018,
+    "real_time_data": 99.18354034423828,
+    "performance": 100,
+    "security": 100
+  },
+  "test_results": [
+    {
+      "category": "Authentication",
+      "test_name": "Login - admin@example.com",
+      "success": false,
+      "accuracy_score": 0.0,
+      "details": "Failed",
+      "response_time": 1.754246473312378,
+      "timestamp": "2025-07-26T02:40:16.092568",
+      "data": null
+    },
+    {
+      "category": "Authentication",
+      "test_name": "Login - hxl2022hao@gmail.com",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Verified",
+      "response_time": 0.5182406902313232,
+      "timestamp": "2025-07-26T02:40:16.618357",
+      "data": null
+    },
+    {
+      "category": "Authentication",
+      "test_name": "Login - user@example.com",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Verified",
+      "response_time": 0.00911712646484375,
+      "timestamp": "2025-07-26T02:40:16.632408",
+      "data": null
+    },
+    {
+      "category": "Authentication",
+      "test_name": "Login - site@example.com",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Verified",
+      "response_time": 0.008433341979980469,
+      "timestamp": "2025-07-26T02:40:16.646080",
+      "data": null
+    },
+    {
+      "category": "Authentication",
+      "test_name": "Login - testing123@example.com",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Verified",
+      "response_time": 0.009424686431884766,
+      "timestamp": "2025-07-26T02:40:16.661360",
+      "data": null
+    },
+    {
+      "category": "Authentication",
+      "test_name": "System Authentication",
+      "success": false,
+      "accuracy_score": 80.0,
+      "details": "80.0% success rate (target: 95%+)",
+      "response_time": 0,
+      "timestamp": "2025-07-26T02:40:16.661576",
+      "data": null
+    },
+    {
+      "category": "API_Consistency",
+      "test_name": "Network Stats Call 1",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "BTC: $117,434",
+      "response_time": 0.6021127700805664,
+      "timestamp": "2025-07-26T02:40:17.279122",
+      "data": {
+        "api_calls_remaining": 658,
+        "block_reward": 3.125,
+        "btc_price": 117433.685,
+        "data_source": "CoinWarz (primary)",
+        "difficulty": 127620086886390,
+        "hashrate": 996.01,
+        "hashrate_source": "analytics_dashboard (priority)",
+        "health_status": "Healthy",
+        "network_difficulty": 127620086886390,
+        "network_hashrate": 996.01,
+        "price": 117433.685,
+        "profit_ratio": 100,
+        "success": true
+      }
+    },
+    {
+      "category": "API_Consistency",
+      "test_name": "Network Stats Call 2",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "BTC: $117,605",
+      "response_time": 1.0205137729644775,
+      "timestamp": "2025-07-26T02:40:20.299991",
+      "data": {
+        "api_calls_remaining": 0,
+        "block_reward": 3.125,
+        "btc_price": 117605.0,
+        "data_source": "blockchain.info (fallback)",
+        "difficulty": 127620086886392.0,
+        "fallback_reason": "CoinWarz API unavailable",
+        "hashrate": 996.01,
+        "hashrate_source": "analytics_dashboard (priority)",
+        "health_status": "Healthy",
+        "network_difficulty": 127620086886392.0,
+        "network_hashrate": 996.01,
+        "price": 117605.0,
+        "profit_ratio": 100,
+        "success": true
+      }
+    },
+    {
+      "category": "API_Consistency",
+      "test_name": "Network Stats Call 3",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "BTC: $117,605",
+      "response_time": 0.9517700672149658,
+      "timestamp": "2025-07-26T02:40:23.252152",
+      "data": {
+        "api_calls_remaining": 0,
+        "block_reward": 3.125,
+        "btc_price": 117605.0,
+        "data_source": "blockchain.info (fallback)",
+        "difficulty": 127620086886392.0,
+        "fallback_reason": "CoinWarz API unavailable",
+        "hashrate": 996.01,
+        "hashrate_source": "analytics_dashboard (priority)",
+        "health_status": "Healthy",
+        "network_difficulty": 127620086886392.0,
+        "network_hashrate": 996.01,
+        "price": 117605.0,
+        "profit_ratio": 100,
+        "success": true
+      }
+    },
+    {
+      "category": "API_Consistency",
+      "test_name": "Network Stats Call 4",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "BTC: $117,605",
+      "response_time": 0.9654159545898438,
+      "timestamp": "2025-07-26T02:40:26.217847",
+      "data": {
+        "api_calls_remaining": 0,
+        "block_reward": 3.125,
+        "btc_price": 117605.0,
+        "data_source": "blockchain.info (fallback)",
+        "difficulty": 127620086886392.0,
+        "fallback_reason": "CoinWarz API unavailable",
+        "hashrate": 996.01,
+        "hashrate_source": "analytics_dashboard (priority)",
+        "health_status": "Healthy",
+        "network_difficulty": 127620086886392.0,
+        "network_hashrate": 996.01,
+        "price": 117605.0,
+        "profit_ratio": 100,
+        "success": true
+      }
+    },
+    {
+      "category": "API_Consistency",
+      "test_name": "Network Stats Call 5",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "BTC: $117,605",
+      "response_time": 0.9127461910247803,
+      "timestamp": "2025-07-26T02:40:29.131117",
+      "data": {
+        "api_calls_remaining": 0,
+        "block_reward": 3.125,
+        "btc_price": 117605.0,
+        "data_source": "blockchain.info (fallback)",
+        "difficulty": 127620086886392.0,
+        "fallback_reason": "CoinWarz API unavailable",
+        "hashrate": 996.01,
+        "hashrate_source": "analytics_dashboard (priority)",
+        "health_status": "Healthy",
+        "network_difficulty": 127620086886392.0,
+        "network_hashrate": 996.01,
+        "price": 117605.0,
+        "profit_ratio": 100,
+        "success": true
+      }
+    },
+    {
+      "category": "API_Consistency",
+      "test_name": "Data Consistency",
+      "success": true,
+      "accuracy_score": 99.927143860636,
+      "details": "BTC variance: 0.0015, Hash variance: 0.0000",
+      "response_time": 0,
+      "timestamp": "2025-07-26T02:40:31.131592",
+      "data": null
+    },
+    {
+      "category": "Calculation",
+      "test_name": "Antminer S19 Pro",
+      "success": true,
+      "accuracy_score": 99.31878161426152,
+      "details": "BTC: 0.016612/day (range: 0.015-0.018), Profit: $478.92",
+      "response_time": 1.0216779708862305,
+      "timestamp": "2025-07-26T02:40:32.167588",
+      "data": null
+    },
+    {
+      "category": "Calculation",
+      "test_name": "Antminer S19",
+      "success": true,
+      "accuracy_score": 98.94533531012232,
+      "details": "BTC: 0.014347/day (range: 0.013-0.016), Profit: $478.92",
+      "response_time": 1.0781025886535645,
+      "timestamp": "2025-07-26T02:40:33.246043",
+      "data": null
+    },
+    {
+      "category": "Calculation",
+      "test_name": "Antminer S21",
+      "success": true,
+      "accuracy_score": 98.73693240946668,
+      "details": "BTC: 0.027646/day (range: 0.026-0.030), Profit: $478.82",
+      "response_time": 1.0390632152557373,
+      "timestamp": "2025-07-26T02:40:34.285385",
+      "data": null
+    },
+    {
+      "category": "Calculation",
+      "test_name": "Overall Precision",
+      "success": true,
+      "accuracy_score": 99.00034977795018,
+      "details": "Average calculation accuracy: 99.0%",
+      "response_time": 0,
+      "timestamp": "2025-07-26T02:40:34.285642",
+      "data": null
+    },
+    {
+      "category": "Real_Time_Data",
+      "test_name": "Market Data Accuracy",
+      "success": true,
+      "accuracy_score": 99.18354034423828,
+      "details": "BTC: $117,605, Hashrate: 996.0 EH/s, Difficulty: 127620086886392.0T",
+      "response_time": 1.0816459655761719,
+      "timestamp": "2025-07-26T02:40:35.419689",
+      "data": {
+        "api_calls_remaining": 0,
+        "block_reward": 3.125,
+        "btc_price": 117605.0,
+        "data_source": "blockchain.info (fallback)",
+        "difficulty": 127620086886392.0,
+        "fallback_reason": "CoinWarz API unavailable",
+        "hashrate": 996.01,
+        "hashrate_source": "analytics_dashboard (priority)",
+        "health_status": "Healthy",
+        "network_difficulty": 127620086886392.0,
+        "network_hashrate": 996.01,
+        "price": 117605.0,
+        "profit_ratio": 100,
+        "success": true
+      }
+    },
+    {
+      "category": "Performance",
+      "test_name": "Network Stats Response",
+      "success": true,
+      "accuracy_score": 100,
+      "details": "1.158s (target: <3.0s)",
+      "response_time": 1.1575140953063965,
+      "timestamp": "2025-07-26T02:40:36.596897",
+      "data": null
+    },
+    {
+      "category": "Performance",
+      "test_name": "Miner Models Response",
+      "success": true,
+      "accuracy_score": 100,
+      "details": "0.004s (target: <2.0s)",
+      "response_time": 0.003931760787963867,
+      "timestamp": "2025-07-26T02:40:36.601027",
+      "data": null
+    },
+    {
+      "category": "Performance",
+      "test_name": "Main Dashboard Response",
+      "success": true,
+      "accuracy_score": 100,
+      "details": "0.006s (target: <5.0s)",
+      "response_time": 0.00612330436706543,
+      "timestamp": "2025-07-26T02:40:36.607291",
+      "data": null
+    },
+    {
+      "category": "Performance",
+      "test_name": "Overall Performance",
+      "success": true,
+      "accuracy_score": 100,
+      "details": "Average performance score: 100.0%",
+      "response_time": 0,
+      "timestamp": "2025-07-26T02:40:36.607499",
+      "data": null
+    },
+    {
+      "category": "Security",
+      "test_name": "Unauthorized Access Protection",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Successfully redirected to login",
+      "response_time": 0,
+      "timestamp": "2025-07-26T02:40:36.626522",
+      "data": null
+    },
+    {
+      "category": "Security",
+      "test_name": "Malicious Input: electricity_cost",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Input properly rejected",
+      "response_time": 0,
+      "timestamp": "2025-07-26T02:40:36.665613",
+      "data": null
+    },
+    {
+      "category": "Security",
+      "test_name": "Malicious Input: miner_count",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Input properly rejected",
+      "response_time": 0,
+      "timestamp": "2025-07-26T02:40:36.679872",
+      "data": null
+    },
+    {
+      "category": "Security",
+      "test_name": "Malicious Input: client_electricity_cost",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Input properly rejected",
+      "response_time": 0,
+      "timestamp": "2025-07-26T02:40:36.685122",
+      "data": null
+    },
+    {
+      "category": "Security",
+      "test_name": "Overall Security",
+      "success": true,
+      "accuracy_score": 100,
+      "details": "Average security score: 100.0%",
+      "response_time": 0,
+      "timestamp": "2025-07-26T02:40:36.685341",
+      "data": null
+    }
+  ]
+}
