@@ -1489,10 +1489,12 @@
         }
 
         function updateInvestmentPrediction(marketData) {
-            const investmentAmount = parseFloat(document.getElementById('investmentAmount')?.value || 25000);
+            const investmentAmountElement = document.getElementById('investmentAmount');
+            const investmentAmount = parseFloat(investmentAmountElement ? investmentAmountElement.value : 25000);
             
             // Get selected miner specifications
-            const selectedMiner = document.getElementById('minerModelSelect')?.value || 'Antminer S19 Pro';
+            const minerModelElement = document.getElementById('minerModelSelect');
+            const selectedMiner = minerModelElement ? minerModelElement.value : 'Antminer S19 Pro';
             const minerSpecs = {
                 'Antminer S21 XP Hyd': { hashrate: 473, power: 5676, cost: 15000 },
                 'Antminer S21 XP': { hashrate: 270, power: 3645, cost: 8500 },
@@ -1636,7 +1638,8 @@
                 currentElectricityPrice.textContent = '$' + electricityCost.toFixed(3);
                 
                 // Get selected miner model
-                const selectedMiner = document.getElementById('minerModelSelect')?.value || 'Antminer S19 Pro';
+                const minerModelSelectElement = document.getElementById('minerModelSelect');
+                const selectedMiner = minerModelSelectElement ? minerModelSelectElement.value : 'Antminer S19 Pro';
                 
                 // Calculate breakeven for current electricity cost using selected miner
                 const dailyProfit = calculateDailyProfitForMiner(selectedMiner, marketData, electricityCost);
