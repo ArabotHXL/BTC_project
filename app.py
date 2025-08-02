@@ -1422,9 +1422,12 @@ def migrate_to_crm():
         # 遍历每个用户并迁移
         for user in users:
             # 检查是否已经存在同名/同邮箱的客户
+            from sqlalchemy import or_, and_
             existing_customer = Customer.query.filter(
-                (Customer.email == user.email) | 
-                ((Customer.name == user.name) & (Customer.company == user.company))
+                or_(
+                    Customer.email == user.email,
+                    and_(Customer.name == user.name, Customer.company == user.company)
+                )
             ).first()
             
             if existing_customer:
