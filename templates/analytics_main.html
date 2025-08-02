@@ -1063,7 +1063,7 @@
             console.log('Analytics page DOM loaded, initializing...');
             
             // Give the page a moment to fully render
-            setTimeout(() => {
+            setTimeout(function() {
                 console.log('Starting analytics initialization...');
                 initPriceChart();
                 setupTabs();
@@ -1074,13 +1074,13 @@
 
         // Tab management
         function setupTabs() {
-            document.querySelectorAll('[data-tab]').forEach(tab => {
+            document.querySelectorAll('[data-tab]').forEach(function(tab) {
                 tab.addEventListener('click', function(e) {
                     e.preventDefault();
                     
                     // Remove active class from all tabs and content
-                    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-                    document.querySelectorAll('.analytics-tab').forEach(content => content.classList.remove('active'));
+                    document.querySelectorAll('.nav-link').forEach(function(link) { link.classList.remove('active'); });
+                    document.querySelectorAll('.analytics-tab').forEach(function(content) { content.classList.remove('active'); });
                     
                     // Add active class to clicked tab and corresponding content
                     this.classList.add('active');
@@ -1317,8 +1317,8 @@
                     ? report.recommendations 
                     : [report.recommendations];
                 
-                recommendations.forEach(rec => {
-                    recommendationsHtml += `<li class="mb-2">${rec}</li>`;
+                recommendations.forEach(function(rec) {
+                    recommendationsHtml += '<li class="mb-2">' + rec + '</li>';
                 });
                 
                 reportRecommendationsElement.innerHTML = recommendationsHtml;
@@ -1578,7 +1578,8 @@
             }
         }
 
-        function calculateDailyProfitForMiner(minerType, marketData, customElectricityCost = null) {
+        function calculateDailyProfitForMiner(minerType, marketData, customElectricityCost) {
+            customElectricityCost = customElectricityCost || null;
             // Updated miner specifications matching main calculator
             const minerSpecs = {
                 'Antminer S21 XP Hyd': { hashrate: 473, power: 5676, cost: 15000 },
@@ -2695,7 +2696,7 @@
                 indicator.style.backgroundColor = '#28a745';
                 indicator.textContent = '数据更新中...';
                 
-                setTimeout(() => {
+                setTimeout(function() {
                     indicator.style.backgroundColor = '#198754';
                     indicator.textContent = '实时更新';
                 }, 1000);
@@ -2722,7 +2723,8 @@
         }
 
         // Utility functions
-        function formatNumber(num, decimals = 2) {
+        function formatNumber(num, decimals) {
+            decimals = decimals || 2;
             if (num === null || num === undefined) return '--';
             const options = {
                 minimumFractionDigits: decimals,
@@ -2766,7 +2768,7 @@
         }
 
         function getRiskColor(level) {
-            switch(level?.toLowerCase()) {
+            switch(level && level.toLowerCase ? level.toLowerCase() : '') {
                 case '低': return 'success';
                 case '中': return 'warning';
                 case '高': return 'danger';
