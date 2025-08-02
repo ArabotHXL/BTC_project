@@ -86,9 +86,9 @@
             background-color: #f56565;
         }
         @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
+            0% { opacity: 1}
+            50% { opacity: 0.5}
+            100% { opacity: 1}
         }
         
         /* 智能警报系统样式优化 */
@@ -212,9 +212,9 @@
             animation: updateFlash 0.5s ease-in-out;
         }
         @keyframes updateFlash {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
+            0% { opacity: 1}
+            50% { opacity: 0.5}
+            100% { opacity: 1}
         }
         .recommendation-item {
             padding: 0.75rem;
@@ -1079,8 +1079,8 @@
                     e.preventDefault();
                     
                     // Remove active class from all tabs and content
-                    document.querySelectorAll('.nav-link').forEach(function(link) { link.classList.remove('active'); });
-                    document.querySelectorAll('.analytics-tab').forEach(function(content) { content.classList.remove('active'); });
+                    document.querySelectorAll('.nav-link').forEach(function(link) { link.classList.remove('active')});
+                    document.querySelectorAll('.analytics-tab').forEach(function(content) { content.classList.remove('active')});
                     
                     // Add active class to clicked tab and corresponding content
                     this.classList.add('active');
@@ -1152,7 +1152,7 @@
                     credentials: 'same-origin',
                     headers: {
                         'Accept': 'application/json',
-                        'Content-Type': 'application/json';
+                        'Content-Type': 'application/json'
                     }
                 });
                 console.log('Market data response status:', response.status);
@@ -1176,7 +1176,7 @@
                     credentials: 'same-origin',
                     headers: {
                         'Accept': 'application/json',
-                        'Content-Type': 'application/json';
+                        'Content-Type': 'application/json'
                     }
                 });
                 if (!response.ok) throw new Error('Technical indicators unavailable');
@@ -1202,7 +1202,7 @@
                     credentials: 'same-origin',
                     headers: {
                         'Accept': 'application/json',
-                        'Content-Type': 'application/json';
+                        'Content-Type': 'application/json'
                     }
                 });
                 if (!response.ok) throw new Error('Price history unavailable');
@@ -1234,7 +1234,7 @@
                     credentials: 'same-origin',
                     headers: {
                         'Accept': 'application/json',
-                        'Content-Type': 'application/json';
+                        'Content-Type': 'application/json'
                     }
                 });
                 if (!response.ok) throw new Error('Report unavailable');
@@ -1291,7 +1291,7 @@
                         for (var i = 0; i < entries.length; i++) {
                             var key = entries[i][0];
                             var value = entries[i][1];
-                            var displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase(); });
+                            var displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase()});
                             findingsHtml += '<div class="mb-2">' +
                                 '<strong>' + displayKey + ':</strong> ' + value +
                                 '</div>';
@@ -1989,7 +1989,7 @@
                     credentials: 'same-origin',
                     headers: {
                         'Accept': 'application/json',
-                        'Content-Type': 'application/json';
+                        'Content-Type': 'application/json'
                     }
                 });
                 
@@ -2023,29 +2023,28 @@
         
         function showDetailedReportModal(report) {
             // 创建详细报告模态框
-            const modalHtml = '
-                <div class="modal fade" id="detailedReportModal" tabindex="-1" aria-labelledby="detailedReportModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-xl">
-                        <div class="modal-content bg-dark">
-                            <div class="modal-header border-secondary">
-                                <h5 class="modal-title text-white" id="detailedReportModalLabel">
-                                    <i class="bi bi-file-earmark-text"></i> ' + report.report_metadata.title
-                                </h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body text-white" style="max-height: 70vh; overflow-y: auto;">
-                                ' + formatDetailedReport(report) + ';
-                            </div>
-                            <div class="modal-footer border-secondary">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-                                <button type="button" class="btn btn-primary" onclick="downloadReport()">
-                                    <i class="bi bi-download"></i> 下载报告
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            ' + '';
+            const modalHtml = 
+                '<div class="modal fade" id="detailedReportModal" tabindex="-1" aria-labelledby="detailedReportModalLabel" aria-hidden="true">' +
+                    '<div class="modal-dialog modal-xl">' +
+                        '<div class="modal-content bg-dark">' +
+                            '<div class="modal-header border-secondary">' +
+                                '<h5 class="modal-title text-white" id="detailedReportModalLabel">' +
+                                    '<i class="bi bi-file-earmark-text"></i> ' + report.report_metadata.title +
+                                '</h5>' +
+                                '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>' +
+                            '</div>' +
+                            '<div class="modal-body text-white" style="max-height: 70vh; overflow-y: auto;">' +
+                                formatDetailedReport(report) +
+                            '</div>' +
+                            '<div class="modal-footer border-secondary">' +
+                                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>' +
+                                '<button type="button" class="btn btn-primary" onclick="downloadReport()">' +
+                                    '<i class="bi bi-download"></i> 下载报告' +
+                                '</button>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
             
             // 移除现有模态框并添加新的
             const existingModal = document.getElementById('detailedReportModal');
@@ -2065,7 +2064,7 @@
             
             // 执行摘要 - 美化样式
             if (report.executive_summary) {
-                html += ''' +
+                html += 
                     '<div class="mb-4">' +
                         '<h5 class="text-primary mb-3 fw-bold border-bottom border-primary pb-2">' +
                             '<i class="bi bi-star-fill"></i> 执行摘要' +
@@ -2100,13 +2099,13 @@
                             </div>
                         </div>
                     </div>
-                ' + '';
+                '';
             }
             
             // 盈利性分析 - 美化样式
             if (report.profitability_analysis && report.profitability_analysis.best_scenario) {
                 const best = report.profitability_analysis.best_scenario;
-                html += ''' +
+                html += 
                     <div class="mb-4">
                         <h5 class="text-primary mb-3 fw-bold border-bottom border-primary pb-2">
                             <i class="bi bi-graph-up-arrow"></i> 最佳投资方案
@@ -2167,12 +2166,12 @@
                             </div>
                         </div>
                     </div>
-                ' + '';
+                '';
             }
             
             // 技术分析 - 美化样式
             if (report.technical_analysis) {
-                html += ''' +
+                html += 
                     '<div class="mb-4">' +
                         '<h5 class="text-primary mb-3 fw-bold border-bottom border-primary pb-2">' +
                             '<i class="bi bi-bar-chart-line"></i> 技术分析' +
@@ -2193,7 +2192,7 @@
                         rsiStatus = '超卖';
                     }
                     
-                    html += ''' +
+                    html += 
                         '<div class="col-md-6">' +
                             '<div class="d-flex align-items-center">' +
                                 '<div class="me-3">' +
@@ -2214,7 +2213,7 @@
                     const trendIcon = trend.short_term_trend === 'up' ? 'bi-arrow-up' : 'bi-arrow-down';
                     const trendColor = trend.short_term_trend === 'up' ? 'text-success' : 'text-danger';
                     
-                    html += ''' +
+                    html += 
                         '<div class="col-md-6">' +
                             '<div class="d-flex align-items-center">' +
                                 '<div class="me-3">' +
@@ -2230,7 +2229,7 @@
                     '';
                 }
                 
-                html += ''' +
+                html += 
                             '</div>' +
                         '</div>' +
                     '</div>' +
@@ -2244,7 +2243,7 @@
                 const riskText = risk.risk_level === 'high' ? '高风险' : risk.risk_level === 'low' ? '低风险' : '中等风险';
                 const riskIcon = risk.risk_level === 'high' ? 'exclamation-triangle' : risk.risk_level === 'low' ? 'shield-check' : 'shield-exclamation';
                 
-                html += ''' +
+                html += 
                     <div class="mb-4">
                         <h5 class="text-primary mb-3 fw-bold border-bottom border-primary pb-2">
                             <i class="bi bi-shield-exclamation"></i> 风险评估
@@ -2281,19 +2280,19 @@
                             </div>
                         </div>
                     </div>
-                ' + '';
+                '';
             }
             
             // 可操作建议 - 美化样式
             if (report.actionable_recommendations && report.actionable_recommendations.length > 0) {
-                html += ''' +
+                html += 
                     <div class="mb-4">
                         <h5 class="text-primary mb-3 fw-bold border-bottom border-primary pb-2">
                             <i class="bi bi-lightbulb-fill"></i> 可操作建议
                         </h5>
                         <div class="p-4 bg-dark rounded-3 border border-secondary">
                             <div class="row g-3">
-                ' + '';
+                '';
                 
                 report.actionable_recommendations.forEach((recommendation, index) => {
                     const icons = ['bi-1-circle-fill', 'bi-2-circle-fill', 'bi-3-circle-fill', 'bi-4-circle-fill', 'bi-5-circle-fill'];
@@ -2301,7 +2300,7 @@
                     const icon = icons[index % icons.length];
                     const color = colors[index % colors.length];
                     
-                    html += ''' +
+                    html += 
                         <div class="col-12">
                             <div class="d-flex align-items-start p-3 bg-secondary bg-opacity-30 rounded-3 border-start border-3 border-primary">
                                 <div class="me-3 mt-1">
@@ -2312,14 +2311,14 @@
                                 </div>
                             </div>
                         </div>
-                    ' + '';
+                    '';
                 });
                 
-                html += ''' +
+                html += 
                             </div>
                         </div>
                     </div>
-                ' + '';
+                '';
             }
             
             return html;
@@ -2599,7 +2598,7 @@
                     };
                     return date.toLocaleString(undefined, dateOptions);
                 });
-                const prices = data.map(function(item) { return item.btc_price || item.price; });
+                const prices = data.map(function(item) { return item.btc_price || item.price});
                 
                 if (priceChart && priceChart.data) {
                     priceChart.data.labels = labels;
