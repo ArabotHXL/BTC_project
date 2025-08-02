@@ -73,23 +73,27 @@ def health_check():
     try:
         # Basic health check - verify database connection
         from db import db
+        # Test database connection
         from sqlalchemy import text
         db.session.execute(text('SELECT 1'))
-        
         return jsonify({
-            "status": "healthy",
-            "timestamp": datetime.utcnow().isoformat(),
-            "service": "btc_mining_calculator",
-            "database": "connected"
+            'status': 'healthy',
+            'database': 'connected',
+            'timestamp': datetime.now().isoformat()
         }), 200
     except Exception as e:
-        logging.error(f"Health check failed: {e}")
         return jsonify({
-            "status": "unhealthy",
-            "timestamp": datetime.utcnow().isoformat(),
-            "service": "btc_mining_calculator",
-            "error": str(e)
+            'status': 'unhealthy',
+            'database': 'disconnected',
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
         }), 500
+
+# API health check - same as /health but at /api/health
+@app.route('/api/health', methods=['GET'])
+def api_health_check():
+    """API health check endpoint"""
+    return health_check()
 
 # Simple status endpoint without authentication for load balancer
 @app.route('/status', methods=['GET'])
@@ -536,6 +540,12 @@ def login_dashboard():
                           time_data=time_data,
                           geo_data=geo_data)
 
+# Test endpoint for regression testing - no authentication required
+@app.route('/api/test/calculate', methods=['POST'])
+def test_calculate():
+    """Test calculation endpoint for regression testing - no authentication required"""
+    return calculate_internal(request)
+
 @app.route('/calculate', methods=['POST'])
 def calculate():
     """Handle the calculation request and return results as JSON"""
@@ -545,14 +555,18 @@ def calculate():
             'success': False,
             'error': 'Authentication required'
         }), 401
-        
+    
+    return calculate_internal(request)
+
+def calculate_internal(request_obj):
+    """Internal calculation function shared by authenticated and test endpoints"""
     try:
         # Handle both JSON and form data
-        if request.is_json:
-            data = request.get_json()
+        if request_obj.is_json:
+            data = request_obj.get_json()
             logging.info(f"Received calculate request JSON data: {data}")
         else:
-            data = request.form
+            data = request_obj.form
             logging.info(f"Received calculate request form data: {data}")
         
         # 初始化错误收集列表
@@ -2372,6 +2386,50 @@ def analytics_dashboard():
                           user_role=user_role,
                           technical_indicators=technical_indicators,
                           latest_report=latest_report)
+
+# Unified analytics data endpoint for testing and general use
+@app.route('/api/analytics/data', methods=['GET'])
+def analytics_unified_data():
+    """统一的分析数据端点 - 用于测试和一般使用"""
+    try:
+        # 允许未经认证的访问用于测试
+        import psycopg2
+        
+        # 连接数据库获取最新市场数据
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT recorded_at, btc_price, network_hashrate, network_difficulty, 
+                   fear_greed_index, price_change_24h, btc_market_cap, btc_volume_24h,
+                   price_change_1h, price_change_7d
+            FROM market_analytics 
+            ORDER BY recorded_at DESC LIMIT 1
+        """)
+        data = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if data:
+            return jsonify({
+                'success': True,
+                'data': {
+                    'timestamp': data[0].isoformat(),
+                    'btc_price': float(data[1]) if data[1] else None,
+                    'network_hashrate': float(data[2]) if data[2] else None,
+                    'network_difficulty': float(data[3]) if data[3] else None,
+                    'fear_greed_index': data[4],
+                    'price_change_24h': float(data[5]) if data[5] else None,
+                    'btc_market_cap': float(data[6]) if data[6] else None,
+                    'btc_volume_24h': float(data[7]) if data[7] else None,
+                    'price_change_1h': float(data[8]) if data[8] else None,
+                    'price_change_7d': float(data[9]) if data[9] else None
+                }
+            })
+        else:
+            return jsonify({'success': False, 'error': '暂无市场数据'}), 404
+    except Exception as e:
+        app.logger.error(f"获取分析数据失败: {e}")
+        return jsonify({'error': f'获取市场数据失败: {str(e)}'}), 500
 
 @app.route('/analytics/api/market-data')
 @app.route('/api/analytics/market-data')

@@ -1,0 +1,228 @@
+{
+  "timestamp": "2025-08-02T22:20:21.919653",
+  "overall_accuracy": 100.0,
+  "target_accuracy": 99.0,
+  "passed_tests": 31,
+  "failed_tests": 0,
+  "total_tests": 31,
+  "test_results": [
+    {
+      "test_name": "系统服务器响应",
+      "passed": true,
+      "details": "状态码: 200",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:11.189313"
+    },
+    {
+      "test_name": "数据库连接",
+      "passed": true,
+      "details": "PostgreSQL数据库",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:11.275032"
+    },
+    {
+      "test_name": "用户认证: admin@example.com",
+      "passed": true,
+      "details": "响应码: 302",
+      "critical": true,
+      "timestamp": "2025-08-02T22:20:12.679901"
+    },
+    {
+      "test_name": "用户认证: hxl2022hao@gmail.com",
+      "passed": true,
+      "details": "响应码: 302",
+      "critical": true,
+      "timestamp": "2025-08-02T22:20:13.082171"
+    },
+    {
+      "test_name": "用户认证: user@example.com",
+      "passed": true,
+      "details": "响应码: 302",
+      "critical": true,
+      "timestamp": "2025-08-02T22:20:13.487574"
+    },
+    {
+      "test_name": "用户认证: site@example.com",
+      "passed": true,
+      "details": "响应码: 302",
+      "critical": true,
+      "timestamp": "2025-08-02T22:20:13.891531"
+    },
+    {
+      "test_name": "用户认证: testing123@example.com",
+      "passed": true,
+      "details": "响应码: 302",
+      "critical": true,
+      "timestamp": "2025-08-02T22:20:14.303164"
+    },
+    {
+      "test_name": "认证系统整体",
+      "passed": true,
+      "details": "成功率: 100.0% (5/5)",
+      "critical": true,
+      "timestamp": "2025-08-02T22:20:14.303326"
+    },
+    {
+      "test_name": "实时市场数据",
+      "passed": true,
+      "details": "BTC: $112,823, 算力: 888.2 EH/s",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:15.479354"
+    },
+    {
+      "test_name": "数据合理性验证",
+      "passed": true,
+      "details": "价格合理: True, 算力合理: True",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:15.479496"
+    },
+    {
+      "test_name": "挖矿计算场景 1",
+      "passed": true,
+      "details": "Antminer S19 Pro x100, 日产出: 0.017354BTC, 日利润: $190.99",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:16.484020"
+    },
+    {
+      "test_name": "挖矿计算场景 2",
+      "passed": true,
+      "details": "Antminer S21 x50, 日产出: 0.028880BTC, 日利润: $395.10",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:16.488059"
+    },
+    {
+      "test_name": "挖矿计算场景 3",
+      "passed": true,
+      "details": "WhatsMiner M50 x200, 日产出: 0.017692BTC, 日利润: $-1460.08",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:16.492903"
+    },
+    {
+      "test_name": "挖矿计算引擎整体",
+      "passed": true,
+      "details": "成功率: 100.0% (3/3)",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:16.493115"
+    },
+    {
+      "test_name": "JS功能: 页面加载",
+      "passed": true,
+      "details": "ES5兼容，无语法错误",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:17.501840"
+    },
+    {
+      "test_name": "JS功能: 分析仪表盘",
+      "passed": true,
+      "details": "ES5兼容，无语法错误",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:17.509402"
+    },
+    {
+      "test_name": "JS功能: 图表渲染",
+      "passed": true,
+      "details": "ES5兼容，无语法错误",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:17.683083"
+    },
+    {
+      "test_name": "JS功能: 多语言支持",
+      "passed": true,
+      "details": "ES5兼容，无语法错误",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:17.690841"
+    },
+    {
+      "test_name": "JavaScript功能整体",
+      "passed": true,
+      "details": "兼容性: 100.0% (4/4)",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:17.691130"
+    },
+    {
+      "test_name": "响应式设计: Mobile",
+      "passed": true,
+      "details": "包含响应式布局",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:18.697912"
+    },
+    {
+      "test_name": "响应式设计: Tablet",
+      "passed": true,
+      "details": "包含响应式布局",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:18.705422"
+    },
+    {
+      "test_name": "响应式设计: Desktop",
+      "passed": true,
+      "details": "包含响应式布局",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:18.711612"
+    },
+    {
+      "test_name": "响应式设计: Large Desktop",
+      "passed": true,
+      "details": "包含响应式布局",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:18.717541"
+    },
+    {
+      "test_name": "响应式设计整体",
+      "passed": true,
+      "details": "兼容性: 100.0% (4/4)",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:18.717636"
+    },
+    {
+      "test_name": "语言支持: 中文",
+      "passed": true,
+      "details": "语言代码: zh",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:19.726528"
+    },
+    {
+      "test_name": "语言支持: English",
+      "passed": true,
+      "details": "语言代码: en",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:19.733969"
+    },
+    {
+      "test_name": "多语言支持整体",
+      "passed": true,
+      "details": "支持率: 100.0% (2/2)",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:19.734103"
+    },
+    {
+      "test_name": "性能: 首页加载",
+      "passed": true,
+      "details": "响应时间: 0.01s (目标: ≤2.0s)",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:20.742164"
+    },
+    {
+      "test_name": "性能: API数据",
+      "passed": true,
+      "details": "响应时间: 0.17s (目标: ≤3.0s)",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:20.914568"
+    },
+    {
+      "test_name": "性能: 挖矿计算",
+      "passed": true,
+      "details": "响应时间: 0.00s (目标: ≤5.0s)",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:20.918508"
+    },
+    {
+      "test_name": "系统性能整体",
+      "passed": true,
+      "details": "效率: 100.0% (3/3)",
+      "critical": false,
+      "timestamp": "2025-08-02T22:20:20.918681"
+    }
+  ],
+  "status": "PASS"
+}
