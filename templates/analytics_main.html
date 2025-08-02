@@ -1280,26 +1280,25 @@
                 try {
                     if (Array.isArray(findings)) {
                         // Handle array of recommendations
-                        findings.forEach((finding, index) => {
-                            findingsHtml += `
-                                <div class="mb-2">
-                                    <strong>${index + 1}.</strong> ${finding}
-                                </div>
-                            `;
+                        findings.forEach(function(finding, index) {
+                            findingsHtml += '<div class="mb-2">' +
+                                '<strong>' + (index + 1) + '.</strong> ' + finding +
+                                '</div>';
                         });
                     } else if (typeof findings === 'object') {
                         // Handle object structure
-                        for (const [key, value] of Object.entries(findings)) {
-                            const displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                            findingsHtml += `
-                                <div class="mb-2">
-                                    <strong>${displayKey}:</strong> ${value}
-                                </div>
-                            `;
+                        var entries = Object.entries(findings);
+                        for (var i = 0; i < entries.length; i++) {
+                            var key = entries[i][0];
+                            var value = entries[i][1];
+                            var displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase(); });
+                            findingsHtml += '<div class="mb-2">' +
+                                '<strong>' + displayKey + ':</strong> ' + value +
+                                '</div>';
                         }
                     } else {
                         // Handle string
-                        findingsHtml = `<div class="mb-2">${findings}</div>`;
+                        findingsHtml = '<div class="mb-2">' + findings + '</div>';
                     }
                     reportFindingsElement.innerHTML = findingsHtml;
                     console.log('Updated report findings:', findings);
@@ -1915,18 +1914,16 @@
                 
                 if (result.success) {
                     // 显示成功状态
-                    statusDiv.innerHTML = `
-                        <div class="text-success">
-                            <i class="bi bi-check-circle-fill me-2"></i>
-                            生成成功！
-                        </div>
-                        <div class="small mt-1">
-                            <div>准确度评分: <strong>${result.summary.accuracy_score}/100</strong></div>
-                            <div>数据源: ${result.summary.data_sources_count}个</div>
-                            <div>生成文件: ${result.summary.files_generated}个</div>
-                            ${result.summary.distributions_sent > 0 ? `<div>已发送: ${result.summary.distributions_sent}个通知</div>` : ''}
-                        </div>
-                    `;
+                    statusDiv.innerHTML = '<div class="text-success">' +
+                        '<i class="bi bi-check-circle-fill me-2"></i>' +
+                        '生成成功！' +
+                        '</div>' +
+                        '<div class="small mt-1">' +
+                            '<div>准确度评分: <strong>' + result.summary.accuracy_score + '/100</strong></div>' +
+                            '<div>数据源: ' + result.summary.data_sources_count + '个</div>' +
+                            '<div>生成文件: ' + result.summary.files_generated + '个</div>' +
+                            (result.summary.distributions_sent > 0 ? '<div>已发送: ' + result.summary.distributions_sent + '个通知</div>' : '') +
+                        '</div>';
                     
                     // 显示下载按钮
                     if (result.generated_files && Object.keys(result.generated_files).length > 0) {
@@ -1940,12 +1937,10 @@
                 
             } catch (error) {
                 console.error('专业报告生成错误:', error);
-                statusDiv.innerHTML = `
-                    <div class="text-danger">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        生成失败: ${error.message}
-                    </div>
-                `;
+                statusDiv.innerHTML = '<div class="text-danger">' +
+                    '<i class="bi bi-exclamation-triangle-fill me-2"></i>' +
+                    '生成失败: ' + error.message +
+                    '</div>';
             } finally {
                 // 恢复按钮状态
                 generateBtn.disabled = false;
@@ -1956,7 +1951,7 @@
         // 下载专业报告文件
         async function downloadProfessionalReport(fileType) {
             try {
-                const response = await fetch(`/api/professional-report/download/${fileType}`);
+                const response = await fetch('/api/professional-report/download/' + fileType);
                 
                 if (response.ok) {
                     const blob = await response.blob();
@@ -1964,7 +1959,7 @@
                     const a = document.createElement('a');
                     a.style.display = 'none';
                     a.href = url;
-                    a.download = `mining_report_${new Date().toISOString().split('T')[0]}.${fileType}`;
+                    a.download = 'mining_report_' + new Date().toISOString().split('T')[0] + '.' + fileType;
                     document.body.appendChild(a);
                     a.click();
                     window.URL.revokeObjectURL(url);
@@ -2340,14 +2335,17 @@
             if (!alertsContainer) return;
 
             const alerts = generateSmartAlerts(marketData);
-            alertsContainer.innerHTML = alerts.map(alert => `
-                <div class="alert alert-${alert.type} d-flex align-items-center" role="alert">
-                    <i class="bi bi-${alert.icon} me-2"></i>
-                    <div>
-                        <strong>${alert.title}:</strong> ${alert.message}
-                    </div>
-                </div>
-            `).join('');
+            var alertsHtml = '';
+            for (var i = 0; i < alerts.length; i++) {
+                var alert = alerts[i];
+                alertsHtml += '<div class="alert alert-' + alert.type + ' d-flex align-items-center" role="alert">' +
+                    '<i class="bi bi-' + alert.icon + ' me-2"></i>' +
+                    '<div>' +
+                        '<strong>' + alert.title + ':</strong> ' + alert.message +
+                    '</div>' +
+                '</div>';
+            }
+            alertsContainer.innerHTML = alertsHtml;
         }
 
         function generateSmartAlerts(marketData) {
@@ -2362,14 +2360,14 @@
                     type: 'warning',
                     icon: 'exclamation-triangle',
                     title: '价格警报',
-                    message: `BTC突破$${formatNumber(price, 0)}，接近历史高位，注意回调风险`
+                    message: 'BTC突破$' + formatNumber(price, 0) + '，接近历史高位，注意回调风险'
                 });
             } else if (price < 95000) {
                 alerts.push({
                     type: 'info',
                     icon: 'info-circle',
                     title: '价格机会',
-                    message: `BTC价格$${formatNumber(price, 0)}，可能是较好的入场时机`
+                    message: 'BTC价格$' + formatNumber(price, 0) + '，可能是较好的入场时机'
                 });
             }
 
@@ -2379,7 +2377,7 @@
                     type: 'success',
                     icon: 'check-circle',
                     title: '网络强劲',
-                    message: `网络算力${formatNumber(hashrate, 1)} EH/s，网络安全性极高`
+                    message: '网络算力' + formatNumber(hashrate, 1) + ' EH/s，网络安全性极高'
                 });
             } else if (hashrate < 600) {
                 alerts.push({
@@ -2420,34 +2418,33 @@
             if (!recommendationsContainer) return;
 
             // 显示加载状态
-            recommendationsContainer.innerHTML = `
-                <div class="loading-spinner text-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">生成专业AI建议...</span>
-                    </div>
-                    <p class="mt-2 text-muted">正在生成专业投资建议...</p>
-                </div>
-            `;
+            recommendationsContainer.innerHTML = '<div class="loading-spinner text-center">' +
+                '<div class="spinner-border text-primary" role="status">' +
+                    '<span class="visually-hidden">生成专业AI建议...</span>' +
+                '</div>' +
+                '<p class="mt-2 text-muted">正在生成专业投资建议...</p>' +
+                '</div>';
 
             try {
                 const recommendations = await generateAIRecommendations(marketData);
-                recommendationsContainer.innerHTML = recommendations.map(rec => `
-                    <div class="mb-3">
-                        <h6 class="text-${rec.type}">
-                            <i class="bi bi-${rec.icon}"></i> ${rec.category}
-                        </h6>
-                        <p class="small text-muted mb-2">${rec.message}</p>
-                    </div>
-                `).join('');
+                var recommendationsHtml = '';
+                for (var i = 0; i < recommendations.length; i++) {
+                    var rec = recommendations[i];
+                    recommendationsHtml += '<div class="mb-3">' +
+                        '<h6 class="text-' + rec.type + '">' +
+                            '<i class="bi bi-' + rec.icon + '"></i> ' + rec.category +
+                        '</h6>' +
+                        '<p class="small text-muted mb-2">' + rec.message + '</p>' +
+                        '</div>';
+                }
+                recommendationsContainer.innerHTML = recommendationsHtml;
                 
             } catch (error) {
                 console.error('Error updating AI recommendations:', error);
-                recommendationsContainer.innerHTML = `
-                    <div class="text-danger">
-                        <h6><i class="bi bi-exclamation-triangle"></i> 加载失败</h6>
-                        <p class="small">无法生成AI建议，请稍后重试</p>
-                    </div>
-                `;
+                recommendationsContainer.innerHTML = '<div class="text-danger">' +
+                    '<h6><i class="bi bi-exclamation-triangle"></i> 加载失败</h6>' +
+                    '<p class="small">无法生成AI建议，请稍后重试</p>' +
+                    '</div>';
             }
         }
 
@@ -2590,7 +2587,7 @@
             
             try {
                 // 转换为用户系统的本地时间
-                const labels = data.map(item => {
+                const labels = data.map(function(item) {
                     const date = new Date(item.timestamp || item.time);
                     // 使用系统本地时间格式，12小时制显示
                     const dateOptions = {
@@ -2602,7 +2599,7 @@
                     };
                     return date.toLocaleString(undefined, dateOptions);
                 });
-                const prices = data.map(item => item.btc_price || item.price);
+                const prices = data.map(function(item) { return item.btc_price || item.price; });
                 
                 if (priceChart && priceChart.data) {
                     priceChart.data.labels = labels;
@@ -2628,9 +2625,14 @@
             // Key findings
             const findings = document.getElementById('reportFindings');
             if (data.key_findings) {
-                findings.innerHTML = Object.entries(data.key_findings)
-                    .map(([key, value]) => `<div><strong>${key}:</strong> ${value}</div>`)
-                    .join('');
+                var findingsHtml = '';
+                var entries = Object.entries(data.key_findings);
+                for (var i = 0; i < entries.length; i++) {
+                    var key = entries[i][0];
+                    var value = entries[i][1];
+                    findingsHtml += '<div><strong>' + key + ':</strong> ' + value + '</div>';
+                }
+                findings.innerHTML = findingsHtml;
             } else {
                 findings.textContent = '暂无关键发现';
             }
@@ -2638,9 +2640,11 @@
             // Recommendations
             const recommendations = document.getElementById('reportRecommendations');
             if (data.recommendations && data.recommendations.length > 0) {
-                recommendations.innerHTML = data.recommendations
-                    .map(rec => `<div class="recommendation-item">${rec}</div>`)
-                    .join('');
+                var recommendationsHtml = '';
+                for (var i = 0; i < data.recommendations.length; i++) {
+                    recommendationsHtml += '<div class="recommendation-item">' + data.recommendations[i] + '</div>';
+                }
+                recommendations.innerHTML = recommendationsHtml;
             } else {
                 recommendations.textContent = '暂无投资建议';
             }
@@ -2832,7 +2836,10 @@
         function calculateMinerBreakevens(hashPrice) {
             const breakevens = [];
             
-            for (const [name, specs] of Object.entries(MINER_DATA)) {
+            var minerEntries = Object.entries(MINER_DATA);
+            for (var i = 0; i < minerEntries.length; i++) {
+                var name = minerEntries[i][0];
+                var specs = minerEntries[i][1];
                 // Daily revenue = hashPrice * hashrate
                 const dailyRevenue = hashPrice * specs.hashrate;
                 
@@ -3070,12 +3077,15 @@
                 return;
             }
 
-            const insightsHtml = insights.slice(0, 12).map(insight => `
-                <div class="insight-item mb-1 p-2 border-start border-${insight.type} border-3">
-                    <i class="bi ${insight.icon} text-${insight.type} me-2"></i>
-                    <span class="small">${insight.text}</span>
-                </div>
-            `).join('');
+            var insightsHtml = '';
+            var insightsToShow = insights.slice(0, 12);
+            for (var i = 0; i < insightsToShow.length; i++) {
+                var insight = insightsToShow[i];
+                insightsHtml += '<div class="insight-item mb-1 p-2 border-start border-' + insight.type + ' border-3">' +
+                    '<i class="bi ' + insight.icon + ' text-' + insight.type + ' me-2"></i>' +
+                    '<span class="small">' + insight.text + '</span>' +
+                    '</div>';
+            }
 
             insightsContainer.innerHTML = insightsHtml;
         }
