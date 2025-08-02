@@ -1364,7 +1364,8 @@
                 return value !== null && value !== undefined ? formatPrice(value) : '--';
             }
             
-            function safeFormatNumber(value, decimals = 2) {
+            function safeFormatNumber(value, decimals) {
+                if (typeof decimals === 'undefined') decimals = 2;
                 return value !== null && value !== undefined ? formatNumber(value, decimals) : '--';
             }
             
@@ -1414,7 +1415,9 @@
         }
 
         function getRiskColor(level) {
-            switch(level?.toLowerCase()) {
+            if (!level) return 'secondary';
+            var lowerLevel = level.toLowerCase();
+            switch(lowerLevel) {
                 case '低': case 'low': return 'success';
                 case '中': case 'medium': return 'warning';
                 case '高': case 'high': return 'danger';
@@ -1426,7 +1429,8 @@
             return price ? '$' + price.toLocaleString() : '--';
         }
 
-        function formatNumber(num, decimals = 2) {
+        function formatNumber(num, decimals) {
+            if (typeof decimals === 'undefined') decimals = 2;
             return num ? num.toFixed(decimals) : '--';
         }
 
