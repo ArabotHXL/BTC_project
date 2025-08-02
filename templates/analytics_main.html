@@ -1343,14 +1343,15 @@
             if (reportTimestampElement && report.created_at) {
                 const date = new Date(report.created_at);
                 // 使用12小时制系统本地时间格式
-                reportTimestampElement.textContent = '生成时间: ' + date.toLocaleString(undefined, {
+                const options = {
                     year: 'numeric',
                     month: '2-digit', 
                     day: '2-digit',
                     hour: 'numeric',
                     minute: '2-digit',
                     hour12: true
-                });
+                };
+                reportTimestampElement.textContent = '生成时间: ' + date.toLocaleString(undefined, options);
             }
             
             console.log('Report display updated successfully');
@@ -2591,13 +2592,14 @@
                 const labels = data.map(item => {
                     const date = new Date(item.timestamp || item.time);
                     // 使用系统本地时间格式，12小时制显示
-                    return date.toLocaleString(undefined, {
+                    const dateOptions = {
                         month: '2-digit',
                         day: '2-digit', 
                         hour: 'numeric',
                         minute: '2-digit',
                         hour12: true
-                    });
+                    };
+                    return date.toLocaleString(undefined, dateOptions);
                 });
                 const prices = data.map(item => item.btc_price || item.price);
                 
@@ -2701,7 +2703,7 @@
             
             if (timeElement) {
                 const now = new Date();
-                timeElement.textContent = '最后更新: ' + now.toLocaleString('zh-CN', {
+                const timeOptions = {
                     hour12: true,
                     year: 'numeric',
                     month: '2-digit',
@@ -2709,7 +2711,8 @@
                     hour: '2-digit',
                     minute: '2-digit',
                     second: '2-digit'
-                });
+                };
+                timeElement.textContent = '最后更新: ' + now.toLocaleString('zh-CN', timeOptions);
             }
         }
 
@@ -2721,10 +2724,11 @@
         // Utility functions
         function formatNumber(num, decimals = 2) {
             if (num === null || num === undefined) return '--';
-            return num.toLocaleString('en-US', {
+            const options = {
                 minimumFractionDigits: decimals,
                 maximumFractionDigits: decimals
-            });
+            };
+            return num.toLocaleString('en-US', options);
         }
 
         function formatPrice(price) {
