@@ -1,0 +1,350 @@
+/* 响应式设计 - 适配各种屏幕尺寸 */
+
+/* 移动优先设计原则 */
+/* 基础移动样式 (320px+) */
+.container-fluid {
+    padding: 10px;
+}
+
+.card {
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.form-control, .form-select {
+    font-size: 16px; /* 防止iOS自动缩放 */
+    padding: 10px;
+}
+
+.btn {
+    padding: 10px 15px;
+    font-size: 14px;
+    min-height: 44px; /* 触摸友好 */
+}
+
+/* 表格响应式处理 */
+.table-responsive {
+    font-size: 14px;
+}
+
+.table th, .table td {
+    padding: 8px;
+    vertical-align: middle;
+}
+
+/* 超小屏幕 (320px - 479px) */
+@media (max-width: 479px) {
+    .container-fluid {
+        padding: 5px;
+    }
+    
+    .card-body {
+        padding: 10px;
+    }
+    
+    .row > .col-md-6,
+    .row > .col-lg-4,
+    .row > .col-lg-6 {
+        margin-bottom: 15px;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        border-radius: 4px !important;
+        margin-bottom: 5px;
+    }
+    
+    /* 隐藏非关键信息 */
+    .d-none-xs {
+        display: none !important;
+    }
+    
+    /* 表格在小屏幕上垂直显示 */
+    .table-responsive table,
+    .table-responsive thead,
+    .table-responsive tbody,
+    .table-responsive th,
+    .table-responsive td,
+    .table-responsive tr {
+        display: block;
+    }
+    
+    .table-responsive thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+    
+    .table-responsive tr {
+        border: 1px solid #ccc;
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 5px;
+    }
+    
+    .table-responsive td {
+        border: none;
+        position: relative;
+        padding-left: 50% !important;
+        text-align: left;
+    }
+    
+    .table-responsive td:before {
+        content: attr(data-label) ": ";
+        position: absolute;
+        left: 6px;
+        width: 45%;
+        font-weight: bold;
+        text-align: left;
+    }
+}
+
+/* 小屏幕 (480px - 767px) */
+@media (min-width: 480px) and (max-width: 767px) {
+    .container-fluid {
+        padding: 15px;
+    }
+    
+    .card-columns {
+        column-count: 1;
+    }
+    
+    .navbar-nav {
+        flex-direction: column;
+    }
+    
+    .form-row .col-6 {
+        margin-bottom: 10px;
+    }
+}
+
+/* 中等屏幕 (768px - 991px) - 平板 */
+@media (min-width: 768px) and (max-width: 991px) {
+    .container-fluid {
+        padding: 20px;
+    }
+    
+    .card-columns {
+        column-count: 2;
+    }
+    
+    .table-responsive {
+        font-size: 15px;
+    }
+    
+    /* 平板优化的表格显示 */
+    .table th, .table td {
+        padding: 10px;
+    }
+}
+
+/* 大屏幕 (992px - 1199px) - 桌面 */
+@media (min-width: 992px) and (max-width: 1199px) {
+    .container-fluid {
+        max-width: 1140px;
+        margin: 0 auto;
+        padding: 30px;
+    }
+    
+    .card-columns {
+        column-count: 3;
+    }
+}
+
+/* 超大屏幕 (1200px+) - 大桌面 */
+@media (min-width: 1200px) {
+    .container-fluid {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px;
+    }
+    
+    .card-columns {
+        column-count: 4;
+    }
+    
+    .table-responsive {
+        font-size: 16px;
+    }
+}
+
+/* 高分辨率屏幕优化 */
+@media (min-resolution: 192dpi), (-webkit-min-device-pixel-ratio: 2) {
+    .card {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+    }
+    
+    .btn {
+        border-width: 0.5px;
+    }
+}
+
+/* 导航栏响应式 */
+@media (max-width: 991px) {
+    .navbar-collapse {
+        background-color: var(--bs-dark);
+        padding: 15px;
+        margin-top: 10px;
+        border-radius: 5px;
+    }
+}
+
+/* 图表容器响应式 */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+@media (max-width: 767px) {
+    .chart-container {
+        height: 250px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .chart-container {
+        height: 400px;
+    }
+}
+
+/* 响应式网格系统增强 */
+.row {
+    margin-left: -10px;
+    margin-right: -10px;
+}
+
+.row > [class*="col-"] {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+/* 响应式字体大小 */
+@media (max-width: 767px) {
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.3rem; }
+    h3 { font-size: 1.1rem; }
+    h4 { font-size: 1rem; }
+    h5 { font-size: 0.9rem; }
+    
+    .display-4 { font-size: 2rem; }
+    .lead { font-size: 1rem; }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+    .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    .form-control {
+        min-height: 44px;
+    }
+    
+    .nav-link {
+        padding: 12px 16px;
+    }
+}
+
+/* 打印样式 */
+@media print {
+    .navbar,
+    .btn,
+    .no-print {
+        display: none !important;
+    }
+    
+    .container-fluid {
+        max-width: none;
+        padding: 0;
+    }
+    
+    .card {
+        border: 1px solid #000;
+        box-shadow: none;
+        page-break-inside: avoid;
+    }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+    .card {
+        background-color: #2d3748;
+        border-color: #4a5568;
+    }
+    
+    .table-responsive {
+        color: #e2e8f0;
+    }
+}
+
+/* 减少动画效果（节能模式） */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* 横屏手机优化 */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    .navbar {
+        min-height: 50px;
+    }
+    
+    .card-body {
+        padding: 15px;
+    }
+    
+    .chart-container {
+        height: 200px;
+    }
+}
+
+/* 可访问性增强 */
+@media (prefers-contrast: high) {
+    .card {
+        border: 2px solid #000;
+    }
+    
+    .btn {
+        border: 2px solid;
+    }
+}
+
+/* Flexbox 布局增强 */
+.d-flex-responsive {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+@media (max-width: 767px) {
+    .d-flex-responsive {
+        flex-direction: column;
+    }
+}
+
+/* 响应式间距系统 */
+@media (max-width: 575px) {
+    .p-responsive { padding: 10px !important; }
+    .m-responsive { margin: 10px !important; }
+}
+
+@media (min-width: 576px) and (max-width: 991px) {
+    .p-responsive { padding: 20px !important; }
+    .m-responsive { margin: 15px !important; }
+}
+
+@media (min-width: 992px) {
+    .p-responsive { padding: 30px !important; }
+    .m-responsive { margin: 20px !important; }
+}

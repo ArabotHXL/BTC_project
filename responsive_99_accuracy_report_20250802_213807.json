@@ -1,0 +1,308 @@
+{
+  "overall_accuracy": 99.75,
+  "grade": "A++ 完美无缺",
+  "status": "🟢 PERFECT",
+  "test_duration": 11.923305988311768,
+  "metrics": {
+    "authentication": 100.0,
+    "responsive": 100.0,
+    "api_consistency": 100.0,
+    "calculation": 99.0,
+    "performance": 100.0,
+    "security": 100.0
+  },
+  "pass_rate": 100.0,
+  "detailed_results": [
+    {
+      "category": "Authentication",
+      "test_name": "Login - admin@example.com",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Verified",
+      "response_time": 0.4258880615234375,
+      "timestamp": "2025-08-02T21:37:56.188584",
+      "data": null
+    },
+    {
+      "category": "Authentication",
+      "test_name": "Login - hxl2022hao@gmail.com",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Verified",
+      "response_time": 0.013457298278808594,
+      "timestamp": "2025-08-02T21:37:56.208746",
+      "data": null
+    },
+    {
+      "category": "Authentication",
+      "test_name": "Login - user@example.com",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Verified",
+      "response_time": 0.009200334548950195,
+      "timestamp": "2025-08-02T21:37:56.223304",
+      "data": null
+    },
+    {
+      "category": "Authentication",
+      "test_name": "Login - site@example.com",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Verified",
+      "response_time": 0.010514259338378906,
+      "timestamp": "2025-08-02T21:37:56.240038",
+      "data": null
+    },
+    {
+      "category": "Authentication",
+      "test_name": "Login - testing123@example.com",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Verified",
+      "response_time": 0.012202739715576172,
+      "timestamp": "2025-08-02T21:37:56.257585",
+      "data": null
+    },
+    {
+      "category": "Authentication",
+      "test_name": "System Authentication",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "100.0% success rate (target: 95%+)",
+      "response_time": 0,
+      "timestamp": "2025-08-02T21:37:56.257792",
+      "data": null
+    },
+    {
+      "category": "Responsive",
+      "test_name": "Design - Mobile",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Mobile (375x667)",
+      "response_time": 0.0050811767578125,
+      "timestamp": "2025-08-02T21:37:56.273234",
+      "data": null
+    },
+    {
+      "category": "Responsive",
+      "test_name": "Design - Tablet",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Tablet (768x1024)",
+      "response_time": 0.005071878433227539,
+      "timestamp": "2025-08-02T21:37:56.278689",
+      "data": null
+    },
+    {
+      "category": "Responsive",
+      "test_name": "Design - Desktop",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Desktop (1200x800)",
+      "response_time": 0.005280256271362305,
+      "timestamp": "2025-08-02T21:37:56.284267",
+      "data": null
+    },
+    {
+      "category": "Responsive",
+      "test_name": "Design - Large Desktop",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Large Desktop (1920x1080)",
+      "response_time": 0.014400243759155273,
+      "timestamp": "2025-08-02T21:37:56.298978",
+      "data": null
+    },
+    {
+      "category": "Responsive",
+      "test_name": "Overall Compatibility",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "100.0% compatibility (target: 95%+)",
+      "response_time": 0,
+      "timestamp": "2025-08-02T21:37:56.299447",
+      "data": null
+    },
+    {
+      "category": "API_Consistency",
+      "test_name": "Network Stats Call 1",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "BTC: $112,645",
+      "response_time": 0.6142818927764893,
+      "timestamp": "2025-08-02T21:37:56.930328",
+      "data": null
+    },
+    {
+      "category": "API_Consistency",
+      "test_name": "Network Stats Call 2",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "BTC: $112,645",
+      "response_time": 0.5434114933013916,
+      "timestamp": "2025-08-02T21:37:58.474076",
+      "data": null
+    },
+    {
+      "category": "API_Consistency",
+      "test_name": "Network Stats Call 3",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "BTC: $112,645",
+      "response_time": 0.6439950466156006,
+      "timestamp": "2025-08-02T21:38:00.118449",
+      "data": null
+    },
+    {
+      "category": "API_Consistency",
+      "test_name": "Network Stats Call 4",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "BTC: $112,645",
+      "response_time": 0.5254895687103271,
+      "timestamp": "2025-08-02T21:38:01.644265",
+      "data": null
+    },
+    {
+      "category": "API_Consistency",
+      "test_name": "Network Stats Call 5",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "BTC: $112,645",
+      "response_time": 0.4817218780517578,
+      "timestamp": "2025-08-02T21:38:03.126397",
+      "data": null
+    },
+    {
+      "category": "API_Consistency",
+      "test_name": "Data Consistency",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "BTC variance: 0.0000, Hash variance: 0.0000",
+      "response_time": 0,
+      "timestamp": "2025-08-02T21:38:04.127134",
+      "data": null
+    },
+    {
+      "category": "Calculation",
+      "test_name": "Antminer S19 Pro",
+      "success": true,
+      "accuracy_score": 99.0,
+      "details": "BTC mined daily: 0.016741",
+      "response_time": 1.0189485549926758,
+      "timestamp": "2025-08-02T21:38:05.156850",
+      "data": null
+    },
+    {
+      "category": "Calculation",
+      "test_name": "Antminer S19",
+      "success": true,
+      "accuracy_score": 99.0,
+      "details": "BTC mined daily: 0.014458",
+      "response_time": 0.8599257469177246,
+      "timestamp": "2025-08-02T21:38:06.017117",
+      "data": null
+    },
+    {
+      "category": "Calculation",
+      "test_name": "Antminer S21",
+      "success": true,
+      "accuracy_score": 99.0,
+      "details": "BTC mined daily: 0.027861",
+      "response_time": 0.9178159236907959,
+      "timestamp": "2025-08-02T21:38:06.935240",
+      "data": null
+    },
+    {
+      "category": "Calculation",
+      "test_name": "Overall Precision",
+      "success": true,
+      "accuracy_score": 99.0,
+      "details": "Average calculation accuracy: 99.0%",
+      "response_time": 0,
+      "timestamp": "2025-08-02T21:38:06.935499",
+      "data": null
+    },
+    {
+      "category": "Performance",
+      "test_name": "Network Stats Response",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "0.681s (target: <3.0s)",
+      "response_time": 0.6806435585021973,
+      "timestamp": "2025-08-02T21:38:07.626224",
+      "data": null
+    },
+    {
+      "category": "Performance",
+      "test_name": "Main Dashboard Response",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "0.006s (target: <5.0s)",
+      "response_time": 0.0063855648040771484,
+      "timestamp": "2025-08-02T21:38:07.632849",
+      "data": null
+    },
+    {
+      "category": "Performance",
+      "test_name": "Overall Performance",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Average performance score: 100.0%",
+      "response_time": 0,
+      "timestamp": "2025-08-02T21:38:07.633144",
+      "data": null
+    },
+    {
+      "category": "Security",
+      "test_name": "Unauthorized Access Protection",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Successfully redirected to login",
+      "response_time": 0,
+      "timestamp": "2025-08-02T21:38:07.641978",
+      "data": null
+    },
+    {
+      "category": "Security",
+      "test_name": "Malicious Input: electricity_cost",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Input properly rejected",
+      "response_time": 0,
+      "timestamp": "2025-08-02T21:38:07.669645",
+      "data": null
+    },
+    {
+      "category": "Security",
+      "test_name": "Malicious Input: miner_count",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Input properly rejected",
+      "response_time": 0,
+      "timestamp": "2025-08-02T21:38:07.674808",
+      "data": null
+    },
+    {
+      "category": "Security",
+      "test_name": "Malicious Input: client_electricity_cost",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Input properly rejected",
+      "response_time": 0,
+      "timestamp": "2025-08-02T21:38:07.679278",
+      "data": null
+    },
+    {
+      "category": "Security",
+      "test_name": "Overall Security",
+      "success": true,
+      "accuracy_score": 100.0,
+      "details": "Average security score: 100.0%",
+      "response_time": 0,
+      "timestamp": "2025-08-02T21:38:07.679479",
+      "data": null
+    }
+  ],
+  "timestamp": "2025-08-02T21:38:07.684458"
+}
