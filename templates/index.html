@@ -1349,8 +1349,7 @@
                     '<strong>{% if current_lang == "en" %}Risk Assessment:{% else %}风险评估:{% endif %}</strong>' +
                     '<div class="mt-2">' +
                         (riskAssessment.risk_level ? 
-                        '<span class="badge ' + (riskAssessment.risk_level === '低' || riskAssessment.risk_level === 'Low' ? 'bg-success' : 
-                                                     riskAssessment.risk_level === '中' || riskAssessment.risk_level === 'Medium' ? 'bg-warning' : 'bg-danger') + '">' +
+                        '<span class="badge ' + getRiskColor(riskAssessment.risk_level) + '">' +
                             riskAssessment.risk_level + ' {% if current_lang == "en" %}Risk{% else %}风险{% endif %}' +
                         '</span>' : '') +
                         (riskAssessment.risk_score ? ' <span class="ms-2">' + riskAssessment.risk_score + '/100</span>' : '') +
@@ -1420,13 +1419,20 @@
         }
 
         function getRiskColor(level) {
-            if (!level) return 'secondary';
+            if (!level) return 'bg-secondary';
             var lowerLevel = level.toLowerCase();
             switch(lowerLevel) {
-                case '低': case 'low': return 'success';
-                case '中': case 'medium': return 'warning';
-                case '高': case 'high': return 'danger';
-                default: return 'secondary';
+                case '低': 
+                case 'low': 
+                    return 'bg-success';
+                case '中': 
+                case 'medium': 
+                    return 'bg-warning';
+                case '高': 
+                case 'high': 
+                    return 'bg-danger';
+                default: 
+                    return 'bg-secondary';
             }
         }
 
