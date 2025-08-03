@@ -1054,9 +1054,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        let priceChart;
-        let refreshInterval;
-        let isAutoRefresh = true;
+        var priceChart;
+        var refreshInterval;
+        var isAutoRefresh = true;
 
         // Initialize the page
         document.addEventListener('DOMContentLoaded', function() {
@@ -1088,7 +1088,7 @@
                     
                     // Add active class to clicked tab and corresponding content
                     this.classList.add('active');
-                    const tabId = this.getAttribute('data-tab');
+                    var tabId = this.getAttribute('data-tab');
                     document.getElementById(tabId).classList.add('active');
                 });
             });
@@ -1096,7 +1096,7 @@
 
         // Initialize price chart
         function initPriceChart() {
-            const ctx = document.getElementById('priceChart').getContext('2d');
+            var ctx = document.getElementById('priceChart').getContext('2d');
             priceChart = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -1152,7 +1152,7 @@
         async function loadMarketData() {
             try {
                 console.log('Loading market data...');
-                const response = await fetch('/api/analytics/market-data', {
+                var response = await fetch('/api/analytics/market-data', {
                     method: 'GET',
                     credentials: 'same-origin',
                     headers: {
@@ -1163,9 +1163,9 @@
                 console.log('Market data response status:', response.status);
                 if (!response.ok) throw new Error('Market data unavailable');
                 
-                const responseData = await response.json();
+                var responseData = await response.json();
                 console.log('Market data response:', responseData);
-                const data = responseData.data || responseData;
+                var data = responseData.data || responseData;
                 console.log('Extracted data for display:', data);
                 updateMarketDataDisplay(data);
             } catch (error) {
@@ -1176,7 +1176,7 @@
 
         async function loadTechnicalIndicators() {
             try {
-                const response = await fetch('/analytics/api/technical-indicators', {
+                var response = await fetch('/analytics/api/technical-indicators', {
                     method: 'GET',
                     credentials: 'same-origin',
                     headers: {
@@ -1186,7 +1186,7 @@
                 });
                 if (!response.ok) throw new Error('Technical indicators unavailable');
                 
-                const response_data = await response.json();
+                var response_data = await response.json();
                 console.log('Technical indicators response:', response_data);
                 
                 if (!response_data.success || !response_data.data) {
@@ -1202,7 +1202,7 @@
 
         async function loadPriceHistory() {
             try {
-                const response = await fetch('/api/analytics/price-history?hours=24', {
+                var response = await fetch('/api/analytics/price-history?hours=24', {
                     method: 'GET',
                     credentials: 'same-origin',
                     headers: {
@@ -1212,11 +1212,11 @@
                 });
                 if (!response.ok) throw new Error('Price history unavailable');
                 
-                const responseData = await response.json();
+                var responseData = await response.json();
                 console.log('Price history response:', responseData);
                 
                 // Extract price_history array from response
-                const data = responseData.price_history || responseData.data || responseData;
+                var data = responseData.price_history || responseData.data || responseData;
                 
                 // Check if data is array and has items
                 if (Array.isArray(data) && data.length > 0) {
@@ -1234,7 +1234,7 @@
 
         async function loadLatestReport() {
             try {
-                const response = await fetch('/api/analytics/latest-report', {
+                var response = await fetch('/api/analytics/latest-report', {
                     method: 'GET',
                     credentials: 'same-origin',
                     headers: {
@@ -1244,7 +1244,7 @@
                 });
                 if (!response.ok) throw new Error('Report unavailable');
                 
-                const data = await response.json();
+                var data = await response.json();
                 updateReportDisplay(data.latest_report || data.data || data);
             } catch (error) {
                 console.error('Report error:', error);
@@ -1254,7 +1254,7 @@
 
         function updateReportDisplay(data) {
             // Check if data contains the report
-            const report = data.detailed_report || data.data || data;
+            var report = data.detailed_report || data.data || data;
             
             if (!report) {
                 showErrorMessage('reports', '暂无可用的分析报告');
@@ -1262,26 +1262,26 @@
             }
             
             // Update report title - use correct path
-            const reportTitleElement = document.getElementById('reportTitle');
-            const title = report.report_metadata?.title || report.title || '专业矿业分析报告';
+            var reportTitleElement = document.getElementById('reportTitle');
+            var title = report.report_metadata?.title || report.title || '专业矿业分析报告';
             if (reportTitleElement) {
                 reportTitleElement.textContent = title;
                 console.log('Updated report title to:', title);
             }
             
             // Update report summary
-            const reportSummaryElement = document.getElementById('reportSummary');
-            const summary = report.executive_summary?.investment_outlook || report.summary || '市场分析摘要';
+            var reportSummaryElement = document.getElementById('reportSummary');
+            var summary = report.executive_summary?.investment_outlook || report.summary || '市场分析摘要';
             if (reportSummaryElement) {
                 reportSummaryElement.textContent = summary;
                 console.log('Updated report summary to:', summary);
             }
             
             // Update key findings
-            const reportFindingsElement = document.getElementById('reportFindings');
-            const findings = report.actionable_recommendations || report.key_findings;
+            var reportFindingsElement = document.getElementById('reportFindings');
+            var findings = report.actionable_recommendations || report.key_findings;
             if (reportFindingsElement && findings) {
-                let findingsHtml = '';
+                var findingsHtml = '';
                 try {
                     if (Array.isArray(findings)) {
                         // Handle array of recommendations
@@ -1314,10 +1314,10 @@
             }
             
             // Update report recommendations if available
-            const reportRecommendationsElement = document.getElementById('reportRecommendations');
+            var reportRecommendationsElement = document.getElementById('reportRecommendations');
             if (reportRecommendationsElement && report.recommendations) {
-                let recommendationsHtml = '';
-                const recommendations = Array.isArray(report.recommendations) 
+                var recommendationsHtml = '';
+                var recommendations = Array.isArray(report.recommendations) 
                     ? report.recommendations 
                     : [report.recommendations];
                 
@@ -1330,8 +1330,8 @@
             
             // Update risk assessment if available
             if (report.risk_assessment) {
-                const riskScoreElement = document.getElementById('reportRiskScore');
-                const riskLevelElement = document.getElementById('reportRiskLevel');
+                var riskScoreElement = document.getElementById('reportRiskScore');
+                var riskLevelElement = document.getElementById('reportRiskLevel');
                 
                 if (riskScoreElement && report.risk_assessment.risk_score) {
                     riskScoreElement.textContent = report.risk_assessment.risk_score;
@@ -1343,11 +1343,11 @@
             }
             
             // Update timestamp - 显示系统本地时间
-            const reportTimestampElement = document.getElementById('reportTimestamp');
+            var reportTimestampElement = document.getElementById('reportTimestamp');
             if (reportTimestampElement && report.created_at) {
-                const date = new Date(report.created_at);
+                var date = new Date(report.created_at);
                 // 使用12小时制系统本地时间格式
-                const options = {
+                var options = {
                     year: 'numeric',
                     month: '2-digit', 
                     day: '2-digit',
@@ -1372,10 +1372,10 @@
             currentMarketData = data;
             
             // Dashboard metrics - check each element exists before updating
-            const btcPriceElement = document.getElementById('btcPrice');
-            const networkHashrateElement = document.getElementById('networkHashrate');
-            const fearGreedIndexElement = document.getElementById('fearGreedIndex');
-            const fearGreedLabelElement = document.getElementById('fearGreedLabel');
+            var btcPriceElement = document.getElementById('btcPrice');
+            var networkHashrateElement = document.getElementById('networkHashrate');
+            var fearGreedIndexElement = document.getElementById('fearGreedIndex');
+            var fearGreedLabelElement = document.getElementById('fearGreedLabel');
             
             console.log('Element check:', {
                 btcPrice: btcPriceElement ? 'found' : 'missing',
@@ -1385,42 +1385,42 @@
             });
             
             if (btcPriceElement && data.btc_price) {
-                const formattedPrice = formatPrice(data.btc_price);
+                var formattedPrice = formatPrice(data.btc_price);
                 console.log('Setting BTC price:', formattedPrice);
                 btcPriceElement.textContent = formattedPrice;
             }
             
             if (networkHashrateElement && data.network_hashrate) {
-                const formattedHashrate = formatNumber(data.network_hashrate, 1);
+                var formattedHashrate = formatNumber(data.network_hashrate, 1);
                 console.log('Setting hashrate:', formattedHashrate);
                 networkHashrateElement.textContent = formattedHashrate;
             }
             
             if (fearGreedIndexElement) {
-                const indexValue = data.fear_greed_index || '--';
+                var indexValue = data.fear_greed_index || '--';
                 console.log('Setting fear greed index:', indexValue);
                 fearGreedIndexElement.textContent = indexValue;
             }
             
             if (fearGreedLabelElement) {
-                const labelValue = getFearGreedLabel(data.fear_greed_index);
+                var labelValue = getFearGreedLabel(data.fear_greed_index);
                 console.log('Setting fear greed label:', labelValue);
                 fearGreedLabelElement.textContent = labelValue;
             }
             
             // Price changes
-            const priceChange24h = document.getElementById('priceChange24h');
+            var priceChange24h = document.getElementById('priceChange24h');
             if (data.price_change_24h !== null) {
                 priceChange24h.textContent = formatPercent(data.price_change_24h);
                 priceChange24h.className = 'metric-change ' + (data.price_change_24h >= 0 ? 'price-up' : 'price-down');
             }
 
             // Market tab details (check if elements exist)
-            const marketCurrentPrice = document.getElementById('marketCurrentPrice');
-            const marketCap = document.getElementById('marketCap');
-            const marketHashrate = document.getElementById('marketHashrate');
-            const marketDifficulty = document.getElementById('marketDifficulty');
-            const marketVolume = document.getElementById('marketVolume');
+            var marketCurrentPrice = document.getElementById('marketCurrentPrice');
+            var marketCap = document.getElementById('marketCap');
+            var marketHashrate = document.getElementById('marketHashrate');
+            var marketDifficulty = document.getElementById('marketDifficulty');
+            var marketVolume = document.getElementById('marketVolume');
             
             if (marketCurrentPrice) marketCurrentPrice.textContent = formatPrice(data.btc_price);
             if (marketCap) marketCap.textContent = data.btc_market_cap ? formatCurrency(data.btc_market_cap) : '$2.12T';
@@ -1436,7 +1436,7 @@
             }
             
             // Handle price changes with fallback displays
-            const change1h = document.getElementById('priceChange1h');
+            var change1h = document.getElementById('priceChange1h');
             if (change1h) {
                 if (data.price_change_1h !== null && data.price_change_1h !== undefined) {
                     change1h.textContent = formatPercent(data.price_change_1h);
@@ -1447,7 +1447,7 @@
                 }
             }
             
-            const change7d = document.getElementById('priceChange7d');
+            var change7d = document.getElementById('priceChange7d');
             if (change7d) {
                 if (data.price_change_7d !== null && data.price_change_7d !== undefined) {
                     change7d.textContent = formatPercent(data.price_change_7d);
@@ -1458,7 +1458,7 @@
                 }
             }
             
-            const priceChange24hDetail = document.getElementById('priceChange24hDetail');
+            var priceChange24hDetail = document.getElementById('priceChange24hDetail');
             if (priceChange24hDetail) {
                 if (data.price_change_24h !== null && data.price_change_24h !== undefined) {
                     priceChange24hDetail.textContent = formatPercent(data.price_change_24h);
@@ -1494,13 +1494,13 @@
         }
 
         function updateInvestmentPrediction(marketData) {
-            const investmentAmountElement = document.getElementById('investmentAmount');
-            const investmentAmount = parseFloat(investmentAmountElement ? investmentAmountElement.value : 25000);
+            var investmentAmountElement = document.getElementById('investmentAmount');
+            var investmentAmount = parseFloat(investmentAmountElement ? investmentAmountElement.value : 25000);
             
             // Get selected miner specifications
-            const minerModelElement = document.getElementById('minerModelSelect');
-            const selectedMiner = minerModelElement ? minerModelElement.value : 'Antminer S19 Pro';
-            const minerSpecs = {
+            var minerModelElement = document.getElementById('minerModelSelect');
+            var selectedMiner = minerModelElement ? minerModelElement.value : 'Antminer S19 Pro';
+            var minerSpecs = {
                 'Antminer S21 XP Hyd': { hashrate: 473, power: 5676, cost: 15000 },
                 'Antminer S21 XP': { hashrate: 270, power: 3645, cost: 8500 },
                 'Antminer S21': { hashrate: 200, power: 3500, cost: 6500 },
@@ -1513,18 +1513,18 @@
                 'Antminer S19 Pro+ Hyd': { hashrate: 198, power: 5445, cost: 5500 }
             };
             
-            const spec = minerSpecs[selectedMiner] || minerSpecs['Antminer S19 Pro'];
-            const minerCount = Math.floor(investmentAmount / spec.cost);
+            var spec = minerSpecs[selectedMiner] || minerSpecs['Antminer S19 Pro'];
+            var minerCount = Math.floor(investmentAmount / spec.cost);
             
             if (minerCount > 0) {
                 // Calculate daily profit per miner using selected miner
-                const dailyProfitPerMiner = calculateDailyProfitForMiner(selectedMiner, marketData);
-                const totalDailyProfit = dailyProfitPerMiner * minerCount;
-                const monthlyProfit = totalDailyProfit * 30;
+                var dailyProfitPerMiner = calculateDailyProfitForMiner(selectedMiner, marketData);
+                var totalDailyProfit = dailyProfitPerMiner * minerCount;
+                var monthlyProfit = totalDailyProfit * 30;
                 
                 // Safe calculation with checks for valid values
-                const annualROI = totalDailyProfit > 0 ? (totalDailyProfit * 365 / investmentAmount) * 100 : 0;
-                const paybackDays = totalDailyProfit > 0 ? investmentAmount / totalDailyProfit : Infinity;
+                var annualROI = totalDailyProfit > 0 ? (totalDailyProfit * 365 / investmentAmount) * 100 : 0;
+                var paybackDays = totalDailyProfit > 0 ? investmentAmount / totalDailyProfit : Infinity;
                 
                 console.log('Investment calculation debug:', {
                     selectedMiner,
@@ -1537,17 +1537,17 @@
                 });
                 
                 // Calculate electricity cost details
-                const electricityCost = 0.05; // Default electricity cost
-                const dailyElectricityCostTotal = (spec.power / 1000) * 24 * electricityCost * minerCount;
+                var electricityCost = 0.05; // Default electricity cost
+                var dailyElectricityCostTotal = (spec.power / 1000) * 24 * electricityCost * minerCount;
                 
                 // Update display
-                const expectedDailyProfit = document.getElementById('expectedDailyProfit');
-                const expectedMonthlyProfit = document.getElementById('expectedMonthlyProfit');
-                const expectedAnnualROI = document.getElementById('expectedAnnualROI');
-                const expectedPaybackTime = document.getElementById('expectedPaybackTime');
-                const availableMinerCount = document.getElementById('availableMinerCount');
-                const dailyElectricityCost = document.getElementById('dailyElectricityCost');
-                const netDailyProfit = document.getElementById('netDailyProfit');
+                var expectedDailyProfit = document.getElementById('expectedDailyProfit');
+                var expectedMonthlyProfit = document.getElementById('expectedMonthlyProfit');
+                var expectedAnnualROI = document.getElementById('expectedAnnualROI');
+                var expectedPaybackTime = document.getElementById('expectedPaybackTime');
+                var availableMinerCount = document.getElementById('availableMinerCount');
+                var dailyElectricityCost = document.getElementById('dailyElectricityCost');
+                var netDailyProfit = document.getElementById('netDailyProfit');
                 
                 // Update electricity cost details
                 if (dailyElectricityCost) {
@@ -1585,7 +1585,7 @@
         function calculateDailyProfitForMiner(minerType, marketData, customElectricityCost) {
             customElectricityCost = customElectricityCost || null;
             // Updated miner specifications matching main calculator
-            const minerSpecs = {
+            var minerSpecs = {
                 'Antminer S21 XP Hyd': { hashrate: 473, power: 5676, cost: 15000 },
                 'Antminer S21 XP': { hashrate: 270, power: 3645, cost: 8500 },
                 'Antminer S21': { hashrate: 200, power: 3500, cost: 6500 },
@@ -1600,22 +1600,22 @@
                 'antminer_s19_pro': { hashrate: 110, power: 3250, cost: 2800 }
             };
             
-            const spec = minerSpecs[minerType] || minerSpecs['Antminer S19 Pro'];
-            const electricityCost = customElectricityCost || 0.025;
+            var spec = minerSpecs[minerType] || minerSpecs['Antminer S19 Pro'];
+            var electricityCost = customElectricityCost || 0.025;
             
             // Calculate daily BTC production using CORRECT mining formula
-            const hashrateInTH = spec.hashrate; // Already in TH/s
-            const networkHashrateTH = marketData.network_hashrate * 1000000; // Convert EH/s to TH/s (1 EH = 1,000,000 TH)
+            var hashrateInTH = spec.hashrate; // Already in TH/s
+            var networkHashrateTH = marketData.network_hashrate * 1000000; // Convert EH/s to TH/s (1 EH = 1,000,000 TH)
             
             // Correct formula: 全网日产出 / 全网算力 * 矿机算力
-            const networkDailyBtc = 144 * 3.125; // 144 blocks per day * 3.125 BTC reward
-            const btcPerTH = networkDailyBtc / networkHashrateTH; // BTC per TH per day
-            const dailyBtc = hashrateInTH * btcPerTH;
+            var networkDailyBtc = 144 * 3.125; // 144 blocks per day * 3.125 BTC reward
+            var btcPerTH = networkDailyBtc / networkHashrateTH; // BTC per TH per day
+            var dailyBtc = hashrateInTH * btcPerTH;
             
             // Calculate daily revenue and costs
-            const dailyRevenue = dailyBtc * marketData.btc_price;
-            const dailyPowerCost = (spec.power / 1000) * 24 * electricityCost;
-            const profit = dailyRevenue - dailyPowerCost;
+            var dailyRevenue = dailyBtc * marketData.btc_price;
+            var dailyPowerCost = (spec.power / 1000) * 24 * electricityCost;
+            var profit = dailyRevenue - dailyPowerCost;
             
             // Debug logging
             console.log('Miner calculation debug:', {
@@ -1632,24 +1632,24 @@
         }
 
         function updateElectricitySensitivity(marketData) {
-            const electricityRange = document.getElementById('electricityRange');
-            const currentElectricityPrice = document.getElementById('currentElectricityPrice');
-            const breakevenPoint = document.getElementById('breakevenPoint');
-            const investmentRecommendation = document.getElementById('investmentRecommendation');
-            const riskAssessmentBar = document.getElementById('riskAssessmentBar');
-            const riskLevelText = document.getElementById('riskLevel');
+            var electricityRange = document.getElementById('electricityRange');
+            var currentElectricityPrice = document.getElementById('currentElectricityPrice');
+            var breakevenPoint = document.getElementById('breakevenPoint');
+            var investmentRecommendation = document.getElementById('investmentRecommendation');
+            var riskAssessmentBar = document.getElementById('riskAssessmentBar');
+            var riskLevelText = document.getElementById('riskLevel');
             
             if (electricityRange && currentElectricityPrice) {
-                const electricityCost = parseFloat(electricityRange.value);
+                var electricityCost = parseFloat(electricityRange.value);
                 currentElectricityPrice.textContent = '$' + electricityCost.toFixed(3);
                 
                 // Get selected miner model
-                const minerModelSelectElement = document.getElementById('minerModelSelect');
-                const selectedMiner = minerModelSelectElement ? minerModelSelectElement.value : 'Antminer S19 Pro';
+                var minerModelSelectElement = document.getElementById('minerModelSelect');
+                var selectedMiner = minerModelSelectElement ? minerModelSelectElement.value : 'Antminer S19 Pro';
                 
                 // Calculate breakeven for current electricity cost using selected miner
-                const dailyProfit = calculateDailyProfitForMiner(selectedMiner, marketData, electricityCost);
-                const breakevenElectricityRate = calculateBreakevenElectricity(selectedMiner, marketData);
+                var dailyProfit = calculateDailyProfitForMiner(selectedMiner, marketData, electricityCost);
+                var breakevenElectricityRate = calculateBreakevenElectricity(selectedMiner, marketData);
                 
                 if (breakevenPoint) {
                     breakevenPoint.textContent = '$' + breakevenElectricityRate.toFixed(4);
@@ -1673,7 +1673,7 @@
                 }
                 
                 // Risk assessment
-                const riskPercent = Math.min(100, (electricityCost / breakevenElectricityRate) * 100);
+                var riskPercent = Math.min(100, (electricityCost / breakevenElectricityRate) * 100);
                 if (riskAssessmentBar && riskLevelText) {
                     riskAssessmentBar.style.width = riskPercent + '%';
                     
@@ -1693,7 +1693,7 @@
 
         function calculateBreakevenElectricity(minerType, marketData) {
             // Calculate breakeven electricity rate for a specific miner
-            const minerSpecs = {
+            var minerSpecs = {
                 'Antminer S21 XP Hyd': { hashrate: 473, power: 5676, cost: 15000 },
                 'Antminer S21 XP': { hashrate: 270, power: 3645, cost: 8500 },
                 'Antminer S21': { hashrate: 200, power: 3500, cost: 6500 },
@@ -1707,25 +1707,25 @@
                 'antminer_s19_pro': { hashrate: 110, power: 3250, cost: 2800 }
             };
             
-            const spec = minerSpecs[minerType] || minerSpecs['Antminer S19 Pro'];
+            var spec = minerSpecs[minerType] || minerSpecs['Antminer S19 Pro'];
             
             // Calculate daily BTC production using CORRECT mining formula
-            const hashrateInTH = spec.hashrate;
-            const networkHashrateTH = marketData.network_hashrate * 1000000; // Convert EH/s to TH/s (1 EH = 1,000,000 TH)
+            var hashrateInTH = spec.hashrate;
+            var networkHashrateTH = marketData.network_hashrate * 1000000; // Convert EH/s to TH/s (1 EH = 1,000,000 TH)
             
             // Correct formula: 全网日产出 / 全网算力 * 矿机算力
-            const networkDailyBtc = 144 * 3.125; // 144 blocks per day * 3.125 BTC reward
-            const btcPerTH = networkDailyBtc / networkHashrateTH; // BTC per TH per day
-            const dailyBtc = hashrateInTH * btcPerTH;
-            const dailyRevenue = dailyBtc * marketData.btc_price;
+            var networkDailyBtc = 144 * 3.125; // 144 blocks per day * 3.125 BTC reward
+            var btcPerTH = networkDailyBtc / networkHashrateTH; // BTC per TH per day
+            var dailyBtc = hashrateInTH * btcPerTH;
+            var dailyRevenue = dailyBtc * marketData.btc_price;
             
             // Breakeven when revenue equals power cost
-            const dailyPowerKWh = (spec.power / 1000) * 24;
+            var dailyPowerKWh = (spec.power / 1000) * 24;
             return dailyRevenue / dailyPowerKWh; // Breakeven electricity rate
         }
 
         function calculateBreakevenElectricity(minerType, marketData) {
-            const minerSpecs = {
+            var minerSpecs = {
                 'antminer_s19_pro': { hashrate: 110, power: 3250, cost: 2500 },
                 'antminer_s19j_pro': { hashrate: 104, power: 3068, cost: 2200 },
                 'antminer_s19_xp': { hashrate: 140, power: 3010, cost: 3200 },
@@ -1733,31 +1733,31 @@
                 'whatsminer_m50': { hashrate: 114, power: 3276, cost: 2600 }
             };
             
-            const spec = minerSpecs[minerType] || minerSpecs['antminer_s19_pro'];
+            var spec = minerSpecs[minerType] || minerSpecs['antminer_s19_pro'];
             
             // Calculate daily BTC production
-            const hashrateInEH = spec.hashrate / 1000000;
-            const networkHashrateEH = marketData.network_hashrate;
-            const dailyBtc = (hashrateInEH / networkHashrateEH) * 144 * 3.125;
-            const dailyRevenue = dailyBtc * marketData.btc_price;
+            var hashrateInEH = spec.hashrate / 1000000;
+            var networkHashrateEH = marketData.network_hashrate;
+            var dailyBtc = (hashrateInEH / networkHashrateEH) * 144 * 3.125;
+            var dailyRevenue = dailyBtc * marketData.btc_price;
             
             // Calculate breakeven electricity cost
-            const dailyPowerConsumption = (spec.power / 1000) * 24; // kWh per day
-            const breakevenElectricity = dailyRevenue / dailyPowerConsumption;
+            var dailyPowerConsumption = (spec.power / 1000) * 24; // kWh per day
+            var breakevenElectricity = dailyRevenue / dailyPowerConsumption;
             
             return breakevenElectricity;
         }
 
         function updateMinerModelComparison(marketData) {
-            const minerModelSelect = document.getElementById('minerModelSelect');
-            const minerCost = document.getElementById('minerCost');
-            const minerDailyProfit = document.getElementById('minerDailyProfit');
-            const minerPaybackPeriod = document.getElementById('minerPaybackPeriod');
-            const minerEfficiencyRating = document.getElementById('minerEfficiencyRating');
+            var minerModelSelect = document.getElementById('minerModelSelect');
+            var minerCost = document.getElementById('minerCost');
+            var minerDailyProfit = document.getElementById('minerDailyProfit');
+            var minerPaybackPeriod = document.getElementById('minerPaybackPeriod');
+            var minerEfficiencyRating = document.getElementById('minerEfficiencyRating');
             
             if (minerModelSelect) {
-                const selectedMiner = minerModelSelect.value;
-                const minerSpecs = {
+                var selectedMiner = minerModelSelect.value;
+                var minerSpecs = {
                     'Antminer S21 XP Hyd': { hashrate: 473, power: 5676, cost: 15000 },
                     'Antminer S21 XP': { hashrate: 270, power: 3645, cost: 8500 },
                     'Antminer S21': { hashrate: 200, power: 3500, cost: 6500 },
@@ -1770,15 +1770,15 @@
                     'Antminer S19 Pro+ Hyd': { hashrate: 198, power: 5445, cost: 5500 }
                 };
                 
-                const spec = minerSpecs[selectedMiner] || minerSpecs['Antminer S19 Pro'];
-                const dailyProfit = calculateDailyProfitForMiner(selectedMiner, marketData);
+                var spec = minerSpecs[selectedMiner] || minerSpecs['Antminer S19 Pro'];
+                var dailyProfit = calculateDailyProfitForMiner(selectedMiner, marketData);
                 
                 // Update display
                 if (minerCost) minerCost.textContent = '$' + formatNumber(spec.cost, 0);
                 if (minerDailyProfit) minerDailyProfit.textContent = '$' + formatNumber(dailyProfit, 2);
                 
                 if (minerPaybackPeriod && dailyProfit > 0) {
-                    const days = spec.cost / dailyProfit;
+                    var days = spec.cost / dailyProfit;
                     if (days < 365) {
                         minerPaybackPeriod.textContent = Math.round(days) + ' 天';
                     } else {
@@ -1788,9 +1788,9 @@
                 
                 // Calculate efficiency rating (based on profit per watt)
                 if (minerEfficiencyRating) {
-                    const profitPerWatt = dailyProfit / spec.power;
-                    const efficiency = Math.min(5, Math.max(1, profitPerWatt * 1000));
-                    const stars = '★'.repeat(Math.round(efficiency)) + '☆'.repeat(5 - Math.round(efficiency));
+                    var profitPerWatt = dailyProfit / spec.power;
+                    var efficiency = Math.min(5, Math.max(1, profitPerWatt * 1000));
+                    var stars = '★'.repeat(Math.round(efficiency)) + '☆'.repeat(5 - Math.round(efficiency));
                     minerEfficiencyRating.textContent = stars;
                 }
             }
@@ -1805,7 +1805,7 @@
 
         function setupInvestmentInteractions() {
             // Investment amount change handler
-            const investmentAmount = document.getElementById('investmentAmount');
+            var investmentAmount = document.getElementById('investmentAmount');
             if (investmentAmount) {
                 investmentAmount.addEventListener('input', function() {
                     if (currentMarketData) {
@@ -1815,7 +1815,7 @@
             }
             
             // Electricity range change handler
-            const electricityRange = document.getElementById('electricityRange');
+            var electricityRange = document.getElementById('electricityRange');
             if (electricityRange) {
                 electricityRange.addEventListener('input', function() {
                     if (currentMarketData) {
@@ -1825,7 +1825,7 @@
             }
             
             // Miner model change handler
-            const minerModelSelect = document.getElementById('minerModelSelect');
+            var minerModelSelect = document.getElementById('minerModelSelect');
             if (minerModelSelect) {
                 minerModelSelect.addEventListener('change', function() {
                     if (currentMarketData) {
@@ -1837,34 +1837,34 @@
 
         function updatePerformanceMetrics(marketData) {
             // Update performance metrics with realistic values based on market conditions
-            const hashrateEfficiency = document.getElementById('hashrateEfficiency');
+            var hashrateEfficiency = document.getElementById('hashrateEfficiency');
             if (hashrateEfficiency) {
                 // Base efficiency on current profitability
-                const dailyProfit = calculateDailyProfitForMiner('Antminer S19 Pro', marketData);
-                const efficiency = dailyProfit > 0 ? 
+                var dailyProfit = calculateDailyProfitForMiner('Antminer S19 Pro', marketData);
+                var efficiency = dailyProfit > 0 ? 
                     Math.min(99.9, 90 + (dailyProfit / 50) * 8) : 
                     Math.max(85, 90 - Math.abs(dailyProfit) / 20);
                 hashrateEfficiency.textContent = formatNumber(efficiency, 1) + '%';
             }
             
             // Power efficiency
-            const powerEfficiency = document.getElementById('powerEfficiency');
+            var powerEfficiency = document.getElementById('powerEfficiency');
             if (powerEfficiency) {
-                const efficiency = 94 + Math.random() * 4; // 94-98%
+                var efficiency = 94 + Math.random() * 4; // 94-98%
                 powerEfficiency.textContent = formatNumber(efficiency, 1) + '%';
             }
             
             // Uptime
-            const uptime = document.getElementById('uptime');
+            var uptime = document.getElementById('uptime');
             if (uptime) {
-                const uptimeValue = 99.5 + Math.random() * 0.4; // 99.5-99.9%
+                var uptimeValue = 99.5 + Math.random() * 0.4; // 99.5-99.9%
                 uptime.textContent = formatNumber(uptimeValue, 1) + '%';
             }
             
             // Temperature
-            const temperature = document.getElementById('temperature');
+            var temperature = document.getElementById('temperature');
             if (temperature) {
-                const temp = 68 + Math.random() * 8; // 68-76°C
+                var temp = 68 + Math.random() * 8; // 68-76°C
                 temperature.textContent = Math.round(temp) + '°C';
             }
         }
@@ -1881,11 +1881,11 @@
 
         // 专业5步报告生成函数
         async function generate5StepReport() {
-            const generateBtn = document.getElementById('generate5StepBtn');
-            const statusDiv = document.getElementById('professional-report-status');
-            const downloadSection = document.getElementById('professional-download-section');
+            var generateBtn = document.getElementById('generate5StepBtn');
+            var statusDiv = document.getElementById('professional-report-status');
+            var downloadSection = document.getElementById('professional-download-section');
             
-            const originalText = generateBtn.innerHTML;
+            var originalText = generateBtn.innerHTML;
             
             try {
                 // 更新UI状态
@@ -1894,17 +1894,17 @@
                 statusDiv.innerHTML = '<i class="bi bi-cpu text-warning"></i> 正在执行5步生成流程...';
                 
                 // 获取用户选择的输出格式和分发方式
-                const outputFormats = [];
+                var outputFormats = [];
                 if (document.getElementById('outputWeb').checked) outputFormats.push('web');
                 if (document.getElementById('outputPDF').checked) outputFormats.push('pdf');
                 if (document.getElementById('outputPPT').checked) outputFormats.push('ppt');
                 
-                const distributionMethods = [];
+                var distributionMethods = [];
                 if (document.getElementById('sendEmail').checked) distributionMethods.push('email');
                 if (document.getElementById('sendSlack').checked) distributionMethods.push('slack');
                 
                 // 调用专业报告生成API
-                const response = await fetch('/api/professional-report/generate', {
+                var response = await fetch('/api/professional-report/generate', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1915,7 +1915,7 @@
                     })
                 });
                 
-                const result = await response.json();
+                var result = await response.json();
                 
                 if (result.success) {
                     // 显示成功状态
@@ -1956,12 +1956,12 @@
         // 下载专业报告文件
         async function downloadProfessionalReport(fileType) {
             try {
-                const response = await fetch('/api/professional-report/download/' + fileType);
+                var response = await fetch('/api/professional-report/download/' + fileType);
                 
                 if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
+                    var blob = await response.blob();
+                    var url = window.URL.createObjectURL(blob);
+                    var a = document.createElement('a');
                     a.style.display = 'none';
                     a.href = url;
                     a.download = 'mining_report_' + new Date().toISOString().split('T')[0] + '.' + fileType;
@@ -1970,7 +1970,7 @@
                     window.URL.revokeObjectURL(url);
                     document.body.removeChild(a);
                 } else {
-                    const error = await response.json();
+                    var error = await response.json();
                     throw new Error(error.error || '下载失败');
                 }
             } catch (error) {
@@ -1980,8 +1980,8 @@
         }
 
         async function generateDetailedReport() {
-            const reportButton = document.querySelector('.btn-outline-primary');
-            const originalText = reportButton.innerHTML;
+            var reportButton = document.querySelector('.btn-outline-primary');
+            var originalText = reportButton.innerHTML;
             
             try {
                 // 显示加载状态
@@ -1989,7 +1989,7 @@
                 reportButton.disabled = true;
                 
                 // 调用详细报告API
-                const response = await fetch('/api/analytics/detailed-report', {
+                var response = await fetch('/api/analytics/detailed-report', {
                     method: 'GET',
                     credentials: 'same-origin',
                     headers: {
@@ -2002,7 +2002,7 @@
                     throw new Error('详细报告生成失败');
                 }
                 
-                const data = await response.json();
+                var data = await response.json();
                 
                 if (data.success && data.detailed_report) {
                     showDetailedReportModal(data.detailed_report);
@@ -2014,7 +2014,7 @@
                 console.error('详细报告生成错误:', error);
                 console.error('错误详情:', error.message);
                 
-                let errorMessage = '详细报告生成失败，请稍后重试。';
+                var errorMessage = '详细报告生成失败，请稍后重试。';
                 if (error.message) {
                     errorMessage += '\n错误信息: ' + error.message;
                 }
@@ -2028,7 +2028,7 @@
         
         function showDetailedReportModal(report) {
             // 创建详细报告模态框
-            const modalHtml = 
+            var modalHtml = 
                 '<div class="modal fade" id="detailedReportModal" tabindex="-1" aria-labelledby="detailedReportModalLabel" aria-hidden="true">' +
                     '<div class="modal-dialog modal-xl">' +
                         '<div class="modal-content bg-dark">' +
@@ -2052,7 +2052,7 @@
                 '</div>';
             
             // 移除现有模态框并添加新的
-            const existingModal = document.getElementById('detailedReportModal');
+            var existingModal = document.getElementById('detailedReportModal');
             if (existingModal) {
                 existingModal.remove();
             }
@@ -2060,12 +2060,12 @@
             document.body.insertAdjacentHTML('beforeend', modalHtml);
             
             // 显示模态框
-            const modal = new bootstrap.Modal(document.getElementById('detailedReportModal'));
+            var modal = new bootstrap.Modal(document.getElementById('detailedReportModal'));
             modal.show();
         }
         
         function formatDetailedReport(report) {
-            let html = '';
+            var html = '';
             
             // 执行摘要 - 美化样式
             if (report.executive_summary) {
@@ -2109,7 +2109,7 @@
             
             // 盈利性分析 - 美化样式
             if (report.profitability_analysis && report.profitability_analysis.best_scenario) {
-                const best = report.profitability_analysis.best_scenario;
+                var best = report.profitability_analysis.best_scenario;
                 html += 
                     <div class="mb-4">
                         <h5 class="text-primary mb-3 fw-bold border-bottom border-primary pb-2">
@@ -2186,9 +2186,9 @@
                 '';
                 
                 if (report.technical_analysis.rsi_14) {
-                    const rsi = report.technical_analysis.rsi_14;
-                    let rsiColor = 'text-warning';
-                    let rsiStatus = '中性';
+                    var rsi = report.technical_analysis.rsi_14;
+                    var rsiColor = 'text-warning';
+                    var rsiStatus = '中性';
                     if (rsi > 70) {
                         rsiColor = 'text-danger';
                         rsiStatus = '超买';
@@ -2214,9 +2214,9 @@
                 }
                 
                 if (report.technical_analysis.trend_analysis) {
-                    const trend = report.technical_analysis.trend_analysis;
-                    const trendIcon = trend.short_term_trend === 'up' ? 'bi-arrow-up' : 'bi-arrow-down';
-                    const trendColor = trend.short_term_trend === 'up' ? 'text-success' : 'text-danger';
+                    var trend = report.technical_analysis.trend_analysis;
+                    var trendIcon = trend.short_term_trend === 'up' ? 'bi-arrow-up' : 'bi-arrow-down';
+                    var trendColor = trend.short_term_trend === 'up' ? 'text-success' : 'text-danger';
                     
                     html += 
                         '<div class="col-md-6">' +
@@ -2243,10 +2243,10 @@
             
             // 风险评估 - 美化样式
             if (report.risk_assessment && report.risk_assessment.overall_risk) {
-                const risk = report.risk_assessment.overall_risk;
-                const riskBadgeClass = risk.risk_level === 'high' ? 'danger' : risk.risk_level === 'low' ? 'success' : 'warning';
-                const riskText = risk.risk_level === 'high' ? '高风险' : risk.risk_level === 'low' ? '低风险' : '中等风险';
-                const riskIcon = risk.risk_level === 'high' ? 'exclamation-triangle' : risk.risk_level === 'low' ? 'shield-check' : 'shield-exclamation';
+                var risk = report.risk_assessment.overall_risk;
+                var riskBadgeClass = risk.risk_level === 'high' ? 'danger' : risk.risk_level === 'low' ? 'success' : 'warning';
+                var riskText = risk.risk_level === 'high' ? '高风险' : risk.risk_level === 'low' ? '低风险' : '中等风险';
+                var riskIcon = risk.risk_level === 'high' ? 'exclamation-triangle' : risk.risk_level === 'low' ? 'shield-check' : 'shield-exclamation';
                 
                 html += 
                     <div class="mb-4">
@@ -2300,10 +2300,10 @@
                 '';
                 
                 report.actionable_recommendations.forEach((recommendation, index) => {
-                    const icons = ['bi-1-circle-fill', 'bi-2-circle-fill', 'bi-3-circle-fill', 'bi-4-circle-fill', 'bi-5-circle-fill'];
-                    const colors = ['text-success', 'text-info', 'text-warning', 'text-danger', 'text-secondary'];
-                    const icon = icons[index % icons.length];
-                    const color = colors[index % colors.length];
+                    var icons = ['bi-1-circle-fill', 'bi-2-circle-fill', 'bi-3-circle-fill', 'bi-4-circle-fill', 'bi-5-circle-fill'];
+                    var colors = ['text-success', 'text-info', 'text-warning', 'text-danger', 'text-secondary'];
+                    var icon = icons[index % icons.length];
+                    var color = colors[index % colors.length];
                     
                     html += 
                         <div class="col-12">
@@ -2335,10 +2335,10 @@
         }
 
         function updateSmartAlerts(marketData) {
-            const alertsContainer = document.getElementById('smartAlerts');
+            var alertsContainer = document.getElementById('smartAlerts');
             if (!alertsContainer) return;
 
-            const alerts = generateSmartAlerts(marketData);
+            var alerts = generateSmartAlerts(marketData);
             var alertsHtml = '';
             for (var i = 0; i < alerts.length; i++) {
                 var alert = alerts[i];
@@ -2353,10 +2353,10 @@
         }
 
         function generateSmartAlerts(marketData) {
-            const alerts = [];
-            const price = marketData.btc_price;
-            const hashrate = marketData.network_hashrate;
-            const fearGreed = marketData.fear_greed_index;
+            var alerts = [];
+            var price = marketData.btc_price;
+            var hashrate = marketData.network_hashrate;
+            var fearGreed = marketData.fear_greed_index;
 
             // Price alerts
             if (price > 110000) {
@@ -2418,7 +2418,7 @@
         }
 
         async function updateAIRecommendations(marketData) {
-            const recommendationsContainer = document.getElementById('aiRecommendations');
+            var recommendationsContainer = document.getElementById('aiRecommendations');
             if (!recommendationsContainer) return;
 
             // 显示加载状态
@@ -2430,7 +2430,7 @@
                 '</div>';
 
             try {
-                const recommendations = await generateAIRecommendations(marketData);
+                var recommendations = await generateAIRecommendations(marketData);
                 var recommendationsHtml = '';
                 for (var i = 0; i < recommendations.length; i++) {
                     var rec = recommendations[i];
@@ -2457,17 +2457,17 @@
         async function generateAIRecommendations(marketData) {
             try {
                 // 调用专业详细报告API获取AI建议
-                const response = await fetch('/api/analytics/detailed-report');
+                var response = await fetch('/api/analytics/detailed-report');
                 if (!response.ok) {
                     throw new Error('Failed to fetch detailed report');
                 }
                 
-                const reportData = await response.json();
+                var reportData = await response.json();
                 console.log('Detailed report data:', reportData);
                 
                 // 从专业报告中提取AI建议
-                const aiRecommendations = reportData.ai_recommendations || {};
-                const recommendations = [];
+                var aiRecommendations = reportData.ai_recommendations || {};
+                var recommendations = [];
                 
                 // 市场机会
                 if (aiRecommendations.market_opportunities) {
@@ -2530,10 +2530,10 @@
         }
         
         function generateSimpleRecommendations(marketData) {
-            const recommendations = [];
-            const price = marketData.btc_price;
-            const hashrate = marketData.network_hashrate;
-            const fearGreed = marketData.fear_greed_index;
+            var recommendations = [];
+            var price = marketData.btc_price;
+            var hashrate = marketData.network_hashrate;
+            var fearGreed = marketData.fear_greed_index;
             
             // 简化版建议逻辑
             if (fearGreed >= 50 && hashrate > 700) {
@@ -2591,10 +2591,10 @@
             
             try {
                 // 转换为用户系统的本地时间
-                const labels = data.map(function(item) {
-                    const date = new Date(item.timestamp || item.time);
+                var labels = data.map(function(item) {
+                    var date = new Date(item.timestamp || item.time);
                     // 使用系统本地时间格式，12小时制显示
-                    const dateOptions = {
+                    var dateOptions = {
                         month: '2-digit',
                         day: '2-digit', 
                         hour: 'numeric',
@@ -2603,7 +2603,7 @@
                     };
                     return date.toLocaleString(undefined, dateOptions);
                 });
-                const prices = data.map(function(item) { return item.btc_price || item.price});
+                var prices = data.map(function(item) { return item.btc_price || item.price});
                 
                 if (priceChart && priceChart.data) {
                     priceChart.data.labels = labels;
@@ -2627,7 +2627,7 @@
                 data.confidence_score ? formatPercent(data.confidence_score * 100) : '--';
 
             // Key findings
-            const findings = document.getElementById('reportFindings');
+            var findings = document.getElementById('reportFindings');
             if (data.key_findings) {
                 var findingsHtml = '';
                 var entries = Object.entries(data.key_findings);
@@ -2642,7 +2642,7 @@
             }
 
             // Recommendations
-            const recommendations = document.getElementById('reportRecommendations');
+            var recommendations = document.getElementById('reportRecommendations');
             if (data.recommendations && data.recommendations.length > 0) {
                 var recommendationsHtml = '';
                 for (var i = 0; i < data.recommendations.length; i++) {
@@ -2656,7 +2656,7 @@
             // Risk assessment
             if (data.risk_assessment) {
                 document.getElementById('reportRiskScore').textContent = data.risk_assessment.risk_score || '--';
-                const riskLevel = document.getElementById('reportRiskLevel');
+                var riskLevel = document.getElementById('reportRiskLevel');
                 riskLevel.textContent = data.risk_assessment.risk_level || '--';
                 riskLevel.className = 'fw-bold text-' + getRiskColor(data.risk_assessment.risk_level);
             }
@@ -2664,8 +2664,8 @@
 
         // Auto refresh functionality
         function setupAutoRefresh() {
-            const intervalSelect = document.getElementById('refreshInterval');
-            const autoRefreshCheck = document.getElementById('autoRefresh');
+            var intervalSelect = document.getElementById('refreshInterval');
+            var autoRefreshCheck = document.getElementById('autoRefresh');
             
             intervalSelect.addEventListener('change', updateRefreshInterval);
             autoRefreshCheck.addEventListener('change', toggleAutoRefresh);
@@ -2674,8 +2674,8 @@
         }
 
         function updateRefreshInterval() {
-            const interval = parseInt(document.getElementById('refreshInterval').value);
-            const autoRefresh = document.getElementById('autoRefresh').checked;
+            var interval = parseInt(document.getElementById('refreshInterval').value);
+            var autoRefresh = document.getElementById('autoRefresh').checked;
             
             if (refreshInterval) {
                 clearInterval(refreshInterval);
@@ -2696,8 +2696,8 @@
         }
         
         function showDataUpdateIndicator() {
-            const indicator = document.getElementById('dataUpdateIndicator');
-            const timeElement = document.getElementById('lastUpdateTime');
+            var indicator = document.getElementById('dataUpdateIndicator');
+            var timeElement = document.getElementById('lastUpdateTime');
             
             if (indicator) {
                 // 闪烁效果显示更新
@@ -2711,8 +2711,8 @@
             }
             
             if (timeElement) {
-                const now = new Date();
-                const timeOptions = {
+                var now = new Date();
+                var timeOptions = {
                     hour12: true,
                     year: 'numeric',
                     month: '2-digit',
@@ -2734,7 +2734,7 @@
         function formatNumber(num, decimals) {
             decimals = decimals || 2;
             if (num === null || num === undefined) return '--';
-            const options = {
+            var options = {
                 minimumFractionDigits: decimals,
                 maximumFractionDigits: decimals
             };
@@ -2785,8 +2785,8 @@
         }
 
         function updateConnectionStatus(isOnline) {
-            const indicator = document.getElementById('connectionStatus');
-            const text = document.getElementById('connectionText');
+            var indicator = document.getElementById('connectionStatus');
+            var text = document.getElementById('connectionText');
             
             if (isOnline) {
                 indicator.className = 'status-indicator status-online';
@@ -2819,11 +2819,11 @@
         }
 
         // Global variables to store data for insights
-        let currentMarketData = null;
-        let currentTechnicalData = null;
+        var currentMarketData = null;
+        var currentTechnicalData = null;
 
         // Miner specifications from mining calculator
-        const MINER_DATA = {
+        var MINER_DATA = {
             "Antminer S21 XP Hyd": {"hashrate": 473, "power_watt": 5676},
             "Antminer S21 XP": {"hashrate": 270, "power_watt": 3645},
             "Antminer S21": {"hashrate": 200, "power_watt": 3500},
@@ -2838,23 +2838,23 @@
 
         // Calculate breakeven electricity costs for all miners
         function calculateMinerBreakevens(hashPrice) {
-            const breakevens = [];
+            var breakevens = [];
             
             var minerEntries = Object.entries(MINER_DATA);
             for (var i = 0; i < minerEntries.length; i++) {
                 var name = minerEntries[i][0];
                 var specs = minerEntries[i][1];
                 // Daily revenue = hashPrice * hashrate
-                const dailyRevenue = hashPrice * specs.hashrate;
+                var dailyRevenue = hashPrice * specs.hashrate;
                 
                 // Daily power consumption in kWh
-                const dailyPowerKwh = (specs.power_watt / 1000) * 24;
+                var dailyPowerKwh = (specs.power_watt / 1000) * 24;
                 
                 // Breakeven electricity cost = daily revenue / daily power consumption
-                const breakevenElectricity = dailyRevenue / dailyPowerKwh;
+                var breakevenElectricity = dailyRevenue / dailyPowerKwh;
                 
                 // Calculate efficiency (W/TH)
-                const efficiency = specs.power_watt / specs.hashrate;
+                var efficiency = specs.power_watt / specs.hashrate;
                 
                 breakevens.push({
                     name: name,
@@ -2872,7 +2872,7 @@
 
         // Generate quick insights based on current data
         function generateQuickInsights() {
-            const insightsContainer = document.getElementById('quickInsights');
+            var insightsContainer = document.getElementById('quickInsights');
             if (!insightsContainer) return;
 
             // Clear loading spinner
@@ -2883,12 +2883,12 @@
                 return;
             }
 
-            const insights = [];
-            const data = currentMarketData;
+            var insights = [];
+            var data = currentMarketData;
 
             // Price movement insights
             if (data.price_change_24h !== null) {
-                const change = data.price_change_24h;
+                var change = data.price_change_24h;
                 if (Math.abs(change) > 5) {
                     insights.push({
                         type: change > 0 ? 'success' : 'danger',
@@ -2906,7 +2906,7 @@
 
             // Fear & Greed insights
             if (data.fear_greed_index) {
-                const index = data.fear_greed_index;
+                var index = data.fear_greed_index;
                 if (index <= 25) {
                     insights.push({
                         type: 'warning',
@@ -2924,7 +2924,7 @@
 
             // Price level insights
             if (data.btc_price) {
-                const price = data.btc_price;
+                var price = data.btc_price;
                 if (price > 110000) {
                     insights.push({
                         type: 'success',
@@ -2942,7 +2942,7 @@
 
             // Network hashrate insights
             if (data.network_hashrate) {
-                const hashrate = data.network_hashrate;
+                var hashrate = data.network_hashrate;
                 if (hashrate > 900) {
                     insights.push({
                         type: 'success',
@@ -2955,10 +2955,10 @@
             // Enhanced mining analysis insights
             if (data.btc_price && data.network_hashrate) {
                 // Hash price calculation ($/TH/day)
-                const hashPrice = (data.btc_price * 3.125 * 144) / (data.network_hashrate * 1e6);
+                var hashPrice = (data.btc_price * 3.125 * 144) / (data.network_hashrate * 1e6);
                 
                 // Mining profitability insight with hash price
-                const estimatedDailyRevenue = (data.btc_price * 200 * 144) / (data.network_hashrate * 1e18 / 1e12);
+                var estimatedDailyRevenue = (data.btc_price * 200 * 144) / (data.network_hashrate * 1e18 / 1e12);
                 if (estimatedDailyRevenue > 15) {
                     insights.push({
                         type: 'success',
@@ -2989,14 +2989,14 @@
                 }
                 
                 // Advanced miner-specific breakeven analysis - Show all 10 miners
-                const minerBreakevenAnalysis = calculateMinerBreakevens(hashPrice);
+                var minerBreakevenAnalysis = calculateMinerBreakevens(hashPrice);
                 if (minerBreakevenAnalysis.length > 0) {
                     // Show all miners with appropriate color coding
                     minerBreakevenAnalysis.forEach((miner, index) => {
-                        const shortName = miner.name.replace('Antminer ', '');
+                        var shortName = miner.name.replace('Antminer ', '');
                         
                         // Determine color and icon based on breakeven price
-                        let type, icon;
+                        var type, icon;
                         if (miner.breakeven > 0.08) {
                             type = 'success';
                             icon = 'bi-trophy-fill';
@@ -3023,14 +3023,14 @@
             // Difficulty adjustment prediction
             if (data.network_difficulty && data.network_hashrate) {
                 // Estimate next difficulty adjustment (simplified)
-                const currentDifficulty = data.network_difficulty;
-                const targetHashrate = currentDifficulty * Math.pow(2, 32) / 600 / 1e18; // Target hashrate in EH/s
-                const actualHashrate = data.network_hashrate;
-                const difficultyChangeEstimate = ((actualHashrate - targetHashrate) / targetHashrate) * 100;
+                var currentDifficulty = data.network_difficulty;
+                var targetHashrate = currentDifficulty * Math.pow(2, 32) / 600 / 1e18; // Target hashrate in EH/s
+                var actualHashrate = data.network_hashrate;
+                var difficultyChangeEstimate = ((actualHashrate - targetHashrate) / targetHashrate) * 100;
                 
                 if (Math.abs(difficultyChangeEstimate) > 3) {
-                    const direction = difficultyChangeEstimate > 0 ? '上调' : '下调';
-                    const impact = difficultyChangeEstimate > 0 ? '收益将进一步下降' : '收益有望改善';
+                    var direction = difficultyChangeEstimate > 0 ? '上调' : '下调';
+                    var impact = difficultyChangeEstimate > 0 ? '收益将进一步下降' : '收益有望改善';
                     insights.push({
                         type: difficultyChangeEstimate > 0 ? 'warning' : 'success',
                         icon: difficultyChangeEstimate > 0 ? 'bi-arrow-up' : 'bi-arrow-down',
@@ -3041,7 +3041,7 @@
 
             // Hash rate trend analysis
             if (data.network_hashrate) {
-                const hashrate = data.network_hashrate;
+                var hashrate = data.network_hashrate;
                 if (hashrate > 1000) {
                     insights.push({
                         type: 'info',
@@ -3059,7 +3059,7 @@
 
             // Technical analysis insights (if available)
             if (currentTechnicalData && currentTechnicalData.rsi_14) {
-                const rsi = currentTechnicalData.rsi_14;
+                var rsi = currentTechnicalData.rsi_14;
                 if (rsi > 70) {
                     insights.push({
                         type: 'warning',
@@ -3097,7 +3097,7 @@
         // 初始化服务器端技术指标数据
         function initServerSideTechnicalData() {
             {% if technical_indicators %}
-            const serverTechData = {{ technical_indicators | tojson | safe }};
+            var serverTechData = {{ technical_indicators | tojson | safe }};
             console.log('Loading server-side technical indicators:', serverTechData);
             updateTechnicalIndicatorsDisplay(serverTechData);
             {% else %}
