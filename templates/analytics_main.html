@@ -1476,16 +1476,11 @@
 
         // Investment Decision Support Functions
         function updateMiningDecisionModules(marketData) {
-            try {
-                // Update all investment components with unified data
-                updateAllInvestmentComponents(marketData);
-                
-                // Setup interactive elements
-                setupInvestmentInteractions();
-                
-            } catch (error) {
-                console.error('Error updating investment decision modules:', error);
-            }
+            // Update all investment components with unified data
+            updateAllInvestmentComponents(marketData);
+            
+            // Setup interactive elements
+            setupInvestmentInteractions();
         }
 
         function updateInvestmentPrediction(marketData) {
@@ -2421,8 +2416,8 @@
                 '<p class="mt-2 text-muted">正在生成专业投资建议...</p>' +
                 '</div>';
 
-            try {
-                var recommendations = generateAIRecommendations(marketData);
+            generateAIRecommendations(marketData)
+            .then(function(recommendations) {
                 var recommendationsHtml = '';
                 for (var i = 0; i < recommendations.length; i++) {
                     var rec = recommendations[i];
@@ -2434,14 +2429,14 @@
                         '</div>';
                 }
                 recommendationsContainer.innerHTML = recommendationsHtml;
-                
-            } catch (error) {
+            })
+            .catch(function(error) {
                 console.error('Error updating AI recommendations:', error);
                 recommendationsContainer.innerHTML = '<div class="text-danger">' +
                     '<h6><i class="bi bi-exclamation-triangle"></i> 加载失败</h6>' +
                     '<p class="small">无法生成AI建议，请稍后重试</p>' +
                     '</div>';
-            }
+            });
         }
 
 
@@ -2515,12 +2510,11 @@
                 }
                 
                 return recommendations;
-                
-            } catch (error) {
+            }).catch(function(error) {
                 console.error('Failed to generate professional AI recommendations:', error);
                 // 降级到简单版本
                 return generateSimpleRecommendations(marketData);
-            }
+            });
         }
         
         function generateSimpleRecommendations(marketData) {
@@ -2583,32 +2577,28 @@
                 return;
             }
             
-            try {
-                // 转换为用户系统的本地时间
-                var labels = data.map(function(item) {
-                    var date = new Date(item.timestamp || item.time);
-                    // 使用系统本地时间格式，12小时制显示
-                    var dateOptions = {
-                        month: '2-digit',
-                        day: '2-digit', 
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true
-                    };
-                    return date.toLocaleString(undefined, dateOptions);
-                });
-                var prices = data.map(function(item) { return item.btc_price || item.price});
-                
-                if (priceChart && priceChart.data) {
-                    priceChart.data.labels = labels;
-                    priceChart.data.datasets[0].data = prices;
-                    priceChart.update();
-                    console.log('Price chart updated successfully');
-                } else {
-                    console.error('Price chart not initialized');
-                }
-            } catch (error) {
-                console.error('Error updating price chart:', error);
+            // 转换为用户系统的本地时间
+            var labels = data.map(function(item) {
+                var date = new Date(item.timestamp || item.time);
+                // 使用系统本地时间格式，12小时制显示
+                var dateOptions = {
+                    month: '2-digit',
+                    day: '2-digit', 
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                };
+                return date.toLocaleString(undefined, dateOptions);
+            });
+            var prices = data.map(function(item) { return item.btc_price || item.price});
+            
+            if (priceChart && priceChart.data) {
+                priceChart.data.labels = labels;
+                priceChart.data.datasets[0].data = prices;
+                priceChart.update();
+                console.log('Price chart updated successfully');
+            } else {
+                console.error('Price chart not initialized');
             }
         }
 
