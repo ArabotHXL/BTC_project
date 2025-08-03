@@ -2286,7 +2286,9 @@
                             <div class="row g-3">
                 '';
                 
-                report.actionable_recommendations.forEach((recommendation, index) => {
+                for (var i = 0; i < report.actionable_recommendations.length; i++) {
+                    var recommendation = report.actionable_recommendations[i];
+                    var index = i;
                     var icons = ['bi-1-circle-fill', 'bi-2-circle-fill', 'bi-3-circle-fill', 'bi-4-circle-fill', 'bi-5-circle-fill'];
                     var colors = ['text-success', 'text-info', 'text-warning', 'text-danger', 'text-secondary'];
                     var icon = icons[index % icons.length];
@@ -2782,15 +2784,17 @@
         }
 
         function showLoading() {
-            document.querySelectorAll('.loading-spinner').forEach(spinner => {
-                spinner.style.display = 'block';
-            });
+            var spinners = document.querySelectorAll('.loading-spinner');
+            for (var i = 0; i < spinners.length; i++) {
+                spinners[i].style.display = 'block';
+            }
         }
 
         function hideLoading() {
-            document.querySelectorAll('.loading-spinner').forEach(spinner => {
-                spinner.style.display = 'none';
-            });
+            var spinners = document.querySelectorAll('.loading-spinner');
+            for (var i = 0; i < spinners.length; i++) {
+                spinners[i].style.display = 'none';
+            }
         }
 
         function showErrorMessage(section, message) {
@@ -2851,7 +2855,7 @@
             }
             
             // Sort by efficiency (lower W/TH is better)
-            return breakevens.sort((a, b) => a.efficiency - b.efficiency);
+            return breakevens.sort(function(a, b) { return a.efficiency - b.efficiency; });
         }
 
         // Generate quick insights based on current data
@@ -2976,7 +2980,9 @@
                 var minerBreakevenAnalysis = calculateMinerBreakevens(hashPrice);
                 if (minerBreakevenAnalysis.length > 0) {
                     // Show all miners with appropriate color coding
-                    minerBreakevenAnalysis.forEach((miner, index) => {
+                    for (var i = 0; i < minerBreakevenAnalysis.length; i++) {
+                        var miner = minerBreakevenAnalysis[i];
+                        var index = i;
                         var shortName = miner.name.replace('Antminer ', '');
                         
                         // Determine color and icon based on breakeven price
