@@ -1882,24 +1882,23 @@
             
             var originalText = generateBtn.innerHTML;
             
-            try {
-                // 更新UI状态
-                generateBtn.disabled = true;
-                generateBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>生成中...';
-                statusDiv.innerHTML = '<i class="bi bi-cpu text-warning"></i> 正在执行5步生成流程...';
-                
-                // 获取用户选择的输出格式和分发方式
-                var outputFormats = [];
-                if (document.getElementById('outputWeb').checked) outputFormats.push('web');
-                if (document.getElementById('outputPDF').checked) outputFormats.push('pdf');
-                if (document.getElementById('outputPPT').checked) outputFormats.push('ppt');
-                
-                var distributionMethods = [];
-                if (document.getElementById('sendEmail').checked) distributionMethods.push('email');
-                if (document.getElementById('sendSlack').checked) distributionMethods.push('slack');
-                
-                // 调用专业报告生成API
-                return fetch('/api/professional-report/generate', {
+            // 更新UI状态
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>生成中...';
+            statusDiv.innerHTML = '<i class="bi bi-cpu text-warning"></i> 正在执行5步生成流程...';
+            
+            // 获取用户选择的输出格式和分发方式
+            var outputFormats = [];
+            if (document.getElementById('outputWeb').checked) outputFormats.push('web');
+            if (document.getElementById('outputPDF').checked) outputFormats.push('pdf');
+            if (document.getElementById('outputPPT').checked) outputFormats.push('ppt');
+            
+            var distributionMethods = [];
+            if (document.getElementById('sendEmail').checked) distributionMethods.push('email');
+            if (document.getElementById('sendSlack').checked) distributionMethods.push('slack');
+            
+            // 调用专业报告生成API
+            fetch('/api/professional-report/generate', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1908,9 +1907,9 @@
                         output_formats: outputFormats,
                         distribution_methods: distributionMethods
                     })
-                });
-                
-                var result = response.json();
+                }).then(function(response) {
+                    return response.json();
+                }).then(function(result) {
                 
                 if (result.success) {
                     // 显示成功状态
@@ -1934,18 +1933,17 @@
                 } else {
                     throw new Error(result.error || '报告生成失败');
                 }
-                
-            } catch (error) {
+                }).catch(function(error) {
                 console.error('专业报告生成错误:', error);
                 statusDiv.innerHTML = '<div class="text-danger">' +
                     '<i class="bi bi-exclamation-triangle-fill me-2"></i>' +
                     '生成失败: ' + error.message +
                     '</div>';
-            } finally {
+                }).finally(function() {
                 // 恢复按钮状态
                 generateBtn.disabled = false;
                 generateBtn.innerHTML = originalText;
-            }
+                });
         }
         
         // 下载专业报告文件
