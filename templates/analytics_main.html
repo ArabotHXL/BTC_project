@@ -1948,62 +1948,61 @@
         
         // 下载专业报告文件
         function downloadProfessionalReport(fileType) {
-            try {
-                return fetch('/api/professional-report/download/' + fileType);
-                
+            fetch('/api/professional-report/download/' + fileType)
+            .then(function(response) {
                 if (response.ok) {
-                    var blob = response.blob();
-                    var url = window.URL.createObjectURL(blob);
-                    var a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = url;
-                    a.download = 'mining_report_' + new Date().toISOString().split('T')[0] + '.' + fileType;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
+                    return response.blob();
                 } else {
-                    var error = response.json();
-                    throw new Error(error.error || '下载失败');
+                    return response.json().then(function(error) {
+                        throw new Error(error.error || '下载失败');
+                    });
                 }
-            } catch (error) {
+            })
+            .then(function(blob) {
+                var url = window.URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'mining_report_' + new Date().toISOString().split('T')[0] + '.' + fileType;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(function(error) {
                 console.error('文件下载错误:', error);
                 alert('下载失败: ' + error.message);
-            }
+            });
         }
 
         function generateDetailedReport() {
             var reportButton = document.querySelector('.btn-outline-primary');
             var originalText = reportButton.innerHTML;
             
-            try {
-                // 显示加载状态
-                reportButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>生成中...';
-                reportButton.disabled = true;
-                
-                // 调用详细报告API
-                return fetch('/api/analytics/detailed-report', {
-                    method: 'GET',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
+            // 显示加载状态
+            reportButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>生成中...';
+            reportButton.disabled = true;
+            
+            // 调用详细报告API
+            fetch('/api/analytics/detailed-report', {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            }).then(function(response) {
                 if (!response.ok) {
                     throw new Error('详细报告生成失败');
                 }
-                
-                var data = response.json();
-                
+                return response.json();
+            }).then(function(data) {
                 if (data.success && data.detailed_report) {
                     showDetailedReportModal(data.detailed_report);
                 } else {
                     throw new Error(data.error || '详细报告生成失败');
                 }
-                
-            } catch (error) {
+            }).catch(function(error) {
                 console.error('详细报告生成错误:', error);
                 console.error('错误详情:', error.message);
                 
@@ -2012,11 +2011,11 @@
                     errorMessage += '\n错误信息: ' + error.message;
                 }
                 alert(errorMessage);
-            } finally {
+            }).finally(function() {
                 // 恢复按钮状态
                 reportButton.innerHTML = originalText;
                 reportButton.disabled = false;
-            }
+            });
         }
         
         function showDetailedReportModal(report) {
@@ -2448,14 +2447,13 @@
 
 
         function generateAIRecommendations(marketData) {
-            try {
-                // 调用专业详细报告API获取AI建议
-                return fetch('/api/analytics/detailed-report');
+            return fetch('/api/analytics/detailed-report')
+            .then(function(response) {
                 if (!response.ok) {
                     throw new Error('Failed to fetch detailed report');
                 }
-                
-                var reportData = response.json();
+                return response.json();
+            }).then(function(reportData) {
                 console.log('Detailed report data:', reportData);
                 
                 // 从专业报告中提取AI建议
@@ -2464,38 +2462,41 @@
                 
                 // 市场机会
                 if (aiRecommendations.market_opportunities) {
-                    aiRecommendations.market_opportunities.forEach(message => {
+                    for (var i = 0; i < aiRecommendations.market_opportunities.length; i++) {
+                        var message = aiRecommendations.market_opportunities[i];
                         recommendations.push({
                             type: 'success',
                             icon: 'arrow-up-circle',
                             category: '市场机会',
                             message: message
                         });
-                    });
+                    }
                 }
                 
                 // 风险提醒
                 if (aiRecommendations.risk_warnings) {
-                    aiRecommendations.risk_warnings.forEach(message => {
+                    for (var j = 0; j < aiRecommendations.risk_warnings.length; j++) {
+                        var message = aiRecommendations.risk_warnings[j];
                         recommendations.push({
                             type: 'warning',
                             icon: 'exclamation-circle',
                             category: '风险提醒',
                             message: message
                         });
-                    });
+                    }
                 }
                 
                 // 成本优化
                 if (aiRecommendations.cost_optimization) {
-                    aiRecommendations.cost_optimization.forEach(message => {
+                    for (var k = 0; k < aiRecommendations.cost_optimization.length; k++) {
+                        var message = aiRecommendations.cost_optimization[k];
                         recommendations.push({
                             type: 'info',
                             icon: 'gear',
                             category: '成本优化',
                             message: message
                         });
-                    });
+                    }
                 }
                 
                 // 显示准确度评分
