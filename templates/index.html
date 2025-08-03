@@ -1078,7 +1078,7 @@
             fetch('/api/analytics/market-data', {
                 method: 'GET',
                 credentials: 'same-origin'
-            }).then(response => {
+            }).then(function(response) {
                 if (response.ok) {
                     return response.json();
                 }
@@ -1189,86 +1189,86 @@
             loadAnalyticsWidget();
         }
 
-        async function showLatestReport() {
-            const modal = new bootstrap.Modal(document.getElementById('analyticsModal'));
+        function showLatestReport() {
+            var modal = new bootstrap.Modal(document.getElementById('analyticsModal'));
             document.getElementById('analyticsModalLabel').textContent = 
                 '{% if current_lang == "en" %}Latest Analysis Report{% else %}最新分析报告{% endif %}';
             
-            try {
-                const response = await fetch('/api/analytics/latest-report');
+            fetch('/api/analytics/latest-report').then(function(response) {
                 if (response.ok) {
-                    const responseData = await response.json();
-                    console.log('Latest report API response:', responseData);
-                    
-                    // Extract report data from wrapped response
-                    let report = responseData.success && responseData.data ? responseData.data : responseData;
-                    
-                    // Handle nested report structure
-                    if (report && report.latest_report) {
-                        report = report.latest_report;
-                    }
-                    
-                    console.log('Latest report data:', report);
-                    
-                    if (report && (report.title || report.summary || report.generated_at)) {
-                        displayReport(report);
-                    } else {
-                        document.getElementById('analyticsModalBody').innerHTML = 
-                            '<div class="alert alert-warning">{% if current_lang == "en" %}No report data available{% else %}暂无报告数据{% endif %}</div>';
-                    }
+                    return response.json().then(function(responseData) {
+                        console.log('Latest report API response:', responseData);
+                        
+                        // Extract report data from wrapped response
+                        var report = responseData.success && responseData.data ? responseData.data : responseData;
+                        
+                        // Handle nested report structure
+                        if (report && report.latest_report) {
+                            report = report.latest_report;
+                        }
+                        
+                        console.log('Latest report data:', report);
+                        
+                        if (report && (report.title || report.summary || report.generated_at)) {
+                            displayReport(report);
+                        } else {
+                            document.getElementById('analyticsModalBody').innerHTML = 
+                                '<div class="alert alert-warning">{% if current_lang == "en" %}No report data available{% else %}暂无报告数据{% endif %}</div>';
+                        }
+                    });
                 } else {
                     document.getElementById('analyticsModalBody').innerHTML = 
                         '<div class="alert alert-warning">{% if current_lang == "en" %}No reports available yet{% else %}暂无可用报告{% endif %}</div>';
                 }
-            } catch (error) {
+            }).catch(function(error) {
                 console.error('Error loading latest report:', error);
                 document.getElementById('analyticsModalBody').innerHTML = 
                     '<div class="alert alert-danger">{% if current_lang == "en" %}Unable to load report{% else %}无法加载报告{% endif %}</div>';
-            }
+            });
             
             modal.show();
         }
 
-        async function showTechnicalIndicators() {
-            const modal = new bootstrap.Modal(document.getElementById('analyticsModal'));
+        function showTechnicalIndicators() {
+            var modal = new bootstrap.Modal(document.getElementById('analyticsModal'));
             document.getElementById('analyticsModalLabel').textContent = 
                 '{% if current_lang == "en" %}Technical Indicators{% else %}技术指标{% endif %}';
             
-            try {
-                const response = await fetch('/api/analytics/technical-indicators');
+            fetch('/api/analytics/technical-indicators').then(function(response) {
                 if (response.ok) {
-                    const responseData = await response.json();
-                    console.log('Technical indicators API response:', responseData);
-                    
-                    // Extract indicators data from wrapped response
-                    let indicators = responseData.success && responseData.data ? responseData.data : responseData;
-                    
-                    // Handle different response formats
-                    if (indicators && indicators.latest_indicators) {
-                        // Use latest_indicators if available
-                        indicators = indicators.latest_indicators;
-                    } else if (indicators && indicators.indicators && indicators.indicators.length > 0) {
-                        // Use first indicator from array
-                        indicators = indicators.indicators[0];
-                    }
-                    
-                    console.log('Technical indicators data:', indicators);
-                    
-                    if (indicators && Object.keys(indicators).length > 0) {
-                        displayTechnicalIndicators(indicators);
-                    } else {
-                        document.getElementById('analyticsModalBody').innerHTML = 
-                            '<div class="alert alert-warning">{% if current_lang == "en" %}No indicators data available{% else %}暂无技术指标数据{% endif %}</div>';
-                    }
+                    return response.json().then(function(responseData) {
+                        console.log('Technical indicators API response:', responseData);
+                        
+                        // Extract indicators data from wrapped response
+                        var indicators = responseData.success && responseData.data ? responseData.data : responseData;
+                        
+                        // Handle different response formats
+                        if (indicators && indicators.latest_indicators) {
+                            // Use latest_indicators if available
+                            indicators = indicators.latest_indicators;
+                        } else if (indicators && indicators.indicators && indicators.indicators.length > 0) {
+                            // Use first indicator from array
+                            indicators = indicators.indicators[0];
+                        }
+                        
+                        console.log('Technical indicators data:', indicators);
+                        
+                        if (indicators && Object.keys(indicators).length > 0) {
+                            displayTechnicalIndicators(indicators);
+                        } else {
+                            document.getElementById('analyticsModalBody').innerHTML = 
+                                '<div class="alert alert-warning">{% if current_lang == "en" %}No indicators data available{% else %}暂无技术指标数据{% endif %}</div>';
+                        }
+                    });
                 } else {
                     document.getElementById('analyticsModalBody').innerHTML = 
                         '<div class="alert alert-warning">{% if current_lang == "en" %}Indicators not available{% else %}技术指标不可用{% endif %}</div>';
                 }
-            } catch (error) {
+            }).catch(function(error) {
                 console.error('Error loading technical indicators:', error);
                 document.getElementById('analyticsModalBody').innerHTML = 
                     '<div class="alert alert-danger">{% if current_lang == "en" %}Unable to load indicators{% else %}无法加载技术指标{% endif %}</div>';
-            }
+            });
             
             modal.show();
         }
@@ -1277,8 +1277,8 @@
             console.log('Formatting report for display:', report);
             
             // Safe access to nested properties
-            const keyFindings = report.key_findings || {};
-            const riskAssessment = report.risk_assessment || {};
+            var keyFindings = report.key_findings || {};
+            var riskAssessment = report.risk_assessment || {};
             
             var html = 
                 '<div class="mb-3">' +
