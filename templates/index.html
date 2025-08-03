@@ -1166,22 +1166,22 @@
             var insights = [];
             
             if (data.price_change_24h > 5) {
-                insights.push('{% if current_lang == "en" %}📈 Strong bullish momentum detected{% else %}📈 检测到强劲上涨动能{% endif %}');
+                insights.push('{% if current_lang == "en" %}Strong bullish momentum detected{% else %}检测到强劲上涨动能{% endif %}');
             } else if (data.price_change_24h < -5) {
-                insights.push('{% if current_lang == "en" %}📉 Significant price decline observed{% else %}📉 观察到显著价格下跌{% endif %}');
+                insights.push('{% if current_lang == "en" %}Significant price decline observed{% else %}观察到显著价格下跌{% endif %}');
             }
 
             if (data.network_hashrate > 900) {
-                insights.push('{% if current_lang == "en" %}🔒 Network security extremely high{% else %}🔒 网络安全性极高{% endif %}');
+                insights.push('{% if current_lang == "en" %}Network security extremely high{% else %}网络安全性极高{% endif %}');
             }
 
             if (data.fear_greed_index <= 25) {
-                insights.push('{% if current_lang == "en" %}💡 Potential buying opportunity{% else %}💡 潜在买入机会{% endif %}');
+                insights.push('{% if current_lang == "en" %}Potential buying opportunity{% else %}潜在买入机会{% endif %}');
             } else if (data.fear_greed_index >= 75) {
-                insights.push('{% if current_lang == "en" %}⚠️ Market overheating warning{% else %}⚠️ 市场过热警告{% endif %}');
+                insights.push('{% if current_lang == "en" %}Market overheating warning{% else %}市场过热警告{% endif %}');
             }
 
-            return insights.length > 0 ? insights.join(' • ') : 
+            return insights.length > 0 ? insights.join(' | ') : 
                 '{% if current_lang == "en" %}Market conditions stable{% else %}市场状况稳定{% endif %}';
         }
 
