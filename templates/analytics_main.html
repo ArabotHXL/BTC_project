@@ -1173,18 +1173,17 @@
         }
 
         function loadTechnicalIndicators() {
-            try {
-                var response = await fetch('/analytics/api/technical-indicators', {
-                    method: 'GET',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                });
+            return fetch('/analytics/api/technical-indicators', {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            }).then(function(response) {
                 if (!response.ok) throw new Error('Technical indicators unavailable');
-                
-                var response_data = await response.json();
+                return response.json();
+            }).then(function(response_data) {
                 console.log('Technical indicators response:', response_data);
                 
                 if (!response_data.success || !response_data.data) {
@@ -1192,25 +1191,24 @@
                 }
                 
                 updateTechnicalIndicatorsDisplay(response_data.data);
-            } catch (error) {
+            }).catch(function(error) {
                 console.error('Technical indicators error:', error);
                 showErrorMessage('technical', '技术指标暂时不可用');
-            }
+            });
         }
 
         function loadPriceHistory() {
-            try {
-                var response = await fetch('/api/analytics/price-history?hours=24', {
-                    method: 'GET',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                });
+            return fetch('/api/analytics/price-history?hours=24', {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            }).then(function(response) {
                 if (!response.ok) throw new Error('Price history unavailable');
-                
-                var responseData = await response.json();
+                return response.json();
+            }).then(function(responseData) {
                 console.log('Price history response:', responseData);
                 
                 // Extract price_history array from response
@@ -1224,30 +1222,29 @@
                     console.warn('Price history data is empty or not an array:', data);
                     showErrorMessage('dashboard', '价格历史数据暂时不可用');
                 }
-            } catch (error) {
+            }).catch(function(error) {
                 console.error('Price history error:', error);
                 showErrorMessage('dashboard', '价格历史数据暂时不可用');
-            }
+            });
         }
 
         function loadLatestReport() {
-            try {
-                var response = await fetch('/api/analytics/latest-report', {
-                    method: 'GET',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                });
+            return fetch('/api/analytics/latest-report', {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            }).then(function(response) {
                 if (!response.ok) throw new Error('Report unavailable');
-                
-                var data = await response.json();
+                return response.json();
+            }).then(function(data) {
                 updateReportDisplay(data.latest_report || data.data || data);
-            } catch (error) {
+            }).catch(function(error) {
                 console.error('Report error:', error);
                 showErrorMessage('reports', '分析报告暂时不可用');
-            }
+            });
         }
 
         function updateReportDisplay(data) {
@@ -1902,7 +1899,7 @@
                 if (document.getElementById('sendSlack').checked) distributionMethods.push('slack');
                 
                 // 调用专业报告生成API
-                var response = await fetch('/api/professional-report/generate', {
+                return fetch('/api/professional-report/generate', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1913,7 +1910,7 @@
                     })
                 });
                 
-                var result = await response.json();
+                var result = response.json();
                 
                 if (result.success) {
                     // 显示成功状态
@@ -1954,10 +1951,10 @@
         // 下载专业报告文件
         function downloadProfessionalReport(fileType) {
             try {
-                var response = await fetch('/api/professional-report/download/' + fileType);
+                return fetch('/api/professional-report/download/' + fileType);
                 
                 if (response.ok) {
-                    var blob = await response.blob();
+                    var blob = response.blob();
                     var url = window.URL.createObjectURL(blob);
                     var a = document.createElement('a');
                     a.style.display = 'none';
@@ -1968,7 +1965,7 @@
                     window.URL.revokeObjectURL(url);
                     document.body.removeChild(a);
                 } else {
-                    var error = await response.json();
+                    var error = response.json();
                     throw new Error(error.error || '下载失败');
                 }
             } catch (error) {
@@ -1987,7 +1984,7 @@
                 reportButton.disabled = true;
                 
                 // 调用详细报告API
-                var response = await fetch('/api/analytics/detailed-report', {
+                return fetch('/api/analytics/detailed-report', {
                     method: 'GET',
                     credentials: 'same-origin',
                     headers: {
@@ -2000,7 +1997,7 @@
                     throw new Error('详细报告生成失败');
                 }
                 
-                var data = await response.json();
+                var data = response.json();
                 
                 if (data.success && data.detailed_report) {
                     showDetailedReportModal(data.detailed_report);
@@ -2428,7 +2425,7 @@
                 '</div>';
 
             try {
-                var recommendations = await generateAIRecommendations(marketData);
+                var recommendations = generateAIRecommendations(marketData);
                 var recommendationsHtml = '';
                 for (var i = 0; i < recommendations.length; i++) {
                     var rec = recommendations[i];
@@ -2455,12 +2452,12 @@
         function generateAIRecommendations(marketData) {
             try {
                 // 调用专业详细报告API获取AI建议
-                var response = await fetch('/api/analytics/detailed-report');
+                return fetch('/api/analytics/detailed-report');
                 if (!response.ok) {
                     throw new Error('Failed to fetch detailed report');
                 }
                 
-                var reportData = await response.json();
+                var reportData = response.json();
                 console.log('Detailed report data:', reportData);
                 
                 // 从专业报告中提取AI建议
