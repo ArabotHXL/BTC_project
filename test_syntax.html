@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Syntax Test</title>
+</head>
+<body>
+    <script>
+        // 从analytics_main.html中提取关键JavaScript片段进行测试
+        function testBasicSyntax() {
+            console.log('Testing basic syntax...');
+            
+            // 测试forEach替换
+            var items = [1, 2, 3];
+            for (var i = 0; i < items.length; i++) {
+                console.log(items[i]);
+            }
+            
+            // 测试Promise链
+            fetch('/test')
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                console.log(data);
+            })
+            .catch(function(error) {
+                console.error(error);
+            });
+            
+            console.log('Syntax test completed');
+        }
+        
+        testBasicSyntax();
+    </script>
+</body>
+</html>

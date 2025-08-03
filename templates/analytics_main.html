@@ -2278,12 +2278,12 @@
             // 可操作建议 - 美化样式
             if (report.actionable_recommendations && report.actionable_recommendations.length > 0) {
                 html += 
-                    <div class="mb-4">
-                        <h5 class="text-primary mb-3 fw-bold border-bottom border-primary pb-2">
-                            <i class="bi bi-lightbulb-fill"></i> 可操作建议
-                        </h5>
-                        <div class="p-4 bg-dark rounded-3 border border-secondary">
-                            <div class="row g-3">
+                    '<div class="mb-4">' +
+                        '<h5 class="text-primary mb-3 fw-bold border-bottom border-primary pb-2">' +
+                            '<i class="bi bi-lightbulb-fill"></i> 可操作建议' +
+                        '</h5>' +
+                        '<div class="p-4 bg-dark rounded-3 border border-secondary">' +
+                            '<div class="row g-3">' +
                 '';
                 
                 for (var i = 0; i < report.actionable_recommendations.length; i++) {
@@ -2295,24 +2295,22 @@
                     var color = colors[index % colors.length];
                     
                     html += 
-                        <div class="col-12">
-                            <div class="d-flex align-items-start p-3 bg-secondary bg-opacity-30 rounded-3 border-start border-3 border-primary">
-                                <div class="me-3 mt-1">
-                                    <i class="bi ' + icon + ' fs-5 ' + color + '"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="text-light fw-medium">' + recommendation + '</div>
-                                </div>
-                            </div>
-                        </div>
-                    '';
+                        '<div class="col-12">' +
+                            '<div class="d-flex align-items-start p-3 bg-secondary bg-opacity-30 rounded-3 border-start border-3 border-primary">' +
+                                '<div class="me-3 mt-1">' +
+                                    '<i class="bi ' + icon + ' fs-5 ' + color + '"></i>' +
+                                '</div>' +
+                                '<div class="flex-grow-1">' +
+                                    '<div class="text-light fw-medium">' + recommendation + '</div>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>';
                 });
                 
                 html += 
-                            </div>
-                        </div>
-                    </div>
-                '';
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
             }
             
             return html;
