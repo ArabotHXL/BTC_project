@@ -1288,13 +1288,18 @@
             var keyFindings = report.key_findings || {};
             var riskAssessment = report.risk_assessment || {};
             
+            var titleText = report.title || (currentLang === 'en' ? 'Analysis Report' : '分析报告');
+            var generatedText = currentLang === 'en' ? 'Generated: ' : '生成时间: ';
+            var confidenceText = currentLang === 'en' ? 'Confidence: ' : '置信度: ';
+            var confidenceScore = report.confidence_score ? ' | ' + confidenceText + (report.confidence_score * 100).toFixed(0) + '%' : '';
+            
             var html = 
                 '<div class="mb-3">' +
-                    '<h6>' + (report.title || (currentLang === 'en' ? 'Analysis Report' : '分析报告')) + '</h6>' +
+                    '<h6>' + titleText + '</h6>' +
                     '<p class="text-muted small">' +
-                        (currentLang === 'en' ? 'Generated: ' : '生成时间: ') +
+                        generatedText +
                         (report.generated_at ? new Date(report.generated_at).toLocaleString() : '--') +
-                        (report.confidence_score ? ' | ' + (currentLang === 'en' ? 'Confidence: ' : '置信度: ') + (report.confidence_score * 100).toFixed(0) + '%' : '') +
+                        confidenceScore +
                     '</p>' +
                 '</div>' +
                 
@@ -1302,8 +1307,7 @@
                 '<div class="mb-3">' +
                     '<strong>' + (currentLang === 'en' ? 'Market Summary:' : '市场摘要:') + '</strong>' +
                     '<p class="mt-1">' + report.summary + '</p>' +
-                '</div>' : '')
-                +
+                '</div>' : '') +
                 
                 (Object.keys(keyFindings).length > 0 ? 
                 '<div class="mb-3">' +
