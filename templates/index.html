@@ -1334,9 +1334,13 @@
                 '<div class="mb-3">' +
                     '<strong>{% if current_lang == "en" %}Investment Recommendations:{% else %}投资建议:{% endif %}</strong>' +
                     '<ul class="list-unstyled mt-2">' +
-                        (report.recommendations ? report.recommendations.map(function(rec) { 
-                            return '<li class="mb-1"><i class="bi bi-check-circle text-success me-2"></i>' + rec + '</li>'; 
-                        }).join('') : '') +
+                        (report.recommendations ? function() {
+                            var items = [];
+                            for (var i = 0; i < report.recommendations.length; i++) {
+                                items.push('<li class="mb-1"><i class="bi bi-check-circle text-success me-2"></i>' + report.recommendations[i] + '</li>');
+                            }
+                            return items.join('');
+                        }() : '') +
                     '</ul>' +
                 '</div>' : '') +
                 
@@ -1364,7 +1368,9 @@
             }
             
             function safeFormatNumber(value, decimals) {
-                if (typeof decimals === 'undefined') decimals = 2;
+                if (typeof decimals === 'undefined') {
+                    decimals = 2;
+                }
                 return value !== null && value !== undefined ? formatNumber(value, decimals) : '--';
             }
             
@@ -1429,7 +1435,9 @@
         }
 
         function formatNumber(num, decimals) {
-            if (typeof decimals === 'undefined') decimals = 2;
+            if (typeof decimals === 'undefined') {
+                decimals = 2;
+            }
             return num ? num.toFixed(decimals) : '--';
         }
 
