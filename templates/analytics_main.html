@@ -1130,51 +1130,49 @@
         }
 
         // Data loading functions
-        async function loadAllData() {
+        function loadAllData() {
             showLoading();
-            try {
-                await Promise.all([
-                    loadMarketData(),
-                    loadTechnicalIndicators(),
-                    loadPriceHistory(),
-                    loadLatestReport()
-                ]);
+            Promise.all([
+                loadMarketData(),
+                loadTechnicalIndicators(),
+                loadPriceHistory(),
+                loadLatestReport()
+            ]).then(function() {
                 updateConnectionStatus(true);
                 generateQuickInsights();
-            } catch (error) {
+            }).catch(function(error) {
                 console.error('Error loading data:', error);
                 updateConnectionStatus(false);
-            } finally {
+            }).finally(function() {
                 hideLoading();
-            }
+            });
         }
 
-        async function loadMarketData() {
-            try {
-                console.log('Loading market data...');
-                var response = await fetch('/api/analytics/market-data', {
-                    method: 'GET',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                });
+        function loadMarketData() {
+            console.log('Loading market data...');
+            return fetch('/api/analytics/market-data', {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            }).then(function(response) {
                 console.log('Market data response status:', response.status);
                 if (!response.ok) throw new Error('Market data unavailable');
-                
-                var responseData = await response.json();
+                return response.json();
+            }).then(function(responseData) {
                 console.log('Market data response:', responseData);
                 var data = responseData.data || responseData;
                 console.log('Extracted data for display:', data);
                 updateMarketDataDisplay(data);
-            } catch (error) {
+            }).catch(function(error) {
                 console.error('Market data error:', error);
                 showErrorMessage('market', '市场数据暂时不可用');
-            }
+            });
         }
 
-        async function loadTechnicalIndicators() {
+        function loadTechnicalIndicators() {
             try {
                 var response = await fetch('/analytics/api/technical-indicators', {
                     method: 'GET',
@@ -1200,7 +1198,7 @@
             }
         }
 
-        async function loadPriceHistory() {
+        function loadPriceHistory() {
             try {
                 var response = await fetch('/api/analytics/price-history?hours=24', {
                     method: 'GET',
@@ -1232,7 +1230,7 @@
             }
         }
 
-        async function loadLatestReport() {
+        function loadLatestReport() {
             try {
                 var response = await fetch('/api/analytics/latest-report', {
                     method: 'GET',
@@ -1480,7 +1478,7 @@
         }
 
         // Investment Decision Support Functions
-        async function updateMiningDecisionModules(marketData) {
+        function updateMiningDecisionModules(marketData) {
             try {
                 // Update all investment components with unified data
                 updateAllInvestmentComponents(marketData);
@@ -1880,7 +1878,7 @@
         }
 
         // 专业5步报告生成函数
-        async function generate5StepReport() {
+        function generate5StepReport() {
             var generateBtn = document.getElementById('generate5StepBtn');
             var statusDiv = document.getElementById('professional-report-status');
             var downloadSection = document.getElementById('professional-download-section');
@@ -1954,7 +1952,7 @@
         }
         
         // 下载专业报告文件
-        async function downloadProfessionalReport(fileType) {
+        function downloadProfessionalReport(fileType) {
             try {
                 var response = await fetch('/api/professional-report/download/' + fileType);
                 
@@ -1979,7 +1977,7 @@
             }
         }
 
-        async function generateDetailedReport() {
+        function generateDetailedReport() {
             var reportButton = document.querySelector('.btn-outline-primary');
             var originalText = reportButton.innerHTML;
             
@@ -2417,7 +2415,7 @@
             }];
         }
 
-        async function updateAIRecommendations(marketData) {
+        function updateAIRecommendations(marketData) {
             var recommendationsContainer = document.getElementById('aiRecommendations');
             if (!recommendationsContainer) return;
 
@@ -2454,7 +2452,7 @@
 
 
 
-        async function generateAIRecommendations(marketData) {
+        function generateAIRecommendations(marketData) {
             try {
                 // 调用专业详细报告API获取AI建议
                 var response = await fetch('/api/analytics/detailed-report');
