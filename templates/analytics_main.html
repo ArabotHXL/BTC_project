@@ -2063,9 +2063,9 @@
                         '</h5>' +
                         '<div class="p-4 bg-dark rounded-3 border border-secondary">' +
                             '<div class="row g-3">' +
-                                '<div class="col-md-6">';
-                                    <div class="d-flex flex-column">
-                                        <span class="text-light mb-2 fw-semibold">当前市场状况:</span>
+                                '<div class="col-md-6">' +
+                                    '<div class="d-flex flex-column">' +
+                                        '<span class="text-light mb-2 fw-semibold">当前市场状况:</span>';
                                         <div class="ms-2">
                                             <div class="mb-2">
                                                 <span class="badge bg-success fs-6 px-3 py-2">
@@ -2098,13 +2098,12 @@
             if (report.profitability_analysis && report.profitability_analysis.best_scenario) {
                 var best = report.profitability_analysis.best_scenario;
                 html += 
-                    <div class="mb-4">
-                        <h5 class="text-primary mb-3 fw-bold border-bottom border-primary pb-2">
-                            <i class="bi bi-graph-up-arrow"></i> 最佳投资方案
-                        </h5>
-                        <div class="p-4 bg-gradient" style="background: linear-gradient(135deg, rgba(40, 44, 52, 0.95), rgba(25, 135, 84, 0.1));" 
-                             class="rounded-3 border border-success">
-                            <div class="row g-4">
+                    '<div class="mb-4">' +
+                        '<h5 class="text-primary mb-3 fw-bold border-bottom border-primary pb-2">' +
+                            '<i class="bi bi-graph-up-arrow"></i> 最佳投资方案' +
+                        '</h5>' +
+                        '<div class="p-4 bg-gradient rounded-3 border border-success" style="background: linear-gradient(135deg, rgba(40, 44, 52, 0.95), rgba(25, 135, 84, 0.1));">' +
+                            '<div class="row g-4">';
                                 <div class="col-md-4">
                                     <div class="text-center p-3 bg-dark rounded-3 border border-secondary">
                                         <div class="mb-2">
@@ -2169,8 +2168,7 @@
                             '<i class="bi bi-bar-chart-line"></i> 技术分析' +
                         '</h5>' +
                         '<div class="p-4 bg-dark rounded-3 border border-secondary">' +
-                            '<div class="row g-3">' +
-                '';
+                            '<div class="row g-3">';
                 
                 if (report.technical_analysis.rsi_14) {
                     var rsi = report.technical_analysis.rsi_14;
@@ -2236,12 +2234,12 @@
                 var riskIcon = risk.risk_level === 'high' ? 'exclamation-triangle' : risk.risk_level === 'low' ? 'shield-check' : 'shield-exclamation';
                 
                 html += 
-                    <div class="mb-4">
-                        <h5 class="text-primary mb-3 fw-bold border-bottom border-primary pb-2">
-                            <i class="bi bi-shield-exclamation"></i> 风险评估
-                        </h5>
-                        <div class="p-4 bg-dark rounded-3 border border-secondary">
-                            <div class="row g-4">
+                    '<div class="mb-4">' +
+                        '<h5 class="text-primary mb-3 fw-bold border-bottom border-primary pb-2">' +
+                            '<i class="bi bi-shield-exclamation"></i> 风险评估' +
+                        '</h5>' +
+                        '<div class="p-4 bg-dark rounded-3 border border-secondary">' +
+                            '<div class="row g-4">';
                                 <div class="col-md-4">
                                     <div class="text-center p-3 bg-gradient rounded-3 border" 
                                          style="background: linear-gradient(135deg, rgba(40, 44, 52, 0.8), rgba(' + (riskBadgeClass === 'danger' ? '220, 53, 69' : riskBadgeClass === 'success' ? '25, 135, 84' : '255, 193, 7') + ', 0.1));">
