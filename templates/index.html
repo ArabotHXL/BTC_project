@@ -988,6 +988,9 @@
     <script src="/static/js/main_new.js"></script>
     
     <script>
+        // Global language variable for JavaScript use
+        var currentLang = '{{ current_lang }}';
+        
         // 添加关机策略的显示/隐藏控制
         document.addEventListener('DOMContentLoaded', function() {
             // 获取元素
@@ -1053,7 +1056,7 @@
                     return marketData.json();
                 } else if (marketData.status === 403) {
                     document.getElementById('widget-insights').textContent = 
-                        '{% if current_lang == "en" %}Analytics access restricted{% else %}分析系统访问受限{% endif %}';
+                        currentLang === 'en' ? 'Analytics access restricted' : '分析系统访问受限';
                     throw new Error('Access restricted');
                 } else {
                     console.log('Analytics API response not OK:', marketData.status);
@@ -1155,34 +1158,36 @@
 
         function getFearGreedLabel(index) {
             if (!index) return '--';
-            if (index <= 25) return '{% if current_lang == "en" %}Extreme Fear{% else %}极度恐惧{% endif %}';
-            if (index <= 45) return '{% if current_lang == "en" %}Fear{% else %}恐惧{% endif %}';
-            if (index <= 55) return '{% if current_lang == "en" %}Neutral{% else %}中性{% endif %}';
-            if (index <= 75) return '{% if current_lang == "en" %}Greed{% else %}贪婪{% endif %}';
-            return '{% if current_lang == "en" %}Extreme Greed{% else %}极度贪婪{% endif %}';
+            var lang = '{{ current_lang }}';
+            if (index <= 25) return lang === 'en' ? 'Extreme Fear' : '极度恐惧';
+            if (index <= 45) return lang === 'en' ? 'Fear' : '恐惧';
+            if (index <= 55) return lang === 'en' ? 'Neutral' : '中性';
+            if (index <= 75) return lang === 'en' ? 'Greed' : '贪婪';
+            return lang === 'en' ? 'Extreme Greed' : '极度贪婪';
         }
 
         function generateInsights(data) {
             var insights = [];
+            var lang = '{{ current_lang }}';
             
             if (data.price_change_24h > 5) {
-                insights.push('{% if current_lang == "en" %}Strong bullish momentum detected{% else %}检测到强劲上涨动能{% endif %}');
+                insights.push(lang === 'en' ? 'Strong bullish momentum detected' : '检测到强劲上涨动能');
             } else if (data.price_change_24h < -5) {
-                insights.push('{% if current_lang == "en" %}Significant price decline observed{% else %}观察到显著价格下跌{% endif %}');
+                insights.push(lang === 'en' ? 'Significant price decline observed' : '观察到显著价格下跌');
             }
 
             if (data.network_hashrate > 900) {
-                insights.push('{% if current_lang == "en" %}Network security extremely high{% else %}网络安全性极高{% endif %}');
+                insights.push(lang === 'en' ? 'Network security extremely high' : '网络安全性极高');
             }
 
             if (data.fear_greed_index <= 25) {
-                insights.push('{% if current_lang == "en" %}Potential buying opportunity{% else %}潜在买入机会{% endif %}');
+                insights.push(lang === 'en' ? 'Potential buying opportunity' : '潜在买入机会');
             } else if (data.fear_greed_index >= 75) {
-                insights.push('{% if current_lang == "en" %}Market overheating warning{% else %}市场过热警告{% endif %}');
+                insights.push(lang === 'en' ? 'Market overheating warning' : '市场过热警告');
             }
 
             return insights.length > 0 ? insights.join(' | ') : 
-                '{% if current_lang == "en" %}Market conditions stable{% else %}市场状况稳定{% endif %}';
+                (lang === 'en' ? 'Market conditions stable' : '市场状况稳定');
         }
 
         function refreshAnalyticsWidget() {
@@ -1192,7 +1197,7 @@
         function showLatestReport() {
             var modal = new bootstrap.Modal(document.getElementById('analyticsModal'));
             document.getElementById('analyticsModalLabel').textContent = 
-                '{% if current_lang == "en" %}Latest Analysis Report{% else %}最新分析报告{% endif %}';
+                currentLang === 'en' ? 'Latest Analysis Report' : '最新分析报告';
             
             fetch('/api/analytics/latest-report').then(function(response) {
                 if (response.ok) {
@@ -1213,17 +1218,17 @@
                             displayReport(report);
                         } else {
                             document.getElementById('analyticsModalBody').innerHTML = 
-                                '<div class="alert alert-warning">{% if current_lang == "en" %}No report data available{% else %}暂无报告数据{% endif %}</div>';
+                                '<div class="alert alert-warning">' + (currentLang === 'en' ? 'No report data available' : '暂无报告数据') + '</div>';
                         }
                     });
                 } else {
                     document.getElementById('analyticsModalBody').innerHTML = 
-                        '<div class="alert alert-warning">{% if current_lang == "en" %}No reports available yet{% else %}暂无可用报告{% endif %}</div>';
+                        '<div class="alert alert-warning">' + (currentLang === 'en' ? 'No reports available yet' : '暂无可用报告') + '</div>';
                 }
             }).catch(function(error) {
                 console.error('Error loading latest report:', error);
                 document.getElementById('analyticsModalBody').innerHTML = 
-                    '<div class="alert alert-danger">{% if current_lang == "en" %}Unable to load report{% else %}无法加载报告{% endif %}</div>';
+                    '<div class="alert alert-danger">' + (currentLang === 'en' ? 'Unable to load report' : '无法加载报告') + '</div>';
             });
             
             modal.show();
@@ -1232,7 +1237,7 @@
         function showTechnicalIndicators() {
             var modal = new bootstrap.Modal(document.getElementById('analyticsModal'));
             document.getElementById('analyticsModalLabel').textContent = 
-                '{% if current_lang == "en" %}Technical Indicators{% else %}技术指标{% endif %}';
+                currentLang === 'en' ? 'Technical Indicators' : '技术指标';
             
             fetch('/api/analytics/technical-indicators').then(function(response) {
                 if (response.ok) {
@@ -1257,17 +1262,17 @@
                             displayTechnicalIndicators(indicators);
                         } else {
                             document.getElementById('analyticsModalBody').innerHTML = 
-                                '<div class="alert alert-warning">{% if current_lang == "en" %}No indicators data available{% else %}暂无技术指标数据{% endif %}</div>';
+                                '<div class="alert alert-warning">' + (currentLang === 'en' ? 'No indicators data available' : '暂无技术指标数据') + '</div>';
                         }
                     });
                 } else {
                     document.getElementById('analyticsModalBody').innerHTML = 
-                        '<div class="alert alert-warning">{% if current_lang == "en" %}Indicators not available{% else %}技术指标不可用{% endif %}</div>';
+                        '<div class="alert alert-warning">' + (currentLang === 'en' ? 'Indicators not available' : '技术指标不可用') + '</div>';
                 }
             }).catch(function(error) {
                 console.error('Error loading technical indicators:', error);
                 document.getElementById('analyticsModalBody').innerHTML = 
-                    '<div class="alert alert-danger">{% if current_lang == "en" %}Unable to load indicators{% else %}无法加载技术指标{% endif %}</div>';
+                    '<div class="alert alert-danger">' + (currentLang === 'en' ? 'Unable to load indicators' : '无法加载技术指标') + '</div>';
             });
             
             modal.show();
@@ -1282,49 +1287,49 @@
             
             var html = 
                 '<div class="mb-3">' +
-                    '<h6>' + (report.title || '{% if current_lang == "en" %}Analysis Report{% else %}分析报告{% endif %}') + '</h6>' +
+                    '<h6>' + (report.title || (currentLang === 'en' ? 'Analysis Report' : '分析报告')) + '</h6>' +
                     '<p class="text-muted small">' +
-                        '{% if current_lang == "en" %}Generated:{% else %}生成时间:{% endif %} ' +
+                        (currentLang === 'en' ? 'Generated: ' : '生成时间: ') +
                         (report.generated_at ? new Date(report.generated_at).toLocaleString() : '--') +
-                        (report.confidence_score ? ' | {% if current_lang == "en" %}Confidence:{% else %}置信度:{% endif %} ' + (report.confidence_score * 100).toFixed(0) + '%' : '') +
+                        (report.confidence_score ? ' | ' + (currentLang === 'en' ? 'Confidence: ' : '置信度: ') + (report.confidence_score * 100).toFixed(0) + '%' : '') +
                     '</p>' +
                 '</div>' +
                 
                 (report.summary ? 
                 '<div class="mb-3">' +
-                    '<strong>{% if current_lang == "en" %}Market Summary:{% else %}市场摘要:{% endif %}</strong>' +
+                    '<strong>' + (currentLang === 'en' ? 'Market Summary:' : '市场摘要:') + '</strong>' +
                     '<p class="mt-1">' + report.summary + '</p>' +
                 '</div>' : '')
                 +
                 
                 (Object.keys(keyFindings).length > 0 ? 
                 '<div class="mb-3">' +
-                    '<strong>{% if current_lang == "en" %}Key Findings:{% else %}关键发现:{% endif %}</strong>' +
+                    '<strong>' + (currentLang === 'en' ? 'Key Findings:' : '关键发现:') + '</strong>' +
                     '<div class="row mt-2">' +
                         (keyFindings.price_range ? 
                         '<div class="col-6">' +
-                            '<small class="text-muted">{% if current_lang == "en" %}Price Range{% else %}价格区间{% endif %}</small><br>' +
+                            '<small class="text-muted">' + (currentLang === 'en' ? 'Price Range' : '价格区间') + '</small><br>' +
                             '<strong>' + keyFindings.price_range + '</strong>' +
                         '</div>' : '') +
                         (keyFindings.avg_price ? 
                         '<div class="col-6">' +
-                            '<small class="text-muted">{% if current_lang == "en" %}Avg Price{% else %}平均价格{% endif %}</small><br>' +
+                            '<small class="text-muted">' + (currentLang === 'en' ? 'Avg Price' : '平均价格') + '</small><br>' +
                             '<strong>' + keyFindings.avg_price + '</strong>' +
                         '</div>' : '') +
                         (keyFindings.avg_hashrate ? 
                         '<div class="col-6 mt-2">' +
-                            '<small class="text-muted">{% if current_lang == "en" %}Network Hashrate{% else %}网络算力{% endif %}</small><br>' +
+                            '<small class="text-muted">' + (currentLang === 'en' ? 'Network Hashrate' : '网络算力') + '</small><br>' +
                             '<strong>' + keyFindings.avg_hashrate + '</strong>' +
                         '</div>' : '') +
                         (keyFindings.market_sentiment ? 
                         '<div class="col-6 mt-2">' +
-                            '<small class="text-muted">{% if current_lang == "en" %}Market Sentiment{% else %}市场情绪{% endif %}</small><br>' +
+                            '<small class="text-muted">' + (currentLang === 'en' ? 'Market Sentiment' : '市场情绪') + '</small><br>' +
                             '<strong>' + keyFindings.market_sentiment + '</strong>' +
                         '</div>' : '') +
                     '</div>' +
                     (keyFindings.rsi_signal ? 
                     '<div class="mt-2">' +
-                        '<small class="text-muted">RSI {% if current_lang == "en" %}Signal{% else %}信号{% endif %}</small><br>' +
+                        '<small class="text-muted">RSI ' + (currentLang === 'en' ? 'Signal' : '信号') + '</small><br>' +
                         '<span class="badge bg-info">' + keyFindings.rsi_signal + '</span>' +
                     '</div>' : '') +
                 '</div>' : '')
@@ -1332,7 +1337,7 @@
                 
                 (report.recommendations && report.recommendations.length > 0 ? 
                 '<div class="mb-3">' +
-                    '<strong>{% if current_lang == "en" %}Investment Recommendations:{% else %}投资建议:{% endif %}</strong>' +
+                    '<strong>' + (currentLang === 'en' ? 'Investment Recommendations:' : '投资建议:') + '</strong>' +
                     '<ul class="list-unstyled mt-2">' +
                         (report.recommendations ? function() {
                             var items = [];
@@ -1346,11 +1351,11 @@
                 
                 (Object.keys(riskAssessment).length > 0 ? 
                 '<div class="mb-3">' +
-                    '<strong>{% if current_lang == "en" %}Risk Assessment:{% else %}风险评估:{% endif %}</strong>' +
+                    '<strong>' + (currentLang === 'en' ? 'Risk Assessment:' : '风险评估:') + '</strong>' +
                     '<div class="mt-2">' +
                         (riskAssessment.risk_level ? 
                         '<span class="badge ' + getRiskColor(riskAssessment.risk_level) + '">' +
-                            riskAssessment.risk_level + ' {% if current_lang == "en" %}Risk{% else %}风险{% endif %}' +
+                            riskAssessment.risk_level + ' ' + (currentLang === 'en' ? 'Risk' : '风险') +
                         '</span>' : '') +
                         (riskAssessment.risk_score ? ' <span class="ms-2">' + riskAssessment.risk_score + '/100</span>' : '') +
                     '</div>' +
@@ -1380,7 +1385,7 @@
             var html = 
                 '<div class="row">' +
                     '<div class="col-md-6">' +
-                        '<h6>{% if current_lang == "en" %}Moving Averages{% else %}移动平均线{% endif %}</h6>' +
+                        '<h6>' + (currentLang === 'en' ? 'Moving Averages' : '移动平均线') + '</h6>' +
                         '<table class="table table-sm">' +
                             '<tr><td>SMA 20</td><td>' + safeFormatPrice(indicators.sma_20) + '</td></tr>' +
                             '<tr><td>SMA 50</td><td>' + safeFormatPrice(indicators.sma_50) + '</td></tr>' +
@@ -1389,28 +1394,28 @@
                         '</table>' +
                     '</div>' +
                     '<div class="col-md-6">' +
-                        '<h6>{% if current_lang == "en" %}Momentum{% else %}动量指标{% endif %}</h6>' +
+                        '<h6>' + (currentLang === 'en' ? 'Momentum' : '动量指标') + '</h6>' +
                         '<table class="table table-sm">' +
                             '<tr><td>RSI (14)</td><td>' + safeFormatNumber(indicators.rsi_14, 1) + '</td></tr>' +
                             '<tr><td>MACD</td><td>' + safeFormatNumber(indicators.macd, 4) + '</td></tr>' +
-                            '<tr><td>{% if current_lang == "en" %}30D Volatility{% else %}30日波动率{% endif %}</td><td>' + safeFormatPercent(indicators.volatility_30d) + '</td></tr>' +
+                            '<tr><td>' + (currentLang === 'en' ? '30D Volatility' : '30日波动率') + '</td><td>' + safeFormatPercent(indicators.volatility_30d) + '</td></tr>' +
                         '</table>' +
                     '</div>' +
                 '</div>' +
                 (indicators.bollinger_upper && indicators.bollinger_lower ? 
                 '<div class="mt-3">' +
-                    '<h6>{% if current_lang == "en" %}Bollinger Bands{% else %}布林带{% endif %}</h6>' +
+                    '<h6>' + (currentLang === 'en' ? 'Bollinger Bands' : '布林带') + '</h6>' +
                     '<div class="row">' +
                         '<div class="col-4 text-center">' +
-                            '<small>{% if current_lang == "en" %}Upper{% else %}上轨{% endif %}</small><br>' +
+                            '<small>' + (currentLang === 'en' ? 'Upper' : '上轨') + '</small><br>' +
                             '<strong>' + formatPrice(indicators.bollinger_upper) + '</strong>' +
                         '</div>' +
                         '<div class="col-4 text-center">' +
-                            '<small>{% if current_lang == "en" %}Middle{% else %}中轨{% endif %}</small><br>' +
+                            '<small>' + (currentLang === 'en' ? 'Middle' : '中轨') + '</small><br>' +
                             '<strong>' + formatPrice(indicators.sma_20) + '</strong>' +
                         '</div>' +
                         '<div class="col-4 text-center">' +
-                            '<small>{% if current_lang == "en" %}Lower{% else %}下轨{% endif %}</small><br>' +
+                            '<small>' + (currentLang === 'en' ? 'Lower' : '下轨') + '</small><br>' +
                             '<strong>' + formatPrice(indicators.bollinger_lower) + '</strong>' +
                         '</div>' +
                     '</div>' +
