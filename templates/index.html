@@ -991,8 +991,8 @@
         // 添加关机策略的显示/隐藏控制
         document.addEventListener('DOMContentLoaded', function() {
             // 获取元素
-            const curtailmentInput = document.getElementById('curtailment');
-            const shutdownStrategyContainer = document.getElementById('shutdown-strategy-container');
+            var curtailmentInput = document.getElementById('curtailment');
+            var shutdownStrategyContainer = document.getElementById('shutdown-strategy-container');
             
             // 检查元素是否存在
             if (curtailmentInput && shutdownStrategyContainer) {
@@ -1003,7 +1003,7 @@
                 curtailmentInput.addEventListener('input', updateShutdownStrategyVisibility);
                 
                 function updateShutdownStrategyVisibility() {
-                    const curtailmentValue = parseFloat(curtailmentInput.value) || 0;
+                    var curtailmentValue = parseFloat(curtailmentInput.value) || 0;
                     
                     // 如果curtailment > 0，显示关机策略选择
                     if (curtailmentValue > 0) {
@@ -1017,9 +1017,9 @@
 
         // 全网算力输入切换功能
         function toggleHashrateInput() {
-            const hashrateApiRadio = document.getElementById('hashrate-api');
-            const hashrateManualRadio = document.getElementById('hashrate-manual');
-            const manualHashrateContainer = document.getElementById('manual-hashrate-container');
+            var hashrateApiRadio = document.getElementById('hashrate-api');
+            var hashrateManualRadio = document.getElementById('hashrate-manual');
+            var manualHashrateContainer = document.getElementById('manual-hashrate-container');
             
             // 检查元素是否存在
             if (hashrateManualRadio && manualHashrateContainer) {
@@ -1040,38 +1040,37 @@
             setInterval(loadAnalyticsWidget, 300000);
         });
 
-        async function loadAnalyticsWidget() {
-            try {
-                const marketData = await fetch('/api/analytics/market-data', {
-                    method: 'GET',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
+        function loadAnalyticsWidget() {
+            fetch('/api/analytics/market-data', {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            }).then(function(marketData) {
                 if (marketData.ok) {
-                    const data = await marketData.json();
-                    console.log('Analytics data received:', data);
-                    if (data.success && data.data) {
-                        updateAnalyticsWidget(data.data);
-                    } else {
-                        // Fallback with current market data
-                        console.log('Using fallback analytics data');
-                        updateAnalyticsWidgetFallback();
-                    }
+                    return marketData.json();
                 } else if (marketData.status === 403) {
                     document.getElementById('widget-insights').textContent = 
                         '{% if current_lang == "en" %}Analytics access restricted{% else %}分析系统访问受限{% endif %}';
+                    throw new Error('Access restricted');
                 } else {
                     console.log('Analytics API response not OK:', marketData.status);
+                    throw new Error('API not OK');
+                }
+            }).then(function(data) {
+                console.log('Analytics data received:', data);
+                if (data.success && data.data) {
+                    updateAnalyticsWidget(data.data);
+                } else {
+                    console.log('Using fallback analytics data');
                     updateAnalyticsWidgetFallback();
                 }
-            } catch (error) {
+            }).catch(function(error) {
                 console.error('Analytics connection error:', error);
                 updateAnalyticsWidgetFallback();
-            }
+            });
         }
         
         function updateAnalyticsWidgetFallback() {
@@ -1084,7 +1083,7 @@
                     return response.json();
                 }
                 throw new Error('Analytics API unavailable');
-            }).then(data => {
+            }).then(function(data) {
                 if (data.success && data.data) {
                     updateAnalyticsWidget(data.data);
                     document.getElementById('widget-insights').textContent = 
@@ -1092,10 +1091,10 @@
                 } else {
                     throw new Error('No analytics data');
                 }
-            }).catch(() => {
+            }).catch(function() {
                 // Only use fallback if analytics truly unavailable
-                const currentPrice = window.currentPriceCache || 80000;
-                const fallbackData = {
+                var currentPrice = window.currentPriceCache || 80000;
+                var fallbackData = {
                     btc_price: currentPrice,
                     network_hashrate: 904.9,
                     fear_greed_index: null,
@@ -1111,15 +1110,15 @@
             console.log('Updating analytics widget with data:', data);
             
             // Update BTC Price
-            const btcPriceEl = document.getElementById('widget-btc-price');
+            var btcPriceEl = document.getElementById('widget-btc-price');
             if (btcPriceEl) {
                 btcPriceEl.textContent = data.btc_price ? '$' + data.btc_price.toLocaleString() : '--';
             }
             
             // Update price change (only if we have real data)
-            const priceChangeEl = document.getElementById('widget-price-change');
+            var priceChangeEl = document.getElementById('widget-price-change');
             if (priceChangeEl && data.price_change_24h !== null && data.price_change_24h !== undefined) {
-                const change = data.price_change_24h;
+                var change = data.price_change_24h;
                 priceChangeEl.textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
                 priceChangeEl.className = 'small ' + (change >= 0 ? 'text-success' : 'text-danger');
             } else if (priceChangeEl) {
@@ -1128,28 +1127,28 @@
             }
 
             // Update Network Hashrate
-            const hashrateEl = document.getElementById('widget-hashrate');
+            var hashrateEl = document.getElementById('widget-hashrate');
             if (hashrateEl) {
                 hashrateEl.textContent = data.network_hashrate ? data.network_hashrate.toFixed(1) : '--';
             }
 
             // Update Fear & Greed Index
-            const fearGreedEl = document.getElementById('widget-fear-greed');
+            var fearGreedEl = document.getElementById('widget-fear-greed');
             if (fearGreedEl) {
                 fearGreedEl.textContent = data.fear_greed_index || '--';
             }
             
             // Update sentiment label
-            const sentimentEl = document.getElementById('widget-sentiment');
+            var sentimentEl = document.getElementById('widget-sentiment');
             if (sentimentEl) {
-                const sentiment = getFearGreedLabel(data.fear_greed_index);
+                var sentiment = getFearGreedLabel(data.fear_greed_index);
                 sentimentEl.textContent = sentiment;
             }
 
             // Update insights
-            const insightsEl = document.getElementById('widget-insights');
+            var insightsEl = document.getElementById('widget-insights');
             if (insightsEl) {
-                const insights = generateInsights(data);
+                var insights = generateInsights(data);
                 insightsEl.innerHTML = insights;
             }
         }
@@ -1164,7 +1163,7 @@
         }
 
         function generateInsights(data) {
-            const insights = [];
+            var insights = [];
             
             if (data.price_change_24h > 5) {
                 insights.push('{% if current_lang == "en" %}📈 Strong bullish momentum detected{% else %}📈 检测到强劲上涨动能{% endif %}');
