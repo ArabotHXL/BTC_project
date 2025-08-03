@@ -1035,13 +1035,14 @@
         }
 
         // Analytics Widget Functions (Owner Only)
-        {% if session.role == 'owner' %}
-        // Load analytics data on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadAnalyticsWidget();
-            // Auto-refresh analytics every 5 minutes
-            setInterval(loadAnalyticsWidget, 300000);
-        });
+        // Check if user is owner and initialize analytics
+        if ('{{ session.role }}' === 'owner') {
+            // Load analytics data on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                loadAnalyticsWidget();
+                // Auto-refresh analytics every 5 minutes
+                setInterval(loadAnalyticsWidget, 300000);
+            });
 
         function loadAnalyticsWidget() {
             fetch('/api/analytics/market-data', {
@@ -1190,8 +1191,12 @@
                 (lang === 'en' ? 'Market conditions stable' : '市场状况稳定');
         }
 
+        } // End of owner check
+
         function refreshAnalyticsWidget() {
-            loadAnalyticsWidget();
+            if ('{{ session.role }}' === 'owner') {
+                loadAnalyticsWidget();
+            }
         }
 
         function showLatestReport() {
@@ -1453,7 +1458,6 @@
         function formatPercent(percent) {
             return percent ? (percent >= 0 ? '+' : '') + percent.toFixed(2) + '%' : '--';
         }
-        {% endif %}
     </script>
 
     <!-- Footer with Legal Link -->
