@@ -1342,13 +1342,15 @@
                 '<div class="mb-3">' +
                     '<strong>' + (currentLang === 'en' ? 'Investment Recommendations:' : '投资建议:') + '</strong>' +
                     '<ul class="list-unstyled mt-2">' +
-                        (report.recommendations ? function() {
+                        (function() {
                             var items = [];
-                            for (var i = 0; i < report.recommendations.length; i++) {
-                                items.push('<li class="mb-1"><i class="bi bi-check-circle text-success me-2"></i>' + report.recommendations[i] + '</li>');
+                            if (report.recommendations) {
+                                for (var i = 0; i < report.recommendations.length; i++) {
+                                    items.push('<li class="mb-1"><i class="bi bi-check-circle text-success me-2"></i>' + report.recommendations[i] + '</li>');
+                                }
                             }
                             return items.join('');
-                        }() : '') +
+                        })() +
                     '</ul>' +
                 '</div>' : '') +
                 
