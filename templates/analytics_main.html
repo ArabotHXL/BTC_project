@@ -2090,8 +2090,7 @@
                                 '</div>' +
                             '</div>' +
                         '</div>' +
-                    '</div>'
-                '';
+                    '</div>';
             }
             
             // 盈利性分析 - 美化样式
@@ -2136,8 +2135,7 @@
                                             '<i class="bi bi-percent fs-1 text-warning"></i>' +
                                         '</div>' +
                                         '<div class="fw-bold text-light mb-1">投资回报</div>' +
-                                        '<div class="fs-6 text-warning fw-semibold">' +
-                                            '' + best.annual_roi.toFixed(1) + '% 年化' +
+                                        '<div class="fs-6 text-warning fw-semibold">' + best.annual_roi.toFixed(1) + '% 年化' +
                                         '</div>' +
                                         '<div class="small text-muted mt-2">' +
                                             '回本: <span class="text-info">' + best.roi_months.toFixed(1) + '个月</span>' +
@@ -2156,8 +2154,7 @@
                                 '</div>' +
                             '</div>' +
                         '</div>' +
-                    '</div>' +
-                '';
+                    '</div>' ;
             }
             
             // 技术分析 - 美化样式
@@ -2194,8 +2191,7 @@
                                     '<div class="small text-muted">' + rsiStatus + '</div>' +
                                 '</div>' +
                             '</div>' +
-                        '</div>' +
-                    '';
+                        '</div>';
                 }
                 
                 if (report.technical_analysis.trend_analysis) {
@@ -2215,15 +2211,13 @@
                                     '<div class="small text-muted">' + (trend.trend_consistency === 'consistent' ? '强势' : '弱势') + '</div>' +
                                 '</div>' +
                             '</div>' +
-                        '</div>' +
-                    '';
+                        '</div>';
                 }
                 
                 html += 
                             '</div>' +
                         '</div>' +
-                    '</div>' +
-                '';
+                    '</div>' ;
             }
             
             // 风险评估 - 美化样式
@@ -2269,8 +2263,7 @@
                                 '</div>';
                             '</div>' +
                         '</div>' +
-                    '</div>' +
-                '';
+                    '</div>' ;
             }
             
             // 可操作建议 - 美化样式
@@ -2281,8 +2274,7 @@
                             '<i class="bi bi-lightbulb-fill"></i> 可操作建议' +
                         '</h5>' +
                         '<div class="p-4 bg-dark rounded-3 border border-secondary">' +
-                            '<div class="row g-3">' +
-                '';
+                            '<div class="row g-3">' ;
                 
                 for (var i = 0; i < report.actionable_recommendations.length; i++) {
                     var recommendation = report.actionable_recommendations[i];
