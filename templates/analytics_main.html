@@ -6,7 +6,7 @@
     <title>{% block title %}分析数据仪表盘 - BTC挖矿计算器{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <script></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             background-color: #0d1421;
@@ -1173,7 +1173,7 @@
         }
 
         function loadTechnicalIndicators() {
-            return fetch('/analytics/api/technical-indicators', {
+            return fetch('/api/analytics/technical-indicators', {
                 method: 'GET',
                 credentials: 'same-origin',
                 headers: {
@@ -2999,7 +2999,7 @@
                         insights.push({
                             type: type,
                             icon: icon,
-                            text: shortName + ': $' + miner.breakeven.toFixed(3) + '/kWh (' + miner.efficiency.toFixed(1) + 'W/TH)';
+                            text: shortName + ': $' + miner.breakeven.toFixed(3) + '/kWh (' + miner.efficiency.toFixed(1) + 'W/TH)'
                         });
                     });
                 }
