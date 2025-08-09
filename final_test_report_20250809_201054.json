@@ -1,0 +1,159 @@
+{
+  "total_tests": 12,
+  "passed_tests": 12,
+  "failed_tests": 0,
+  "test_details": [
+    {
+      "test_name": "Server Connectivity",
+      "status": "PASS",
+      "details": "Status: 200, Time: 0.014s",
+      "response_time": 0.013780832290649414,
+      "data": {},
+      "timestamp": "2025-08-09T20:10:47.110567"
+    },
+    {
+      "test_name": "Database Integrity",
+      "status": "PASS",
+      "details": "Tables: 5/5, Records: 3310",
+      "response_time": 0,
+      "data": {
+        "user_access": 8,
+        "customers": 0,
+        "network_snapshots": 3299,
+        "plans": 3,
+        "subscriptions": 0
+      },
+      "timestamp": "2025-08-09T20:10:47.787206"
+    },
+    {
+      "test_name": "API /",
+      "status": "PASS",
+      "details": "Status: 200",
+      "response_time": 0.006309032440185547,
+      "data": {},
+      "timestamp": "2025-08-09T20:10:48.094878"
+    },
+    {
+      "test_name": "API /login",
+      "status": "PASS",
+      "details": "Status: 200",
+      "response_time": 0.006161689758300781,
+      "data": {},
+      "timestamp": "2025-08-09T20:10:48.101508"
+    },
+    {
+      "test_name": "API /api/analytics/data",
+      "status": "PASS",
+      "details": "Status: 200",
+      "response_time": 0.1898801326751709,
+      "data": {},
+      "timestamp": "2025-08-09T20:10:48.291734"
+    },
+    {
+      "test_name": "API /billing/plans",
+      "status": "PASS",
+      "details": "Status: 200",
+      "response_time": 0.23407196998596191,
+      "data": {},
+      "timestamp": "2025-08-09T20:10:48.526282"
+    },
+    {
+      "test_name": "API /dashboard",
+      "status": "PASS",
+      "details": "Status: 200",
+      "response_time": 0.011646747589111328,
+      "data": {},
+      "timestamp": "2025-08-09T20:10:48.538320"
+    },
+    {
+      "test_name": "Real-time Analytics",
+      "status": "PASS",
+      "details": "Quality: 55.6% complete",
+      "response_time": 0.1755659580230713,
+      "data": {
+        "has_success_flag": true,
+        "has_data_object": true,
+        "data_field_count": 5,
+        "data_completeness": 55.55555555555556
+      },
+      "timestamp": "2025-08-09T20:10:49.014983"
+    },
+    {
+      "test_name": "Mining Calculator Comprehensive",
+      "status": "PASS",
+      "details": "Score: 3/3, Sections: 5/5",
+      "response_time": 0,
+      "data": {
+        "data_available": true,
+        "result_sections": 5,
+        "reasonable_data": true
+      },
+      "timestamp": "2025-08-09T20:10:51.699565"
+    },
+    {
+      "test_name": "Subscription Integration",
+      "status": "PASS",
+      "details": "Indicators: 8/9, Forms: True",
+      "response_time": 0.11476874351501465,
+      "data": {},
+      "timestamp": "2025-08-09T20:10:52.115624"
+    },
+    {
+      "test_name": "System Performance",
+      "status": "PASS",
+      "details": "Score: 3/4, Response: 0.005s",
+      "response_time": 0,
+      "data": {
+        "cpu_percent": 44.8,
+        "memory_percent": 80.2,
+        "memory_used_mb": 50848.9,
+        "disk_percent": 69.4,
+        "avg_response_time": 0.005,
+        "response_times": [
+          0.005,
+          0.005,
+          0.005
+        ],
+        "network_info": {
+          "bytes_sent": 12970938,
+          "bytes_recv": 23033066
+        },
+        "test_duration": 6.34
+      },
+      "timestamp": "2025-08-09T20:10:53.435050"
+    },
+    {
+      "test_name": "Multilingual Support",
+      "status": "PASS",
+      "details": "Indicators found: 9",
+      "response_time": 0,
+      "data": {},
+      "timestamp": "2025-08-09T20:10:53.748060"
+    }
+  ],
+  "performance_metrics": {
+    "cpu_percent": 44.8,
+    "memory_percent": 80.2,
+    "memory_used_mb": 50848.9,
+    "disk_percent": 69.4,
+    "avg_response_time": 0.005,
+    "response_times": [
+      0.005,
+      0.005,
+      0.005
+    ],
+    "network_info": {
+      "bytes_sent": 12970938,
+      "bytes_recv": 23033066
+    },
+    "test_duration": 6.34
+  },
+  "system_health": {
+    "score": 100,
+    "status": "EXCELLENT",
+    "grade": "A++"
+  },
+  "timestamp": "2025-08-09T20:10:47.094071",
+  "pass_rate": 100.0,
+  "test_duration": 6.95
+}

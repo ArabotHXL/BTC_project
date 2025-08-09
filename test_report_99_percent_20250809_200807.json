@@ -1,0 +1,113 @@
+{
+  "total_tests": 9,
+  "passed_tests": 8,
+  "failed_tests": 1,
+  "test_details": [
+    {
+      "test_name": "Server Health Check",
+      "status": "PASS",
+      "details": "Status: 200",
+      "response_time": 0.03406047821044922,
+      "data": {},
+      "timestamp": "2025-08-09T20:08:01.108541"
+    },
+    {
+      "test_name": "Database Connection",
+      "status": "PASS",
+      "details": "Connected. Tables found: ['user_access', 'customers', 'network_snapshots', 'plans', 'subscriptions']",
+      "response_time": 0,
+      "data": {},
+      "timestamp": "2025-08-09T20:08:01.920373"
+    },
+    {
+      "test_name": "API /login",
+      "status": "PASS",
+      "details": "Status: 200",
+      "response_time": 0.013393163681030273,
+      "data": {},
+      "timestamp": "2025-08-09T20:08:02.435188"
+    },
+    {
+      "test_name": "API /api/analytics/data",
+      "status": "PASS",
+      "details": "Status: 200",
+      "response_time": 0.20348525047302246,
+      "data": {},
+      "timestamp": "2025-08-09T20:08:02.639009"
+    },
+    {
+      "test_name": "API /billing/plans",
+      "status": "PASS",
+      "details": "Status: 200",
+      "response_time": 0.1517653465270996,
+      "data": {},
+      "timestamp": "2025-08-09T20:08:02.791220"
+    },
+    {
+      "test_name": "Analytics Engine",
+      "status": "PASS",
+      "details": "All fields present",
+      "response_time": 0.17948412895202637,
+      "data": {
+        "data": {
+          "btc_market_cap": null,
+          "btc_price": 116644.0,
+          "btc_volume_24h": null,
+          "fear_greed_index": 67,
+          "network_difficulty": 129435235580344.8,
+          "network_hashrate": 752.81,
+          "price_change_1h": -0.2606,
+          "price_change_24h": -0.007,
+          "price_change_7d": 2.3636,
+          "timestamp": "2025-08-09T06:35:37.537152"
+        },
+        "success": true
+      },
+      "timestamp": "2025-08-09T20:08:03.471739"
+    },
+    {
+      "test_name": "Mining Calculator",
+      "status": "FAIL",
+      "details": "calculate_mining_profitability() got an unexpected keyword argument 'pool_fee'",
+      "response_time": 0,
+      "data": {},
+      "timestamp": "2025-08-09T20:08:05.729763"
+    },
+    {
+      "test_name": "Subscription System",
+      "status": "PASS",
+      "details": "Found plan indicators: ['free', 'basic', 'pro', 'stripe']",
+      "response_time": 0.11814212799072266,
+      "data": {},
+      "timestamp": "2025-08-09T20:08:06.348888"
+    },
+    {
+      "test_name": "Performance Metrics",
+      "status": "PASS",
+      "details": "CPU: 57.7%, Memory: 83.4%",
+      "response_time": 0,
+      "data": {
+        "cpu_percent": 57.7,
+        "memory_percent": 83.4,
+        "memory_used_mb": 52877.1,
+        "disk_percent": 69.4,
+        "network_bytes_sent": 12493847,
+        "network_bytes_recv": 22490609,
+        "test_duration_seconds": 6.8
+      },
+      "timestamp": "2025-08-09T20:08:07.851993"
+    }
+  ],
+  "performance_metrics": {
+    "cpu_percent": 57.7,
+    "memory_percent": 83.4,
+    "memory_used_mb": 52877.1,
+    "disk_percent": 69.4,
+    "network_bytes_sent": 12493847,
+    "network_bytes_recv": 22490609,
+    "test_duration_seconds": 6.8
+  },
+  "timestamp": "2025-08-09T20:08:01.054548",
+  "pass_rate": 88.89,
+  "test_duration": 6.8
+}
