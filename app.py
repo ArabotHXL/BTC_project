@@ -3010,5 +3010,19 @@ def legal_terms():
     """法律条款和使用条件页面 - 公开访问，无需登录"""
     return render_template('legal_simple.html')
 
+# Register Stripe billing routes if available
+# Register Stripe billing blueprint if available
+if SUBSCRIPTION_ENABLED:
+    try:
+        app.register_blueprint(billing_bp, url_prefix="/billing")
+        logging.info("Stripe billing routes registered successfully")
+        
+        # Create database tables for subscriptions
+        with app.app_context():
+            db.create_all()
+            logging.info("Subscription tables created")
+    except Exception as e:
+        logging.error(f"Failed to register billing routes: {e}")
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
