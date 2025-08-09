@@ -172,7 +172,42 @@ translations = {
     "commercial_license": "商业许可",
     "data_accuracy": "数据准确性",
     "no_investment_advice": "非投资建议",
-    "liability_limitation": "责任限制"
+    "liability_limitation": "责任限制",
+    
+    # Homepage translations
+    "homepage_title": "Bitcoin挖矿智能分析平台",
+    "homepage_subtitle": "专业的比特币挖矿收益计算与投资分析工具，支持实时数据、多算法验证、智能报告生成",
+    "start_calculating": "开始计算",
+    "learn_more": "了解更多",
+    "market_data": "市场数据",
+    "real_time": "实时更新",
+    "miner_models": "矿机型号",
+    "accuracy_rate": "准确率",
+    "real_time_data": "实时数据",
+    "enterprise_grade": "企业级",
+    "key_features": "核心功能",
+    "features_subtitle": "为挖矿投资者提供全方位的专业工具",
+    "advanced_calculator": "高级计算引擎",
+    "calculator_desc": "支持10+主流矿机型号，双算法验证，精确计算收益",
+    "real_time_analytics": "实时数据分析",
+    "analytics_desc": "24/7实时获取BTC价格、网络难度、算力等关键指标",
+    "crm_system": "CRM客户管理",
+    "crm_desc": "完整的客户生命周期管理，支持销售跟踪和佣金计算",
+    "enterprise_security": "企业级安全",
+    "security_desc": "多重身份验证，角色权限管理，数据加密保护",
+    "multilingual_support": "多语言支持",
+    "multilingual_desc": "完整的中英文界面，满足国际化需求",
+    "subscription_plans": "订阅计划",
+    "subscription_desc": "灵活的付费计划，Stripe安全支付，功能分级管理",
+    "ready_to_start": "准备开始挖矿分析？",
+    "cta_subtitle": "立即体验专业的比特币挖矿收益计算工具",
+    "start_free_trial": "免费试用",
+    "view_pricing": "查看定价",
+    "footer_description": "专业的比特币挖矿分析平台，为矿工和投资者提供准确的收益计算和投资建议。",
+    "quick_links": "快速链接",
+    "support": "支持",
+    "help_center": "帮助中心",
+    "contact_us": "联系我们"
 }
 
 # 获取翻译函数，如果没有找到对应翻译，返回原文

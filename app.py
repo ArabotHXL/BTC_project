@@ -54,6 +54,15 @@ except ImportError as e:
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
+# Helper functions
+def get_user_by_email(email):
+    """根据邮箱获取用户信息"""
+    try:
+        return UserAccess.query.filter_by(email=email).first()
+    except Exception as e:
+        logging.error(f"Error getting user by email: {e}")
+        return None
+
 def safe_float_conversion(value, default=0):
     """
     安全的float转换函数，防护NaN注入攻击
@@ -377,8 +386,23 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/')
-@login_required
 def index():
+    """中英双语主页 - 公开访问"""
+    # 获取语言设置
+    lang = request.args.get('lang', 'zh')
+    if lang not in ['zh', 'en']:
+        lang = 'zh'
+    
+    # 检查用户是否已登录
+    user_data = None
+    if 'user_email' in session:
+        user_data = get_user_by_email(session['user_email'])
+    
+    return render_template('homepage.html', lang=lang, user_data=user_data, t=get_translation)
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
     """渲染BTC挖矿计算器主页"""
     try:
         # 验证关键环境变量
@@ -387,7 +411,7 @@ def index():
         
         return render_template('index.html')
     except Exception as e:
-        logging.error(f"Index route error: {e}")
+        logging.error(f"Dashboard route error: {e}")
         # 对于健康检查，返回简单状态而不是错误页面
         if request.headers.get('User-Agent', '').startswith('curl') or 'health' in request.args:
             return jsonify({"status": "error", "message": str(e)}), 500
