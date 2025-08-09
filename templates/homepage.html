@@ -732,16 +732,47 @@
             }
         }
         
-        // Fix button click events
+        // Fix button click events - 更强制的导航方式
         function ensureButtonsWork() {
-            // Make sure all login and calculation buttons work
-            document.querySelectorAll('a[href="/login"], a[href="/dashboard"]').forEach(button => {
+            // Remove any existing event listeners and force direct navigation
+            document.querySelectorAll('a[href="/login"], a[href="/dashboard"], a[href="/billing/plans"]').forEach(button => {
+                // Ensure clickable
                 button.style.pointerEvents = 'auto';
+                button.style.cursor = 'pointer';
+                button.style.zIndex = '999';
+                
+                // Clear any existing event listeners
+                button.onclick = null;
+                
+                // Add strong click handler
                 button.addEventListener('click', function(e) {
+                    e.preventDefault();
                     e.stopPropagation();
-                    console.log('Button clicked:', this.href);
-                    // Force navigation
-                    window.location.href = this.href;
+                    e.stopImmediatePropagation();
+                    
+                    console.log('Forcing navigation to:', this.href);
+                    
+                    // Use multiple methods to ensure navigation
+                    const targetUrl = this.getAttribute('href');
+                    
+                    // Method 1: Direct location change
+                    setTimeout(() => {
+                        window.location.href = targetUrl;
+                    }, 100);
+                    
+                    // Method 2: Backup with window.open in same tab
+                    setTimeout(() => {
+                        if (window.location.href.indexOf(targetUrl) === -1) {
+                            window.open(targetUrl, '_self');
+                        }
+                    }, 500);
+                    
+                    return false;
+                }, true); // Use capture phase
+                
+                // Also handle mouse events
+                button.addEventListener('mousedown', function(e) {
+                    console.log('Mouse down on:', this.href);
                 });
             });
         }
