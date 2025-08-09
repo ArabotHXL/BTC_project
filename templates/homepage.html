@@ -344,10 +344,17 @@
                             {{ t('homepage_subtitle', lang) }}
                         </p>
                         <div class="d-flex gap-3 flex-wrap">
-                            <a href="/calculator" class="btn-primary-custom">
+                            {% if user_data %}
+                            <a href="/dashboard" class="btn-primary-custom">
                                 <i class="bi bi-calculator"></i>
                                 <span data-translate="start_calculating">{{ t('start_calculating', lang) }}</span>
                             </a>
+                            {% else %}
+                            <a href="/login" class="btn-primary-custom">
+                                <i class="bi bi-box-arrow-in-right"></i>
+                                <span data-translate="start_calculating">{{ t('start_calculating', lang) }}</span>
+                            </a>
+                            {% endif %}
                             <a href="#features" class="btn-outline-custom">
                                 <i class="bi bi-info-circle"></i>
                                 <span data-translate="learn_more">{{ t('learn_more', lang) }}</span>
@@ -499,11 +506,18 @@
                     <h2 class="display-5 fw-bold mb-4" data-translate="ready_to_start">{{ t('ready_to_start', lang) }}</h2>
                     <p class="lead mb-4" data-translate="cta_subtitle">{{ t('cta_subtitle', lang) }}</p>
                     <div class="d-flex gap-3 justify-content-center flex-wrap">
-                        <a href="/calculator" class="btn-primary-custom">
+                        {% if user_data %}
+                        <a href="/dashboard" class="btn-primary-custom">
                             <i class="bi bi-rocket-takeoff"></i>
                             <span data-translate="start_free_trial">{{ t('start_free_trial', lang) }}</span>
                         </a>
-                        <a href="/pricing" class="btn-outline-custom">
+                        {% else %}
+                        <a href="/login" class="btn-primary-custom">
+                            <i class="bi bi-rocket-takeoff"></i>
+                            <span data-translate="start_free_trial">{{ t('start_free_trial', lang) }}</span>
+                        </a>
+                        {% endif %}
+                        <a href="/billing/plans" class="btn-outline-custom">
                             <i class="bi bi-tag"></i>
                             <span data-translate="view_pricing">{{ t('view_pricing', lang) }}</span>
                         </a>
@@ -529,9 +543,9 @@
                         <div class="col-md-6">
                             <h6 class="mb-3" data-translate="quick_links">{{ t('quick_links', lang) }}</h6>
                             <ul class="list-unstyled">
-                                <li><a href="/calculator" class="text-muted text-decoration-none" data-translate="mining_calculator">{{ t('mining_calculator', lang) }}</a></li>
+                                <li><a href="/dashboard" class="text-muted text-decoration-none" data-translate="mining_calculator">{{ t('mining_calculator', lang) }}</a></li>
                                 <li><a href="/analytics" class="text-muted text-decoration-none" data-translate="analytics">{{ t('analytics', lang) }}</a></li>
-                                <li><a href="/pricing" class="text-muted text-decoration-none" data-translate="pricing">{{ t('pricing', lang) }}</a></li>
+                                <li><a href="/billing/plans" class="text-muted text-decoration-none" data-translate="pricing">{{ t('pricing', lang) }}</a></li>
                             </ul>
                         </div>
                         <div class="col-md-6">

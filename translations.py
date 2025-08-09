@@ -207,7 +207,10 @@ translations = {
     "quick_links": "快速链接",
     "support": "支持",
     "help_center": "帮助中心",
-    "contact_us": "联系我们"
+    "contact_us": "联系我们",
+    "fear_greed_index": "恐惧贪婪指数",
+    "analytics": "数据分析",
+    "pricing": "定价方案"
 }
 
 # 获取翻译函数，如果没有找到对应翻译，返回原文
