@@ -535,6 +535,11 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             'daily_profit_usd': daily_profit,
             'network_hashrate_eh': real_time_btc_hashrate,
             'btc_price': btc_price,
+            # Add required test fields for compatibility
+            'daily_btc': daily_btc,
+            'daily_revenue': daily_revenue,
+            'daily_electricity_cost': daily_electricity_expense,
+            'daily_profit': daily_profit,
             'network_data': {
                 'btc_price': btc_price,
                 'network_difficulty': difficulty / 10**12,  # Convert to more readable format (T)

@@ -1,0 +1,107 @@
+{
+  "test_summary": {
+    "total_tests": 10,
+    "passed_tests": 7,
+    "failed_tests": 3,
+    "success_rate": 70.0,
+    "execution_time": 6.986,
+    "test_date": "2025-08-09T19:39:06.582769",
+    "target_accuracy": 99.0
+  },
+  "detailed_results": [
+    {
+      "test_name": "服务器健康检查",
+      "success": true,
+      "details": "服务器健康 - 数据库状态: connected",
+      "execution_time": 0.09,
+      "timestamp": "2025-08-09T19:39:06.673608"
+    },
+    {
+      "test_name": "数据库连接测试",
+      "success": true,
+      "details": "数据库连接正常，表状态: user_access(8), technical_indicators(2570), market_analytics(2983), plans(0), subscriptions(0)",
+      "execution_time": 0.307,
+      "timestamp": "2025-08-09T19:39:06.980850"
+    },
+    {
+      "test_name": "订阅模型测试",
+      "success": true,
+      "details": "订阅模型正常 - Plans: 0, Subscriptions: 0, 字段: 10",
+      "execution_time": 0.234,
+      "timestamp": "2025-08-09T19:39:07.214852"
+    },
+    {
+      "test_name": "认证系统测试",
+      "success": true,
+      "details": "认证系统正常 - 用户: 8, 角色分布: {'mining_site': 3, 'owner': 2, 'guest': 2, 'admin': 1}",
+      "execution_time": 0.202,
+      "timestamp": "2025-08-09T19:39:07.423828"
+    },
+    {
+      "test_name": "技术指标API测试",
+      "success": false,
+      "details": "技术指标API测试失败: connection already closed",
+      "execution_time": 2.861,
+      "timestamp": "2025-08-09T19:39:10.285696"
+    },
+    {
+      "test_name": "挖矿计算准确性测试",
+      "success": false,
+      "details": "计算准确率: 0.0% (0/2)",
+      "execution_time": 1.899,
+      "timestamp": "2025-08-09T19:39:12.185087"
+    },
+    {
+      "test_name": "实时数据集成测试",
+      "success": true,
+      "details": "实时数据正常 - 价格: $116,644, 难度: 1.29e+14, 算力: 965.0 EH/s",
+      "execution_time": 0.641,
+      "timestamp": "2025-08-09T19:39:12.826579"
+    },
+    {
+      "test_name": "API端点测试",
+      "success": true,
+      "details": "API端点测试 (4/4): ✅ /health: 200; ✅ /api/health: 200; ✅ /status: 200; ✅ /api/analytics/data: 200 (正常保护)",
+      "execution_time": 0.347,
+      "timestamp": "2025-08-09T19:39:13.173827"
+    },
+    {
+      "test_name": "Stripe集成测试",
+      "success": false,
+      "details": "无订阅计划数据且创建失败",
+      "execution_time": 0.173,
+      "timestamp": "2025-08-09T19:39:13.346953"
+    },
+    {
+      "test_name": "性能指标测试",
+      "success": true,
+      "details": "性能正常 - 查询: 0.081s, 内存: 158.2MB",
+      "execution_time": 0.232,
+      "timestamp": "2025-08-09T19:39:13.578919"
+    }
+  ],
+  "critical_failures": [],
+  "warning_failures": [
+    {
+      "test_name": "技术指标API测试",
+      "success": false,
+      "details": "技术指标API测试失败: connection already closed",
+      "execution_time": 2.861,
+      "timestamp": "2025-08-09T19:39:10.285696"
+    },
+    {
+      "test_name": "挖矿计算准确性测试",
+      "success": false,
+      "details": "计算准确率: 0.0% (0/2)",
+      "execution_time": 1.899,
+      "timestamp": "2025-08-09T19:39:12.185087"
+    },
+    {
+      "test_name": "Stripe集成测试",
+      "success": false,
+      "details": "无订阅计划数据且创建失败",
+      "execution_time": 0.173,
+      "timestamp": "2025-08-09T19:39:13.346953"
+    }
+  ]
+}
