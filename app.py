@@ -18,6 +18,16 @@ from auth import verify_email, login_required
 from db import db
 from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot
 from translations import get_translation
+
+# 导入订阅系统模块（延迟导入以避免循环依赖）
+try:
+    from models_subscription import Plan, Subscription
+    from billing_routes import billing_bp
+    from decorators import require_plan, require_feature, allow_advanced_analytics, get_user_plan
+    SUBSCRIPTION_ENABLED = True
+except ImportError as e:
+    logging.warning(f"Subscription modules not available: {e}")
+    SUBSCRIPTION_ENABLED = False
 from mining_calculator import (
     MINER_DATA,
     get_real_time_btc_price,
@@ -31,6 +41,15 @@ from mining_calculator import (
 from crm_routes import init_crm_routes
 from services.network_data_service import network_collector, network_analyzer
 from mining_broker_routes import init_broker_routes
+# Import subscription modules conditionally
+try:
+    from models_subscription import Plan, Subscription
+    from billing_routes import billing_bp
+    from decorators import require_plan, require_feature, allow_advanced_analytics, get_user_plan
+    SUBSCRIPTION_ENABLED = True
+except ImportError as e:
+    logging.warning(f"Subscription modules not available: {e}")
+    SUBSCRIPTION_ENABLED = False
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -2541,10 +2560,9 @@ def analytics_technical_indicators():
     """获取技术指标"""
     user_role = get_user_role(session.get('email'))
     if user_role != 'owner':
-        return jsonify({'error': '只有拥有者可以访问分析系统'}), 403
+        return jsonify({'success': False, 'error': '只有拥有者可以访问分析系统'}), 403
     
     try:
-        import analytics_engine
         import psycopg2
         
         # 获取最新技术指标
@@ -2562,7 +2580,7 @@ def analytics_technical_indicators():
         
         if data:
             indicators_data = {
-                'timestamp': data[0].isoformat(),
+                'timestamp': data[0].isoformat() if data[0] else None,
                 'rsi_14': float(data[1]) if data[1] else None,
                 'sma_20': float(data[2]) if data[2] else None,
                 'sma_50': float(data[3]) if data[3] else None,
@@ -2574,19 +2592,22 @@ def analytics_technical_indicators():
                 'volatility_30d': float(data[9]) if data[9] else None
             }
             return jsonify({
+                'success': True,
+                'data': indicators_data,
                 'indicators': [indicators_data],
                 'latest_indicators': indicators_data
             })
         else:
             # Return empty but valid format when no data
             return jsonify({
+                'success': False,
+                'error': '暂无技术指标数据',
                 'indicators': [],
-                'latest_indicators': None,
-                'message': '指标数据为空(正常，需要时间积累)'
+                'latest_indicators': None
             })
     except Exception as e:
-        app.logger.error(f"获取技术指标失败: {e}")
-        return jsonify({'error': f'获取技术指标失败: {str(e)}'}), 500
+        logging.error(f"获取技术指标失败: {e}")
+        return jsonify({'success': False, 'error': f'获取技术指标失败: {str(e)}'}), 500
 
 @app.route('/api/analytics/price-history')
 @login_required
@@ -2724,22 +2745,21 @@ def analytics_technical_indicators_api():
         return jsonify({'error': '需要拥有者权限'}), 403
     
     try:
-        from analytics_engine import DatabaseManager
-        db_manager = DatabaseManager()
-        db_manager.connect()
+        import psycopg2
         
-        cursor = None
-        result = None
-        if db_manager.connection:
-            cursor = db_manager.connection.cursor()
-            cursor.execute("""
-                SELECT sma_20, sma_50, ema_12, ema_26, rsi_14, macd, 
-                       bollinger_upper, bollinger_lower, volatility_30d, created_at
-                FROM technical_indicators 
-                ORDER BY created_at DESC 
-                LIMIT 1
-            """)
-            result = cursor.fetchone()
+        # 直接使用psycopg2连接数据库，避免依赖外部模块
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT sma_20, sma_50, ema_12, ema_26, rsi_14, macd, 
+                   bollinger_upper, bollinger_lower, volatility_30d, recorded_at
+            FROM technical_indicators 
+            ORDER BY recorded_at DESC 
+            LIMIT 1
+        """)
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
         
         if result:
             indicators_data = {
@@ -2759,6 +2779,7 @@ def analytics_technical_indicators_api():
             return jsonify({'success': False, 'error': '暂无技术指标数据'})
             
     except Exception as e:
+        logging.error(f"技术指标API错误: {str(e)}")
         return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/analytics/api/price-history')
