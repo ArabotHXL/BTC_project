@@ -1694,7 +1694,10 @@
                 if (!response.ok) throw new Error('Report unavailable');
                 return response.json();
             }).then(function(data) {
-                updateReportDisplay(data.latest_report || data.data || data);
+                console.log('Raw report API response:', data);
+                var reportData = data.latest_report || data.detailed_report || data.data || data;
+                console.log('Extracted report data for display:', reportData);
+                updateReportDisplay(reportData);
             }).catch(function(error) {
                 console.error('Report error:', error);
                 showErrorMessage('reports', '分析报告暂时不可用');
@@ -1702,10 +1705,13 @@
         }
 
         function updateReportDisplay(data) {
+            console.log('updateReportDisplay called with data:', data);
+            
             // Check if data contains the report
-            var report = data.detailed_report || data.data || data;
+            var report = data;
 
-            if (!report) {
+            if (!report || (typeof report === 'object' && Object.keys(report).length === 0)) {
+                console.log('No valid report data found');
                 showErrorMessage('reports', '暂无可用的分析报告');
                 return;
             }
@@ -2353,13 +2359,20 @@
 
             // 获取用户选择的输出格式和分发方式
             var outputFormats = [];
-            if (document.getElementById('outputWeb').checked) outputFormats.push('web');
-            if (document.getElementById('outputPDF').checked) outputFormats.push('pdf');
-            if (document.getElementById('outputPPT').checked) outputFormats.push('ppt');
+            var outputWebEl = document.getElementById('outputWeb');
+            var outputPDFEl = document.getElementById('outputPDF'); 
+            var outputPPTEl = document.getElementById('outputPPT');
+            
+            if (outputWebEl && outputWebEl.checked) outputFormats.push('web');
+            if (outputPDFEl && outputPDFEl.checked) outputFormats.push('pdf');
+            if (outputPPTEl && outputPPTEl.checked) outputFormats.push('ppt');
 
             var distributionMethods = [];
-            if (document.getElementById('sendEmail').checked) distributionMethods.push('email');
-            if (document.getElementById('sendSlack').checked) distributionMethods.push('slack');
+            var sendEmailEl = document.getElementById('sendEmail');
+            var sendSlackEl = document.getElementById('sendSlack');
+            
+            if (sendEmailEl && sendEmailEl.checked) distributionMethods.push('email');
+            if (sendSlackEl && sendSlackEl.checked) distributionMethods.push('slack');
 
             // 调用专业报告生成API
             fetch('/api/professional-report/generate', {
@@ -2984,8 +2997,11 @@
         }
 
         function updateRefreshInterval() {
-            var interval = parseInt(document.getElementById('refreshInterval').value);
-            var autoRefresh = document.getElementById('autoRefresh').checked;
+            var refreshIntervalEl = document.getElementById('refreshInterval');
+            var autoRefreshEl = document.getElementById('autoRefresh');
+            
+            var interval = refreshIntervalEl ? parseInt(refreshIntervalEl.value) : 30;
+            var autoRefresh = autoRefreshEl ? autoRefreshEl.checked : false;
 
             if (refreshInterval) {
                 clearInterval(refreshInterval);
@@ -2997,7 +3013,8 @@
         }
 
         function toggleAutoRefresh() {
-            isAutoRefresh = document.getElementById('autoRefresh').checked;
+            var autoRefreshEl = document.getElementById('autoRefresh');
+            isAutoRefresh = autoRefreshEl ? autoRefreshEl.checked : false;
             updateRefreshInterval();
         }
 
