@@ -1,0 +1,87 @@
+{
+  "timestamp": "2025-08-10T18:27:37.235796",
+  "total_tests": 11,
+  "passed_tests": 10,
+  "failed_tests": 1,
+  "success_rate": 90.9090909090909,
+  "target_achieved": false,
+  "detailed_results": [
+    {
+      "test_name": "Database Connection",
+      "status": "PASS",
+      "message": "Database connection successful",
+      "execution_time": 0.19400691986083984,
+      "timestamp": "2025-08-10T18:27:27.292062"
+    },
+    {
+      "test_name": "Homepage Access",
+      "status": "PASS",
+      "message": "Status: 200",
+      "execution_time": 0.008659601211547852,
+      "timestamp": "2025-08-10T18:27:27.301652"
+    },
+    {
+      "test_name": "Analytics Data API",
+      "status": "PASS",
+      "message": "BTC: $118525.0, Hashrate: 952.0EH/s",
+      "execution_time": 0.7398698329925537,
+      "timestamp": "2025-08-10T18:27:28.041851"
+    },
+    {
+      "test_name": "Batch Calculator API",
+      "status": "PASS",
+      "message": "Daily profit: $7.53",
+      "execution_time": 1.011408805847168,
+      "timestamp": "2025-08-10T18:27:29.053488"
+    },
+    {
+      "test_name": "Route /batch-calculator",
+      "status": "PASS",
+      "message": "Status: 200",
+      "execution_time": 0.005635738372802734,
+      "timestamp": "2025-08-10T18:27:29.059476"
+    },
+    {
+      "test_name": "Route /analytics",
+      "status": "PASS",
+      "message": "Status: 200 (accessible)",
+      "execution_time": 0.00877523422241211,
+      "timestamp": "2025-08-10T18:27:29.068417"
+    },
+    {
+      "test_name": "Route /pricing",
+      "status": "PASS",
+      "message": "Status: 200",
+      "execution_time": 0.09096002578735352,
+      "timestamp": "2025-08-10T18:27:29.159542"
+    },
+    {
+      "test_name": "Static /static/style.css",
+      "status": "PASS",
+      "message": "Size: 3090 bytes",
+      "execution_time": 0.005112886428833008,
+      "timestamp": "2025-08-10T18:27:29.164882"
+    },
+    {
+      "test_name": "Static /static/script.js",
+      "status": "PASS",
+      "message": "Size: 12641 bytes",
+      "execution_time": 0.005181312561035156,
+      "timestamp": "2025-08-10T18:27:29.170239"
+    },
+    {
+      "test_name": "Algorithm Accuracy",
+      "status": "FAIL",
+      "message": "Accuracy: 50.0% (1/2)",
+      "execution_time": 1.700747013092041,
+      "timestamp": "2025-08-10T18:27:30.871180"
+    },
+    {
+      "test_name": "System Performance",
+      "status": "PASS",
+      "message": "Concurrent success rate: 100.0%",
+      "execution_time": 6.3640992641448975,
+      "timestamp": "2025-08-10T18:27:37.235443"
+    }
+  ]
+}
