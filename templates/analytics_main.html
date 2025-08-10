@@ -1857,16 +1857,16 @@
                 // Investment recommendation
                 if (investmentRecommendation) {
                     if (electricityCost < breakevenElectricityRate * 0.7) {
-                        investmentRecommendation.textContent = '强烈推荐';
+                        investmentRecommendation.textContent = getText('强烈推荐', 'Highly Recommended');
                         investmentRecommendation.className = 'h6 text-success';
                     } else if (electricityCost < breakevenElectricityRate * 0.9) {
-                        investmentRecommendation.textContent = '推荐';
+                        investmentRecommendation.textContent = getText('推荐', 'Recommended');
                         investmentRecommendation.className = 'h6 text-info';
                     } else if (electricityCost < breakevenElectricityRate) {
-                        investmentRecommendation.textContent = '谨慎';
+                        investmentRecommendation.textContent = getText('谨慎', 'Cautious');
                         investmentRecommendation.className = 'h6 text-warning';
                     } else {
-                        investmentRecommendation.textContent = '不推荐';
+                        investmentRecommendation.textContent = getText('不推荐', 'Not Recommended');
                         investmentRecommendation.className = 'h6 text-danger';
                     }
                 }
@@ -1878,13 +1878,13 @@
 
                     if (riskPercent < 50) {
                         riskAssessmentBar.className = 'progress-bar bg-success';
-                        riskLevelText.textContent = '低风险';
+                        riskLevelText.textContent = getText('低风险', 'Low Risk');
                     } else if (riskPercent < 80) {
                         riskAssessmentBar.className = 'progress-bar bg-warning';
-                        riskLevelText.textContent = '中等风险';
+                        riskLevelText.textContent = getText('中等风险', 'Medium Risk');
                     } else {
                         riskAssessmentBar.className = 'progress-bar bg-danger';
-                        riskLevelText.textContent = '高风险';
+                        riskLevelText.textContent = getText('高风险', 'High Risk');
                     }
                 }
             }
@@ -1979,9 +1979,9 @@
                 if (minerPaybackPeriod && dailyProfit > 0) {
                     var days = spec.cost / dailyProfit;
                     if (days < 365) {
-                        minerPaybackPeriod.textContent = Math.round(days) + ' 天';
+                        minerPaybackPeriod.textContent = Math.round(days) + getText(' 天', ' days');
                     } else {
-                        minerPaybackPeriod.textContent = formatNumber(days / 365, 1) + ' 年';
+                        minerPaybackPeriod.textContent = formatNumber(days / 365, 1) + getText(' 年', ' years');
                     }
                 }
 
@@ -2071,11 +2071,19 @@
         // Interactive functions for buttons
         function calculateOptimalElectricity() {
             // Show modal or alert with optimal electricity cost calculation
-            alert('电价优化计算功能开发中...\n\n基于当前市场条件：\n- 建议目标电价: $0.045/kWh\n- 最大可承受电价: $0.068/kWh\n- 推荐谈判范围: $0.040-0.050/kWh');
+            var message = getText(
+                '电价优化计算功能开发中...\n\n基于当前市场条件：\n- 建议目标电价: $0.045/kWh\n- 最大可承受电价: $0.068/kWh\n- 推荐谈判范围: $0.040-0.050/kWh',
+                'Electricity optimization calculator in development...\n\nBased on current market conditions:\n- Recommended target rate: $0.045/kWh\n- Maximum sustainable rate: $0.068/kWh\n- Suggested negotiation range: $0.040-0.050/kWh'
+            );
+            alert(message);
         }
 
         function configureAlerts() {
-            alert('警报配置功能开发中...\n\n可配置项目：\n- 价格突破警报\n- 收益率下降警报\n- 网络难度变化警报\n- 算力异常警报');
+            var message = getText(
+                '警报配置功能开发中...\n\n可配置项目：\n- 价格突破警报\n- 收益率下降警报\n- 网络难度变化警报\n- 算力异常警报',
+                'Alert configuration feature in development...\n\nConfigurable items:\n- Price breakthrough alerts\n- Profitability decline alerts\n- Network difficulty change alerts\n- Hashrate anomaly alerts'
+            );
+            alert(message);
         }
 
         // 专业5步报告生成函数
@@ -2922,6 +2930,11 @@
             return breakevens.sort(function(a, b) { return a.efficiency - b.efficiency; });
         }
 
+        // Bilingual text helper function
+        function getText(zhText, enText) {
+            return currentLanguage === 'zh' ? zhText : enText;
+        }
+
         // Generate quick insights based on current data
         function generateQuickInsights() {
             var insightsContainer = document.getElementById('quickInsights');
@@ -2931,7 +2944,7 @@
             insightsContainer.innerHTML = '';
 
             if (!currentMarketData) {
-                insightsContainer.innerHTML = '<div class="text-muted">等待数据加载...</div>';
+                insightsContainer.innerHTML = '<div class="text-muted">' + getText('等待数据加载...', 'Waiting for data...') + '</div>';
                 return;
             }
 
@@ -2942,16 +2955,18 @@
             if (data.price_change_24h !== null) {
                 var change = data.price_change_24h;
                 if (Math.abs(change) > 5) {
+                    var direction = change > 0 ? getText('上涨', 'increased') : getText('下跌', 'decreased');
                     insights.push({
                         type: change > 0 ? 'success' : 'danger',
                         icon: change > 0 ? 'bi-trending-up' : 'bi-trending-down',
-                        text: '24小时内价格' + (change > 0 ? '上涨' : '下跌') + Math.abs(change).toFixed(1) + '%'
+                        text: getText('24小时内价格' + direction + Math.abs(change).toFixed(1) + '%', 
+                                   'Price ' + direction + ' ' + Math.abs(change).toFixed(1) + '% in 24h')
                     });
                 } else if (Math.abs(change) < 1) {
                     insights.push({
                         type: 'info',
                         icon: 'bi-dash-circle',
-                        text: '价格走势相对稳定'
+                        text: getText('价格走势相对稳定', 'Price movement relatively stable')
                     });
                 }
             }
@@ -2963,13 +2978,13 @@
                     insights.push({
                         type: 'warning',
                         icon: 'bi-exclamation-triangle',
-                        text: '市场情绪极度恐惧，可能是买入机会'
+                        text: getText('市场情绪极度恐惧，可能是买入机会', 'Market sentiment extremely fearful, potential buying opportunity')
                     });
                 } else if (index >= 75) {
                     insights.push({
                         type: 'warning',
                         icon: 'bi-fire',
-                        text: '市场情绪极度贪婪，注意风险控制'
+                        text: getText('市场情绪极度贪婪，注意风险控制', 'Market sentiment extremely greedy, watch risk management')
                     });
                 }
             }
@@ -2981,13 +2996,13 @@
                     insights.push({
                         type: 'success',
                         icon: 'bi-arrow-up-circle',
-                        text: 'BTC价格突破11万美元关键阻力位'
+                        text: getText('BTC价格突破11万美元关键阻力位', 'BTC price breaks $110k key resistance level')
                     });
                 } else if (price < 100000) {
                     insights.push({
                         type: 'info',
                         icon: 'bi-info-circle',
-                        text: 'BTC价格仍在10万美元心理关口下方'
+                        text: getText('BTC价格仍在10万美元心理关口下方', 'BTC price still below $100k psychological level')
                     });
                 }
             }
@@ -2999,7 +3014,7 @@
                     insights.push({
                         type: 'success',
                         icon: 'bi-cpu',
-                        text: '网络算力超过900 EH/s，网络安全性极高'
+                        text: getText('网络算力超过900 EH/s，网络安全性极高', 'Network hashrate exceeds 900 EH/s, extremely high security')
                     });
                 }
             }
@@ -3015,13 +3030,15 @@
                     insights.push({
                         type: 'success',
                         icon: 'bi-gem',
-                        text: '挖矿收益较好，Hash Price: $' + hashPrice.toFixed(4) + '/TH/天'
+                        text: getText('挖矿收益较好，Hash Price: $' + hashPrice.toFixed(4) + '/TH/天', 
+                                   'Mining profits good, Hash Price: $' + hashPrice.toFixed(4) + '/TH/day')
                     });
                 } else if (estimatedDailyRevenue < 10) {
                     insights.push({
                         type: 'warning',
                         icon: 'bi-exclamation-circle',
-                        text: '收益承压，Hash Price: $' + hashPrice.toFixed(4) + '/TH/天，注意电费成本'
+                        text: getText('收益承压，Hash Price: $' + hashPrice.toFixed(4) + '/TH/天，注意电费成本', 
+                                   'Profits under pressure, Hash Price: $' + hashPrice.toFixed(4) + '/TH/day, watch electricity costs')
                     });
                 }
 
@@ -3030,13 +3047,13 @@
                     insights.push({
                         type: 'warning',
                         icon: 'bi-people-fill',
-                        text: '网络竞争异常激烈，个体矿工收益下降'
+                        text: getText('网络竞争异常激烈，个体矿工收益下降', 'Network competition extremely intense, individual miner profits declining')
                     });
                 } else if (data.network_hashrate < 800) {
                     insights.push({
                         type: 'success',
                         icon: 'bi-target',
-                        text: '网络竞争相对缓和，挖矿机会较好'
+                        text: getText('网络竞争相对缓和，挖矿机会较好', 'Network competition relatively relaxed, good mining opportunities')
                     });
                 }
 
@@ -3083,12 +3100,13 @@
                 var difficultyChangeEstimate = ((actualHashrate - targetHashrate) / targetHashrate) * 100;
 
                 if (Math.abs(difficultyChangeEstimate) > 3) {
-                    var direction = difficultyChangeEstimate > 0 ? '上调' : '下调';
-                    var impact = difficultyChangeEstimate > 0 ? '收益将进一步下降' : '收益有望改善';
+                    var direction = difficultyChangeEstimate > 0 ? getText('上调', 'increase') : getText('下调', 'decrease');
+                    var impact = difficultyChangeEstimate > 0 ? getText('收益将进一步下降', 'profits will decline further') : getText('收益有望改善', 'profits may improve');
                     insights.push({
                         type: difficultyChangeEstimate > 0 ? 'warning' : 'success',
                         icon: difficultyChangeEstimate > 0 ? 'bi-arrow-up' : 'bi-arrow-down',
-                        text: '预计下次难度' + direction + Math.abs(difficultyChangeEstimate).toFixed(1) + '%，' + impact
+                        text: getText('预计下次难度' + direction + Math.abs(difficultyChangeEstimate).toFixed(1) + '%，' + impact,
+                                   'Next difficulty expected to ' + direction + ' ' + Math.abs(difficultyChangeEstimate).toFixed(1) + '%, ' + impact)
                     });
                 }
             }
@@ -3100,13 +3118,13 @@
                     insights.push({
                         type: 'info',
                         icon: 'bi-graph-up-arrow',
-                        text: '网络算力突破1000 EH/s历史新高，行业进入新阶段'
+                        text: getText('网络算力突破1000 EH/s历史新高，行业进入新阶段', 'Network hashrate breaks 1000 EH/s ATH, industry enters new phase')
                     });
                 } else if (hashrate > 900) {
                     insights.push({
                         type: 'success',
                         icon: 'bi-shield-check',
-                        text: '网络算力超过900 EH/s，安全性达到极高水平'
+                        text: getText('网络算力超过900 EH/s，安全性达到极高水平', 'Network hashrate exceeds 900 EH/s, security reaches extremely high level')
                     });
                 }
             }
@@ -3118,20 +3136,20 @@
                     insights.push({
                         type: 'warning',
                         icon: 'bi-thermometer-high',
-                        text: 'RSI指标显示超买状态'
+                        text: getText('RSI指标显示超买状态', 'RSI indicator shows overbought condition')
                     });
                 } else if (rsi < 30) {
                     insights.push({
                         type: 'info',
                         icon: 'bi-thermometer-low',
-                        text: 'RSI指标显示超卖状态'
+                        text: getText('RSI指标显示超卖状态', 'RSI indicator shows oversold condition')
                     });
                 }
             }
 
             // Generate HTML
             if (insights.length === 0) {
-                insightsContainer.innerHTML = '<div class="text-muted">暂无特殊市场洞察</div>';
+                insightsContainer.innerHTML = '<div class="text-muted">' + getText('暂无特殊市场洞察', 'No special market insights available') + '</div>';
                 return;
             }
 
@@ -3171,6 +3189,9 @@
 
     <!-- Server-side data injection -->
     <script>
+        // Inject current language for JavaScript bilingual support
+        var currentLanguage = '{{ current_lang }}';
+        
         // Inject server-side technical indicators data as global variable
         // eslint-disable-next-line
         window.serverTechnicalIndicators = {{ technical_indicators | tojson | default('null') | safe }};
