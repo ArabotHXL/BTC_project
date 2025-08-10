@@ -2433,43 +2433,66 @@ def analytics_dashboard():
 # Unified analytics data endpoint for testing and general use
 @app.route('/api/analytics/data', methods=['GET'])
 def analytics_unified_data():
-    """统一的分析数据端点 - 用于测试和一般使用"""
+    """统一的分析数据端点 - 用于测试和一般使用 - 使用实时数据"""
     try:
-        # 允许未经认证的访问用于测试
+        # 使用实时API数据而不是数据库缓存
+        from mining_calculator import get_real_time_btc_price, get_real_time_btc_hashrate, get_real_time_difficulty
         import psycopg2
+        from datetime import datetime
         
-        # 连接数据库获取最新市场数据
-        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT recorded_at, btc_price, network_hashrate, network_difficulty, 
-                   fear_greed_index, price_change_24h, btc_market_cap, btc_volume_24h,
-                   price_change_1h, price_change_7d
-            FROM market_analytics 
-            ORDER BY recorded_at DESC LIMIT 1
-        """)
-        data = cursor.fetchone()
-        cursor.close()
-        conn.close()
+        # 获取实时数据
+        real_time_price = get_real_time_btc_price()
+        real_time_hashrate = get_real_time_btc_hashrate()
+        real_time_difficulty = get_real_time_difficulty()
         
-        if data:
-            return jsonify({
-                'success': True,
-                'data': {
-                    'timestamp': data[0].isoformat(),
-                    'btc_price': float(data[1]) if data[1] else None,
-                    'network_hashrate': float(data[2]) if data[2] else None,
-                    'network_difficulty': float(data[3]) if data[3] else None,
-                    'fear_greed_index': data[4],
-                    'price_change_24h': float(data[5]) if data[5] else None,
-                    'btc_market_cap': float(data[6]) if data[6] else None,
-                    'btc_volume_24h': float(data[7]) if data[7] else None,
-                    'price_change_1h': float(data[8]) if data[8] else None,
-                    'price_change_7d': float(data[9]) if data[9] else None
-                }
-            })
-        else:
-            return jsonify({'success': False, 'error': '暂无市场数据'}), 404
+        # 获取恐惧贪婪指数（从其他源或使用默认值）
+        try:
+            import requests
+            response = requests.get('https://api.alternative.me/fng/', timeout=5)
+            fear_greed_data = response.json().get('data', [{}])[0] if response.status_code == 200 else {}
+        except:
+            fear_greed_data = {'value': 50}  # 默认中性值
+        
+        # 对于一些需要从数据库获取的数据，仍然查询数据库作为备用
+        try:
+            conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT recorded_at, price_change_24h, btc_market_cap, btc_volume_24h,
+                       price_change_1h, price_change_7d
+                FROM market_analytics 
+                ORDER BY recorded_at DESC LIMIT 1
+            """)
+            data = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            
+            if data:
+                price_change_24h = float(data[1]) if data[1] else None
+                btc_market_cap = float(data[2]) if data[2] else None
+                btc_volume_24h = float(data[3]) if data[3] else None
+                price_change_1h = float(data[4]) if data[4] else None
+                price_change_7d = float(data[5]) if data[5] else None
+            else:
+                price_change_24h = btc_market_cap = btc_volume_24h = price_change_1h = price_change_7d = None
+        except:
+            price_change_24h = btc_market_cap = btc_volume_24h = price_change_1h = price_change_7d = None
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'timestamp': datetime.now().isoformat(),
+                'btc_price': real_time_price,
+                'network_hashrate': real_time_hashrate,
+                'network_difficulty': real_time_difficulty,
+                'fear_greed_index': fear_greed_data.get('value') if fear_greed_data else None,
+                'price_change_24h': price_change_24h,
+                'btc_market_cap': btc_market_cap,
+                'btc_volume_24h': btc_volume_24h,
+                'price_change_1h': price_change_1h,
+                'price_change_7d': price_change_7d
+            }
+        })
     except Exception as e:
         app.logger.error(f"获取分析数据失败: {e}")
         return jsonify({'error': f'获取市场数据失败: {str(e)}'}), 500
@@ -2479,46 +2502,72 @@ def analytics_unified_data():
 @app.route('/analytics/market-data')
 @login_required
 def analytics_market_data():
-    """获取分析系统的市场数据"""
+    """获取分析系统的市场数据 - 使用实时数据"""
     user_role = get_user_role(session.get('email'))
     if user_role != 'owner':
         return jsonify({'error': '只有拥有者可以访问分析系统'}), 403
     
     try:
+        # 使用实时API数据而不是数据库缓存
+        from mining_calculator import get_real_time_btc_price, get_real_time_btc_hashrate, get_real_time_difficulty
         import psycopg2
+        from datetime import datetime
         
-        # 直接连接数据库获取最新市场数据
-        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT recorded_at, btc_price, network_hashrate, network_difficulty, 
-                   fear_greed_index, price_change_24h, btc_market_cap, btc_volume_24h,
-                   price_change_1h, price_change_7d
-            FROM market_analytics 
-            ORDER BY recorded_at DESC LIMIT 1
-        """)
-        data = cursor.fetchone()
-        cursor.close()
-        conn.close()
+        # 获取实时数据
+        real_time_price = get_real_time_btc_price()
+        real_time_hashrate = get_real_time_btc_hashrate()
+        real_time_difficulty = get_real_time_difficulty()
         
-        if data:
-            return jsonify({
-                'success': True,
-                'data': {
-                    'timestamp': data[0].isoformat(),
-                    'btc_price': float(data[1]) if data[1] else None,
-                    'network_hashrate': float(data[2]) if data[2] else None,
-                    'network_difficulty': float(data[3]) if data[3] else None,
-                    'fear_greed_index': data[4],
-                    'price_change_24h': float(data[5]) if data[5] else None,
-                    'btc_market_cap': float(data[6]) if data[6] else None,
-                    'btc_volume_24h': float(data[7]) if data[7] else None,
-                    'price_change_1h': float(data[8]) if data[8] else None,
-                    'price_change_7d': float(data[9]) if data[9] else None
-                }
-            })
-        else:
-            return jsonify({'success': False, 'error': '暂无市场数据'}), 404
+        # 获取恐惧贪婪指数（从其他源或使用默认值）
+        try:
+            import requests
+            response = requests.get('https://api.alternative.me/fng/', timeout=5)
+            fear_greed_data = response.json().get('data', [{}])[0] if response.status_code == 200 else {}
+        except:
+            fear_greed_data = {'value': 50}  # 默认中性值
+        
+        logging.info(f"分析仪表盘使用实时数据: BTC=${real_time_price}, 算力={real_time_hashrate}EH/s")
+        
+        # 对于一些需要从数据库获取的数据，仍然查询数据库作为备用
+        try:
+            conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT recorded_at, price_change_24h, btc_market_cap, btc_volume_24h,
+                       price_change_1h, price_change_7d
+                FROM market_analytics 
+                ORDER BY recorded_at DESC LIMIT 1
+            """)
+            data = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            
+            if data:
+                price_change_24h = float(data[1]) if data[1] else None
+                btc_market_cap = float(data[2]) if data[2] else None
+                btc_volume_24h = float(data[3]) if data[3] else None
+                price_change_1h = float(data[4]) if data[4] else None
+                price_change_7d = float(data[5]) if data[5] else None
+            else:
+                price_change_24h = btc_market_cap = btc_volume_24h = price_change_1h = price_change_7d = None
+        except:
+            price_change_24h = btc_market_cap = btc_volume_24h = price_change_1h = price_change_7d = None
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'timestamp': datetime.now().isoformat(),
+                'btc_price': real_time_price,
+                'network_hashrate': real_time_hashrate,
+                'network_difficulty': real_time_difficulty,
+                'fear_greed_index': fear_greed_data.get('value') if fear_greed_data else None,
+                'price_change_24h': price_change_24h,
+                'btc_market_cap': btc_market_cap,
+                'btc_volume_24h': btc_volume_24h,
+                'price_change_1h': price_change_1h,
+                'price_change_7d': price_change_7d
+            }
+        })
     except Exception as e:
         app.logger.error(f"获取分析数据失败: {e}")
         return jsonify({'error': f'获取市场数据失败: {str(e)}'}), 500
