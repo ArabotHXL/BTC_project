@@ -254,6 +254,46 @@
             border-color: rgba(13, 202, 240, 0.3);
             color: #ffffff;
         }
+        
+        /* 报告生成区域样式增强 */
+        .feature-card {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .feature-card:hover {
+            background-color: rgba(255,255,255,0.25) !important;
+            transform: translateY(-2px);
+        }
+        
+        .generate-btn {
+            transition: all 0.3s ease;
+            border: none;
+            background: linear-gradient(45deg, #ffffff, #f8f9fa);
+            color: #4f46e5;
+        }
+        .generate-btn:hover {
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+        }
+        
+        .download-btn {
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+        .download-btn:hover {
+            background-color: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.8);
+            transform: translateX(5px);
+        }
+        
+        .process-steps .step-circle {
+            transition: all 0.3s ease;
+        }
+        .process-steps .step-item:hover .step-circle {
+            background-color: rgba(255,255,255,0.4) !important;
+            transform: scale(1.1);
+        }
         .loading-spinner {
             display: none;
             text-align: center;
@@ -340,6 +380,22 @@
             .alert {
                 padding: 0.5rem;
                 font-size: 0.9rem;
+            }
+            .feature-card {
+                padding: 0.75rem !important;
+            }
+            .process-steps {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            .step-connector {
+                display: none;
+            }
+            .generate-btn {
+                width: 100%;
+                font-size: 0.9rem;
+                padding: 0.75rem 1rem !important;
+            }
             }
             .navbar-brand {
                 font-size: 0.9rem !important;
@@ -918,52 +974,116 @@
 
                 <!-- Reports Tab -->
                 <div id="reports" class="analytics-tab">
-                    <h4 class="mb-4">
-                        <i class="bi bi-file-text"></i> 自动分析报告
-                    </h4>
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <h3 class="mb-0 fw-bold">
+                            <i class="bi bi-file-text text-primary me-2"></i>
+                            {% if current_lang == 'en' %}Automated Analysis Reports{% else %}自动分析报告{% endif %}
+                        </h3>
+                        <span class="badge bg-primary-subtle text-primary px-3 py-2">
+                            <i class="bi bi-cpu me-1"></i>AI驱动
+                        </span>
+                    </div>
 
                     <!-- 专业5步报告生成区 -->
-                    <div class="row mb-4">
+                    <div class="row mb-5">
                         <div class="col-12">
-                            <div class="card bg-gradient text-white border-0 shadow-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                                <div class="card-header bg-transparent border-0">
-                                    <h5 class="mb-0 fw-bold">
-                                        <i class="bi bi-gear-wide-connected me-2"></i>
-                                        专业5步报告生成系统
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-8">
-                                            <p class="mb-3">
-                                                <strong>全自动、专业级矿业分析报告</strong><br>
-                                                <small class="opacity-75">① 采数 → ② 建模 → ③ 风险打分 → ④ 可视化 → ⑤ 自动分发</small>
+                            <div class="card border-0 shadow-lg overflow-hidden" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #ec4899 100%); position: relative;">
+                                <!-- 装饰性背景元素 -->
+                                <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.5;"></div>
+                                <div style="position: absolute; bottom: -30px; left: -30px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.3;"></div>
+                                
+                                <div class="card-header bg-transparent border-0 py-4">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <h4 class="mb-1 fw-bold text-white">
+                                                <i class="bi bi-gear-wide-connected me-2"></i>
+                                                {% if current_lang == 'en' %}Professional 5-Step Report Generation{% else %}专业5步报告生成系统{% endif %}
+                                            </h4>
+                                            <p class="mb-0 text-white-50">
+                                                {% if current_lang == 'en' %}AI-powered analysis with institutional-grade insights{% else %}AI驱动的机构级分析洞察{% endif %}
                                             </p>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="badge bg-white bg-opacity-25 text-white px-3 py-2">
+                                                <i class="bi bi-award me-1"></i>专业版
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body py-4">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-8">
+                                            <!-- 流程步骤可视化 -->
+                                            <div class="mb-4">
+                                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                                    <span class="text-white fw-semibold">
+                                                        {% if current_lang == 'en' %}Automated Professional Mining Analysis{% else %}全自动、专业级矿业分析报告{% endif %}
+                                                    </span>
+                                                </div>
+                                                
+                                                <!-- 工作流程指示器 -->
+                                                <div class="process-steps d-flex justify-content-between mb-3">
+                                                    <div class="step-item text-center flex-fill">
+                                                        <div class="step-circle bg-white bg-opacity-25 text-white d-inline-flex align-items-center justify-content-center rounded-circle mb-1" style="width: 32px; height: 32px;">
+                                                            <i class="bi bi-database-fill"></i>
+                                                        </div>
+                                                        <div class="small text-white-75">采数</div>
+                                                    </div>
+                                                    <div class="step-connector align-self-center" style="border-top: 2px dashed rgba(255,255,255,0.4); flex-grow: 1; margin: 0 0.5rem;"></div>
+                                                    <div class="step-item text-center flex-fill">
+                                                        <div class="step-circle bg-white bg-opacity-25 text-white d-inline-flex align-items-center justify-content-center rounded-circle mb-1" style="width: 32px; height: 32px;">
+                                                            <i class="bi bi-diagram-3-fill"></i>
+                                                        </div>
+                                                        <div class="small text-white-75">建模</div>
+                                                    </div>
+                                                    <div class="step-connector align-self-center" style="border-top: 2px dashed rgba(255,255,255,0.4); flex-grow: 1; margin: 0 0.5rem;"></div>
+                                                    <div class="step-item text-center flex-fill">
+                                                        <div class="step-circle bg-white bg-opacity-25 text-white d-inline-flex align-items-center justify-content-center rounded-circle mb-1" style="width: 32px; height: 32px;">
+                                                            <i class="bi bi-shield-check"></i>
+                                                        </div>
+                                                        <div class="small text-white-75">评分</div>
+                                                    </div>
+                                                    <div class="step-connector align-self-center" style="border-top: 2px dashed rgba(255,255,255,0.4); flex-grow: 1; margin: 0 0.5rem;"></div>
+                                                    <div class="step-item text-center flex-fill">
+                                                        <div class="step-circle bg-white bg-opacity-25 text-white d-inline-flex align-items-center justify-content-center rounded-circle mb-1" style="width: 32px; height: 32px;">
+                                                            <i class="bi bi-bar-chart-fill"></i>
+                                                        </div>
+                                                        <div class="small text-white-75">可视化</div>
+                                                    </div>
+                                                    <div class="step-connector align-self-center" style="border-top: 2px dashed rgba(255,255,255,0.4); flex-grow: 1; margin: 0 0.5rem;"></div>
+                                                    <div class="step-item text-center flex-fill">
+                                                        <div class="step-circle bg-white bg-opacity-25 text-white d-inline-flex align-items-center justify-content-center rounded-circle mb-1" style="width: 32px; height: 32px;">
+                                                            <i class="bi bi-send-fill"></i>
+                                                        </div>
+                                                        <div class="small text-white-75">分发</div>
+                                                    </div>
+                                                </div>
+                                            </div>
 
-                                            <!-- 功能特点 -->
-                                            <div class="row g-2 mb-3">
-                                                <div class="col-6 col-md-3">
-                                                    <div class="d-flex align-items-center">
-                                                        <i class="bi bi-database-check me-2"></i>
-                                                        <small>多源数据验证</small>
+                                            <!-- 功能特点卡片 -->
+                                            <div class="row g-3 mb-4">
+                                                <div class="col-6 col-lg-3">
+                                                    <div class="feature-card bg-white bg-opacity-15 rounded-3 p-3 text-center h-100">
+                                                        <i class="bi bi-database-check fs-4 text-white mb-2 d-block"></i>
+                                                        <div class="small text-white fw-medium">多源数据验证</div>
                                                     </div>
                                                 </div>
-                                                <div class="col-6 col-md-3">
-                                                    <div class="d-flex align-items-center">
-                                                        <i class="bi bi-graph-up-arrow me-2"></i>
-                                                        <small>ARIMA/Monte Carlo</small>
+                                                <div class="col-6 col-lg-3">
+                                                    <div class="feature-card bg-white bg-opacity-15 rounded-3 p-3 text-center h-100">
+                                                        <i class="bi bi-graph-up-arrow fs-4 text-white mb-2 d-block"></i>
+                                                        <div class="small text-white fw-medium">ARIMA/Monte Carlo</div>
                                                     </div>
                                                 </div>
-                                                <div class="col-6 col-md-3">
-                                                    <div class="d-flex align-items-center">
-                                                        <i class="bi bi-shield-check me-2"></i>
-                                                        <small>准确度评分</small>
+                                                <div class="col-6 col-lg-3">
+                                                    <div class="feature-card bg-white bg-opacity-15 rounded-3 p-3 text-center h-100">
+                                                        <i class="bi bi-shield-check fs-4 text-white mb-2 d-block"></i>
+                                                        <div class="small text-white fw-medium">准确度评分</div>
                                                     </div>
                                                 </div>
-                                                <div class="col-6 col-md-3">
-                                                    <div class="d-flex align-items-center">
-                                                        <i class="bi bi-file-earmark-pdf me-2"></i>
-                                                        <small>PDF/PPT输出</small>
+                                                <div class="col-6 col-lg-3">
+                                                    <div class="feature-card bg-white bg-opacity-15 rounded-3 p-3 text-center h-100">
+                                                        <i class="bi bi-file-earmark-pdf fs-4 text-white mb-2 d-block"></i>
+                                                        <div class="small text-white fw-medium">PDF/PPT输出</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1006,24 +1126,34 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-4 text-center">
-                                            <button class="btn btn-light btn-lg mb-3" onclick="generate5StepReport()" id="generate5StepBtn">
-                                                <i class="bi bi-lightning-charge me-2"></i>
-                                                生成专业报告
-                                            </button>
-                                            <div id="professional-report-status" class="small opacity-75">
-                                                点击生成全自动专业分析报告
-                                            </div>
+                                        <div class="col-md-4">
+                                            <div class="text-center">
+                                                <!-- 主要生成按钮 -->
+                                                <div class="mb-4">
+                                                    <button class="btn btn-light btn-lg px-4 py-3 shadow-sm generate-btn" onclick="generate5StepReport()" id="generate5StepBtn">
+                                                        <i class="bi bi-lightning-charge me-2"></i>
+                                                        <span class="fw-bold">{% if current_lang == 'en' %}Generate Professional Report{% else %}生成专业报告{% endif %}</span>
+                                                    </button>
+                                                </div>
+                                                
+                                                <!-- 状态指示器 -->
+                                                <div id="professional-report-status" class="text-white-75 mb-3">
+                                                    <i class="bi bi-info-circle me-1"></i>
+                                                    {% if current_lang == 'en' %}Click to generate automated professional analysis{% else %}点击生成全自动专业分析报告{% endif %}
+                                                </div>
 
-                                            <!-- 下载按钮区域 -->
-                                            <div id="professional-download-section" style="display: none;" class="mt-3">
-                                                <div class="d-flex flex-column gap-2">
-                                                    <button class="btn btn-outline-light btn-sm" onclick="downloadProfessionalReport('pdf')">
-                                                        <i class="bi bi-file-pdf me-1"></i> 下载PDF
-                                                    </button>
-                                                    <button class="btn btn-outline-light btn-sm" onclick="downloadProfessionalReport('pptx')">
-                                                        <i class="bi bi-file-ppt me-1"></i> 下载PPT
-                                                    </button>
+                                                <!-- 下载按钮区域 -->
+                                                <div id="professional-download-section" style="display: none;" class="mt-3">
+                                                    <div class="download-buttons d-flex flex-column gap-2">
+                                                        <button class="btn btn-outline-light btn-sm download-btn" onclick="downloadProfessionalReport('pdf')">
+                                                            <i class="bi bi-file-pdf me-2"></i>
+                                                            <span>{% if current_lang == 'en' %}Download PDF{% else %}下载PDF{% endif %}</span>
+                                                        </button>
+                                                        <button class="btn btn-outline-light btn-sm download-btn" onclick="downloadProfessionalReport('pptx')">
+                                                            <i class="bi bi-file-ppt me-2"></i>
+                                                            <span>{% if current_lang == 'en' %}Download PowerPoint{% else %}下载PPT{% endif %}</span>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1035,9 +1165,17 @@
 
                     <div class="row">
                         <div class="col-md-8">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="mb-0">最新分析报告</h5>
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-header bg-white border-0 py-3">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <h5 class="mb-0 fw-bold">
+                                            <i class="bi bi-file-earmark-text text-primary me-2"></i>
+                                            {% if current_lang == 'en' %}Latest Analysis Report{% else %}最新分析报告{% endif %}
+                                        </h5>
+                                        <span class="badge bg-success-subtle text-success">
+                                            <i class="bi bi-check-circle me-1"></i>已生成
+                                        </span>
+                                    </div>
                                 </div>
                                 <div class="card-body">
                                     <div id="reportTitle" class="h5 mb-3">
@@ -1091,9 +1229,12 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="mb-0">风险评估</h5>
+                            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
+                                <div class="card-header bg-transparent border-0 py-3">
+                                    <h5 class="mb-0 fw-bold text-dark">
+                                        <i class="bi bi-shield-exclamation text-warning me-2"></i>
+                                        {% if current_lang == 'en' %}Risk Assessment{% else %}风险评估{% endif %}
+                                    </h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="text-center mb-3">
