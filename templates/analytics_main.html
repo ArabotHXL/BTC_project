@@ -1799,42 +1799,68 @@
                 // Update report recommendations if available
                 console.log('Updating recommendations...');
                 var reportRecommendationsElement = document.getElementById('reportRecommendations');
-                if (reportRecommendationsElement && report.recommendations) {
-                    var recommendationsHtml = '';
-                    var recommendations = Array.isArray(report.recommendations) 
-                        ? report.recommendations 
-                        : [report.recommendations];
+                console.log('Recommendations element:', reportRecommendationsElement ? 'found' : 'not found');
+                console.log('Recommendations data:', report.recommendations);
+                
+                if (reportRecommendationsElement) {
+                    if (report.recommendations) {
+                        var recommendationsHtml = '';
+                        var recommendations = Array.isArray(report.recommendations) 
+                            ? report.recommendations 
+                            : [report.recommendations];
 
-                    recommendations.forEach(function(rec) {
-                        recommendationsHtml += '<li class="d-flex align-items-start mb-2 py-2">' +
-                            '<i class="bi bi-check text-success me-2 mt-1"></i>' +
-                            '<span style="color: #212529 !important;">' + rec + '</span>' +
-                            '</li>';
-                    });
+                        recommendations.forEach(function(rec) {
+                            recommendationsHtml += '<li class="d-flex align-items-start mb-2 py-2">' +
+                                '<i class="bi bi-check text-success me-2 mt-1"></i>' +
+                                '<span style="color: #212529 !important;">' + rec + '</span>' +
+                                '</li>';
+                        });
 
-                    reportRecommendationsElement.innerHTML = '<ul class="list-unstyled">' + recommendationsHtml + '</ul>';
-                    console.log('Updated recommendations successfully');
+                        reportRecommendationsElement.innerHTML = '<ul class="list-unstyled">' + recommendationsHtml + '</ul>';
+                        console.log('Updated recommendations successfully');
+                    } else {
+                        console.log('No recommendations data available');
+                    }
                 }
 
                 // Update risk assessment if available
                 console.log('Updating risk assessment...');
                 if (report.risk_assessment) {
+                    console.log('Risk assessment data found:', report.risk_assessment);
+                    
                     var riskScoreElement = document.getElementById('reportRiskScore');
-                    var riskLevelElement = document.getElementById('reportRiskLevel');
-
-                    if (riskScoreElement && report.risk_assessment.risk_score) {
-                        riskScoreElement.textContent = report.risk_assessment.risk_score;
+                    console.log('Risk score element:', riskScoreElement ? 'found' : 'not found');
+                    
+                    if (riskScoreElement) {
+                        if (report.risk_assessment.risk_score) {
+                            riskScoreElement.textContent = report.risk_assessment.risk_score;
+                            console.log('Updated risk score to:', report.risk_assessment.risk_score);
+                        } else {
+                            console.log('No risk_score data available');
+                        }
                     }
 
-                    if (riskLevelElement && report.risk_assessment.risk_level) {
-                        riskLevelElement.textContent = report.risk_assessment.risk_level;
+                    var riskLevelElement = document.getElementById('reportRiskLevel');
+                    console.log('Risk level element:', riskLevelElement ? 'found' : 'not found');
+                    
+                    if (riskLevelElement) {
+                        if (report.risk_assessment.risk_level) {
+                            riskLevelElement.textContent = report.risk_assessment.risk_level;
+                            console.log('Updated risk level to:', report.risk_assessment.risk_level);
+                        } else {
+                            console.log('No risk_level data available');
+                        }
                     }
                     console.log('Updated risk assessment successfully');
+                } else {
+                    console.log('No risk_assessment data available');
                 }
 
                 // Update timestamp - 显示系统本地时间
                 console.log('Updating timestamp...');
                 var reportTimestampElement = document.getElementById('reportTimestamp');
+                console.log('Timestamp element:', reportTimestampElement ? 'found' : 'not found');
+                
                 if (reportTimestampElement && report.created_at) {
                     var date = new Date(report.created_at);
                     // 使用12小时制系统本地时间格式
@@ -1848,6 +1874,10 @@
                     };
                     reportTimestampElement.textContent = '生成时间: ' + date.toLocaleString(undefined, options);
                     console.log('Updated timestamp successfully');
+                } else if (!reportTimestampElement) {
+                    console.log('reportTimestamp element not found in template, skipping timestamp update');
+                } else {
+                    console.log('No created_at data available for timestamp');
                 }
                 
                 console.log('All report display updates completed successfully');
