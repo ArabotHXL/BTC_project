@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 @batch_calculator_bp.route('/batch-calculator')
-def batch_calculator_page():
+def batch_calculator():
     """Display the batch calculator interface."""
     try:
         user_id = session.get('user_id')
