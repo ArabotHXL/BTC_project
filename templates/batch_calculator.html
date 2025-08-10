@@ -654,7 +654,7 @@
                                     <th>{% if current_lang == "en" %}Model{% else %}型号{% endif %}</th>
                                     <th>{% if current_lang == "en" %}Qty{% else %}数量{% endif %}</th>
                                     <th>{% if current_lang == "en" %}Daily{% else %}日收益{% endif %}</th>
-                                    <th>{% if current_lang == "en" %}ROI{% else %}ROI{% endif %}</th>
+                                    <th>{% if current_lang == "en" %}ROI Days{% else %}回本天数{% endif %}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -666,8 +666,8 @@
                     <tr>
                         <td class="small">${result.model}</td>
                         <td>${result.quantity}</td>
-                        <td class="${profitClass}">$${result.daily_profit.toFixed(2)}</td>
-                        <td>${result.annual_roi.toFixed(1)}%</td>
+                        <td class="${profitClass}">$${(result.daily_profit || 0).toFixed(2)}</td>
+                        <td>${result.roi_days ? result.roi_days + ' days' : 'N/A'}</td>
                     </tr>
                 `;
             });
