@@ -145,25 +145,26 @@ def batch_calculate():
                 power_consumption = float(miner.get('power_consumption', 3250))
                 electricity_cost = float(miner.get('electricity_cost', 0.08))
                 
-                # Calculate for this miner type using correct parameters
+                # Calculate for this miner type using correct parameters  
+                # Don't multiply by quantity here - let the function handle it
                 calc_result = calculate_mining_profitability(
                     hashrate=0,  # Will be calculated from miner model
-                    power_consumption=power_consumption * quantity,
+                    power_consumption=power_consumption,  # Single miner power
                     electricity_cost=electricity_cost,
                     miner_model=model,
                     miner_count=quantity
                 )
                 
-                # Add to results
+                # Add to results - calculation already accounts for quantity
                 result_entry = {
                     'model': model,
                     'quantity': quantity,
                     'power_consumption': power_consumption,
                     'electricity_cost': electricity_cost,
-                    'daily_profit': calc_result.get('daily_profit', 0) * quantity,
-                    'daily_revenue': calc_result.get('daily_revenue', 0) * quantity,
-                    'daily_cost': calc_result.get('daily_cost', 0) * quantity,
-                    'monthly_profit': calc_result.get('monthly_profit', 0) * quantity,
+                    'daily_profit': calc_result.get('daily_profit', 0),
+                    'daily_revenue': calc_result.get('daily_revenue', 0),
+                    'daily_cost': calc_result.get('daily_cost', 0),
+                    'monthly_profit': calc_result.get('monthly_profit', 0),
                     'roi_days': calc_result.get('roi_days', 0),
                     'hash_rate': calc_result.get('hash_rate', 0)
                 }
