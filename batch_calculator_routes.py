@@ -146,9 +146,8 @@ def batch_calculate():
                 electricity_cost = float(miner.get('electricity_cost', 0.08))
                 
                 # Calculate for this miner type using correct parameters  
-                # Don't multiply by quantity here - let the function handle it
+                # Don't pass hashrate=0, let it be calculated properly
                 calc_result = calculate_mining_profitability(
-                    hashrate=0,  # Will be calculated from miner model
                     power_consumption=power_consumption,  # Single miner power
                     electricity_cost=electricity_cost,
                     miner_model=model,

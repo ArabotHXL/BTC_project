@@ -623,13 +623,13 @@
                         <div class="col-6">
                             <div class="bg-dark p-2 rounded text-center">
                                 <div class="small text-muted">{% if current_lang == "en" %}Daily Profit{% else %}日收益{% endif %}</div>
-                                <div class="fw-bold text-success">$${summary.total_daily_profit.toFixed(2)}</div>
+                                <div class="fw-bold ${summary.total_daily_profit >= 0 ? 'text-success' : 'text-danger'}">$${(summary.total_daily_profit || 0).toFixed(2)}</div>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="bg-dark p-2 rounded text-center">
                                 <div class="small text-muted">{% if current_lang == "en" %}Monthly{% else %}月收益{% endif %}</div>
-                                <div class="fw-bold">$${(summary.total_daily_profit * 30).toFixed(2)}</div>
+                                <div class="fw-bold">$${((summary.total_daily_profit || 0) * 30).toFixed(2)}</div>
                             </div>
                         </div>
                         <div class="col-6">
