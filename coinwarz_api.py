@@ -207,16 +207,20 @@ def get_enhanced_network_data():
             coinwarz_btc = get_bitcoin_data_from_coinwarz()
             
             if coinwarz_btc:
-                # 优先使用分析系统算力数据，其次使用blockchain.info
-                if analytics_data and analytics_data.get('hashrate'):
-                    final_hashrate = analytics_data['hashrate']
-                    hashrate_source = "analytics_dashboard (priority)"
-                    logging.info(f"使用分析仪表盘算力数据: {final_hashrate:.1f} EH/s")
-                else:
-                    blockchain_hashrate = get_real_time_btc_hashrate()
+                # 优先使用实时blockchain.info算力数据，其次使用分析系统缓存
+                blockchain_hashrate = get_real_time_btc_hashrate()
+                if blockchain_hashrate and blockchain_hashrate > 0:
                     final_hashrate = blockchain_hashrate
-                    hashrate_source = "blockchain.info (fallback)"
-                    logging.info(f"使用blockchain.info算力数据: {blockchain_hashrate:.1f} EH/s")
+                    hashrate_source = "blockchain.info (real-time)"
+                    logging.info(f"使用blockchain.info实时算力数据: {blockchain_hashrate:.1f} EH/s")
+                elif analytics_data and analytics_data.get('hashrate'):
+                    final_hashrate = analytics_data['hashrate']
+                    hashrate_source = "analytics_dashboard (fallback)"
+                    logging.info(f"使用分析仪表盘备用算力数据: {final_hashrate:.1f} EH/s")
+                else:
+                    final_hashrate = 900  # 默认值
+                    hashrate_source = "default"
+                    logging.warning(f"使用默认算力数据: {final_hashrate:.1f} EH/s")
                 
                 # 使用CoinWarz作为主要数据源
                 network_data = {
@@ -237,16 +241,20 @@ def get_enhanced_network_data():
         # CoinWarz不可用或调用次数用完时，使用blockchain.info
         logging.warning(f"CoinWarz API不可用 (剩余调用: {api_status.get('ApiUsageAvailable', 0) if api_status else 0})，切换到blockchain.info")
         
-        # 优先使用分析系统算力数据
-        if analytics_data and analytics_data.get('hashrate'):
-            final_hashrate = analytics_data['hashrate']
-            hashrate_source = "analytics_dashboard (priority)"
-            logging.info(f"使用分析仪表盘算力数据: {final_hashrate:.1f} EH/s")
-        else:
-            blockchain_hashrate = get_real_time_btc_hashrate()
+        # 优先使用实时blockchain.info算力数据
+        blockchain_hashrate = get_real_time_btc_hashrate()
+        if blockchain_hashrate and blockchain_hashrate > 0:
             final_hashrate = blockchain_hashrate
-            hashrate_source = 'blockchain.info (direct API)'
-            logging.info(f"使用blockchain.info算力数据: {blockchain_hashrate:.1f} EH/s")
+            hashrate_source = 'blockchain.info (real-time API)'
+            logging.info(f"使用blockchain.info实时算力数据: {blockchain_hashrate:.1f} EH/s")
+        elif analytics_data and analytics_data.get('hashrate'):
+            final_hashrate = analytics_data['hashrate']
+            hashrate_source = "analytics_dashboard (fallback)"
+            logging.info(f"使用分析仪表盘备用算力数据: {final_hashrate:.1f} EH/s")
+        else:
+            final_hashrate = 900  # 默认值
+            hashrate_source = 'default'
+            logging.warning(f"使用默认算力数据: {final_hashrate:.1f} EH/s")
         
         blockchain_difficulty = get_real_time_difficulty()
         blockchain_price = get_real_time_btc_price()

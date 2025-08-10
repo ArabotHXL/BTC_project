@@ -103,9 +103,20 @@ def calculate_roi(investment, yearly_profit, monthly_profit, btc_price, forecast
     }
 
 def get_real_time_btc_price():
-    """Get the current Bitcoin price from analytics database first, then CoinGecko API"""
+    """Get the current Bitcoin price from CoinGecko API first, then analytics database as fallback"""
+    # 优先使用实时CoinGecko API
     try:
-        # 首先尝试从analytics数据库获取最新价格
+        response = requests.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd', timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        real_time_price = float(data['bitcoin']['usd'])
+        logging.info(f"使用CoinGecko实时价格: ${real_time_price:,.2f}")
+        return real_time_price
+    except Exception as e:
+        logging.warning(f"CoinGecko API获取失败: {e}，尝试analytics备用数据")
+    
+    # 备用：从analytics数据库获取最新价格
+    try:
         import os
         import psycopg2
         
@@ -123,21 +134,15 @@ def get_real_time_btc_price():
         
         if result and result[0]:
             analytics_price = float(result[0])
-            logging.info(f"使用analytics数据库价格: ${analytics_price:,.2f}")
+            logging.info(f"使用analytics备用价格: ${analytics_price:,.2f}")
             return analytics_price
             
     except Exception as e:
         logging.warning(f"Analytics数据库价格获取失败: {e}")
     
-    # 如果analytics数据库失败，尝试CoinGecko API
-    try:
-        response = requests.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd', timeout=10)
-        response.raise_for_status()
-        data = response.json()
-        return float(data['bitcoin']['usd'])
-    except Exception as e:
-        logging.warning(f"Unable to get real-time BTC price: {e}")
-        return DEFAULT_BTC_PRICE
+    # 最后备用：使用默认值
+    logging.warning(f"使用默认BTC价格: ${DEFAULT_BTC_PRICE:,.2f}")
+    return DEFAULT_BTC_PRICE
 
 def get_real_time_difficulty():
     """Get the current Bitcoin network difficulty with fallback options"""
