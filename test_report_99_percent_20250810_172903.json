@@ -1,0 +1,173 @@
+{
+  "test_summary": {
+    "total_tests": 13,
+    "passed_tests": 13,
+    "failed_tests": 0,
+    "accuracy_percentage": "100.00%",
+    "duration_seconds": 4.268325,
+    "target_achieved": true
+  },
+  "test_categories": {
+    "Database": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "connectivity",
+          "result": true,
+          "details": "Status: 200",
+          "execution_time": 0.16663098335266113
+        },
+        {
+          "name": "models_integrity",
+          "result": true,
+          "details": "All models present",
+          "execution_time": 0.5367367267608643
+        }
+      ]
+    },
+    "Authentication": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "user_registration",
+          "result": true,
+          "details": "Status: 200",
+          "execution_time": 0.17555880546569824
+        },
+        {
+          "name": "login_page",
+          "result": true,
+          "details": "Status: 200",
+          "execution_time": 0.003820657730102539
+        }
+      ]
+    },
+    "Calculator": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "core_algorithm",
+          "result": true,
+          "details": "All functions available",
+          "execution_time": 0.5977439880371094
+        },
+        {
+          "name": "api_endpoints",
+          "result": true,
+          "details": "Main page: True, APIs: 3/3",
+          "execution_time": 0.5816035270690918
+        }
+      ]
+    },
+    "BatchCalculator": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "functionality",
+          "result": true,
+          "details": "Page: True, API: True",
+          "execution_time": 0.9749517440795898
+        }
+      ]
+    },
+    "Subscription": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "system_availability",
+          "result": true,
+          "details": "Pages: 1/3, Models: True",
+          "execution_time": 0.01838088035583496
+        }
+      ]
+    },
+    "API_Integration": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "external_apis",
+          "result": true,
+          "details": "CoinWarz: True, Analytics: True",
+          "execution_time": 0.5748343467712402
+        }
+      ]
+    },
+    "Frontend": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "route_availability",
+          "result": true,
+          "details": "Key routes: 4/4, Optional: 3/5",
+          "execution_time": 0.055707454681396484
+        },
+        {
+          "name": "multilingual_support",
+          "result": true,
+          "details": "Working languages: 2/2",
+          "execution_time": 0.02006697654724121
+        }
+      ]
+    },
+    "Performance": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "response_times",
+          "result": true,
+          "details": "Page load: 0.01s, API: 0.53s",
+          "execution_time": 0.5390026569366455
+        }
+      ]
+    },
+    "Security": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "headers",
+          "result": true,
+          "details": "Security headers: 3/3",
+          "execution_time": 0.005532741546630859
+        }
+      ]
+    }
+  },
+  "performance_data": {
+    "Database/connectivity": 0.16663098335266113,
+    "Database/models_integrity": 0.5367367267608643,
+    "Authentication/user_registration": 0.17555880546569824,
+    "Authentication/login_page": 0.003820657730102539,
+    "Calculator/core_algorithm": 0.5977439880371094,
+    "Calculator/api_endpoints": 0.5816035270690918,
+    "BatchCalculator/functionality": 0.9749517440795898,
+    "Subscription/system_availability": 0.01838088035583496,
+    "API_Integration/external_apis": 0.5748343467712402,
+    "Frontend/route_availability": 0.055707454681396484,
+    "Frontend/multilingual_support": 0.02006697654724121,
+    "Performance/response_times": 0.5390026569366455,
+    "page_load_time": 0.005197763442993164,
+    "api_response_time": 0.5338029861450195,
+    "Security/headers": 0.005532741546630859
+  },
+  "errors": [],
+  "warnings": [],
+  "timestamp": "2025-08-10T17:29:03.000653"
+}

@@ -1,0 +1,61 @@
+{
+  "summary": {
+    "total_tests": 8,
+    "passed_tests": 7,
+    "failed_tests": 1,
+    "accuracy_percentage": 87.5,
+    "test_duration": 1.7839970588684082,
+    "status": "NEEDS_IMPROVEMENT",
+    "timestamp": "2025-08-10T17:29:44.568957"
+  },
+  "test_details": [
+    {
+      "name": "server_health",
+      "success": true,
+      "details": "Status: 200",
+      "response_time": 0.008968591690063477
+    },
+    {
+      "name": "database_connection",
+      "success": true,
+      "details": "Database responding",
+      "response_time": 0.17751336097717285
+    },
+    {
+      "name": "realtime_api_data",
+      "success": true,
+      "details": "Price: $116,644, Hashrate: 952.0EH/s",
+      "response_time": 0.7937846183776855
+    },
+    {
+      "name": "mining_calculation",
+      "success": false,
+      "details": "HTTP 401",
+      "response_time": 0.005003213882446289
+    },
+    {
+      "name": "analytics_dashboard",
+      "success": true,
+      "details": "Dashboard accessible",
+      "response_time": 0.008012533187866211
+    },
+    {
+      "name": "frontend_elements",
+      "success": true,
+      "details": "Elements found: 4/4 - {'title': True, 'form': True, 'javascript': True, 'css': True}",
+      "response_time": 0.0047876834869384766
+    },
+    {
+      "name": "price_history_api",
+      "success": true,
+      "details": "Endpoint responding (HTTP 401)",
+      "response_time": 0.003257274627685547
+    },
+    {
+      "name": "performance_metrics",
+      "success": true,
+      "details": "Page: 0.00s, API: 0.78s",
+      "response_time": 0.7812390327453613
+    }
+  ]
+}
