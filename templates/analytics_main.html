@@ -496,7 +496,7 @@
                                 <div class="card-header">
                                     <h5 class="mb-0">
                                         <i class="bi bi-graph-up-arrow"></i>
-                                        BTC 价格趋势 (24小时)
+                                        {% if current_lang == 'en' %}BTC Price Trend (24 Hours){% else %}BTC 价格趋势 (24小时){% endif %}
                                     </h5>
                                 </div>
                                 <div class="card-body">
@@ -560,15 +560,15 @@
                                     </div>
                                     <div class="row mt-3">
                                         <div class="col-4">
-                                            <small class="text-muted">1小时变化</small>
+                                            <small class="text-muted">{% if current_lang == 'en' %}1H Change{% else %}1小时变化{% endif %}</small>
                                             <div id="priceChange1h">--</div>
                                         </div>
                                         <div class="col-4">
-                                            <small class="text-muted">24小时变化</small>
+                                            <small class="text-muted">{% if current_lang == 'en' %}24H Change{% else %}24小时变化{% endif %}</small>
                                             <div id="priceChange24hDetail">--</div>
                                         </div>
                                         <div class="col-4">
-                                            <small class="text-muted">7天变化</small>
+                                            <small class="text-muted">{% if current_lang == 'en' %}7D Change{% else %}7天变化{% endif %}</small>
                                             <div id="priceChange7d">--</div>
                                         </div>
                                     </div>
@@ -593,7 +593,7 @@
                                     </div>
                                     <div class="row mt-3">
                                         <div class="col-12">
-                                            <small class="text-muted">24小时交易量</small>
+                                            <small class="text-muted">{% if current_lang == 'en' %}24H Volume{% else %}24小时交易量{% endif %}</small>
                                             <div class="h5" id="marketVolume">--</div>
                                         </div>
                                     </div>
@@ -606,7 +606,7 @@
                     <div class="row mt-4">
                         <div class="col-md-12">
                             <h4 class="mb-3">
-                                <i class="bi bi-graph-up-arrow"></i> 投资决策分析中心
+                                <i class="bi bi-graph-up-arrow"></i> {% if current_lang == 'en' %}Investment Decision Analysis Center{% else %}投资决策分析中心{% endif %}
                             </h4>
                         </div>
                     </div>
@@ -618,7 +618,7 @@
                                 <div class="card-header">
                                     <h5 class="mb-0">
                                         <i class="bi bi-calculator"></i>
-                                        投资收益预测
+                                        {% if current_lang == 'en' %}ROI Forecast{% else %}投资收益预测{% endif %}
                                     </h5>
                                 </div>
                                 <div class="card-body">

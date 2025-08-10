@@ -2343,6 +2343,12 @@ def network_history_main():
 @login_required
 def analytics_dashboard():
     """数据分析仪表盘 - 仅限拥有者"""
+    # 获取语言参数
+    lang = request.args.get('lang', session.get('language', 'zh'))
+    if lang not in ['zh', 'en']:
+        lang = 'zh'
+    session['language'] = lang
+    
     user_role = get_user_role(session.get('email'))
     # 允许所有已登录用户访问analytics页面
     if not user_role:
@@ -2428,7 +2434,8 @@ def analytics_dashboard():
     return render_template('analytics_main.html', 
                           user_role=user_role,
                           technical_indicators=technical_indicators,
-                          latest_report=latest_report)
+                          latest_report=latest_report,
+                          current_lang=lang)
 
 # Unified analytics data endpoint for testing and general use
 @app.route('/api/analytics/data', methods=['GET'])
