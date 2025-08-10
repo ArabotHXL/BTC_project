@@ -922,10 +922,10 @@
                 <!-- Reports Tab -->
                 <div id="reports" class="analytics-tab">
                     <div class="mb-4">
-                        <h3 class="mb-1 text-dark">
+                        <h3 class="mb-1" style="color: #212529 !important; font-weight: 700;">
                             {% if current_lang == 'en' %}Analysis Reports{% else %}分析报告{% endif %}
                         </h3>
-                        <p class="text-muted mb-0">
+                        <p class="text-dark mb-0" style="color: #495057 !important;">
                             {% if current_lang == 'en' %}Professional mining analysis and recommendations{% else %}专业挖矿分析与建议{% endif %}
                         </p>
                     </div>
@@ -935,14 +935,14 @@
                         <div class="col-12">
                             <div class="card border border-light">
                                 <div class="card-header bg-white border-bottom">
-                                    <h5 class="mb-0 text-dark">
+                                    <h5 class="mb-0" style="color: #212529 !important; font-weight: 600;">
                                         {% if current_lang == 'en' %}Professional Report Generation{% else %}专业报告生成{% endif %}
                                     </h5>
                                 </div>
                                 <div class="card-body py-4">
                                     <div class="row">
                                         <div class="col-md-8">
-                                            <p class="text-muted mb-3">
+                                            <p class="mb-3" style="color: #495057 !important;">
                                                 {% if current_lang == 'en' %}Generate comprehensive mining analysis reports with market insights and investment recommendations.{% else %}生成包含市场洞察和投资建议的综合挖矿分析报告。{% endif %}
                                             </p>
                                             
@@ -967,7 +967,7 @@
                                             <!-- 选项设置 -->
                                             <div class="row">
                                                 <div class="col-md-6">
-                                                    <label class="form-label text-muted small">输出格式</label>
+                                                    <label class="form-label small" style="color: #343a40 !important; font-weight: 500;">输出格式</label>
                                                     <div class="d-flex gap-3">
                                                         <div class="form-check">
                                                             <input class="form-check-input" type="checkbox" id="outputWeb" checked>
@@ -984,7 +984,7 @@
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label class="form-label text-muted small">分发方式</label>
+                                                    <label class="form-label small" style="color: #343a40 !important; font-weight: 500;">分发方式</label>
                                                     <div class="d-flex gap-3">
                                                         <div class="form-check">
                                                             <input class="form-check-input" type="checkbox" id="sendEmail">
@@ -1006,7 +1006,7 @@
                                                 </button>
                                                 
                                                 <!-- 状态信息 -->
-                                                <div id="professional-report-status" class="text-muted small mb-3">
+                                                <div id="professional-report-status" class="small mb-3" style="color: #495057 !important;">
                                                     {% if current_lang == 'en' %}Click to generate analysis report{% else %}点击生成分析报告{% endif %}
                                                 </div>
 
@@ -1033,7 +1033,7 @@
                         <div class="col-md-8">
                             <div class="card border border-light">
                                 <div class="card-header bg-white border-bottom">
-                                    <h5 class="mb-0 text-dark">
+                                    <h5 class="mb-0" style="color: #212529 !important; font-weight: 600;">
                                         {% if current_lang == 'en' %}Latest Analysis Report{% else %}最新分析报告{% endif %}
                                     </h5>
                                 </div>
@@ -1053,12 +1053,12 @@
                                         {% endif %}
                                     </div>
 
-                                    <h6 class="mb-3 text-dark">关键发现</h6>
+                                    <h6 class="mb-3" style="color: #212529 !important; font-weight: 600;">关键发现</h6>
                                     <div id="reportFindings" class="mb-4">
                                         {% if latest_report and latest_report.key_findings %}
                                             {% for key, value in latest_report.key_findings.items() %}
                                                 <div class="border-start border-4 border-primary bg-light p-3 mb-2">
-                                                    <strong class="text-dark">{{ key }}:</strong> <span class="text-muted ms-2">{{ value }}</span>
+                                                    <strong style="color: #212529 !important;">{{ key }}:</strong> <span style="color: #495057 !important;" class="ms-2">{{ value }}</span>
                                                 </div>
                                             {% endfor %}
                                         {% else %}
@@ -1068,14 +1068,14 @@
                                         {% endif %}
                                     </div>
 
-                                    <h6 class="mb-3 text-dark">投资建议</h6>
+                                    <h6 class="mb-3" style="color: #212529 !important; font-weight: 600;">投资建议</h6>
                                     <div id="reportRecommendations">
                                         {% if latest_report and latest_report.recommendations %}
                                             <ul class="list-unstyled">
                                             {% for recommendation in latest_report.recommendations %}
                                                 <li class="d-flex align-items-start mb-2 py-2">
                                                     <i class="bi bi-check text-success me-2 mt-1"></i>
-                                                    <span class="text-dark">{{ recommendation }}</span>
+                                                    <span style="color: #212529 !important;">{{ recommendation }}</span>
                                                 </li>
                                             {% endfor %}
                                             </ul>
@@ -1091,7 +1091,7 @@
                         <div class="col-md-4">
                             <div class="card border border-light">
                                 <div class="card-header bg-white border-bottom">
-                                    <h5 class="mb-0 text-dark">
+                                    <h5 class="mb-0" style="color: #212529 !important; font-weight: 600;">
                                         {% if current_lang == 'en' %}Risk Assessment{% else %}风险评估{% endif %}
                                     </h5>
                                 </div>
@@ -1484,8 +1484,8 @@
                         // Handle array of recommendations
                         findings.forEach(function(finding, index) {
                             findingsHtml += '<div class="border-start border-4 border-primary bg-light p-3 mb-2">' +
-                                '<strong class="text-dark">' + (index + 1) + '.</strong> ' +
-                                '<span class="text-muted ms-2">' + finding + '</span>' +
+                                '<strong style="color: #212529 !important;">' + (index + 1) + '.</strong> ' +
+                                '<span style="color: #495057 !important;" class="ms-2">' + finding + '</span>' +
                                 '</div>';
                         });
                     } else if (typeof findings === 'object') {
@@ -1496,14 +1496,14 @@
                             var value = entries[i][1];
                             var displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase()});
                             findingsHtml += '<div class="border-start border-4 border-primary bg-light p-3 mb-2">' +
-                                '<strong class="text-dark">' + displayKey + ':</strong> ' +
-                                '<span class="text-muted ms-2">' + value + '</span>' +
+                                '<strong style="color: #212529 !important;">' + displayKey + ':</strong> ' +
+                                '<span style="color: #495057 !important;" class="ms-2">' + value + '</span>' +
                                 '</div>';
                         }
                     } else {
                         // Handle string
                         findingsHtml = '<div class="border-start border-4 border-primary bg-light p-3 mb-2">' +
-                            '<span class="text-muted">' + findings + '</span>' +
+                            '<span style="color: #495057 !important;">' + findings + '</span>' +
                             '</div>';
                     }
                     reportFindingsElement.innerHTML = findingsHtml;
@@ -1525,7 +1525,7 @@
                 recommendations.forEach(function(rec) {
                     recommendationsHtml += '<li class="d-flex align-items-start mb-2 py-2">' +
                         '<i class="bi bi-check text-success me-2 mt-1"></i>' +
-                        '<span class="text-dark">' + rec + '</span>' +
+                        '<span style="color: #212529 !important;">' + rec + '</span>' +
                         '</li>';
                 });
 
