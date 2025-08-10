@@ -10,6 +10,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 2025)
 
+### Batch Calculator Real-time Price Fix (August 10, 2025)
+- **Real-time Synchronization**: Fixed BTC price input field to automatically update with real-time data
+- **Initial Load Fix**: Ensured price updates correctly on page load when real-time toggle is enabled
+- **Toggle Handler**: Added immediate price update when real-time data toggle is switched on
+- **Auto-refresh**: Maintained 30-second automatic refresh cycle for continuous price updates
+- **User Experience**: Eliminated price discrepancy between input field and network status display
+
 ### Quick Insights Bilingual Support Fix (August 10, 2025)
 - **JavaScript Internationalization**: Implemented comprehensive bilingual support for Quick Insights feature
 - **Language Detection**: Added automatic language detection and getText() helper function for real-time language switching
