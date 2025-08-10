@@ -78,7 +78,9 @@ class BitcoinMiningCalculator {
         if (!select) return;
 
         // 清空现有选项
-        select.innerHTML = '<option value="">选择矿机型号</option>';
+        const currentLang = document.querySelector('meta[name="language"]')?.content || 'zh';
+        const selectText = currentLang === 'en' ? 'Select a miner model' : '选择矿机型号';
+        select.innerHTML = '<option value="">' + selectText + '</option>';
 
         // 添加矿机选项
         miners.forEach(miner => {
