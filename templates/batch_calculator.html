@@ -20,7 +20,23 @@
                 {% if current_lang == 'en' %}BTC Mining Calculator{% else %}BTC挖矿计算器{% endif %}
             </a>
             
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 align-items-center">
+                <!-- Language Switcher -->
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-globe me-1"></i>
+                        {% if current_lang == 'en' %}EN{% else %}中文{% endif %}
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ url_for('batch_calculator.batch_calculator', lang='en') }}">
+                            <i class="bi bi-flag-usa me-2"></i>English
+                        </a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('batch_calculator.batch_calculator', lang='zh') }}">
+                            <i class="bi bi-flag-china me-2"></i>中文
+                        </a></li>
+                    </ul>
+                </div>
+
                 <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">
                     <i class="bi bi-arrow-left me-1"></i>
                     {% if current_lang == 'en' %}Back to Calculator{% else %}返回计算器{% endif %}
