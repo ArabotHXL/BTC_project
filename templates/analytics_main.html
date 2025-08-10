@@ -241,9 +241,18 @@
         .recommendation-item {
             padding: 0.75rem;
             margin: 0.5rem 0;
-            background-color: #2d3748;
+            background-color: rgba(40, 167, 69, 0.1);
             border-radius: 6px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #28a745;
+            transition: background-color 0.2s ease;
+        }
+        .recommendation-item:hover {
+            background-color: rgba(40, 167, 69, 0.15);
+        }
+        .alert-light {
+            background-color: rgba(13, 202, 240, 0.1);
+            border-color: rgba(13, 202, 240, 0.3);
+            color: #ffffff;
         }
         .loading-spinner {
             display: none;
@@ -323,6 +332,14 @@
             }
             .metric-label {
                 font-size: 0.75rem;
+            }
+            .recommendation-item {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+            .alert {
+                padding: 0.5rem;
+                font-size: 0.9rem;
             }
             .navbar-brand {
                 font-size: 0.9rem !important;
@@ -1038,29 +1055,36 @@
                                         {% endif %}
                                     </div>
 
-                                    <h6>关键发现</h6>
+                                    <h6 class="mb-3"><i class="bi bi-lightbulb me-2 text-warning"></i>关键发现</h6>
                                     <div id="reportFindings" class="mb-4">
                                         {% if latest_report and latest_report.key_findings %}
                                             {% for key, value in latest_report.key_findings.items() %}
-                                                <div class="mb-2">
-                                                    <strong>{{ key }}:</strong> {{ value }}
+                                                <div class="alert alert-light border-start border-4 border-info mb-2 py-2">
+                                                    <strong class="text-info">{{ key }}:</strong> <span class="ms-2">{{ value }}</span>
                                                 </div>
                                             {% endfor %}
                                         {% else %}
-                                            暂无关键发现
+                                            <div class="text-muted fst-italic">
+                                                <i class="bi bi-info-circle me-2"></i>暂无关键发现
+                                            </div>
                                         {% endif %}
                                     </div>
 
-                                    <h6>投资建议</h6>
+                                    <h6 class="mb-3"><i class="bi bi-target me-2 text-success"></i>投资建议</h6>
                                     <div id="reportRecommendations">
                                         {% if latest_report and latest_report.recommendations %}
+                                            <ul class="list-unstyled">
                                             {% for recommendation in latest_report.recommendations %}
-                                                <div class="mb-2">
-                                                    <i class="bi bi-check-circle-fill text-success"></i> {{ recommendation }}
-                                                </div>
+                                                <li class="recommendation-item d-flex align-items-start mb-2">
+                                                    <i class="bi bi-check-circle-fill text-success me-2 mt-1"></i>
+                                                    <span>{{ recommendation }}</span>
+                                                </li>
                                             {% endfor %}
+                                            </ul>
                                         {% else %}
-                                            暂无投资建议
+                                            <div class="text-muted fst-italic">
+                                                <i class="bi bi-info-circle me-2"></i>暂无投资建议
+                                            </div>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -1459,8 +1483,10 @@
                     if (Array.isArray(findings)) {
                         // Handle array of recommendations
                         findings.forEach(function(finding, index) {
-                            findingsHtml += '<div class="mb-2">' +
-                                '<strong>' + (index + 1) + '.</strong> ' + finding +
+                            findingsHtml += '<div class="alert alert-light border-start border-4 border-info mb-2 py-2">' +
+                                '<i class="bi bi-arrow-right text-info me-2"></i>' +
+                                '<strong class="text-info">' + (index + 1) + '.</strong> ' +
+                                '<span class="ms-2">' + finding + '</span>' +
                                 '</div>';
                         });
                     } else if (typeof findings === 'object') {
@@ -1470,13 +1496,16 @@
                             var key = entries[i][0];
                             var value = entries[i][1];
                             var displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase()});
-                            findingsHtml += '<div class="mb-2">' +
-                                '<strong>' + displayKey + ':</strong> ' + value +
+                            findingsHtml += '<div class="alert alert-light border-start border-4 border-info mb-2 py-2">' +
+                                '<strong class="text-info">' + displayKey + ':</strong> ' +
+                                '<span class="ms-2">' + value + '</span>' +
                                 '</div>';
                         }
                     } else {
                         // Handle string
-                        findingsHtml = '<div class="mb-2">' + findings + '</div>';
+                        findingsHtml = '<div class="alert alert-light border-start border-4 border-info mb-2 py-2">' +
+                            '<i class="bi bi-info-circle text-info me-2"></i>' + findings + 
+                            '</div>';
                     }
                     reportFindingsElement.innerHTML = findingsHtml;
                     console.log('Updated report findings:', findings);
@@ -1495,10 +1524,13 @@
                     : [report.recommendations];
 
                 recommendations.forEach(function(rec) {
-                    recommendationsHtml += '<li class="mb-2">' + rec + '</li>';
+                    recommendationsHtml += '<li class="recommendation-item d-flex align-items-start mb-2">' +
+                        '<i class="bi bi-check-circle-fill text-success me-2 mt-1"></i>' +
+                        '<span>' + rec + '</span>' +
+                        '</li>';
                 });
 
-                reportRecommendationsElement.innerHTML = recommendationsHtml;
+                reportRecommendationsElement.innerHTML = '<ul class="list-unstyled">' + recommendationsHtml + '</ul>';
             }
 
             // Update risk assessment if available
