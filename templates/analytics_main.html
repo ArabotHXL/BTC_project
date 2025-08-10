@@ -8,71 +8,108 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* 商务极简风格 - 白色背景，高对比度文字 */
         body {
-            background-color: #0d1421;
-            color: #ffffff;
+            background-color: #ffffff;
+            color: #1a1a1a;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
+        
         .navbar-dark {
-            background-color: #1a2332 !important;
-            border-bottom: 1px solid #2d3748;
+            background-color: #ffffff !important;
+            border-bottom: 1px solid #e0e0e0;
         }
+        
+        .navbar-dark .navbar-nav .nav-link {
+            color: #1a1a1a !important;
+        }
+        
+        .navbar-dark .navbar-brand {
+            color: #1a1a1a !important;
+        }
+        
         .card {
-            background-color: #1a2332;
-            border: 1px solid #2d3748;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            box-shadow: none;
         }
+        
         .card-header {
-            background-color: #2d3748;
-            border-bottom: 1px solid #4a5568;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
             font-weight: 600;
+            color: #1a1a1a !important;
         }
+        
         .metric-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            transition: transform 0.2s ease-in-out;
-            color: #ffffff !important;
+            background-color: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            transition: none;
+            color: #1a1a1a !important;
         }
+        
         .metric-card:hover {
-            transform: translateY(-2px);
+            transform: none;
         }
+        
         .metric-value {
             font-size: 2rem;
             font-weight: bold;
-            color: #ffffff !important;
+            color: #1a1a1a !important;
         }
+        
         .metric-label {
             font-size: 0.9rem;
-            color: #e2e8f0 !important;
+            color: #4a4a4a !important;
         }
+        
         .metric-change {
             font-size: 0.8rem;
-            color: #cbd5e0 !important;
+            color: #6a6a6a !important;
         }
+        
         .price-up {
-            color: #48bb78;
+            color: #198754 !important;
         }
+        
         .price-down {
-            color: #f56565;
+            color: #dc3545 !important;
         }
+        
         .chart-container {
             position: relative;
             height: 400px;
         }
-        /* Ensure all text is visible */
+        
+        /* 高对比度文字样式 */
         .card-body, .card-header, .h1, .h2, .h3, .h4, .h5, .h6,
-        .text-white, .small, .fw-bold, div, span, p, .nav-link {
-            color: #ffffff !important;
+        div, span, p, .nav-link {
+            color: #1a1a1a !important;
         }
+        
         .sidebar h5, .sidebar p, .sidebar span, .sidebar a {
-            color: #cbd5e0 !important;
+            color: #2a2a2a !important;
         }
+        
         .text-muted {
-            color: #cbd5e0 !important;
+            color: #4a4a4a !important;
         }
+        
+        .text-white {
+            color: #1a1a1a !important;
+        }
+        
+        .small, small {
+            color: #3a3a3a !important;
+        }
+        
+        .fw-bold {
+            color: #1a1a1a !important;
+        }
+        
         .loading-spinner {
             text-align: center;
-            color: #ffffff;
+            color: #1a1a1a;
         }
         .status-indicator {
             width: 12px;
@@ -380,6 +417,178 @@
                 display: block;
             }
         }
+        
+        /* ===== 商务极简风格覆盖样式 - 高对比度文字 ===== */
+        body {
+            background-color: #ffffff !important;
+            color: #1a1a1a !important;
+        }
+        
+        .card, .metric-card {
+            background-color: #ffffff !important;
+            border: 1px solid #e0e0e0 !important;
+            box-shadow: none !important;
+        }
+        
+        .card-header {
+            background-color: #f8f9fa !important;
+            color: #1a1a1a !important;
+        }
+        
+        .card-body, .card-text, .card-title {
+            background-color: #ffffff !important;
+            color: #1a1a1a !important;
+        }
+        
+        /* 确保所有标题文字都是深黑色 */
+        h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+            color: #1a1a1a !important;
+            font-weight: 600 !important;
+        }
+        
+        /* 确保所有正文文字都有高对比度 */
+        p, span, div, .card-body *, .card-header * {
+            color: #1a1a1a !important;
+        }
+        
+        /* 表单元素高对比度 */
+        .form-control, .form-select {
+            background-color: #ffffff !important;
+            border: 1px solid #d0d0d0 !important;
+            color: #1a1a1a !important;
+        }
+        
+        .form-label {
+            color: #1a1a1a !important;
+            font-weight: 500 !important;
+        }
+        
+        /* 按钮样式 */
+        .btn-primary {
+            background-color: #0d6efd !important;
+            border-color: #0d6efd !important;
+            color: #ffffff !important;
+        }
+        
+        /* 导航栏高对比度 */
+        .navbar, .navbar-dark {
+            background-color: #ffffff !important;
+            border-bottom: 1px solid #e0e0e0 !important;
+        }
+        
+        .navbar-nav .nav-link, .navbar-brand {
+            color: #1a1a1a !important;
+        }
+        
+        /* 侧边栏高对比度 */
+        .sidebar, .sidebar * {
+            background-color: #ffffff !important;
+            color: #1a1a1a !important;
+        }
+        
+        /* 数据指标卡片 */
+        .metric-value {
+            color: #1a1a1a !important;
+            font-weight: bold !important;
+        }
+        
+        .metric-label {
+            color: #4a4a4a !important;
+        }
+        
+        .metric-change {
+            color: #6a6a6a !important;
+        }
+        
+        /* 确保文字颜色覆盖 */
+        .text-white, .text-light {
+            color: #1a1a1a !important;
+        }
+        
+        .text-muted {
+            color: #4a4a4a !important;
+        }
+        
+        .small, small {
+            color: #3a3a3a !important;
+        }
+        
+        /* 列表和表格 */
+        .list-group-item {
+            background-color: #ffffff !important;
+            color: #1a1a1a !important;
+            border: 1px solid #e0e0e0 !important;
+        }
+        
+        .table th, .table td {
+            color: #1a1a1a !important;
+            background-color: #ffffff !important;
+        }
+        
+        /* 警告框样式 */
+        .alert {
+            background-color: #f8f9fa !important;
+            border: 1px solid #e0e0e0 !important;
+            color: #1a1a1a !important;
+        }
+        
+        .alert-info {
+            background-color: #d1ecf1 !important;
+            border-color: #bee5eb !important;
+            color: #0c5460 !important;
+        }
+        
+        .alert-success {
+            background-color: #d4edda !important;
+            border-color: #c3e6cb !important;
+            color: #155724 !important;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd !important;
+            border-color: #ffeaa7 !important;
+            color: #856404 !important;
+        }
+        
+        /* 智能警报系统覆盖 */
+        #smartAlerts .alert {
+            background-color: #f8f9fa !important;
+            border: 1px solid #e0e0e0 !important;
+            color: #1a1a1a !important;
+        }
+        
+        #smartAlerts .alert-info {
+            background-color: #d1ecf1 !important;
+            border-color: #bee5eb !important;
+            color: #0c5460 !important;
+        }
+        
+        #smartAlerts .alert-warning {
+            background-color: #fff3cd !important;
+            border-color: #ffeaa7 !important;
+            color: #856404 !important;
+        }
+        
+        #smartAlerts .alert-success {
+            background-color: #d4edda !important;
+            border-color: #c3e6cb !important;
+            color: #155724 !important;
+        }
+        
+        /* 确保动态生成内容的高对比度 */
+        #reportFindings *, #reportRecommendations * {
+            background-color: #f8f9fa !important;
+            color: #1a1a1a !important;
+        }
+        
+        #reportFindings .text-muted {
+            color: #3a3a3a !important;
+        }
+        
+        #reportFindings .text-dark, #reportRecommendations .text-dark {
+            color: #1a1a1a !important;
+        }
+        
     </style>
 </head>
 <body>
