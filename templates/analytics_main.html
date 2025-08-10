@@ -6,32 +6,46 @@
     <title>{% block title %}{% if current_lang == 'en' %}Analytics Dashboard - BTC Mining Calculator{% else %}分析数据仪表盘 - BTC挖矿计算器{% endif %}{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/color-contrast.css') }}" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* 页面默认为浅色主题，但支持主题切换 */
         body {
             background-color: #ffffff;
             color: #212529;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
+        
+        /* 导航栏适配主题 */
         .navbar-dark {
             background-color: #ffffff !important;
             border-bottom: 1px solid #dee2e6;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
+        
+        /* 卡片适配主题 */
         .card {
             background-color: #ffffff;
             border: 1px solid #dee2e6;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            color: #212529 !important;
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
         }
+        
         .card-header {
             background-color: #f8f9fa;
             border-bottom: 1px solid #dee2e6;
             font-weight: 600;
             color: #212529 !important;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
+        
+        /* 指标卡片适配主题 */
         .metric-card {
             background-color: #ffffff;
             border: 1px solid #dee2e6;
-            transition: transform 0.2s ease-in-out;
+            transition: transform 0.2s ease-in-out, background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
             color: #212529 !important;
         }
         .metric-card:hover {
@@ -61,16 +75,43 @@
             position: relative;
             height: 400px;
         }
-        /* Business professional text styling */
+        /* Business professional text styling - 适配主题切换 */
         .card-body, .card-header, .h1, .h2, .h3, .h4, .h5, .h6,
         .small, .fw-bold, div, span, p, .nav-link {
-            color: #212529 !important;
+            color: #212529;
+            transition: color 0.3s ease;
         }
+        
         .sidebar h5, .sidebar p, .sidebar span, .sidebar a {
-            color: #495057 !important;
+            color: #495057;
+            transition: color 0.3s ease;
         }
+        
         .text-muted {
-            color: #6c757d !important;
+            color: #6c757d;
+            transition: color 0.3s ease;
+        }
+        
+        /* 深色主题覆盖样式 */
+        .theme-dark .card-body, 
+        .theme-dark .card-header, 
+        .theme-dark .h1, .theme-dark .h2, .theme-dark .h3, 
+        .theme-dark .h4, .theme-dark .h5, .theme-dark .h6,
+        .theme-dark .small, .theme-dark .fw-bold, 
+        .theme-dark div, .theme-dark span, .theme-dark p, 
+        .theme-dark .nav-link {
+            color: #ffffff !important;
+        }
+        
+        .theme-dark .sidebar h5, 
+        .theme-dark .sidebar p, 
+        .theme-dark .sidebar span, 
+        .theme-dark .sidebar a {
+            color: #adb5bd !important;
+        }
+        
+        .theme-dark .text-muted {
+            color: #adb5bd !important;
         }
         .loading-spinner {
             text-align: center;
