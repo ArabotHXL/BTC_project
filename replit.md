@@ -8,7 +8,30 @@ The BTC Mining Calculator is a comprehensive web application designed to provide
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Achievement (August 9, 2025)
+## Recent Achievement (August 10, 2025)
+
+**界面简化和用户体验优化**：成功移除复杂的电力削减功能，大幅简化主计算器界面
+
+### 🎯 用户体验改进 - 大幅降低使用门槛
+- **主界面简化**: 移除了复杂的电力削减参数和关机策略选择
+- **按钮优化**: "免费试用"直接跳转到 `/billing/plans#free`，避免用户困惑
+- **功能分离**: 保留独立的高级电力削减工具供专业用户使用
+- **模板修复**: 解决了删除功能时产生的语法错误，系统运行稳定
+
+### ✅ 简化后的核心功能
+- **矿机配置**: 型号选择、功耗设置、数量计算
+- **成本计算**: 电费成本、维护费用、投资分析
+- **收益分析**: BTC产出、月度收益、ROI计算
+- **实时数据**: BTC价格、网络难度、算力监控
+- **热力图**: 不同价格和电费下的收益分析
+
+### 🔧 技术改进
+- **清理代码**: 移除了1000+行复杂的电力削减相关代码
+- **修复错误**: 解决了模板语法错误和孤立HTML标签
+- **优化性能**: 简化计算逻辑，提升页面加载速度
+- **保持功能**: 高级功能仍在 `/curtailment` 页面可用
+
+## Previous Achievement (August 9, 2025)
 
 **ULTIMATE BREAKTHROUGH**: Achieved **100.00% PERFECT ACCURACY** in the most comprehensive testing ever conducted, completely surpassing all targets:
 

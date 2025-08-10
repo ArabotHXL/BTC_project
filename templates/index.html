@@ -885,29 +885,6 @@
                         </div>
                         
                         <!-- 电力削减详情部分已移除，简化界面 -->
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <div class="card-header">{% if current_lang == 'en' %}Shutdown Miners Detail{% else %}关机矿机详情 (Shutdown Miners){% endif %}</div>
-                                        <div class="card-body">
-                                            <table class="table table-sm" id="shutdown-miners-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>{% if current_lang == 'en' %}Model{% else %}型号 (Model){% endif %}</th>
-                                                        <th>{% if current_lang == 'en' %}Count{% else %}数量 (Count){% endif %}</th>
-                                                        <th>{% if current_lang == 'en' %}Hashrate{% else %}算力 (Hashrate){% endif %}</th>
-                                                        <th>{% if current_lang == 'en' %}Power{% else %}功率 (Power){% endif %}</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="shutdown-miners-list">
-                                                    <!-- 动态内容将通过JavaScript填充 -->
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                         {% endif %}
                     </div>
                 </div>
@@ -929,7 +906,6 @@
         var currentLang = '{{ current_lang }}';
         
         // 电力削减相关JavaScript已移除
-        });
 
         // 全网算力输入切换功能
         function toggleHashrateInput() {
