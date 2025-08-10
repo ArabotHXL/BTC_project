@@ -58,6 +58,9 @@
         .chart-container {
             position: relative;
             height: 400px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: rgba(0,0,0,0.1);
         }
         /* Ensure all text is visible */
         .card-body, .card-header, .h1, .h2, .h3, .h4, .h5, .h6,
@@ -450,37 +453,49 @@
                     </h4>
 
                     <!-- Key Metrics Row -->
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <div class="card metric-card text-white price-display">
-                                <div class="card-body text-center">
+                    <div class="row mb-5">
+                        <div class="col-xl-3 col-lg-6 mb-3">
+                            <div class="card metric-card text-white price-display shadow-sm">
+                                <div class="card-body text-center p-4">
+                                    <div class="d-flex align-items-center justify-content-center mb-2">
+                                        <i class="bi bi-currency-bitcoin h3 me-2 mb-0"></i>
+                                    </div>
                                     <div class="metric-value" id="btcPrice">--</div>
                                     <div class="metric-label">{% if current_lang == 'en' %}BTC Price (USD){% else %}BTC 价格 (USD){% endif %}</div>
                                     <div class="metric-change" id="priceChange24h">--</div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="card metric-card text-white">
-                                <div class="card-body text-center">
+                        <div class="col-xl-3 col-lg-6 mb-3">
+                            <div class="card metric-card text-white shadow-sm">
+                                <div class="card-body text-center p-4">
+                                    <div class="d-flex align-items-center justify-content-center mb-2">
+                                        <i class="bi bi-cpu h3 me-2 mb-0"></i>
+                                    </div>
                                     <div class="metric-value" id="networkHashrate">--</div>
                                     <div class="metric-label">{% if current_lang == 'en' %}Network Hashrate (EH/s){% else %}网络算力 (EH/s){% endif %}</div>
                                     <div class="metric-change" id="hashrateStatus">--</div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="card metric-card text-white">
-                                <div class="card-body text-center">
+                        <div class="col-xl-3 col-lg-6 mb-3">
+                            <div class="card metric-card text-white shadow-sm">
+                                <div class="card-body text-center p-4">
+                                    <div class="d-flex align-items-center justify-content-center mb-2">
+                                        <i class="bi bi-emoji-neutral h3 me-2 mb-0"></i>
+                                    </div>
                                     <div class="metric-value" id="fearGreedIndex">--</div>
                                     <div class="metric-label">{% if current_lang == 'en' %}Fear & Greed Index{% else %}恐惧贪婪指数{% endif %}</div>
                                     <div class="metric-change" id="fearGreedLabel">--</div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="card metric-card text-white">
-                                <div class="card-body text-center">
+                        <div class="col-xl-3 col-lg-6 mb-3">
+                            <div class="card metric-card text-white shadow-sm">
+                                <div class="card-body text-center p-4">
+                                    <div class="d-flex align-items-center justify-content-center mb-2">
+                                        <i class="bi bi-graph-up h3 me-2 mb-0"></i>
+                                    </div>
                                     <div class="metric-value" id="rsiValue">--</div>
                                     <div class="metric-label">RSI (14)</div>
                                     <div class="metric-change" id="rsiSignal">--</div>
@@ -489,33 +504,34 @@
                         </div>
                     </div>
 
-                    <!-- Charts Row -->
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="card">
-                                <div class="card-header">
+                    <!-- Charts and Insights Row -->
+                    <div class="row mb-4">
+                        <div class="col-lg-8 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0">
                                         <i class="bi bi-graph-up-arrow"></i>
                                         {% if current_lang == 'en' %}BTC Price Trend (24 Hours){% else %}BTC 价格趋势 (24小时){% endif %}
                                     </h5>
+                                    <span class="badge bg-success">{% if current_lang == 'en' %}Live{% else %}实时{% endif %}</span>
                                 </div>
                                 <div class="card-body">
-                                    <div class="chart-container">
+                                    <div class="chart-container" style="height: 300px;">
                                         <canvas id="priceChart"></canvas>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="card">
+                        <div class="col-lg-4 mb-4">
+                            <div class="card h-100">
                                 <div class="card-header">
                                     <h5 class="mb-0">
-                                        <i class="bi bi-info-circle"></i>
+                                        <i class="bi bi-lightbulb"></i>
                                         {% if current_lang == 'en' %}Quick Insights{% else %}快速洞察{% endif %}
                                     </h5>
                                 </div>
                                 <div class="card-body">
-                                    <div id="quickInsights">
+                                    <div id="quickInsights" style="min-height: 250px;">
                                         <div class="loading-spinner">
                                             <div class="spinner-border text-primary" role="status">
                                                 <span class="visually-hidden">{% if current_lang == 'en' %}Loading...{% else %}加载中...{% endif %}</span>
@@ -527,8 +543,78 @@
                         </div>
                     </div>
 
-
-
+                    <!-- Performance Summary Row -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-trophy"></i>
+                                        {% if current_lang == 'en' %}Top Mining Performers{% else %}挖矿性能排行{% endif %}
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <div class="text-success">
+                                                <i class="bi bi-award h4"></i>
+                                                <div class="small">S21 XP</div>
+                                                <div class="fw-bold">$0.195/kWh</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="text-warning">
+                                                <i class="bi bi-award h4"></i>
+                                                <div class="small">S21</div>
+                                                <div class="fw-bold">$0.173/kWh</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="text-info">
+                                                <i class="bi bi-award h4"></i>
+                                                <div class="small">S19 Pro</div>
+                                                <div class="fw-bold">$0.109/kWh</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-speedometer2"></i>
+                                        {% if current_lang == 'en' %}System Status{% else %}系统状态{% endif %}
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <span class="status-indicator status-online me-2"></span>
+                                                <span class="small">{% if current_lang == 'en' %}Data Feed{% else %}数据源{% endif %}</span>
+                                            </div>
+                                            <div class="d-flex align-items-center mb-2">
+                                                <span class="status-indicator status-online me-2"></span>
+                                                <span class="small">{% if current_lang == 'en' %}API Services{% else %}API服务{% endif %}</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <span class="status-indicator status-online me-2"></span>
+                                                <span class="small">{% if current_lang == 'en' %}Database{% else %}数据库{% endif %}</span>
+                                            </div>
+                                            <div class="d-flex align-items-center mb-2">
+                                                <span class="status-indicator status-online me-2"></span>
+                                                <span class="small">{% if current_lang == 'en' %}Analytics{% else %}分析引擎{% endif %}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                 </div>
 
