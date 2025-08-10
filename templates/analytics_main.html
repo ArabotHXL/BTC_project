@@ -3009,49 +3009,8 @@
             }
         }
 
-        function updateReportDisplay(data) {
-            document.getElementById('reportTitle').textContent = data.title || '暂无报告';
-            document.getElementById('reportSummary').textContent = data.summary || '';
-            document.getElementById('reportGeneratedAt').textContent = data.generated_at ? 
-                new Date(data.generated_at).toLocaleString() : '--';
-            document.getElementById('reportConfidence').textContent = 
-                data.confidence_score ? formatPercent(data.confidence_score * 100) : '--';
-
-            // Key findings
-            var findings = document.getElementById('reportFindings');
-            if (data.key_findings) {
-                var findingsHtml = '';
-                var entries = Object.entries(data.key_findings);
-                for (var i = 0; i < entries.length; i++) {
-                    var key = entries[i][0];
-                    var value = entries[i][1];
-                    findingsHtml += '<div><strong>' + key + ':</strong> ' + value + '</div>';
-                }
-                findings.innerHTML = findingsHtml;
-            } else {
-                findings.textContent = '暂无关键发现';
-            }
-
-            // Recommendations
-            var recommendations = document.getElementById('reportRecommendations');
-            if (data.recommendations && data.recommendations.length > 0) {
-                var recommendationsHtml = '';
-                for (var i = 0; i < data.recommendations.length; i++) {
-                    recommendationsHtml += '<div class="recommendation-item">' + data.recommendations[i] + '</div>';
-                }
-                recommendations.innerHTML = recommendationsHtml;
-            } else {
-                recommendations.textContent = '暂无投资建议';
-            }
-
-            // Risk assessment
-            if (data.risk_assessment) {
-                document.getElementById('reportRiskScore').textContent = data.risk_assessment.risk_score || '--';
-                var riskLevel = document.getElementById('reportRiskLevel');
-                riskLevel.textContent = data.risk_assessment.risk_level || '--';
-                riskLevel.className = 'fw-bold text-' + getRiskColor(data.risk_assessment.risk_level);
-            }
-        }
+        // This is the old duplicate updateReportDisplay function - removing it to avoid conflicts
+        // The main function with proper error handling is earlier in the file
 
         // Auto refresh functionality
         function setupAutoRefresh() {
