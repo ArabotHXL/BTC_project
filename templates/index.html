@@ -400,26 +400,7 @@
                                     <div class="form-text">{% if current_lang == 'en' %}Monthly maintenance cost for the mining facility{% else %}每月矿场维护费用{% endif %}</div>
                                 </div>
                                 
-                                <!-- Curtailment Percentage -->
-                                <div class="mb-3">
-                                    <label for="curtailment" class="form-label">{% if current_lang == 'en' %}Curtailment %{% else %}限电百分比{% endif %}</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="curtailment" name="curtailment" value="0" min="0" max="100" step="1">
-                                        <span class="input-group-text">%</span>
-                                    </div>
-                                    <div class="form-text">{% if current_lang == 'en' %}Percentage of time with reduced power due to grid demand response, high temperature, or maintenance{% else %}电力削减/限电比例，表示因电网需求响应、高温或维护等原因需降低功率的时间百分比{% endif %}</div>
-                                </div>
-                                
-                                <!-- Shutdown Strategy (仅当curtailment > 0时显示) -->
-                                <div class="mb-3" id="shutdown-strategy-container" style="display: none;">
-                                    <label for="shutdown-strategy" class="form-label">{% if current_lang == 'en' %}Shutdown Strategy{% else %}关机策略{% endif %}</label>
-                                    <select class="form-select" id="shutdown-strategy" name="shutdown_strategy">
-                                        <option value="efficiency" selected>{% if current_lang == 'en' %}Efficiency-based{% else %}按效率关机 - 先关效率低的{% endif %}</option>
-                                        <option value="proportional">{% if current_lang == 'en' %}Proportional{% else %}按比例关机 - 每种型号同比例{% endif %}</option>
-                                        <option value="random">{% if current_lang == 'en' %}Random{% else %}随机关机{% endif %}</option>
-                                    </select>
-                                    <div class="form-text">{% if current_lang == 'en' %}Select which miners to shut down during curtailment periods{% else %}选择限电时优先关闭哪些矿机{% endif %}</div>
-                                </div>
+                                <!-- 电力削减功能已移除，简化用户体验 -->
                                 
                                 <!-- Host Investment Amount -->
                                 <div class="mb-3">
@@ -434,7 +415,7 @@
                                 <!-- 为普通用户隐藏字段，但提供默认值 -->
                                 <input type="hidden" id="maintenance-fee" name="maintenance_fee" value="5000">
                                 <input type="hidden" id="host-investment" name="host_investment" value="800000">
-                                <input type="hidden" id="curtailment" name="curtailment" value="0">
+                                <!-- 电力削减参数已移除 -->
                                 {% endif %}
                                 
                                 <!-- Client Investment Amount -->
@@ -658,14 +639,7 @@
                                                 <td>矿机数量 (Miner Count)</td>
                                                 <td id="miner-count-result" class="text-end">0</td>
                                             </tr>
-                                            <tr>
-                                                <td>运行中矿机 (Running Miners)</td>
-                                                <td id="running-miners" class="text-end">0</td>
-                                            </tr>
-                                            <tr>
-                                                <td>停机矿机 (Shutdown Miners)</td>
-                                                <td id="shutdown-miners" class="text-end">0</td>
-                                            </tr>
+                                            <!-- 关机矿机显示已移除 -->
                                             <tr>
                                                 <td>盈亏平衡电价 (Break-even Electricity)</td>
                                                 <td id="break-even-electricity" class="text-end">$0.00/kWh</td>
@@ -680,10 +654,7 @@
                                                 <td>盈亏平衡BTC价格 (Break-even BTC)</td>
                                                 <td id="break-even-btc" class="text-end">$0.00</td>
                                             </tr>
-                                            <tr>
-                                                <td>最优削减比例 (Optimal Curtailment)</td>
-                                                <td id="optimal-curtailment" class="text-end">0.00%</td>
-                                            </tr>
+
                                         </tbody>
                                     </table>
                                     
@@ -913,41 +884,7 @@
                             </div>
                         </div>
                         
-                        <!-- 电力削减详情部分 - 仅对矿场主/管理员/所有者显示 -->
-                        {% if session.role in ['owner', 'admin', 'mining_site'] %}
-                        <div id="curtailment-details-section" style="display: none;" class="mt-5">
-                            <h4 class="mb-3">{% if current_lang == 'en' %}Power Curtailment Details{% else %}电力削减详情 (Power Curtailment Details){% endif %}</h4>
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <div class="card-header">{% if current_lang == 'en' %}Curtailment Impact{% else %}削减影响 (Curtailment Impact){% endif %}</div>
-                                        <div class="card-body">
-                                            <table class="table table-sm">
-                                                <tbody>
-                                                    <tr>
-                                                        <td>{% if current_lang == 'en' %}Shutdown Strategy{% else %}关机策略 (Shutdown Strategy){% endif %}</td>
-                                                        <td id="curtailment-strategy" class="text-end">-</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>{% if current_lang == 'en' %}Electricity Saved{% else %}节省电量 (Electricity Saved){% endif %}</td>
-                                                        <td id="saved-electricity" class="text-end">0 kWh</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>{% if current_lang == 'en' %}Electricity Cost Saved{% else %}电费节省 (Electricity Cost Saved){% endif %}</td>
-                                                        <td id="saved-electricity-cost" class="text-end">$0.00</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>{% if current_lang == 'en' %}Revenue Loss{% else %}收入损失 (Revenue Loss){% endif %}</td>
-                                                        <td id="revenue-loss" class="text-end">$0.00</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>{% if current_lang == 'en' %}Net Impact{% else %}净影响 (Net Impact){% endif %}</td>
-                                                        <td id="net-impact" class="text-end">$0.00</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
+                        <!-- 电力削减详情部分已移除，简化界面 -->
                                 </div>
                                 <div class="col-md-6">
                                     <div class="card">
@@ -991,31 +928,7 @@
         // Global language variable for JavaScript use
         var currentLang = '{{ current_lang }}';
         
-        // 添加关机策略的显示/隐藏控制
-        document.addEventListener('DOMContentLoaded', function() {
-            // 获取元素
-            var curtailmentInput = document.getElementById('curtailment');
-            var shutdownStrategyContainer = document.getElementById('shutdown-strategy-container');
-            
-            // 检查元素是否存在
-            if (curtailmentInput && shutdownStrategyContainer) {
-                // 初始检查
-                updateShutdownStrategyVisibility();
-                
-                // 添加事件监听器
-                curtailmentInput.addEventListener('input', updateShutdownStrategyVisibility);
-                
-                function updateShutdownStrategyVisibility() {
-                    var curtailmentValue = parseFloat(curtailmentInput.value) || 0;
-                    
-                    // 如果curtailment > 0，显示关机策略选择
-                    if (curtailmentValue > 0) {
-                        shutdownStrategyContainer.style.display = 'block';
-                    } else {
-                        shutdownStrategyContainer.style.display = 'none';
-                    }
-                }
-            }
+        // 电力削减相关JavaScript已移除
         });
 
         // 全网算力输入切换功能
