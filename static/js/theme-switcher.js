@@ -2,12 +2,25 @@
 class ThemeSwitcher {
     constructor() {
         this.currentTheme = localStorage.getItem('theme') || 'light';
+        console.log('ThemeSwitcher initialized with theme:', this.currentTheme);
         this.init();
     }
 
     init() {
-        this.applyTheme(this.currentTheme);
+        // 等待DOM完全加载
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.setup();
+            });
+        } else {
+            this.setup();
+        }
+    }
+
+    setup() {
+        console.log('Setting up theme switcher...');
         this.createToggleButton();
+        this.applyTheme(this.currentTheme);
         this.bindEvents();
     }
 
@@ -150,6 +163,13 @@ class ThemeSwitcher {
     }
 
     createToggleButton() {
+        // 检查是否已存在按钮
+        if (document.getElementById('theme-toggle')) {
+            console.log('Theme toggle button already exists');
+            return;
+        }
+
+        console.log('Creating theme toggle button...');
         const button = document.createElement('button');
         button.id = 'theme-toggle';
         button.className = 'btn btn-outline-secondary position-fixed';
@@ -164,10 +184,15 @@ class ThemeSwitcher {
             align-items: center;
             justify-content: center;
             transition: all 0.3s ease;
+            font-size: 18px;
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(0, 0, 0, 0.1);
         `;
         
         this.updateButtonIcon(button);
         document.body.appendChild(button);
+        console.log('Theme toggle button created and added to body');
     }
 
     updateButtonIcon(button) {
@@ -213,10 +238,19 @@ class ThemeSwitcher {
     }
 }
 
-// 页面加载完成后初始化主题切换器
-document.addEventListener('DOMContentLoaded', () => {
-    window.themeSwitcher = new ThemeSwitcher();
-});
+// 立即初始化主题切换器
+console.log('Loading theme switcher script...');
+window.themeSwitcher = new ThemeSwitcher();
 
 // 导出给其他脚本使用
 window.ThemeSwitcher = ThemeSwitcher;
+
+// 额外的保险机制 - 如果第一次初始化失败，重试
+setTimeout(() => {
+    if (!document.getElementById('theme-toggle')) {
+        console.log('Retry creating theme toggle button...');
+        if (window.themeSwitcher) {
+            window.themeSwitcher.createToggleButton();
+        }
+    }
+}, 1000);
