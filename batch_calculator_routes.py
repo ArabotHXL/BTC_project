@@ -1,7 +1,7 @@
 """
 Batch calculator routes for handling multiple miner calculations.
 """
-from flask import Blueprint, request, jsonify, render_template, session
+from flask import Blueprint, request, jsonify, render_template, session, render_template_string
 from decorators import check_miner_limit, get_user_plan, UpgradeRequired
 from mining_calculator import calculate_mining_profitability, MINER_DATA
 import logging
@@ -21,21 +21,81 @@ def batch_calculator():
         
         if not user_plan:
             logger.warning(f"No plan found for user {user_id}")
-            # Default to free plan
-            from models_subscription import Plan
-            user_plan = Plan.query.filter_by(id='free').first()
+            # Create a default free plan object if database lookup fails
+            class DefaultPlan:
+                id = 'free'
+                name = 'Free'
+                max_miners = 1
+                price = 0
+                allow_advanced_analytics = False
+                allow_api = False
+                allow_scenarios = False
+            user_plan = DefaultPlan()
         
         # Get current language
         current_lang = request.args.get('lang', session.get('language', 'zh'))
         session['language'] = current_lang
         
-        return render_template('batch_calculator.html', 
-                             user_plan=user_plan,
-                             current_lang=current_lang)
+        logger.info(f"Rendering batch calculator with plan: {user_plan.name}, language: {current_lang}")
+        
+        # Pass session data to template
+        template_data = {
+            'user_plan': user_plan,
+            'current_lang': current_lang,
+            'session': session
+        }
+        
+        return render_template('batch_calculator.html', **template_data)
     
     except Exception as e:
-        logger.error(f"Error loading batch calculator: {e}")
-        return "Error loading batch calculator", 500
+        logger.error(f"Error loading batch calculator: {e}", exc_info=True)
+        # Return a working basic page
+        return render_template_string('''
+<!DOCTYPE html>
+<html lang="zh-CN" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>批量挖矿计算器</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-calculator me-2"></i>BTC挖矿计算器
+            </a>
+            <div class="d-flex gap-2">
+                <a href="/" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i>返回计算器
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="mb-1">批量挖矿计算器</h2>
+                <p class="text-muted mb-0">一次性计算多台矿机的收益率</p>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>系统维护中</strong>
+                    <p class="mb-0">批量计算器正在升级优化，请稍后再试。您可以先使用主页的单台矿机计算功能。</p>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <a href="/" class="btn btn-primary">返回主计算器</a>
+                    <a href="/billing/plans" class="btn btn-outline-secondary ms-2">查看订阅计划</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+        ''')
 
 
 @batch_calculator_bp.route('/api/batch-calculate', methods=['POST'])

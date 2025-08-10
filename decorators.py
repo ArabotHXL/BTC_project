@@ -8,17 +8,58 @@ from models import db
 
 
 def get_user_plan(user_id):
-    """Get user's current plan or default to free."""
-    if not user_id:
-        # Default free plan for unauthenticated users
-        return Plan.query.filter_by(id='free').first()
-    
-    subscription = Subscription.query.filter_by(user_id=user_id).first()
-    if subscription and subscription.plan:
-        return subscription.plan
-    
-    # Default to free plan
-    return Plan.query.filter_by(id='free').first()
+    """Get user's current subscription plan."""
+    try:
+        if not user_id:
+            # Return default free plan structure
+            class DefaultPlan:
+                id = 'free'
+                name = 'Free'
+                max_miners = 1
+                price = 0
+                allow_advanced_analytics = False
+                allow_api = False
+                allow_scenarios = False
+            return DefaultPlan()
+            
+        # Get user's active subscription
+        subscription = Subscription.query.filter_by(
+            user_id=user_id,
+            status='active'
+        ).first()
+        
+        if subscription and subscription.plan:
+            return subscription.plan
+        
+        # Try to get free plan from database
+        free_plan = Plan.query.filter_by(id='free').first()
+        if free_plan:
+            return free_plan
+            
+        # Return default free plan if database lookup fails
+        class DefaultPlan:
+            id = 'free'
+            name = 'Free'
+            max_miners = 1
+            price = 0
+            allow_advanced_analytics = False
+            allow_api = False
+            allow_scenarios = False
+        return DefaultPlan()
+        
+    except Exception as e:
+        import logging
+        logging.error(f"Error getting user plan: {e}")
+        # Return default free plan on any error
+        class DefaultPlan:
+            id = 'free'
+            name = 'Free'
+            max_miners = 1
+            price = 0
+            allow_advanced_analytics = False
+            allow_api = False
+            allow_scenarios = False
+        return DefaultPlan()
 
 
 def require_entitlement(check_func):
