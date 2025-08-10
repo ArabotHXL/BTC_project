@@ -145,12 +145,13 @@ def batch_calculate():
                 power_consumption = float(miner.get('power_consumption', 3250))
                 electricity_cost = float(miner.get('electricity_cost', 0.08))
                 
-                # Calculate for this miner type
+                # Calculate for this miner type using correct parameters
                 calc_result = calculate_mining_profitability(
-                    miner_type=model,
-                    power_consumption=power_consumption,
+                    hashrate=0,  # Will be calculated from miner model
+                    power_consumption=power_consumption * quantity,
                     electricity_cost=electricity_cost,
-                    quantity=quantity
+                    miner_model=model,
+                    miner_count=quantity
                 )
                 
                 # Add to results
@@ -197,18 +198,6 @@ def batch_calculate():
                 'current_plan': plan.name if plan else 'Free',
                 'max_miners': plan.max_miners if plan else 1,
                 'used_miners': total_miners
-            }
-        })
-        
-        return jsonify({
-            'success': True,
-            'results': results,
-            'summary': summary,
-            'settings': {
-                'btc_price': btc_price,
-                'use_realtime': use_realtime,
-                'difficulty': difficulty if use_realtime else None,
-                'hashrate': hashrate if use_realtime else None
             }
         })
         
