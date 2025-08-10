@@ -264,39 +264,144 @@
         .price-display .metric-value {
             font-size: 2.5rem !important; /* 与右边tiles保持一致 */
         }
+        
+        /* 响应式设计 - Mobile First */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 76px;
+                left: -250px;
+                width: 250px;
+                height: calc(100vh - 76px);
+                z-index: 1000;
+                transition: left 0.3s ease;
+                overflow-y: auto;
+            }
+            .sidebar.show {
+                left: 0;
+            }
+            .main-content {
+                margin-left: 0 !important;
+                padding: 1rem;
+            }
+            .col-md-2 {
+                width: 250px;
+            }
+            .col-md-10 {
+                width: 100%;
+                padding-left: 0;
+            }
+            .navbar-brand {
+                font-size: 1rem !important;
+            }
+            .metric-value {
+                font-size: 1.8rem !important;
+            }
+            .metric-label {
+                font-size: 0.8rem;
+            }
+            .btn-group-sm {
+                display: none;
+            }
+            #connectionText, #lastUpdate {
+                display: none;
+            }
+            .container-fluid {
+                padding: 0;
+            }
+            .card {
+                margin-bottom: 1rem;
+            }
+            .row .col-md-3, .row .col-md-4, .row .col-md-6 {
+                margin-bottom: 1rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .metric-value {
+                font-size: 1.5rem !important;
+            }
+            .metric-label {
+                font-size: 0.75rem;
+            }
+            .navbar-brand {
+                font-size: 0.9rem !important;
+            }
+            .btn-sm {
+                font-size: 0.75rem;
+                padding: 0.25rem 0.5rem;
+            }
+            .main-content {
+                padding: 0.5rem;
+            }
+        }
+        
+        /* 移动端侧边栏遮罩 */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+        .sidebar-overlay.show {
+            display: block;
+        }
+        
+        /* 移动端菜单按钮 */
+        .mobile-menu-btn {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
     </style>
 </head>
 <body>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
+            <!-- 移动端菜单按钮 -->
+            <button class="btn btn-outline-light mobile-menu-btn me-2" type="button" id="sidebarToggle">
+                <i class="bi bi-list"></i>
+            </button>
+            
             <a class="navbar-brand" href="/">
                 <i class="bi bi-graph-up-arrow"></i>
-                {% if current_lang == 'en' %}BTC Mining Calculator - Analytics Center{% else %}BTC挖矿计算器 - 数据分析中心{% endif %}
+                <span class="d-none d-md-inline">{% if current_lang == 'en' %}BTC Mining Calculator - Analytics Center{% else %}BTC挖矿计算器 - 数据分析中心{% endif %}</span>
+                <span class="d-md-none">{% if current_lang == 'en' %}Analytics{% else %}分析{% endif %}</span>
             </a>
             <div class="d-flex align-items-center">
                 <!-- 语言切换 / Language Switcher -->
-                <div class="btn-group btn-group-sm me-3" role="group">
+                <div class="btn-group btn-group-sm me-2 d-none d-md-flex" role="group">
                     <a href="{{ url_for(request.endpoint, lang='zh', **request.view_args) }}" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
                     <a href="{{ url_for(request.endpoint, lang='en', **request.view_args) }}" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}">English</a>
                 </div>
                 
-                <span class="status-indicator status-online" id="connectionStatus"></span>
-                <span id="connectionText">{% if current_lang == 'en' %}Real-time Connected{% else %}实时连接{% endif %}</span>
-                <span class="ms-3 text-muted" id="lastUpdate">
+                <span class="status-indicator status-online d-none d-md-inline" id="connectionStatus"></span>
+                <span class="d-none d-md-inline" id="connectionText">{% if current_lang == 'en' %}Real-time Connected{% else %}实时连接{% endif %}</span>
+                <span class="ms-3 text-muted d-none d-lg-inline" id="lastUpdate">
                     {% if current_lang == 'en' %}Last update: --{% else %}更新: --{% endif %}
                 </span>
-                <a href="/" class="btn btn-outline-light btn-sm ms-3">
-                    <i class="bi bi-house"></i> {% if current_lang == 'en' %}Back to Home{% else %}返回主页{% endif %}
+                <a href="/" class="btn btn-outline-light btn-sm ms-2">
+                    <i class="bi bi-house"></i> <span class="d-none d-md-inline">{% if current_lang == 'en' %}Back to Home{% else %}返回主页{% endif %}</span>
                 </a>
             </div>
         </div>
     </nav>
 
+    <!-- 移动端侧边栏遮罩 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <div class="col-md-2 sidebar p-3">
+            <div class="col-md-2 sidebar p-3" id="sidebar">
                 <nav class="nav nav-pills flex-column">
                     <a class="nav-link active" href="#dashboard" data-tab="dashboard">
                         <i class="bi bi-speedometer2"></i> {% if current_lang == 'en' %}Dashboard{% else %}仪表盘{% endif %}
@@ -1091,6 +1196,9 @@
         // Initialize the page
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Analytics page DOM loaded, initializing...');
+            
+            // Initialize mobile sidebar functionality
+            initMobileSidebar();
 
             // Give the page a moment to fully render
             setTimeout(function() {
@@ -1101,6 +1209,46 @@
                 loadAllData();
             }, 200);
         });
+        
+        // Mobile sidebar functionality
+        function initMobileSidebar() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                    sidebarOverlay.classList.toggle('show');
+                });
+            }
+            
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', function() {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('show');
+                });
+            }
+            
+            // Auto-close sidebar when nav link is clicked on mobile
+            const navLinks = document.querySelectorAll('.sidebar .nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) {
+                        sidebar.classList.remove('show');
+                        sidebarOverlay.classList.remove('show');
+                    }
+                });
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('show');
+                }
+            });
+        }
 
         // Tab management
         function setupTabs() {
