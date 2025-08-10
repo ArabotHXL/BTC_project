@@ -395,8 +395,8 @@ def index():
     
     # 检查用户是否已登录
     user_data = None
-    if 'user_email' in session:
-        user_data = get_user_by_email(session['user_email'])
+    if 'email' in session and session.get('authenticated'):
+        user_data = {'email': session['email'], 'role': session.get('role', 'guest')}
     
     return render_template('homepage.html', lang=lang, user_data=user_data, t=get_translation)
 
