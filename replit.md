@@ -8,6 +8,13 @@ The BTC Mining Calculator is a comprehensive web application designed to provide
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (August 2025)
+
+### UI Layout Optimization (August 10, 2025)
+- **Header Layout Improvement**: Relocated user email dropdown menu to the far right of the header for better visual organization
+- **Responsive Design Enhancement**: Added optimized CSS for mobile and desktop layouts ensuring proper email menu positioning
+- **User Experience**: Improved header spacing and element distribution for cleaner interface presentation
+
 ## System Architecture
 
 The application is built upon a modular Flask web application architecture, emphasizing separation of concerns and a mobile-first design philosophy.
