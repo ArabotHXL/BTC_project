@@ -513,8 +513,15 @@
                 },
                 body: JSON.stringify(requestData)
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log('Received data:', data);
                 if (data.success) {
                     calculationResults = data.results;
                     displayBatchResults(data.results, data.summary);
@@ -523,12 +530,13 @@
                     if (data.error === 'upgrade_required') {
                         showUpgradeModal(totalMiners);
                     } else {
-                        showErrorResults(data.message);
+                        showErrorResults(data.message || 'Unknown error');
                     }
                 }
             })
             .catch(error => {
                 console.error('Calculation error:', error);
+                console.error('Error details:', error.message);
                 showErrorResults('{% if current_lang == "en" %}Calculation failed. Please try again.{% else %}计算失败，请重试。{% endif %}');
             });
         }
@@ -626,8 +634,8 @@
                         </div>
                         <div class="col-6">
                             <div class="bg-dark p-2 rounded text-center">
-                                <div class="small text-muted">{% if current_lang == "en" %}ROI{% else %}年化ROI{% endif %}</div>
-                                <div class="fw-bold text-warning">${summary.average_roi.toFixed(1)}%</div>
+                                <div class="small text-muted">{% if current_lang == "en" %}Avg ROI Days{% else %}平均回本天数{% endif %}</div>
+                                <div class="fw-bold text-warning">${summary.average_roi_days ? summary.average_roi_days.toFixed(0) : 'N/A'}</div>
                             </div>
                         </div>
                     </div>
