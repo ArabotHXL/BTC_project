@@ -3,7 +3,7 @@ Batch calculator routes for handling multiple miner calculations.
 """
 from flask import Blueprint, request, jsonify, render_template, session
 from decorators import check_miner_limit, get_user_plan, UpgradeRequired
-from mining_calculator import MiningCalculator
+from mining_calculator import calculate_mining_profitability, MINER_DATA
 import logging
 
 # Create blueprint
@@ -72,107 +72,73 @@ def batch_calculate():
             }), 402
         
         # Process calculations
-        calculator = MiningCalculator()
         results = []
-        summary = {
-            'total_miners': total_miners,
-            'total_daily_profit': 0,
-            'total_daily_revenue': 0,
-            'total_daily_cost': 0,
-            'average_roi': 0
-        }
-        
-        btc_price = float(settings.get('btc_price', 116000))
-        use_realtime = settings.get('use_realtime', True)
-        
-        # If using real-time data, get current market conditions
-        if use_realtime:
-            try:
-                # Get real-time data from existing calculator
-                from coinwarz_api import get_network_data
-                network_data = get_network_data()
-                if network_data:
-                    btc_price = network_data.get('btc_price', btc_price)
-                    difficulty = network_data.get('difficulty', 129435235580345)
-                    hashrate = network_data.get('hashrate', 707.77)
-                else:
-                    # Fallback values
-                    difficulty = 129435235580345
-                    hashrate = 707.77
-            except Exception as e:
-                logger.warning(f"Failed to get real-time data: {e}")
-                difficulty = 129435235580345
-                hashrate = 707.77
-        else:
-            # Use default values
-            difficulty = 129435235580345
-            hashrate = 707.77
-        
-        total_roi_sum = 0
-        valid_results = 0
+        total_daily_profit = 0
+        total_daily_revenue = 0
+        total_daily_cost = 0
         
         for miner in miners:
             try:
-                # Calculate for this miner group
-                result = calculator.calculate_mining_profitability({
-                    'miner_model': miner['model'],
-                    'miner_count': miner['quantity'],
-                    'electricity_cost': miner['electricity_cost'],
-                    'btc_price': btc_price,
-                    'site_power_mw': miner['power'] * miner['quantity'] / 1000000,  # Convert W to MW
-                    'use_real_time_data': use_realtime
-                })
+                # Extract miner details
+                model = miner.get('model', 'Antminer S19 Pro')
+                quantity = int(miner.get('quantity', 1))
+                power_consumption = float(miner.get('power_consumption', 3250))
+                electricity_cost = float(miner.get('electricity_cost', 0.08))
                 
-                if result and result.get('success', False):
-                    miner_result = {
-                        'model': miner['model'],
-                        'quantity': miner['quantity'],
-                        'hashrate': miner.get('hashrate', 0),
-                        'power': miner['power'],
-                        'electricity_cost': miner['electricity_cost'],
-                        'daily_revenue': result.get('daily_revenue', 0),
-                        'daily_cost': result.get('daily_cost', 0),
-                        'daily_profit': result.get('daily_profit', 0),
-                        'monthly_profit': result.get('monthly_profit', 0),
-                        'annual_roi': result.get('annual_roi', 0),
-                        'payback_days': result.get('payback_days', 0)
-                    }
-                    
-                    results.append(miner_result)
-                    
-                    # Add to summary
-                    summary['total_daily_revenue'] += miner_result['daily_revenue']
-                    summary['total_daily_cost'] += miner_result['daily_cost']
-                    summary['total_daily_profit'] += miner_result['daily_profit']
-                    total_roi_sum += miner_result['annual_roi']
-                    valid_results += 1
-                    
-                else:
-                    logger.error(f"Calculation failed for miner {miner['model']}: {result}")
-                    # Add failed result
-                    results.append({
-                        'model': miner['model'],
-                        'quantity': miner['quantity'],
-                        'error': 'Calculation failed',
-                        'daily_profit': 0,
-                        'annual_roi': 0
-                    })
-                    
+                # Calculate for this miner type
+                calc_result = calculate_mining_profitability(
+                    miner_type=model,
+                    power_consumption=power_consumption,
+                    electricity_cost=electricity_cost,
+                    quantity=quantity
+                )
+                
+                # Add to results
+                result_entry = {
+                    'model': model,
+                    'quantity': quantity,
+                    'power_consumption': power_consumption,
+                    'electricity_cost': electricity_cost,
+                    'daily_profit': calc_result.get('daily_profit', 0) * quantity,
+                    'daily_revenue': calc_result.get('daily_revenue', 0) * quantity,
+                    'daily_cost': calc_result.get('daily_cost', 0) * quantity,
+                    'monthly_profit': calc_result.get('monthly_profit', 0) * quantity,
+                    'roi_days': calc_result.get('roi_days', 0),
+                    'hash_rate': calc_result.get('hash_rate', 0)
+                }
+                
+                results.append(result_entry)
+                
+                # Add to totals
+                total_daily_profit += result_entry['daily_profit']
+                total_daily_revenue += result_entry['daily_revenue']
+                total_daily_cost += result_entry['daily_cost']
+                
             except Exception as e:
-                logger.error(f"Error calculating for miner {miner.get('model', 'unknown')}: {e}")
-                results.append({
-                    'model': miner.get('model', 'Unknown'),
-                    'quantity': miner.get('quantity', 0),
-                    'error': str(e),
-                    'daily_profit': 0,
-                    'annual_roi': 0
-                })
+                logger.error(f"Error calculating for miner {miner}: {e}")
+                continue
         
-        # Calculate average ROI
-        if valid_results > 0:
-            summary['average_roi'] = total_roi_sum / valid_results
+        summary = {
+            'total_miners': total_miners,
+            'total_daily_profit': total_daily_profit,
+            'total_daily_revenue': total_daily_revenue,
+            'total_daily_cost': total_daily_cost,
+            'total_monthly_profit': total_daily_profit * 30,
+            'average_roi_days': sum(r.get('roi_days', 0) for r in results) / len(results) if results else 0
+        }
         
         logger.info(f"Batch calculation completed: {len(results)} miners processed")
+        
+        return jsonify({
+            'success': True,
+            'results': results,
+            'summary': summary,
+            'plan_info': {
+                'current_plan': plan.name if plan else 'Free',
+                'max_miners': plan.max_miners if plan else 1,
+                'used_miners': total_miners
+            }
+        })
         
         return jsonify({
             'success': True,
