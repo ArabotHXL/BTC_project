@@ -21,6 +21,7 @@ BLOCK_REWARD = 3.125  # BTC
 MINER_DATA = {
     "Antminer S19": {"hashrate": 95, "power_watt": 3250},
     "Antminer S19 Pro": {"hashrate": 110, "power_watt": 3250},
+    "Antminer S19j Pro": {"hashrate": 100, "power_watt": 3068},  # Added for frontend compatibility
     "Antminer S19 XP": {"hashrate": 140, "power_watt": 3010},
     "Antminer S21": {"hashrate": 200, "power_watt": 3550},
     "Antminer S21 Pro": {"hashrate": 234, "power_watt": 3531},
@@ -28,7 +29,13 @@ MINER_DATA = {
     "Antminer S21 Hyd": {"hashrate": 335, "power_watt": 5360},
     "Antminer S21 Pro Hyd": {"hashrate": 319, "power_watt": 5445},
     "Antminer S21 XP Hyd": {"hashrate": 473, "power_watt": 5676},
-    "WhatsMiner M50": {"hashrate": 114, "power_watt": 3306}
+    "Antminer T19": {"hashrate": 84, "power_watt": 3150},
+    "WhatsMiner M50": {"hashrate": 114, "power_watt": 3306},
+    "WhatsMiner M50S": {"hashrate": 126, "power_watt": 3276},
+    "WhatsMiner M53S": {"hashrate": 226, "power_watt": 6554},
+    "WhatsMiner M56S": {"hashrate": 212, "power_watt": 5550},
+    "AvalonMiner 1366": {"hashrate": 100, "power_watt": 3420},
+    "AvalonMiner 1466": {"hashrate": 150, "power_watt": 3420}
 }
 
 def calculate_roi(investment, yearly_profit, monthly_profit, btc_price, forecast_months=36):
