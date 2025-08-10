@@ -344,6 +344,16 @@
             updateEmptyState();
         });
 
+        // Update quota display in the header
+        function updateQuotaDisplay() {
+            document.getElementById('currentCount').textContent = '0';
+            document.getElementById('maxMiners').textContent = maxMiners;
+            
+            const progressBar = document.getElementById('quotaProgress');
+            progressBar.style.width = '0%';
+            progressBar.className = 'progress-bar bg-primary';
+        }
+
         function addMinerRow() {
             const tbody = document.getElementById('minersTableBody');
             const rowId = `miner-row-${++minerRowCount}`;
