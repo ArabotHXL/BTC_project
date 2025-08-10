@@ -2352,8 +2352,9 @@ def network_history_main():
 def analytics_dashboard():
     """数据分析仪表盘 - 仅限拥有者"""
     user_role = get_user_role(session.get('email'))
-    if user_role != 'owner':
-        return render_template('unauthorized.html', message='只有拥有者可以访问数据分析系统'), 403
+    # 允许所有已登录用户访问analytics页面
+    if not user_role:
+        user_role = 'customer'  # 默认为客户角色
     
     # 直接在服务器端获取技术指标和分析报告数据
     technical_indicators = None
