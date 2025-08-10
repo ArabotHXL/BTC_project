@@ -238,62 +238,9 @@
             50% { opacity: 0.5}
             100% { opacity: 1}
         }
-        .recommendation-item {
-            padding: 0.75rem;
-            margin: 0.5rem 0;
-            background-color: rgba(40, 167, 69, 0.1);
-            border-radius: 6px;
-            border-left: 4px solid #28a745;
-            transition: background-color 0.2s ease;
-        }
-        .recommendation-item:hover {
-            background-color: rgba(40, 167, 69, 0.15);
-        }
-        .alert-light {
-            background-color: rgba(13, 202, 240, 0.1);
-            border-color: rgba(13, 202, 240, 0.3);
-            color: #ffffff;
-        }
+        /* 简化样式 */
         
-        /* 报告生成区域样式增强 */
-        .feature-card {
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        .feature-card:hover {
-            background-color: rgba(255,255,255,0.25) !important;
-            transform: translateY(-2px);
-        }
-        
-        .generate-btn {
-            transition: all 0.3s ease;
-            border: none;
-            background: linear-gradient(45deg, #ffffff, #f8f9fa);
-            color: #4f46e5;
-        }
-        .generate-btn:hover {
-            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
-        }
-        
-        .download-btn {
-            transition: all 0.3s ease;
-            border: 2px solid rgba(255,255,255,0.5);
-        }
-        .download-btn:hover {
-            background-color: rgba(255,255,255,0.2);
-            border-color: rgba(255,255,255,0.8);
-            transform: translateX(5px);
-        }
-        
-        .process-steps .step-circle {
-            transition: all 0.3s ease;
-        }
-        .process-steps .step-item:hover .step-circle {
-            background-color: rgba(255,255,255,0.4) !important;
-            transform: scale(1.1);
-        }
+        /* 商务极简样式 */
         .loading-spinner {
             display: none;
             text-align: center;
@@ -974,184 +921,103 @@
 
                 <!-- Reports Tab -->
                 <div id="reports" class="analytics-tab">
-                    <div class="d-flex align-items-center justify-content-between mb-4">
-                        <h3 class="mb-0 fw-bold">
-                            <i class="bi bi-file-text text-primary me-2"></i>
-                            {% if current_lang == 'en' %}Automated Analysis Reports{% else %}自动分析报告{% endif %}
+                    <div class="mb-4">
+                        <h3 class="mb-1 text-dark">
+                            {% if current_lang == 'en' %}Analysis Reports{% else %}分析报告{% endif %}
                         </h3>
-                        <span class="badge bg-primary-subtle text-primary px-3 py-2">
-                            <i class="bi bi-cpu me-1"></i>AI驱动
-                        </span>
+                        <p class="text-muted mb-0">
+                            {% if current_lang == 'en' %}Professional mining analysis and recommendations{% else %}专业挖矿分析与建议{% endif %}
+                        </p>
                     </div>
 
-                    <!-- 专业5步报告生成区 -->
-                    <div class="row mb-5">
+                    <!-- 专业报告生成区 -->
+                    <div class="row mb-4">
                         <div class="col-12">
-                            <div class="card border-0 shadow-lg overflow-hidden" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #ec4899 100%); position: relative;">
-                                <!-- 装饰性背景元素 -->
-                                <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.5;"></div>
-                                <div style="position: absolute; bottom: -30px; left: -30px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.3;"></div>
-                                
-                                <div class="card-header bg-transparent border-0 py-4">
-                                    <div class="d-flex align-items-center justify-content-between">
-                                        <div>
-                                            <h4 class="mb-1 fw-bold text-white">
-                                                <i class="bi bi-gear-wide-connected me-2"></i>
-                                                {% if current_lang == 'en' %}Professional 5-Step Report Generation{% else %}专业5步报告生成系统{% endif %}
-                                            </h4>
-                                            <p class="mb-0 text-white-50">
-                                                {% if current_lang == 'en' %}AI-powered analysis with institutional-grade insights{% else %}AI驱动的机构级分析洞察{% endif %}
-                                            </p>
-                                        </div>
-                                        <div class="text-end">
-                                            <div class="badge bg-white bg-opacity-25 text-white px-3 py-2">
-                                                <i class="bi bi-award me-1"></i>专业版
-                                            </div>
-                                        </div>
-                                    </div>
+                            <div class="card border border-light">
+                                <div class="card-header bg-white border-bottom">
+                                    <h5 class="mb-0 text-dark">
+                                        {% if current_lang == 'en' %}Professional Report Generation{% else %}专业报告生成{% endif %}
+                                    </h5>
                                 </div>
                                 <div class="card-body py-4">
-                                    <div class="row align-items-center">
+                                    <div class="row">
                                         <div class="col-md-8">
-                                            <!-- 流程步骤可视化 -->
-                                            <div class="mb-4">
-                                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                                    <span class="text-white fw-semibold">
-                                                        {% if current_lang == 'en' %}Automated Professional Mining Analysis{% else %}全自动、专业级矿业分析报告{% endif %}
-                                                    </span>
+                                            <p class="text-muted mb-3">
+                                                {% if current_lang == 'en' %}Generate comprehensive mining analysis reports with market insights and investment recommendations.{% else %}生成包含市场洞察和投资建议的综合挖矿分析报告。{% endif %}
+                                            </p>
+                                            
+                                            <!-- 功能列表 -->
+                                            <div class="row mb-4">
+                                                <div class="col-md-6">
+                                                    <ul class="list-unstyled">
+                                                        <li class="mb-2"><i class="bi bi-check text-success me-2"></i>多源数据验证</li>
+                                                        <li class="mb-2"><i class="bi bi-check text-success me-2"></i>风险评估分析</li>
+                                                        <li class="mb-2"><i class="bi bi-check text-success me-2"></i>投资建议生成</li>
+                                                    </ul>
                                                 </div>
-                                                
-                                                <!-- 工作流程指示器 -->
-                                                <div class="process-steps d-flex justify-content-between mb-3">
-                                                    <div class="step-item text-center flex-fill">
-                                                        <div class="step-circle bg-white bg-opacity-25 text-white d-inline-flex align-items-center justify-content-center rounded-circle mb-1" style="width: 32px; height: 32px;">
-                                                            <i class="bi bi-database-fill"></i>
-                                                        </div>
-                                                        <div class="small text-white-75">采数</div>
-                                                    </div>
-                                                    <div class="step-connector align-self-center" style="border-top: 2px dashed rgba(255,255,255,0.4); flex-grow: 1; margin: 0 0.5rem;"></div>
-                                                    <div class="step-item text-center flex-fill">
-                                                        <div class="step-circle bg-white bg-opacity-25 text-white d-inline-flex align-items-center justify-content-center rounded-circle mb-1" style="width: 32px; height: 32px;">
-                                                            <i class="bi bi-diagram-3-fill"></i>
-                                                        </div>
-                                                        <div class="small text-white-75">建模</div>
-                                                    </div>
-                                                    <div class="step-connector align-self-center" style="border-top: 2px dashed rgba(255,255,255,0.4); flex-grow: 1; margin: 0 0.5rem;"></div>
-                                                    <div class="step-item text-center flex-fill">
-                                                        <div class="step-circle bg-white bg-opacity-25 text-white d-inline-flex align-items-center justify-content-center rounded-circle mb-1" style="width: 32px; height: 32px;">
-                                                            <i class="bi bi-shield-check"></i>
-                                                        </div>
-                                                        <div class="small text-white-75">评分</div>
-                                                    </div>
-                                                    <div class="step-connector align-self-center" style="border-top: 2px dashed rgba(255,255,255,0.4); flex-grow: 1; margin: 0 0.5rem;"></div>
-                                                    <div class="step-item text-center flex-fill">
-                                                        <div class="step-circle bg-white bg-opacity-25 text-white d-inline-flex align-items-center justify-content-center rounded-circle mb-1" style="width: 32px; height: 32px;">
-                                                            <i class="bi bi-bar-chart-fill"></i>
-                                                        </div>
-                                                        <div class="small text-white-75">可视化</div>
-                                                    </div>
-                                                    <div class="step-connector align-self-center" style="border-top: 2px dashed rgba(255,255,255,0.4); flex-grow: 1; margin: 0 0.5rem;"></div>
-                                                    <div class="step-item text-center flex-fill">
-                                                        <div class="step-circle bg-white bg-opacity-25 text-white d-inline-flex align-items-center justify-content-center rounded-circle mb-1" style="width: 32px; height: 32px;">
-                                                            <i class="bi bi-send-fill"></i>
-                                                        </div>
-                                                        <div class="small text-white-75">分发</div>
-                                                    </div>
+                                                <div class="col-md-6">
+                                                    <ul class="list-unstyled">
+                                                        <li class="mb-2"><i class="bi bi-check text-success me-2"></i>PDF/PPT输出</li>
+                                                        <li class="mb-2"><i class="bi bi-check text-success me-2"></i>数据可视化</li>
+                                                        <li class="mb-2"><i class="bi bi-check text-success me-2"></i>实时市场数据</li>
+                                                    </ul>
                                                 </div>
                                             </div>
 
-                                            <!-- 功能特点卡片 -->
-                                            <div class="row g-3 mb-4">
-                                                <div class="col-6 col-lg-3">
-                                                    <div class="feature-card bg-white bg-opacity-15 rounded-3 p-3 text-center h-100">
-                                                        <i class="bi bi-database-check fs-4 text-white mb-2 d-block"></i>
-                                                        <div class="small text-white fw-medium">多源数据验证</div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-6 col-lg-3">
-                                                    <div class="feature-card bg-white bg-opacity-15 rounded-3 p-3 text-center h-100">
-                                                        <i class="bi bi-graph-up-arrow fs-4 text-white mb-2 d-block"></i>
-                                                        <div class="small text-white fw-medium">ARIMA/Monte Carlo</div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-6 col-lg-3">
-                                                    <div class="feature-card bg-white bg-opacity-15 rounded-3 p-3 text-center h-100">
-                                                        <i class="bi bi-shield-check fs-4 text-white mb-2 d-block"></i>
-                                                        <div class="small text-white fw-medium">准确度评分</div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-6 col-lg-3">
-                                                    <div class="feature-card bg-white bg-opacity-15 rounded-3 p-3 text-center h-100">
-                                                        <i class="bi bi-file-earmark-pdf fs-4 text-white mb-2 d-block"></i>
-                                                        <div class="small text-white fw-medium">PDF/PPT输出</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- 输出格式选择 -->
+                                            <!-- 选项设置 -->
                                             <div class="row">
                                                 <div class="col-md-6">
-                                                    <label class="form-label text-white">
-                                                        <i class="bi bi-file-earmark me-1"></i>输出格式
-                                                    </label>
-                                                    <div class="d-flex gap-2 flex-wrap">
+                                                    <label class="form-label text-muted small">输出格式</label>
+                                                    <div class="d-flex gap-3">
                                                         <div class="form-check">
                                                             <input class="form-check-input" type="checkbox" id="outputWeb" checked>
-                                                            <label class="form-check-label text-white small" for="outputWeb">Web</label>
+                                                            <label class="form-check-label small" for="outputWeb">Web</label>
                                                         </div>
                                                         <div class="form-check">
                                                             <input class="form-check-input" type="checkbox" id="outputPDF" checked>
-                                                            <label class="form-check-label text-white small" for="outputPDF">PDF</label>
+                                                            <label class="form-check-label small" for="outputPDF">PDF</label>
                                                         </div>
                                                         <div class="form-check">
                                                             <input class="form-check-input" type="checkbox" id="outputPPT">
-                                                            <label class="form-check-label text-white small" for="outputPPT">PPT</label>
+                                                            <label class="form-check-label small" for="outputPPT">PPT</label>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label class="form-label text-white">
-                                                        <i class="bi bi-send me-1"></i>分发方式
-                                                    </label>
-                                                    <div class="d-flex gap-2 flex-wrap">
+                                                    <label class="form-label text-muted small">分发方式</label>
+                                                    <div class="d-flex gap-3">
                                                         <div class="form-check">
                                                             <input class="form-check-input" type="checkbox" id="sendEmail">
-                                                            <label class="form-check-label text-white small" for="sendEmail">邮件</label>
+                                                            <label class="form-check-label small" for="sendEmail">邮件</label>
                                                         </div>
                                                         <div class="form-check">
                                                             <input class="form-check-input" type="checkbox" id="sendSlack">
-                                                            <label class="form-check-label text-white small" for="sendSlack">Slack</label>
+                                                            <label class="form-check-label small" for="sendSlack">Slack</label>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
-                                            <div class="text-center">
-                                                <!-- 主要生成按钮 -->
-                                                <div class="mb-4">
-                                                    <button class="btn btn-light btn-lg px-4 py-3 shadow-sm generate-btn" onclick="generate5StepReport()" id="generate5StepBtn">
-                                                        <i class="bi bi-lightning-charge me-2"></i>
-                                                        <span class="fw-bold">{% if current_lang == 'en' %}Generate Professional Report{% else %}生成专业报告{% endif %}</span>
-                                                    </button>
-                                                </div>
+                                            <div class="text-center border-start ps-4">
+                                                <!-- 生成按钮 -->
+                                                <button class="btn btn-primary btn-lg mb-3" onclick="generate5StepReport()" id="generate5StepBtn">
+                                                    {% if current_lang == 'en' %}Generate Report{% else %}生成报告{% endif %}
+                                                </button>
                                                 
-                                                <!-- 状态指示器 -->
-                                                <div id="professional-report-status" class="text-white-75 mb-3">
-                                                    <i class="bi bi-info-circle me-1"></i>
-                                                    {% if current_lang == 'en' %}Click to generate automated professional analysis{% else %}点击生成全自动专业分析报告{% endif %}
+                                                <!-- 状态信息 -->
+                                                <div id="professional-report-status" class="text-muted small mb-3">
+                                                    {% if current_lang == 'en' %}Click to generate analysis report{% else %}点击生成分析报告{% endif %}
                                                 </div>
 
-                                                <!-- 下载按钮区域 -->
-                                                <div id="professional-download-section" style="display: none;" class="mt-3">
-                                                    <div class="download-buttons d-flex flex-column gap-2">
-                                                        <button class="btn btn-outline-light btn-sm download-btn" onclick="downloadProfessionalReport('pdf')">
-                                                            <i class="bi bi-file-pdf me-2"></i>
-                                                            <span>{% if current_lang == 'en' %}Download PDF{% else %}下载PDF{% endif %}</span>
+                                                <!-- 下载选项 -->
+                                                <div id="professional-download-section" style="display: none;">
+                                                    <div class="d-flex flex-column gap-2">
+                                                        <button class="btn btn-outline-secondary btn-sm" onclick="downloadProfessionalReport('pdf')">
+                                                            <i class="bi bi-file-pdf me-1"></i>PDF
                                                         </button>
-                                                        <button class="btn btn-outline-light btn-sm download-btn" onclick="downloadProfessionalReport('pptx')">
-                                                            <i class="bi bi-file-ppt me-2"></i>
-                                                            <span>{% if current_lang == 'en' %}Download PowerPoint{% else %}下载PPT{% endif %}</span>
+                                                        <button class="btn btn-outline-secondary btn-sm" onclick="downloadProfessionalReport('pptx')">
+                                                            <i class="bi bi-file-ppt me-1"></i>PowerPoint
                                                         </button>
                                                     </div>
                                                 </div>
@@ -1165,17 +1031,11 @@
 
                     <div class="row">
                         <div class="col-md-8">
-                            <div class="card border-0 shadow-sm h-100">
-                                <div class="card-header bg-white border-0 py-3">
-                                    <div class="d-flex align-items-center justify-content-between">
-                                        <h5 class="mb-0 fw-bold">
-                                            <i class="bi bi-file-earmark-text text-primary me-2"></i>
-                                            {% if current_lang == 'en' %}Latest Analysis Report{% else %}最新分析报告{% endif %}
-                                        </h5>
-                                        <span class="badge bg-success-subtle text-success">
-                                            <i class="bi bi-check-circle me-1"></i>已生成
-                                        </span>
-                                    </div>
+                            <div class="card border border-light">
+                                <div class="card-header bg-white border-bottom">
+                                    <h5 class="mb-0 text-dark">
+                                        {% if current_lang == 'en' %}Latest Analysis Report{% else %}最新分析报告{% endif %}
+                                    </h5>
                                 </div>
                                 <div class="card-body">
                                     <div id="reportTitle" class="h5 mb-3">
@@ -1193,12 +1053,12 @@
                                         {% endif %}
                                     </div>
 
-                                    <h6 class="mb-3"><i class="bi bi-lightbulb me-2 text-warning"></i>关键发现</h6>
+                                    <h6 class="mb-3 text-dark">关键发现</h6>
                                     <div id="reportFindings" class="mb-4">
                                         {% if latest_report and latest_report.key_findings %}
                                             {% for key, value in latest_report.key_findings.items() %}
-                                                <div class="alert alert-light border-start border-4 border-info mb-2 py-2">
-                                                    <strong class="text-info">{{ key }}:</strong> <span class="ms-2">{{ value }}</span>
+                                                <div class="border-start border-4 border-primary bg-light p-3 mb-2">
+                                                    <strong class="text-dark">{{ key }}:</strong> <span class="text-muted ms-2">{{ value }}</span>
                                                 </div>
                                             {% endfor %}
                                         {% else %}
@@ -1208,14 +1068,14 @@
                                         {% endif %}
                                     </div>
 
-                                    <h6 class="mb-3"><i class="bi bi-target me-2 text-success"></i>投资建议</h6>
+                                    <h6 class="mb-3 text-dark">投资建议</h6>
                                     <div id="reportRecommendations">
                                         {% if latest_report and latest_report.recommendations %}
                                             <ul class="list-unstyled">
                                             {% for recommendation in latest_report.recommendations %}
-                                                <li class="recommendation-item d-flex align-items-start mb-2">
-                                                    <i class="bi bi-check-circle-fill text-success me-2 mt-1"></i>
-                                                    <span>{{ recommendation }}</span>
+                                                <li class="d-flex align-items-start mb-2 py-2">
+                                                    <i class="bi bi-check text-success me-2 mt-1"></i>
+                                                    <span class="text-dark">{{ recommendation }}</span>
                                                 </li>
                                             {% endfor %}
                                             </ul>
@@ -1229,10 +1089,9 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
-                                <div class="card-header bg-transparent border-0 py-3">
-                                    <h5 class="mb-0 fw-bold text-dark">
-                                        <i class="bi bi-shield-exclamation text-warning me-2"></i>
+                            <div class="card border border-light">
+                                <div class="card-header bg-white border-bottom">
+                                    <h5 class="mb-0 text-dark">
                                         {% if current_lang == 'en' %}Risk Assessment{% else %}风险评估{% endif %}
                                     </h5>
                                 </div>
@@ -1624,10 +1483,9 @@
                     if (Array.isArray(findings)) {
                         // Handle array of recommendations
                         findings.forEach(function(finding, index) {
-                            findingsHtml += '<div class="alert alert-light border-start border-4 border-info mb-2 py-2">' +
-                                '<i class="bi bi-arrow-right text-info me-2"></i>' +
-                                '<strong class="text-info">' + (index + 1) + '.</strong> ' +
-                                '<span class="ms-2">' + finding + '</span>' +
+                            findingsHtml += '<div class="border-start border-4 border-primary bg-light p-3 mb-2">' +
+                                '<strong class="text-dark">' + (index + 1) + '.</strong> ' +
+                                '<span class="text-muted ms-2">' + finding + '</span>' +
                                 '</div>';
                         });
                     } else if (typeof findings === 'object') {
@@ -1637,15 +1495,15 @@
                             var key = entries[i][0];
                             var value = entries[i][1];
                             var displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase()});
-                            findingsHtml += '<div class="alert alert-light border-start border-4 border-info mb-2 py-2">' +
-                                '<strong class="text-info">' + displayKey + ':</strong> ' +
-                                '<span class="ms-2">' + value + '</span>' +
+                            findingsHtml += '<div class="border-start border-4 border-primary bg-light p-3 mb-2">' +
+                                '<strong class="text-dark">' + displayKey + ':</strong> ' +
+                                '<span class="text-muted ms-2">' + value + '</span>' +
                                 '</div>';
                         }
                     } else {
                         // Handle string
-                        findingsHtml = '<div class="alert alert-light border-start border-4 border-info mb-2 py-2">' +
-                            '<i class="bi bi-info-circle text-info me-2"></i>' + findings + 
+                        findingsHtml = '<div class="border-start border-4 border-primary bg-light p-3 mb-2">' +
+                            '<span class="text-muted">' + findings + '</span>' +
                             '</div>';
                     }
                     reportFindingsElement.innerHTML = findingsHtml;
@@ -1665,9 +1523,9 @@
                     : [report.recommendations];
 
                 recommendations.forEach(function(rec) {
-                    recommendationsHtml += '<li class="recommendation-item d-flex align-items-start mb-2">' +
-                        '<i class="bi bi-check-circle-fill text-success me-2 mt-1"></i>' +
-                        '<span>' + rec + '</span>' +
+                    recommendationsHtml += '<li class="d-flex align-items-start mb-2 py-2">' +
+                        '<i class="bi bi-check text-success me-2 mt-1"></i>' +
+                        '<span class="text-dark">' + rec + '</span>' +
                         '</li>';
                 });
 
