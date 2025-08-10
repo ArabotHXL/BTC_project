@@ -2701,6 +2701,8 @@ def analytics_price_history():
         # 直接从数据库获取价格历史数据
         conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
         cursor = conn.cursor()
+        
+        # 首先尝试获取最近指定小时数的数据
         cursor.execute("""
             SELECT recorded_at, btc_price, network_hashrate, network_difficulty
             FROM market_analytics 
@@ -2709,6 +2711,19 @@ def analytics_price_history():
         """, (hours,))
         
         data = cursor.fetchall()
+        
+        # 如果没有最近24小时的数据，获取最新的24条记录
+        if not data:
+            cursor.execute("""
+                SELECT recorded_at, btc_price, network_hashrate, network_difficulty
+                FROM market_analytics 
+                ORDER BY recorded_at DESC 
+                LIMIT %s
+            """, (min(hours, 24),))
+            data = cursor.fetchall()
+            # 反转顺序以按时间升序排列
+            data = data[::-1]
+        
         cursor.close()
         conn.close()
         
