@@ -10,6 +10,19 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Achievement (August 10, 2025)
 
+**代码锁定 - 系统稳定版本**：用户确认代码状态满意，要求锁定当前版本
+
+### 🔒 代码锁定状态
+- **锁定时间**: 2025年8月10日
+- **锁定原因**: 用户确认系统功能完善，界面优化到位
+- **当前状态**: 所有核心功能正常运行，用户体验优化完成
+
+### 🎯 最终优化成果
+- **路由重命名**: 将 `/dashboard` 重命名为更准确的 `/calculator`
+- **向后兼容**: 添加重定向确保旧链接仍然工作
+- **界面优化**: 更新所有导航链接和页面标题
+- **用户体验**: 图标从仪表盘改为计算器，命名更直观
+
 **界面简化和用户体验优化**：成功移除复杂的电力削减功能，大幅简化主计算器界面
 
 ### 🎯 用户体验改进 - 大幅降低使用门槛
@@ -30,6 +43,8 @@ Preferred communication style: Simple, everyday language.
 - **修复错误**: 解决了模板语法错误和孤立HTML标签
 - **优化性能**: 简化计算逻辑，提升页面加载速度
 - **保持功能**: 高级功能仍在 `/curtailment` 页面可用
+- **会话修复**: 解决了session键名不一致问题（user_email vs email）
+- **路由优化**: 重命名dashboard为calculator，添加重定向保持兼容性
 
 ## Previous Achievement (August 9, 2025)
 
