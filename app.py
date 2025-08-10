@@ -23,6 +23,7 @@ from translations import get_translation
 try:
     from models_subscription import Plan, Subscription
     from billing_routes import billing_bp
+    from batch_calculator_routes import batch_calculator_bp
     from decorators import require_plan, require_feature, allow_advanced_analytics, get_user_plan
     SUBSCRIPTION_ENABLED = True
 except ImportError as e:
@@ -41,15 +42,6 @@ from mining_calculator import (
 from crm_routes import init_crm_routes
 from services.network_data_service import network_collector, network_analyzer
 from mining_broker_routes import init_broker_routes
-# Import subscription modules conditionally
-try:
-    from models_subscription import Plan, Subscription
-    from billing_routes import billing_bp
-    from decorators import require_plan, require_feature, allow_advanced_analytics, get_user_plan
-    SUBSCRIPTION_ENABLED = True
-except ImportError as e:
-    logging.warning(f"Subscription modules not available: {e}")
-    SUBSCRIPTION_ENABLED = False
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -3047,7 +3039,9 @@ def legal_terms():
 if SUBSCRIPTION_ENABLED:
     try:
         app.register_blueprint(billing_bp, url_prefix="/billing")
+        app.register_blueprint(batch_calculator_bp)
         logging.info("Stripe billing routes registered successfully")
+        logging.info("Batch calculator routes registered successfully")
         
         # Create database tables for subscriptions
         with app.app_context():

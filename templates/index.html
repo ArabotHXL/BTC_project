@@ -117,10 +117,13 @@
                 <h1 class="fs-4">{% if current_lang == 'en' %}Bitcoin Mining Calculator{% else %}比特币挖矿计算器{% endif %}</h1>
                 
                 <div class="d-flex gap-2 gap-md-4 align-items-center flex-wrap">
-                    <!-- 智能电力管理系统按钮 (仅对管理员显示) -->
-                    {% if session.role in ['owner', 'admin'] %}
-                    <!-- 电力管理功能已移除 -->
-                    {% endif %}
+                    <!-- 批量计算器按钮 -->
+                    <div class="btn-group btn-group-sm me-3">
+                        <a href="{{ url_for('batch_calculator.batch_calculator_page') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-calculator-fill me-1"></i>
+                            {% if current_lang == 'en' %}Batch Calculator{% else %}批量计算器{% endif %}
+                        </a>
+                    </div>
                     
                     <!-- CRM系统按钮 (对特定角色显示) -->
                     {% if user_has_crm_access() %}
