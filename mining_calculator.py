@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO)
 BLOCKS_PER_DAY = 144
 DEFAULT_BTC_PRICE = 80000  # USD
 DEFAULT_NETWORK_DIFFICULTY = 119116256505723  # ~119.12T
-DEFAULT_NETWORK_HASHRATE = 900  # EH/s
+DEFAULT_NETWORK_HASHRATE = 752.81  # EH/s (Updated to current network state)
 BLOCK_REWARD = 3.125  # BTC
 
 # Fixed miner data including hashrate and power consumption for each model
