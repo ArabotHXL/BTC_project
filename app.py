@@ -2713,14 +2713,15 @@ def analytics_price_history():
         
         data = cursor.fetchall()
         
-        # 如果没有最近24小时的数据，获取最新的24条记录
-        if not data:
+        # 如果最近24小时的数据不足5条，获取最新的24条记录
+        if len(data) < 5:
             cursor.execute("""
                 SELECT recorded_at, btc_price, network_hashrate, network_difficulty
                 FROM market_analytics 
+                WHERE btc_price IS NOT NULL
                 ORDER BY recorded_at DESC 
                 LIMIT %s
-            """, (min(hours, 24),))
+            """, (min(hours, 48),))  # 获取更多数据点
             data = cursor.fetchall()
             # 反转顺序以按时间升序排列
             data = data[::-1]
