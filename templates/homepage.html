@@ -328,8 +328,8 @@
                         {{ user_data.email }}
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="/dashboard">
-                            <i class="bi bi-speedometer2 me-2"></i>仪表盘 / Dashboard
+                        <li><a class="dropdown-item" href="/calculator">
+                            <i class="bi bi-calculator me-2"></i>挖矿计算器 / Calculator
                         </a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="/logout">
@@ -362,7 +362,7 @@
                         </p>
                         <div class="d-flex gap-3 flex-wrap">
                             {% if user_data %}
-                            <a href="/dashboard" class="btn-primary-custom">
+                            <a href="/calculator" class="btn-primary-custom">
                                 <i class="bi bi-calculator"></i>
                                 <span data-translate="start_calculating">{{ t('start_calculating', lang) }}</span>
                             </a>

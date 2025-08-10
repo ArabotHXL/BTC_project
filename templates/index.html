@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="user-role" content="{{ session.role }}">
     <meta name="language" content="{{ current_lang }}">
-    <title>{{ t('bitcoin_mining_profitability_calculator') }}</title>
+    <title>{% if current_lang == 'en' %}Bitcoin Mining Calculator{% else %}比特币挖矿计算器{% endif %}</title>
     <!-- Bootstrap CSS from Replit CDN -->
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
     <!-- Bootstrap Icons -->
@@ -55,7 +55,7 @@
     <div class="container-fluid" style="visibility: hidden; opacity: 0; transition: opacity 0.3s ease-in-out;">
         <header class="py-3 mb-4 border-bottom">
             <div class="container d-flex align-items-center justify-content-between">
-                <h1 class="fs-4">{{ t('bitcoin_mining_profitability_calculator') }}</h1>
+                <h1 class="fs-4">{% if current_lang == 'en' %}Bitcoin Mining Calculator{% else %}比特币挖矿计算器{% endif %}</h1>
                 
                 <div class="d-flex gap-4 align-items-center">
                     <!-- 智能电力管理系统按钮 (仅对管理员显示) -->

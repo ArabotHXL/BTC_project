@@ -400,9 +400,16 @@ def index():
     
     return render_template('homepage.html', lang=lang, user_data=user_data, t=get_translation)
 
+# 重定向旧的dashboard路由到新的calculator路由
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    """重定向到挖矿计算器"""
+    return redirect(url_for('calculator'))
+
+@app.route('/calculator')
+@login_required
+def calculator():
     """渲染BTC挖矿计算器主页"""
     try:
         # 验证关键环境变量
