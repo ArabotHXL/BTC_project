@@ -33,6 +33,7 @@ translations = {
     
     # 主页面 / Main page
     "btc_mining_calculator": "BTC挖矿计算器",
+    "all_rights_reserved": "版权所有",
     "bitcoin_mining_profitability_calculator": "比特币挖矿收益计算器",
     "btc_price": "BTC价格",
     "difficulty": "难度",
