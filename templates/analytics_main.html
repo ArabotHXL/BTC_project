@@ -922,10 +922,10 @@
                 <!-- Reports Tab -->
                 <div id="reports" class="analytics-tab">
                     <div class="mb-4">
-                        <h3 class="mb-1" style="color: #212529 !important; font-weight: 700;">
+                        <h3 class="mb-1" style="color: #ffffff !important; font-weight: 700;">
                             {% if current_lang == 'en' %}Analysis Reports{% else %}分析报告{% endif %}
                         </h3>
-                        <p class="text-dark mb-0" style="color: #495057 !important;">
+                        <p class="mb-0" style="color: #ffffff !important;">
                             {% if current_lang == 'en' %}Professional mining analysis and recommendations{% else %}专业挖矿分析与建议{% endif %}
                         </p>
                     </div>
@@ -942,7 +942,7 @@
                                 <div class="card-body py-4">
                                     <div class="row">
                                         <div class="col-md-8">
-                                            <p class="mb-3" style="color: #495057 !important;">
+                                            <p class="mb-3" style="color: #ffffff !important;">
                                                 {% if current_lang == 'en' %}Generate comprehensive mining analysis reports with market insights and investment recommendations.{% else %}生成包含市场洞察和投资建议的综合挖矿分析报告。{% endif %}
                                             </p>
                                             
@@ -967,7 +967,7 @@
                                             <!-- 选项设置 -->
                                             <div class="row">
                                                 <div class="col-md-6">
-                                                    <label class="form-label small" style="color: #343a40 !important; font-weight: 500;">输出格式</label>
+                                                    <label class="form-label small" style="color: #ffffff !important; font-weight: 500;">输出格式</label>
                                                     <div class="d-flex gap-3">
                                                         <div class="form-check">
                                                             <input class="form-check-input" type="checkbox" id="outputWeb" checked>
@@ -984,7 +984,7 @@
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label class="form-label small" style="color: #343a40 !important; font-weight: 500;">分发方式</label>
+                                                    <label class="form-label small" style="color: #ffffff !important; font-weight: 500;">分发方式</label>
                                                     <div class="d-flex gap-3">
                                                         <div class="form-check">
                                                             <input class="form-check-input" type="checkbox" id="sendEmail">
@@ -1006,7 +1006,7 @@
                                                 </button>
                                                 
                                                 <!-- 状态信息 -->
-                                                <div id="professional-report-status" class="small mb-3" style="color: #495057 !important;">
+                                                <div id="professional-report-status" class="small mb-3" style="color: #ffffff !important;">
                                                     {% if current_lang == 'en' %}Click to generate analysis report{% else %}点击生成分析报告{% endif %}
                                                 </div>
 
@@ -1053,12 +1053,12 @@
                                         {% endif %}
                                     </div>
 
-                                    <h6 class="mb-3" style="color: #212529 !important; font-weight: 600;">关键发现</h6>
+                                    <h6 class="mb-3" style="color: #ffffff !important; font-weight: 600;">关键发现</h6>
                                     <div id="reportFindings" class="mb-4">
                                         {% if latest_report and latest_report.key_findings %}
                                             {% for key, value in latest_report.key_findings.items() %}
                                                 <div class="border-start border-4 border-primary bg-light p-3 mb-2">
-                                                    <strong style="color: #212529 !important;">{{ key }}:</strong> <span style="color: #495057 !important;" class="ms-2">{{ value }}</span>
+                                                    <strong style="color: #ffffff !important;">{{ key }}:</strong> <span style="color: #ffffff !important;" class="ms-2">{{ value }}</span>
                                                 </div>
                                             {% endfor %}
                                         {% else %}
@@ -1068,14 +1068,14 @@
                                         {% endif %}
                                     </div>
 
-                                    <h6 class="mb-3" style="color: #212529 !important; font-weight: 600;">投资建议</h6>
+                                    <h6 class="mb-3" style="color: #ffffff !important; font-weight: 600;">投资建议</h6>
                                     <div id="reportRecommendations">
                                         {% if latest_report and latest_report.recommendations %}
                                             <ul class="list-unstyled">
                                             {% for recommendation in latest_report.recommendations %}
                                                 <li class="d-flex align-items-start mb-2 py-2">
                                                     <i class="bi bi-check text-success me-2 mt-1"></i>
-                                                    <span style="color: #212529 !important;">{{ recommendation }}</span>
+                                                    <span style="color: #ffffff !important;">{{ recommendation }}</span>
                                                 </li>
                                             {% endfor %}
                                             </ul>
