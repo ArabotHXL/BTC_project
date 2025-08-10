@@ -493,12 +493,15 @@
             // Show loading state
             showLoadingResults();
 
-            // Prepare request data
+            // Prepare request data with safe defaults
+            const btcPriceEl = document.getElementById('globalBtcPrice');
+            const useRealtimeEl = document.getElementById('useRealTimeData');
+            
             const requestData = {
                 miners: miners,
                 settings: {
-                    btc_price: document.getElementById('globalBtcPrice').value,
-                    use_realtime: document.getElementById('useRealTimeData').checked
+                    btc_price: btcPriceEl ? btcPriceEl.value : null,
+                    use_realtime: useRealtimeEl ? useRealtimeEl.checked : true
                 }
             };
 
@@ -545,7 +548,7 @@
                     miners.push({
                         model: model,
                         quantity: quantity,
-                        power: power,
+                        power_consumption: power,  // Fixed: use correct field name
                         electricity_cost: electricity,
                         hashrate: minerModels[model]?.hashrate || 0
                     });
