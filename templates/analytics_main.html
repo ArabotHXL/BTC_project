@@ -1683,7 +1683,7 @@
         }
 
         function loadLatestReport() {
-            return fetch('/api/analytics/latest-report', {
+            return fetch('/api/analytics/detailed-report', {
                 method: 'GET',
                 credentials: 'same-origin',
                 headers: {
@@ -1695,7 +1695,7 @@
                 return response.json();
             }).then(function(data) {
                 console.log('Raw report API response:', data);
-                var reportData = data.latest_report || data.detailed_report || data.data || data;
+                var reportData = data.detailed_report || data.latest_report || data.data || data;
                 console.log('Extracted report data for display:', reportData);
                 updateReportDisplay(reportData);
             }).catch(function(error) {
