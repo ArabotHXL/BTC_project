@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>订阅计划 - BTC挖矿计算器</title>
+    <title>{% if current_lang == 'en' %}Subscription Plans - BTC Mining Calculator{% else %}订阅计划 - BTC挖矿计算器{% endif %}</title>
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
@@ -57,7 +57,7 @@
         }
 
         .plan-card.featured::before {
-            content: '推荐';
+            content: attr(data-recommended);
             position: absolute;
             top: -10px;
             right: 20px;
@@ -143,10 +143,12 @@
         <div class="container">
             <a class="navbar-brand" href="/">
                 <i class="bi bi-cpu me-2"></i>
-                BTC 挖矿计算器
+                {% if current_lang == 'en' %}BTC Mining Calculator{% else %}BTC 挖矿计算器{% endif %}
             </a>
             <div>
-                <a href="/dashboard" class="btn btn-outline-light btn-sm">返回仪表盘</a>
+                <a href="/calculator" class="btn btn-outline-light btn-sm">
+                    {% if current_lang == 'en' %}Back to Calculator{% else %}返回计算器{% endif %}
+                </a>
             </div>
         </div>
     </nav>
@@ -156,8 +158,12 @@
         <div class="container">
             <div class="row mb-5">
                 <div class="col-12 text-center">
-                    <h1 class="display-4 mb-3">选择您的订阅计划</h1>
-                    <p class="lead text-secondary">解锁更多功能，提升挖矿收益分析能力</p>
+                    <h1 class="display-4 mb-3">
+                        {% if current_lang == 'en' %}Choose Your Subscription Plan{% else %}选择您的订阅计划{% endif %}
+                    </h1>
+                    <p class="lead text-secondary">
+                        {% if current_lang == 'en' %}Unlock more features and enhance your mining profitability analysis{% else %}解锁更多功能，提升挖矿收益分析能力{% endif %}
+                    </p>
                 </div>
             </div>
 
@@ -165,49 +171,85 @@
                 <!-- Free Plan -->
                 <div class="col-lg-4 mb-4">
                     <div class="plan-card">
-                        <div class="plan-name">免费版</div>
+                        <div class="plan-name">
+                            {% if current_lang == 'en' %}Free{% else %}免费版{% endif %}
+                        </div>
                         <div class="plan-price">$0</div>
-                        <div class="plan-period">永久免费</div>
+                        <div class="plan-period">
+                            {% if current_lang == 'en' %}Forever Free{% else %}永久免费{% endif %}
+                        </div>
                         
                         <ul class="plan-features">
-                            <li><i class="bi bi-check-circle"></i> 基础挖矿计算器</li>
-                            <li><i class="bi bi-check-circle"></i> 实时BTC价格</li>
-                            <li><i class="bi bi-check-circle"></i> 3种矿机型号</li>
-                            <li><i class="bi bi-check-circle"></i> 基础ROI分析</li>
-                            <li><i class="bi bi-x-circle text-muted"></i> 历史数据分析</li>
-                            <li><i class="bi bi-x-circle text-muted"></i> 高级图表</li>
-                            <li><i class="bi bi-x-circle text-muted"></i> API访问</li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Basic Mining Calculator{% else %}基础挖矿计算器{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Real-time BTC Price{% else %}实时BTC价格{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}3 Miner Models{% else %}3种矿机型号{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Basic ROI Analysis{% else %}基础ROI分析{% endif %}
+                            </li>
+                            <li><i class="bi bi-x-circle text-muted"></i> 
+                                {% if current_lang == 'en' %}Historical Data Analysis{% else %}历史数据分析{% endif %}
+                            </li>
+                            <li><i class="bi bi-x-circle text-muted"></i> 
+                                {% if current_lang == 'en' %}Advanced Charts{% else %}高级图表{% endif %}
+                            </li>
+                            <li><i class="bi bi-x-circle text-muted"></i> 
+                                {% if current_lang == 'en' %}API Access{% else %}API访问{% endif %}
+                            </li>
                         </ul>
                         
-                        <a href="/dashboard" class="btn-plan btn-plan-free">
+                        <a href="/calculator" class="btn-plan btn-plan-free">
                             <i class="bi bi-rocket-takeoff me-2"></i>
-                            开始使用
+                            {% if current_lang == 'en' %}Start Using{% else %}开始使用{% endif %}
                         </a>
                     </div>
                 </div>
 
                 <!-- Basic Plan -->
                 <div class="col-lg-4 mb-4">
-                    <div class="plan-card featured">
-                        <div class="plan-name">基础版</div>
+                    <div class="plan-card featured" data-recommended="{% if current_lang == 'en' %}Recommended{% else %}推荐{% endif %}">
+                        <div class="plan-name">
+                            {% if current_lang == 'en' %}Basic{% else %}基础版{% endif %}
+                        </div>
                         <div class="plan-price">$29</div>
-                        <div class="plan-period">每月</div>
+                        <div class="plan-period">
+                            {% if current_lang == 'en' %}Per Month{% else %}每月{% endif %}
+                        </div>
                         
                         <ul class="plan-features">
-                            <li><i class="bi bi-check-circle"></i> 所有免费版功能</li>
-                            <li><i class="bi bi-check-circle"></i> 10+矿机型号</li>
-                            <li><i class="bi bi-check-circle"></i> 历史数据分析</li>
-                            <li><i class="bi bi-check-circle"></i> 高级图表</li>
-                            <li><i class="bi bi-check-circle"></i> 电力削减分析</li>
-                            <li><i class="bi bi-check-circle"></i> 邮件支持</li>
-                            <li><i class="bi bi-x-circle text-muted"></i> API访问</li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}All Free Features{% else %}所有免费版功能{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}10+ Miner Models{% else %}10+矿机型号{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Historical Data Analysis{% else %}历史数据分析{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Advanced Charts{% else %}高级图表{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Power Curtailment Analysis{% else %}电力削减分析{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Email Support{% else %}邮件支持{% endif %}
+                            </li>
+                            <li><i class="bi bi-x-circle text-muted"></i> 
+                                {% if current_lang == 'en' %}API Access{% else %}API访问{% endif %}
+                            </li>
                         </ul>
                         
                         <form action="/billing/create-checkout-session" method="POST">
                             <input type="hidden" name="price_id" value="{{ basic_price_id }}">
                             <button type="submit" class="btn-plan btn-plan-premium">
                                 <i class="bi bi-star me-2"></i>
-                                立即订阅
+                                {% if current_lang == 'en' %}Subscribe Now{% else %}立即订阅{% endif %}
                             </button>
                         </form>
                     </div>
@@ -216,25 +258,43 @@
                 <!-- Pro Plan -->
                 <div class="col-lg-4 mb-4">
                     <div class="plan-card">
-                        <div class="plan-name">专业版</div>
+                        <div class="plan-name">
+                            {% if current_lang == 'en' %}Professional{% else %}专业版{% endif %}
+                        </div>
                         <div class="plan-price">$99</div>
-                        <div class="plan-period">每月</div>
+                        <div class="plan-period">
+                            {% if current_lang == 'en' %}Per Month{% else %}每月{% endif %}
+                        </div>
                         
                         <ul class="plan-features">
-                            <li><i class="bi bi-check-circle"></i> 所有基础版功能</li>
-                            <li><i class="bi bi-check-circle"></i> 无限矿机型号</li>
-                            <li><i class="bi bi-check-circle"></i> CRM客户管理</li>
-                            <li><i class="bi bi-check-circle"></i> API完全访问</li>
-                            <li><i class="bi bi-check-circle"></i> 自定义报告</li>
-                            <li><i class="bi bi-check-circle"></i> 优先技术支持</li>
-                            <li><i class="bi bi-check-circle"></i> 白标定制</li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}All Basic Features{% else %}所有基础版功能{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Unlimited Miner Models{% else %}无限矿机型号{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}CRM Customer Management{% else %}CRM客户管理{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Full API Access{% else %}API完全访问{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Custom Reports{% else %}自定义报告{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}Priority Technical Support{% else %}优先技术支持{% endif %}
+                            </li>
+                            <li><i class="bi bi-check-circle"></i> 
+                                {% if current_lang == 'en' %}White Label Customization{% else %}白标定制{% endif %}
+                            </li>
                         </ul>
                         
                         <form action="/billing/create-checkout-session" method="POST">
                             <input type="hidden" name="price_id" value="{{ pro_price_id }}">
                             <button type="submit" class="btn-plan btn-plan-premium">
                                 <i class="bi bi-lightning me-2"></i>
-                                立即订阅
+                                {% if current_lang == 'en' %}Subscribe Now{% else %}立即订阅{% endif %}
                             </button>
                         </form>
                     </div>
@@ -244,15 +304,25 @@
             <!-- FAQ Section -->
             <div class="row mt-5">
                 <div class="col-12">
-                    <h3 class="text-center mb-4">常见问题</h3>
+                    <h3 class="text-center mb-4">
+                        {% if current_lang == 'en' %}Frequently Asked Questions{% else %}常见问题{% endif %}
+                    </h3>
                     <div class="row">
                         <div class="col-md-6">
-                            <h5>如何取消订阅？</h5>
-                            <p class="text-secondary">您可以随时在账户设置中取消订阅，取消后将在当前计费周期结束时生效。</p>
+                            <h5>
+                                {% if current_lang == 'en' %}How to cancel subscription?{% else %}如何取消订阅？{% endif %}
+                            </h5>
+                            <p class="text-secondary">
+                                {% if current_lang == 'en' %}You can cancel your subscription at any time in account settings. Cancellation will take effect at the end of the current billing cycle.{% else %}您可以随时在账户设置中取消订阅，取消后将在当前计费周期结束时生效。{% endif %}
+                            </p>
                         </div>
                         <div class="col-md-6">
-                            <h5>支持哪些支付方式？</h5>
-                            <p class="text-secondary">我们支持所有主要信用卡和借记卡，通过安全的Stripe支付平台处理。</p>
+                            <h5>
+                                {% if current_lang == 'en' %}What payment methods are supported?{% else %}支持哪些支付方式？{% endif %}
+                            </h5>
+                            <p class="text-secondary">
+                                {% if current_lang == 'en' %}We accept all major credit and debit cards, processed through the secure Stripe payment platform.{% else %}我们支持所有主要信用卡和借记卡，通过安全的Stripe支付平台处理。{% endif %}
+                            </p>
                         </div>
                     </div>
                 </div>

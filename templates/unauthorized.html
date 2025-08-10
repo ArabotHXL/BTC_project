@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>访问被拒绝 - BTC挖矿计算器</title>
+    <title>{% if current_lang == 'en' %}Access Denied - BTC Mining Calculator{% else %}访问被拒绝 - BTC挖矿计算器{% endif %}</title>
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
     <style>
         body {
@@ -65,7 +65,9 @@
     <div class="container">
         <div class="unauthorized-container">
             <div class="btc-icon">₿</div>
-            <h1 class="error-title">访问被拒绝</h1>
+            <h1 class="error-title">
+                {% if current_lang == 'en' %}Access Denied{% else %}访问被拒绝{% endif %}
+            </h1>
             
             <!-- 消息提示 -->
             {% with messages = get_flashed_messages(with_categories=true) %}
@@ -79,12 +81,19 @@
             {% endwith %}
             
             <div class="error-message">
-                <p>您没有权限访问BTC挖矿计算器。此工具需要授权访问。</p>
-                <p>请联系管理员申请访问权限，或使用已获授权的邮箱地址重新登录。</p>
+                {% if current_lang == 'en' %}
+                    <p>You do not have permission to access the BTC Mining Calculator. This tool requires authorized access.</p>
+                    <p>Please contact the administrator to request access permissions, or log in again using an authorized email address.</p>
+                {% else %}
+                    <p>您没有权限访问BTC挖矿计算器。此工具需要授权访问。</p>
+                    <p>请联系管理员申请访问权限，或使用已获授权的邮箱地址重新登录。</p>
+                {% endif %}
             </div>
             
             <div class="d-grid gap-2">
-                <a href="{{ url_for('login') }}" class="btn btn-primary">返回登录</a>
+                <a href="{{ url_for('login') }}" class="btn btn-primary">
+                    {% if current_lang == 'en' %}Back to Login{% else %}返回登录{% endif %}
+                </a>
             </div>
         </div>
     </div>
