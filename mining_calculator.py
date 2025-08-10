@@ -15,7 +15,7 @@ BLOCKS_PER_DAY = 144
 DEFAULT_BTC_PRICE = 80000  # USD
 DEFAULT_NETWORK_DIFFICULTY = 119116256505723  # ~119.12T
 DEFAULT_NETWORK_HASHRATE = 900  # EH/s
-BLOCK_REWARD = 3.125  # BTC
+BLOCK_REWARD = 3.13  # BTC (Updated to current halving cycle)
 
 # Fixed miner data including hashrate and power consumption for each model
 MINER_DATA = {
@@ -387,7 +387,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         btc_per_th = network_daily_btc / network_TH
         # 矿场每日产出 = 矿场TH * 每TH产出
         site_daily_btc_output = site_total_hashrate * btc_per_th
-        site_monthly_btc_output = site_daily_btc_output * 30.5
+        site_monthly_btc_output = site_daily_btc_output * 30
         
         # 打印推导的网络哈希率与API返回的对比，便于调试
         print(f"API Network Hashrate: {real_time_btc_hashrate:.2f} EH/s vs Derived from Difficulty: {network_TH_from_difficulty/1e6:.2f} EH/s")
@@ -403,7 +403,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         site_total_hashrate_Hs = site_total_hashrate * 1e12  # TH/s → H/s
         difficulty_factor = 2 ** 32
         site_daily_btc_output_difficulty = (site_total_hashrate_Hs * block_reward_to_use * 86400) / (difficulty_raw * difficulty_factor)
-        site_monthly_btc_output_difficulty = site_daily_btc_output_difficulty * 30.5
+        site_monthly_btc_output_difficulty = site_daily_btc_output_difficulty * 30
         
         # 打印两种算法的结果，方便调试
         print(f"Algorithm 1 (Network Based) - Daily BTC: {site_daily_btc_output:.8f}")
@@ -424,7 +424,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         
         # === 成本计算 (Cost Calculation) ===
         # Calculate using the operating time after curtailment
-        monthly_power_consumption = power_consumption * 24 * 30.5 * curtailment_factor / 1000  # kWh
+        monthly_power_consumption = power_consumption * 24 * 30 * curtailment_factor / 1000  # kWh
         electricity_expense = monthly_power_consumption * electricity_cost
         client_electricity_expense = monthly_power_consumption * (client_electricity_cost or electricity_cost)
         
@@ -468,12 +468,12 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         # running_miners 和 shutdown_miners 已经在前面计算为 running_miner_count 和 shutdown_miner_count
         
         # 计算每日维护费
-        daily_maintenance_fee = maintenance_fee / 30.5
+        daily_maintenance_fee = maintenance_fee / 30
         
         # Scale back to get daily values
-        daily_revenue = monthly_revenue / 30.5
-        daily_profit = monthly_profit / 30.5  # 这里已经考虑了维护费，因为monthly_profit包含维护费
-        daily_electricity_expense = electricity_expense / 30.5
+        daily_revenue = monthly_revenue / 30
+        daily_profit = monthly_profit / 30  # 这里已经考虑了维护费，因为monthly_profit包含维护费
+        daily_electricity_expense = electricity_expense / 30
         client_daily_profit = client_monthly_profit / 30.5
         client_daily_electricity_expense = client_electricity_expense / 30.5
         
