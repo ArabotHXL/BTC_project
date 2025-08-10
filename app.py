@@ -3013,7 +3013,16 @@ def analytics_main():
         flash('您没有权限访问此页面', 'danger')
         return redirect(url_for('index'))
     
-    return render_template('analytics_main.html')
+    # 提供默认的技术指标数据
+    technical_indicators = {
+        'rsi': 50.0,
+        'macd': 0.0,
+        'bb_upper': 50000,
+        'bb_lower': 45000,
+        'volume': 1000000
+    }
+    
+    return render_template('analytics_main.html', technical_indicators=technical_indicators)
 
 # 修复专业报告路由
 @app.route('/api/professional-report')
