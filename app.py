@@ -2692,14 +2692,7 @@ def analytics_technical_indicators():
 
 @app.route('/api/analytics/price-history')
 def analytics_price_history():
-    """获取价格历史数据 - 简化版本用于前端AJAX调用"""
-    # 简化验证：检查是否有邮箱会话（说明已登录）
-    if not session.get('email'):
-        return jsonify({'error': '未授权访问'}), 401
-    
-    user_role = get_user_role(session.get('email'))
-    if user_role != 'owner':
-        return jsonify({'error': '只有拥有者可以访问分析系统'}), 403
+    """获取价格历史数据 - 公开API用于图表显示"""
     
     try:
         import psycopg2
