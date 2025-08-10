@@ -1697,7 +1697,14 @@
                 console.log('Raw report API response:', data);
                 var reportData = data.detailed_report || data.latest_report || data.data || data;
                 console.log('Extracted report data for display:', reportData);
-                updateReportDisplay(reportData);
+                try {
+                    updateReportDisplay(reportData);
+                    console.log('Report display updated successfully');
+                } catch (displayError) {
+                    console.error('Error in updateReportDisplay:', displayError);
+                    console.error('Error stack:', displayError.stack);
+                    showErrorMessage('reports', '报告显示处理出错: ' + displayError.message);
+                }
             }).catch(function(error) {
                 console.error('Report error:', error);
                 showErrorMessage('reports', '分析报告暂时不可用');
@@ -1707,117 +1714,148 @@
         function updateReportDisplay(data) {
             console.log('updateReportDisplay called with data:', data);
             
-            // Check if data contains the report
-            var report = data;
+            try {
+                // Check if data contains the report
+                var report = data;
 
-            if (!report || (typeof report === 'object' && Object.keys(report).length === 0)) {
-                console.log('No valid report data found');
-                showErrorMessage('reports', '暂无可用的分析报告');
-                return;
-            }
+                if (!report || (typeof report === 'object' && Object.keys(report).length === 0)) {
+                    console.log('No valid report data found');
+                    showErrorMessage('reports', '暂无可用的分析报告');
+                    return;
+                }
+                
+                console.log('Report data validation passed, proceeding with display update...');
 
-            // Update report title - use correct path
-            var reportTitleElement = document.getElementById('reportTitle');
-            var title = report.report_metadata?.title || report.title || '专业矿业分析报告';
-            if (reportTitleElement) {
-                reportTitleElement.textContent = title;
-                console.log('Updated report title to:', title);
-            }
+                // Update report title - use correct path
+                console.log('Updating report title...');
+                var reportTitleElement = document.getElementById('reportTitle');
+                var title = (report.report_metadata && report.report_metadata.title) || report.title || '专业矿业分析报告';
+                if (reportTitleElement) {
+                    reportTitleElement.textContent = title;
+                    console.log('Updated report title to:', title);
+                } else {
+                    console.warn('reportTitle element not found');
+                }
 
-            // Update report summary
-            var reportSummaryElement = document.getElementById('reportSummary');
-            var summary = report.executive_summary?.investment_outlook || report.summary || '市场分析摘要';
-            if (reportSummaryElement) {
-                reportSummaryElement.textContent = summary;
-                console.log('Updated report summary to:', summary);
-            }
+                // Update report summary
+                console.log('Updating report summary...');
+                var reportSummaryElement = document.getElementById('reportSummary');
+                var summary = (report.executive_summary && report.executive_summary.investment_outlook) || report.summary || '市场分析摘要';
+                if (reportSummaryElement) {
+                    reportSummaryElement.textContent = summary;
+                    console.log('Updated report summary to:', summary);
+                } else {
+                    console.warn('reportSummary element not found');
+                }
 
-            // Update key findings
-            var reportFindingsElement = document.getElementById('reportFindings');
-            var findings = report.actionable_recommendations || report.key_findings;
-            if (reportFindingsElement && findings) {
-                var findingsHtml = '';
-                try {
-                    if (Array.isArray(findings)) {
-                        // Handle array of recommendations
-                        findings.forEach(function(finding, index) {
-                            findingsHtml += '<div class="border-start border-4 border-primary bg-light p-3 mb-2">' +
-                                '<strong style="color: #212529 !important;">' + (index + 1) + '.</strong> ' +
-                                '<span style="color: #495057 !important;" class="ms-2">' + finding + '</span>' +
-                                '</div>';
-                        });
-                    } else if (typeof findings === 'object') {
-                        // Handle object structure
-                        var entries = Object.entries(findings);
-                        for (var i = 0; i < entries.length; i++) {
-                            var key = entries[i][0];
-                            var value = entries[i][1];
-                            var displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase()});
-                            findingsHtml += '<div class="border-start border-4 border-primary bg-light p-3 mb-2">' +
-                                '<strong style="color: #212529 !important;">' + displayKey + ':</strong> ' +
-                                '<span style="color: #495057 !important;" class="ms-2">' + value + '</span>' +
+                // Update key findings
+                console.log('Updating key findings...');
+                var reportFindingsElement = document.getElementById('reportFindings');
+                var findings = report.actionable_recommendations || report.key_findings;
+                console.log('Found findings data:', findings);
+                
+                if (reportFindingsElement && findings) {
+                    var findingsHtml = '';
+                    try {
+                        if (Array.isArray(findings)) {
+                            console.log('Processing findings as array, length:', findings.length);
+                            // Handle array of recommendations
+                            findings.forEach(function(finding, index) {
+                                findingsHtml += '<div class="border-start border-4 border-primary bg-light p-3 mb-2">' +
+                                    '<strong style="color: #212529 !important;">' + (index + 1) + '.</strong> ' +
+                                    '<span style="color: #495057 !important;" class="ms-2">' + finding + '</span>' +
+                                    '</div>';
+                            });
+                        } else if (typeof findings === 'object') {
+                            console.log('Processing findings as object');
+                            // Handle object structure
+                            var entries = Object.entries(findings);
+                            for (var i = 0; i < entries.length; i++) {
+                                var key = entries[i][0];
+                                var value = entries[i][1];
+                                var displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase()});
+                                findingsHtml += '<div class="border-start border-4 border-primary bg-light p-3 mb-2">' +
+                                    '<strong style="color: #212529 !important;">' + displayKey + ':</strong> ' +
+                                    '<span style="color: #495057 !important;" class="ms-2">' + value + '</span>' +
+                                    '</div>';
+                            }
+                        } else {
+                            console.log('Processing findings as string');
+                            // Handle string
+                            findingsHtml = '<div class="border-start border-4 border-primary bg-light p-3 mb-2">' +
+                                '<span style="color: #495057 !important;">' + findings + '</span>' +
                                 '</div>';
                         }
-                    } else {
-                        // Handle string
-                        findingsHtml = '<div class="border-start border-4 border-primary bg-light p-3 mb-2">' +
-                            '<span style="color: #495057 !important;">' + findings + '</span>' +
-                            '</div>';
+                        reportFindingsElement.innerHTML = findingsHtml;
+                        console.log('Updated report findings successfully');
+                    } catch (findingsError) {
+                        console.error('Error parsing key findings:', findingsError);
+                        reportFindingsElement.innerHTML = '<div class="text-muted">关键发现解析中...</div>';
                     }
-                    reportFindingsElement.innerHTML = findingsHtml;
-                    console.log('Updated report findings:', findings);
-                } catch (error) {
-                    console.error('Error parsing key findings:', error);
-                    reportFindingsElement.innerHTML = '<div class="text-muted">关键发现解析中...</div>';
-                }
-            }
-
-            // Update report recommendations if available
-            var reportRecommendationsElement = document.getElementById('reportRecommendations');
-            if (reportRecommendationsElement && report.recommendations) {
-                var recommendationsHtml = '';
-                var recommendations = Array.isArray(report.recommendations) 
-                    ? report.recommendations 
-                    : [report.recommendations];
-
-                recommendations.forEach(function(rec) {
-                    recommendationsHtml += '<li class="d-flex align-items-start mb-2 py-2">' +
-                        '<i class="bi bi-check text-success me-2 mt-1"></i>' +
-                        '<span style="color: #212529 !important;">' + rec + '</span>' +
-                        '</li>';
-                });
-
-                reportRecommendationsElement.innerHTML = '<ul class="list-unstyled">' + recommendationsHtml + '</ul>';
-            }
-
-            // Update risk assessment if available
-            if (report.risk_assessment) {
-                var riskScoreElement = document.getElementById('reportRiskScore');
-                var riskLevelElement = document.getElementById('reportRiskLevel');
-
-                if (riskScoreElement && report.risk_assessment.risk_score) {
-                    riskScoreElement.textContent = report.risk_assessment.risk_score;
+                } else {
+                    console.warn('reportFindings element or findings data not available');
                 }
 
-                if (riskLevelElement && report.risk_assessment.risk_level) {
-                    riskLevelElement.textContent = report.risk_assessment.risk_level;
-                }
-            }
+                // Update report recommendations if available
+                console.log('Updating recommendations...');
+                var reportRecommendationsElement = document.getElementById('reportRecommendations');
+                if (reportRecommendationsElement && report.recommendations) {
+                    var recommendationsHtml = '';
+                    var recommendations = Array.isArray(report.recommendations) 
+                        ? report.recommendations 
+                        : [report.recommendations];
 
-            // Update timestamp - 显示系统本地时间
-            var reportTimestampElement = document.getElementById('reportTimestamp');
-            if (reportTimestampElement && report.created_at) {
-                var date = new Date(report.created_at);
-                // 使用12小时制系统本地时间格式
-                var options = {
-                    year: 'numeric',
-                    month: '2-digit', 
-                    day: '2-digit',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                };
-                reportTimestampElement.textContent = '生成时间: ' + date.toLocaleString(undefined, options);
+                    recommendations.forEach(function(rec) {
+                        recommendationsHtml += '<li class="d-flex align-items-start mb-2 py-2">' +
+                            '<i class="bi bi-check text-success me-2 mt-1"></i>' +
+                            '<span style="color: #212529 !important;">' + rec + '</span>' +
+                            '</li>';
+                    });
+
+                    reportRecommendationsElement.innerHTML = '<ul class="list-unstyled">' + recommendationsHtml + '</ul>';
+                    console.log('Updated recommendations successfully');
+                }
+
+                // Update risk assessment if available
+                console.log('Updating risk assessment...');
+                if (report.risk_assessment) {
+                    var riskScoreElement = document.getElementById('reportRiskScore');
+                    var riskLevelElement = document.getElementById('reportRiskLevel');
+
+                    if (riskScoreElement && report.risk_assessment.risk_score) {
+                        riskScoreElement.textContent = report.risk_assessment.risk_score;
+                    }
+
+                    if (riskLevelElement && report.risk_assessment.risk_level) {
+                        riskLevelElement.textContent = report.risk_assessment.risk_level;
+                    }
+                    console.log('Updated risk assessment successfully');
+                }
+
+                // Update timestamp - 显示系统本地时间
+                console.log('Updating timestamp...');
+                var reportTimestampElement = document.getElementById('reportTimestamp');
+                if (reportTimestampElement && report.created_at) {
+                    var date = new Date(report.created_at);
+                    // 使用12小时制系统本地时间格式
+                    var options = {
+                        year: 'numeric',
+                        month: '2-digit', 
+                        day: '2-digit',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                    };
+                    reportTimestampElement.textContent = '生成时间: ' + date.toLocaleString(undefined, options);
+                    console.log('Updated timestamp successfully');
+                }
+                
+                console.log('All report display updates completed successfully');
+                
+            } catch (updateError) {
+                console.error('Error in updateReportDisplay:', updateError);
+                console.error('Error stack:', updateError.stack);
+                showErrorMessage('reports', '报告显示更新失败: ' + updateError.message);
             }
 
             console.log('Report display updated successfully');
