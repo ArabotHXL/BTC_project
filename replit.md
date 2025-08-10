@@ -24,6 +24,7 @@ Preferred communication style: Simple, everyday language.
 - **订阅计划页面**: 三个计划（免费版/基础版/专业版）完全双语支持
 - **错误页面**: 访问拒绝页面支持完整双语错误提示
 - **管理页面**: 登录记录页面、用户访问管理页面支持双语切换
+- **分析页面**: 数据仪表盘、市场数据、技术指标支持双语显示
 - **导航系统**: 所有菜单、按钮、标题根据语言选择完全切换
 - **表单系统**: 用户管理表单、登录记录表格支持双语标签
 
@@ -34,6 +35,7 @@ Preferred communication style: Simple, everyday language.
 4. **login_records.html** (登录记录) - ✅ 核心功能双语化
 5. **user_access.html** (用户管理) - ✅ 核心功能双语化
 6. **login.html** (登录页面) - ✅ 原本已支持双语
+7. **analytics_main.html** (数据分析) - ✅ 主要界面双语化
 
 ### 📋 待优化页面 (可选)
 - CRM系统页面 (templates/crm/*.html) - 有基础框架但需详细内容双语化

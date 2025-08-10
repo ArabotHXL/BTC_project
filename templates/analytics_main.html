@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}分析数据仪表盘 - BTC挖矿计算器{% endblock %}</title>
+    <title>{% block title %}{% if current_lang == 'en' %}Analytics Dashboard - BTC Mining Calculator{% else %}分析数据仪表盘 - BTC挖矿计算器{% endif %}{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -250,14 +250,22 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="/">
                 <i class="bi bi-graph-up-arrow"></i>
-                BTC挖矿计算器 - 数据分析中心
+                {% if current_lang == 'en' %}BTC Mining Calculator - Analytics Center{% else %}BTC挖矿计算器 - 数据分析中心{% endif %}
             </a>
             <div class="d-flex align-items-center">
+                <!-- 语言切换 / Language Switcher -->
+                <div class="btn-group btn-group-sm me-3" role="group">
+                    <a href="{{ url_for(request.endpoint, lang='zh', **request.view_args) }}" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
+                    <a href="{{ url_for(request.endpoint, lang='en', **request.view_args) }}" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}">English</a>
+                </div>
+                
                 <span class="status-indicator status-online" id="connectionStatus"></span>
-                <span id="connectionText">实时连接</span>
-                <span class="ms-3 text-muted" id="lastUpdate">--</span>
+                <span id="connectionText">{% if current_lang == 'en' %}Real-time Connected{% else %}实时连接{% endif %}</span>
+                <span class="ms-3 text-muted" id="lastUpdate">
+                    {% if current_lang == 'en' %}Last update: --{% else %}更新: --{% endif %}
+                </span>
                 <a href="/" class="btn btn-outline-light btn-sm ms-3">
-                    <i class="bi bi-house"></i> 返回主页
+                    <i class="bi bi-house"></i> {% if current_lang == 'en' %}Back to Home{% else %}返回主页{% endif %}
                 </a>
             </div>
         </div>
@@ -269,19 +277,19 @@
             <div class="col-md-2 sidebar p-3">
                 <nav class="nav nav-pills flex-column">
                     <a class="nav-link active" href="#dashboard" data-tab="dashboard">
-                        <i class="bi bi-speedometer2"></i> 仪表盘
+                        <i class="bi bi-speedometer2"></i> {% if current_lang == 'en' %}Dashboard{% else %}仪表盘{% endif %}
                     </a>
                     <a class="nav-link" href="#market" data-tab="market">
-                        <i class="bi bi-graph-up"></i> 市场数据
+                        <i class="bi bi-graph-up"></i> {% if current_lang == 'en' %}Market Data{% else %}市场数据{% endif %}
                     </a>
                     <a class="nav-link" href="#technical" data-tab="technical">
-                        <i class="bi bi-bar-chart"></i> 技术分析
+                        <i class="bi bi-bar-chart"></i> {% if current_lang == 'en' %}Technical Analysis{% else %}技术分析{% endif %}
                     </a>
                     <a class="nav-link" href="#reports" data-tab="reports">
-                        <i class="bi bi-file-text"></i> 分析报告
+                        <i class="bi bi-file-text"></i> {% if current_lang == 'en' %}Analytics Reports{% else %}分析报告{% endif %}
                     </a>
                     <a class="nav-link" href="#settings" data-tab="settings">
-                        <i class="bi bi-gear"></i> 系统设置
+                        <i class="bi bi-gear"></i> {% if current_lang == 'en' %}System Settings{% else %}系统设置{% endif %}
                     </a>
                 </nav>
             </div>
@@ -291,7 +299,7 @@
                 <!-- Dashboard Tab -->
                 <div id="dashboard" class="analytics-tab active">
                     <h4 class="mb-4">
-                        <i class="bi bi-speedometer2"></i> 实时数据仪表盘
+                        <i class="bi bi-speedometer2"></i> {% if current_lang == 'en' %}Real-time Data Dashboard{% else %}实时数据仪表盘{% endif %}
                     </h4>
 
                     <!-- Key Metrics Row -->
@@ -300,7 +308,7 @@
                             <div class="card metric-card text-white price-display">
                                 <div class="card-body text-center">
                                     <div class="metric-value" id="btcPrice">--</div>
-                                    <div class="metric-label">BTC 价格 (USD)</div>
+                                    <div class="metric-label">{% if current_lang == 'en' %}BTC Price (USD){% else %}BTC 价格 (USD){% endif %}</div>
                                     <div class="metric-change" id="priceChange24h">--</div>
                                 </div>
                             </div>
@@ -309,7 +317,7 @@
                             <div class="card metric-card text-white">
                                 <div class="card-body text-center">
                                     <div class="metric-value" id="networkHashrate">--</div>
-                                    <div class="metric-label">网络算力 (EH/s)</div>
+                                    <div class="metric-label">{% if current_lang == 'en' %}Network Hashrate (EH/s){% else %}网络算力 (EH/s){% endif %}</div>
                                     <div class="metric-change" id="hashrateStatus">--</div>
                                 </div>
                             </div>
@@ -318,7 +326,7 @@
                             <div class="card metric-card text-white">
                                 <div class="card-body text-center">
                                     <div class="metric-value" id="fearGreedIndex">--</div>
-                                    <div class="metric-label">恐惧贪婪指数</div>
+                                    <div class="metric-label">{% if current_lang == 'en' %}Fear & Greed Index{% else %}恐惧贪婪指数{% endif %}</div>
                                     <div class="metric-change" id="fearGreedLabel">--</div>
                                 </div>
                             </div>
@@ -356,14 +364,14 @@
                                 <div class="card-header">
                                     <h5 class="mb-0">
                                         <i class="bi bi-info-circle"></i>
-                                        快速洞察
+                                        {% if current_lang == 'en' %}Quick Insights{% else %}快速洞察{% endif %}
                                     </h5>
                                 </div>
                                 <div class="card-body">
                                     <div id="quickInsights">
                                         <div class="loading-spinner">
                                             <div class="spinner-border text-primary" role="status">
-                                                <span class="visually-hidden">加载中...</span>
+                                                <span class="visually-hidden">{% if current_lang == 'en' %}Loading...{% else %}加载中...{% endif %}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -380,9 +388,9 @@
                 <!-- Market Data Tab -->
                 <div id="market" class="analytics-tab">
                     <h4 class="mb-4">
-                        <i class="bi bi-graph-up"></i> 市场数据详情
-                        <span class="badge bg-success ms-2" id="dataUpdateIndicator">实时更新</span>
-                        <small class="text-muted ms-2" id="lastUpdateTime">最后更新: --</small>
+                        <i class="bi bi-graph-up"></i> {% if current_lang == 'en' %}Market Data Details{% else %}市场数据详情{% endif %}
+                        <span class="badge bg-success ms-2" id="dataUpdateIndicator">{% if current_lang == 'en' %}Real-time Update{% else %}实时更新{% endif %}</span>
+                        <small class="text-muted ms-2" id="lastUpdateTime">{% if current_lang == 'en' %}Last update: --{% else %}最后更新: --{% endif %}</small>
                     </h4>
 
                     <!-- Price and Network Information -->
@@ -390,16 +398,16 @@
                         <div class="col-md-6">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5 class="mb-0">价格信息</h5>
+                                    <h5 class="mb-0">{% if current_lang == 'en' %}Price Information{% else %}价格信息{% endif %}</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-6">
-                                            <small class="text-muted">当前价格</small>
+                                            <small class="text-muted">{% if current_lang == 'en' %}Current Price{% else %}当前价格{% endif %}</small>
                                             <div class="h4" id="marketCurrentPrice">--</div>
                                         </div>
                                         <div class="col-6">
-                                            <small class="text-muted">市值</small>
+                                            <small class="text-muted">{% if current_lang == 'en' %}Market Cap{% else %}市值{% endif %}</small>
                                             <div class="h5" id="marketCap">--</div>
                                         </div>
                                     </div>
@@ -423,16 +431,16 @@
                         <div class="col-md-6">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5 class="mb-0">网络信息</h5>
+                                    <h5 class="mb-0">{% if current_lang == 'en' %}Network Information{% else %}网络信息{% endif %}</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-6">
-                                            <small class="text-muted">网络算力</small>
+                                            <small class="text-muted">{% if current_lang == 'en' %}Network Hashrate{% else %}网络算力{% endif %}</small>
                                             <div class="h4" id="marketHashrate">--</div>
                                         </div>
                                         <div class="col-6">
-                                            <small class="text-muted">网络难度</small>
+                                            <small class="text-muted">{% if current_lang == 'en' %}Network Difficulty{% else %}网络难度{% endif %}</small>
                                             <div class="h5" id="marketDifficulty">--</div>
                                         </div>
                                     </div>
