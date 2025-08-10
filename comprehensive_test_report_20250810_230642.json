@@ -1,0 +1,115 @@
+{
+  "timestamp": "2025-08-10T23:06:42.369757",
+  "total_tests": 15,
+  "passed_tests": 14,
+  "failed_tests": 1,
+  "success_rate": 93.33333333333333,
+  "target_achieved": false,
+  "detailed_results": [
+    {
+      "test_name": "Database Connection",
+      "status": "PASS",
+      "message": "Database connection successful",
+      "execution_time": 0.1799330711364746,
+      "timestamp": "2025-08-10T23:06:29.996241"
+    },
+    {
+      "test_name": "Database Integrity",
+      "status": "PASS",
+      "message": "Tables: 100.0% (4/4)",
+      "execution_time": 0.24336719512939453,
+      "timestamp": "2025-08-10T23:06:30.340275"
+    },
+    {
+      "test_name": "Homepage Access",
+      "status": "PASS",
+      "message": "Status: 200",
+      "execution_time": 0.008507251739501953,
+      "timestamp": "2025-08-10T23:06:30.449461"
+    },
+    {
+      "test_name": "Analytics Data API",
+      "status": "PASS",
+      "message": "BTC: $119108.0, Hashrate: 952.0EH/s",
+      "execution_time": 0.7331035137176514,
+      "timestamp": "2025-08-10T23:06:31.282904"
+    },
+    {
+      "test_name": "Batch Calculator API",
+      "status": "PASS",
+      "message": "Daily profit: $7.58",
+      "execution_time": 1.1232588291168213,
+      "timestamp": "2025-08-10T23:06:32.506485"
+    },
+    {
+      "test_name": "Advanced Analytics APIs",
+      "status": "FAIL",
+      "message": "API Success: 0.0% (0/4)",
+      "execution_time": 0.2078568935394287,
+      "timestamp": "2025-08-10T23:06:32.814637"
+    },
+    {
+      "test_name": "Route /batch-calculator",
+      "status": "PASS",
+      "message": "Status: 200",
+      "execution_time": 0.04849720001220703,
+      "timestamp": "2025-08-10T23:06:32.963435"
+    },
+    {
+      "test_name": "Route /analytics",
+      "status": "PASS",
+      "message": "Status: 200 (accessible)",
+      "execution_time": 0.012021064758300781,
+      "timestamp": "2025-08-10T23:06:32.975614"
+    },
+    {
+      "test_name": "Route /pricing",
+      "status": "PASS",
+      "message": "Status: 200",
+      "execution_time": 0.09334993362426758,
+      "timestamp": "2025-08-10T23:06:33.069857"
+    },
+    {
+      "test_name": "Static /static/style.css",
+      "status": "PASS",
+      "message": "Size: 3090 bytes",
+      "execution_time": 0.005802631378173828,
+      "timestamp": "2025-08-10T23:06:33.176292"
+    },
+    {
+      "test_name": "Static /static/script.js",
+      "status": "PASS",
+      "message": "Size: 12641 bytes",
+      "execution_time": 0.011386632919311523,
+      "timestamp": "2025-08-10T23:06:33.187858"
+    },
+    {
+      "test_name": "Authentication - Login Page",
+      "status": "PASS",
+      "message": "Login page accessible",
+      "execution_time": 0.004812479019165039,
+      "timestamp": "2025-08-10T23:06:33.292954"
+    },
+    {
+      "test_name": "Bilingual Support",
+      "status": "PASS",
+      "message": "Both Chinese and English detected",
+      "execution_time": 0.008475542068481445,
+      "timestamp": "2025-08-10T23:06:33.401767"
+    },
+    {
+      "test_name": "Algorithm Accuracy",
+      "status": "PASS",
+      "message": "Accuracy: 100.0% (2/2)",
+      "execution_time": 1.8687825202941895,
+      "timestamp": "2025-08-10T23:06:35.370821"
+    },
+    {
+      "test_name": "System Performance",
+      "status": "PASS",
+      "message": "Concurrent requests: 100.0% success",
+      "execution_time": 6.798288822174072,
+      "timestamp": "2025-08-10T23:06:42.269418"
+    }
+  ]
+}
