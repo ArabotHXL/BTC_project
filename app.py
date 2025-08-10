@@ -3330,28 +3330,13 @@ def api_network_data():
 # 添加缺失的分析数据API端点 - 使用数据库数据
 @app.route('/api/analytics-data')
 def api_analytics_data():
-    """分析数据API端点 - 直接从market_analytics表获取最新数据"""
+    """分析数据API端点 - 优先使用实时数据，数据库作为备用"""
     try:
-        # 首先尝试从数据库获取最新数据
-        latest_data = db.session.execute(
-            text("SELECT btc_price, network_difficulty, network_hashrate, fear_greed_index, price_change_1h, price_change_24h, price_change_7d, recorded_at FROM market_analytics ORDER BY recorded_at DESC LIMIT 1")
-        ).fetchone()
+        # 首先尝试获取实时数据
+        from mining_calculator import get_real_time_btc_price, get_real_time_difficulty, get_real_time_btc_hashrate
         
-        if latest_data:
-            # 使用数据库中的最新数据
-            btc_price = float(latest_data[0]) if latest_data[0] else 116644.0
-            difficulty = float(latest_data[1]) if latest_data[1] else 129435235580345.0
-            hashrate = float(latest_data[2]) if latest_data[2] else 752.81
-            fear_greed = int(latest_data[3]) if latest_data[3] else 69
-            price_change_1h = float(latest_data[4]) if latest_data[4] else 0.0
-            price_change_24h = float(latest_data[5]) if latest_data[5] else 0.0
-            price_change_7d = float(latest_data[6]) if latest_data[6] else 0.0
-            timestamp = latest_data[7].isoformat() if latest_data[7] else datetime.now().isoformat()
-            
-            logging.info(f"从数据库获取分析数据: BTC=${btc_price}, 算力={hashrate}EH/s")
-        else:
-            # 如果数据库没有数据，作为备用获取实时数据
-            from mining_calculator import get_real_time_btc_price, get_real_time_difficulty, get_real_time_btc_hashrate
+        try:
+            # 获取实时数据
             btc_price = get_real_time_btc_price()
             difficulty = get_real_time_difficulty()
             hashrate = get_real_time_btc_hashrate()
@@ -3361,7 +3346,40 @@ def api_analytics_data():
             price_change_7d = 0.0
             timestamp = datetime.now().isoformat()
             
-            logging.info(f"数据库无数据，使用API获取: BTC=${btc_price}, 算力={hashrate}EH/s")
+            logging.info(f"使用实时API数据: BTC=${btc_price}, 算力={hashrate}EH/s")
+            
+        except Exception as api_error:
+            logging.warning(f"实时API获取失败: {api_error}，切换到数据库数据")
+            
+            # API失败时，从数据库获取最新数据作为备用
+            latest_data = db.session.execute(
+                text("SELECT btc_price, network_difficulty, network_hashrate, fear_greed_index, price_change_1h, price_change_24h, price_change_7d, recorded_at FROM market_analytics ORDER BY recorded_at DESC LIMIT 1")
+            ).fetchone()
+            
+            if latest_data:
+                # 使用数据库中的最新数据
+                btc_price = float(latest_data[0]) if latest_data[0] else 116644.0
+                difficulty = float(latest_data[1]) if latest_data[1] else 129435235580345.0
+                hashrate = float(latest_data[2]) if latest_data[2] else 752.81
+                fear_greed = int(latest_data[3]) if latest_data[3] else 69
+                price_change_1h = float(latest_data[4]) if latest_data[4] else 0.0
+                price_change_24h = float(latest_data[5]) if latest_data[5] else 0.0
+                price_change_7d = float(latest_data[6]) if latest_data[6] else 0.0
+                timestamp = latest_data[7].isoformat() if latest_data[7] else datetime.now().isoformat()
+                
+                logging.info(f"使用数据库备用数据: BTC=${btc_price}, 算力={hashrate}EH/s")
+            else:
+                # 都失败了，使用默认值
+                btc_price = 116644.0
+                difficulty = 129435235580345.0
+                hashrate = 752.81
+                fear_greed = 69
+                price_change_1h = 0.0
+                price_change_24h = 0.0
+                price_change_7d = 0.0
+                timestamp = datetime.now().isoformat()
+                
+                logging.warning("数据库也无数据，使用默认值")
         
         # 构建分析数据 - 匹配批量计算器期望的格式
         analytics_data = {
