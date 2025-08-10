@@ -12,6 +12,7 @@ import pytz
 # 第三方库导入
 import numpy as np
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, g
+from sqlalchemy import text
 
 # 本地模块导入
 from auth import verify_email, login_required
@@ -3326,36 +3327,54 @@ def api_network_data():
             'error': str(e)
         }), 500
 
-# 添加缺失的分析数据API端点
+# 添加缺失的分析数据API端点 - 使用数据库数据
 @app.route('/api/analytics-data')
 def api_analytics_data():
-    """分析数据API端点"""
+    """分析数据API端点 - 直接从market_analytics表获取最新数据"""
     try:
-        from mining_calculator import get_real_time_btc_price, get_real_time_difficulty, get_real_time_btc_hashrate
+        # 首先尝试从数据库获取最新数据
+        latest_data = db.session.execute(
+            text("SELECT btc_price, network_difficulty, network_hashrate, fear_greed_index, price_change_1h, price_change_24h, price_change_7d, recorded_at FROM market_analytics ORDER BY recorded_at DESC LIMIT 1")
+        ).fetchone()
         
-        # 获取实时数据
-        btc_price = get_real_time_btc_price()
-        difficulty = get_real_time_difficulty()
-        hashrate = get_real_time_btc_hashrate()
+        if latest_data:
+            # 使用数据库中的最新数据
+            btc_price = float(latest_data[0]) if latest_data[0] else 116644.0
+            difficulty = float(latest_data[1]) if latest_data[1] else 129435235580345.0
+            hashrate = float(latest_data[2]) if latest_data[2] else 752.81
+            fear_greed = int(latest_data[3]) if latest_data[3] else 69
+            price_change_1h = float(latest_data[4]) if latest_data[4] else 0.0
+            price_change_24h = float(latest_data[5]) if latest_data[5] else 0.0
+            price_change_7d = float(latest_data[6]) if latest_data[6] else 0.0
+            timestamp = latest_data[7].isoformat() if latest_data[7] else datetime.now().isoformat()
+            
+            logging.info(f"从数据库获取分析数据: BTC=${btc_price}, 算力={hashrate}EH/s")
+        else:
+            # 如果数据库没有数据，作为备用获取实时数据
+            from mining_calculator import get_real_time_btc_price, get_real_time_difficulty, get_real_time_btc_hashrate
+            btc_price = get_real_time_btc_price()
+            difficulty = get_real_time_difficulty()
+            hashrate = get_real_time_btc_hashrate()
+            fear_greed = 69  # 默认值
+            price_change_1h = 0.0
+            price_change_24h = 0.0
+            price_change_7d = 0.0
+            timestamp = datetime.now().isoformat()
+            
+            logging.info(f"数据库无数据，使用API获取: BTC=${btc_price}, 算力={hashrate}EH/s")
         
-        # 构建分析数据
+        # 构建分析数据 - 匹配批量计算器期望的格式
         analytics_data = {
-            'current_metrics': {
-                'btc_price': btc_price,
-                'network_difficulty': difficulty,
-                'network_hashrate': hashrate,
-                'timestamp': datetime.now().isoformat()
-            },
-            'market_trends': {
-                'price_trend': 'bullish' if btc_price > 60000 else 'bearish',
-                'difficulty_change': 'increasing' if difficulty > 50e12 else 'stable',
-                'hashrate_status': 'high' if hashrate > 600 else 'normal'
-            },
-            'mining_health': {
-                'network_security': 'excellent',
-                'mining_difficulty': 'high',
-                'profitability_outlook': 'positive' if btc_price > 50000 else 'moderate'
-            }
+            'btc_price': btc_price,
+            'btc_market_cap': None,
+            'btc_volume_24h': None,
+            'network_difficulty': difficulty,
+            'network_hashrate': hashrate,
+            'fear_greed_index': str(fear_greed),
+            'price_change_1h': price_change_1h,
+            'price_change_24h': price_change_24h,
+            'price_change_7d': price_change_7d,
+            'timestamp': timestamp
         }
         
         return jsonify({
@@ -3363,6 +3382,7 @@ def api_analytics_data():
             'data': analytics_data
         })
     except Exception as e:
+        logging.error(f"获取分析数据失败: {str(e)}")
         return jsonify({
             'success': False,
             'error': str(e)
