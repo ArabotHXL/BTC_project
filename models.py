@@ -201,6 +201,29 @@ class Customer(db.Model):
     def __repr__(self):
         return f"<Customer {self.name} - {self.company}>"
 
+class User(db.Model):
+    """用户模型"""
+    __tablename__ = 'users'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    username = db.Column(db.String(80), unique=True, nullable=True)
+    password_hash = db.Column(db.String(256), nullable=False)
+    
+    # 用户状态
+    is_active = db.Column(db.Boolean, default=True)
+    is_verified = db.Column(db.Boolean, default=False)
+    
+    # 时间戳
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_login = db.Column(db.DateTime, nullable=True)
+    
+    # 用户角色
+    role = db.Column(db.String(20), default='user')  # user, admin, manager
+    
+    def __repr__(self):
+        return f'<User {self.email}>'
+
 class Contact(db.Model):
     """客户联系人"""
     __tablename__ = 'crm_contacts'

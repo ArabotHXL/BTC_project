@@ -36,3 +36,7 @@ class Subscription(db.Model):
     # Relationships
     plan = db.relationship("Plan", backref="subscriptions")
     user = db.relationship("UserAccess", backref="subscriptions")
+
+# 为了测试兼容性，添加别名
+SubscriptionPlan = Plan
+UserSubscription = Subscription

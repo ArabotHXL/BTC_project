@@ -1092,3 +1092,17 @@ def calculate_monthly_curtailment_impact(
     except Exception as e:
         logging.error(f"计算月度Curtailment时出错: {str(e)}")
         raise e
+
+def get_miner_specifications(model_name=None):
+    """
+    获取矿机规格信息
+    
+    Parameters:
+    - model_name: 特定矿机型号名称，如果为None则返回所有矿机数据
+    
+    Returns:
+    - dict: 矿机规格数据
+    """
+    if model_name:
+        return MINER_DATA.get(model_name, {})
+    return MINER_DATA

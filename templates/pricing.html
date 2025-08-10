@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if current_lang == 'en' %}Pricing Plans{% else %}定价方案{% endif %} - BTC Mining Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-dark text-light">
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h1 class="display-4">
+                {% if current_lang == 'en' %}Choose Your Plan{% else %}选择您的方案{% endif %}
+            </h1>
+            <p class="lead">
+                {% if current_lang == 'en' %}Unlock powerful mining analytics{% else %}解锁强大的挖矿分析功能{% endif %}
+            </p>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-md-4 mb-4">
+                <div class="card bg-secondary h-100">
+                    <div class="card-body text-center">
+                        <h3>Free</h3>
+                        <h4 class="text-primary">$0/mo</h4>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check text-success"></i> Basic mining calculator</li>
+                            <li><i class="bi bi-check text-success"></i> 3 miners max</li>
+                            <li><i class="bi bi-check text-success"></i> 7 days history</li>
+                        </ul>
+                        <a href="#" class="btn btn-outline-primary">Current Plan</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card bg-secondary h-100 border-primary">
+                    <div class="card-body text-center">
+                        <h3>Basic</h3>
+                        <h4 class="text-primary">$29/mo</h4>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check text-success"></i> Advanced calculator</li>
+                            <li><i class="bi bi-check text-success"></i> 10 miners max</li>
+                            <li><i class="bi bi-check text-success"></i> 30 days history</li>
+                            <li><i class="bi bi-check text-success"></i> API access</li>
+                        </ul>
+                        <a href="#" class="btn btn-primary">Upgrade</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card bg-secondary h-100">
+                    <div class="card-body text-center">
+                        <h3>Pro</h3>
+                        <h4 class="text-primary">$99/mo</h4>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check text-success"></i> Unlimited miners</li>
+                            <li><i class="bi bi-check text-success"></i> Full history</li>
+                            <li><i class="bi bi-check text-success"></i> Advanced analytics</li>
+                            <li><i class="bi bi-check text-success"></i> Priority support</li>
+                        </ul>
+                        <a href="#" class="btn btn-primary">Upgrade</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

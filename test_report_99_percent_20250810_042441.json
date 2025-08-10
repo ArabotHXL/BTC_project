@@ -1,0 +1,177 @@
+{
+  "test_summary": {
+    "total_tests": 13,
+    "passed_tests": 10,
+    "failed_tests": 3,
+    "accuracy_percentage": "76.92%",
+    "duration_seconds": 3.322452,
+    "target_achieved": false
+  },
+  "test_categories": {
+    "Database": {
+      "total": 2,
+      "passed": 1,
+      "failed": 1,
+      "tests": [
+        {
+          "name": "connectivity",
+          "result": true,
+          "details": "Status: 200",
+          "execution_time": 0.17447233200073242
+        },
+        {
+          "name": "models_integrity",
+          "result": false,
+          "details": "Missing models: ['subscription.SubscriptionPlan', 'subscription.UserSubscription']",
+          "execution_time": 0.7783031463623047
+        }
+      ]
+    },
+    "Authentication": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "user_registration",
+          "result": true,
+          "details": "Status: 200",
+          "execution_time": 0.2618114948272705
+        },
+        {
+          "name": "login_page",
+          "result": true,
+          "details": "Status: 200",
+          "execution_time": 0.0072977542877197266
+        }
+      ]
+    },
+    "Calculator": {
+      "total": 2,
+      "passed": 1,
+      "failed": 1,
+      "tests": [
+        {
+          "name": "core_algorithm",
+          "result": true,
+          "details": "All functions available",
+          "execution_time": 0.7100992202758789
+        },
+        {
+          "name": "api_endpoints",
+          "result": false,
+          "details": "Main page: True, APIs: 2/3",
+          "execution_time": 0.02509164810180664
+        }
+      ]
+    },
+    "BatchCalculator": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "functionality",
+          "result": true,
+          "details": "Page: True, API: True",
+          "execution_time": 1.1199750900268555
+        }
+      ]
+    },
+    "Subscription": {
+      "total": 1,
+      "passed": 0,
+      "failed": 1,
+      "tests": [
+        {
+          "name": "system_availability",
+          "result": false,
+          "details": "Pages: 0/3, Models: False",
+          "execution_time": 0.017798423767089844
+        }
+      ]
+    },
+    "API_Integration": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "external_apis",
+          "result": true,
+          "details": "CoinWarz: True, Analytics: False",
+          "execution_time": 0.04059004783630371
+        }
+      ]
+    },
+    "Frontend": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "route_availability",
+          "result": true,
+          "details": "Key routes: 4/4, Optional: 3/5",
+          "execution_time": 0.06885552406311035
+        },
+        {
+          "name": "multilingual_support",
+          "result": true,
+          "details": "Working languages: 2/2",
+          "execution_time": 0.029564857482910156
+        }
+      ]
+    },
+    "Performance": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "response_times",
+          "result": true,
+          "details": "Page load: 0.00s, API: 0.00s",
+          "execution_time": 0.007960081100463867
+        }
+      ]
+    },
+    "Security": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "headers",
+          "result": true,
+          "details": "Security headers: 3/3",
+          "execution_time": 0.040187835693359375
+        }
+      ]
+    }
+  },
+  "performance_data": {
+    "Database/connectivity": 0.17447233200073242,
+    "Database/models_integrity": 0.7783031463623047,
+    "Authentication/user_registration": 0.2618114948272705,
+    "Authentication/login_page": 0.0072977542877197266,
+    "Calculator/core_algorithm": 0.7100992202758789,
+    "Calculator/api_endpoints": 0.02509164810180664,
+    "BatchCalculator/functionality": 1.1199750900268555,
+    "Subscription/system_availability": 0.017798423767089844,
+    "API_Integration/external_apis": 0.04059004783630371,
+    "Frontend/route_availability": 0.06885552406311035,
+    "Frontend/multilingual_support": 0.029564857482910156,
+    "Performance/response_times": 0.007960081100463867,
+    "page_load_time": 0.004360198974609375,
+    "api_response_time": 0.0035974979400634766,
+    "Security/headers": 0.040187835693359375
+  },
+  "errors": [
+    "Database/models_integrity: Missing models: ['subscription.SubscriptionPlan', 'subscription.UserSubscription']",
+    "Calculator/api_endpoints: Main page: True, APIs: 2/3",
+    "Subscription/system_availability: Pages: 0/3, Models: False"
+  ],
+  "warnings": [],
+  "timestamp": "2025-08-10T04:24:41.482012"
+}

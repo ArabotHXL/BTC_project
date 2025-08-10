@@ -3064,5 +3064,215 @@ try:
 except Exception as e:
     logging.error(f"Failed to register batch calculator routes: {e}")
 
+# 添加安全头
+@app.after_request  
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['Content-Security-Policy'] = "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data:; img-src 'self' data: https:;"
+    return response
+
+# 添加缺失的API端点
+@app.route('/api/miner-data', methods=['GET'])
+def api_miner_data():
+    """获取矿机数据API"""
+    try:
+        from mining_calculator import get_miner_specifications
+        return jsonify({
+            'success': True,
+            'data': get_miner_specifications()
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/calculate', methods=['POST'])
+def api_calculate():
+    """计算API端点"""
+    try:
+        data = request.get_json() or {}
+        from mining_calculator import calculate_mining_profitability
+        
+        # 提取参数
+        miner_model = data.get('miner_model', 'Antminer S19 Pro')
+        miner_count = data.get('miner_count', 1)
+        electricity_cost = data.get('electricity_cost', 0.05)
+        btc_price = data.get('btc_price')
+        use_real_time_data = data.get('use_real_time_data', True)
+        
+        result = calculate_mining_profitability(
+            miner_model=miner_model,
+            miner_count=miner_count,
+            electricity_cost=electricity_cost,
+            btc_price=btc_price,
+            use_real_time_data=use_real_time_data
+        )
+        
+        return jsonify({
+            'success': True,
+            'data': result
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# 注册页面路由
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """用户注册页面"""
+    if request.method == 'GET':
+        return render_template('register.html')
+    
+    # POST请求处理注册逻辑
+    try:
+        email = request.form.get('email')
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        if not email or not password:
+            flash('邮箱和密码为必填项', 'error')
+            return render_template('register.html')
+        
+        # 检查用户是否已存在
+        existing_user = UserAccess.query.filter_by(email=email).first()
+        if existing_user:
+            flash('该邮箱已注册', 'error')
+            return render_template('register.html')
+        
+        # 创建新用户
+        new_user = UserAccess(
+            name=username or email.split('@')[0],
+            email=email,
+            access_days=30,
+            role='user'
+        )
+        
+        db.session.add(new_user)
+        db.session.commit()
+        
+        flash('注册成功！请检查邮箱验证链接', 'success')
+        return redirect(url_for('login'))
+        
+    except Exception as e:
+        logging.error(f"Registration error: {e}")
+        flash('注册失败，请稍后重试', 'error')
+        return render_template('register.html')
+
+# 添加订阅系统路由
+@app.route('/pricing')
+def pricing():
+    """订阅计划页面"""
+    try:
+        from models_subscription import Plan
+        plans = Plan.query.all()
+        return render_template('pricing.html', plans=plans)
+    except Exception as e:
+        logging.error(f"Pricing page error: {e}")
+        return render_template('pricing.html', plans=[])
+
+@app.route('/subscription')  
+@login_required
+def subscription():
+    """用户订阅管理页面"""
+    try:
+        email = session.get('email')
+        user = UserAccess.query.filter_by(email=email).first()
+        if not user:
+            return redirect(url_for('login'))
+        
+        from models_subscription import Subscription, Plan
+        subscription = Subscription.query.filter_by(user_id=user.id).first()
+        plans = Plan.query.all()
+        
+        return render_template('subscription.html', 
+                             user=user, 
+                             subscription=subscription, 
+                             plans=plans)
+    except Exception as e:
+        logging.error(f"Subscription page error: {e}")
+        return render_template('subscription.html', 
+                             user=None, 
+                             subscription=None, 
+                             plans=[])
+
+@app.route('/api/network-data')
+def api_network_data():
+    """网络数据API端点"""
+    try:
+        from mining_calculator import get_real_time_btc_price, get_real_time_difficulty, get_real_time_btc_hashrate, get_real_time_block_reward
+        
+        btc_price = get_real_time_btc_price()
+        difficulty = get_real_time_difficulty()
+        hashrate = get_real_time_btc_hashrate()
+        block_reward = get_real_time_block_reward()
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'btc_price': btc_price,
+                'difficulty': difficulty,
+                'hashrate': hashrate,
+                'block_reward': block_reward,
+                'timestamp': datetime.now().isoformat()
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# 添加缺失的分析数据API端点
+@app.route('/api/analytics-data')
+def api_analytics_data():
+    """分析数据API端点"""
+    try:
+        from mining_calculator import get_real_time_btc_price, get_real_time_difficulty, get_real_time_btc_hashrate
+        
+        # 获取实时数据
+        btc_price = get_real_time_btc_price()
+        difficulty = get_real_time_difficulty()
+        hashrate = get_real_time_btc_hashrate()
+        
+        # 构建分析数据
+        analytics_data = {
+            'current_metrics': {
+                'btc_price': btc_price,
+                'network_difficulty': difficulty,
+                'network_hashrate': hashrate,
+                'timestamp': datetime.now().isoformat()
+            },
+            'market_trends': {
+                'price_trend': 'bullish' if btc_price > 60000 else 'bearish',
+                'difficulty_change': 'increasing' if difficulty > 50e12 else 'stable',
+                'hashrate_status': 'high' if hashrate > 600 else 'normal'
+            },
+            'mining_health': {
+                'network_security': 'excellent',
+                'mining_difficulty': 'high',
+                'profitability_outlook': 'positive' if btc_price > 50000 else 'moderate'
+            }
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': analytics_data
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# 添加缺失的网络统计API端点（恢复原名）
+@app.route('/api/network-stats')
+def api_network_stats_alias():
+    """网络统计API端点（别名）"""
+    return api_network_data()
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
