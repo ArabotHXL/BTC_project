@@ -5,10 +5,15 @@ import logging
 import json
 import calendar
 import os
+import time
 from datetime import datetime
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
+
+# 简单的API缓存机制，避免频繁调用
+_API_CACHE = {}
+_CACHE_TIMEOUT = 60  # 60秒缓存
 
 # Constants
 BLOCKS_PER_DAY = 144

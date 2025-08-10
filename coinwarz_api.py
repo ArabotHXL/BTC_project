@@ -155,8 +155,7 @@ def calculate_hashrate_from_difficulty(difficulty, block_time=600):
 
 def get_analytics_hashrate():
     """
-    从分析系统获取网络算力数据
-    优先使用分析仪表盘的算力数据
+    从分析系统获取网络算力数据 - 仅作为备用数据源
     """
     try:
         conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
@@ -171,12 +170,12 @@ def get_analytics_hashrate():
         conn.close()
         
         if data and data[0]:
-            logging.info(f"使用分析系统算力数据: {data[0]} EH/s")
+            logging.info(f"获取分析系统备用算力数据: {data[0]} EH/s")
             return {
                 'hashrate': float(data[0]),
                 'btc_price': float(data[1]) if data[1] else None,
                 'difficulty': float(data[2]) if data[2] else None,
-                'source': 'analytics_dashboard'
+                'source': 'analytics_dashboard_fallback'
             }
     except Exception as e:
         logging.warning(f"无法获取分析系统算力数据: {e}")
