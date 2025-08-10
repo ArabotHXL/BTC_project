@@ -9,72 +9,70 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
-            background-color: #ffffff;
-            color: #212529;
+            background-color: #0d1421;
+            color: #ffffff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         .navbar-dark {
-            background-color: #ffffff !important;
-            border-bottom: 1px solid #dee2e6;
+            background-color: #1a2332 !important;
+            border-bottom: 1px solid #2d3748;
         }
         .card {
-            background-color: #ffffff;
-            border: 1px solid #dee2e6;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            background-color: #1a2332;
+            border: 1px solid #2d3748;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         }
         .card-header {
-            background-color: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
+            background-color: #2d3748;
+            border-bottom: 1px solid #4a5568;
             font-weight: 600;
-            color: #212529 !important;
         }
         .metric-card {
-            background-color: #ffffff;
-            border: 1px solid #dee2e6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
             transition: transform 0.2s ease-in-out;
-            color: #212529 !important;
+            color: #ffffff !important;
         }
         .metric-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
         .metric-value {
             font-size: 2rem;
             font-weight: bold;
-            color: #212529 !important;
+            color: #ffffff !important;
         }
         .metric-label {
             font-size: 0.9rem;
-            color: #6c757d !important;
+            color: #e2e8f0 !important;
         }
         .metric-change {
             font-size: 0.8rem;
-            color: #6c757d !important;
+            color: #cbd5e0 !important;
         }
         .price-up {
-            color: #198754;
+            color: #48bb78;
         }
         .price-down {
-            color: #dc3545;
+            color: #f56565;
         }
         .chart-container {
             position: relative;
             height: 400px;
         }
-        /* Business professional text styling */
+        /* Ensure all text is visible */
         .card-body, .card-header, .h1, .h2, .h3, .h4, .h5, .h6,
-        .small, .fw-bold, div, span, p, .nav-link {
-            color: #212529 !important;
+        .text-white, .small, .fw-bold, div, span, p, .nav-link {
+            color: #ffffff !important;
         }
         .sidebar h5, .sidebar p, .sidebar span, .sidebar a {
-            color: #495057 !important;
+            color: #cbd5e0 !important;
         }
         .text-muted {
-            color: #6c757d !important;
+            color: #cbd5e0 !important;
         }
         .loading-spinner {
             text-align: center;
-            color: #212529;
+            color: #ffffff;
         }
         .status-indicator {
             width: 12px;
@@ -84,11 +82,11 @@
             margin-right: 8px;
         }
         .status-online {
-            background-color: #198754;
+            background-color: #48bb78;
             animation: pulse 2s infinite;
         }
         .status-offline {
-            background-color: #dc3545;
+            background-color: #f56565;
         }
         @keyframes pulse {
             0% { opacity: 1}
@@ -96,31 +94,31 @@
             100% { opacity: 1}
         }
 
-        /* 简洁警报系统样式 */
+        /* 智能警报系统样式优化 */
         #smartAlerts .alert {
-            background-color: #f8f9fa !important;
-            border: 1px solid #dee2e6 !important;
-            color: #212529 !important;
+            background-color: rgba(255, 255, 255, 0.15) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            color: #ffffff !important;
             font-weight: 500;
             margin-bottom: 12px;
         }
 
         #smartAlerts .alert-info {
-            background-color: #e7f3ff !important;
-            border-color: #b3d7ff !important;
-            color: #055160 !important;
+            background-color: rgba(99, 179, 237, 0.25) !important;
+            border-color: rgba(99, 179, 237, 0.5) !important;
+            color: #e6f3ff !important;
         }
 
         #smartAlerts .alert-warning {
-            background-color: #fff3e0 !important;
-            border-color: #ffcc80 !important;
-            color: #664d03 !important;
+            background-color: rgba(237, 137, 54, 0.25) !important;
+            border-color: rgba(237, 137, 54, 0.5) !important;
+            color: #fff3e6 !important;
         }
 
         #smartAlerts .alert-success {
-            background-color: #e8f5e8 !important;
-            border-color: #c3e6c3 !important;
-            color: #0f5132 !important;
+            background-color: rgba(72, 187, 120, 0.25) !important;
+            border-color: rgba(72, 187, 120, 0.5) !important;
+            color: #e6fff0 !important;
         }
 
         #smartAlerts .alert strong {
@@ -133,35 +131,34 @@
             font-size: 1.1em;
         }
 
-        /* AI投资建议样式 */
+        /* AI投资建议样式优化 */
         #aiRecommendations {
-            background-color: #f8f9fa;
+            background-color: rgba(255, 255, 255, 0.05);
             border-radius: 8px;
             padding: 16px;
-            border: 1px solid #dee2e6;
         }
 
         #aiRecommendations h6 {
-            color: #212529 !important;
+            color: #ffffff !important;
             font-weight: 600;
             margin-bottom: 8px;
             font-size: 1rem;
         }
 
         #aiRecommendations .text-success {
-            color: #198754 !important;
+            color: #68d391 !important;
         }
 
         #aiRecommendations .text-warning {
-            color: #fd7e14 !important;
+            color: #fbb040 !important;
         }
 
         #aiRecommendations .text-info {
-            color: #0dcaf0 !important;
+            color: #63b3ed !important;
         }
 
         #aiRecommendations p {
-            color: #495057 !important;
+            color: #e2e8f0 !important;
             font-weight: 400;
             line-height: 1.5;
         }
@@ -172,7 +169,7 @@
         .metric-value {
             font-size: 2.5rem;
             font-weight: bold;
-            color: #212529 !important;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
         .metric-value.price-display {
             font-size: 2.5rem; /* 与右边tiles一致的大小 */
@@ -186,14 +183,14 @@
             font-weight: 500;
         }
         .sidebar {
-            background-color: #f8f9fa;
-            border-right: 1px solid #dee2e6;
+            background-color: #1a2332;
+            border-right: 1px solid #2d3748;
             min-height: calc(100vh - 76px);
             position: sticky;
             top: 0;
         }
         .sidebar .nav-link {
-            color: #495057 !important;
+            color: #cbd5e0 !important;
             border-radius: 6px;
             margin: 4px 0;
             transition: all 0.2s;
@@ -204,8 +201,8 @@
         }
         .sidebar .nav-link:hover,
         .sidebar .nav-link.active {
-            background-color: #e9ecef !important;
-            color: #212529 !important;
+            background-color: #2d3748 !important;
+            color: #ffffff !important;
             transform: translateX(2px);
         }
         .sidebar .nav-link i {
@@ -214,7 +211,7 @@
             text-align: center;
         }
         .main-content {
-            background-color: #ffffff;
+            background-color: #0d1421;
             min-height: calc(100vh - 76px);
             padding: 2rem;
         }
@@ -250,12 +247,12 @@
             padding: 2rem;
         }
         .alert-analytics {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            color: #212529;
+            background-color: #2d3748;
+            border: 1px solid #4a5568;
+            color: #ffffff;
         }
         .card-header h5 {
-            color: #212529 !important;
+            color: #ffffff !important;
         }
         .chart-container canvas {
             background-color: transparent;
