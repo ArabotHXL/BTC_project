@@ -45,6 +45,25 @@
             background-color: rgba(var(--bs-primary-rgb), 0.2);
         }
         
+        /* 头部布局优化 */
+        header .container {
+            max-width: 100%;
+        }
+        
+        header .d-flex.gap-2 {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        #network-stats-container {
+            flex: 1;
+            justify-content: center;
+        }
+        
+        .dropdown.ms-auto {
+            flex-shrink: 0;
+        }
+        
         /* 移动端响应式样式增强 */
         @media (max-width: 768px) {
             .container-fluid {
@@ -59,10 +78,21 @@
                 text-align: center;
             }
             .d-flex.gap-2 {
-                flex-wrap: wrap;
-                justify-content: center;
+                flex-direction: column;
                 gap: 0.5rem !important;
             }
+            
+            /* 移动端时邮箱下拉菜单居中显示 */
+            .dropdown.ms-auto {
+                margin: 0 auto !important;
+                align-self: center;
+            }
+            
+            #network-stats-container {
+                justify-content: center;
+                order: -1; /* 移动端时网络统计在上面 */
+            }
+            
             .btn-group {
                 flex-direction: column;
                 width: 100%;
@@ -144,7 +174,7 @@
                     </div>
                     
                     <!-- Network Stats -->
-                    <div id="network-stats-container" class="d-flex gap-3 text-center">
+                    <div id="network-stats-container" class="d-flex gap-3 text-center me-auto">
                         <div class="stats-item">
                             <span class="badge bg-warning">{{ t('btc_price') }}</span>
                             <span id="btc-price" class="stats-value">$0</span>
@@ -163,8 +193,8 @@
                         </div>
                     </div>
                     
-                    <!-- User Account Info -->
-                    <div class="dropdown">
+                    <!-- User Account Info - Moved to the far right -->
+                    <div class="dropdown ms-auto">
                         <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-person-circle me-1"></i>
                             {% if session.email %}
