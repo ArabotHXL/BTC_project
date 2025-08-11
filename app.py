@@ -3939,6 +3939,47 @@ def api_analytics_data():
             'error': str(e)
         }), 500
 
+# Network History API
+@app.route('/api/network-history')
+@login_required
+def api_network_history():
+    """API endpoint for network history data"""
+    try:
+        # 获取最近30天的网络历史数据
+        historical_data = get_network_snapshots(limit=30)
+        
+        if not historical_data:
+            logger.warning("No network history data available")
+            return jsonify({
+                'success': False,
+                'error': 'No network history data available'
+            })
+        
+        # 格式化数据
+        formatted_data = []
+        for data in reversed(historical_data):  # 按时间顺序排列
+            formatted_data.append({
+                'timestamp': data.timestamp.isoformat(),
+                'btc_price': float(data.btc_price),
+                'network_difficulty': float(data.network_difficulty),
+                'network_hashrate': float(data.network_hashrate)
+            })
+        
+        logger.info(f"网络历史数据API返回 {len(formatted_data)} 条记录")
+        
+        return jsonify({
+            'success': True,
+            'data': formatted_data,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"网络历史数据API错误: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
 # 添加缺失的网络统计API端点（恢复原名）
 @app.route('/api/network-stats')
 def api_network_stats_alias():
