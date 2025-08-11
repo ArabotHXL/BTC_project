@@ -2726,11 +2726,195 @@ def analytics_dashboard():
     except Exception as e:
         print(f"获取分析数据时出错: {e}")
     
-    return render_template('analytics_main.html', 
+    return render_template('analytics_dashboard.html', 
                           user_role=user_role,
                           technical_indicators=technical_indicators,
                           latest_report=latest_report,
-                          current_lang=lang)
+                          lang=lang)
+
+# 历史数据分析API路由
+@app.route('/api/analytics/historical-stats')
+@requires_owner_only
+@log_access_attempt('历史数据统计API')
+def api_historical_stats():
+    """获取历史数据统计信息"""
+    try:
+        days = request.args.get('days', 30, type=int)
+        
+        from analytics_engine import DatabaseManager
+        db_manager = DatabaseManager()
+        db_manager.connect()
+        
+        if not db_manager.connection:
+            return jsonify({'error': '数据库连接失败'}), 500
+            
+        cursor = db_manager.connection.cursor()
+        
+        # 获取指定天数内的价格统计
+        cursor.execute("""
+            SELECT MIN(btc_price) as min_price, MAX(btc_price) as max_price, 
+                   AVG(btc_price) as avg_price, COUNT(*) as total_points
+            FROM market_analytics 
+            WHERE recorded_at >= NOW() - INTERVAL '%s days'
+        """, (days,))
+        
+        price_stats = cursor.fetchone()
+        
+        # 获取算力平均值
+        cursor.execute("""
+            SELECT AVG(network_hashrate) as avg_hashrate
+            FROM market_analytics 
+            WHERE recorded_at >= NOW() - INTERVAL '%s days'
+            AND network_hashrate > 0
+        """, (days,))
+        
+        hashrate_stats = cursor.fetchone()
+        
+        # 获取最近的难度变化
+        cursor.execute("""
+            SELECT network_difficulty, recorded_at
+            FROM market_analytics 
+            WHERE network_difficulty > 0
+            ORDER BY recorded_at DESC 
+            LIMIT 2
+        """)
+        
+        difficulty_records = cursor.fetchall()
+        difficulty_change = 0
+        if len(difficulty_records) >= 2:
+            latest = difficulty_records[0][0]
+            previous = difficulty_records[1][0]
+            if previous > 0:
+                difficulty_change = ((latest - previous) / previous) * 100
+        
+        cursor.close()
+        db_manager.disconnect()
+        
+        return jsonify({
+            'price_range': {
+                'min': float(price_stats[0]) if price_stats[0] else 0,
+                'max': float(price_stats[1]) if price_stats[1] else 0,
+                'avg': float(price_stats[2]) if price_stats[2] else 0
+            } if price_stats else None,
+            'avg_hashrate': float(hashrate_stats[0]) if hashrate_stats and hashrate_stats[0] else 0,
+            'difficulty_change': difficulty_change,
+            'total_points': int(price_stats[3]) if price_stats and price_stats[3] else 0
+        })
+        
+    except Exception as e:
+        logging.error(f"获取历史统计数据失败: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/analytics/price-history')
+@requires_owner_only
+@log_access_attempt('价格历史数据API')
+def api_price_history():
+    """获取价格历史趋势数据"""
+    try:
+        days = request.args.get('days', 30, type=int)
+        
+        from analytics_engine import DatabaseManager
+        db_manager = DatabaseManager()
+        db_manager.connect()
+        
+        if not db_manager.connection:
+            return jsonify({'error': '数据库连接失败'}), 500
+            
+        cursor = db_manager.connection.cursor()
+        
+        # 获取价格历史数据，按时间降序排列
+        cursor.execute("""
+            SELECT btc_price, recorded_at
+            FROM market_analytics 
+            WHERE recorded_at >= NOW() - INTERVAL '%s days'
+            AND btc_price > 0
+            ORDER BY recorded_at ASC
+        """, (days,))
+        
+        records = cursor.fetchall()
+        cursor.close()
+        db_manager.disconnect()
+        
+        if not records:
+            return jsonify({'labels': [], 'prices': []})
+        
+        # 处理数据点，如果太多则采样
+        if len(records) > 100:
+            # 采样，保持大约100个数据点
+            step = len(records) // 100
+            records = records[::step]
+        
+        labels = []
+        prices = []
+        
+        for record in records:
+            price, timestamp = record
+            labels.append(timestamp.strftime('%m/%d %H:%M'))
+            prices.append(float(price))
+        
+        return jsonify({
+            'labels': labels,
+            'prices': prices
+        })
+        
+    except Exception as e:
+        logging.error(f"获取价格历史数据失败: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/analytics/hashrate-history')
+@requires_owner_only
+@log_access_attempt('算力历史数据API')
+def api_hashrate_history():
+    """获取算力历史趋势数据"""
+    try:
+        days = request.args.get('days', 30, type=int)
+        
+        from analytics_engine import DatabaseManager
+        db_manager = DatabaseManager()
+        db_manager.connect()
+        
+        if not db_manager.connection:
+            return jsonify({'error': '数据库连接失败'}), 500
+            
+        cursor = db_manager.connection.cursor()
+        
+        # 获取算力历史数据
+        cursor.execute("""
+            SELECT network_hashrate, recorded_at
+            FROM market_analytics 
+            WHERE recorded_at >= NOW() - INTERVAL '%s days'
+            AND network_hashrate > 0
+            ORDER BY recorded_at ASC
+        """, (days,))
+        
+        records = cursor.fetchall()
+        cursor.close()
+        db_manager.disconnect()
+        
+        if not records:
+            return jsonify({'labels': [], 'hashrates': []})
+        
+        # 处理数据点，如果太多则采样
+        if len(records) > 100:
+            step = len(records) // 100
+            records = records[::step]
+        
+        labels = []
+        hashrates = []
+        
+        for record in records:
+            hashrate, timestamp = record
+            labels.append(timestamp.strftime('%m/%d %H:%M'))
+            hashrates.append(float(hashrate))
+        
+        return jsonify({
+            'labels': labels,
+            'hashrates': hashrates
+        })
+        
+    except Exception as e:
+        logging.error(f"获取算力历史数据失败: {e}")
+        return jsonify({'error': str(e)}), 500
 
 # Unified analytics data endpoint for testing and general use
 @app.route('/api/analytics/data', methods=['GET'])

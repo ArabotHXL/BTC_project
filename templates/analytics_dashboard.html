@@ -277,6 +277,77 @@
                 </div>
             </div>
         </div>
+
+        <!-- 历史数据分析模块 -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            历史数据分析
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- 历史数据统计概览 -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="metric-card card p-3 text-center">
+                                    <small class="text-muted">价格范围 (7天)</small>
+                                    <div class="metric-value text-light" id="priceRange7d">--</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="metric-card card p-3 text-center">
+                                    <small class="text-muted">平均算力 (7天)</small>
+                                    <div class="metric-value text-light" id="avgHashrate7d">--</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="metric-card card p-3 text-center">
+                                    <small class="text-muted">难度调整 (最近)</small>
+                                    <div class="metric-value text-light" id="difficultyChange">--</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="metric-card card p-3 text-center">
+                                    <small class="text-muted">数据点总数</small>
+                                    <div class="metric-value text-light" id="totalDataPoints">--</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 历史趋势图表 -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>BTC 价格历史趋势</h6>
+                                <div class="chart-container">
+                                    <canvas id="priceHistoryChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>网络算力历史趋势</h6>
+                                <div class="chart-container">
+                                    <canvas id="hashrateHistoryChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 时间范围选择器 -->
+                        <div class="row mt-3">
+                            <div class="col-12 text-center">
+                                <div class="btn-group" role="group" aria-label="时间范围选择">
+                                    <button type="button" class="btn btn-outline-primary" onclick="loadHistoricalData(7)">7天</button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="loadHistoricalData(30)">30天</button>
+                                    <button type="button" class="btn btn-outline-primary active" onclick="loadHistoricalData(90)">90天</button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="loadHistoricalData(365)">1年</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -665,15 +736,180 @@
             
             console.log('Server-side data loading completed');
         }
+
+        // 历史数据图表变量
+        let priceHistoryChart;
+        let hashrateHistoryChart;
+        
+        // 初始化历史价格图表
+        function initPriceHistoryChart() {
+            const ctx = document.getElementById('priceHistoryChart').getContext('2d');
+            priceHistoryChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'BTC 价格',
+                        data: [],
+                        borderColor: '#f8d000',
+                        backgroundColor: 'rgba(248, 208, 0, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#ffffff' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { 
+                                color: '#ffffff',
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#ffffff' } }
+                    }
+                }
+            });
+        }
+
+        // 初始化历史算力图表
+        function initHashrateHistoryChart() {
+            const ctx = document.getElementById('hashrateHistoryChart').getContext('2d');
+            hashrateHistoryChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '网络算力 (EH/s)',
+                        data: [],
+                        borderColor: '#48bb78',
+                        backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#ffffff' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { 
+                                color: '#ffffff',
+                                callback: function(value) {
+                                    return value.toFixed(2) + ' EH/s';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#ffffff' } }
+                    }
+                }
+            });
+        }
+
+        // 加载历史数据
+        function loadHistoricalData(days = 90) {
+            // 更新按钮状态
+            document.querySelectorAll('.btn-group button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
+
+            console.log('Loading historical data for', days, 'days');
+
+            // 获取历史数据统计
+            fetch('/api/analytics/historical-stats?days=' + days)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('Historical stats error:', data.error);
+                        return;
+                    }
+                    
+                    // 更新统计卡片
+                    document.getElementById('priceRange7d').textContent = 
+                        data.price_range ? `$${data.price_range.min.toLocaleString()} - $${data.price_range.max.toLocaleString()}` : '--';
+                    document.getElementById('avgHashrate7d').textContent = 
+                        data.avg_hashrate ? `${data.avg_hashrate.toFixed(2)} EH/s` : '--';
+                    document.getElementById('difficultyChange').textContent = 
+                        data.difficulty_change ? `${data.difficulty_change > 0 ? '+' : ''}${data.difficulty_change.toFixed(2)}%` : '--';
+                    document.getElementById('totalDataPoints').textContent = 
+                        data.total_points ? data.total_points.toLocaleString() : '--';
+                })
+                .catch(error => {
+                    console.error('Error loading historical stats:', error);
+                });
+
+            // 获取历史价格趋势
+            fetch('/api/analytics/price-history?days=' + days)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('Price history error:', data.error);
+                        return;
+                    }
+                    
+                    if (priceHistoryChart && data.labels && data.prices) {
+                        priceHistoryChart.data.labels = data.labels;
+                        priceHistoryChart.data.datasets[0].data = data.prices;
+                        priceHistoryChart.update();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading price history:', error);
+                });
+
+            // 获取历史算力趋势
+            fetch('/api/analytics/hashrate-history?days=' + days)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('Hashrate history error:', data.error);
+                        return;
+                    }
+                    
+                    if (hashrateHistoryChart && data.labels && data.hashrates) {
+                        hashrateHistoryChart.data.labels = data.labels;
+                        hashrateHistoryChart.data.datasets[0].data = data.hashrates;
+                        hashrateHistoryChart.update();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading hashrate history:', error);
+                });
+        }
         
         // 初始化和定时更新
         document.addEventListener('DOMContentLoaded', function() {
             initPriceChart();
+            initPriceHistoryChart();
+            initHashrateHistoryChart();
             
             // 立即加载数据
             fetchMarketData();
             fetchTechnicalIndicators(); // 立即加载技术指标
             fetchPriceHistory();
+            loadHistoricalData(90); // 默认加载90天历史数据
             
             // 加载服务器端传递的数据
             console.log('Loading server-side data...');
