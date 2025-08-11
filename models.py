@@ -184,6 +184,10 @@ class UserAccess(db.Model):
         """验证邮箱"""
         self.is_email_verified = True
         self.email_verification_token = None
+    
+    def calculate_expiry(self):
+        """重新计算到期时间（基于access_days）"""
+        self.expires_at = self.created_at + timedelta(days=self.access_days)
         
     def __repr__(self):
         return f"<UserAccess {self.name} ({self.email}) - {self.access_status}>"
