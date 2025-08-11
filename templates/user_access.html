@@ -416,10 +416,27 @@
                      data-email="{{ user.email|lower }}" 
                      data-company="{{ (user.company or '')|lower }}" 
                      data-role="{{ user.role }}"
-                     data-status="{{ 'active' if user.has_access else 'expired' }}">
+                     data-status="{{ 'active' if user.has_access else 'expired' }}"
+                     style="
+                     {% if user.role == 'owner' %}background: linear-gradient(135deg, rgba(220, 53, 69, 0.3), rgba(220, 53, 69, 0.15)) !important; border-left: 6px solid #dc3545 !important;
+                     {% elif user.role == 'admin' %}background: linear-gradient(135deg, rgba(253, 126, 20, 0.3), rgba(253, 126, 20, 0.15)) !important; border-left: 6px solid #fd7e14 !important;
+                     {% elif user.role == 'mining_site' %}background: linear-gradient(135deg, rgba(32, 201, 151, 0.3), rgba(32, 201, 151, 0.15)) !important; border-left: 6px solid #20c997 !important;
+                     {% else %}background: linear-gradient(135deg, rgba(111, 66, 193, 0.3), rgba(111, 66, 193, 0.15)) !important; border-left: 6px solid #6f42c1 !important;
+                     {% endif %}
+                     border-bottom: 1px solid #333; transition: all 0.3s ease;
+                     "">
                     <div class="user-list-card">
                         <div class="d-flex align-items-center">
-                            <div class="user-avatar me-3">
+                            <div class="user-avatar me-3" style="
+                                width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; 
+                                justify-content: center; font-weight: bold; font-size: 18px; color: white;
+                                {% if user.role == 'owner' %}background: linear-gradient(135deg, #dc3545, #c82333) !important; border: 2px solid rgba(220, 53, 69, 0.8);
+                                {% elif user.role == 'admin' %}background: linear-gradient(135deg, #fd7e14, #e8640c) !important; border: 2px solid rgba(253, 126, 20, 0.8);
+                                {% elif user.role == 'mining_site' %}background: linear-gradient(135deg, #20c997, #1ba085) !important; border: 2px solid rgba(32, 201, 151, 0.8);
+                                {% else %}background: linear-gradient(135deg, #6f42c1, #59359a) !important; border: 2px solid rgba(111, 66, 193, 0.8);
+                                {% endif %}
+                                box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+                            ">
                                 {{ user.name[0]|upper if user.name else '?' }}
                             </div>
                             <div class="user-info flex-grow-1">
