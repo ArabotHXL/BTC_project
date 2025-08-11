@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 2025)
 
+### Professional Landing Page and Navigation Architecture (August 11, 2025)
+- **Landing Page Design**: Created professional introduction page at root path `/` with modern dark theme and golden accents
+- **Page Flow Architecture**: Established clear navigation hierarchy - Landing Page → Login → Main Dashboard (`/main`) → Role-based Functions
+- **Dual Entry Points**: Landing page offers both "Login" and "Free Trial" entry points leading to authentication system
+- **Feature Showcase**: Comprehensive display of 6 core features with statistical highlights (17+ ASIC models, 4+ data sources, 98%+ accuracy)
+- **Bilingual Support**: Complete Chinese/English language switching throughout landing page and navigation flow
+- **Responsive Design**: Mobile-optimized interface supporting all screen sizes from 320px to desktop
+
 ### Advanced Permission Control System (August 11, 2025)
 - **Complete Permission Matrix**: Created comprehensive permission allocation matrix defining 5-tier access control system (Owner/Admin/Mining_site/Manager/Guest)
 - **Advanced Decorators**: Implemented sophisticated permission decorators for fine-grained access control with automatic role validation
