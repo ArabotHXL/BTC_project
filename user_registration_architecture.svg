@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="800" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#f8d000;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffa500;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="authGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4CAF50;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#45a049;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="adminGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF6B6B;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#EE5A52;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="dbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4ECDC4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#44A08D;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 背景 -->
+  <rect width="1200" height="800" fill="#1a1a1a"/>
+  
+  <!-- 标题 -->
+  <rect x="0" y="0" width="1200" height="60" fill="url(#headerGrad)"/>
+  <text x="600" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#000">
+    BTC Mining Calculator - 用户注册与管理系统架构
+  </text>
+  
+  <!-- 前端用户界面层 -->
+  <g id="frontend-layer">
+    <rect x="50" y="100" width="300" height="150" rx="10" fill="#2c3e50" stroke="#34495e" stroke-width="2"/>
+    <text x="200" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ecf0f1">前端用户界面</text>
+    
+    <!-- 用户注册 -->
+    <rect x="70" y="140" width="120" height="40" rx="5" fill="url(#authGrad)" stroke="#2ecc71" stroke-width="1"/>
+    <text x="130" y="163" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#fff">用户注册页面</text>
+    
+    <!-- 登录界面 -->
+    <rect x="210" y="140" width="120" height="40" rx="5" fill="url(#authGrad)" stroke="#2ecc71" stroke-width="1"/>
+    <text x="270" y="163" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#fff">登录界面</text>
+    
+    <!-- 邮箱验证 -->
+    <rect x="70" y="190" width="120" height="40" rx="5" fill="#95a5a6" stroke="#7f8c8d" stroke-width="1"/>
+    <text x="130" y="213" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#fff">邮箱验证</text>
+    
+    <!-- 主页面 -->
+    <rect x="210" y="190" width="120" height="40" rx="5" fill="#3498db" stroke="#2980b9" stroke-width="1"/>
+    <text x="270" y="213" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#fff">主页面</text>
+  </g>
+  
+  <!-- 认证与权限层 -->
+  <g id="auth-layer">
+    <rect x="400" y="100" width="350" height="200" rx="10" fill="#2c3e50" stroke="#34495e" stroke-width="2"/>
+    <text x="575" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ecf0f1">认证与权限管理</text>
+    
+    <!-- 密码认证 -->
+    <rect x="420" y="140" width="150" height="50" rx="5" fill="url(#authGrad)" stroke="#2ecc71" stroke-width="1"/>
+    <text x="495" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#fff">密码哈希验证</text>
+    <text x="495" y="180" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#fff">Werkzeug Security</text>
+    
+    <!-- 角色管理 -->
+    <rect x="580" y="140" width="150" height="50" rx="5" fill="#e74c3c" stroke="#c0392b" stroke-width="1"/>
+    <text x="655" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#fff">角色权限控制</text>
+    <text x="655" y="180" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#fff">Owner/Admin/User/Guest</text>
+    
+    <!-- 会话管理 -->
+    <rect x="420" y="200" width="150" height="40" rx="5" fill="#9b59b6" stroke="#8e44ad" stroke-width="1"/>
+    <text x="495" y="223" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#fff">会话管理</text>
+    
+    <!-- 访问控制 -->
+    <rect x="580" y="200" width="150" height="40" rx="5" fill="#f39c12" stroke="#e67e22" stroke-width="1"/>
+    <text x="655" y="223" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#fff">访问期限控制</text>
+    
+    <!-- 邮箱验证令牌 -->
+    <rect x="420" y="250" width="310" height="40" rx="5" fill="#1abc9c" stroke="#16a085" stroke-width="1"/>
+    <text x="575" y="273" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#fff">邮箱验证令牌系统</text>
+  </g>
+  
+  <!-- 后台管理层 -->
+  <g id="admin-layer">
+    <rect x="800" y="100" width="350" height="200" rx="10" fill="#2c3e50" stroke="#34495e" stroke-width="2"/>
+    <text x="975" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ecf0f1">后台管理系统</text>
+    
+    <!-- 用户创建 -->
+    <rect x="820" y="140" width="150" height="50" rx="5" fill="url(#adminGrad)" stroke="#e74c3c" stroke-width="1"/>
+    <text x="895" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#fff">快速创建用户</text>
+    <text x="895" y="180" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#fff">测试账户模板</text>
+    
+    <!-- 用户列表 -->
+    <rect x="980" y="140" width="150" height="50" rx="5" fill="#34495e" stroke="#2c3e50" stroke-width="1"/>
+    <text x="1055" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#fff">用户列表管理</text>
+    <text x="1055" y="180" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#fff">状态监控</text>
+    
+    <!-- 权限操作 -->
+    <rect x="820" y="200" width="150" height="40" rx="5" fill="#e67e22" stroke="#d35400" stroke-width="1"/>
+    <text x="895" y="223" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#fff">权限管理</text>
+    
+    <!-- 批量操作 -->
+    <rect x="980" y="200" width="150" height="40" rx="5" fill="#8e44ad" stroke="#7d3c98" stroke-width="1"/>
+    <text x="1055" y="223" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#fff">批量操作</text>
+    
+    <!-- API接口 -->
+    <rect x="820" y="250" width="310" height="40" rx="5" fill="#2980b9" stroke="#1f618d" stroke-width="1"/>
+    <text x="975" y="273" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#fff">REST API 接口 (验证邮箱、延长访问期)</text>
+  </g>
+  
+  <!-- 数据库层 -->
+  <g id="database-layer">
+    <rect x="200" y="350" width="800" height="200" rx="10" fill="#2c3e50" stroke="#34495e" stroke-width="2"/>
+    <text x="600" y="375" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ecf0f1">PostgreSQL 数据库</text>
+    
+    <!-- 用户表 -->
+    <rect x="220" y="390" width="180" height="140" rx="5" fill="url(#dbGrad)" stroke="#4ECDC4" stroke-width="2"/>
+    <text x="310" y="415" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#fff">user_access</text>
+    <line x1="220" y1="425" x2="400" y2="425" stroke="#fff" stroke-width="1"/>
+    <text x="230" y="440" font-family="Arial, sans-serif" font-size="10" fill="#fff">• id (主键)</text>
+    <text x="230" y="455" font-family="Arial, sans-serif" font-size="10" fill="#fff">• email (唯一)</text>
+    <text x="230" y="470" font-family="Arial, sans-serif" font-size="10" fill="#fff">• username (唯一)</text>
+    <text x="230" y="485" font-family="Arial, sans-serif" font-size="10" fill="#fff">• password_hash</text>
+    <text x="230" y="500" font-family="Arial, sans-serif" font-size="10" fill="#fff">• is_email_verified</text>
+    <text x="230" y="515" font-family="Arial, sans-serif" font-size="10" fill="#fff">• verification_token</text>
+    
+    <!-- 登录记录表 -->
+    <rect x="420" y="390" width="180" height="140" rx="5" fill="#95a5a6" stroke="#7f8c8d" stroke-width="2"/>
+    <text x="510" y="415" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#fff">login_records</text>
+    <line x1="420" y1="425" x2="600" y2="425" stroke="#fff" stroke-width="1"/>
+    <text x="430" y="440" font-family="Arial, sans-serif" font-size="10" fill="#fff">• id (主键)</text>
+    <text x="430" y="455" font-family="Arial, sans-serif" font-size="10" fill="#fff">• email</text>
+    <text x="430" y="470" font-family="Arial, sans-serif" font-size="10" fill="#fff">• login_time</text>
+    <text x="430" y="485" font-family="Arial, sans-serif" font-size="10" fill="#fff">• successful</text>
+    <text x="430" y="500" font-family="Arial, sans-serif" font-size="10" fill="#fff">• ip_address</text>
+    <text x="430" y="515" font-family="Arial, sans-serif" font-size="10" fill="#fff">• login_location</text>
+    
+    <!-- 网络快照表 -->
+    <rect x="620" y="390" width="180" height="140" rx="5" fill="#3498db" stroke="#2980b9" stroke-width="2"/>
+    <text x="710" y="415" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#fff">network_snapshots</text>
+    <line x1="620" y1="425" x2="800" y2="425" stroke="#fff" stroke-width="1"/>
+    <text x="630" y="440" font-family="Arial, sans-serif" font-size="10" fill="#fff">• id (主键)</text>
+    <text x="630" y="455" font-family="Arial, sans-serif" font-size="10" fill="#fff">• btc_price</text>
+    <text x="630" y="470" font-family="Arial, sans-serif" font-size="10" fill="#fff">• network_difficulty</text>
+    <text x="630" y="485" font-family="Arial, sans-serif" font-size="10" fill="#fff">• network_hashrate</text>
+    <text x="630" y="500" font-family="Arial, sans-serif" font-size="10" fill="#fff">• recorded_at</text>
+    <text x="630" y="515" font-family="Arial, sans-serif" font-size="10" fill="#fff">• is_valid</text>
+    
+    <!-- 订阅表 -->
+    <rect x="820" y="390" width="160" height="140" rx="5" fill="#e74c3c" stroke="#c0392b" stroke-width="2"/>
+    <text x="900" y="415" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#fff">subscriptions</text>
+    <line x1="820" y1="425" x2="980" y2="425" stroke="#fff" stroke-width="1"/>
+    <text x="830" y="440" font-family="Arial, sans-serif" font-size="10" fill="#fff">• id (主键)</text>
+    <text x="830" y="455" font-family="Arial, sans-serif" font-size="10" fill="#fff">• user_id (外键)</text>
+    <text x="830" y="470" font-family="Arial, sans-serif" font-size="10" fill="#fff">• plan_id</text>
+    <text x="830" y="485" font-family="Arial, sans-serif" font-size="10" fill="#fff">• stripe_id</text>
+    <text x="830" y="500" font-family="Arial, sans-serif" font-size="10" fill="#fff">• status</text>
+    <text x="830" y="515" font-family="Arial, sans-serif" font-size="10" fill="#fff">• expires_at</text>
+  </g>
+  
+  <!-- 业务功能层 -->
+  <g id="business-layer">
+    <rect x="50" y="580" width="1100" height="180" rx="10" fill="#2c3e50" stroke="#34495e" stroke-width="2"/>
+    <text x="600" y="605" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ecf0f1">核心业务功能模块</text>
+    
+    <!-- 挖矿计算器 -->
+    <rect x="80" y="620" width="200" height="120" rx="5" fill="#f39c12" stroke="#e67e22" stroke-width="2"/>
+    <text x="180" y="645" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#fff">挖矿计算器</text>
+    <text x="90" y="665" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 双算法验证</text>
+    <text x="90" y="680" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 17种矿机模型</text>
+    <text x="90" y="695" font-family="Arial, sans-serif" font-size="10" fill="#fff">• ROI分析</text>
+    <text x="90" y="710" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 功率削减分析</text>
+    <text x="90" y="725" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 批量计算</text>
+    
+    <!-- 数据分析 -->
+    <rect x="300" y="620" width="200" height="120" rx="5" fill="#9b59b6" stroke="#8e44ad" stroke-width="2"/>
+    <text x="400" y="645" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#fff">实时数据分析</text>
+    <text x="310" y="665" font-family="Arial, sans-serif" font-size="10" fill="#fff">• BTC价格监控</text>
+    <text x="310" y="680" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 网络难度追踪</text>
+    <text x="310" y="695" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 专业报告生成</text>
+    <text x="310" y="710" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 技术指标分析</text>
+    <text x="310" y="725" font-family="Arial, sans-serif" font-size="10" fill="#fff">• ARIMA预测</text>
+    
+    <!-- CRM系统 -->
+    <rect x="520" y="620" width="200" height="120" rx="5" fill="#1abc9c" stroke="#16a085" stroke-width="2"/>
+    <text x="620" y="645" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#fff">CRM管理系统</text>
+    <text x="530" y="665" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 客户生命周期</text>
+    <text x="530" y="680" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 销售线索跟踪</text>
+    <text x="530" y="695" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 交易管理</text>
+    <text x="530" y="710" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 佣金计算</text>
+    <text x="530" y="725" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 活动记录</text>
+    
+    <!-- 订阅系统 -->
+    <rect x="740" y="620" width="200" height="120" rx="5" fill="#e74c3c" stroke="#c0392b" stroke-width="2"/>
+    <text x="840" y="645" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#fff">订阅计费系统</text>
+    <text x="750" y="665" font-family="Arial, sans-serif" font-size="10" fill="#fff">• Stripe支付集成</text>
+    <text x="750" y="680" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 三档订阅计划</text>
+    <text x="750" y="695" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 功能分级控制</text>
+    <text x="750" y="710" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 自动续费</text>
+    <text x="750" y="725" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 发票管理</text>
+    
+    <!-- 多语言系统 -->
+    <rect x="960" y="620" width="170" height="120" rx="5" fill="#34495e" stroke="#2c3e50" stroke-width="2"/>
+    <text x="1045" y="645" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#fff">多语言系统</text>
+    <text x="970" y="665" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 中英文切换</text>
+    <text x="970" y="680" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 动态翻译</text>
+    <text x="970" y="695" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 界面本地化</text>
+    <text x="970" y="710" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 用户偏好</text>
+    <text x="970" y="725" font-family="Arial, sans-serif" font-size="10" fill="#fff">• 语言持久化</text>
+  </g>
+  
+  <!-- 连接线 -->
+  <!-- 前端到认证层 -->
+  <line x1="350" y1="175" x2="400" y2="175" stroke="#3498db" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- 认证层到管理层 -->
+  <line x1="750" y1="200" x2="800" y2="200" stroke="#e74c3c" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- 认证层到数据库 -->
+  <line x1="575" y1="300" x2="575" y2="350" stroke="#4ECDC4" stroke-width="3" marker-end="url(#arrowhead)"/>
+  
+  <!-- 管理层到数据库 -->
+  <line x1="975" y1="300" x2="975" y2="350" stroke="#4ECDC4" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="975" y1="350" x2="800" y2="350" stroke="#4ECDC4" stroke-width="2"/>
+  
+  <!-- 数据库到业务层 -->
+  <line x1="600" y1="550" x2="600" y2="580" stroke="#f39c12" stroke-width="3" marker-end="url(#arrowhead)"/>
+  
+  <!-- 箭头标记 -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+     refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#fff" />
+    </marker>
+  </defs>
+  
+  <!-- 版权信息 -->
+  <text x="600" y="790" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#95a5a6">
+    BTC Mining Calculator - 用户注册与管理系统功能架构图 © 2025
+  </text>
+</svg>
