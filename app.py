@@ -2192,15 +2192,77 @@ def view_customer_crm(user_id):
 @app.route('/network/history')
 @login_required
 def network_history():
-    """网络历史数据分析页面 - 暂时禁用"""
+    """网络历史数据分析页面"""
     if not has_role(['owner', 'admin', 'mining_site']):
         flash('您没有权限访问此页面', 'danger')
         return redirect(url_for('index'))
     
-    # 显示维护页面而不是有问题的数据
-    return render_template('maintenance.html', 
-                          message="网络分析功能正在维护中，请稍后再试。",
-                          title="Network Analysis - Under Maintenance")
+    try:
+        # 获取最近30天的网络数据
+        end_date = datetime.utcnow()
+        start_date = end_date - timedelta(days=30)
+        
+        # 从数据库获取历史数据
+        snapshots = NetworkSnapshot.query.filter(
+            NetworkSnapshot.recorded_at >= start_date,
+            NetworkSnapshot.is_valid.is_(True)
+        ).order_by(NetworkSnapshot.recorded_at.asc()).all()
+        
+        # 准备图表数据
+        price_data = []
+        difficulty_data = []
+        hashrate_data = []
+        dates = []
+        
+        for snapshot in snapshots:
+            dates.append(snapshot.recorded_at.strftime('%Y-%m-%d'))
+            price_data.append(float(snapshot.btc_price))
+            difficulty_data.append(float(snapshot.network_difficulty))
+            hashrate_data.append(float(snapshot.network_hashrate))
+        
+        # 计算统计数据
+        if snapshots:
+            current_price = snapshots[-1].btc_price
+            current_difficulty = snapshots[-1].network_difficulty
+            current_hashrate = snapshots[-1].network_hashrate
+            
+            # 30天价格变化
+            price_change = ((snapshots[-1].btc_price - snapshots[0].btc_price) / snapshots[0].btc_price) * 100 if len(snapshots) > 1 else 0
+            
+            # 难度变化
+            difficulty_change = ((snapshots[-1].network_difficulty - snapshots[0].network_difficulty) / snapshots[0].network_difficulty) * 100 if len(snapshots) > 1 else 0
+            
+            # 算力变化
+            hashrate_change = ((snapshots[-1].network_hashrate - snapshots[0].network_hashrate) / snapshots[0].network_hashrate) * 100 if len(snapshots) > 1 else 0
+        else:
+            current_price = current_difficulty = current_hashrate = 0
+            price_change = difficulty_change = hashrate_change = 0
+        
+        stats = {
+            'current_price': current_price,
+            'current_difficulty': current_difficulty,
+            'current_hashrate': current_hashrate,
+            'price_change': price_change,
+            'difficulty_change': difficulty_change,
+            'hashrate_change': hashrate_change,
+            'data_points': len(snapshots)
+        }
+        
+        chart_data = {
+            'dates': dates,
+            'price_data': price_data,
+            'difficulty_data': difficulty_data,
+            'hashrate_data': hashrate_data
+        }
+        
+        return render_template('network_history.html', 
+                             stats=stats, 
+                             chart_data=chart_data)
+                             
+    except Exception as e:
+        logging.error(f"网络历史数据获取失败: {e}")
+        flash('数据加载失败，请稍后再试', 'danger')
+        return redirect(url_for('index'))
 
 # Network analysis APIs temporarily disabled
 # @app.route('/api/network/stats')
