@@ -3395,6 +3395,112 @@ def verify_email_token(token):
         flash('验证失败，请重试', 'error')
         return redirect(url_for('login'))
 
+@app.route('/admin/create-user', methods=['GET', 'POST'])
+@login_required
+def admin_create_user():
+    """管理员创建测试用户"""
+    # 检查是否有管理员权限
+    if not has_role(['owner', 'admin']):
+        flash('需要管理员权限才能创建用户', 'error')
+        return redirect(url_for('index'))
+    
+    if request.method == 'GET':
+        return render_template('admin/create_user.html')
+    
+    try:
+        email = request.form.get('email', '').strip().lower()
+        username = request.form.get('username', '').strip().lower()
+        password = request.form.get('password', '')
+        name = request.form.get('name', '').strip()
+        role = request.form.get('role', 'user')
+        access_days = int(request.form.get('access_days', 30))
+        skip_email_verification = request.form.get('skip_email_verification') == 'on'
+        
+        # 验证必填字段
+        if not email:
+            flash('邮箱地址为必填项', 'error')
+            return render_template('admin/create_user.html')
+        
+        # 检查邮箱是否已存在
+        if UserAccess.query.filter_by(email=email).first():
+            flash('该邮箱已存在', 'error')
+            return render_template('admin/create_user.html')
+        
+        # 检查用户名是否已存在
+        if username and UserAccess.query.filter_by(username=username).first():
+            flash('该用户名已存在', 'error')
+            return render_template('admin/create_user.html')
+        
+        # 创建新用户
+        new_user = UserAccess(
+            name=name or username or email.split('@')[0],
+            email=email,
+            username=username if username else None,
+            access_days=access_days,
+            role=role
+        )
+        
+        # 设置密码
+        if password:
+            new_user.set_password(password)
+        
+        # 设置邮箱验证状态
+        if skip_email_verification:
+            new_user.is_email_verified = True
+        else:
+            new_user.generate_email_verification_token()
+        
+        db.session.add(new_user)
+        db.session.commit()
+        
+        flash(f'用户 {email} 创建成功！角色: {role}, 访问天数: {access_days}', 'success')
+        return redirect(url_for('admin_create_user'))
+        
+    except Exception as e:
+        logging.error(f"管理员创建用户错误: {e}")
+        flash('创建用户失败，请重试', 'error')
+        return render_template('admin/create_user.html')
+
+@app.route('/admin/users')
+@login_required  
+def admin_user_list():
+    """管理员查看用户列表"""
+    if not has_role(['owner', 'admin']):
+        flash('需要管理员权限', 'error')
+        return redirect(url_for('index'))
+    
+    users = UserAccess.query.order_by(UserAccess.created_at.desc()).all()
+    return render_template('admin/user_list.html', users=users)
+
+@app.route('/admin/verify-user/<int:user_id>', methods=['POST'])
+@login_required
+def admin_verify_user(user_id):
+    """管理员验证用户邮箱"""
+    if not has_role(['owner', 'admin']):
+        return jsonify({'error': '权限不足'}), 403
+    
+    user = UserAccess.query.get_or_404(user_id)
+    user.verify_email()
+    db.session.commit()
+    
+    return jsonify({'success': True})
+
+@app.route('/admin/extend-access/<int:user_id>', methods=['POST'])
+@login_required
+def admin_extend_access(user_id):
+    """管理员延长用户访问时间"""
+    if not has_role(['owner', 'admin']):
+        return jsonify({'error': '权限不足'}), 403
+    
+    data = request.get_json()
+    days = data.get('days', 30)
+    
+    user = UserAccess.query.get_or_404(user_id)
+    user.extend_access(days)
+    db.session.commit()
+    
+    return jsonify({'success': True})
+
 # 添加订阅系统路由
 @app.route('/pricing')
 def pricing():
