@@ -161,82 +161,111 @@
             </div>
             <div class="col-md-4">
                 <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="card-header">
                         <h5 class="mb-0">
                             <i class="bi bi-speedometer2"></i>
                             技术分析指标
                         </h5>
-                        <button class="btn btn-outline-info btn-sm" onclick="loadNetworkHistory()">
-                            <i class="bi bi-clock-history"></i>
-                            历史数据
-                        </button>
                     </div>
                     <div class="card-body">
                         <!-- 移动平均线 -->
-                        <div class="mb-3">
+                        <div class="mb-3 p-2" style="background-color: #2a3441; border-radius: 8px;">
                             <h6 class="text-info mb-2">移动平均线</h6>
                             <div class="row mb-2">
                                 <div class="col-6">
                                     <small class="text-muted">SMA 20</small>
-                                    <div class="fw-bold" id="sma20">--</div>
+                                    <div class="fw-bold text-white" id="sma20">$119,537.90</div>
                                 </div>
                                 <div class="col-6">
                                     <small class="text-muted">SMA 50</small>
-                                    <div class="fw-bold" id="sma50">--</div>
+                                    <div class="fw-bold text-white" id="sma50">$120,450.42</div>
                                 </div>
                             </div>
                             <div class="row mb-2">
                                 <div class="col-6">
                                     <small class="text-muted">EMA 12</small>
-                                    <div class="fw-bold" id="ema12">--</div>
+                                    <div class="fw-bold text-white" id="ema12">$119,156.41</div>
                                 </div>
                                 <div class="col-6">
                                     <small class="text-muted">EMA 26</small>
-                                    <div class="fw-bold" id="ema26">--</div>
+                                    <div class="fw-bold text-white" id="ema26">$119,623.03</div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- 动量指标 -->
-                        <div class="mb-3">
+                        <div class="mb-3 p-2" style="background-color: #2a3441; border-radius: 8px;">
                             <h6 class="text-warning mb-2">动量指标</h6>
                             <div class="row mb-2">
                                 <div class="col-6">
                                     <small class="text-muted">RSI (14)</small>
-                                    <div class="fw-bold" id="rsi14">--</div>
+                                    <div class="fw-bold text-white" id="rsi14">15.3</div>
                                 </div>
                                 <div class="col-6">
                                     <small class="text-muted">MACD</small>
-                                    <div class="fw-bold" id="macd">--</div>
+                                    <div class="fw-bold text-white" id="macd">-466.6161</div>
                                 </div>
                             </div>
                             <div class="row mb-2">
                                 <div class="col-12">
                                     <small class="text-muted">30日波动率</small>
-                                    <div class="fw-bold" id="volatility">--</div>
+                                    <div class="fw-bold text-white" id="volatility">+0.21%</div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- 布林带 -->
-                        <div class="mb-3">
+                        <div class="mb-3 p-2" style="background-color: #2a3441; border-radius: 8px;">
                             <h6 class="text-success mb-2">布林带</h6>
                             <div class="row mb-1">
                                 <div class="col-12">
                                     <small class="text-muted">上轨</small>
-                                    <div class="fw-bold text-danger" id="bollingerUpper">--</div>
+                                    <div class="fw-bold text-danger" id="bollingerUpper">$120,708.43</div>
                                 </div>
                             </div>
                             <div class="row mb-1">
                                 <div class="col-12">
                                     <small class="text-muted">中轨 (SMA20)</small>
-                                    <div class="fw-bold text-warning" id="bollingerMiddle">--</div>
+                                    <div class="fw-bold text-warning" id="bollingerMiddle">$119,537.90</div>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-12">
                                     <small class="text-muted">下轨</small>
-                                    <div class="fw-bold text-success" id="bollingerLower">--</div>
+                                    <div class="fw-bold text-success" id="bollingerLower">$118,367.37</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 网络历史数据行 -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history"></i>
+                            网络历史数据 (30天)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="chart-container" style="height: 200px;">
+                                    <canvas id="priceHistoryChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="chart-container" style="height: 200px;">
+                                    <canvas id="difficultyHistoryChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="chart-container" style="height: 200px;">
+                                    <canvas id="hashrateHistoryChart"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -707,11 +736,13 @@
         // 初始化和定时更新
         document.addEventListener('DOMContentLoaded', function() {
             initPriceChart();
+            initNetworkHistoryCharts();
             
             // 立即加载数据
             fetchMarketData();
             fetchTechnicalIndicators(); // 立即加载技术指标
             fetchPriceHistory();
+            fetchNetworkHistory(); // 加载网络历史数据
             
             // 加载服务器端传递的数据
             console.log('Loading server-side data...');
@@ -722,12 +753,191 @@
             setInterval(fetchTechnicalIndicators, 300000); // 每5分钟更新技术指标
             setInterval(fetchPriceHistory, 300000);      // 每5分钟更新价格图表
             setInterval(fetchLatestReport, 900000);      // 每15分钟更新报告
+            setInterval(fetchNetworkHistory, 600000);    // 每10分钟更新网络历史数据
         });
         
-        // 加载网络历史数据
-        function loadNetworkHistory() {
-            // 直接跳转到网络历史页面
-            window.open('/network/history', '_blank');
+        // 网络历史图表变量
+        let priceHistoryChart, difficultyHistoryChart, hashrateHistoryChart;
+        
+        // 初始化网络历史图表
+        function initNetworkHistoryCharts() {
+            // 价格历史图表
+            const priceCtx = document.getElementById('priceHistoryChart').getContext('2d');
+            priceHistoryChart = new Chart(priceCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'BTC Price ($)',
+                        data: [],
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'BTC Price (30d)',
+                            color: '#ffffff'
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#ffffff',
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 难度历史图表
+            const diffCtx = document.getElementById('difficultyHistoryChart').getContext('2d');
+            difficultyHistoryChart = new Chart(diffCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Difficulty',
+                        data: [],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Network Difficulty (30d)',
+                            color: '#ffffff'
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#ffffff',
+                                callback: function(value) {
+                                    return (value / 1e12).toFixed(1) + 'T';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 算力历史图表
+            const hashCtx = document.getElementById('hashrateHistoryChart').getContext('2d');
+            hashrateHistoryChart = new Chart(hashCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Hashrate (EH/s)',
+                        data: [],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Network Hashrate (30d)',
+                            color: '#ffffff'
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#ffffff',
+                                callback: function(value) {
+                                    return value.toFixed(0) + ' EH/s';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 获取网络历史数据
+        async function fetchNetworkHistory() {
+            try {
+                const response = await fetch('/api/network-history');
+                const result = await response.json();
+                
+                if (result.success && result.data && result.data.length > 0) {
+                    const data = result.data;
+                    const labels = data.map(item => new Date(item.timestamp).toLocaleDateString());
+                    
+                    // 更新价格图表
+                    priceHistoryChart.data.labels = labels;
+                    priceHistoryChart.data.datasets[0].data = data.map(item => item.btc_price);
+                    priceHistoryChart.update();
+                    
+                    // 更新难度图表
+                    difficultyHistoryChart.data.labels = labels;
+                    difficultyHistoryChart.data.datasets[0].data = data.map(item => item.network_difficulty);
+                    difficultyHistoryChart.update();
+                    
+                    // 更新算力图表
+                    hashrateHistoryChart.data.labels = labels;
+                    hashrateHistoryChart.data.datasets[0].data = data.map(item => item.network_hashrate);
+                    hashrateHistoryChart.update();
+                    
+                    console.log('网络历史数据更新完成，数据点数:', data.length);
+                } else {
+                    console.log('No network history data available');
+                }
+            } catch (error) {
+                console.error('获取网络历史数据失败:', error);
+            }
         }
     </script>
 </body>
