@@ -1,6 +1,7 @@
 # 标准库导入
 from datetime import datetime, timedelta
 import enum
+import logging
 
 # 本地模块导入
 from db import db
@@ -170,9 +171,15 @@ class UserAccess(db.Model):
     def check_password(self, password):
         """验证密码"""
         from werkzeug.security import check_password_hash
-        if not self.password_hash:
+        # 检查密码哈希是否存在且不为空字符串
+        if not self.password_hash or self.password_hash.strip() == '':
             return False
-        return check_password_hash(self.password_hash, password)
+        try:
+            return check_password_hash(self.password_hash, password)
+        except ValueError as e:
+            # 如果密码哈希格式无效，记录错误并返回False
+            logging.warning(f"密码哈希格式无效: {e}")
+            return False
     
     def generate_email_verification_token(self):
         """生成邮箱验证令牌"""
