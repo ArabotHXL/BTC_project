@@ -442,26 +442,17 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/')
+@login_required
 def index():
-    """中英双语主页 - 公开访问"""
-    # 获取语言设置
-    lang = request.args.get('lang', 'zh')
-    if lang not in ['zh', 'en']:
-        lang = 'zh'
-    
-    # 检查用户是否已登录
-    user_data = None
-    if 'email' in session and session.get('authenticated'):
-        user_data = {'email': session['email'], 'role': session.get('role', 'guest')}
-    
-    return render_template('homepage.html', lang=lang, user_data=user_data, t=get_translation)
+    """卡片式仪表盘主页"""
+    return render_template('dashboard_home.html')
 
-# 重定向旧的dashboard路由到新的calculator路由
+# 重定向旧的dashboard路由到新的首页
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    """重定向到挖矿计算器"""
-    return redirect(url_for('calculator'))
+    """重定向到首页仪表盘"""
+    return redirect(url_for('index'))
 
 @app.route('/calculator')
 @login_required
@@ -474,11 +465,26 @@ def calculator():
         
         return render_template('index.html')
     except Exception as e:
-        logging.error(f"Dashboard route error: {e}")
+        logging.error(f"Calculator route error: {e}")
         # 对于健康检查，返回简单状态而不是错误页面
         if request.headers.get('User-Agent', '').startswith('curl') or 'health' in request.args:
             return jsonify({"status": "error", "message": str(e)}), 500
         return render_template('error.html', error=str(e)), 500
+
+# 添加一个公开访问的入口页面（未登录用户）
+@app.route('/welcome')
+def welcome():
+    """未登录用户的欢迎页面"""
+    # 获取语言设置
+    lang = request.args.get('lang', 'zh')
+    if lang not in ['zh', 'en']:
+        lang = 'zh'
+    
+    # 检查用户是否已登录，已登录则重定向到仪表盘
+    if 'email' in session and session.get('authenticated'):
+        return redirect(url_for('index'))
+    
+    return render_template('homepage.html', lang=lang, t=get_translation)
 
 @app.route('/admin/login_records')
 @app.route('/login-records')
