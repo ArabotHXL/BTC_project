@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t('btc_mining_calculator') }} - {{ t('professional_analysis_platform') if current_lang == 'zh' else 'Professional Mining Analysis Platform' }}</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #121212 0%, #1e2329 100%);
+            color: #f8f9fa;
+            min-height: 100vh;
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, rgba(248, 208, 0, 0.1) 0%, rgba(33, 37, 41, 0.9) 100%);
+            padding: 5rem 0 3rem;
+            text-align: center;
+        }
+        
+        .btc-logo {
+            display: inline-block;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #f8d000, #ffcc00);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 100px;
+            font-size: 3.5rem;
+            margin-bottom: 2rem;
+            transform: rotate(12deg);
+            color: #212529;
+            box-shadow: 0 10px 30px rgba(248, 208, 0, 0.3);
+        }
+        
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #f8d000, #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.4rem;
+            margin-bottom: 3rem;
+            color: #adb5bd;
+            font-weight: 300;
+        }
+        
+        .features-section {
+            padding: 4rem 0;
+            background-color: rgba(33, 37, 41, 0.5);
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, rgba(248, 208, 0, 0.05), rgba(33, 37, 41, 0.8));
+            border: 1px solid rgba(248, 208, 0, 0.2);
+            border-radius: 1rem;
+            padding: 2rem;
+            height: 100%;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(248, 208, 0, 0.3);
+            border-color: rgba(248, 208, 0, 0.5);
+        }
+        
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #f8d000, #ffcc00);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2rem;
+            color: #212529;
+        }
+        
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #f8d000;
+        }
+        
+        .feature-desc {
+            color: #adb5bd;
+            line-height: 1.6;
+        }
+        
+        .cta-section {
+            padding: 4rem 0;
+            text-align: center;
+        }
+        
+        .cta-button {
+            background: linear-gradient(135deg, #f8d000, #ffcc00);
+            border: none;
+            color: #212529;
+            font-size: 1.2rem;
+            font-weight: 600;
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0 1rem 1rem;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(248, 208, 0, 0.4);
+            color: #212529;
+            text-decoration: none;
+        }
+        
+        .cta-button-outline {
+            background: transparent;
+            border: 2px solid #f8d000;
+            color: #f8d000;
+        }
+        
+        .cta-button-outline:hover {
+            background: linear-gradient(135deg, #f8d000, #ffcc00);
+            color: #212529;
+        }
+        
+        .stats-section {
+            padding: 3rem 0;
+            background-color: rgba(248, 208, 0, 0.05);
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #f8d000;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 1.1rem;
+            color: #adb5bd;
+        }
+        
+        .language-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(33, 37, 41, 0.9);
+            border: 1px solid rgba(248, 208, 0, 0.3);
+            border-radius: 25px;
+            padding: 0.5rem 1rem;
+            color: #f8d000;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .language-toggle:hover {
+            background: rgba(248, 208, 0, 0.1);
+            color: #f8d000;
+            text-decoration: none;
+        }
+        
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            .hero-subtitle {
+                font-size: 1.2rem;
+            }
+            .feature-card {
+                margin-bottom: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 语言切换 -->
+    <a href="?lang={{ 'en' if current_lang == 'zh' else 'zh' }}" class="language-toggle">
+        <i class="fas fa-globe"></i> {{ '中文' if current_lang == 'en' else 'English' }}
+    </a>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="btc-logo">₿</div>
+            <h1 class="hero-title">
+                {% if current_lang == 'zh' %}
+                    BTC挖矿计算器
+                {% else %}
+                    BTC Mining Calculator
+                {% endif %}
+            </h1>
+            <p class="hero-subtitle">
+                {% if current_lang == 'zh' %}
+                    专业的比特币挖矿智能分析平台 | 实时数据·精确计算·投资分析
+                {% else %}
+                    Professional Bitcoin Mining Intelligence Platform | Real-time Data · Accurate Calculations · Investment Analysis
+                {% endif %}
+            </p>
+            
+            <div class="mt-4">
+                <a href="{{ url_for('login') }}" class="cta-button">
+                    <i class="fas fa-sign-in-alt"></i> 
+                    {% if current_lang == 'zh' %}立即登录{% else %}Login Now{% endif %}
+                </a>
+                <a href="{{ url_for('login') }}" class="cta-button cta-button-outline">
+                    <i class="fas fa-user-plus"></i> 
+                    {% if current_lang == 'zh' %}免费试用{% else %}Free Trial{% endif %}
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <div class="stat-number">17+</div>
+                        <div class="stat-label">
+                            {% if current_lang == 'zh' %}矿机型号{% else %}ASIC Models{% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <div class="stat-number">4+</div>
+                        <div class="stat-label">
+                            {% if current_lang == 'zh' %}数据源{% else %}Data Sources{% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <div class="stat-number">98%+</div>
+                        <div class="stat-label">
+                            {% if current_lang == 'zh' %}计算精度{% else %}Accuracy{% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">
+                            {% if current_lang == 'zh' %}实时数据{% else %}Real-time Data{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="container">
+            <div class="row text-center mb-5">
+                <div class="col-12">
+                    <h2 class="display-4 mb-3" style="color: #f8d000;">
+                        {% if current_lang == 'zh' %}核心功能{% else %}Core Features{% endif %}
+                    </h2>
+                    <p class="lead" style="color: #adb5bd;">
+                        {% if current_lang == 'zh' %}
+                            专业工具助力挖矿投资决策
+                        {% else %}
+                            Professional tools for mining investment decisions
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <h3 class="feature-title">
+                            {% if current_lang == 'zh' %}挖矿计算器{% else %}Mining Calculator{% endif %}
+                        </h3>
+                        <p class="feature-desc">
+                            {% if current_lang == 'zh' %}
+                                支持17种ASIC矿机，实时电价、难度和币价数据，精确计算挖矿收益
+                            {% else %}
+                                Supports 17 ASIC miners with real-time electricity, difficulty and price data for accurate profit calculations
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <h3 class="feature-title">
+                            {% if current_lang == 'zh' %}批量分析{% else %}Batch Analysis{% endif %}
+                        </h3>
+                        <p class="feature-desc">
+                            {% if current_lang == 'zh' %}
+                                批量计算多台矿机组合，支持不同电价策略，优化矿场配置方案
+                            {% else %}
+                                Batch calculate multiple miner combinations with different pricing strategies to optimize mining farm configurations
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h3 class="feature-title">
+                            {% if current_lang == 'zh' %}客户管理{% else %}CRM System{% endif %}
+                        </h3>
+                        <p class="feature-desc">
+                            {% if current_lang == 'zh' %}
+                                完整的CRM系统，管理客户信息、商机跟进和交易记录
+                            {% else %}
+                                Complete CRM system for managing customer information, lead tracking and deal records
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="feature-title">
+                            {% if current_lang == 'zh' %}数据分析{% else %}Analytics Platform{% endif %}
+                        </h3>
+                        <p class="feature-desc">
+                            {% if current_lang == 'zh' %}
+                                高级数据分析平台，历史趋势分析，投资风险评估
+                            {% else %}
+                                Advanced analytics platform with historical trend analysis and investment risk assessment
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <h3 class="feature-title">
+                            {% if current_lang == 'zh' %}电力管理{% else %}Power Management{% endif %}
+                        </h3>
+                        <p class="feature-desc">
+                            {% if current_lang == 'zh' %}
+                                电力削减计算器，优化电力使用策略，降低运营成本
+                            {% else %}
+                                Power curtailment calculator to optimize electricity usage strategies and reduce operational costs
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-network-wired"></i>
+                        </div>
+                        <h3 class="feature-title">
+                            {% if current_lang == 'zh' %}网络分析{% else %}Network Analysis{% endif %}
+                        </h3>
+                        <p class="feature-desc">
+                            {% if current_lang == 'zh' %}
+                                比特币网络历史数据分析，难度变化趋势，算力分布统计
+                            {% else %}
+                                Bitcoin network historical data analysis, difficulty trend analysis, and hashrate distribution statistics
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2 class="display-5 mb-4" style="color: #f8d000;">
+                {% if current_lang == 'zh' %}
+                    开始您的专业挖矿分析之旅
+                {% else %}
+                    Start Your Professional Mining Analysis Journey
+                {% endif %}
+            </h2>
+            <p class="lead mb-4" style="color: #adb5bd;">
+                {% if current_lang == 'zh' %}
+                    立即体验专业级比特币挖矿计算和分析工具
+                {% else %}
+                    Experience professional Bitcoin mining calculation and analysis tools now
+                {% endif %}
+            </p>
+            <a href="{{ url_for('login') }}" class="cta-button">
+                <i class="fas fa-rocket"></i> 
+                {% if current_lang == 'zh' %}立即开始{% else %}Get Started{% endif %}
+            </a>
+        </div>
+    </section>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
