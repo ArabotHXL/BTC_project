@@ -40,7 +40,7 @@
                             <span class="d-md-none">{% if current_lang == 'en' %}Records{% else %}记录{% endif %}</span>
                         </a>
                         {% if session.role == 'owner' %}
-                        <a href="{{ url_for('migrate_to_crm') }}" class="btn btn-outline-success btn-sm d-none d-lg-inline-block" onclick="return confirm('{% if current_lang == \"en\" %}Are you sure you want to migrate all user data to the CRM system? This operation cannot be undone.{% else %}确定要将所有用户数据迁移到CRM系统吗？此操作不可撤销。{% endif %}')">
+                        <a href="{{ url_for('migrate_to_crm') }}" class="btn btn-outline-success btn-sm d-none d-lg-inline-block" onclick="return confirm('{% if current_lang == 'en' %}Are you sure you want to migrate all user data to the CRM system? This operation cannot be undone.{% else %}确定要将所有用户数据迁移到CRM系统吗？此操作不可撤销。{% endif %}')">
                             <i class="bi bi-database-fill-gear"></i> 
                             {% if current_lang == 'en' %}Migrate to CRM{% else %}迁移到CRM{% endif %}
                         </a>
