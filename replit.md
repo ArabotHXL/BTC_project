@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 2025)
 
+### Advanced Permission Control System (August 11, 2025)
+- **Complete Permission Matrix**: Created comprehensive permission allocation matrix defining 5-tier access control system (Owner/Admin/Mining_site/Manager/Guest)
+- **Advanced Decorators**: Implemented sophisticated permission decorators for fine-grained access control with automatic role validation
+- **Route-Level Security**: Applied permission decorators to critical routes including analytics platform (Owner-only), network analysis, and user management
+- **Access Logging**: Added comprehensive access attempt logging for security monitoring and audit trails
+- **Data Access Rules**: Established data access boundaries - Mining_site users only access own customer data, Admins manage all except Owner accounts
+- **Permission Documentation**: Created detailed SYSTEM_PERMISSIONS_MATRIX.md documenting 16 major system functions with role-based access rules
+
 ### User Registration and Admin Management System (August 11, 2025)
 - **Complete User Registration System**: Implemented comprehensive username/password registration with email verification
 - **Database Schema Enhancement**: Added user authentication fields (username, password_hash, is_email_verified, email_verification_token)

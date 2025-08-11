@@ -17,6 +17,20 @@ from sqlalchemy import text
 # 本地模块导入
 from auth import verify_email, login_required
 from db import db
+try:
+    from decorators import (requires_role, requires_owner_only, requires_admin_or_owner, 
+                           requires_crm_access, requires_network_analysis_access, 
+                           requires_batch_calculator_access, log_access_attempt)
+except ImportError:
+    logging.warning("Decorators module not available, using basic login_required only")
+    # 如果导入失败，使用基本装饰器
+    requires_role = lambda roles: login_required
+    requires_owner_only = login_required
+    requires_admin_or_owner = login_required
+    requires_crm_access = login_required
+    requires_network_analysis_access = login_required 
+    requires_batch_calculator_access = login_required
+    log_access_attempt = lambda name: lambda f: f
 from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot
 from translations import get_translation
 
@@ -1385,13 +1399,10 @@ def get_miners():
 # 用户访问管理系统路由
 @app.route('/admin/user_access')
 @app.route('/user-access')
-@login_required
+@requires_admin_or_owner
+@log_access_attempt('用户访问管理')
 def user_access():
     """管理员管理用户访问权限"""
-    # 只允许owner或admin角色访问
-    if not has_role(['owner', 'admin']):
-        flash('您没有权限访问此页面，需要管理员或拥有者权限', 'danger')
-        return redirect(url_for('index'))
     
     # 获取所有用户
     users = UserAccess.query.order_by(UserAccess.created_at.desc()).all()
@@ -1404,13 +1415,10 @@ def user_access():
     return render_template('user_access.html', users=users)
 
 @app.route('/admin/user_access/add', methods=['POST'])
-@login_required
+@requires_admin_or_owner
+@log_access_attempt('添加用户访问权限')
 def add_user_access():
     """添加新用户访问权限"""
-    # 只允许owner或admin角色访问
-    if not has_role(['owner', 'admin']):
-        flash('您没有权限访问此页面，需要管理员或拥有者权限', 'danger')
-        return redirect(url_for('index'))
     
     try:
         # 获取表单数据
@@ -2547,11 +2555,43 @@ def inject_nav_menu():
             return False
         role = session.get('role')
         return role == 'owner'
+    
+    def user_has_user_management_access():
+        """检查用户是否有访问用户管理的权限"""
+        if not session.get('authenticated'):
+            return False
+        role = session.get('role')
+        return role in ['owner', 'admin']
+    
+    def user_has_batch_calculator_access():
+        """检查用户是否有访问批量计算器的权限"""
+        if not session.get('authenticated'):
+            return False
+        role = session.get('role')
+        return role in ['owner', 'admin', 'mining_site']
+    
+    def user_has_billing_access():
+        """检查用户是否有访问计费管理的权限"""
+        if not session.get('authenticated'):
+            return False
+        role = session.get('role')
+        return role in ['owner', 'admin']
+    
+    def user_has_mining_broker_access():
+        """检查用户是否有访问矿场中介的权限"""
+        if not session.get('authenticated'):
+            return False
+        role = session.get('role')
+        return role in ['owner', 'admin', 'mining_site']
         
     return {
         'user_has_crm_access': user_has_crm_access,
         'user_has_network_analysis_access': user_has_network_analysis_access,
-        'user_has_analytics_access': user_has_analytics_access
+        'user_has_analytics_access': user_has_analytics_access,
+        'user_has_user_management_access': user_has_user_management_access,
+        'user_has_batch_calculator_access': user_has_batch_calculator_access,
+        'user_has_billing_access': user_has_billing_access,
+        'user_has_mining_broker_access': user_has_mining_broker_access
     }
 
 @app.route('/algorithm-test')
@@ -2570,17 +2610,17 @@ def curtailment_calculator_alt():
     return render_template('curtailment_calculator.html', user_role=user_role)
 
 @app.route('/network-history')
-@login_required
+@requires_network_analysis_access
+@log_access_attempt('网络历史分析')
 def network_history_main():
     """网络历史数据分析页面 - 主路由"""
     user_role = get_user_role(session.get('email'))
-    if user_role not in ['owner', 'admin', 'mining_site']:
-        return render_template('unauthorized.html', message='需要矿场主或管理员权限'), 403
     return render_template('network_history.html', user_role=user_role)
 
 @app.route('/analytics')
 @app.route('/analytics_dashboard')
-@login_required
+@requires_owner_only
+@log_access_attempt('数据分析平台')
 def analytics_dashboard():
     """数据分析仪表盘 - 仅限拥有者"""
     # 获取语言参数
