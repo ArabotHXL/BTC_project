@@ -467,6 +467,8 @@ def home():
     """项目介绍页面"""
     return render_template('landing.html')
 
+
+
 # 重定向旧的dashboard路由到新的首页
 @app.route('/dashboard')
 @login_required

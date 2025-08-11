@@ -200,7 +200,7 @@
                 <a class="nav-link" href="#features" style="color: #adb5bd;">
                     {% if current_lang == 'zh' %}功能{% else %}Features{% endif %}
                 </a>
-                <a class="nav-link" href="#" onclick="showPricing()" style="color: #adb5bd;">
+                <a class="nav-link" href="{{ url_for('pricing') }}" style="color: #adb5bd;">
                     {% if current_lang == 'zh' %}定价{% else %}Pricing{% endif %}
                 </a>
                 <a href="?lang={{ 'en' if current_lang == 'zh' else 'zh' }}" class="nav-link" style="color: #f8d000;">
