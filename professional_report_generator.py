@@ -1097,15 +1097,20 @@ class Professional5StepReportGenerator:
         logger.info("步骤2: 预测建模...")
         price_predictions = self.modeler.predict_btc_price_arima(days_ahead=30)
         
-        # Monte Carlo参数
+        # Monte Carlo参数 - 确保数据有效性
+        btc_price = max(1, price_data.get('final_price', 119000))  # 默认使用合理的BTC价格
+        network_hashrate = max(1, network_data.get('final_hashrate', 950))  # 默认网络算力
+        
         base_params = {
-            'btc_price': price_data['final_price'],
-            'network_hashrate': network_data['final_hashrate'] * 1e9,  # 转换为TH/s
-            'miner_hashrate': 110,  # S19 Pro
-            'miner_power': 3250,
-            'miner_cost': 3125,
-            'electricity_cost': 0.065
+            'btc_price': btc_price,
+            'network_hashrate': network_hashrate * 1e9,  # 转换为TH/s
+            'miner_hashrate': 110,  # S19 Pro TH/s
+            'miner_power': 3250,  # 瓦特
+            'miner_cost': 3125,  # 美元
+            'electricity_cost': 0.065  # 美元/kWh
         }
+        
+        logger.info(f"Monte Carlo参数: BTC=${btc_price:,.0f}, 算力={network_hashrate:.1f}EH/s")
         
         monte_carlo_results = self.modeler.monte_carlo_roi_simulation(base_params)
         

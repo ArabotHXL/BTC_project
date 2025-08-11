@@ -2493,30 +2493,59 @@
 
         // 下载专业报告文件
         function downloadProfessionalReport(fileType) {
-            fetch('/api/professional-report/download/' + fileType)
+            console.log('Starting professional report download for:', fileType);
+            showSuccessMessage('正在生成' + fileType.toUpperCase() + '报告...');
+            
+            fetch('/api/professional-report/download/' + fileType, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    format: fileType,
+                    timestamp: new Date().toISOString()
+                })
+            })
             .then(function(response) {
-                if (response.ok) {
-                    return response.blob();
-                } else {
-                    return response.json().then(function(error) {
-                        throw new Error(error.error || '下载失败');
+                console.log('Download response status:', response.status);
+                if (!response.ok) {
+                    return response.text().then(function(text) {
+                        throw new Error('HTTP ' + response.status + ': ' + (text || '服务器错误'));
                     });
                 }
+                
+                // Get filename from response headers if available
+                var contentDisposition = response.headers.get('Content-Disposition');
+                var filename = 'mining_report_' + new Date().toISOString().split('T')[0] + '.' + fileType;
+                if (contentDisposition) {
+                    var filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                    if (filenameMatch) {
+                        filename = filenameMatch[1];
+                    }
+                }
+                
+                return response.blob().then(function(blob) {
+                    return { blob: blob, filename: filename };
+                });
             })
-            .then(function(blob) {
-                var url = window.URL.createObjectURL(blob);
+            .then(function(result) {
+                console.log('Creating download link for file:', result.filename);
+                var url = window.URL.createObjectURL(result.blob);
                 var a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
-                a.download = 'mining_report_' + new Date().toISOString().split('T')[0] + '.' + fileType;
+                a.download = result.filename;
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
+                
+                showSuccessMessage('报告下载完成！');
+                console.log('Professional report download completed');
             })
             .catch(function(error) {
                 console.error('文件下载错误:', error);
-                alert('下载失败: ' + error.message);
+                showSuccessMessage('下载失败: ' + error.message);
             });
         }
 

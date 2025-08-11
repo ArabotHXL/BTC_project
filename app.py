@@ -3071,7 +3071,7 @@ def generate_professional_report():
         logging.error(f"专业报告生成错误: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/professional-report/download/<file_type>')
+@app.route('/api/professional-report/download/<file_type>', methods=['GET', 'POST'])
 @login_required
 def download_professional_report(file_type):
     """下载专业报告文件"""
@@ -3083,6 +3083,11 @@ def download_professional_report(file_type):
         from flask import send_file
         from datetime import datetime
         
+        # Handle POST request data if present
+        if request.method == 'POST':
+            data = request.get_json() or {}
+            logging.info(f"Professional report download request: {file_type}, data: {data}")
+        
         if file_type == 'pdf':
             filename = f"mining_report_{datetime.now().strftime('%Y-%m-%d')}.pdf"
         elif file_type == 'pptx':
@@ -3091,9 +3096,27 @@ def download_professional_report(file_type):
             return jsonify({'error': '不支持的文件类型'}), 400
             
         if os.path.exists(filename):
-            return send_file(filename, as_attachment=True)
+            return send_file(filename, 
+                           as_attachment=True, 
+                           download_name=filename,
+                           mimetype='application/octet-stream')
         else:
-            return jsonify({'error': '文件未找到，请先生成报告'}), 404
+            # Try to generate report if not found
+            logging.warning(f"Report file {filename} not found, trying to generate...")
+            from professional_report_generator import Professional5StepReportGenerator
+            
+            generator = Professional5StepReportGenerator()
+            result = generator.generate_comprehensive_report(
+                output_formats=['web', 'pdf'] if file_type == 'pdf' else ['web', 'pptx']
+            )
+            
+            if os.path.exists(filename):
+                return send_file(filename, 
+                               as_attachment=True, 
+                               download_name=filename,
+                               mimetype='application/octet-stream')
+            else:
+                return jsonify({'error': '文件生成失败，请稍后重试'}), 500
             
     except Exception as e:
         logging.error(f"文件下载错误: {e}")
