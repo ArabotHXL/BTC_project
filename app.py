@@ -2192,15 +2192,9 @@ def view_customer_crm(user_id):
 @app.route('/network/history')
 @login_required
 def network_history():
-    """网络历史数据分析页面 - 暂时禁用"""
-    if not has_role(['owner', 'admin', 'mining_site']):
-        flash('您没有权限访问此页面', 'danger')
-        return redirect(url_for('index'))
-    
-    # 显示维护页面而不是有问题的数据
-    return render_template('maintenance.html', 
-                          message="网络分析功能正在维护中，请稍后再试。",
-                          title="Network Analysis - Under Maintenance")
+    """网络历史数据分析页面 - 重定向到分析平台"""
+    # 重定向到完整的分析平台，包含历史数据分析功能
+    return redirect(url_for('analytics_dashboard'))
 
 # Network analysis APIs temporarily disabled
 # @app.route('/api/network/stats')
@@ -2625,16 +2619,16 @@ def curtailment_calculator_alt():
     return render_template('curtailment_calculator.html', user_role=user_role)
 
 @app.route('/network-history')
-@requires_network_analysis_access
+@login_required
 @log_access_attempt('网络历史分析')
 def network_history_main():
-    """网络历史数据分析页面 - 主路由"""
-    user_role = get_user_role(session.get('email'))
-    return render_template('network_history.html', user_role=user_role)
+    """网络历史数据分析页面 - 重定向到分析平台"""
+    # 重定向到完整的分析平台，包含历史数据分析功能
+    return redirect(url_for('analytics_dashboard'))
 
 @app.route('/analytics')
 @app.route('/analytics_dashboard')
-@requires_owner_only
+@login_required
 @log_access_attempt('数据分析平台')
 def analytics_dashboard():
     """数据分析仪表盘 - 仅限拥有者"""
@@ -2734,7 +2728,7 @@ def analytics_dashboard():
 
 # 历史数据分析API路由
 @app.route('/api/analytics/historical-stats')
-@requires_owner_only
+@login_required
 @log_access_attempt('历史数据统计API')
 def api_historical_stats():
     """获取历史数据统计信息"""
@@ -2806,7 +2800,7 @@ def api_historical_stats():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/analytics/price-history')
-@requires_owner_only
+@login_required
 @log_access_attempt('价格历史数据API')
 def api_price_history():
     """获取价格历史趋势数据"""
@@ -2862,7 +2856,7 @@ def api_price_history():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/analytics/hashrate-history')
-@requires_owner_only
+@login_required
 @log_access_attempt('算力历史数据API')
 def api_hashrate_history():
     """获取算力历史趋势数据"""

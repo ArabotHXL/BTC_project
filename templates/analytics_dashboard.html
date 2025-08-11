@@ -686,7 +686,7 @@
             
             // 技术指标数据来自服务器端
             {% if technical_indicators %}
-            const techData = {{ technical_indicators | tojsonfilter | safe }};
+            const techData = {{ technical_indicators | tojson | safe }};
             console.log('Technical indicators from server:', techData);
             
             // 更新RSI
@@ -708,7 +708,7 @@
             
             // 分析报告数据来自服务器端
             {% if latest_report %}
-            const reportData = {{ latest_report | tojsonfilter | safe }};
+            const reportData = {{ latest_report | tojson | safe }};
             console.log('Report from server:', reportData);
             
             // 更新报告信息
