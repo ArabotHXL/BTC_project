@@ -455,11 +455,20 @@ def logout():
         
     return redirect(url_for('login'))
 
-@app.route('/')
+@app.route('/main')
 @login_required
 def index():
     """卡片式仪表盘主页"""
     return render_template('dashboard_home.html')
+
+# 根路径重定向到主页
+@app.route('/')
+def home():
+    """根路径重定向到主页"""
+    if session.get('authenticated'):
+        return redirect(url_for('index'))
+    else:
+        return redirect(url_for('login'))
 
 # 重定向旧的dashboard路由到新的首页
 @app.route('/dashboard')
