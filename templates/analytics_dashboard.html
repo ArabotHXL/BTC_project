@@ -909,8 +909,26 @@
         // 获取网络历史数据
         async function fetchNetworkHistory() {
             try {
-                const response = await fetch('/api/network-history');
+                console.log('Loading network history data...');
+                const response = await fetch('/api/network-history', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                console.log('Network history response status:', response.status);
+                
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        console.error('Authentication/authorization error for network history');
+                        throw new Error(`认证错误: ${response.status}`);
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const result = await response.json();
+                console.log('Network history response:', result);
                 
                 if (result.success && result.data && result.data.length > 0) {
                     const data = result.data;
