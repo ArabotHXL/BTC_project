@@ -10,16 +10,6 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 2025)
 
-### Historical Data Analysis Integration into Analytics Platform (August 11, 2025)
-- **Complete Integration**: Successfully integrated historical data analysis functionality into the existing analytics platform (`/analytics` route) instead of maintaining separate Network Analysis module
-- **New Analytics Features**: Added comprehensive historical data analysis section with price range statistics, average hashrate metrics, difficulty change tracking, and total data points display
-- **Interactive Charts**: Implemented dual historical trend charts for BTC price and network hashrate with time range selectors (7 days, 30 days, 90 days, 1 year)
-- **API Endpoints**: Created three new API routes for historical data: `/api/analytics/historical-stats`, `/api/analytics/price-history`, and `/api/analytics/hashrate-history`
-- **Data Visualization**: Enhanced analytics dashboard with Chart.js-powered interactive historical charts featuring proper sampling for large datasets
-- **User Experience**: Added time range selector buttons with active state management and automatic data refresh capabilities
-- **Network Analysis Cleanup**: Successfully disabled problematic Network Analysis module by commenting out all database query routes that were causing SQLAlchemy errors
-- **Maintenance Page**: Created professional maintenance page template for disabled Network Analysis functionality with bilingual support
-
 ### Professional Landing Page and Navigation Architecture (August 11, 2025)
 - **Landing Page Design**: Created professional introduction page at root path `/` with modern dark theme and golden accents
 - **Page Flow Architecture**: Established clear navigation hierarchy - Landing Page → Price Page (side) → Login (会员页面) → Main Dashboard (`/main`) → Role-based Functions
