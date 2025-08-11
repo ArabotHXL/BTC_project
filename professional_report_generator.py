@@ -33,9 +33,36 @@ from sklearn.metrics import mean_absolute_percentage_error
 import subprocess
 import git
 
-# 导入现有模块
+# 导入现有模块  
 from analytics_engine import AnalyticsEngine, DataCollector
 from coinwarz_api import get_enhanced_network_data
+
+# 导入Flask相关模块用于API端点
+try:
+    from flask import request, session, jsonify
+    from auth import get_user_role
+    FLASK_AVAILABLE = True
+except ImportError:
+    # 如果Flask不可用，定义占位符函数
+    FLASK_AVAILABLE = False
+    def jsonify(data): 
+        return data
+    def get_user_role(email): 
+        return 'user'
+    
+    # 创建请求和会话的占位符对象
+    class MockRequest:
+        def get(self, key, default=None): 
+            return default
+        def get_json(self): 
+            return {}
+    
+    class MockSession:
+        def get(self, key, default=None): 
+            return default
+    
+    request = MockRequest()
+    session = MockSession()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -189,6 +216,15 @@ class PredictiveModeling:
                 
             prices = price_data['btc_price'].values
             
+            # 确保数据类型正确，并处理NaN值
+            prices = np.array(prices, dtype=np.float64)
+            
+            # 移除NaN值
+            prices = prices[~np.isnan(prices)]
+            
+            if len(prices) < 10:
+                return {'error': '有效历史数据不足', 'predictions': []}
+            
             # 拟合ARIMA模型
             model = ARIMA(prices, order=(1, 1, 1))
             fitted_model = model.fit()
@@ -199,11 +235,21 @@ class PredictiveModeling:
             
             predictions = []
             for i in range(days_ahead):
+                # 处理numpy数组和pandas DataFrame两种情况
+                if hasattr(confidence_intervals, 'iloc'):
+                    # pandas DataFrame
+                    lower_bound = float(confidence_intervals.iloc[i, 0]) if not np.isnan(confidence_intervals.iloc[i, 0]) else 0.0
+                    upper_bound = float(confidence_intervals.iloc[i, 1]) if not np.isnan(confidence_intervals.iloc[i, 1]) else 0.0
+                else:
+                    # numpy array
+                    lower_bound = float(confidence_intervals[i][0]) if len(confidence_intervals) > i and len(confidence_intervals[i]) > 0 else 0.0
+                    upper_bound = float(confidence_intervals[i][1]) if len(confidence_intervals) > i and len(confidence_intervals[i]) > 1 else 0.0
+                    
                 predictions.append({
                     'day': i + 1,
-                    'predicted_price': float(forecast[i]),
-                    'lower_bound': float(confidence_intervals.iloc[i, 0]),
-                    'upper_bound': float(confidence_intervals.iloc[i, 1])
+                    'predicted_price': float(forecast[i]) if not np.isnan(forecast[i]) else 0.0,
+                    'lower_bound': lower_bound,
+                    'upper_bound': upper_bound
                 })
                 
             return {
@@ -221,24 +267,38 @@ class PredictiveModeling:
         try:
             results = []
             
+            # 验证关键参数
+            required_params = ['btc_price', 'network_hashrate', 'miner_power', 'miner_hashrate', 'electricity_cost', 'miner_cost']
+            for param in required_params:
+                if param not in base_params or base_params[param] is None or base_params[param] <= 0:
+                    logger.error(f"Monte Carlo参数错误: {param} = {base_params.get(param, 'None')}")
+                    return {'error': f'无效的参数: {param}'}
+            
             for _ in range(simulations):
                 # 随机变量
                 price_volatility = np.random.normal(0, 0.3)  # 30% 年波动率
                 hashrate_change = np.random.normal(0, 0.15)  # 15% 算力变化
                 power_degradation = np.random.uniform(0.01, 0.03)  # 1-3% 月功耗增加
                 
-                # 调整参数
-                sim_price = base_params['btc_price'] * (1 + price_volatility)
-                sim_hashrate = base_params['network_hashrate'] * (1 + hashrate_change)
-                sim_power = base_params['miner_power'] * (1 + power_degradation)
+                # 调整参数，确保不为零
+                sim_price = max(0.01, base_params['btc_price'] * (1 + price_volatility))
+                sim_hashrate = max(0.001, base_params['network_hashrate'] * (1 + hashrate_change))
+                sim_power = max(0.001, base_params['miner_power'] * (1 + power_degradation))
+                miner_cost = max(0.01, base_params['miner_cost'])  # 防止除零
                 
-                # 计算ROI
-                daily_revenue = (base_params['miner_hashrate'] / sim_hashrate) * 3.125 * sim_price
-                daily_cost = sim_power * 24 * base_params['electricity_cost'] / 1000
-                daily_profit = daily_revenue - daily_cost
-                annual_roi = (daily_profit * 365) / base_params['miner_cost'] * 100
+                # 计算ROI，添加除零保护
+                if sim_hashrate > 0 and miner_cost > 0:
+                    daily_revenue = (base_params['miner_hashrate'] / sim_hashrate) * 3.125 * sim_price
+                    daily_cost = sim_power * 24 * base_params['electricity_cost'] / 1000
+                    daily_profit = daily_revenue - daily_cost
+                    annual_roi = (daily_profit * 365) / miner_cost * 100
+                    
+                    # 限制极端值
+                    annual_roi = max(-1000, min(1000, annual_roi))
+                    results.append(annual_roi)
                 
-                results.append(annual_roi)
+            if not results:
+                return {'error': '模拟结果为空'}
                 
             return {
                 'mean_roi': np.mean(results),
@@ -269,10 +329,10 @@ class AccuracyScoring:
         }
         
     def calculate_accuracy_score(self, 
-                               data_consistency: float = None,
-                               model_mape: float = None,
-                               price_volatility: float = None,
-                               transparency_score: float = None) -> Dict:
+                               data_consistency: Optional[float] = None,
+                               model_mape: Optional[float] = None,
+                               price_volatility: Optional[float] = None,
+                               transparency_score: Optional[float] = None) -> Dict:
         """按精确公式计算准确度评分: 40% Data Consistency + 30% Model Accuracy + 20% Price Volatility + 10% Transparency"""
         
         # 1. Data Consistency (40%) - 多源验证
@@ -830,8 +890,10 @@ class MultiFormatReportGenerator:
         title = slide.shapes.title
         subtitle = slide.placeholders[1]
         
-        title.text = "专业矿业分析报告"
-        subtitle.text = f"报告日期: {self.timestamp.strftime('%Y年%m月%d日')}\n报告编号: {self.report_id}"
+        if title:
+            title.text = "专业矿业分析报告"
+        if subtitle:
+            subtitle.text = f"报告日期: {self.timestamp.strftime('%Y年%m月%d日')}\n报告编号: {self.report_id}"
         
         # 执行摘要页
         slide_layout = prs.slide_layouts[1]  # 内容布局
@@ -839,7 +901,8 @@ class MultiFormatReportGenerator:
         title = slide.shapes.title
         content = slide.placeholders[1]
         
-        title.text = "执行摘要"
+        if title:
+            title.text = "执行摘要"
         exec_summary = data.get('executive_summary', {})
         summary_text = f"""当前市场状况:
 • BTC价格: ${exec_summary.get('current_btc_price', 0):,.2f}
@@ -849,14 +912,16 @@ class MultiFormatReportGenerator:
 投资前景:
 {exec_summary.get('investment_outlook', 'N/A')}"""
         
-        content.text = summary_text
+        if content:
+            content.text = summary_text
         
         # 投资方案页
         slide = prs.slides.add_slide(slide_layout)
         title = slide.shapes.title
         content = slide.placeholders[1]
         
-        title.text = "最佳投资方案"
+        if title:
+            title.text = "最佳投资方案"
         best_investment = data.get('best_investment_scenarios', [{}])[0] if data.get('best_investment_scenarios') else {}
         
         investment_text = f"""推荐配置:
@@ -866,7 +931,8 @@ class MultiFormatReportGenerator:
 • 回本周期: {best_investment.get('payback_months', 0):.1f}个月
 • 盈亏平衡电价: ${best_investment.get('breakeven_electricity', 0):.4f}/kWh"""
         
-        content.text = investment_text
+        if content:
+            content.text = investment_text
         
         prs.save(filename)
         logger.info(f"PPT报告生成完成: {filename}")
