@@ -1,105 +1,335 @@
-<!DOCTYPE html>
-<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% if current_lang == 'en' %}User Access Management - BTC Mining Calculator{% else %}用户访问管理 - BTC挖矿计算器{% endif %}</title>
-    <!-- Bootstrap CSS from Replit CDN -->
-    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <!-- Bootstrap JS Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Responsive CSS -->
-    <link rel="stylesheet" href="/static/css/responsive.css">
-</head>
-<body>
-    <div class="container-fluid">
-        <header class="py-3 mb-4 border-bottom">
-            <div class="container d-flex align-items-center justify-content-between">
-                <h1 class="fs-4">
-                    {% if current_lang == 'en' %}User Access Management{% else %}用户访问权限管理{% endif %}
+{% extends "base.html" %}
+
+{% block title %}
+    {% if current_lang == 'en' %}User Access Management{% else %}用户访问管理{% endif %} - BTC Mining Calculator
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .user-card {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .user-card:hover {
+        transform: translateY(-4px);
+        border-color: #ffc107;
+        box-shadow: 0 8px 25px rgba(255, 193, 7, 0.15);
+    }
+    
+    .user-avatar {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #ffc107, #ffb300);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: #000;
+        font-size: 18px;
+    }
+    
+    .role-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .role-owner { background: #dc3545; color: white; }
+    .role-admin { background: #fd7e14; color: white; }
+    .role-mining_site { background: #20c997; color: white; }
+    .role-guest { background: #6f42c1; color: white; }
+    
+    .floating-add-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #ffc107, #ffb300);
+        border: none;
+        border-radius: 50%;
+        color: #000;
+        font-size: 24px;
+        box-shadow: 0 6px 20px rgba(255, 193, 7, 0.3);
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+    
+    .floating-add-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+    }
+    
+    .action-btn {
+        background: linear-gradient(135deg, #ffc107, #ffb300);
+        border: none;
+        color: #000;
+        font-weight: 500;
+        padding: 10px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+        color: #000;
+    }
+    
+    .search-container {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .form-control, .form-select {
+        background: #2d2d2d;
+        border: 1px solid #444;
+        color: #fff;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        background: #2d2d2d;
+        border-color: #ffc107;
+        color: #fff;
+        box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        border: 1px solid #333;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    
+    .stats-card {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #ffc107;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- 页面标题 -->
+    <div class="page-header mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2">
+                    <i class="bi bi-people-fill me-3"></i>
+                    {% if current_lang == 'en' %}User Access Management{% else %}用户访问管理{% endif %}
                 </h1>
-                
-                <div class="d-flex gap-2 gap-md-4 align-items-center flex-wrap">
-                    <!-- 语言切换 / Language Switcher -->
-                    <div class="btn-group btn-group-sm me-2 d-none d-md-flex" role="group">
-                        <a href="{{ url_for(request.endpoint, lang='zh', **request.view_args) }}" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
-                        <a href="{{ url_for(request.endpoint, lang='en', **request.view_args) }}" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}">English</a>
+                <p class="text-muted mb-0">
+                    {% if current_lang == 'en' %}Manage user permissions and access control{% else %}管理用户权限和访问控制{% endif %}
+                </p>
+            </div>
+            <div class="col-md-4">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="stats-card">
+                            <div class="stats-number">{{ users|length }}</div>
+                            <div class="small text-muted">{% if current_lang == 'en' %}Total Users{% else %}总用户数{% endif %}</div>
+                        </div>
                     </div>
-                    
-                    <div class="d-flex flex-wrap gap-1">
-                        <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-calculator"></i> 
-                            <span class="d-none d-md-inline">{% if current_lang == 'en' %}Back to Calculator{% else %}返回计算器{% endif %}</span>
-                            <span class="d-md-none">{% if current_lang == 'en' %}Home{% else %}首页{% endif %}</span>
-                        </a>
-                        <a href="{{ url_for('login_records') }}" class="btn btn-outline-secondary btn-sm">
-                            <i class="bi bi-file-text"></i> 
-                            <span class="d-none d-md-inline">{% if current_lang == 'en' %}Login Records{% else %}登录记录{% endif %}</span>
-                            <span class="d-md-none">{% if current_lang == 'en' %}Records{% else %}记录{% endif %}</span>
-                        </a>
-                        {% if session.role == 'owner' %}
-                        <a href="{{ url_for('migrate_to_crm') }}" class="btn btn-outline-success btn-sm d-none d-lg-inline-block" onclick="return confirm('{% if current_lang == 'en' %}Are you sure you want to migrate all user data to the CRM system? This operation cannot be undone.{% else %}确定要将所有用户数据迁移到CRM系统吗？此操作不可撤销。{% endif %}')">
-                            <i class="bi bi-database-fill-gear"></i> 
-                            {% if current_lang == 'en' %}Migrate to CRM{% else %}迁移到CRM{% endif %}
-                        </a>
-                        {% endif %}
-                        <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">
-                            <i class="bi bi-box-arrow-right"></i> 
-                            <span class="d-none d-md-inline">{% if current_lang == 'en' %}Logout{% else %}退出登录{% endif %}</span>
-                        </a>
+                    <div class="col-6">
+                        <div class="stats-card">
+                            <div class="stats-number">{{ users|selectattr('has_access')|list|length }}</div>
+                            <div class="small text-muted">{% if current_lang == 'en' %}Active{% else %}活跃用户{% endif %}</div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </header>
+        </div>
+    </div>
 
-        <main class="container mb-5">
-            <!-- 消息提示条 -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            {% for category, message in messages %}
-                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                    {{ message }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                </div>
-                            {% endfor %}
+    <!-- 搜索和筛选 -->
+    <div class="search-container">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control" id="userSearch" 
+                           placeholder="{% if current_lang == 'en' %}Search users by name, email, or company...{% else %}按姓名、邮箱或公司搜索用户...{% endif %}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="roleFilter">
+                    <option value="">{% if current_lang == 'en' %}All Roles{% else %}所有角色{% endif %}</option>
+                    <option value="owner">{% if current_lang == 'en' %}Owner{% else %}拥有者{% endif %}</option>
+                    <option value="admin">{% if current_lang == 'en' %}Administrator{% else %}管理员{% endif %}</option>
+                    <option value="mining_site">{% if current_lang == 'en' %}Mining Manager{% else %}矿场管理{% endif %}</option>
+                    <option value="guest">{% if current_lang == 'en' %}Guest{% else %}客人{% endif %}</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="statusFilter">
+                    <option value="">{% if current_lang == 'en' %}All Status{% else %}所有状态{% endif %}</option>
+                    <option value="active">{% if current_lang == 'en' %}Active{% else %}有效{% endif %}</option>
+                    <option value="expired">{% if current_lang == 'en' %}Expired{% else %}过期{% endif %}</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户列表 -->
+    <div class="row" id="userList">
+        {% if users %}
+            {% for user in users %}
+            <div class="col-lg-6 col-xl-4 mb-4 user-item" 
+                 data-name="{{ user.name|lower }}" 
+                 data-email="{{ user.email|lower }}" 
+                 data-company="{{ (user.company or '')|lower }}" 
+                 data-role="{{ user.role }}"
+                 data-status="{{ 'active' if user.has_access else 'expired' }}">
+                <div class="user-card p-4 h-100">
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="user-avatar me-3">
+                            {{ user.name[0]|upper if user.name else '?' }}
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">{{ user.name }}</h6>
+                            <p class="text-muted mb-1 small">{{ user.email }}</p>
+                            {% if user.company %}
+                            <p class="text-muted mb-0 small">
+                                <i class="bi bi-building me-1"></i>{{ user.company }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                    data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" href="#" onclick="viewUser({{ user.id }})">
+                                    <i class="bi bi-eye me-2"></i>{% if current_lang == 'en' %}View Details{% else %}查看详情{% endif %}
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="editUser({{ user.id }})">
+                                    <i class="bi bi-pencil me-2"></i>{% if current_lang == 'en' %}Edit{% else %}编辑{% endif %}
+                                </a></li>
+                                {% if user.role != 'owner' %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="#" onclick="deleteUser({{ user.id }})">
+                                    <i class="bi bi-trash me-2"></i>{% if current_lang == 'en' %}Delete{% else %}删除{% endif %}
+                                </a></li>
+                                {% endif %}
+                            </ul>
                         </div>
                     </div>
-                {% endif %}
-            {% endwith %}
-            
-            <!-- 添加新用户 -->
-            <div class="card shadow mb-4">
-                <div class="card-header bg-primary bg-opacity-10">
-                    <h5 class="mb-0">
-                        <i class="bi bi-person-plus me-2"></i>{% if current_lang == 'en' %}Add New User{% else %}添加新用户{% endif %}
-                    </h5>
+                    
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <span class="role-badge role-{{ user.role }}">
+                                {% if user.role == 'owner' %}{% if current_lang == 'en' %}Owner{% else %}拥有者{% endif %}
+                                {% elif user.role == 'admin' %}{% if current_lang == 'en' %}Admin{% else %}管理员{% endif %}
+                                {% elif user.role == 'mining_site' %}{% if current_lang == 'en' %}Mining{% else %}矿场{% endif %}
+                                {% else %}{% if current_lang == 'en' %}Guest{% else %}客人{% endif %}
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="col-6 text-end">
+                            {% if user.has_access %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-circle me-1"></i>{% if current_lang == 'en' %}Active{% else %}有效{% endif %}
+                            </span>
+                            {% else %}
+                            <span class="badge bg-danger">
+                                <i class="bi bi-x-circle me-1"></i>{% if current_lang == 'en' %}Expired{% else %}过期{% endif %}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="small text-muted">
+                        <div class="row">
+                            <div class="col-6">
+                                <i class="bi bi-calendar-plus me-1"></i>
+                                {{ user.created_at.strftime('%Y-%m-%d') }}
+                            </div>
+                            <div class="col-6">
+                                {% if user.last_login %}
+                                <i class="bi bi-clock me-1"></i>
+                                {{ user.last_login.strftime('%m-%d') }}
+                                {% else %}
+                                <i class="bi bi-dash-circle me-1"></i>
+                                {% if current_lang == 'en' %}Never{% else %}从未{% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <form action="{{ url_for('add_user_access') }}" method="post" class="row g-3">
-                        <div class="col-md-4">
-                            <label for="name" class="form-label">{% if current_lang == 'en' %}Name{% else %}姓名{% endif %}</label>
-                            <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <i class="bi bi-people display-1 text-muted"></i>
+                <h4 class="mt-3 text-muted">{% if current_lang == 'en' %}No users found{% else %}暂无用户{% endif %}</h4>
+                <p class="text-muted">{% if current_lang == 'en' %}Click the + button to add your first user{% else %}点击 + 按钮添加第一个用户{% endif %}</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 悬浮添加按钮 -->
+<button class="floating-add-btn" data-bs-toggle="modal" data-bs-target="#addUserModal">
+    <i class="bi bi-plus"></i>
+</button>
+
+<!-- 添加用户模态框 -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">
+                    <i class="bi bi-person-plus me-2"></i>
+                    {% if current_lang == 'en' %}Add New User{% else %}添加新用户{% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('add_user_access') }}" method="post">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-person me-1"></i>
+                                {% if current_lang == 'en' %}Full Name{% else %}姓名{% endif %}
+                            </label>
+                            <input type="text" class="form-control" name="name" required>
                         </div>
-                        <div class="col-md-4">
-                            <label for="email" class="form-label">{% if current_lang == 'en' %}Email{% else %}邮箱{% endif %}</label>
-                            <input type="email" class="form-control" id="email" name="email" required>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-envelope me-1"></i>
+                                {% if current_lang == 'en' %}Email Address{% else %}邮箱地址{% endif %}
+                            </label>
+                            <input type="email" class="form-control" name="email" required>
                         </div>
-                        <div class="col-md-2">
-                            <label for="access_days" class="form-label">{% if current_lang == 'en' %}Access Days{% else %}访问天数{% endif %}</label>
-                            <input type="number" class="form-control" id="access_days" name="access_days" min="1" value="30" required>
-                        </div>
-                        <div class="col-md-2">
-                            <label for="role" class="form-label">{% if current_lang == 'en' %}User Role{% else %}用户角色{% endif %}</label>
-                            <select class="form-select" id="role" name="role" required>
-                                <!-- 基本角色 - 所有人都可以创建 -->
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-shield me-1"></i>
+                                {% if current_lang == 'en' %}User Role{% else %}用户角色{% endif %}
+                            </label>
+                            <select class="form-select" name="role" required>
                                 <option value="guest">{% if current_lang == 'en' %}Mining Site Guest{% else %}矿场客人{% endif %}</option>
                                 <option value="mining_site">{% if current_lang == 'en' %}Mining Site Manager{% else %}矿场管理{% endif %}</option>
-                                
-                                <!-- 高级角色 - 只有特定角色可以创建 -->
                                 <option value="admin">{% if current_lang == 'en' %}Administrator{% else %}管理员{% endif %}</option>
                                 {% if session.get('role') == 'owner' %}
                                 <option value="owner">{% if current_lang == 'en' %}Owner{% else %}拥有者{% endif %}</option>
@@ -107,244 +337,155 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label for="company" class="form-label">公司</label>
-                            <input type="text" class="form-control" id="company" name="company">
+                            <label class="form-label">
+                                <i class="bi bi-calendar-check me-1"></i>
+                                {% if current_lang == 'en' %}Access Days{% else %}访问天数{% endif %}
+                            </label>
+                            <input type="number" class="form-control" name="access_days" min="1" value="30" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="position" class="form-label">职位</label>
-                            <input type="text" class="form-control" id="position" name="position">
+                            <label class="form-label">
+                                <i class="bi bi-building me-1"></i>
+                                {% if current_lang == 'en' %}Company{% else %}公司{% endif %}
+                            </label>
+                            <input type="text" class="form-control" name="company">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-briefcase me-1"></i>
+                                {% if current_lang == 'en' %}Position{% else %}职位{% endif %}
+                            </label>
+                            <input type="text" class="form-control" name="position">
                         </div>
                         <div class="col-12">
-                            <label for="notes" class="form-label">备注</label>
-                            <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                            <label class="form-label">
+                                <i class="bi bi-chat-text me-1"></i>
+                                {% if current_lang == 'en' %}Notes{% else %}备注{% endif %}
+                            </label>
+                            <textarea class="form-control" name="notes" rows="3"></textarea>
                         </div>
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-primary">添加用户</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            
-            <!-- 用户列表和管理 -->
-            <div class="card shadow">
-                <div class="card-header bg-success bg-opacity-10 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="bi bi-people me-2"></i>用户列表
-                    </h5>
-                    <span class="badge bg-info">用户总数: {{ users|length }}</span>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-striped">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>ID</th>
-                                    <th>姓名</th>
-                                    <th>邮箱</th>
-                                    <th>公司</th>
-                                    <th>角色</th>
-                                    <th>添加时间</th>
-                                    <th>访问状态</th>
-                                    <th>剩余天数</th>
-                                    <th>上次登录</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% if users %}
-                                    {% for user in users %}
-                                        <tr class="{{ 'table-success' if user.has_access else 'table-danger' }}">
-                                            <td>{{ user.id }}</td>
-                                            <td>{{ user.name }}</td>
-                                            <td>{{ user.email }}</td>
-                                            <td>{{ user.company or '-' }}</td>
-                                            <td>
-                                                {% if user.role == 'owner' %}
-                                                    <span class="badge bg-danger">拥有者</span>
-                                                {% elif user.role == 'admin' %}
-                                                    <span class="badge bg-warning">管理员</span>
-                                                {% elif user.role == 'mining_site' %}
-                                                    <span class="badge bg-info">矿场管理</span>
-                                                {% else %}
-                                                    <span class="badge bg-primary">矿场客人</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
-                                            <td>
-                                                {% if user.has_access %}
-                                                    <span class="badge bg-success">授权访问</span>
-                                                {% else %}
-                                                    <span class="badge bg-danger">访问已过期</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-info">{{ user.days_remaining }} 天</span>
-                                            </td>
-                                            <td>
-                                                {% if user.last_login %}
-                                                    {{ user.last_login.strftime('%Y-%m-%d %H:%M') }}
-                                                {% else %}
-                                                    -
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                <div class="btn-group" role="group">
-                                                    <button type="button" 
-                                                            class="btn btn-sm btn-outline-info" 
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#userModal{{ user.id }}">
-                                                        查看
-                                                    </button>
-                                                    <div class="btn-group" role="group">
-                                                        <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                                            延长权限
-                                                        </button>
-                                                        <ul class="dropdown-menu">
-                                                            <li>
-                                                                <form action="{{ url_for('extend_user_access', user_id=user.id, days=7) }}" method="post">
-                                                                    <button type="submit" class="dropdown-item">延长7天</button>
-                                                                </form>
-                                                            </li>
-                                                            <li>
-                                                                <form action="{{ url_for('extend_user_access', user_id=user.id, days=30) }}" method="post">
-                                                                    <button type="submit" class="dropdown-item">延长30天</button>
-                                                                </form>
-                                                            </li>
-                                                            <li>
-                                                                <form action="{{ url_for('extend_user_access', user_id=user.id, days=90) }}" method="post">
-                                                                    <button type="submit" class="dropdown-item">延长90天</button>
-                                                                </form>
-                                                            </li>
-                                                            <li>
-                                                                <form action="{{ url_for('extend_user_access', user_id=user.id, days=365) }}" method="post">
-                                                                    <button type="submit" class="dropdown-item">延长1年</button>
-                                                                </form>
-                                                            </li>
-                                                        </ul>
-                                                    </div>
-                                                    <form action="{{ url_for('revoke_user_access', user_id=user.id) }}" method="post">
-                                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('确定要撤销此用户的访问权限吗？')">
-                                                            撤销权限
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                                
-                                                <!-- 用户详情模态框 -->
-                                                <div class="modal fade" id="userModal{{ user.id }}" tabindex="-1" aria-labelledby="userModalLabel{{ user.id }}" aria-hidden="true">
-                                                    <div class="modal-dialog">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h5 class="modal-title" id="userModalLabel{{ user.id }}">用户详情 - {{ user.name }}</h5>
-                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                            </div>
-                                                            <div class="modal-body">
-                                                                <table class="table table-bordered">
-                                                                    <tr>
-                                                                        <th>ID</th>
-                                                                        <td>{{ user.id }}</td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <th>姓名</th>
-                                                                        <td>{{ user.name }}</td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <th>邮箱</th>
-                                                                        <td>{{ user.email }}</td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <th>公司</th>
-                                                                        <td>{{ user.company or '-' }}</td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <th>职位</th>
-                                                                        <td>{{ user.position or '-' }}</td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <th>用户角色</th>
-                                                                        <td>
-                                                                            {% if user.role == 'owner' %}
-                                                                                <span class="badge bg-danger">拥有者</span>
-                                                                            {% elif user.role == 'admin' %}
-                                                                                <span class="badge bg-warning">管理员</span>
-                                                                            {% elif user.role == 'mining_site' %}
-                                                                                <span class="badge bg-info">矿场管理</span>
-                                                                            {% else %}
-                                                                                <span class="badge bg-primary">矿场客人</span>
-                                                                            {% endif %}
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <th>添加时间</th>
-                                                                        <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <th>访问状态</th>
-                                                                        <td>{{ user.access_status }}</td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <th>过期时间</th>
-                                                                        <td>{{ user.expires_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <th>剩余天数</th>
-                                                                        <td>{{ user.days_remaining }}</td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <th>总授权天数</th>
-                                                                        <td>{{ user.access_days }}</td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <th>上次登录</th>
-                                                                        <td>
-                                                                            {% if user.last_login %}
-                                                                                {{ user.last_login.strftime('%Y-%m-%d %H:%M:%S') }}
-                                                                            {% else %}
-                                                                                尚未登录
-                                                                            {% endif %}
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <th>备注</th>
-                                                                        <td>{{ user.notes or '-' }}</td>
-                                                                    </tr>
-                                                                </table>
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                {% else %}
-                                    <tr>
-                                        <td colspan="9" class="text-center">暂无用户记录</td>
-                                    </tr>
-                                {% endif %}
-                            </tbody>
-                        </table>
                     </div>
                 </div>
-            </div>
-        </main>
-
-        <footer class="py-3 my-4 border-top">
-            <div class="container text-center">
-                <p class="text-muted">© 2025 BTC Mining Calculator</p>
-            </div>
-        </footer>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                    </button>
+                    <button type="submit" class="action-btn btn">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        {% if current_lang == 'en' %}Create User{% else %}创建用户{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
+</div>
 
-    <script>
-        // 初始化工具提示
-        document.addEventListener('DOMContentLoaded', function() {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
+<!-- 用户详情模态框 -->
+<div class="modal fade" id="userDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">
+                    <i class="bi bi-person-circle me-2"></i>
+                    {% if current_lang == 'en' %}User Details{% else %}用户详情{% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="userDetailsContent">
+                <!-- 动态加载用户详情 -->
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Close{% else %}关闭{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 搜索和筛选功能
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('userSearch');
+    const roleFilter = document.getElementById('roleFilter');
+    const statusFilter = document.getElementById('statusFilter');
+
+    function filterUsers() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const roleValue = roleFilter.value;
+        const statusValue = statusFilter.value;
+        const userItems = document.querySelectorAll('.user-item');
+
+        userItems.forEach(item => {
+            const name = item.dataset.name;
+            const email = item.dataset.email;
+            const company = item.dataset.company;
+            const role = item.dataset.role;
+            const status = item.dataset.status;
+
+            const matchesSearch = name.includes(searchTerm) || 
+                                email.includes(searchTerm) || 
+                                company.includes(searchTerm);
+            const matchesRole = !roleValue || role === roleValue;
+            const matchesStatus = !statusValue || status === statusValue;
+
+            if (matchesSearch && matchesRole && matchesStatus) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
         });
-    </script>
-</body>
-</html>
+    }
+
+    searchInput.addEventListener('input', filterUsers);
+    roleFilter.addEventListener('change', filterUsers);
+    statusFilter.addEventListener('change', filterUsers);
+
+    // 页面加载动画
+    const userCards = document.querySelectorAll('.user-card');
+    userCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+
+function viewUser(userId) {
+    // TODO: 加载并显示用户详细信息
+    const modal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
+    document.getElementById('userDetailsContent').innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-warning" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">{% if current_lang == "en" %}Loading user details...{% else %}正在加载用户详情...{% endif %}</p>
+        </div>
+    `;
+    modal.show();
+    
+    // 这里可以添加AJAX调用来获取用户详情
+    setTimeout(() => {
+        document.getElementById('userDetailsContent').innerHTML = `
+            <div class="alert alert-info">
+                {% if current_lang == "en" %}User details functionality will be implemented soon.{% else %}用户详情功能即将实现{% endif %}
+            </div>
+        `;
+    }, 1000);
+}
+
+function editUser(userId) {
+    alert('{% if current_lang == "en" %}Edit user functionality coming soon{% else %}编辑用户功能即将推出{% endif %}');
+}
+
+function deleteUser(userId) {
+    if (confirm('{% if current_lang == "en" %}Are you sure you want to delete this user?{% else %}确定要删除这个用户吗？{% endif %}')) {
+        // TODO: 实现删除用户功能
+        window.location.href = `/admin/user_access/revoke/${userId}`;
+    }
+}
+</script>
+{% endblock %}
