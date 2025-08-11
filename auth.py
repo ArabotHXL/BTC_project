@@ -45,6 +45,47 @@ def get_authorized_emails():
     logging.debug(f"使用默认的 {len(default_emails)} 个授权邮箱")
     return default_emails
 
+def verify_password_login(email_or_username, password):
+    """验证邮箱/用户名和密码登录"""
+    if not email_or_username or not password:
+        logging.warning("登录验证失败: 缺少邮箱/用户名或密码")
+        return None
+    
+    # 清理输入
+    email_or_username = email_or_username.lower().strip()
+    
+    # 查找用户（支持邮箱或用户名登录）
+    user = UserAccess.query.filter(
+        (UserAccess.email == email_or_username) |
+        (UserAccess.username == email_or_username)
+    ).first()
+    
+    if not user:
+        logging.warning(f"用户不存在: {email_or_username}")
+        return None
+    
+    # 检查邮箱是否已验证
+    if not user.is_email_verified:
+        logging.warning(f"用户 {email_or_username} 邮箱未验证")
+        return None
+    
+    # 验证密码
+    if not user.check_password(password):
+        logging.warning(f"用户 {email_or_username} 密码错误")
+        return None
+    
+    # 检查访问权限
+    if not user.has_access:
+        logging.warning(f"用户 {email_or_username} 访问权限已过期")
+        return None
+    
+    # 更新最后登录时间
+    user.last_login = datetime.utcnow()
+    db.session.commit()
+    
+    logging.info(f"用户 {email_or_username} 密码登录成功")
+    return user
+
 def hash_email(email):
     """使用SHA-256哈希邮箱地址，增加安全性"""
     # 创建哈希对象
@@ -67,6 +108,11 @@ def verify_email(email):
     try:
         user = UserAccess.query.filter_by(email=email).first()
         if user:
+            # 检查邮箱是否已验证
+            if not user.is_email_verified:
+                logging.warning(f"用户 {email} 邮箱未验证")
+                return False
+                
             # 更新最后登录时间
             user.last_login = datetime.utcnow()
             db.session.commit()

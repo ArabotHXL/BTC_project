@@ -99,6 +99,10 @@ class UserAccess(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(256), nullable=False, unique=True)
+    username = db.Column(db.String(50), nullable=True, unique=True)  # 新增用户名字段
+    password_hash = db.Column(db.String(512), nullable=True)  # 新增密码哈希字段
+    is_email_verified = db.Column(db.Boolean, default=False, nullable=False)  # 邮箱验证状态
+    email_verification_token = db.Column(db.String(100), nullable=True)  # 邮箱验证令牌
     company = db.Column(db.String(200), nullable=True)
     position = db.Column(db.String(100), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -112,9 +116,12 @@ class UserAccess(db.Model):
     created_by_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
     created_by = db.relationship('UserAccess', foreign_keys=[created_by_id], backref='managed_users', remote_side=[id])
     
-    def __init__(self, name, email, access_days=30, company=None, position=None, notes=None, role="guest"):
+    def __init__(self, name, email, access_days=30, company=None, position=None, notes=None, role="guest", 
+                 username=None, password_hash=None):
         self.name = name
         self.email = email
+        self.username = username
+        self.password_hash = password_hash
         self.company = company
         self.position = position
         self.access_days = access_days
@@ -154,6 +161,29 @@ class UserAccess(db.Model):
     def revoke_access(self):
         """撤销访问权限"""
         self.expires_at = datetime.utcnow() - timedelta(days=1)
+    
+    def set_password(self, password):
+        """设置密码哈希"""
+        from werkzeug.security import generate_password_hash
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password):
+        """验证密码"""
+        from werkzeug.security import check_password_hash
+        if not self.password_hash:
+            return False
+        return check_password_hash(self.password_hash, password)
+    
+    def generate_email_verification_token(self):
+        """生成邮箱验证令牌"""
+        import secrets
+        self.email_verification_token = secrets.token_urlsafe(32)
+        return self.email_verification_token
+    
+    def verify_email(self):
+        """验证邮箱"""
+        self.is_email_verified = True
+        self.email_verification_token = None
         
     def __repr__(self):
         return f"<UserAccess {self.name} ({self.email}) - {self.access_status}>"

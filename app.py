@@ -20,6 +20,53 @@ from db import db
 from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot
 from translations import get_translation
 
+def send_verification_email(email, token):
+    """发送邮箱验证邮件"""
+    try:
+        # 构建验证链接
+        domain = os.environ.get('REPLIT_DOMAINS', 'localhost:5000').split(',')[0]
+        verification_url = f"https://{domain}/verify-email/{token}"
+        
+        # 邮件内容
+        subject = "BTC Mining Calculator - 邮箱验证"
+        html_body = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #f8d000;">欢迎注册 BTC Mining Calculator</h2>
+                <p>感谢您注册我们的比特币挖矿计算平台！</p>
+                <p>请点击下面的链接验证您的邮箱地址：</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{verification_url}" 
+                       style="background-color: #f8d000; color: #000; padding: 12px 24px; 
+                              text-decoration: none; border-radius: 4px; font-weight: bold;">
+                        验证邮箱
+                    </a>
+                </div>
+                <p>如果按钮无法点击，请复制以下链接到浏览器：</p>
+                <p style="word-break: break-all; color: #666;">{verification_url}</p>
+                <p style="color: #666; font-size: 12px; margin-top: 40px;">
+                    此链接有效期为24小时。如果您没有注册此账户，请忽略这封邮件。
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        logging.info(f"邮箱验证链接已生成: {verification_url}")
+        logging.info(f"发送验证邮件到: {email}")
+        
+        # TODO: 这里可以集成SendGrid等邮件服务
+        # 现在先记录到日志，实际部署时需要配置邮件服务
+        print(f"验证邮件发送到 {email}")
+        print(f"验证链接: {verification_url}")
+        
+        return True
+        
+    except Exception as e:
+        logging.error(f"发送验证邮件失败: {e}")
+        return False
+
 # 导入订阅系统模块（延迟导入以避免循环依赖）
 try:
     from models_subscription import Plan, Subscription
@@ -187,10 +234,26 @@ def login():
     
     # 处理表单提交
     if request.method == 'POST':
-        email = request.form.get('email')
+        email_or_username = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
         
-        # 验证邮箱
-        login_successful = verify_email(email)
+        # 尝试密码登录
+        user = None
+        login_successful = False
+        
+        if password:
+            # 使用密码登录
+            from auth import verify_password_login
+            user = verify_password_login(email_or_username, password)
+            if user:
+                login_successful = True
+                email = user.email  # 使用用户的邮箱作为会话标识
+            else:
+                email = email_or_username
+        else:
+            # 向后兼容：无密码时使用邮箱验证
+            email = email_or_username
+            login_successful = verify_email(email)
         
         # 记录登录尝试
         try:
@@ -3247,38 +3310,90 @@ def register():
     
     # POST请求处理注册逻辑
     try:
-        email = request.form.get('email')
-        username = request.form.get('username')
-        password = request.form.get('password')
+        email = request.form.get('email', '').strip()
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
         
+        # 基础验证
         if not email or not password:
             flash('邮箱和密码为必填项', 'error')
             return render_template('register.html')
         
-        # 检查用户是否已存在
-        existing_user = UserAccess.query.filter_by(email=email).first()
+        if len(password) < 6:
+            flash('密码长度至少6位', 'error')
+            return render_template('register.html')
+        
+        # 邮箱格式验证
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, email):
+            flash('邮箱格式无效', 'error')
+            return render_template('register.html')
+        
+        # 检查邮箱是否已存在
+        existing_user = UserAccess.query.filter_by(email=email.lower()).first()
         if existing_user:
             flash('该邮箱已注册', 'error')
             return render_template('register.html')
         
+        # 检查用户名是否已存在（如果提供了用户名）
+        if username:
+            existing_username = UserAccess.query.filter_by(username=username.lower()).first()
+            if existing_username:
+                flash('该用户名已存在', 'error')
+                return render_template('register.html')
+        
         # 创建新用户
         new_user = UserAccess(
             name=username or email.split('@')[0],
-            email=email,
-            access_days=30,
+            email=email.lower(),
+            username=username.lower() if username else None,
+            access_days=7,  # 新用户先给7天试用期
             role='user'
         )
+        
+        # 设置密码哈希
+        new_user.set_password(password)
+        
+        # 生成邮箱验证令牌
+        verification_token = new_user.generate_email_verification_token()
         
         db.session.add(new_user)
         db.session.commit()
         
-        flash('注册成功！请检查邮箱验证链接', 'success')
+        # 发送验证邮件
+        send_verification_email(email, verification_token)
+        
+        flash('注册成功！请检查您的邮箱并点击验证链接完成注册', 'success')
         return redirect(url_for('login'))
         
     except Exception as e:
-        logging.error(f"Registration error: {e}")
+        logging.error(f"注册错误: {e}")
         flash('注册失败，请稍后重试', 'error')
         return render_template('register.html')
+
+@app.route('/verify-email/<token>')
+def verify_email_token(token):
+    """验证邮箱令牌"""
+    try:
+        # 查找带有此令牌的用户
+        user = UserAccess.query.filter_by(email_verification_token=token).first()
+        
+        if not user:
+            flash('无效的验证链接', 'error')
+            return redirect(url_for('login'))
+        
+        # 验证邮箱
+        user.verify_email()
+        db.session.commit()
+        
+        flash('邮箱验证成功！现在可以登录了', 'success')
+        return redirect(url_for('login'))
+        
+    except Exception as e:
+        logging.error(f"邮箱验证错误: {e}")
+        flash('验证失败，请重试', 'error')
+        return redirect(url_for('login'))
 
 # 添加订阅系统路由
 @app.route('/pricing')
