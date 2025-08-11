@@ -55,9 +55,10 @@ def verify_password_login(email_or_username, password):
     email_or_username = email_or_username.lower().strip()
     
     # 查找用户（支持邮箱或用户名登录）
+    from sqlalchemy import or_
     user = UserAccess.query.filter(
-        (UserAccess.email == email_or_username) |
-        (UserAccess.username == email_or_username)
+        or_(UserAccess.email == email_or_username,
+            UserAccess.username == email_or_username)
     ).first()
     
     if not user:

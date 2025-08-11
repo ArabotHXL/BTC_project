@@ -3228,8 +3228,9 @@ def legal_terms():
 # Register Stripe billing blueprint if available
 if SUBSCRIPTION_ENABLED:
     try:
-        app.register_blueprint(billing_bp, url_prefix="/billing")
-        logging.info("Stripe billing routes registered successfully")
+        if 'billing_bp' in globals():
+            app.register_blueprint(billing_bp, url_prefix="/billing")
+            logging.info("Stripe billing routes registered successfully")
         
         # Create database tables for subscriptions
         with app.app_context():
@@ -3240,8 +3241,9 @@ if SUBSCRIPTION_ENABLED:
 
 # Register batch calculator blueprint (separate from subscription check)
 try:
-    app.register_blueprint(batch_calculator_bp)
-    logging.info("Batch calculator routes registered successfully")
+    if 'batch_calculator_bp' in globals():
+        app.register_blueprint(batch_calculator_bp)
+        logging.info("Batch calculator routes registered successfully")
 except Exception as e:
     logging.error(f"Failed to register batch calculator routes: {e}")
 
