@@ -14,160 +14,30 @@
         overflow: hidden;
     }
     
-    /* 强制覆盖所有可能的样式 - 超级明显的测试 */
-    .user-item {
-        background: red !important;
-        border: 3px solid yellow !important;
-        color: white !important;
-    }
-    
-    .user-item:first-child {
-        background: blue !important;
-        border: 5px solid lime !important;
-    }
+    /* 清除之前的测试样式 */
     
     .user-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
         margin: 0;
         padding: 0;
     }
     
-    .user-item {
-        border-bottom: 1px solid #333;
-        transition: all 0.3s ease;
+    .user-item:hover {
+        transform: translateX(3px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
     
     .user-item:last-child {
         border-bottom: none;
     }
     
-    /* 超级强制颜色覆盖 - 使用更高特异性 */
-    .user-list .user-item[data-role="owner"],
-    .list-container .user-item[data-role="owner"] {
-        background: linear-gradient(135deg, rgba(220, 53, 69, 0.25), rgba(220, 53, 69, 0.15)) !important;
-        border-left: 6px solid #dc3545 !important;
-        box-shadow: inset 0 0 10px rgba(220, 53, 69, 0.1) !important;
-    }
+    /* 清除过度复杂的样式，现在使用内联样式 */
     
-    .user-list .user-item[data-role="admin"],
-    .list-container .user-item[data-role="admin"] {
-        background: linear-gradient(135deg, rgba(253, 126, 20, 0.25), rgba(253, 126, 20, 0.15)) !important;
-        border-left: 6px solid #fd7e14 !important;
-        box-shadow: inset 0 0 10px rgba(253, 126, 20, 0.1) !important;
-    }
+    /* 基本布局样式 */
     
-    .user-list .user-item[data-role="mining_site"],
-    .list-container .user-item[data-role="mining_site"] {
-        background: linear-gradient(135deg, rgba(32, 201, 151, 0.25), rgba(32, 201, 151, 0.15)) !important;
-        border-left: 6px solid #20c997 !important;
-        box-shadow: inset 0 0 10px rgba(32, 201, 151, 0.1) !important;
-    }
-    
-    .user-list .user-item[data-role="guest"],
-    .list-container .user-item[data-role="guest"] {
-        background: linear-gradient(135deg, rgba(111, 66, 193, 0.25), rgba(111, 66, 193, 0.15)) !important;
-        border-left: 6px solid #6f42c1 !important;
-        box-shadow: inset 0 0 10px rgba(111, 66, 193, 0.1) !important;
-    }
-    
-    /* 交替行效果 */
-    .user-item:nth-child(even) {
-        background: rgba(255, 255, 255, 0.03) !important;
-    }
-    
-    .user-item:nth-child(even)[data-role="owner"] {
-        background: linear-gradient(135deg, rgba(220, 53, 69, 0.20), rgba(220, 53, 69, 0.12)) !important;
-    }
-    
-    .user-item:nth-child(even)[data-role="admin"] {
-        background: linear-gradient(135deg, rgba(253, 126, 20, 0.20), rgba(253, 126, 20, 0.12)) !important;
-    }
-    
-    .user-item:nth-child(even)[data-role="mining_site"] {
-        background: linear-gradient(135deg, rgba(32, 201, 151, 0.20), rgba(32, 201, 151, 0.12)) !important;
-    }
-    
-    .user-item:nth-child(even)[data-role="guest"] {
-        background: linear-gradient(135deg, rgba(111, 66, 193, 0.20), rgba(111, 66, 193, 0.12)) !important;
-    }
-    
-    .user-item:hover {
-        background: rgba(255, 193, 7, 0.08) !important;
-        transform: translateX(4px);
-        border-left-color: #ffc107 !important;
-    }
-    
-    .user-list-card {
-        padding: 20px;
-        background: transparent;
-        border: none;
-    }
-    
-    .user-avatar {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        font-size: 18px;
-        border: 2px solid rgba(255, 255, 255, 0.1);
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
-    }
-    
-    /* 不同角色的头像颜色 */
-    .user-item[data-role="owner"] .user-avatar {
-        background: linear-gradient(135deg, #dc3545, #c82333) !important;
-        color: white !important;
-        border-color: rgba(220, 53, 69, 0.8) !important;
-    }
-    
-    .user-item[data-role="admin"] .user-avatar {
-        background: linear-gradient(135deg, #fd7e14, #e8640c) !important;
-        color: white !important;
-        border-color: rgba(253, 126, 20, 0.8) !important;
-    }
-    
-    .user-item[data-role="mining_site"] .user-avatar {
-        background: linear-gradient(135deg, #20c997, #1ba085) !important;
-        color: white !important;
-        border-color: rgba(32, 201, 151, 0.8) !important;
-    }
-    
-    .user-item[data-role="guest"] .user-avatar {
-        background: linear-gradient(135deg, #6f42c1, #59359a) !important;
-        color: white !important;
-        border-color: rgba(111, 66, 193, 0.8) !important;
-    }
-    
-    .role-badge {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 500;
-    }
-    
-    .role-owner { 
-        background: linear-gradient(135deg, #dc3545, #c82333); 
-        color: white; 
-        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
-    }
-    .role-admin { 
-        background: linear-gradient(135deg, #fd7e14, #e8640c); 
-        color: white; 
-        box-shadow: 0 2px 8px rgba(253, 126, 20, 0.3);
-    }
-    .role-mining_site { 
-        background: linear-gradient(135deg, #20c997, #1ba085); 
-        color: white; 
-        box-shadow: 0 2px 8px rgba(32, 201, 151, 0.3);
-    }
-    .role-guest { 
-        background: linear-gradient(135deg, #6f42c1, #59359a); 
-        color: white; 
-        box-shadow: 0 2px 8px rgba(111, 66, 193, 0.3);
-    }
-    
+    /* 按钮样式 */
     .floating-add-btn {
         position: fixed;
         bottom: 30px;
@@ -187,22 +57,6 @@
     .floating-add-btn:hover {
         transform: scale(1.1);
         box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
-    }
-    
-    .action-btn {
-        background: linear-gradient(135deg, #ffc107, #ffb300);
-        border: none;
-        color: #000;
-        font-weight: 500;
-        padding: 10px 20px;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-    
-    .action-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
-        color: #000;
     }
     
     .search-container {
@@ -418,89 +272,85 @@
                      data-role="{{ user.role }}"
                      data-status="{{ 'active' if user.has_access else 'expired' }}"
                      style="
-                     {% if user.role == 'owner' %}background: linear-gradient(135deg, rgba(220, 53, 69, 0.3), rgba(220, 53, 69, 0.15)) !important; border-left: 6px solid #dc3545 !important;
-                     {% elif user.role == 'admin' %}background: linear-gradient(135deg, rgba(253, 126, 20, 0.3), rgba(253, 126, 20, 0.15)) !important; border-left: 6px solid #fd7e14 !important;
-                     {% elif user.role == 'mining_site' %}background: linear-gradient(135deg, rgba(32, 201, 151, 0.3), rgba(32, 201, 151, 0.15)) !important; border-left: 6px solid #20c997 !important;
-                     {% else %}background: linear-gradient(135deg, rgba(111, 66, 193, 0.3), rgba(111, 66, 193, 0.15)) !important; border-left: 6px solid #6f42c1 !important;
+                     {% if user.role == 'owner' %}background: rgba(220, 53, 69, 0.1); border-left: 4px solid #dc3545;
+                     {% elif user.role == 'admin' %}background: rgba(253, 126, 20, 0.1); border-left: 4px solid #fd7e14;
+                     {% elif user.role == 'mining_site' %}background: rgba(32, 201, 151, 0.1); border-left: 4px solid #20c997;
+                     {% else %}background: rgba(111, 66, 193, 0.1); border-left: 4px solid #6f42c1;
                      {% endif %}
-                     border-bottom: 1px solid #333; transition: all 0.3s ease;
-                     "">
-                    <div class="user-list-card">
-                        <div class="d-flex align-items-center">
-                            <div class="user-avatar me-3" style="
-                                width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; 
-                                justify-content: center; font-weight: bold; font-size: 18px; color: white;
-                                {% if user.role == 'owner' %}background: linear-gradient(135deg, #dc3545, #c82333) !important; border: 2px solid rgba(220, 53, 69, 0.8);
-                                {% elif user.role == 'admin' %}background: linear-gradient(135deg, #fd7e14, #e8640c) !important; border: 2px solid rgba(253, 126, 20, 0.8);
-                                {% elif user.role == 'mining_site' %}background: linear-gradient(135deg, #20c997, #1ba085) !important; border: 2px solid rgba(32, 201, 151, 0.8);
-                                {% else %}background: linear-gradient(135deg, #6f42c1, #59359a) !important; border: 2px solid rgba(111, 66, 193, 0.8);
-                                {% endif %}
-                                box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+                     padding: 15px; border-bottom: 1px solid #333; transition: all 0.2s ease;
+                     ">
+                    <div class="d-flex align-items-center">
+                        <!-- 头像 -->
+                        <div style="
+                            width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; 
+                            justify-content: center; font-weight: bold; font-size: 16px; color: white; margin-right: 15px;
+                            {% if user.role == 'owner' %}background: #dc3545;
+                            {% elif user.role == 'admin' %}background: #fd7e14;
+                            {% elif user.role == 'mining_site' %}background: #20c997;
+                            {% else %}background: #6f42c1;
+                            {% endif %}
                             ">
-                                {{ user.name[0]|upper if user.name else '?' }}
-                            </div>
-                            <div class="user-info flex-grow-1">
-                                <div class="row align-items-center">
-                                    <div class="col-md-3">
-                                        <h6 class="mb-0">{{ user.name }}</h6>
-                                        <small class="text-muted">{{ user.email }}</small>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <span class="role-badge role-{{ user.role }}">
-                                            {% if user.role == 'owner' %}{% if current_lang == 'en' %}Owner{% else %}拥有者{% endif %}
-                                            {% elif user.role == 'admin' %}{% if current_lang == 'en' %}Admin{% else %}管理员{% endif %}
-                                            {% elif user.role == 'mining_site' %}{% if current_lang == 'en' %}Mining{% else %}矿场{% endif %}
-                                            {% else %}{% if current_lang == 'en' %}Guest{% else %}客人{% endif %}
+                            {{ user.name[0]|upper if user.name else '?' }}
+                        </div>
+                        
+                        <!-- 基本信息 -->
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h6 class="mb-0 text-white">{{ user.name }}</h6>
+                                    <small class="text-muted">{{ user.email }}</small>
+                                </div>
+                                
+                                <div class="d-flex align-items-center gap-3">
+                                    <!-- 角色标签 -->
+                                    <span style="
+                                        {% if user.role == 'owner' %}background: #dc3545; 
+                                        {% elif user.role == 'admin' %}background: #fd7e14;
+                                        {% elif user.role == 'mining_site' %}background: #20c997;
+                                        {% else %}background: #6f42c1;
+                                        {% endif %}
+                                        color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;
+                                        ">
+                                        {% if user.role == 'owner' %}{% if current_lang == 'en' %}Owner{% else %}拥有者{% endif %}
+                                        {% elif user.role == 'admin' %}{% if current_lang == 'en' %}Admin{% else %}管理员{% endif %}
+                                        {% elif user.role == 'mining_site' %}{% if current_lang == 'en' %}Mining{% else %}矿场{% endif %}
+                                        {% else %}{% if current_lang == 'en' %}Guest{% else %}客人{% endif %}
+                                        {% endif %}
+                                    </span>
+                                    
+                                    <!-- 状态 -->
+                                    {% if user.has_access %}
+                                    <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px;">
+                                        {% if current_lang == 'en' %}Active{% else %}有效{% endif %}
+                                    </span>
+                                    {% else %}
+                                    <span style="background: #dc3545; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px;">
+                                        {% if current_lang == 'en' %}Expired{% else %}过期{% endif %}
+                                    </span>
+                                    {% endif %}
+                                    
+                                    <!-- 创建日期 -->
+                                    <small class="text-muted">{{ user.created_at.strftime('%m/%d') }}</small>
+                                    
+                                    <!-- 操作菜单 -->
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-dark">
+                                            <li><a class="dropdown-item" href="#" onclick="viewUser({{ user.id }})">
+                                                <i class="bi bi-eye me-2"></i>{% if current_lang == 'en' %}View{% else %}查看{% endif %}
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="editUser({{ user.id }})">
+                                                <i class="bi bi-pencil me-2"></i>{% if current_lang == 'en' %}Edit{% else %}编辑{% endif %}
+                                            </a></li>
+                                            {% if user.role != 'owner' %}
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteUser({{ user.id }})">
+                                                <i class="bi bi-trash me-2"></i>{% if current_lang == 'en' %}Delete{% else %}删除{% endif %}
+                                            </a></li>
                                             {% endif %}
-                                        </span>
-                                    </div>
-                                    <div class="col-md-2">
-                                        {% if user.company %}
-                                        <span class="company-badge">
-                                            <i class="bi bi-building me-1"></i>{{ user.company }}
-                                        </span>
-                                        {% else %}
-                                        <span class="text-muted">-</span>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-2">
-                                        {% if user.has_access %}
-                                        <span class="badge status-active">
-                                            <i class="bi bi-check-circle-fill me-1"></i>{% if current_lang == 'en' %}Active{% else %}有效{% endif %}
-                                        </span>
-                                        {% else %}
-                                        <span class="badge status-expired">
-                                            <i class="bi bi-x-circle-fill me-1"></i>{% if current_lang == 'en' %}Expired{% else %}过期{% endif %}
-                                        </span>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-2">
-                                        <small class="text-muted">
-                                            <i class="bi bi-calendar-plus me-1"></i>
-                                            {{ user.created_at.strftime('%Y-%m-%d') }}
-                                        </small>
-                                    </div>
-                                    <div class="col-md-1 text-end">
-                                        <div class="dropdown">
-                                            <button class="btn btn-sm btn-outline-secondary" type="button" 
-                                                    data-bs-toggle="dropdown">
-                                                <i class="bi bi-three-dots-vertical"></i>
-                                            </button>
-                                            <ul class="dropdown-menu dropdown-menu-dark">
-                                                <li><a class="dropdown-item" href="#" onclick="viewUser({{ user.id }})">
-                                                    <i class="bi bi-eye me-2"></i>{% if current_lang == 'en' %}View Details{% else %}查看详情{% endif %}
-                                                </a></li>
-                                                <li><a class="dropdown-item" href="#" onclick="editUser({{ user.id }})">
-                                                    <i class="bi bi-pencil me-2"></i>{% if current_lang == 'en' %}Edit{% else %}编辑{% endif %}
-                                                </a></li>
-                                                {% if user.role != 'owner' %}
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li><a class="dropdown-item text-danger" href="#" onclick="deleteUser({{ user.id }})">
-                                                    <i class="bi bi-trash me-2"></i>{% if current_lang == 'en' %}Delete{% else %}删除{% endif %}
-                                                </a></li>
-                                                {% endif %}
-                                            </ul>
-                                        </div>
+                                        </ul>
                                     </div>
                                 </div>
                             </div>
