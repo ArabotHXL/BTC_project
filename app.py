@@ -1496,6 +1496,176 @@ def extend_user_access(user_id, days):
     
     return redirect(url_for('user_access'))
 
+@app.route('/admin/user_access/view/<int:user_id>', methods=['GET'])
+@login_required
+def view_user_details(user_id):
+    """查看用户详细信息"""
+    # 只允许owner或admin角色访问
+    if not has_role(['owner', 'admin']):
+        return jsonify({'success': False, 'message': '您没有权限访问此页面'})
+    
+    try:
+        # 查找用户
+        user = UserAccess.query.get_or_404(user_id)
+        
+        # 获取当前语言
+        current_lang = session.get('language', 'zh')
+        
+        # 生成用户详情HTML
+        from flask import render_template_string
+        html = render_template_string('''
+        <div class="user-details">
+            <div class="row g-3">
+                <div class="col-12 text-center mb-3">
+                    <div class="user-avatar-large mx-auto mb-3">
+                        {{ user.name[0]|upper if user.name else '?' }}
+                    </div>
+                    <h5>{{ user.name }}</h5>
+                    <span class="role-badge role-{{ user.role }} mb-2 d-inline-block">
+                        {% if user.role == 'owner' %}{% if current_lang == 'en' %}Owner{% else %}拥有者{% endif %}
+                        {% elif user.role == 'admin' %}{% if current_lang == 'en' %}Admin{% else %}管理员{% endif %}
+                        {% elif user.role == 'mining_site' %}{% if current_lang == 'en' %}Mining Manager{% else %}矿场管理{% endif %}
+                        {% else %}{% if current_lang == 'en' %}Guest{% else %}客人{% endif %}
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">{% if current_lang == 'en' %}Email{% else %}邮箱{% endif %}</label>
+                    <p class="mb-2">{{ user.email }}</p>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">{% if current_lang == 'en' %}Username{% else %}用户名{% endif %}</label>
+                    <p class="mb-2">{{ user.username or '-' }}</p>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">{% if current_lang == 'en' %}Company{% else %}公司{% endif %}</label>
+                    <p class="mb-2">{{ user.company or '-' }}</p>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">{% if current_lang == 'en' %}Position{% else %}职位{% endif %}</label>
+                    <p class="mb-2">{{ user.position or '-' }}</p>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">{% if current_lang == 'en' %}Access Status{% else %}访问状态{% endif %}</label>
+                    <p class="mb-2">
+                        {% if user.has_access %}
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle me-1"></i>{% if current_lang == 'en' %}Active{% else %}有效{% endif %}
+                        </span>
+                        {% else %}
+                        <span class="badge bg-danger">
+                            <i class="bi bi-x-circle me-1"></i>{% if current_lang == 'en' %}Expired{% else %}过期{% endif %}
+                        </span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">{% if current_lang == 'en' %}Days Remaining{% else %}剩余天数{% endif %}</label>
+                    <p class="mb-2">{{ user.days_remaining }}{% if current_lang == 'en' %} days{% else %} 天{% endif %}</p>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">{% if current_lang == 'en' %}Created Date{% else %}创建时间{% endif %}</label>
+                    <p class="mb-2">{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">{% if current_lang == 'en' %}Last Login{% else %}最后登录{% endif %}</label>
+                    <p class="mb-2">
+                        {% if user.last_login %}
+                            {{ user.last_login.strftime('%Y-%m-%d %H:%M:%S') }}
+                        {% else %}
+                            {% if current_lang == 'en' %}Never logged in{% else %}从未登录{% endif %}
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">{% if current_lang == 'en' %}Email Verified{% else %}邮箱验证{% endif %}</label>
+                    <p class="mb-2">
+                        {% if user.is_email_verified %}
+                        <span class="badge bg-success">{% if current_lang == 'en' %}Verified{% else %}已验证{% endif %}</span>
+                        {% else %}
+                        <span class="badge bg-warning">{% if current_lang == 'en' %}Not Verified{% else %}未验证{% endif %}</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">{% if current_lang == 'en' %}Expires At{% else %}过期时间{% endif %}</label>
+                    <p class="mb-2">{{ user.expires_at.strftime('%Y-%m-%d %H:%M:%S') if user.expires_at else '-' }}</p>
+                </div>
+                {% if user.notes %}
+                <div class="col-12">
+                    <label class="form-label small text-muted">{% if current_lang == 'en' %}Notes{% else %}备注{% endif %}</label>
+                    <p class="mb-2">{{ user.notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <style>
+            .user-avatar-large {
+                width: 80px;
+                height: 80px;
+                background: linear-gradient(135deg, #ffc107, #ffb300);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+                color: #000;
+                font-size: 2rem;
+            }
+        </style>
+        ''', user=user, current_lang=current_lang)
+        
+        return jsonify({'success': True, 'html': html})
+    except Exception as e:
+        logging.error(f"查看用户详情时出错: {str(e)}")
+        return jsonify({'success': False, 'message': f'查看用户详情失败: {str(e)}'})
+
+@app.route('/admin/user_access/edit/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def edit_user_access(user_id):
+    """编辑用户信息"""
+    # 只允许owner或admin角色访问
+    if not has_role(['owner', 'admin']):
+        flash('您没有权限访问此页面，需要管理员或拥有者权限', 'danger')
+        return redirect(url_for('index'))
+    
+    try:
+        user = UserAccess.query.get_or_404(user_id)
+        
+        if request.method == 'POST':
+            # 更新用户信息
+            user.name = request.form['name']
+            user.email = request.form['email']
+            user.username = request.form.get('username')
+            user.company = request.form.get('company')
+            user.position = request.form.get('position')
+            user.notes = request.form.get('notes')
+            
+            # 更新访问天数（如果提供）
+            access_days = request.form.get('access_days')
+            if access_days:
+                user.access_days = int(access_days)
+                user.calculate_expiry()
+            
+            # 更新角色（只有owner可以修改角色）
+            if has_role(['owner']):
+                new_role = request.form.get('role')
+                if new_role in ['owner', 'admin', 'mining_site', 'guest']:
+                    user.role = new_role
+            
+            db.session.commit()
+            flash(f'用户 {user.name} 信息已成功更新', 'success')
+            return redirect(url_for('user_access'))
+        
+        # GET请求：显示编辑表单
+        return render_template('admin/edit_user.html', user=user)
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"编辑用户信息时出错: {str(e)}")
+        flash(f'编辑用户信息失败: {str(e)}', 'danger')
+        return redirect(url_for('user_access'))
+
 @app.route('/admin/user_access/revoke/<int:user_id>', methods=['POST'])
 @login_required
 def revoke_user_access(user_id):
