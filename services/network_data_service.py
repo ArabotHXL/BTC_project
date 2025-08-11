@@ -8,7 +8,7 @@ import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 import requests
-from sqlalchemy import func, desc, asc
+from sqlalchemy import func, desc, asc, and_
 from models import NetworkSnapshot
 from db import db
 import pytz
