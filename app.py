@@ -2628,7 +2628,7 @@ def network_history_main():
 
 @app.route('/analytics')
 @app.route('/analytics_dashboard')
-@login_required
+@requires_owner_only
 @log_access_attempt('数据分析平台')
 def analytics_dashboard():
     """数据分析仪表盘 - 仅限拥有者"""
@@ -2728,7 +2728,7 @@ def analytics_dashboard():
 
 # 历史数据分析API路由
 @app.route('/api/analytics/historical-stats')
-@login_required
+@requires_owner_only
 @log_access_attempt('历史数据统计API')
 def api_historical_stats():
     """获取历史数据统计信息"""
@@ -2782,7 +2782,8 @@ def api_historical_stats():
                 difficulty_change = ((latest - previous) / previous) * 100
         
         cursor.close()
-        db_manager.disconnect()
+        if db_manager.connection:
+            db_manager.connection.close()
         
         return jsonify({
             'price_range': {
@@ -2800,7 +2801,7 @@ def api_historical_stats():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/analytics/price-history')
-@login_required
+@requires_owner_only
 @log_access_attempt('价格历史数据API')
 def api_price_history():
     """获取价格历史趋势数据"""
@@ -2827,7 +2828,8 @@ def api_price_history():
         
         records = cursor.fetchall()
         cursor.close()
-        db_manager.disconnect()
+        if db_manager.connection:
+            db_manager.connection.close()
         
         if not records:
             return jsonify({'labels': [], 'prices': []})
@@ -2856,7 +2858,7 @@ def api_price_history():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/analytics/hashrate-history')
-@login_required
+@requires_owner_only
 @log_access_attempt('算力历史数据API')
 def api_hashrate_history():
     """获取算力历史趋势数据"""
@@ -2883,7 +2885,8 @@ def api_hashrate_history():
         
         records = cursor.fetchall()
         cursor.close()
-        db_manager.disconnect()
+        if db_manager.connection:
+            db_manager.connection.close()
         
         if not records:
             return jsonify({'labels': [], 'hashrates': []})
