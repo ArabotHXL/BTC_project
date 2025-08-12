@@ -555,23 +555,19 @@
             }
             
             // Update calculate button state
+            updateCalculateButton(totalMiners);
+        }
+
+        function updateCalculateButton(totalMiners) {
             const calculateBtn = document.getElementById('calculateBtn');
-            if (totalMiners > maxMiners && !bypassUsed) {
-                calculateBtn.disabled = true;
-                calculateBtn.innerHTML = '<i class="bi bi-lock me-2"></i>{% if current_lang == "en" %}Upgrade Required{% else %}需要升级{% endif %}';
-            } else {
-                calculateBtn.disabled = false;
-                calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>{% if current_lang == "en" %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}';
-            }
-            
-            // Update calculate button state
-            const calculateBtn = document.getElementById('calculateBtn');
-            if (totalMiners > maxMiners && !bypassUsed) {
-                calculateBtn.disabled = true;
-                calculateBtn.innerHTML = '<i class="bi bi-lock me-2"></i>{% if current_lang == "en" %}Upgrade Required{% else %}需要升级{% endif %}';
-            } else {
-                calculateBtn.disabled = false;
-                calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>{% if current_lang == "en" %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}';
+            if (calculateBtn) {
+                if (totalMiners > maxMiners && !bypassUsed) {
+                    calculateBtn.disabled = true;
+                    calculateBtn.innerHTML = '<i class="bi bi-lock me-2"></i>{% if current_lang == "en" %}Upgrade Required{% else %}需要升级{% endif %}';
+                } else {
+                    calculateBtn.disabled = false;
+                    calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>{% if current_lang == "en" %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}';
+                }
             }
         }
 
