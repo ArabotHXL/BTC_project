@@ -541,27 +541,27 @@
                 currentCountSpan.textContent = totalMiners;
                 remainingCountSpan.textContent = Math.max(0, maxMiners - totalMiners);
                 
-                const progress = Math.min((totalMiners / maxMiners) * 100, 100);
-                progressBar.style.width = progress + '%';
+                const progressPercent = Math.min((totalMiners / maxMiners) * 100, 100);
+                progressBar.style.width = progressPercent + '%';
                 
                 // Update progress bar color based on usage
-                if (progress >= 100) {
+                if (progressPercent >= 100) {
                     progressBar.className = 'progress-bar bg-danger';
-                } else if (progress >= 80) {
+                } else if (progressPercent >= 80) {
                     progressBar.className = 'progress-bar bg-warning';
                 } else {
                     progressBar.className = 'progress-bar bg-success';
                 }
             }
             
-            // Change color based on usage
-            progressBar.className = 'progress-bar';
-            if (progress > 90) {
-                progressBar.classList.add('bg-danger');
-            } else if (progress > 70) {
-                progressBar.classList.add('bg-warning');
+            // Update calculate button state
+            const calculateBtn = document.getElementById('calculateBtn');
+            if (totalMiners > maxMiners && !bypassUsed) {
+                calculateBtn.disabled = true;
+                calculateBtn.innerHTML = '<i class="bi bi-lock me-2"></i>{% if current_lang == "en" %}Upgrade Required{% else %}需要升级{% endif %}';
             } else {
-                progressBar.classList.add('bg-primary');
+                calculateBtn.disabled = false;
+                calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>{% if current_lang == "en" %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}';
             }
             
             // Update calculate button state

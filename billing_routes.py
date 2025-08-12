@@ -9,7 +9,7 @@ from datetime import datetime
 from models_subscription import Plan, Subscription
 from models import UserAccess
 from decorators import get_user_plan, get_user_subscription
-from db import db
+from app import db
 
 
 # Stripe configuration

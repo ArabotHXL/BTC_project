@@ -1,0 +1,169 @@
+{
+  "timestamp": "2025-08-12T03:27:25.282959",
+  "total_tests": 16,
+  "passed_tests": 16,
+  "success_rate": 100.0,
+  "target_achieved": true,
+  "test_results": [
+    {
+      "name": "Application Startup",
+      "passed": true,
+      "details": "(200)"
+    },
+    {
+      "name": "Login Page Template",
+      "passed": true,
+      "details": "(200)"
+    },
+    {
+      "name": "Calculator Page",
+      "passed": true,
+      "details": "(200)"
+    },
+    {
+      "name": "Batch Calculator",
+      "passed": true,
+      "details": "(200)"
+    },
+    {
+      "name": "Analytics API",
+      "passed": {
+        "btc_market_cap": null,
+        "btc_price": 118929.0,
+        "btc_volume_24h": null,
+        "fear_greed_index": "69",
+        "network_difficulty": 129435235580345.0,
+        "network_hashrate": 911.0,
+        "price_change_1h": 0.0,
+        "price_change_24h": 0.0,
+        "price_change_7d": 0.0,
+        "timestamp": "2025-08-12T03:27:23.534270"
+      },
+      "details": "(Data integrity verified)"
+    },
+    {
+      "name": "Network Data API",
+      "passed": true,
+      "details": "(200)"
+    },
+    {
+      "name": "Miner Models API",
+      "passed": {
+        "Antminer S19": {
+          "hashrate": 95,
+          "power_watt": 3250
+        },
+        "Antminer S19 Pro": {
+          "hashrate": 110,
+          "power_watt": 3250
+        },
+        "Antminer S19 XP": {
+          "hashrate": 140,
+          "power_watt": 3010
+        },
+        "Antminer S19j Pro": {
+          "hashrate": 100,
+          "power_watt": 3068
+        },
+        "Antminer S21": {
+          "hashrate": 200,
+          "power_watt": 3550
+        },
+        "Antminer S21 Hyd": {
+          "hashrate": 335,
+          "power_watt": 5360
+        },
+        "Antminer S21 Pro": {
+          "hashrate": 234,
+          "power_watt": 3531
+        },
+        "Antminer S21 Pro Hyd": {
+          "hashrate": 319,
+          "power_watt": 5445
+        },
+        "Antminer S21 XP": {
+          "hashrate": 270,
+          "power_watt": 3645
+        },
+        "Antminer S21 XP Hyd": {
+          "hashrate": 473,
+          "power_watt": 5676
+        },
+        "Antminer T19": {
+          "hashrate": 84,
+          "power_watt": 3150
+        },
+        "AvalonMiner 1366": {
+          "hashrate": 100,
+          "power_watt": 3420
+        },
+        "AvalonMiner 1466": {
+          "hashrate": 150,
+          "power_watt": 3420
+        },
+        "WhatsMiner M50": {
+          "hashrate": 114,
+          "power_watt": 3306
+        },
+        "WhatsMiner M50S": {
+          "hashrate": 126,
+          "power_watt": 3276
+        },
+        "WhatsMiner M53S": {
+          "hashrate": 226,
+          "power_watt": 6554
+        },
+        "WhatsMiner M56S": {
+          "hashrate": 212,
+          "power_watt": 5550
+        }
+      },
+      "details": "(Model data available)"
+    },
+    {
+      "name": "BTC Price Data",
+      "passed": true,
+      "details": "($118929.0)"
+    },
+    {
+      "name": "Network Hashrate",
+      "passed": true,
+      "details": "(911.0 EH/s)"
+    },
+    {
+      "name": "Data Timestamp",
+      "passed": true,
+      "details": "(Real-time data)"
+    },
+    {
+      "name": "Landing Page UI",
+      "passed": true,
+      "details": "(Bootstrap: True, No errors: True)"
+    },
+    {
+      "name": "Login Page UI",
+      "passed": true,
+      "details": "(Bootstrap: True, No errors: True)"
+    },
+    {
+      "name": "Page Load Speed",
+      "passed": true,
+      "details": "(0.02s)"
+    },
+    {
+      "name": "API Response Speed",
+      "passed": true,
+      "details": "(0.34s)"
+    },
+    {
+      "name": "404 Error Handling",
+      "passed": true,
+      "details": "(404)"
+    },
+    {
+      "name": "Invalid API Handling",
+      "passed": true,
+      "details": "(422)"
+    }
+  ]
+}
