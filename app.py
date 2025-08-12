@@ -3643,10 +3643,36 @@ def api_generate_detailed_report():
             price_history = []
         
         # 生成详细报告 - 使用简化版本
-        logging.info("开始调用简化详细报告生成器...")
-        from simple_detailed_report import generate_simple_detailed_report
+        logging.info("开始生成简化详细报告...")
         
-        detailed_report = generate_simple_detailed_report(market_data, price_history)
+        # 生成简化的市场分析报告
+        report_sections = []
+        
+        # 基础市场数据
+        report_sections.append("=== 市场概况 ===")
+        report_sections.append(f"当前BTC价格: ${market_data.get('btc_price', 0):,.2f}")
+        report_sections.append(f"网络算力: {market_data.get('network_hashrate', 0):.1f} EH/s")
+        report_sections.append(f"网络难度: {market_data.get('network_difficulty', 0):,.0f}")
+        
+        # 价格趋势分析
+        if price_history and len(price_history) > 1:
+            prices = [record.get('btc_price', 0) for record in price_history[-24:]]
+            if prices:
+                min_price = min(prices)
+                max_price = max(prices)
+                current_price = prices[-1]
+                volatility = ((max_price - min_price) / min_price) * 100
+                
+                report_sections.append("\n=== 24小时价格分析 ===")
+                report_sections.append(f"价格区间: ${min_price:,.2f} - ${max_price:,.2f}")
+                report_sections.append(f"价格波动率: {volatility:.2f}%")
+        
+        # 挖矿收益估算
+        report_sections.append("\n=== 挖矿收益预估 ===")
+        s19_daily = (110 * 24 * 6.25 * market_data.get('btc_price', 0)) / (market_data.get('network_difficulty', 1) * 2**32 / 10**12)
+        report_sections.append(f"S19 Pro日收益预估: ${s19_daily:.2f}")
+        
+        detailed_report = "\n".join(report_sections)
         logging.info("详细报告生成完成")
         
         # 确保返回数据可以序列化为JSON
