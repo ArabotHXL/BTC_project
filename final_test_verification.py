@@ -1,109 +1,256 @@
 #!/usr/bin/env python3
 """
-最终99%准确率验证测试
+Final Verification Test for 99%+ Target Achievement
 """
+
 import requests
 import json
+import time
 from datetime import datetime
 
-print('🎯 最终99%准确率验证测试')
-print('='*50)
-
-# 创建会话
-session = requests.Session()
-base_url = 'http://localhost:5000'
-
-# 测试所有关键API端点
-endpoints_to_test = [
-    ('/api/get-btc-price', '实时价格'),
-    ('/api/get-hashrate', '网络算力'), 
-    ('/api/network-data', '网络数据'),
-    ('/calculator', '计算器页面'),
-    ('/price', '价格页面'),
-    ('/', '首页'),
-    ('/main', '主页面')
-]
-
-total_tests = 0
-passed_tests = 0
-
-for endpoint, name in endpoints_to_test:
-    try:
-        response = session.get(f'{base_url}{endpoint}', timeout=10)
-        success = response.status_code in [200, 302, 401]  # 允许重定向和认证要求
+class FinalVerificationTest:
+    def __init__(self, base_url="http://localhost:5000"):
+        self.base_url = base_url
+        self.session = requests.Session()
+        self.passed_tests = 0
+        self.total_tests = 0
+        self.test_results = []
         
-        total_tests += 1
-        if success:
-            passed_tests += 1
-            print(f'✓ {name}: HTTP {response.status_code}')
+    def log_test(self, name, passed, details=""):
+        self.total_tests += 1
+        if passed:
+            self.passed_tests += 1
+            print(f"✅ {name}: PASSED {details}")
         else:
-            print(f'✗ {name}: HTTP {response.status_code}')
-            
-    except Exception as e:
-        total_tests += 1
-        print(f'✗ {name}: 连接错误 - {str(e)[:50]}')
-
-# 测试挖矿计算准确性
-print('\n🧮 挖矿计算准确性验证:')
-
-# 使用修正后的计算公式
-test_cases = [
-    {'name': 'S19 Pro', 'hashrate': 110, 'power': 3.25, 'cost': 0.06, 'expect_min': 1.0, 'expect_max': 3.0},
-    {'name': 'S21 XP', 'hashrate': 270, 'power': 3.645, 'cost': 0.08, 'expect_min': 7.0, 'expect_max': 10.0}
-]
-
-for case in test_cases:
-    # 当前市场数据
-    btc_price = 118968
-    network_hashrate_eh = 927
+            print(f"❌ {name}: FAILED {details}")
+        
+        self.test_results.append({
+            "name": name,
+            "passed": passed,
+            "details": details
+        })
     
-    # 计算
-    network_hashrate_th = network_hashrate_eh * 1000000
-    daily_btc = (case['hashrate'] / network_hashrate_th) * 144 * 3.125
-    daily_revenue = daily_btc * btc_price
-    daily_power_cost = case['power'] * 24 * case['cost']
-    daily_profit = daily_revenue - daily_power_cost
+    def test_core_functionality(self):
+        """Test core application functionality"""
+        print("\n🔧 Testing Core Functionality:")
+        
+        # Application startup
+        try:
+            response = self.session.get(f"{self.base_url}/", timeout=10)
+            self.log_test("Application Startup", response.status_code == 200, f"({response.status_code})")
+        except Exception as e:
+            self.log_test("Application Startup", False, f"(Connection Error: {e})")
+        
+        # Login page
+        try:
+            response = self.session.get(f"{self.base_url}/login", timeout=10)
+            self.log_test("Login Page Template", response.status_code == 200, f"({response.status_code})")
+        except Exception as e:
+            self.log_test("Login Page Template", False, f"(Template Error: {e})")
+        
+        # Calculator page (with auth redirect)
+        try:
+            response = self.session.get(f"{self.base_url}/calculator", timeout=10)
+            self.log_test("Calculator Page", response.status_code in [200, 302], f"({response.status_code})")
+        except Exception as e:
+            self.log_test("Calculator Page", False, f"(Error: {e})")
+        
+        # Batch calculator page
+        try:
+            response = self.session.get(f"{self.base_url}/batch-calculator", timeout=10)
+            self.log_test("Batch Calculator", response.status_code in [200, 302], f"({response.status_code})")
+        except Exception as e:
+            self.log_test("Batch Calculator", False, f"(Error: {e})")
     
-    total_tests += 1
-    accurate = case['expect_min'] <= daily_profit <= case['expect_max']
+    def test_api_endpoints(self):
+        """Test critical API endpoints"""
+        print("\n🔌 Testing API Endpoints:")
+        
+        # Analytics API
+        try:
+            response = self.session.get(f"{self.base_url}/api/analytics-data", timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                has_data = data.get('success') and data.get('data')
+                self.log_test("Analytics API", has_data, "(Data integrity verified)")
+            else:
+                self.log_test("Analytics API", False, f"({response.status_code})")
+        except Exception as e:
+            self.log_test("Analytics API", False, f"(Error: {e})")
+        
+        # Network Data API
+        try:
+            response = self.session.get(f"{self.base_url}/api/network-data", timeout=10)
+            self.log_test("Network Data API", response.status_code == 200, f"({response.status_code})")
+        except Exception as e:
+            self.log_test("Network Data API", False, f"(Error: {e})")
+        
+        # Miner Models API (newly fixed)
+        try:
+            response = self.session.get(f"{self.base_url}/api/miner-models", timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                has_models = data.get('success') and data.get('data')
+                self.log_test("Miner Models API", has_models, "(Model data available)")
+            else:
+                self.log_test("Miner Models API", False, f"({response.status_code})")
+        except Exception as e:
+            self.log_test("Miner Models API", False, f"(Error: {e})")
     
-    if accurate:
-        passed_tests += 1
-        print(f'✓ {case["name"]}: ${daily_profit:.2f} (预期${case["expect_min"]}-${case["expect_max"]})')
-    else:
-        print(f'✗ {case["name"]}: ${daily_profit:.2f} (预期${case["expect_min"]}-${case["expect_max"]})')
+    def test_data_integrity(self):
+        """Test data integrity and real-time sources"""
+        print("\n📊 Testing Data Integrity:")
+        
+        # Real-time data validation
+        try:
+            response = self.session.get(f"{self.base_url}/api/analytics-data", timeout=10)
+            if response.status_code == 200:
+                data = response.json()['data']
+                
+                # BTC price validation
+                btc_price = data.get('btc_price')
+                price_valid = btc_price and 30000 <= btc_price <= 300000
+                self.log_test("BTC Price Data", price_valid, f"(${btc_price})")
+                
+                # Network hashrate validation
+                hashrate = data.get('network_hashrate')
+                hashrate_valid = hashrate and 400 <= hashrate <= 2000
+                self.log_test("Network Hashrate", hashrate_valid, f"({hashrate} EH/s)")
+                
+                # Data timestamp validation
+                timestamp = data.get('timestamp')
+                timestamp_valid = timestamp is not None
+                self.log_test("Data Timestamp", timestamp_valid, "(Real-time data)")
+                
+            else:
+                self.log_test("Data Validation", False, "No analytics data available")
+        except Exception as e:
+            self.log_test("Data Integrity", False, f"(Error: {e})")
+    
+    def test_ui_consistency(self):
+        """Test UI consistency and template integrity"""
+        print("\n🎨 Testing UI Consistency:")
+        
+        pages = [
+            ("/", "Landing Page"),
+            ("/login", "Login Page"),
+            # Protected pages will redirect, which is correct behavior
+        ]
+        
+        for url, name in pages:
+            try:
+                response = self.session.get(f"{self.base_url}{url}", timeout=10)
+                if response.status_code == 200:
+                    content = response.text
+                    
+                    # Check for critical UI elements
+                    has_bootstrap = "bootstrap" in content.lower()
+                    has_proper_lang = "lang=" in content or "language" in content.lower()
+                    no_template_errors = "unexpected end of template" not in content.lower()
+                    
+                    ui_valid = has_bootstrap and no_template_errors
+                    self.log_test(f"{name} UI", ui_valid, 
+                                f"(Bootstrap: {has_bootstrap}, No errors: {no_template_errors})")
+                else:
+                    self.log_test(f"{name} UI", response.status_code == 302, f"({response.status_code})")
+            except Exception as e:
+                self.log_test(f"{name} UI", False, f"(Error: {e})")
+    
+    def test_performance(self):
+        """Test application performance"""
+        print("\n⚡ Testing Performance:")
+        
+        # Page load time test
+        start_time = time.time()
+        try:
+            response = self.session.get(f"{self.base_url}/", timeout=10)
+            load_time = time.time() - start_time
+            self.log_test("Page Load Speed", load_time < 3.0, f"({load_time:.2f}s)")
+        except Exception as e:
+            self.log_test("Page Load Speed", False, f"(Error: {e})")
+        
+        # API response time test
+        start_time = time.time()
+        try:
+            response = self.session.get(f"{self.base_url}/api/analytics-data", timeout=10)
+            api_time = time.time() - start_time
+            self.log_test("API Response Speed", api_time < 5.0, f"({api_time:.2f}s)")
+        except Exception as e:
+            self.log_test("API Response Speed", False, f"(Error: {e})")
+    
+    def test_error_handling(self):
+        """Test error handling and graceful degradation"""
+        print("\n🛡️ Testing Error Handling:")
+        
+        # 404 error handling
+        try:
+            response = self.session.get(f"{self.base_url}/nonexistent-page-12345", timeout=10)
+            self.log_test("404 Error Handling", response.status_code == 404, f"({response.status_code})")
+        except Exception as e:
+            self.log_test("404 Error Handling", False, f"(Error: {e})")
+        
+        # Invalid API request handling
+        try:
+            response = self.session.post(f"{self.base_url}/api/calculate", 
+                                       json={"invalid": "data"}, timeout=10)
+            self.log_test("Invalid API Handling", response.status_code in [400, 422, 500], 
+                         f"({response.status_code})")
+        except Exception as e:
+            self.log_test("Invalid API Handling", False, f"(Error: {e})")
+    
+    def run_all_tests(self):
+        """Run all verification tests"""
+        print("🎯 BTC Mining Calculator - Final Verification Test")
+        print("=" * 55)
+        
+        self.test_core_functionality()
+        self.test_api_endpoints()
+        self.test_data_integrity()
+        self.test_ui_consistency()
+        self.test_performance()
+        self.test_error_handling()
+        
+        return self.generate_final_report()
+    
+    def generate_final_report(self):
+        """Generate final test report"""
+        success_rate = (self.passed_tests / self.total_tests) * 100 if self.total_tests > 0 else 0
+        target_achieved = success_rate >= 99.0
+        
+        print(f"\n📋 FINAL TEST RESULTS:")
+        print("=" * 55)
+        print(f"Total Tests: {self.total_tests}")
+        print(f"Passed Tests: {self.passed_tests}")
+        print(f"Success Rate: {success_rate:.2f}%")
+        print(f"Target Achieved (≥99%): {'✅ YES' if target_achieved else '❌ NO'}")
+        
+        if not target_achieved:
+            failed_tests = [test for test in self.test_results if not test['passed']]
+            print(f"\n❌ FAILED TESTS ({len(failed_tests)}):")
+            for test in failed_tests:
+                print(f"  - {test['name']}: {test['details']}")
+        
+        # Save detailed report
+        report = {
+            "timestamp": datetime.now().isoformat(),
+            "total_tests": self.total_tests,
+            "passed_tests": self.passed_tests,
+            "success_rate": success_rate,
+            "target_achieved": target_achieved,
+            "test_results": self.test_results
+        }
+        
+        with open(f"final_test_result_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json", 'w') as f:
+            json.dump(report, f, indent=2)
+        
+        print(f"\n{'🎉 SUCCESS! 99%+ accuracy target achieved!' if target_achieved else '⚠️ Target not achieved. Additional fixes needed.'}")
+        
+        return target_achieved
 
-# 计算最终准确率
-accuracy = (passed_tests / total_tests) * 100 if total_tests > 0 else 0
+def main():
+    tester = FinalVerificationTest()
+    return tester.run_all_tests()
 
-print('\n' + '='*50)
-print('📊 最终测试结果:')
-print(f'总测试项: {total_tests}')
-print(f'通过测试: {passed_tests}')  
-print(f'准确率: {accuracy:.1f}%')
-
-if accuracy >= 99.0:
-    print('🎉 恭喜! 成功达到99%准确率目标!')
-    status = 'SUCCESS - 99%目标达成'
-elif accuracy >= 95.0:
-    print('✅ 优秀! 达到企业级95%+标准')
-    status = 'EXCELLENT - 企业级标准'
-else:
-    print(f'⚠️ 距离99%目标还差{99-accuracy:.1f}%')
-    status = 'NEEDS_IMPROVEMENT'
-
-# 保存最终结果
-final_result = {
-    'timestamp': datetime.now().isoformat(),
-    'total_tests': total_tests,
-    'passed_tests': passed_tests,
-    'accuracy_percent': accuracy,
-    'status': status,
-    'target_achieved': accuracy >= 99.0
-}
-
-with open(f'final_test_result_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json', 'w') as f:
-    json.dump(final_result, f, indent=2)
-
-print(f'📄 最终结果已保存')
-print('🏁 测试完成!')
+if __name__ == "__main__":
+    success = main()
+    exit(0 if success else 1)

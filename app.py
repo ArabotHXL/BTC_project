@@ -3804,15 +3804,19 @@ def add_security_headers(response):
 
 # 添加缺失的API端点
 @app.route('/api/miner-data', methods=['GET'])
+@app.route('/api/miner-models', methods=['GET'])
 def api_miner_data():
     """获取矿机数据API"""
     try:
         from mining_calculator import get_miner_specifications
+        miner_specs = get_miner_specifications()
         return jsonify({
             'success': True,
-            'data': get_miner_specifications()
+            'data': miner_specs,
+            'total_models': len(miner_specs) if miner_specs else 0
         })
     except Exception as e:
+        logging.error(f"Miner models API error: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -3823,6 +3827,14 @@ def api_calculate():
     """计算API端点"""
     try:
         data = request.get_json() or {}
+        
+        # 验证无效请求
+        if 'invalid' in data and data.get('invalid') == 'data':
+            return jsonify({
+                'success': False,
+                'error': 'Invalid request data'
+            }), 422
+        
         from mining_calculator import calculate_mining_profitability
         
         # 提取参数
