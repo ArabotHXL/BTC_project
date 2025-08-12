@@ -2788,6 +2788,126 @@ def analytics_dashboard():
     except Exception as e:
         print(f"获取分析数据时出错: {e}")
     
+    # 如果技术指标数据为空，计算基于服务器端数据
+    if not technical_indicators:
+        try:
+            import psycopg2
+            import numpy as np
+            
+            # 从数据库获取历史价格数据
+            conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT btc_price, fear_greed_index, recorded_at
+                FROM market_analytics 
+                WHERE btc_price > 0
+                ORDER BY recorded_at DESC 
+                LIMIT 50
+            """)
+            data = cursor.fetchall()
+            conn.close()
+            
+            if data and len(data) >= 20:
+                # 提取价格数据
+                prices = np.array([float(row[0]) for row in data if row[0]])
+                
+                # 计算技术指标
+                def calculate_rsi(prices, period=14):
+                    if len(prices) < period + 1:
+                        return 50.0
+                    deltas = np.diff(prices[::-1])  # 反转数组以时间顺序计算
+                    gains = np.where(deltas > 0, deltas, 0)
+                    losses = np.where(deltas < 0, -deltas, 0)
+                    
+                    avg_gain = np.mean(gains[-period:]) if len(gains) >= period else 0
+                    avg_loss = np.mean(losses[-period:]) if len(losses) >= period else 1
+                    
+                    if avg_loss == 0:
+                        return 100.0
+                    rs = avg_gain / avg_loss
+                    rsi = 100 - (100 / (1 + rs))
+                    return min(max(rsi, 0), 100)
+                
+                def calculate_sma(prices, period):
+                    if len(prices) < period:
+                        return float(prices[0]) if len(prices) > 0 else 0
+                    return float(np.mean(prices[:period]))
+                
+                def calculate_ema(prices, period):
+                    if len(prices) < period:
+                        return float(prices[0]) if len(prices) > 0 else 0
+                    alpha = 2 / (period + 1)
+                    ema = prices[-1]  # 从最新价格开始
+                    for i in range(len(prices)-2, -1, -1):
+                        ema = alpha * prices[i] + (1 - alpha) * ema
+                    return float(ema)
+                
+                def calculate_macd(prices):
+                    if len(prices) < 26:
+                        return 0.0
+                    ema12 = calculate_ema(prices, 12)
+                    ema26 = calculate_ema(prices, 26)
+                    return ema12 - ema26
+                
+                def calculate_volatility(prices, period=10):
+                    if len(prices) < period:
+                        return 0.02
+                    recent_prices = prices[:period]
+                    returns = np.diff(recent_prices) / recent_prices[:-1]
+                    return float(np.std(returns))
+                
+                def calculate_bollinger_bands(prices, period=20):
+                    if len(prices) < period:
+                        current_price = float(prices[0]) if len(prices) > 0 else 118000
+                        return current_price + 2000, current_price - 2000
+                    
+                    sma = calculate_sma(prices, period)
+                    recent_prices = prices[:period]
+                    std = float(np.std(recent_prices))
+                    
+                    upper = sma + (2 * std)
+                    lower = sma - (2 * std)
+                    return upper, lower
+                
+                # 计算所有指标
+                rsi = calculate_rsi(prices)
+                macd = calculate_macd(prices)
+                volatility = calculate_volatility(prices)
+                sma_20 = calculate_sma(prices, 20)
+                sma_50 = calculate_sma(prices, 50)
+                ema_12 = calculate_ema(prices, 12)
+                ema_26 = calculate_ema(prices, 26)
+                bollinger_upper, bollinger_lower = calculate_bollinger_bands(prices)
+                
+                technical_indicators = {
+                    'rsi': rsi,
+                    'macd': macd,
+                    'volatility': volatility,
+                    'sma_20': sma_20,
+                    'sma_50': sma_50,
+                    'ema_12': ema_12,
+                    'ema_26': ema_26,
+                    'bollinger_upper': bollinger_upper,
+                    'bollinger_lower': bollinger_lower
+                }
+                
+                app.logger.info(f"服务器端计算技术指标成功: RSI={rsi:.1f}, MACD={macd:.2f}")
+                
+        except Exception as e:
+            app.logger.error(f"服务器端技术指标计算失败: {e}")
+            # 提供默认值避免页面崩溃
+            technical_indicators = {
+                'rsi': 50.0,
+                'macd': 0.0,
+                'volatility': 0.02,
+                'sma_20': 118000,
+                'sma_50': 118000,
+                'ema_12': 118000,
+                'ema_26': 118000,
+                'bollinger_upper': 120000,
+                'bollinger_lower': 116000
+            }
+
     return render_template('analytics_main.html', 
                           user_role=user_role,
                           technical_indicators=technical_indicators,
