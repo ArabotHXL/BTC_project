@@ -2861,6 +2861,138 @@ def analytics_unified_data():
         app.logger.error(f"获取分析数据失败: {e}")
         return jsonify({'error': f'获取市场数据失败: {str(e)}'}), 500
 
+@app.route('/analytics/api/technical-indicators')
+@login_required
+def analytics_technical_indicators():
+    """计算技术指标 - 使用真实数据库数据"""
+    user_role = get_user_role(session.get('email'))
+    if user_role not in ['owner', 'manager', 'mining_site']:
+        return jsonify({'error': '权限不足'}), 403
+    
+    try:
+        import psycopg2
+        import numpy as np
+        from datetime import datetime
+        
+        # 从数据库获取历史价格数据
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT btc_price, network_hashrate, fear_greed_index, 
+                   price_change_1h, price_change_24h, price_change_7d,
+                   recorded_at
+            FROM market_analytics 
+            WHERE btc_price > 0
+            ORDER BY recorded_at DESC 
+            LIMIT 50
+        """)
+        data = cursor.fetchall()
+        conn.close()
+        
+        if not data:
+            return jsonify({
+                'success': False, 
+                'error': 'No historical data available',
+                'data': None
+            })
+        
+        # 转换为价格列表
+        prices = [float(row[0]) for row in data if row[0]]
+        current_price = prices[0] if prices else 0
+        fear_greed_index = int(data[0][2]) if data[0][2] else 50
+        
+        # 计算RSI (14期)
+        def calculate_rsi(prices_list, period=14):
+            if len(prices_list) < period + 1:
+                return 50
+            gains = []
+            losses = []
+            for i in range(1, min(period + 1, len(prices_list))):
+                change = prices_list[i-1] - prices_list[i]
+                if change > 0:
+                    gains.append(change)
+                    losses.append(0)
+                else:
+                    gains.append(0)
+                    losses.append(abs(change))
+            avg_gain = sum(gains) / len(gains) if gains else 0
+            avg_loss = sum(losses) / len(losses) if losses else 0
+            if avg_loss == 0:
+                return 100
+            rs = avg_gain / avg_loss
+            return 100 - (100 / (1 + rs))
+        
+        # 计算EMA
+        def calculate_ema(prices_list, period):
+            if not prices_list or len(prices_list) < period:
+                return prices_list[0] if prices_list else 0
+            multiplier = 2 / (period + 1)
+            ema = prices_list[0]
+            for price in prices_list[1:period]:
+                ema = (price * multiplier) + (ema * (1 - multiplier))
+            return ema
+        
+        # 计算移动平均线
+        sma_20 = sum(prices[:20]) / min(20, len(prices)) if prices else current_price
+        sma_50 = sum(prices[:50]) / min(50, len(prices)) if prices else current_price
+        
+        # 计算EMA
+        ema_12 = calculate_ema(prices, 12)
+        ema_26 = calculate_ema(prices, 26)
+        
+        # 计算技术指标
+        rsi = round(calculate_rsi(prices), 1)
+        macd = round(ema_12 - ema_26, 2)
+        
+        # 波动率计算
+        if len(prices) >= 10:
+            recent_prices = prices[:10]
+            avg_price = sum(recent_prices) / len(recent_prices)
+            variance = sum((p - avg_price) ** 2 for p in recent_prices) / len(recent_prices)
+            volatility = round((variance ** 0.5) / avg_price, 4)
+        else:
+            volatility = 0.025
+        
+        # 布林带计算
+        if len(prices) >= 20:
+            sma = sma_20
+            variance = sum((p - sma) ** 2 for p in prices[:20]) / 20
+            std_dev = variance ** 0.5
+            bb_upper = sma + (2 * std_dev)
+            bb_lower = sma - (2 * std_dev)
+        else:
+            bb_upper = current_price * 1.05
+            bb_lower = current_price * 0.95
+        
+        technical_data = {
+            'rsi': rsi,
+            'macd': macd,
+            'volatility': volatility,
+            'sma_20': round(sma_20, 2),
+            'sma_50': round(sma_50, 2),
+            'ema_12': round(ema_12, 2),
+            'ema_26': round(ema_26, 2),
+            'bollinger_upper': round(bb_upper, 2),
+            'bollinger_lower': round(bb_lower, 2),
+            'current_price': current_price,
+            'fear_greed_index': fear_greed_index,
+            'price_change_24h': float(data[0][4]) if data[0][4] else 0
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': technical_data,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logging.error(f"Technical indicators API error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'data': None
+        }), 500
+
 @app.route('/analytics/api/market-data')
 @app.route('/api/analytics/market-data')
 @app.route('/analytics/market-data')
@@ -2990,61 +3122,7 @@ def analytics_latest_report():
         app.logger.error(f"获取分析报告失败: {e}")
         return jsonify({'error': f'获取分析报告失败: {str(e)}'}), 500
 
-@app.route('/api/analytics/technical-indicators')
-@app.route('/analytics/technical-indicators')
-@login_required
-def analytics_technical_indicators():
-    """获取技术指标"""
-    user_role = get_user_role(session.get('email'))
-    if user_role != 'owner':
-        return jsonify({'success': False, 'error': '只有拥有者可以访问分析系统'}), 403
-    
-    try:
-        import psycopg2
-        
-        # 获取最新技术指标
-        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT recorded_at, rsi_14, sma_20, sma_50, ema_12, ema_26, 
-                   macd, bollinger_upper, bollinger_lower, volatility_30d
-            FROM technical_indicators 
-            ORDER BY recorded_at DESC LIMIT 1
-        """)
-        data = cursor.fetchone()
-        cursor.close()
-        conn.close()
-        
-        if data:
-            indicators_data = {
-                'timestamp': data[0].isoformat() if data[0] else None,
-                'rsi_14': float(data[1]) if data[1] else None,
-                'sma_20': float(data[2]) if data[2] else None,
-                'sma_50': float(data[3]) if data[3] else None,
-                'ema_12': float(data[4]) if data[4] else None,
-                'ema_26': float(data[5]) if data[5] else None,
-                'macd': float(data[6]) if data[6] else None,
-                'bollinger_upper': float(data[7]) if data[7] else None,
-                'bollinger_lower': float(data[8]) if data[8] else None,
-                'volatility_30d': float(data[9]) if data[9] else None
-            }
-            return jsonify({
-                'success': True,
-                'data': indicators_data,
-                'indicators': [indicators_data],
-                'latest_indicators': indicators_data
-            })
-        else:
-            # Return empty but valid format when no data
-            return jsonify({
-                'success': False,
-                'error': '暂无技术指标数据',
-                'indicators': [],
-                'latest_indicators': None
-            })
-    except Exception as e:
-        logging.error(f"获取技术指标失败: {e}")
-        return jsonify({'success': False, 'error': f'获取技术指标失败: {str(e)}'}), 500
+# Removed duplicate function definition - using the new market_analytics based version above
 
 @app.route('/api/analytics/price-history')
 def analytics_price_history():
