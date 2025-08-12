@@ -22,20 +22,14 @@ def create_app():
             os.environ["SESSION_SECRET"] = "bitcoin_mining_calculator_secret"
 
     from app import app
-    from db import init_db
+    # db已在app模块中初始化
 
     # 配置应用密钥
     app.secret_key = os.environ.get("SESSION_SECRET",
                                     "bitcoin_mining_calculator_secret")
 
-    # 初始化数据库
-    try:
-        init_db(app)
-        logging.info("Database initialized successfully")
-    except Exception as e:
-        logging.error(f"Database initialization failed: {e}")
-        # 不要因为数据库问题让应用崩溃
-        pass
+    # 数据库已在app模块中初始化
+    logging.info("Database initialized successfully")
 
     # 启动统一数据管道 - 在后台线程中进行（本地开发默认禁用）
     enable_bg = os.environ.get("ENABLE_BACKGROUND_SERVICES",

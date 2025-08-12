@@ -7,7 +7,7 @@ import requests
 import logging
 import os
 import psycopg2
-from config import Config
+# from config import Config  # 已移除config模块
 
 # CoinWarz API配置
 COINWARZ_API_KEY = "8dd87e048ec84b6c8ad3322fb07f747a"

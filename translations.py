@@ -1,281 +1,146 @@
 """
-系统中英文翻译文件
-Bilingual translations for the system (Chinese-English)
+简化的翻译模块
+提供基本的中英文翻译功能
 """
 
-# 翻译字典，键名为英文，值为中文
-# Translation dictionary, keys are English, values are Chinese
-translations = {
-    # 通用元素 / Common elements
-    "language": "语言",
-    "english": "英文",
-    "chinese": "中文",
-    "submit": "提交",
-    "cancel": "取消",
-    "save": "保存",
-    "back": "返回",
-    "logout": "退出登录",
-    "success": "成功",
-    "error": "错误",
-    "warning": "警告",
-    "info": "信息",
-    
-    # 登录页面 / Login page
-    "login": "登录",
-    "login_title": "登录 - BTC挖矿计算器",
-    "email_verification_login": "邮箱验证登录",
-    "email_address": "邮箱地址",
-    "enter_authorized_email": "请输入授权邮箱",
-    "use_authorized_email": "请使用已获授权的邮箱地址登录。",
-    "login_success": "登录成功！欢迎使用BTC挖矿计算器",
-    "login_failed": "登录失败！您没有访问权限",
-    "you_logged_out": "您已成功退出登录",
-    
-    # 主页面 / Main page
-    "btc_mining_calculator": "BTC挖矿计算器",
-    "all_rights_reserved": "版权所有",
-    "bitcoin_mining_profitability_calculator": "比特币挖矿收益计算器",
-    "btc_price": "BTC价格",
-    "difficulty": "难度",
-    "network_hashrate": "网络算力",
-    "block_reward": "区块奖励",
-    "network_and_mining_details": "网络和挖矿详情",
-    "bitcoin_network_information": "比特币网络信息",
-    "mining_site_information": "挖矿场信息",
-    "btc_output_algorithms": "BTC产出算法",
-    "profitability_heatmap": "收益热力图",
-    "refresh_chart": "刷新图表",
-    "generate_chart": "生成热力图",
-    "daily_btc_total": "日产BTC总量",
-    "by_hashrate": "按算力占比",
-    "by_difficulty": "按难度公式",
-    "algorithm_1": "算法1",
-    "algorithm_2": "算法2",
-    "total_site_hashrate": "场地总算力",
-    "btc_per_th_daily": "每TH日产BTC",
-    "optimal_electricity_rate": "最优电费",
-    
-    # 计算表单 / Calculator form
-    "miner_settings": "矿机设置",
-    "mining_calculator": "挖矿计算器",
-    "miner_model": "矿机型号",
-    "select_miner": "选择矿机",
-    "hashrate": "算力",
-    "power_consumption": "功耗",
-    "electricity_cost": "电费成本",
-    "use_real_time_data": "使用实时数据",
-    "miner_count": "矿机数量",
-    "site_power_mw": "矿场功率 (MW)",
-    "calculate": "计算",
-    "reset": "重置",
-    
-    # 结果部分 / Results section
-    "results": "计算结果",
-    "daily": "每日",
-    "monthly": "每月",
-    "yearly": "每年",
-    "btc_mined": "挖矿产出",
-    "revenue": "收入",
-    "costs": "成本",
-    "profit": "利润",
-    "customer_information": "客户信息",
-    "customer_income": "客户收入",
-    "customer_expenses": "客户支出",
-    "monthly_btc": "月度BTC产出",
-    "monthly_btc_revenue": "月度BTC收入",
-    "customer_monthly_electricity": "客户月度电费",
-    "customer_monthly_profit": "客户月度收益",
-    "customer_yearly_profit": "客户年度收益",
-    "customer_break_even_electricity": "客户盈亏平衡电价",
-    "customer_break_even_btc": "客户盈亏平衡BTC价格",
-    
-    # 高级设置 / Advanced settings
-    "advanced_settings": "高级设置",
-    "customer_electricity_cost": "客户电费",
-    "curtailment": "限电比例",
-    "maintenance_fee": "维护费用",
-    "advanced_options": "高级选项",
-    
-    # 投资回报 / ROI section
-    "investment": "投资",
-    "host_investment": "矿场投资",
-    "client_investment": "客户投资",
-    "roi_analysis": "投资回报分析",
-    "host_roi_analysis": "矿场主投资回报",
-    "client_roi_analysis": "客户投资回报",
-    "your_profit_information": "您的收益信息",
-    "payback_period": "回本周期",
-    "roi_percentage": "投资回报率",
-    "profit_forecast": "利润预测",
-    "cumulative_profit": "累计利润",
-    "monthly_cash_flow": "每月现金流",
-    "investment_amount": "投资金额",
-    "annual_roi": "年化投资回报率",
-    "payback_months": "投资回收期",
-    "payback_years": "回收期",
-    "host_monthly_profit": "矿场主月度收益",
-    "host_income": "矿场主收入",
-    "host_expenses": "矿场主支出",
-    "host_electric_profit": "矿场主电费差收益",
-    "host_operation_profit": "矿场主运营收益",
-    "total_site_revenue": "矿场总收入",
-    "total_income": "总收入",
-    "monthly_electricity_cost": "月度电费",
-    "operation_cost": "运维费用",
-    "total_expenses": "总支出",
-    
-    # 管理页面 / Admin pages
-    "login_records": "登录记录",
-    "login_records_management": "登录记录管理",
-    "user_access_management": "用户权限管理",
-    "return_to_calculator": "返回计算器",
-    "last_100_records": "最近100条登录记录",
-    "id": "ID",
-    "user_email": "用户邮箱",
-    "login_time": "登录时间",
-    "status": "状态",
-    "ip_address": "IP地址",
-    "country_region": "国家/地区",
-    "location_details": "详细位置",
-    "view_details": "查看详情",
-    "unknown_location": "未知位置",
-    
-    # 用户角色 / User roles
-    "owner": "拥有者",
-    "admin": "管理员",
-    "mining_site": "矿场管理",
-    "customer": "客户",
-    "guest": "访客",
-    
-    # 错误信息 / Error messages
-    "error_fetching_network_stats": "获取网络状态失败",
-    "error_fetching_miners": "获取矿机列表失败",
-    "calculation_error": "计算过程中出错",
-    "invalid_input": "无效的输入参数",
-    "server_error": "服务器错误",
-    "unauthorized": "未授权访问",
-    "access_denied": "访问被拒绝",
-    "session_expired": "会话已过期",
-    
-    # 法律条款页面 / Legal Terms Page
-    "legal_terms": "法律条款",
-    "legal_compliance_documentation": "法律合规文档",
-    "terms_of_use": "使用条款",
-    "earnings_disclaimer": "收益免责声明",
-    "data_usage_notice": "数据使用说明",
-    "last_updated": "最后更新",
-    "back_to_calculator": "返回计算器",
-    "home": "主页",
-    "legal_disclaimer": "法律免责声明",
-    "risk_warning": "风险提示",
-    "third_party_apis": "第三方API",
-    "api_terms_compliance": "API条款合规",
-    "commercial_license": "商业许可",
-    "data_accuracy": "数据准确性",
-    "no_investment_advice": "非投资建议",
-    "liability_limitation": "责任限制",
-    
-    # Homepage translations
-    "homepage_title": "Bitcoin挖矿智能分析平台",
-    "homepage_subtitle": "专业的比特币挖矿收益计算与投资分析工具，支持实时数据、多算法验证、智能报告生成",
-    "start_calculating": "开始计算",
-    "learn_more": "了解更多",
-    "market_data": "市场数据",
-    "real_time": "实时更新",
-    "miner_models": "矿机型号",
-    "accuracy_rate": "准确率",
-    "real_time_data": "实时数据",
-    "enterprise_grade": "企业级",
-    "key_features": "核心功能",
-    "features_subtitle": "为挖矿投资者提供全方位的专业工具",
-    "advanced_calculator": "高级计算引擎",
-    "calculator_desc": "支持10+主流矿机型号，双算法验证，精确计算收益",
-    "real_time_analytics": "实时数据分析",
-    "analytics_desc": "24/7实时获取BTC价格、网络难度、算力等关键指标",
-    "crm_system": "CRM客户管理",
-    "crm_desc": "完整的客户生命周期管理，支持销售跟踪和佣金计算",
-    "enterprise_security": "企业级安全",
-    "security_desc": "多重身份验证，角色权限管理，数据加密保护",
-    "multilingual_support": "多语言支持",
-    "multilingual_desc": "完整的中英文界面，满足国际化需求",
-    "subscription_plans": "订阅计划",
-    "subscription_desc": "灵活的付费计划，Stripe安全支付，功能分级管理",
-    "ready_to_start": "准备开始挖矿分析？",
-    "cta_subtitle": "立即体验专业的比特币挖矿收益计算工具",
-    "start_free_trial": "免费试用",
-    "view_pricing": "查看定价",
-    "footer_description": "专业的比特币挖矿分析平台，为矿工和投资者提供准确的收益计算和投资建议。",
-    "quick_links": "快速链接",
-    "support": "支持",
-    "help_center": "帮助中心",
-    "contact_us": "联系我们",
-    "fear_greed_index": "恐惧贪婪指数",
-    "analytics": "数据分析",
-    "pricing": "定价方案"
-}
+import logging
 
-# 获取翻译函数，如果没有找到对应翻译，返回原文
-# Function to get translation, returns original text if no translation found
-def format_english_key(key):
-    """
-    将带下划线的英文键转换为可读性更好的格式
-    Convert underscore English keys to more readable format
-    
-    :param key: 带下划线的英文键，如 "network_hashrate"
-    :return: 格式化的英文文本，如 "Network Hashrate"
-    """
-    # 将下划线替换为空格
-    words = key.split('_')
-    
-    # 特殊处理某些缩写词
-    formatted_words = []
-    for word in words:
-        if word.lower() == 'btc':
-            # BTC 应该全部大写
-            formatted_words.append('BTC')
-        else:
-            # 其他单词首字母大写
-            formatted_words.append(word.capitalize())
-    
-    return ' '.join(formatted_words)
+# 翻译字典
+TRANSLATIONS = {
+    'en': {
+        'btc_mining_calculator': 'BTC Mining Calculator',
+        'language': 'Language',
+        'owner': 'Owner',
+        'admin': 'Admin',
+        'manager': 'Manager',
+        'mining_site': 'Mining Site',
+        'guest': 'Guest',
+        'logout': 'Logout',
+        'login': 'Login',
+        'dashboard': 'Dashboard',
+        'user_management': 'User Management',
+        'miner_settings': 'Miner Settings',
+        'miner_model': 'Miner Model',
+        'select_miner': 'Select Miner',
+        'site_power_mw': 'Site Power (MW)',
+        'miner_count': 'Miner Count',
+        'electricity_cost': 'Electricity Cost',
+        'btc_price': 'BTC Price',
+        'use_real_time_data': 'Use Real Time Data',
+        'calculate': 'Calculate',
+        'results': 'Results',
+        'btc_mined': 'BTC Mined',
+        'daily': 'Daily',
+        'profitability_heatmap': 'Profitability Heatmap',
+        'difficulty': 'Difficulty',
+        'network_hashrate': 'Network Hashrate',
+        'block_reward': 'Block Reward',
+        'subscription_plan': 'Subscription Plan',
+        'free': 'Free',
+        'basic': 'Basic',
+        'pro': 'Pro',
+        'role': 'Role',
+        'has_access': 'Has Access',
+        'yes': 'Yes',
+        'no': 'No',
+        'edit': 'Edit',
+        'save': 'Save',
+        'cancel': 'Cancel',
+        'actions': 'Actions',
+        'name': 'Name',
+        'email': 'Email',
+        'created_at': 'Created At',
+        'last_login': 'Last Login',
+        'status': 'Status',
+        'active': 'Active',
+        'inactive': 'Inactive',
+    },
+    'zh': {
+        'btc_mining_calculator': 'BTC挖矿计算器',
+        'language': '语言',
+        'owner': '所有者',
+        'admin': '管理员',
+        'manager': '经理',
+        'mining_site': '挖矿站点',
+        'guest': '访客',
+        'logout': '退出登录',
+        'login': '登录',
+        'dashboard': '仪表盘',
+        'user_management': '用户管理',
+        'miner_settings': '矿机设置',
+        'miner_model': '矿机型号',
+        'select_miner': '选择矿机',
+        'site_power_mw': '站点功率(MW)',
+        'miner_count': '矿机数量',
+        'electricity_cost': '电力成本',
+        'btc_price': 'BTC价格',
+        'use_real_time_data': '使用实时数据',
+        'calculate': '计算',
+        'results': '结果',
+        'btc_mined': 'BTC产出',
+        'daily': '每日',
+        'profitability_heatmap': '盈利能力热图',
+        'difficulty': '挖矿难度',
+        'network_hashrate': '网络算力',
+        'block_reward': '区块奖励',
+        'subscription_plan': '订阅计划',
+        'free': '免费',
+        'basic': '基础',
+        'pro': '专业',
+        'role': '角色',
+        'has_access': '有访问权限',
+        'yes': '是',
+        'no': '否',
+        'edit': '编辑',
+        'save': '保存',
+        'cancel': '取消',
+        'actions': '操作',
+        'name': '姓名',
+        'email': '邮箱',
+        'created_at': '创建时间',
+        'last_login': '最后登录',
+        'status': '状态',
+        'active': '活跃',
+        'inactive': '非活跃',
+    }
+}
 
 def get_translation(text, to_lang='zh'):
     """
     获取文本翻译
-    Get text translation
     
-    :param text: 原文本 / Original text
-    :param to_lang: 目标语言 'zh' 或 'en' / Target language 'zh' or 'en'
-    :return: 翻译后的文本 / Translated text
+    Args:
+        text (str): 要翻译的文本键
+        to_lang (str): 目标语言 'en' 或 'zh'
+    
+    Returns:
+        str: 翻译后的文本
     """
-    # 添加日志记录
-    print(f"DEBUG: Translating '{text}' to '{to_lang}'")
-    
-    if to_lang == 'en':
-        # 如果目标语言是英文，首先检查是否是英文键
-        if text in translations:
-            # 对英文键进行格式化，使其更易读
-            formatted_key = format_english_key(text)
-            print(f"DEBUG: Formatted '{text}' to '{formatted_key}'")
-            return formatted_key
+    try:
+        if to_lang not in ['en', 'zh']:
+            to_lang = 'zh'
+            
+        # 获取翻译
+        translation = TRANSLATIONS.get(to_lang, {}).get(text)
         
-        # 查找中文对应的英文
-        for en_text, zh_text in translations.items():
-            if zh_text == text:
-                # 对英文键进行格式化，使其更易读
-                formatted_key = format_english_key(en_text)
-                print(f"DEBUG: Found en_key='{en_text}' for zh_text='{text}', formatted to '{formatted_key}'")
-                return formatted_key
-        
-        # 如果没找到，返回原文
-        print(f"DEBUG: No translation found for '{text}', returning as is")
-        return text
-    elif to_lang == 'zh':
-        # 如果目标语言是中文，从字典中获取翻译
-        zh_text = translations.get(text, text)
-        print(f"DEBUG: Translated '{text}' to zh '{zh_text}'")
-        return zh_text
-    else:
-        # 不支持的语言，返回原文
-        print(f"DEBUG: Unsupported language '{to_lang}', returning original text")
-        return text
+        if translation:
+            logging.debug(f"Translating '{text}' to '{to_lang}'")
+            # 简单的格式化：首字母大写，下划线替换为空格
+            formatted = translation.title() if to_lang == 'en' else translation
+            logging.debug(f"Formatted '{text}' to '{formatted}'")
+            return formatted
+        else:
+            # 如果没有找到翻译，返回格式化的原文本
+            if to_lang == 'en':
+                # 英文：首字母大写，下划线替换为空格
+                formatted = text.replace('_', ' ').title()
+            else:
+                # 中文：直接返回原文本
+                formatted = text
+            
+            logging.warning(f"Translation not found for '{text}' in '{to_lang}', using formatted version: '{formatted}'")
+            return formatted
+            
+    except Exception as e:
+        logging.error(f"Translation error for '{text}': {e}")
+        return text.replace('_', ' ').title() if to_lang == 'en' else text

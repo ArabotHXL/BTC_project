@@ -15,8 +15,8 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 from sqlalchemy import text
 
 # 本地模块导入
-from auth import verify_email, login_required
 from db import db
+from auth import verify_email, login_required
 try:
     from decorators import (requires_role, requires_owner_only, requires_admin_or_owner, 
                            requires_crm_access, requires_network_analysis_access, 
@@ -31,7 +31,7 @@ except ImportError:
     requires_network_analysis_access = login_required 
     requires_batch_calculator_access = login_required
     log_access_attempt = lambda name: lambda f: f
-from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot
+# Models将在数据库初始化时导入
 from translations import get_translation
 
 def send_verification_email(email, token):
@@ -148,6 +148,23 @@ app = Flask(__name__)
 
 # 设置安全的会话密钥
 app.secret_key = os.environ.get("SESSION_SECRET", secrets.token_hex(32))
+
+# 配置数据库
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_recycle": 300,
+    "pool_pre_ping": True,
+}
+
+# 初始化数据库
+db.init_app(app)
+
+# 创建数据库表
+with app.app_context():
+    # 在导入models前确保数据库已初始化
+    from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot
+    db.create_all()
+    logging.info("Database tables created successfully")
 
 # Health check route for deployment - no authentication required
 @app.route('/health', methods=['GET'])
