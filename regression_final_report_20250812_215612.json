@@ -1,0 +1,31 @@
+{
+  "timestamp": "2025-08-12T21:56:12.646085",
+  "test_results": [
+    {
+      "test_file": "test_regression_comprehensive.py",
+      "return_code": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"/home/runner/workspace/test_regression_comprehensive.py\", line 5, in <module>\n    import pytest\nModuleNotFoundError: No module named 'pytest'\n",
+      "success": false
+    },
+    {
+      "test_file": "test_performance_advanced.py",
+      "return_code": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"/home/runner/workspace/test_performance_advanced.py\", line 6, in <module>\n    import aiohttp\nModuleNotFoundError: No module named 'aiohttp'\n",
+      "success": false
+    }
+  ],
+  "analysis": {
+    "total_tests": 2,
+    "passed_tests": 0,
+    "failed_tests": 2,
+    "success_rate": 0.0
+  },
+  "fixes_applied": [
+    "创建测试用户: test_free@test.com",
+    "创建测试用户: test_basic@test.com",
+    "创建测试用户: test_pro@test.com",
+    "关键端点验证通过: 3/4"
+  ]
+}

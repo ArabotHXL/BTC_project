@@ -82,7 +82,6 @@ class UserSubscription(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 关系
-    user = db.relationship('UserAccess', backref='subscription')
     plan = db.relationship('SubscriptionPlan', backref='subscribers')
     
     def __repr__(self):
