@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### Subscription Management System (August 12, 2025)
+- Added comprehensive subscription plan management with three tiers (Free/Basic $29/Pro $99)
+- Implemented Owner-only access control for subscription plan assignment
+- Created visual subscription plan selection interface with billing information
+- Added subscription plan badges in user management interface
+- Database schema updated with subscription_plan field and proper migration
+- Enhanced user editing capabilities with role-based permission controls
+
 ### UI Improvements (August 12, 2025)
 - Enhanced batch calculator quota indicator with compact #/# format display
 - Optimized size and layout for better visual balance (120-160px width)
