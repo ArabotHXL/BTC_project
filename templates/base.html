@@ -32,8 +32,8 @@
                     <!-- Language Switcher -->
                     <div class="d-flex align-items-center">
                         <div class="btn-group btn-group-sm me-3" role="group" aria-label="{{ t('language') }}">
-                            <a href="{{ request.url_rule.endpoint }}?lang=zh" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
-                            <a href="{{ request.url_rule.endpoint }}?lang=en" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}">English</a>
+                            <a href="{{ url_for(request.endpoint) }}?lang=zh" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
+                            <a href="{{ url_for(request.endpoint) }}?lang=en" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}">English</a>
                         </div>
                     </div>
                     
