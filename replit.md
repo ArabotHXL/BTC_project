@@ -10,6 +10,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 2025)
 
+### Technical Analysis Integration Completion (August 12, 2025)
+- **Complete Technical Analysis Integration**: Successfully consolidated standalone technical analysis page into main analytics platform as dedicated tab
+- **API Path Corrections**: Fixed JavaScript API calls from `/api/market-data` to correct `/analytics/api/market-data` endpoints, resolving JSON parsing errors
+- **Real-time Technical Indicators**: Implemented comprehensive technical analysis features including RSI, MACD, moving averages, Bollinger Bands, and market sentiment analysis
+- **Bilingual Technical Analysis**: Full Chinese/English language support for all technical indicators, signals, and recommendations
+- **Interactive Price Charts**: Added technical analysis price charts with Chart.js integration and real-time data updates
+- **Smart Error Handling**: Enhanced error management for technical data loading with graceful fallbacks and user-friendly error messages
+- **Navigation Integration**: Technical analysis accessible via user dropdown menu and analytics platform sidebar with proper role-based permissions (owner/manager/mining_site)
+- **Route Optimization**: `/technical_analysis` routes now redirect to analytics dashboard with technical tab activation for seamless user experience
+
 ### Professional Landing Page and Navigation Architecture (August 11, 2025)
 - **Landing Page Design**: Created professional introduction page at root path `/` with modern dark theme and golden accents
 - **Page Flow Architecture**: Established clear navigation hierarchy - Landing Page → Price Page (side) → Login (会员页面) → Main Dashboard (`/main`) → Role-based Functions

@@ -1755,7 +1755,6 @@
             showLoading();
             Promise.all([
                 loadMarketData(),
-                loadTechnicalIndicators(),
                 loadPriceHistory(),
                 loadLatestReport()
             ]).then(function() {
@@ -1771,7 +1770,7 @@
 
         function loadMarketData() {
             console.log('Loading market data...');
-            return fetch('/api/analytics/market-data', {
+            return fetch('/analytics/api/market-data', {
                 method: 'GET',
                 credentials: 'same-origin',
                 headers: {
@@ -1793,29 +1792,11 @@
             });
         }
 
+        // This function is now handled by the new technical analysis system
         function loadTechnicalIndicators() {
-            return fetch('/api/analytics/technical-indicators', {
-                method: 'GET',
-                credentials: 'same-origin',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            }).then(function(response) {
-                if (!response.ok) throw new Error('Technical indicators unavailable');
-                return response.json();
-            }).then(function(response_data) {
-                console.log('Technical indicators response:', response_data);
-
-                if (!response_data.success || !response_data.data) {
-                    throw new Error(response_data.error || 'No technical data available');
-                }
-
-                updateTechnicalIndicatorsDisplay(response_data.data);
-            }).catch(function(error) {
-                console.error('Technical indicators error:', error);
-                showErrorMessage('technical', '技术指标暂时不可用');
-            });
+            console.log('Legacy technical indicators function called, redirecting to new system');
+            // Use the new technical analysis system instead
+            return loadTechnicalData();
         }
 
         function loadPriceHistory() {
@@ -3727,7 +3708,7 @@
         function loadTechnicalData() {
             console.log('Loading technical analysis data...');
             
-            fetch('/api/market-data')
+            fetch('/analytics/api/market-data')
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -3736,6 +3717,13 @@
                 })
                 .catch(error => {
                     console.error('Error fetching technical data:', error);
+                    // Show friendly error message
+                    const rsiElement = document.getElementById('techRsiValue');
+                    if (rsiElement) rsiElement.textContent = '--';
+                    const macdElement = document.getElementById('techMacdValue');
+                    if (macdElement) macdElement.textContent = '--';
+                    const volElement = document.getElementById('techVolatilityValue');
+                    if (volElement) volElement.textContent = '--';
                 });
         }
 
