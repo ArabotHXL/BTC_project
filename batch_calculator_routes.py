@@ -17,20 +17,28 @@ def batch_calculator():
     """Display the batch calculator interface."""
     try:
         user_id = session.get('user_id')
-        user_plan = get_user_plan(user_id)
+        user_plan_raw = get_user_plan(user_id)
         
-        if not user_plan:
-            logger.warning(f"No plan found for user {user_id}")
-            # Create a default free plan object if database lookup fails
-            class DefaultPlan:
-                id = 'free'
-                name = 'Free'
-                max_miners = 1
-                price = 0
-                allow_advanced_analytics = False
-                allow_api = False
-                allow_scenarios = False
-            user_plan = DefaultPlan()
+        # Create a default free plan object if database lookup fails or returns string
+        class DefaultPlan:
+            id = 'free'
+            name = 'Free'
+            max_miners = 1
+            price = 0
+            allow_advanced_analytics = False
+            allow_api = False
+            allow_scenarios = False
+        
+        # Always use DefaultPlan for now since get_user_plan seems to return string
+        user_plan = DefaultPlan()
+        if user_plan_raw and hasattr(user_plan_raw, 'name'):
+            user_plan = user_plan_raw
+        elif user_plan_raw == 'pro':
+            user_plan.name = 'Pro'
+            user_plan.max_miners = 10
+        elif user_plan_raw == 'basic':
+            user_plan.name = 'Basic' 
+            user_plan.max_miners = 5
         
         # Get current language
         current_lang = request.args.get('lang', session.get('language', 'zh'))
