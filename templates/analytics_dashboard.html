@@ -761,8 +761,26 @@
         
         // 初始化网络历史图表
         function initNetworkHistoryCharts() {
+            console.log('Initializing network history charts...');
+            
+            // 检查canvas元素是否存在
+            const priceCanvas = document.getElementById('priceHistoryChart');
+            const difficultyCanvas = document.getElementById('difficultyHistoryChart');
+            const hashrateCanvas = document.getElementById('hashrateHistoryChart');
+            
+            console.log('Canvas elements found:', {
+                priceCanvas: !!priceCanvas,
+                difficultyCanvas: !!difficultyCanvas,
+                hashrateCanvas: !!hashrateCanvas
+            });
+            
+            if (!priceCanvas || !difficultyCanvas || !hashrateCanvas) {
+                console.error('Some canvas elements not found for network history charts');
+                return;
+            }
+            
             // 价格历史图表
-            const priceCtx = document.getElementById('priceHistoryChart').getContext('2d');
+            const priceCtx = priceCanvas.getContext('2d');
             priceHistoryChart = new Chart(priceCtx, {
                 type: 'line',
                 data: {
@@ -810,7 +828,7 @@
             });
             
             // 难度历史图表
-            const diffCtx = document.getElementById('difficultyHistoryChart').getContext('2d');
+            const diffCtx = difficultyCanvas.getContext('2d');
             difficultyHistoryChart = new Chart(diffCtx, {
                 type: 'line',
                 data: {
@@ -858,7 +876,7 @@
             });
             
             // 算力历史图表
-            const hashCtx = document.getElementById('hashrateHistoryChart').getContext('2d');
+            const hashCtx = hashrateCanvas.getContext('2d');
             hashrateHistoryChart = new Chart(hashCtx, {
                 type: 'line',
                 data: {
@@ -904,6 +922,8 @@
                     }
                 }
             });
+            
+            console.log('Network history charts initialized successfully');
         }
         
         // 获取网络历史数据
