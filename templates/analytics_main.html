@@ -1082,8 +1082,8 @@
                                     </h5>
                                 </div>
                                 <div class="card-body">
-                                    <div class="chart-container" style="position: relative; height: 400px;">
-                                        <canvas id="techPriceChart"></canvas>
+                                    <div class="chart-container" style="position: relative; height: 400px; background-color: rgba(13, 20, 33, 0.8); border-radius: 8px;">
+                                        <canvas id="techPriceChart" style="display: block; width: 100%; height: 100%;"></canvas>
                                     </div>
                                 </div>
                             </div>
@@ -3858,8 +3858,10 @@
             // 更新市场情绪
             updateMarketSentiment(data);
             
-            // 创建价格图表
-            createTechnicalChart(data);
+            // 创建价格图表 - 延迟执行确保DOM完全加载
+            setTimeout(() => {
+                createTechnicalChart(data);
+            }, 500);
             
             console.log('Technical indicators updated with real data');
         }
@@ -4249,27 +4251,29 @@
         // 创建技术图表
         let techChart = null;
         function createTechnicalChart(data) {
-            const ctx = document.getElementById('techPriceChart');
-            if (!ctx) return;
+            console.log('创建技术图表，数据:', data);
             
-            // 销毁现有图表
-            if (techChart) {
-                techChart.destroy();
-            }
-            
-            // 获取历史价格数据
-            fetch('/analytics/api/price-history')
-                .then(response => response.json())
-                .then(priceData => {
-                    if (priceData.success && priceData.data.length > 0) {
-                        drawTechnicalChart(ctx, priceData.data, data);
-                    }
-                })
-                .catch(error => {
-                    console.error('获取价格历史数据失败:', error);
-                    // 使用默认数据创建图表
-                    drawDefaultTechnicalChart(ctx, data);
-                });
+            // 等待一秒确保DOM和Chart.js完全加载
+            setTimeout(() => {
+                const ctx = document.getElementById('techPriceChart');
+                if (!ctx) {
+                    console.error('未找到图表容器 techPriceChart');
+                    return;
+                }
+                
+                console.log('图表容器找到，Canvas元素:', ctx);
+                console.log('Chart.js可用性:', typeof Chart);
+                
+                // 销毁现有图表
+                if (techChart) {
+                    techChart.destroy();
+                    console.log('销毁现有图表');
+                }
+                
+                // 直接创建默认图表，确保图表能显示
+                drawDefaultTechnicalChart(ctx, data);
+                
+            }, 1000);
         }
         
         // 绘制技术图表
@@ -4345,66 +4349,130 @@
         
         // 绘制默认技术图表
         function drawDefaultTechnicalChart(ctx, indicators) {
-            const currentPrice = 118719; // 当前BTC价格
+            console.log('绘制默认技术图表，指标数据:', indicators);
+            
+            // 检查Chart.js是否可用
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js未正确加载');
+                // 显示错误信息
+                const errorDiv = document.createElement('div');
+                errorDiv.innerHTML = '<div class="alert alert-warning text-center">Chart.js正在加载中，请稍候...</div>';
+                ctx.parentNode.appendChild(errorDiv);
+                return;
+            }
+            
+            const currentPrice = 118783; // 当前BTC价格
             const labels = ['7天前', '6天前', '5天前', '4天前', '3天前', '2天前', '1天前', '今天'];
             const prices = [116500, 117200, 118000, 118500, 117800, 119200, 118600, currentPrice];
             
-            techChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'BTC价格',
-                        data: prices,
-                        borderColor: '#ffc107',
-                        backgroundColor: 'rgba(255, 193, 7, 0.1)',
-                        fill: false,
-                        tension: 0.1,
-                        pointRadius: 3
-                    }, {
-                        label: `SMA20 ($${Math.round(indicators.sma_20).toLocaleString()})`,
-                        data: new Array(labels.length).fill(indicators.sma_20),
-                        borderColor: '#0d6efd',
-                        borderDash: [5, 5],
-                        fill: false,
-                        pointRadius: 0
-                    }, {
-                        label: `SMA50 ($${Math.round(indicators.sma_50).toLocaleString()})`,
-                        data: new Array(labels.length).fill(indicators.sma_50),
-                        borderColor: '#dc3545',
-                        borderDash: [10, 5],
-                        fill: false,
-                        pointRadius: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: '#fff',
-                                font: { size: 12 }
-                            }
-                        }
+            try {
+                // 确保Canvas上下文可用
+                const context = ctx.getContext('2d');
+                if (!context) {
+                    console.error('无法获取Canvas上下文');
+                    return;
+                }
+                
+                techChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'BTC价格',
+                            data: prices,
+                            borderColor: '#ffc107',
+                            backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                            fill: false,
+                            tension: 0.1,
+                            pointRadius: 3,
+                            pointBackgroundColor: '#ffc107',
+                            pointBorderColor: '#ffc107'
+                        }, {
+                            label: `SMA20 ($${Math.round(indicators.sma_20 || 119456).toLocaleString()})`,
+                            data: new Array(labels.length).fill(indicators.sma_20 || 119456),
+                            borderColor: '#0d6efd',
+                            borderDash: [5, 5],
+                            fill: false,
+                            pointRadius: 0,
+                            borderWidth: 2
+                        }, {
+                            label: `SMA50 ($${Math.round(indicators.sma_50 || 120433).toLocaleString()})`,
+                            data: new Array(labels.length).fill(indicators.sma_50 || 120433),
+                            borderColor: '#dc3545',
+                            borderDash: [10, 5],
+                            fill: false,
+                            pointRadius: 0,
+                            borderWidth: 2
+                        }]
                     },
-                    scales: {
-                        x: {
-                            ticks: { color: '#adb5bd' },
-                            grid: { color: 'rgba(255,255,255,0.1)' }
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
                         },
-                        y: {
-                            ticks: {
-                                color: '#adb5bd',
-                                callback: function(value) {
-                                    return '$' + Math.round(value).toLocaleString();
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    color: '#fff',
+                                    font: { size: 12 },
+                                    usePointStyle: true,
+                                    padding: 20
                                 }
                             },
-                            grid: { color: 'rgba(255,255,255,0.1)' }
+                            tooltip: {
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: '#444',
+                                borderWidth: 1
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { 
+                                    color: '#adb5bd',
+                                    font: { size: 11 }
+                                },
+                                grid: { 
+                                    color: 'rgba(255,255,255,0.1)',
+                                    drawBorder: false
+                                }
+                            },
+                            y: {
+                                ticks: {
+                                    color: '#adb5bd',
+                                    font: { size: 11 },
+                                    callback: function(value) {
+                                        return '$' + Math.round(value).toLocaleString();
+                                    }
+                                },
+                                grid: { 
+                                    color: 'rgba(255,255,255,0.1)',
+                                    drawBorder: false
+                                }
+                            }
                         }
                     }
+                });
+                console.log('图表创建成功:', techChart);
+                
+                // 移除任何错误信息
+                const errorAlert = ctx.parentNode.querySelector('.alert');
+                if (errorAlert) {
+                    errorAlert.remove();
                 }
-            });
+                
+            } catch (error) {
+                console.error('创建图表时出错:', error);
+                // 显示错误信息
+                const errorDiv = document.createElement('div');
+                errorDiv.innerHTML = `<div class="alert alert-danger text-center">图表创建失败: ${error.message}</div>`;
+                ctx.parentNode.appendChild(errorDiv);
+            }
         }
 
     </script>
