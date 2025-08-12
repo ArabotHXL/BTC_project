@@ -126,17 +126,18 @@ def batch_calculate():
         # Calculate total miner count
         total_miners = sum(miner.get('quantity', 1) for miner in miners)
         
-        # Check quota limits
-        allowed, plan, message = check_miner_limit(total_miners)
+        # Check quota limits - for now, check_miner_limit just returns True
+        # TODO: Implement proper quota checking when subscription system is ready
+        allowed = check_miner_limit(total_miners)
         
         if not allowed:
-            logger.warning(f"Quota exceeded: {total_miners} miners, plan allows {plan.max_miners}")
+            logger.warning(f"Quota exceeded: {total_miners} miners")
             return jsonify({
                 'success': False,
                 'error': 'upgrade_required',
-                'message': message,
-                'current_plan': plan.name if plan else 'unknown',
-                'max_miners': plan.max_miners if plan else 1,
+                'message': 'Quota exceeded. Please upgrade your plan.',
+                'current_plan': 'Free',
+                'max_miners': 1,
                 'attempted_miners': total_miners
             }), 402
         
@@ -204,8 +205,8 @@ def batch_calculate():
             'results': results,
             'summary': summary,
             'plan_info': {
-                'current_plan': plan.name if plan else 'Free',
-                'max_miners': plan.max_miners if plan else 1,
+                'current_plan': 'Free',
+                'max_miners': 1,
                 'used_miners': total_miners
             }
         })
@@ -214,8 +215,8 @@ def batch_calculate():
         return jsonify({
             'success': False,
             'error': 'upgrade_required',
-            'message': e.message,
-            'current_plan': e.current_plan
+            'message': str(e),
+            'current_plan': 'Free'
         }), 402
         
     except Exception as e:
@@ -280,7 +281,7 @@ def export_batch_excel():
         plan = get_user_plan(user_id)
         
         # Check if user has Excel export permissions
-        if not plan or plan.id == 'free':
+        if not plan or plan == 'free':
             return jsonify({
                 'success': False,
                 'error': 'upgrade_required',
@@ -320,8 +321,8 @@ def export_batch_pdf():
         user_id = session.get('user_id')
         plan = get_user_plan(user_id)
         
-        # Check if user has PDF export permissions
-        if not plan or not plan.allow_advanced_analytics:
+        # Check if user has PDF export permissions  
+        if not plan or plan == 'free':
             return jsonify({
                 'success': False,
                 'error': 'upgrade_required',
