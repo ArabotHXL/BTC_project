@@ -32,14 +32,16 @@ def create_app():
     logging.info("Database initialized successfully")
 
     # 启动统一数据管道 - 在后台线程中进行（本地开发默认禁用）
+    # 默认启用后台服务，除非明确禁用
     enable_bg = os.environ.get("ENABLE_BACKGROUND_SERVICES",
-                               "0").lower() in ("1", "true", "yes")
+                               "1").lower() in ("1", "true", "yes")
     if enable_bg:
 
         def start_background_services():
             try:
-                from unified_data_pipeline import start_unified_pipeline
-                start_unified_pipeline()
+                from analytics_engine import AnalyticsEngine
+                engine = AnalyticsEngine()
+                engine.start_scheduler()
                 logging.info("Background services started successfully")
             except Exception as e:
                 logging.error(f"Background services failed to start: {e}")

@@ -36,6 +36,12 @@ Preferred communication style: Simple, everyday language.
 - Added database schema support for RPC-specific fields (block height, median time, difficulty adjustment tracking)
 - Documented comprehensive implementation roadmap for local Bitcoin node integration
 
+### Data Pipeline Optimization (August 12, 2025)
+- Modified data collection frequency from 30 minutes to 15 minutes for better real-time accuracy
+- Enabled background services by default (changed default from disabled to enabled)
+- Improved data collection pipeline to support Bitcoin RPC integration as primary source
+- Enhanced system responsiveness and data freshness for mining calculations
+
 ### Subscription Management System (August 12, 2025)
 - Added comprehensive subscription plan management with three tiers (Free/Basic $29/Pro $99)
 - Implemented Owner-only access control for subscription plan assignment
