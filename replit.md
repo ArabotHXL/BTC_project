@@ -8,6 +8,14 @@ The BTC Mining Calculator is a comprehensive web application designed for Bitcoi
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+### UI Improvements (August 12, 2025)
+- Enhanced batch calculator quota indicator with compact #/# format display
+- Optimized size and layout for better visual balance (120-160px width)
+- Added real-time quota tracking with progress bar visualization
+- Improved user experience with clear remaining capacity indicators
+
 ## System Architecture
 
 The application is built upon a modular Flask web application architecture, emphasizing separation of concerns and a mobile-first design philosophy.
