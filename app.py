@@ -83,14 +83,19 @@ def send_verification_email(email, token):
 
 # 导入订阅系统模块（延迟导入以避免循环依赖）
 try:
-    from models_subscription import Plan, Subscription
     from billing_routes import billing_bp
-    from batch_calculator_routes import batch_calculator_bp
-    from decorators import require_plan, require_feature, allow_advanced_analytics, get_user_plan
-    SUBSCRIPTION_ENABLED = True
+    BILLING_ENABLED = True
 except ImportError as e:
-    logging.warning(f"Subscription modules not available: {e}")
-    SUBSCRIPTION_ENABLED = False
+    logging.warning(f"Billing modules not available: {e}")
+    BILLING_ENABLED = False
+
+# 导入批量计算器路由
+try:
+    from batch_calculator_routes import batch_calculator_bp
+    BATCH_CALCULATOR_ENABLED = True
+except ImportError as e:
+    logging.warning(f"Batch calculator module not available: {e}")
+    BATCH_CALCULATOR_ENABLED = False
 from mining_calculator import (
     MINER_DATA,
     get_real_time_btc_price,
@@ -3801,28 +3806,22 @@ def legal_terms():
     """法律条款和使用条件页面 - 公开访问，无需登录"""
     return render_template('legal_simple.html')
 
-# Register Stripe billing routes if available
-# Register Stripe billing blueprint if available
-if SUBSCRIPTION_ENABLED:
+# 注册蓝图
+# Register billing blueprint if available
+if BILLING_ENABLED and 'billing_bp' in globals():
     try:
-        if 'billing_bp' in globals():
-            app.register_blueprint(billing_bp, url_prefix="/billing")
-            logging.info("Stripe billing routes registered successfully")
-        
-        # Create database tables for subscriptions
-        with app.app_context():
-            db.create_all()
-            logging.info("Subscription tables created")
+        app.register_blueprint(billing_bp, url_prefix="/billing")
+        logging.info("Stripe billing routes registered successfully")
     except Exception as e:
         logging.error(f"Failed to register billing routes: {e}")
 
-# Register batch calculator blueprint (separate from subscription check)
-try:
-    if 'batch_calculator_bp' in globals():
+# Register batch calculator blueprint
+if BATCH_CALCULATOR_ENABLED and 'batch_calculator_bp' in globals():
+    try:
         app.register_blueprint(batch_calculator_bp)
         logging.info("Batch calculator routes registered successfully")
-except Exception as e:
-    logging.error(f"Failed to register batch calculator routes: {e}")
+    except Exception as e:
+        logging.error(f"Failed to register batch calculator routes: {e}")
 
 # 添加安全头
 @app.after_request  
