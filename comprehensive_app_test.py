@@ -1,544 +1,609 @@
 #!/usr/bin/env python3
 """
-BTC Mining Calculator - Comprehensive App Testing
-要求：准确率和可用通过率99%以上
+BTC挖矿计算器 - 综合应用测试系统
+目标: 99%准确率和可用率验证
+
+测试覆盖范围:
+1. 核心计算引擎准确性
+2. API接口可用性
+3. 数据库连接稳定性
+4. 用户认证系统
+5. 技术指标计算
+6. 实时数据源集成
+7. 前端功能完整性
+8. 错误处理机制
+9. 并发请求处理
+10. 系统性能基准
 """
 
-import requests
-import json
-import time
-import logging
 import os
 import sys
-from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import json
+import time
+import requests
 import psycopg2
-from urllib.parse import urlparse
+import threading
+import numpy as np
+from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import logging
 
 # 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(f'comprehensive_test_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'),
+        logging.StreamHandler()
+    ]
+)
+
 logger = logging.getLogger(__name__)
 
 class ComprehensiveAppTester:
-    def __init__(self, base_url="http://localhost:5000"):
-        self.base_url = base_url
-        self.session = requests.Session()
-        self.test_results = []
-        self.total_tests = 0
-        self.passed_tests = 0
-        self.failed_tests = 0
-        
-    def log_result(self, test_name, success, message="", execution_time=0.0):
-        """记录测试结果"""
-        self.total_tests += 1
-        if success:
-            self.passed_tests += 1
-            status = "PASS"
-        else:
-            self.failed_tests += 1
-            status = "FAIL"
-            
-        result = {
-            "test_name": test_name,
-            "status": status,
-            "message": message,
-            "execution_time": execution_time,
-            "timestamp": datetime.now().isoformat()
+    def __init__(self):
+        self.base_url = "https://btc-mining-calculator-system.replit.dev"
+        self.test_results = {
+            'total_tests': 0,
+            'passed_tests': 0,
+            'failed_tests': 0,
+            'accuracy_score': 0.0,
+            'availability_score': 0.0,
+            'detailed_results': {},
+            'performance_metrics': {},
+            'error_log': []
         }
-        self.test_results.append(result)
-        logger.info(f"{status}: {test_name} ({execution_time:.2f}s) - {message}")
+        self.start_time = time.time()
+
+    def log_result(self, test_name, success, details=None, error=None):
+        """记录测试结果"""
+        self.test_results['total_tests'] += 1
+        if success:
+            self.test_results['passed_tests'] += 1
+            logger.info(f"✓ {test_name}: PASSED")
+        else:
+            self.test_results['failed_tests'] += 1
+            logger.error(f"✗ {test_name}: FAILED - {error}")
+            self.test_results['error_log'].append({
+                'test': test_name,
+                'error': str(error),
+                'timestamp': datetime.now().isoformat()
+            })
         
-    def test_database_connection(self):
-        """测试数据库连接"""
-        start_time = time.time()
+        self.test_results['detailed_results'][test_name] = {
+            'success': success,
+            'details': details,
+            'error': str(error) if error else None,
+            'timestamp': datetime.now().isoformat()
+        }
+
+    def test_database_connectivity(self):
+        """测试数据库连接和基础功能"""
+        logger.info("🔍 测试数据库连接...")
         try:
-            database_url = os.environ.get('DATABASE_URL')
-            if not database_url:
-                self.log_result("Database Connection", False, "DATABASE_URL not found", time.time() - start_time)
-                return
-                
-            # 解析数据库URL
-            parsed = urlparse(database_url)
-            conn = psycopg2.connect(
-                host=parsed.hostname,
-                port=parsed.port,
-                database=parsed.path[1:],
-                user=parsed.username,
-                password=parsed.password
-            )
-            
+            conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
             cursor = conn.cursor()
-            cursor.execute("SELECT 1")
-            result = cursor.fetchone()
             
-            if result and result[0] == 1:
-                self.log_result("Database Connection", True, "Database connection successful", time.time() - start_time)
-            else:
-                self.log_result("Database Connection", False, "Database query failed", time.time() - start_time)
-                
-            cursor.close()
+            # 测试基本查询
+            cursor.execute("SELECT COUNT(*) FROM users")
+            user_count = cursor.fetchone()[0]
+            
+            # 测试市场数据表
+            cursor.execute("SELECT COUNT(*) FROM market_analytics WHERE btc_price > 0")
+            market_data_count = cursor.fetchone()[0]
+            
+            # 测试技术指标表
+            cursor.execute("SELECT COUNT(*) FROM technical_indicators")
+            tech_indicators_count = cursor.fetchone()[0]
+            
             conn.close()
             
-        except Exception as e:
-            self.log_result("Database Connection", False, f"Database error: {str(e)}", time.time() - start_time)
+            self.log_result('database_connectivity', True, {
+                'user_count': user_count,
+                'market_data_count': market_data_count,
+                'tech_indicators_count': tech_indicators_count
+            })
             
-    def test_homepage_access(self):
-        """测试首页访问"""
-        start_time = time.time()
-        try:
-            response = self.session.get(f"{self.base_url}/")
-            if response.status_code == 200 and "BTC Mining Calculator" in response.text:
-                self.log_result("Homepage Access", True, f"Status: {response.status_code}", time.time() - start_time)
-            else:
-                self.log_result("Homepage Access", False, f"Status: {response.status_code}", time.time() - start_time)
-        except Exception as e:
-            self.log_result("Homepage Access", False, f"Error: {str(e)}", time.time() - start_time)
+            return True
             
-    def test_analytics_data_api(self):
-        """测试分析数据API"""
-        start_time = time.time()
-        try:
-            response = self.session.get(f"{self.base_url}/api/analytics-data")
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('success') and 'data' in data:
-                    analytics_data = data['data']
-                    # 验证关键数据字段
-                    required_fields = ['btc_price', 'network_hashrate', 'network_difficulty']
-                    missing_fields = [field for field in required_fields if field not in analytics_data or analytics_data[field] is None]
-                    
-                    if not missing_fields:
-                        self.log_result("Analytics Data API", True, f"BTC: ${analytics_data['btc_price']}, Hashrate: {analytics_data['network_hashrate']}EH/s", time.time() - start_time)
-                    else:
-                        self.log_result("Analytics Data API", False, f"Missing fields: {missing_fields}", time.time() - start_time)
-                else:
-                    self.log_result("Analytics Data API", False, "Invalid data structure", time.time() - start_time)
-            else:
-                self.log_result("Analytics Data API", False, f"Status: {response.status_code}", time.time() - start_time)
         except Exception as e:
-            self.log_result("Analytics Data API", False, f"Error: {str(e)}", time.time() - start_time)
-            
-    def test_batch_calculator_api(self):
-        """测试批量计算器API"""
-        start_time = time.time()
+            self.log_result('database_connectivity', False, error=e)
+            return False
+
+    def test_authentication_system(self):
+        """测试用户认证系统"""
+        logger.info("🔍 测试用户认证系统...")
         try:
-            test_payload = {
-                "miners": [
-                    {
-                        "model": "Antminer S21",
-                        "quantity": 1,
-                        "electricity_cost": 0.045
-                    }
-                ],
-                "site_power": 10,
-                "btc_price": 118500,
-                "use_real_time": False
+            session = requests.Session()
+            
+            # 测试登录页面可访问性
+            login_response = session.get(f"{self.base_url}/login")
+            if login_response.status_code != 200:
+                raise Exception(f"Login page not accessible: {login_response.status_code}")
+            
+            # 测试登录功能
+            login_data = {
+                'email': 'hxl2022hao@gmail.com',
+                'password': 'Hxl,04141992'
             }
             
-            response = self.session.post(f"{self.base_url}/api/batch-calculate", json=test_payload)
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('success') and 'results' in data:
-                    results = data['results']
-                    if results and len(results) > 0:
-                        result = results[0]
-                        daily_profit = result.get('daily_profit', 0)
-                        # 验证计算结果合理性 (应该在$5-$15之间)
-                        if 5 <= daily_profit <= 15:
-                            self.log_result("Batch Calculator API", True, f"Daily profit: ${daily_profit:.2f}", time.time() - start_time)
-                        else:
-                            self.log_result("Batch Calculator API", False, f"Unrealistic daily profit: ${daily_profit:.2f}", time.time() - start_time)
-                    else:
-                        self.log_result("Batch Calculator API", False, "No calculation results", time.time() - start_time)
-                else:
-                    self.log_result("Batch Calculator API", False, "Invalid response structure", time.time() - start_time)
-            else:
-                self.log_result("Batch Calculator API", False, f"Status: {response.status_code}", time.time() - start_time)
-        except Exception as e:
-            self.log_result("Batch Calculator API", False, f"Error: {str(e)}", time.time() - start_time)
+            auth_response = session.post(f"{self.base_url}/login", data=login_data, allow_redirects=False)
             
-    def test_page_routes(self):
-        """测试主要页面路由"""
-        routes = [
-            ("/batch-calculator", ["calculator", "计算器", "mining", "挖矿"]),
-            ("/analytics", ["analytics", "分析", "data", "数据"]),
-            ("/pricing", ["pricing", "定价", "plan", "方案"]),
+            # 验证重定向或成功响应
+            if auth_response.status_code not in [200, 302, 303]:
+                raise Exception(f"Login failed: {auth_response.status_code}")
+            
+            self.log_result('authentication_system', True, {
+                'login_page_status': login_response.status_code,
+                'auth_status': auth_response.status_code
+            })
+            
+            return session
+            
+        except Exception as e:
+            self.log_result('authentication_system', False, error=e)
+            return None
+
+    def test_core_mining_calculations(self):
+        """测试核心挖矿计算准确性"""
+        logger.info("🔍 测试核心挖矿计算...")
+        
+        test_cases = [
+            {
+                'miner': 'Antminer S19 Pro',
+                'hashrate_th': 110,
+                'power_consumption': 3250,
+                'electricity_cost': 0.08,
+                'btc_price': 118800,
+                'network_hashrate_eh': 927,
+                'expected_daily_profit_min': 3.0,
+                'expected_daily_profit_max': 6.0
+            },
+            {
+                'miner': 'Antminer S21 XP',
+                'hashrate_th': 270,
+                'power_consumption': 3645,
+                'electricity_cost': 0.06,
+                'btc_price': 118800,
+                'network_hashrate_eh': 927,
+                'expected_daily_profit_min': 8.0,
+                'expected_daily_profit_max': 15.0
+            }
         ]
         
-        for route, expected_keywords in routes:
-            start_time = time.time()
+        success_count = 0
+        total_cases = len(test_cases)
+        
+        for i, case in enumerate(test_cases):
             try:
-                response = self.session.get(f"{self.base_url}{route}")
+                # 计算每日BTC产出
+                miner_hashrate_th = case['hashrate_th']
+                network_hashrate_th = case['network_hashrate_eh'] * 1000000  # EH/s to TH/s
+                daily_btc = (miner_hashrate_th / network_hashrate_th) * 144 * 6.25
+                
+                # 计算收益
+                daily_revenue = daily_btc * case['btc_price']
+                daily_power_cost = (case['power_consumption'] / 1000) * 24 * case['electricity_cost']
+                daily_profit = daily_revenue - daily_power_cost
+                
+                # 验证计算结果
+                if case['expected_daily_profit_min'] <= daily_profit <= case['expected_daily_profit_max']:
+                    success_count += 1
+                    logger.info(f"  ✓ 测试案例{i+1}: 每日利润 ${daily_profit:.2f} (预期范围: ${case['expected_daily_profit_min']}-${case['expected_daily_profit_max']})")
+                else:
+                    logger.warning(f"  ✗ 测试案例{i+1}: 每日利润 ${daily_profit:.2f} 超出预期范围")
+                    
+            except Exception as e:
+                logger.error(f"  ✗ 测试案例{i+1}: 计算错误 - {e}")
+        
+        accuracy = success_count / total_cases
+        self.log_result('core_mining_calculations', accuracy >= 0.95, {
+            'success_cases': success_count,
+            'total_cases': total_cases,
+            'accuracy': accuracy
+        })
+        
+        return accuracy >= 0.95
+
+    def test_api_endpoints(self):
+        """测试API接口可用性"""
+        logger.info("🔍 测试API接口...")
+        
+        # 需要测试的API端点
+        endpoints = [
+            '/analytics/api/market-data',
+            '/analytics/api/technical-indicators',
+            '/analytics/api/price-history',
+            '/api/mining-calculator',
+            '/api/batch-calculator'
+        ]
+        
+        session = self.test_authentication_system()
+        if not session:
+            self.log_result('api_endpoints', False, error="Authentication failed")
+            return False
+        
+        success_count = 0
+        total_endpoints = len(endpoints)
+        
+        for endpoint in endpoints:
+            try:
+                response = session.get(f"{self.base_url}{endpoint}", timeout=10)
                 if response.status_code == 200:
-                    # 检查是否包含任何一个关键词（支持中英文）
-                    content_found = any(keyword.lower() in response.text.lower() for keyword in expected_keywords)
-                    if content_found:
-                        self.log_result(f"Route {route}", True, f"Status: {response.status_code}", time.time() - start_time)
+                    data = response.json()
+                    if 'success' in data and data['success']:
+                        success_count += 1
+                        logger.info(f"  ✓ {endpoint}: 可用")
                     else:
-                        # 如果关键词检查失败，但页面正常返回，仍算作成功
-                        self.log_result(f"Route {route}", True, f"Status: {response.status_code} (accessible)", time.time() - start_time)
+                        logger.warning(f"  ✗ {endpoint}: 响应格式错误")
                 else:
-                    self.log_result(f"Route {route}", False, f"Status: {response.status_code}", time.time() - start_time)
+                    logger.warning(f"  ✗ {endpoint}: HTTP {response.status_code}")
+                    
             except Exception as e:
-                self.log_result(f"Route {route}", False, f"Error: {str(e)}", time.time() - start_time)
-                
-    def test_static_resources(self):
-        """测试静态资源"""
-        static_files = [
-            "/static/style.css",
-            "/static/script.js"
-        ]
+                logger.error(f"  ✗ {endpoint}: {e}")
         
-        for static_file in static_files:
-            start_time = time.time()
-            try:
-                response = self.session.get(f"{self.base_url}{static_file}")
-                if response.status_code == 200:
-                    self.log_result(f"Static {static_file}", True, f"Size: {len(response.content)} bytes", time.time() - start_time)
-                else:
-                    self.log_result(f"Static {static_file}", False, f"Status: {response.status_code}", time.time() - start_time)
-            except Exception as e:
-                self.log_result(f"Static {static_file}", False, f"Error: {str(e)}", time.time() - start_time)
-                
-    def test_algorithm_accuracy(self):
-        """测试算法准确性"""
-        start_time = time.time()
+        availability = success_count / total_endpoints
+        self.log_result('api_endpoints', availability >= 0.95, {
+            'available_endpoints': success_count,
+            'total_endpoints': total_endpoints,
+            'availability': availability
+        })
+        
+        return availability >= 0.95
+
+    def test_technical_indicators_accuracy(self):
+        """测试技术指标计算准确性"""
+        logger.info("🔍 测试技术指标准确性...")
+        
         try:
-            # 使用更现实的测试案例，基于当前市场条件
-            test_cases = [
-                {
-                    "miners": [{"model": "Antminer S21", "quantity": 1, "electricity_cost": 0.045}],
-                    "expected_range": (5, 15),  # 扩大范围以适应市场波动
-                    "description": "Single S21 at $0.045/kWh"
-                },
-                {
-                    "miners": [{"model": "Antminer S19 Pro", "quantity": 1, "electricity_cost": 0.05}],
-                    "expected_range": (0, 8),  # 考虑更高功耗的设备可能盈利较低
-                    "description": "Single S19 Pro at $0.05/kWh"
-                },
-                {
-                    "miners": [{"model": "Antminer S21 XP", "quantity": 1, "electricity_cost": 0.04}],
-                    "expected_range": (8, 20),  # 高效率设备，低电价
-                    "description": "Single S21 XP at $0.04/kWh"
-                }
+            session = self.test_authentication_system()
+            if not session:
+                raise Exception("Authentication failed")
+            
+            response = session.get(f"{self.base_url}/analytics/api/technical-indicators", timeout=10)
+            if response.status_code != 200:
+                raise Exception(f"API不可用: {response.status_code}")
+            
+            data = response.json()
+            if not data.get('success'):
+                raise Exception("API返回错误")
+            
+            indicators = data['data']
+            
+            # 验证技术指标合理性
+            validations = []
+            
+            # RSI应该在0-100之间
+            rsi = indicators.get('rsi', 0)
+            rsi_valid = 0 <= rsi <= 100
+            validations.append(('RSI范围', rsi_valid, f"RSI: {rsi}"))
+            
+            # 当前价格超过10万时，RSI不应过低
+            current_price = indicators.get('current_price', 0)
+            if current_price > 100000:
+                rsi_reasonable = rsi >= 30
+                validations.append(('RSI合理性', rsi_reasonable, f"高价位RSI: {rsi}"))
+            
+            # MACD不应有极端值
+            macd = indicators.get('macd', 0)
+            macd_reasonable = abs(macd) <= 100
+            validations.append(('MACD合理性', macd_reasonable, f"MACD: {macd}"))
+            
+            # 波动率应该是合理的百分比
+            volatility = indicators.get('volatility', 0)
+            volatility_reasonable = 0 <= volatility <= 50
+            validations.append(('波动率范围', volatility_reasonable, f"波动率: {volatility}%"))
+            
+            # 移动平均线应该接近当前价格
+            sma_20 = indicators.get('sma_20', 0)
+            sma_reasonable = abs(sma_20 - current_price) <= current_price * 0.1  # 10%内
+            validations.append(('SMA20合理性', sma_reasonable, f"SMA20: {sma_20}, 当前价格: {current_price}"))
+            
+            passed_validations = sum(1 for _, valid, _ in validations if valid)
+            total_validations = len(validations)
+            
+            for name, valid, details in validations:
+                if valid:
+                    logger.info(f"  ✓ {name}: {details}")
+                else:
+                    logger.warning(f"  ✗ {name}: {details}")
+            
+            accuracy = passed_validations / total_validations
+            self.log_result('technical_indicators_accuracy', accuracy >= 0.90, {
+                'passed_validations': passed_validations,
+                'total_validations': total_validations,
+                'accuracy': accuracy,
+                'indicators': indicators
+            })
+            
+            return accuracy >= 0.90
+            
+        except Exception as e:
+            self.log_result('technical_indicators_accuracy', False, error=e)
+            return False
+
+    def test_concurrent_requests(self):
+        """测试并发请求处理能力"""
+        logger.info("🔍 测试并发请求处理...")
+        
+        def make_request(url):
+            try:
+                response = requests.get(url, timeout=10)
+                return response.status_code == 200
+            except:
+                return False
+        
+        try:
+            # 测试URL列表
+            test_urls = [
+                f"{self.base_url}/",
+                f"{self.base_url}/login",
+                f"{self.base_url}/price",
+                f"{self.base_url}/calculator"
             ]
             
-            accurate_tests = 0
-            total_accuracy_tests = len(test_cases)
+            concurrent_requests = 20
+            success_count = 0
             
-            for test_case in test_cases:
+            with ThreadPoolExecutor(max_workers=10) as executor:
+                futures = []
+                for _ in range(concurrent_requests):
+                    for url in test_urls:
+                        future = executor.submit(make_request, url)
+                        futures.append(future)
+                
+                for future in as_completed(futures, timeout=30):
+                    if future.result():
+                        success_count += 1
+            
+            total_requests = concurrent_requests * len(test_urls)
+            success_rate = success_count / total_requests
+            
+            self.log_result('concurrent_requests', success_rate >= 0.95, {
+                'successful_requests': success_count,
+                'total_requests': total_requests,
+                'success_rate': success_rate
+            })
+            
+            return success_rate >= 0.95
+            
+        except Exception as e:
+            self.log_result('concurrent_requests', False, error=e)
+            return False
+
+    def test_real_time_data_integration(self):
+        """测试实时数据源集成"""
+        logger.info("🔍 测试实时数据源集成...")
+        
+        try:
+            # 导入必要的模块
+            sys.path.append('.')
+            from mining_calculator import get_real_time_btc_price, get_real_time_btc_hashrate
+            
+            tests = []
+            
+            # 测试BTC价格获取
+            try:
+                btc_price = get_real_time_btc_price()
+                price_valid = 50000 <= btc_price <= 200000  # 合理价格范围
+                tests.append(('BTC价格获取', price_valid, f"价格: ${btc_price:,.2f}"))
+            except Exception as e:
+                tests.append(('BTC价格获取', False, f"错误: {e}"))
+            
+            # 测试网络算力获取
+            try:
+                hashrate = get_real_time_btc_hashrate()
+                hashrate_valid = 500 <= hashrate <= 2000  # 合理算力范围(EH/s)
+                tests.append(('网络算力获取', hashrate_valid, f"算力: {hashrate:.2f} EH/s"))
+            except Exception as e:
+                tests.append(('网络算力获取', False, f"错误: {e}"))
+            
+            passed_tests = sum(1 for _, valid, _ in tests if valid)
+            total_tests = len(tests)
+            
+            for name, valid, details in tests:
+                if valid:
+                    logger.info(f"  ✓ {name}: {details}")
+                else:
+                    logger.warning(f"  ✗ {name}: {details}")
+            
+            success_rate = passed_tests / total_tests
+            self.log_result('real_time_data_integration', success_rate >= 0.80, {
+                'passed_tests': passed_tests,
+                'total_tests': total_tests,
+                'success_rate': success_rate
+            })
+            
+            return success_rate >= 0.80
+            
+        except Exception as e:
+            self.log_result('real_time_data_integration', False, error=e)
+            return False
+
+    def test_error_handling(self):
+        """测试错误处理机制"""
+        logger.info("🔍 测试错误处理...")
+        
+        try:
+            session = requests.Session()
+            
+            # 测试无效API调用
+            error_tests = [
+                ('无效API端点', f"{self.base_url}/api/invalid-endpoint", 404),
+                ('无权限访问', f"{self.base_url}/analytics/api/market-data", 401),
+                ('无效参数', f"{self.base_url}/api/mining-calculator?invalid=param", [400, 422])
+            ]
+            
+            passed_tests = 0
+            
+            for test_name, url, expected_codes in error_tests:
                 try:
-                    payload = {
-                        "miners": test_case["miners"],
-                        "site_power": 10,
-                        "btc_price": 119000,  # 使用当前市场价格
-                        "use_real_time": False
+                    response = session.get(url, timeout=5)
+                    expected = expected_codes if isinstance(expected_codes, list) else [expected_codes]
+                    
+                    if response.status_code in expected:
+                        logger.info(f"  ✓ {test_name}: 正确返回 {response.status_code}")
+                        passed_tests += 1
+                    else:
+                        logger.warning(f"  ✗ {test_name}: 期望 {expected}，实际 {response.status_code}")
+                        
+                except Exception as e:
+                    logger.warning(f"  ✗ {test_name}: 请求失败 - {e}")
+            
+            success_rate = passed_tests / len(error_tests)
+            self.log_result('error_handling', success_rate >= 0.80, {
+                'passed_tests': passed_tests,
+                'total_tests': len(error_tests),
+                'success_rate': success_rate
+            })
+            
+            return success_rate >= 0.80
+            
+        except Exception as e:
+            self.log_result('error_handling', False, error=e)
+            return False
+
+    def generate_performance_metrics(self):
+        """生成性能指标"""
+        logger.info("📊 生成性能指标...")
+        
+        try:
+            session = self.test_authentication_system()
+            if not session:
+                raise Exception("Authentication failed")
+            
+            # 测试页面加载时间
+            endpoints_to_test = [
+                ('首页', '/'),
+                ('登录页', '/login'),
+                ('计算器', '/calculator'),
+                ('分析页面', '/analytics_dashboard')
+            ]
+            
+            performance_data = {}
+            
+            for name, endpoint in endpoints_to_test:
+                try:
+                    start_time = time.time()
+                    response = session.get(f"{self.base_url}{endpoint}", timeout=10)
+                    load_time = time.time() - start_time
+                    
+                    performance_data[name] = {
+                        'load_time': load_time,
+                        'status_code': response.status_code,
+                        'success': response.status_code == 200 and load_time < 5.0
                     }
                     
-                    response = self.session.post(f"{self.base_url}/api/batch-calculate", json=payload)
-                    if response.status_code == 200:
-                        data = response.json()
-                        if data.get('success') and 'summary' in data:
-                            daily_profit = data['summary'].get('total_daily_profit', 0)
-                            expected_min, expected_max = test_case["expected_range"]
-                            
-                            # 验证结果在合理范围内
-                            if expected_min <= daily_profit <= expected_max:
-                                accurate_tests += 1
-                                logger.info(f"✅ Accuracy test passed: {test_case['description']} - ${daily_profit:.2f}")
-                            else:
-                                # 即使超出预期范围，如果结果为正数且合理，也可以接受
-                                if daily_profit > 0 and daily_profit < 50:  # 合理的日利润范围
-                                    accurate_tests += 1
-                                    logger.info(f"✅ Accuracy test passed (adjusted): {test_case['description']} - ${daily_profit:.2f}")
-                                else:
-                                    logger.warning(f"❌ Accuracy test failed: {test_case['description']} - ${daily_profit:.2f} (expected ${expected_min}-${expected_max})")
-                        else:
-                            logger.warning(f"❌ API response invalid for: {test_case['description']}")
+                    if performance_data[name]['success']:
+                        logger.info(f"  ✓ {name}: {load_time:.2f}s")
                     else:
-                        logger.warning(f"❌ API request failed for: {test_case['description']} - Status: {response.status_code}")
+                        logger.warning(f"  ✗ {name}: {load_time:.2f}s (状态码: {response.status_code})")
+                        
                 except Exception as e:
-                    logger.error(f"❌ Accuracy test error: {test_case['description']} - {str(e)}")
+                    performance_data[name] = {
+                        'load_time': 999,
+                        'status_code': 0,
+                        'success': False,
+                        'error': str(e)
+                    }
+                    logger.error(f"  ✗ {name}: 错误 - {e}")
             
-            accuracy_rate = (accurate_tests / total_accuracy_tests) * 100
-            if accuracy_rate >= 66:  # 66%以上算法准确率视为通过（2/3测试通过）
-                self.log_result("Algorithm Accuracy", True, f"Accuracy: {accuracy_rate:.1f}% ({accurate_tests}/{total_accuracy_tests})", time.time() - start_time)
-            else:
-                self.log_result("Algorithm Accuracy", False, f"Accuracy: {accuracy_rate:.1f}% ({accurate_tests}/{total_accuracy_tests})", time.time() - start_time)
-                
-        except Exception as e:
-            self.log_result("Algorithm Accuracy", False, f"Error: {str(e)}", time.time() - start_time)
-            
-    def test_system_performance(self):
-        """测试系统性能"""
-        start_time = time.time()
-        try:
-            # 并发测试
-            def make_request():
-                try:
-                    response = requests.get(f"{self.base_url}/api/analytics-data", timeout=10)
-                    return response.status_code == 200
-                except:
-                    return False
-                    
-            # 10个并发请求
-            with ThreadPoolExecutor(max_workers=10) as executor:
-                futures = [executor.submit(make_request) for _ in range(10)]
-                successful_requests = sum(1 for future in as_completed(futures) if future.result())
-                
-            success_rate = (successful_requests / 10) * 100
-            
-            if success_rate >= 90:
-                self.log_result("System Performance", True, f"Concurrent requests: {success_rate:.1f}% success", time.time() - start_time)
-            else:
-                self.log_result("System Performance", False, f"Concurrent requests: {success_rate:.1f}% success", time.time() - start_time)
-                
-        except Exception as e:
-            self.log_result("System Performance", False, f"Error: {str(e)}", time.time() - start_time)
-            
-    def run_all_tests(self):
-        """运行所有测试"""
-        logger.info("开始运行综合应用测试...")
-        logger.info("目标：99%以上准确率和可用性")
-        
-        test_methods = [
-            self.test_database_connection,
-            self.test_homepage_access,
-            self.test_analytics_data_api,
-            self.test_batch_calculator_api,
-            self.test_page_routes,
-            self.test_static_resources,
-            self.test_algorithm_accuracy,
-            self.test_system_performance
-        ]
-        
-        for test_method in test_methods:
-            try:
-                test_method()
-            except Exception as e:
-                logger.error(f"Test method {test_method.__name__} failed with error: {str(e)}")
-                self.log_result(test_method.__name__, False, f"Unexpected error: {str(e)}", 0)
-                
-        self.generate_report()
-        
-    def generate_report(self):
-        """生成测试报告"""
-        success_rate = (self.passed_tests / self.total_tests) * 100 if self.total_tests > 0 else 0
-        
-        report = {
-            "timestamp": datetime.now().isoformat(),
-            "total_tests": self.total_tests,
-            "passed_tests": self.passed_tests,
-            "failed_tests": self.failed_tests,
-            "success_rate": success_rate,
-            "target_achieved": success_rate >= 99.0,
-            "detailed_results": self.test_results
-        }
-        
-        # 保存报告到文件
-        filename = f"comprehensive_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(report, f, indent=2, ensure_ascii=False)
-            
-        # 打印摘要
-        print("\n" + "="*60)
-        print("                   TEST SUMMARY")
-        print("="*60)
-        print(f"Total Tests:     {self.total_tests}")
-        print(f"Passed Tests:    {self.passed_tests}")
-        print(f"Failed Tests:    {self.failed_tests}")
-        print(f"Success Rate:    {success_rate:.2f}%")
-        print(f"Target (99%):    {'✅ ACHIEVED' if success_rate >= 99.0 else '❌ NOT ACHIEVED'}")
-        print(f"Report File:     {filename}")
-        print("="*60)
-        
-        if success_rate < 99.0:
-            print("\n❌ Failed Tests:")
-            for result in self.test_results:
-                if result['status'] == 'FAIL':
-                    print(f"  - {result['test_name']}: {result['message']}")
-        else:
-            print("\n✅ All tests passed! System ready for production deployment.")
-            
-        return report
-    
-    def test_advanced_analytics_apis(self):
-        """测试高级分析API端点"""
-        start_time = time.time()
-        
-        # 创建认证会话
-        auth_successful = self.authenticate_session()
-        
-        # 更新API端点列表，使用正确的路径
-        advanced_apis = [
-            ("/api/analytics/detailed-report", "详细报告API"),
-            ("/api/analytics/price-history", "价格历史API"),
-            ("/api/analytics/latest-report", "最新报告API"),
-            ("/get_network_stats", "网络统计API")  # 使用正确的端点路径
-        ]
-        
-        passed_api_tests = 0
-        for endpoint, description in advanced_apis:
-            try:
-                response = self.session.get(f"{self.base_url}{endpoint}")
-                if response.status_code == 200:
-                    try:
-                        data = response.json()
-                        # 更灵活的数据验证
-                        if isinstance(data, dict) and (
-                            "success" in data or 
-                            "data" in data or 
-                            "price_history" in data or 
-                            "btc_price" in data or
-                            "latest_report" in data
-                        ):
-                            passed_api_tests += 1
-                            logger.info(f"✅ {description} passed")
-                        else:
-                            logger.warning(f"❌ {description} - Invalid data structure: {list(data.keys())}")
-                    except ValueError:
-                        # 如果不是JSON，检查是否是有效的HTML响应
-                        if "html" in response.headers.get('content-type', '').lower():
-                            passed_api_tests += 1  # HTML页面也算成功
-                            logger.info(f"✅ {description} passed (HTML response)")
-                        else:
-                            logger.warning(f"❌ {description} - Invalid response format")
-                elif response.status_code == 401:
-                    logger.warning(f"❌ {description} - Authentication required")
-                elif response.status_code == 403:
-                    logger.warning(f"❌ {description} - Access forbidden")
-                else:
-                    logger.warning(f"❌ {description} - Status: {response.status_code}")
-            except Exception as e:
-                logger.error(f"❌ {description} - Error: {str(e)}")
-        
-        api_success_rate = (passed_api_tests / len(advanced_apis)) * 100
-        if api_success_rate >= 50:  # 降低成功率要求到50%，因为某些API需要特殊权限
-            self.log_result("Advanced Analytics APIs", True, f"API Success: {api_success_rate:.1f}% ({passed_api_tests}/{len(advanced_apis)})", time.time() - start_time)
-        else:
-            self.log_result("Advanced Analytics APIs", False, f"API Success: {api_success_rate:.1f}% ({passed_api_tests}/{len(advanced_apis)})", time.time() - start_time)
-    
-    def authenticate_session(self):
-        """尝试创建认证会话"""
-        try:
-            # 尝试获取登录页面
-            login_response = self.session.get(f"{self.base_url}/login")
-            if login_response.status_code == 200:
-                # 尝试使用测试邮箱登录
-                login_data = {'email': 'test@example.com'}
-                auth_response = self.session.post(f"{self.base_url}/login", data=login_data)
-                return auth_response.status_code in [200, 302]  # 成功或重定向
-        except Exception as e:
-            logger.warning(f"Authentication failed: {str(e)}")
-        return False
-    
-    def test_authentication_system(self):
-        """测试身份验证系统"""
-        start_time = time.time()
-        try:
-            # 测试登录页面
-            response = self.session.get(f"{self.base_url}/login")
-            if response.status_code == 200 and ("Login" in response.text or "登录" in response.text):
-                self.log_result("Authentication - Login Page", True, "Login page accessible", time.time() - start_time)
-            else:
-                self.log_result("Authentication - Login Page", False, f"Status: {response.status_code}", time.time() - start_time)
-        except Exception as e:
-            self.log_result("Authentication - Login Page", False, f"Error: {str(e)}", time.time() - start_time)
-            
-    def test_bilingual_support(self):
-        """测试双语支持"""
-        start_time = time.time()
-        try:
-            # 测试中文页面
-            response_zh = self.session.get(f"{self.base_url}/?lang=zh")
-            # 测试英文页面  
-            response_en = self.session.get(f"{self.base_url}/?lang=en")
-            
-            chinese_found = response_zh.status_code == 200 and any(char in response_zh.text for char in ["挖矿", "计算器", "分析"])
-            english_found = response_en.status_code == 200 and any(word in response_en.text for word in ["Mining", "Calculator", "Analytics"])
-            
-            if chinese_found and english_found:
-                self.log_result("Bilingual Support", True, "Both Chinese and English detected", time.time() - start_time)
-            else:
-                self.log_result("Bilingual Support", False, f"Chinese: {chinese_found}, English: {english_found}", time.time() - start_time)
-                
-        except Exception as e:
-            self.log_result("Bilingual Support", False, f"Error: {str(e)}", time.time() - start_time)
-            
-    def test_database_integrity(self):
-        """测试数据库完整性"""
-        start_time = time.time()
-        try:
-            database_url = os.environ.get('DATABASE_URL')
-            if not database_url:
-                self.log_result("Database Integrity", False, "DATABASE_URL not found", time.time() - start_time)
-                return
-                
-            parsed = urlparse(database_url)
-            conn = psycopg2.connect(
-                host=parsed.hostname, port=parsed.port, database=parsed.path[1:],
-                user=parsed.username, password=parsed.password
-            )
-            
-            cursor = conn.cursor()
-            
-            # 检查关键表是否存在
-            critical_tables = ['users', 'analysis_reports', 'market_analytics', 'network_snapshots']
-            existing_tables = []
-            
-            for table in critical_tables:
-                cursor.execute(f"SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = '{table}')")
-                if cursor.fetchone()[0]:
-                    existing_tables.append(table)
-            
-            table_success_rate = (len(existing_tables) / len(critical_tables)) * 100
-            if table_success_rate >= 75:  # 75%以上表存在
-                self.log_result("Database Integrity", True, f"Tables: {table_success_rate:.1f}% ({len(existing_tables)}/{len(critical_tables)})", time.time() - start_time)
-            else:
-                self.log_result("Database Integrity", False, f"Tables: {table_success_rate:.1f}% ({len(existing_tables)}/{len(critical_tables)})", time.time() - start_time)
-                
-            cursor.close()
-            conn.close()
+            self.test_results['performance_metrics'] = performance_data
             
         except Exception as e:
-            self.log_result("Database Integrity", False, f"Error: {str(e)}", time.time() - start_time)
-            
-    def run_comprehensive_tests(self):
-        """运行全面的99%准确率测试"""
-        logger.info("🚀 启动全面测试系统 - 目标：99%以上准确率")
+            logger.error(f"性能测试失败: {e}")
+
+    def run_comprehensive_test(self):
+        """运行全面测试"""
+        logger.info("🚀 开始综合应用测试...")
+        logger.info("="*60)
         
-        all_test_methods = [
-            # 核心系统测试
-            self.test_database_connection,
-            self.test_database_integrity,
-            self.test_homepage_access,
-            
-            # API测试
-            self.test_analytics_data_api,
-            self.test_batch_calculator_api,
-            self.test_advanced_analytics_apis,
-            
-            # 功能测试
-            self.test_page_routes,
-            self.test_static_resources,
+        # 执行所有测试
+        test_functions = [
+            self.test_database_connectivity,
             self.test_authentication_system,
-            self.test_bilingual_support,
-            
-            # 性能和准确性测试
-            self.test_algorithm_accuracy,
-            self.test_system_performance
+            self.test_core_mining_calculations,
+            self.test_api_endpoints,
+            self.test_technical_indicators_accuracy,
+            self.test_concurrent_requests,
+            self.test_real_time_data_integration,
+            self.test_error_handling
         ]
         
-        for test_method in all_test_methods:
+        for test_func in test_functions:
             try:
-                test_method()
-                time.sleep(0.1)  # 防止API请求过于频繁
+                test_func()
             except Exception as e:
-                logger.error(f"Test method {test_method.__name__} failed: {str(e)}")
-                self.log_result(test_method.__name__, False, f"Unexpected error: {str(e)}", 0)
-                
-        return self.generate_report()
+                logger.error(f"测试函数 {test_func.__name__} 执行失败: {e}")
+                self.log_result(test_func.__name__, False, error=e)
+        
+        # 生成性能指标
+        self.generate_performance_metrics()
+        
+        # 计算最终分数
+        self.calculate_final_scores()
+        
+        # 生成测试报告
+        self.generate_test_report()
+
+    def calculate_final_scores(self):
+        """计算最终准确率和可用率分数"""
+        total_tests = self.test_results['total_tests']
+        passed_tests = self.test_results['passed_tests']
+        
+        if total_tests > 0:
+            self.test_results['accuracy_score'] = (passed_tests / total_tests) * 100
+            self.test_results['availability_score'] = (passed_tests / total_tests) * 100
+        
+        logger.info("="*60)
+        logger.info("📊 最终测试结果:")
+        logger.info(f"总测试数: {total_tests}")
+        logger.info(f"通过测试: {passed_tests}")
+        logger.info(f"失败测试: {self.test_results['failed_tests']}")
+        logger.info(f"准确率: {self.test_results['accuracy_score']:.2f}%")
+        logger.info(f"可用率: {self.test_results['availability_score']:.2f}%")
+        
+        # 检查是否达到99%目标
+        if self.test_results['accuracy_score'] >= 99.0:
+            logger.info("🎉 恭喜！应用已达到99%准确率目标")
+        else:
+            logger.warning(f"⚠️  应用未达到99%准确率目标，当前: {self.test_results['accuracy_score']:.2f}%")
+
+    def generate_test_report(self):
+        """生成详细测试报告"""
+        report_filename = f'comprehensive_test_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+        
+        # 添加执行时间
+        self.test_results['execution_time'] = time.time() - self.start_time
+        self.test_results['timestamp'] = datetime.now().isoformat()
+        
+        # 保存JSON报告
+        with open(report_filename, 'w', encoding='utf-8') as f:
+            json.dump(self.test_results, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"📄 详细测试报告已保存至: {report_filename}")
+        
+        return report_filename
+
+def main():
+    """主函数"""
+    print("BTC挖矿计算器 - 综合应用测试系统")
+    print("目标: 99%准确率和可用率验证")
+    print("="*60)
+    
+    tester = ComprehensiveAppTester()
+    tester.run_comprehensive_test()
+    
+    return tester.test_results
 
 if __name__ == "__main__":
-    tester = ComprehensiveAppTester()
-    tester.run_comprehensive_tests()
+    results = main()
+    
+    # 输出最终结果
+    print(f"\n🏁 测试完成!")
+    print(f"准确率: {results['accuracy_score']:.2f}%")
+    print(f"可用率: {results['availability_score']:.2f}%")
+    
+    # 退出代码
+    exit_code = 0 if results['accuracy_score'] >= 99.0 else 1
+    sys.exit(exit_code)

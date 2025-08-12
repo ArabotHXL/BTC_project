@@ -1,0 +1,76 @@
+{
+  "total_tests": 13,
+  "passed_tests": 10,
+  "failed_tests": 3,
+  "accuracy_score": 76.92307692307693,
+  "test_details": {
+    "数据库表_users": {
+      "success": true,
+      "details": "0条记录",
+      "timestamp": "2025-08-12T01:07:36.317980"
+    },
+    "数据库表_market_analytics": {
+      "success": true,
+      "details": "3045条记录",
+      "timestamp": "2025-08-12T01:07:36.340067"
+    },
+    "数据库表_technical_indicators": {
+      "success": true,
+      "details": "2631条记录",
+      "timestamp": "2025-08-12T01:07:36.361437"
+    },
+    "市场数据质量": {
+      "success": true,
+      "details": "3001条有效价格记录",
+      "timestamp": "2025-08-12T01:07:36.383448"
+    },
+    "计算准确性_Antminer S19 Pro (低电费)": {
+      "success": false,
+      "details": "每日利润$8.03 (预期$1.0-$3.0)",
+      "timestamp": "2025-08-12T01:07:36.384247"
+    },
+    "计算准确性_Antminer S21 XP (中等电费)": {
+      "success": false,
+      "details": "每日利润$24.19 (预期$7.0-$10.0)",
+      "timestamp": "2025-08-12T01:07:36.384352"
+    },
+    "API_实时价格API": {
+      "success": true,
+      "details": "HTTP 200",
+      "timestamp": "2025-08-12T01:07:36.506499"
+    },
+    "API_网络算力API": {
+      "success": true,
+      "details": "HTTP 200",
+      "timestamp": "2025-08-12T01:07:36.654214"
+    },
+    "API_计算器页面": {
+      "success": true,
+      "details": "HTTP 200",
+      "timestamp": "2025-08-12T01:07:36.669511"
+    },
+    "API_价格页面": {
+      "success": false,
+      "details": "HTTP 500",
+      "timestamp": "2025-08-12T01:07:36.952489"
+    },
+    "技术指标_SMA20合理性": {
+      "success": true,
+      "details": "SMA20: $119336.65, 当前价格: $118917.00, 偏差: 0.35%",
+      "timestamp": "2025-08-12T01:07:37.133809"
+    },
+    "并发性能测试": {
+      "success": true,
+      "details": "成功率: 100.0%, 平均响应时间: 0.01s",
+      "timestamp": "2025-08-12T01:07:37.180006"
+    },
+    "数据一致性验证": {
+      "success": true,
+      "details": "有效数据比例: 100.0% (3045/3045)",
+      "timestamp": "2025-08-12T01:07:37.388610"
+    }
+  },
+  "timestamp": "2025-08-12T01:07:36.125233",
+  "availability_score": 76.92307692307693,
+  "result_status": "NEEDS_IMPROVEMENT"
+}

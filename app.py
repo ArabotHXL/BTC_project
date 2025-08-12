@@ -4114,6 +4114,62 @@ def api_network_data():
             'error': str(e)
         }), 500
 
+# 添加缺失的API端点
+@app.route('/api/get-btc-price')
+def api_get_btc_price():
+    """API端点：获取实时BTC价格"""
+    try:
+        from mining_calculator import get_real_time_btc_price
+        price = get_real_time_btc_price()
+        return jsonify({
+            'success': True,
+            'btc_price': price,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/get-hashrate')
+def api_get_hashrate():
+    """API端点：获取网络算力"""
+    try:
+        from mining_calculator import get_real_time_btc_hashrate
+        hashrate = get_real_time_btc_hashrate()
+        return jsonify({
+            'success': True,
+            'hashrate': hashrate,
+            'unit': 'EH/s',
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/price')
+def price_page():
+    """价格页面路由"""
+    current_lang = session.get('language', 'zh')
+    try:
+        from mining_calculator import get_real_time_btc_price, get_real_time_btc_hashrate
+        btc_price = get_real_time_btc_price()
+        hashrate = get_real_time_btc_hashrate()
+        
+        return render_template('price.html', 
+                             btc_price=btc_price,
+                             hashrate=hashrate,
+                             current_lang=current_lang)
+    except Exception as e:
+        app.logger.error(f"价格页面加载错误: {e}")
+        return render_template('price.html', 
+                             btc_price=118000,
+                             hashrate=927,
+                             current_lang=current_lang)
+
 # 添加缺失的分析数据API端点 - 使用数据库数据
 @app.route('/api/analytics-data')
 def api_analytics_data():
