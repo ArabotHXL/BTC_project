@@ -3503,14 +3503,13 @@ def analytics_main():
 @login_required
 @log_access_attempt('技术分析')
 def technical_analysis():
-    """技术分析页面"""
+    """技术分析页面 - 重定向到分析平台的技术分析标签"""
     if not has_role(['owner', 'manager', 'mining_site']):
         flash('您没有权限访问此页面', 'danger')
         return redirect(url_for('index'))
     
-    lang = session.get('language', 'zh')
-    
-    return render_template('technical_analysis.html', current_lang=lang)
+    # 重定向到分析仪表盘的技术分析标签
+    return redirect(url_for('analytics_dashboard') + '#technical')
 
 # 修复专业报告路由
 @app.route('/api/professional-report')

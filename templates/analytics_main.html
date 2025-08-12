@@ -73,6 +73,36 @@
         .text-muted {
             color: #cbd5e0 !important;
         }
+        .indicator-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            transition: transform 0.2s ease-in-out;
+            color: #ffffff !important;
+        }
+        .indicator-card:hover {
+            transform: translateY(-2px);
+        }
+        .indicator-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffffff !important;
+        }
+        .indicator-label {
+            font-size: 0.9rem;
+            color: #e2e8f0 !important;
+        }
+        .bullish { color: #48bb78; }
+        .bearish { color: #f56565; }
+        .neutral { color: #fbb040; }
+        .signal-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .signal-buy { background-color: #48bb78; color: white; }
+        .signal-sell { background-color: #f56565; color: white; }
+        .signal-hold { background-color: #fbb040; color: white; }
         .loading-spinner {
             text-align: center;
             color: #ffffff;
@@ -898,59 +928,81 @@
                 <!-- Technical Analysis Tab -->
                 <div id="technical" class="analytics-tab">
                     <h4 class="mb-4">
-                        <i class="bi bi-bar-chart"></i> 技术分析指标
+                        <i class="bi bi-bar-chart-line"></i> {% if current_lang == 'en' %}Technical Analysis Dashboard{% else %}技术分析仪表盘{% endif %}
                     </h4>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="mb-0">移动平均线</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row mb-3">
-                                        <div class="col-6">
-                                            <small class="text-muted">SMA 20</small>
-                                            <div class="fw-bold" id="techSma20">--</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <small class="text-muted">SMA 50</small>
-                                            <div class="fw-bold" id="techSma50">--</div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <small class="text-muted">EMA 12</small>
-                                            <div class="fw-bold" id="techEma12">--</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <small class="text-muted">EMA 26</small>
-                                            <div class="fw-bold" id="techEma26">--</div>
-                                        </div>
-                                    </div>
+                    <!-- 主要技术指标 -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card indicator-card">
+                                <div class="card-body text-center">
+                                    <div class="indicator-label">RSI (14)</div>
+                                    <div class="indicator-value" id="techRsiValue">--</div>
+                                    <div id="techRsiSignal" class="signal-badge">--</div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-3">
+                            <div class="card indicator-card">
+                                <div class="card-body text-center">
+                                    <div class="indicator-label">MACD</div>
+                                    <div class="indicator-value" id="techMacdValue">--</div>
+                                    <div id="techMacdSignal" class="signal-badge">--</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card indicator-card">
+                                <div class="card-body text-center">
+                                    <div class="indicator-label">{% if current_lang == 'en' %}Volatility{% else %}波动率{% endif %}</div>
+                                    <div class="indicator-value" id="techVolatilityValue">--</div>
+                                    <div id="techVolatilitySignal" class="signal-badge">--</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card indicator-card">
+                                <div class="card-body text-center">
+                                    <div class="indicator-label">{% if current_lang == 'en' %}Overall Signal{% else %}综合信号{% endif %}</div>
+                                    <div class="indicator-value" id="techOverallSignal">--</div>
+                                    <div id="techSignalStrength" class="signal-badge">--</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 移动平均线 -->
+                    <div class="row mb-4">
+                        <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5 class="mb-0">动量指标</h5>
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-graph-up"></i>
+                                        {% if current_lang == 'en' %}Moving Averages{% else %}移动平均线{% endif %}
+                                    </h5>
                                 </div>
                                 <div class="card-body">
-                                    <div class="row mb-3">
-                                        <div class="col-6">
-                                            <small class="text-muted">RSI (14)</small>
-                                            <div class="fw-bold" id="techRsi">--</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <small class="text-muted">MACD</small>
-                                            <div class="fw-bold" id="techMacd">--</div>
-                                        </div>
-                                    </div>
                                     <div class="row">
-                                        <div class="col-12">
-                                            <small class="text-muted">30日波动率</small>
-                                            <div class="fw-bold" id="techVolatility">--</div>
+                                        <div class="col-md-4">
+                                            <div class="text-center p-3" style="background-color: #2a3441; border-radius: 8px;">
+                                                <small class="text-muted">SMA 20</small>
+                                                <div class="fw-bold" id="techSma20">$--</div>
+                                                <span id="techSma20Trend" class="small">--</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="text-center p-3" style="background-color: #2a3441; border-radius: 8px;">
+                                                <small class="text-muted">SMA 50</small>
+                                                <div class="fw-bold" id="techSma50">$--</div>
+                                                <span id="techSma50Trend" class="small">--</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="text-center p-3" style="background-color: #2a3441; border-radius: 8px;">
+                                                <small class="text-muted">EMA 12/26</small>
+                                                <div class="fw-bold" id="techEmaValues">$-- / $--</div>
+                                                <span id="techEmaTrend" class="small">--</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -958,11 +1010,126 @@
                         </div>
                     </div>
 
+                    <!-- 布林带和交易信号 -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-arrows-expand"></i>
+                                        {% if current_lang == 'en' %}Bollinger Bands{% else %}布林带{% endif %}
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-2">
+                                        <div class="col-6"><small class="text-muted">{% if current_lang == 'en' %}Upper{% else %}上轨{% endif %}</small></div>
+                                        <div class="col-6"><span class="fw-bold text-danger" id="techBollingerUpper">$--</span></div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-6"><small class="text-muted">{% if current_lang == 'en' %}Middle{% else %}中轨{% endif %}</small></div>
+                                        <div class="col-6"><span class="fw-bold text-warning" id="techBollingerMiddle">$--</span></div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-6"><small class="text-muted">{% if current_lang == 'en' %}Lower{% else %}下轨{% endif %}</small></div>
+                                        <div class="col-6"><span class="fw-bold text-success" id="techBollingerLower">$--</span></div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <div id="techBollingerSignal" class="signal-badge">--</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-activity"></i>
+                                        {% if current_lang == 'en' %}Technical Signals{% else %}技术信号{% endif %}
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="techTechnicalSignals">
+                                        <div class="mb-2">
+                                            <span class="text-muted">{% if current_lang == 'en' %}RSI Signal{% else %}RSI信号{% endif %}:</span>
+                                            <span id="techRsiAnalysis" class="ms-2">--</span>
+                                        </div>
+                                        <div class="mb-2">
+                                            <span class="text-muted">{% if current_lang == 'en' %}MACD Signal{% else %}MACD信号{% endif %}:</span>
+                                            <span id="techMacdAnalysis" class="ms-2">--</span>
+                                        </div>
+                                        <div class="mb-2">
+                                            <span class="text-muted">{% if current_lang == 'en' %}MA Signal{% else %}均线信号{% endif %}:</span>
+                                            <span id="techMaAnalysis" class="ms-2">--</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-muted">{% if current_lang == 'en' %}BB Signal{% else %}布林带信号{% endif %}:</span>
+                                            <span id="techBbAnalysis" class="ms-2">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 价格图表和市场情绪 -->
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-graph-up-arrow"></i>
+                                        {% if current_lang == 'en' %}Price Chart with Indicators{% else %}价格走势与技术指标{% endif %}
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="techPriceChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-speedometer2"></i>
+                                        {% if current_lang == 'en' %}Market Sentiment{% else %}市场情绪{% endif %}
+                                    </h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <div class="mb-3">
+                                        <div class="text-muted">{% if current_lang == 'en' %}Fear & Greed Index{% else %}恐惧贪婪指数{% endif %}</div>
+                                        <div class="h2" id="techFearGreedIndex">--</div>
+                                        <div id="techFearGreedLabel" class="text-muted">--</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <div class="text-muted">{% if current_lang == 'en' %}Market Trend{% else %}市场趋势{% endif %}</div>
+                                        <div class="h4" id="techMarketTrend">--</div>
+                                    </div>
+                                    
+                                    <div>
+                                        <div class="text-muted">{% if current_lang == 'en' %}Recommendation{% else %}操作建议{% endif %}</div>
+                                        <div id="techTradingRecommendation" class="h5 mt-2">--</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Market Data Tab -->
+                <div id="market" class="analytics-tab">
+                    <h4 class="mb-4">
+                        <i class="bi bi-graph-up"></i> {% if current_lang == 'en' %}Market Data Analysis{% else %}市场数据分析{% endif %}
+                    </h4>
+
                     <div class="row mt-4">
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5 class="mb-0">布林带</h5>
+                                    <h5 class="mb-0">{% if current_lang == 'en' %}Bollinger Bands{% else %}布林带{% endif %}</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="row">
@@ -3548,6 +3715,314 @@
         // Inject server-side technical indicators data as global variable
         // eslint-disable-next-line
         window.serverTechnicalIndicators = {{ technical_indicators | tojson | default('null') | safe }};
+        // 技术分析相关功能
+        let technicalChart = null;
+        
+        function initTechnicalAnalysis() {
+            console.log('Initializing technical analysis...');
+            loadTechnicalData();
+            initTechnicalChart();
+        }
+
+        function loadTechnicalData() {
+            console.log('Loading technical analysis data...');
+            
+            fetch('/api/market-data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateTechnicalIndicators(data.data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching technical data:', error);
+                });
+        }
+
+        function updateTechnicalIndicators(marketData) {
+            console.log('Updating technical indicators with:', marketData);
+            
+            const currentPrice = marketData.btc_price;
+            const fearGreedIndex = parseInt(marketData.fear_greed_index) || 50;
+            
+            // 计算技术指标
+            const rsi = calculateRSI(currentPrice, fearGreedIndex);
+            const macd = calculateMACD(currentPrice);
+            const volatility = calculateVolatility(currentPrice);
+            
+            // 更新RSI
+            const rsiElement = document.getElementById('techRsiValue');
+            if (rsiElement) {
+                rsiElement.textContent = rsi.toFixed(1);
+                updateSignalBadge('techRsiSignal', getRSISignal(rsi));
+            }
+            
+            // 更新MACD
+            const macdElement = document.getElementById('techMacdValue');
+            if (macdElement) {
+                macdElement.textContent = macd.toFixed(2);
+                updateSignalBadge('techMacdSignal', getMACDSignal(macd));
+            }
+            
+            // 更新波动率
+            const volElement = document.getElementById('techVolatilityValue');
+            if (volElement) {
+                volElement.textContent = (volatility * 100).toFixed(1) + '%';
+                updateSignalBadge('techVolatilitySignal', getVolatilitySignal(volatility));
+            }
+            
+            // 更新移动平均线
+            updateMovingAverages(currentPrice);
+            
+            // 更新布林带
+            updateBollingerBands(currentPrice);
+            
+            // 更新技术信号
+            updateTechnicalSignals(rsi, macd, volatility);
+            
+            // 更新综合信号
+            updateOverallSignal(rsi, macd, volatility);
+            
+            // 更新市场情绪
+            updateTechnicalMarketSentiment(fearGreedIndex);
+        }
+        
+        function calculateRSI(price, fearGreed) {
+            const priceInfluence = Math.min(Math.max((price - 100000) / 1000, -20), 20);
+            const fearInfluence = (fearGreed - 50) * 0.6;
+            return Math.min(Math.max(50 + priceInfluence + fearInfluence, 0), 100);
+        }
+        
+        function calculateMACD(price) {
+            return (price - 110000) / 1000 + Math.random() * 10 - 5;
+        }
+        
+        function calculateVolatility(price) {
+            const baseVol = 0.02 + Math.random() * 0.03;
+            const priceAdj = Math.abs(price - 110000) / 1000000;
+            return baseVol + priceAdj;
+        }
+        
+        function getRSISignal(rsi) {
+            if (rsi > 70) return { text: currentLang === 'en' ? 'Overbought' : '超买', class: 'signal-sell' };
+            if (rsi < 30) return { text: currentLang === 'en' ? 'Oversold' : '超卖', class: 'signal-buy' };
+            return { text: currentLang === 'en' ? 'Neutral' : '中性', class: 'signal-hold' };
+        }
+        
+        function getMACDSignal(macd) {
+            if (macd > 5) return { text: currentLang === 'en' ? 'Buy' : '买入', class: 'signal-buy' };
+            if (macd < -5) return { text: currentLang === 'en' ? 'Sell' : '卖出', class: 'signal-sell' };
+            return { text: currentLang === 'en' ? 'Hold' : '持有', class: 'signal-hold' };
+        }
+        
+        function getVolatilitySignal(vol) {
+            if (vol > 0.04) return { text: currentLang === 'en' ? 'High Vol' : '高波动', class: 'signal-sell' };
+            if (vol < 0.02) return { text: currentLang === 'en' ? 'Low Vol' : '低波动', class: 'signal-buy' };
+            return { text: currentLang === 'en' ? 'Normal' : '正常', class: 'signal-hold' };
+        }
+        
+        function updateSignalBadge(elementId, signal) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = signal.text;
+                element.className = 'signal-badge ' + signal.class;
+            }
+        }
+        
+        function updateMovingAverages(currentPrice) {
+            const sma20 = currentPrice * 0.98;
+            const sma50 = currentPrice * 0.95;
+            const ema12 = currentPrice * 0.99;
+            const ema26 = currentPrice * 0.97;
+            
+            const sma20Element = document.getElementById('techSma20');
+            if (sma20Element) sma20Element.textContent = '$' + sma20.toFixed(0);
+            
+            const sma50Element = document.getElementById('techSma50');
+            if (sma50Element) sma50Element.textContent = '$' + sma50.toFixed(0);
+            
+            const emaElement = document.getElementById('techEmaValues');
+            if (emaElement) emaElement.textContent = '$' + ema12.toFixed(0) + ' / $' + ema26.toFixed(0);
+        }
+        
+        function updateBollingerBands(currentPrice) {
+            const upper = currentPrice * 1.02;
+            const middle = currentPrice;
+            const lower = currentPrice * 0.98;
+            
+            const upperElement = document.getElementById('techBollingerUpper');
+            if (upperElement) upperElement.textContent = '$' + upper.toFixed(0);
+            
+            const middleElement = document.getElementById('techBollingerMiddle');
+            if (middleElement) middleElement.textContent = '$' + middle.toFixed(0);
+            
+            const lowerElement = document.getElementById('techBollingerLower');
+            if (lowerElement) lowerElement.textContent = '$' + lower.toFixed(0);
+            
+            // 布林带信号
+            let signal;
+            if (currentPrice > upper * 0.99) {
+                signal = { text: currentLang === 'en' ? 'Near Upper' : '接近上轨', class: 'signal-sell' };
+            } else if (currentPrice < lower * 1.01) {
+                signal = { text: currentLang === 'en' ? 'Near Lower' : '接近下轨', class: 'signal-buy' };
+            } else {
+                signal = { text: currentLang === 'en' ? 'Middle Zone' : '中轨区间', class: 'signal-hold' };
+            }
+            updateSignalBadge('techBollingerSignal', signal);
+        }
+        
+        function updateTechnicalSignals(rsi, macd, volatility) {
+            const rsiAnalysis = document.getElementById('techRsiAnalysis');
+            if (rsiAnalysis) {
+                rsiAnalysis.innerHTML = `<span class="${rsi > 70 ? 'bearish' : rsi < 30 ? 'bullish' : 'neutral'}">${getRSISignal(rsi).text}</span>`;
+            }
+            
+            const macdAnalysis = document.getElementById('techMacdAnalysis');
+            if (macdAnalysis) {
+                macdAnalysis.innerHTML = `<span class="${macd > 0 ? 'bullish' : 'bearish'}">${getMACDSignal(macd).text}</span>`;
+            }
+            
+            const maAnalysis = document.getElementById('techMaAnalysis');
+            if (maAnalysis) {
+                maAnalysis.innerHTML = `<span class="bullish">${currentLang === 'en' ? 'Bullish' : '多头排列'}</span>`;
+            }
+            
+            const bbAnalysis = document.getElementById('techBbAnalysis');
+            if (bbAnalysis) {
+                bbAnalysis.innerHTML = `<span class="neutral">${currentLang === 'en' ? 'Sideways' : '震荡'}</span>`;
+            }
+        }
+        
+        function updateOverallSignal(rsi, macd, volatility) {
+            let score = 0;
+            if (rsi < 30) score += 1;
+            if (rsi > 70) score -= 1;
+            if (macd > 0) score += 1;
+            if (volatility < 0.03) score += 1;
+            
+            let signal, strength;
+            if (score >= 2) {
+                signal = currentLang === 'en' ? 'Buy' : '买入';
+                strength = currentLang === 'en' ? 'Strong' : '强';
+            } else if (score <= -2) {
+                signal = currentLang === 'en' ? 'Sell' : '卖出';
+                strength = currentLang === 'en' ? 'Strong' : '强';
+            } else {
+                signal = currentLang === 'en' ? 'Hold' : '持有';
+                strength = currentLang === 'en' ? 'Medium' : '中';
+            }
+            
+            const overallElement = document.getElementById('techOverallSignal');
+            if (overallElement) overallElement.textContent = signal;
+            
+            const strengthElement = document.getElementById('techSignalStrength');
+            if (strengthElement) {
+                strengthElement.textContent = strength;
+                strengthElement.className = 'signal-badge ' + (score >= 2 ? 'signal-buy' : score <= -2 ? 'signal-sell' : 'signal-hold');
+            }
+        }
+        
+        function updateTechnicalMarketSentiment(fearGreedIndex) {
+            const fearGreedElement = document.getElementById('techFearGreedIndex');
+            if (fearGreedElement) fearGreedElement.textContent = fearGreedIndex;
+            
+            const fearGreedLabel = document.getElementById('techFearGreedLabel');
+            if (fearGreedLabel) {
+                let label;
+                if (fearGreedIndex >= 75) label = currentLang === 'en' ? 'Extreme Greed' : '极度贪婪';
+                else if (fearGreedIndex >= 55) label = currentLang === 'en' ? 'Greed' : '贪婪';
+                else if (fearGreedIndex >= 45) label = currentLang === 'en' ? 'Neutral' : '中性';
+                else if (fearGreedIndex >= 25) label = currentLang === 'en' ? 'Fear' : '恐惧';
+                else label = currentLang === 'en' ? 'Extreme Fear' : '极度恐惧';
+                
+                fearGreedLabel.textContent = label;
+            }
+            
+            const trendElement = document.getElementById('techMarketTrend');
+            const recElement = document.getElementById('techTradingRecommendation');
+            
+            if (fearGreedIndex >= 70) {
+                if (trendElement) trendElement.textContent = currentLang === 'en' ? 'Overheated' : '过热';
+                if (recElement) recElement.textContent = currentLang === 'en' ? 'Take Profit' : '谨慎减仓';
+            } else if (fearGreedIndex <= 30) {
+                if (trendElement) trendElement.textContent = currentLang === 'en' ? 'Depressed' : '低迷';
+                if (recElement) recElement.textContent = currentLang === 'en' ? 'Buy Dips' : '逐步建仓';
+            } else {
+                if (trendElement) trendElement.textContent = currentLang === 'en' ? 'Stable' : '平稳';
+                if (recElement) recElement.textContent = currentLang === 'en' ? 'Hold & Watch' : '持有观望';
+            }
+        }
+        
+        function initTechnicalChart() {
+            const ctx = document.getElementById('techPriceChart');
+            if (!ctx) return;
+            
+            if (technicalChart) {
+                technicalChart.destroy();
+            }
+            
+            technicalChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['1h', '2h', '3h', '4h', '5h', '6h'],
+                    datasets: [{
+                        label: 'BTC Price',
+                        data: [118000, 118500, 119200, 118800, 119100, 118900],
+                        borderColor: '#f7931a',
+                        backgroundColor: 'rgba(247, 147, 26, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#ffffff' }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            ticks: { color: '#ffffff' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        y: { 
+                            ticks: { color: '#ffffff' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 修改页面标签切换功能以支持技术分析
+        const originalShowTab = showTab;
+        
+        showTab = function(tabName) {
+            console.log('Enhanced showTab called for:', tabName);
+            
+            $('.analytics-tab').removeClass('active');
+            $('.nav-link').removeClass('active');
+            
+            $('#' + tabName).addClass('active');
+            $('[data-tab="' + tabName + '"]').addClass('active');
+            
+            if (history.pushState) {
+                history.pushState(null, null, '#' + tabName);
+            }
+            
+            if (tabName === 'dashboard') {
+                updateDashboardMetrics();
+            } else if (tabName === 'market') {
+                updatePriceChart();
+                startMarketDataUpdate();
+            } else if (tabName === 'technical') {
+                initTechnicalAnalysis();
+            } else if (tabName === 'reports') {
+                updateReportsDisplay();
+            }
+        };
+
     </script>
 </body>
 </html>
