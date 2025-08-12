@@ -105,6 +105,73 @@
             border-color: #dc3545;
             color: #fff;
         }
+        
+        .subscription-plan-card {
+            background: #2d2d2d;
+            border: 2px solid #444;
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        
+        .subscription-plan-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+        
+        .subscription-plan-card.selected {
+            border-color: var(--primary-color);
+            background: rgba(255, 193, 7, 0.1);
+        }
+        
+        .plan-label {
+            cursor: pointer;
+            margin: 0;
+            display: block;
+            height: 100%;
+        }
+        
+        .plan-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .plan-header i {
+            font-size: 1.2rem;
+            margin-right: 8px;
+            color: var(--primary-color);
+        }
+        
+        .plan-header h6 {
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .plan-price {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+        
+        .plan-features {
+            color: #aaa;
+        }
+        
+        .subscription-plan-card input[type="radio"] {
+            display: none;
+        }
+        
+        .subscription-plan-card input[type="radio"]:checked + .plan-label {
+            color: #fff;
+        }
+        
+        .subscription-plan-card input[type="radio"]:checked {
+            background: var(--primary-color);
+        }
     </style>
 </head>
 <body>
@@ -212,6 +279,62 @@
                             </label>
                             <input type="number" class="form-control" name="access_days" value="{{ user.access_days or '' }}" min="1">
                         </div>
+                        <div class="col-12">
+                            <label class="form-label">
+                                <i class="bi bi-credit-card me-1"></i>
+                                {% if current_lang == 'en' %}Subscription Plan{% else %}订阅计划{% endif %}
+                            </label>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <div class="subscription-plan-card" onclick="selectPlan('free')">
+                                        <input type="radio" name="subscription_plan" value="free" id="plan_free" 
+                                               {{ 'checked' if (user.subscription_plan or 'free') == 'free' else '' }}>
+                                        <label for="plan_free" class="plan-label">
+                                            <div class="plan-header">
+                                                <i class="bi bi-person"></i>
+                                                <h6>{% if current_lang == 'en' %}Free{% else %}免费版{% endif %}</h6>
+                                            </div>
+                                            <div class="plan-price">$0/月</div>
+                                            <div class="plan-features">
+                                                <small>{% if current_lang == 'en' %}Basic calculator{% else %}基础计算器{% endif %}</small>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="subscription-plan-card" onclick="selectPlan('basic')">
+                                        <input type="radio" name="subscription_plan" value="basic" id="plan_basic"
+                                               {{ 'checked' if user.subscription_plan == 'basic' else '' }}>
+                                        <label for="plan_basic" class="plan-label">
+                                            <div class="plan-header">
+                                                <i class="bi bi-star"></i>
+                                                <h6>{% if current_lang == 'en' %}Basic{% else %}基础版{% endif %}</h6>
+                                            </div>
+                                            <div class="plan-price">$29/月</div>
+                                            <div class="plan-features">
+                                                <small>{% if current_lang == 'en' %}Advanced features{% else %}高级功能{% endif %}</small>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="subscription-plan-card" onclick="selectPlan('pro')">
+                                        <input type="radio" name="subscription_plan" value="pro" id="plan_pro"
+                                               {{ 'checked' if user.subscription_plan == 'pro' else '' }}>
+                                        <label for="plan_pro" class="plan-label">
+                                            <div class="plan-header">
+                                                <i class="bi bi-gem"></i>
+                                                <h6>{% if current_lang == 'en' %}Pro{% else %}专业版{% endif %}</h6>
+                                            </div>
+                                            <div class="plan-price">$99/月</div>
+                                            <div class="plan-features">
+                                                <small>{% if current_lang == 'en' %}All features{% else %}全部功能{% endif %}</small>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         {% endif %}
                     </div>
 
@@ -252,6 +375,31 @@
             form.submit();
         }
     }
+    
+    function selectPlan(planType) {
+        // 移除所有选中状态
+        document.querySelectorAll('.subscription-plan-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        // 添加选中状态到当前卡片
+        const selectedCard = document.querySelector(`#plan_${planType}`).closest('.subscription-plan-card');
+        selectedCard.classList.add('selected');
+        
+        // 选中对应的radio按钮
+        document.querySelector(`#plan_${planType}`).checked = true;
+    }
+    
+    // 页面加载时设置初始选中状态
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkedRadio = document.querySelector('input[name="subscription_plan"]:checked');
+        if (checkedRadio) {
+            const card = checkedRadio.closest('.subscription-plan-card');
+            if (card) {
+                card.classList.add('selected');
+            }
+        }
+    });
     </script>
 </body>
 </html>

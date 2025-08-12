@@ -112,13 +112,14 @@ class UserAccess(db.Model):
     notes = db.Column(db.Text, nullable=True)
     last_login = db.Column(db.DateTime, nullable=True)
     role = db.Column(db.String(20), default="guest", nullable=False)
+    subscription_plan = db.Column(db.String(20), default="free", nullable=False)  # 订阅计划: free, basic, pro
     
     # 创建者关联（矿场主可以创建客户）
     created_by_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
     created_by = db.relationship('UserAccess', foreign_keys=[created_by_id], backref='managed_users', remote_side=[id])
     
     def __init__(self, name, email, access_days=30, company=None, position=None, notes=None, role="guest", 
-                 username=None, password_hash=None):
+                 username=None, password_hash=None, subscription_plan="free"):
         self.name = name
         self.email = email
         self.username = username
@@ -129,6 +130,7 @@ class UserAccess(db.Model):
         self.expires_at = datetime.utcnow() + timedelta(days=access_days)
         self.notes = notes
         self.role = role
+        self.subscription_plan = subscription_plan
     
     @property
     def has_access(self):

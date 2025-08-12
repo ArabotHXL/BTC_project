@@ -1675,6 +1675,12 @@ def edit_user_access(user_id):
                 new_role = request.form.get('role')
                 if new_role in ['owner', 'admin', 'mining_site', 'guest']:
                     user.role = new_role
+                
+                # 更新订阅计划
+                subscription_plan = request.form.get('subscription_plan')
+                if subscription_plan in ['free', 'basic', 'pro']:
+                    user.subscription_plan = subscription_plan
+                    logging.info(f"用户 {user.name} 的订阅计划已更新为: {subscription_plan}")
             
             db.session.commit()
             flash(f'用户 {user.name} 信息已成功更新', 'success')

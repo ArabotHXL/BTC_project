@@ -345,6 +345,18 @@
                                         {% else %}{% if current_lang == 'en' %}Guest{% else %}客人{% endif %}
                                         {% endif %}
                                     </span>
+                                    {% if user.subscription_plan and user.subscription_plan != 'free' %}
+                                    <span class="badge" style="
+                                        {% if user.subscription_plan == 'basic' %}background: #ffc107; color: #000;
+                                        {% elif user.subscription_plan == 'pro' %}background: #17a2b8; color: #fff;
+                                        {% endif %}
+                                        font-size: 0.7rem; margin-left: 4px;">
+                                        {% if user.subscription_plan == 'basic' %}
+                                            {% if current_lang == 'en' %}Basic{% else %}基础版{% endif %}
+                                        {% elif user.subscription_plan == 'pro' %}
+                                            {% if current_lang == 'en' %}Pro{% else %}专业版{% endif %}
+                                        {% endif %}
+                                    </span>
                                     
                                     <!-- 状态 -->
                                     {% if user.has_access %}
