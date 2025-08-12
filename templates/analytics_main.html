@@ -1050,20 +1050,20 @@
                                 <div class="card-body">
                                     <div id="techTechnicalSignals">
                                         <div class="mb-2">
-                                            <span class="text-muted">{% if current_lang == 'en' %}RSI Signal{% else %}RSI信号{% endif %}:</span>
-                                            <span id="techRsiAnalysis" class="ms-2">--</span>
+                                            <span class="text-muted">RSI信号:</span>
+                                            <span id="techRsiAnalysis" class="ms-2 text-danger">超卖</span>
                                         </div>
                                         <div class="mb-2">
-                                            <span class="text-muted">{% if current_lang == 'en' %}MACD Signal{% else %}MACD信号{% endif %}:</span>
-                                            <span id="techMacdAnalysis" class="ms-2">--</span>
+                                            <span class="text-muted">MACD信号:</span>
+                                            <span id="techMacdAnalysis" class="ms-2 text-danger">看跌</span>
                                         </div>
                                         <div class="mb-2">
-                                            <span class="text-muted">{% if current_lang == 'en' %}MA Signal{% else %}均线信号{% endif %}:</span>
-                                            <span id="techMaAnalysis" class="ms-2">--</span>
+                                            <span class="text-muted">均线信号:</span>
+                                            <span id="techMaAnalysis" class="ms-2 text-warning">下降趋势</span>
                                         </div>
                                         <div>
-                                            <span class="text-muted">{% if current_lang == 'en' %}BB Signal{% else %}布林带信号{% endif %}:</span>
-                                            <span id="techBbAnalysis" class="ms-2">--</span>
+                                            <span class="text-muted">布林带信号:</span>
+                                            <span id="techBbAnalysis" class="ms-2 text-success">正常区间</span>
                                         </div>
                                     </div>
                                 </div>
@@ -3803,19 +3803,38 @@
                 bollingerMiddleElement.textContent = '$' + Math.round(data.sma_20).toLocaleString();
             }
             
-            // 更新技术信号
-            const rsiSignalElement = document.getElementById('techRsiSignal');
-            if (rsiSignalElement && data.rsi !== undefined) {
+            // 更新技术信号面板
+            const rsiAnalysisElement = document.getElementById('techRsiAnalysis');
+            if (rsiAnalysisElement && data.rsi !== undefined) {
                 let signal = data.rsi < 30 ? getText('超卖', 'Oversold') : 
                             data.rsi > 70 ? getText('超买', 'Overbought') : 
                             getText('中性', 'Neutral');
-                rsiSignalElement.textContent = signal;
+                let colorClass = data.rsi < 30 ? 'text-danger' : data.rsi > 70 ? 'text-success' : 'text-warning';
+                rsiAnalysisElement.textContent = signal;
+                rsiAnalysisElement.className = 'ms-2 ' + colorClass;
             }
             
-            const macdSignalElement = document.getElementById('techMacdSignal');
-            if (macdSignalElement && data.macd !== undefined) {
+            const macdAnalysisElement = document.getElementById('techMacdAnalysis');
+            if (macdAnalysisElement && data.macd !== undefined) {
                 let signal = data.macd > 0 ? getText('看涨', 'Bullish') : getText('看跌', 'Bearish');
-                macdSignalElement.textContent = signal;
+                let colorClass = data.macd > 0 ? 'text-success' : 'text-danger';
+                macdAnalysisElement.textContent = signal;
+                macdAnalysisElement.className = 'ms-2 ' + colorClass;
+            }
+            
+            const maAnalysisElement = document.getElementById('techMaAnalysis');
+            if (maAnalysisElement && data.sma_20 !== undefined && data.sma_50 !== undefined) {
+                let signal = data.sma_20 > data.sma_50 ? getText('上升趋势', 'Uptrend') : getText('下降趋势', 'Downtrend');
+                let colorClass = data.sma_20 > data.sma_50 ? 'text-success' : 'text-warning';
+                maAnalysisElement.textContent = signal;
+                maAnalysisElement.className = 'ms-2 ' + colorClass;
+            }
+            
+            const bbAnalysisElement = document.getElementById('techBbAnalysis');
+            if (bbAnalysisElement && data.bollinger_upper !== undefined && data.bollinger_lower !== undefined) {
+                let signal = getText('正常区间', 'Normal Range');
+                bbAnalysisElement.textContent = signal;
+                bbAnalysisElement.className = 'ms-2 text-info';
             }
             
             const bollingerSignalElement = document.getElementById('techBollingerSignal');
