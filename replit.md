@@ -19,6 +19,7 @@ Preferred communication style: Simple, everyday language.
 - Added automatic cleanup for old data to maintain database performance
 - Implemented request/response caching reducing API calls by ~70%
 - Database query optimization with batch operations and selective field queries
+- **Data Source Unification**: Modified analytics dashboard to use market_analytics table as primary data source instead of external APIs for consistency and reliability
 
 ### Route Fixes and Template Updates (August 12, 2025)
 - Fixed /batch-calculator template reference errors
