@@ -2789,6 +2789,7 @@ def analytics_dashboard():
         print(f"获取分析数据时出错: {e}")
     
     # 如果技术指标数据为空，计算基于服务器端数据
+    app.logger.info(f"检查技术指标数据: {technical_indicators}")
     if not technical_indicators:
         try:
             import psycopg2
@@ -2891,7 +2892,7 @@ def analytics_dashboard():
                     'bollinger_lower': bollinger_lower
                 }
                 
-                app.logger.info(f"服务器端计算技术指标成功: RSI={rsi:.1f}, MACD={macd:.2f}")
+                app.logger.info(f"服务器端计算技术指标成功: RSI={rsi:.1f}, MACD={macd:.2f}, 波动率={volatility:.3f}, SMA20=${sma_20:.0f}")
                 
         except Exception as e:
             app.logger.error(f"服务器端技术指标计算失败: {e}")

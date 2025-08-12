@@ -3674,9 +3674,11 @@
 
             if (serverTechData) {
                 console.log('Loading server-side technical indicators:', serverTechData);
-                updateTechnicalIndicatorsDisplay(serverTechData);
+                updateTechnicalIndicators(serverTechData);
             } else {
                 console.log('No server-side technical indicators available');
+                // 如果没有服务器数据，显示错误状态
+                showTechnicalIndicatorsError();
             }
         }
 
@@ -3787,6 +3789,17 @@
             const ema26Element = document.getElementById('techEMA26');
             if (ema26Element && data.ema_26 !== undefined) {
                 ema26Element.textContent = '$' + data.ema_26.toLocaleString();
+            }
+            
+            // 更新布林带
+            const bollingerUpperElement = document.getElementById('techBollingerUpper');
+            if (bollingerUpperElement && data.bollinger_upper !== undefined) {
+                bollingerUpperElement.textContent = '$' + data.bollinger_upper.toLocaleString();
+            }
+            
+            const bollingerLowerElement = document.getElementById('techBollingerLower');
+            if (bollingerLowerElement && data.bollinger_lower !== undefined) {
+                bollingerLowerElement.textContent = '$' + data.bollinger_lower.toLocaleString();
             }
             
             console.log('Technical indicators updated with real data');
