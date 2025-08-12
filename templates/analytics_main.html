@@ -3770,36 +3770,70 @@
             }
             
             // 更新移动平均线
-            const sma20Element = document.getElementById('techSMA20');
+            const sma20Element = document.getElementById('techSma20');
             if (sma20Element && data.sma_20 !== undefined) {
-                sma20Element.textContent = '$' + data.sma_20.toLocaleString();
+                sma20Element.textContent = '$' + Math.round(data.sma_20).toLocaleString();
             }
             
-            const sma50Element = document.getElementById('techSMA50');  
+            const sma50Element = document.getElementById('techSma50');  
             if (sma50Element && data.sma_50 !== undefined) {
-                sma50Element.textContent = '$' + data.sma_50.toLocaleString();
+                sma50Element.textContent = '$' + Math.round(data.sma_50).toLocaleString();
             }
             
-            // 更新EMA
-            const ema12Element = document.getElementById('techEMA12');
-            if (ema12Element && data.ema_12 !== undefined) {
-                ema12Element.textContent = '$' + data.ema_12.toLocaleString();
-            }
-            
-            const ema26Element = document.getElementById('techEMA26');
-            if (ema26Element && data.ema_26 !== undefined) {
-                ema26Element.textContent = '$' + data.ema_26.toLocaleString();
+            // 更新EMA组合显示
+            const emaValuesElement = document.getElementById('techEmaValues');
+            if (emaValuesElement && data.ema_12 !== undefined && data.ema_26 !== undefined) {
+                emaValuesElement.textContent = '$' + Math.round(data.ema_12).toLocaleString() + ' / $' + Math.round(data.ema_26).toLocaleString();
             }
             
             // 更新布林带
             const bollingerUpperElement = document.getElementById('techBollingerUpper');
             if (bollingerUpperElement && data.bollinger_upper !== undefined) {
-                bollingerUpperElement.textContent = '$' + data.bollinger_upper.toLocaleString();
+                bollingerUpperElement.textContent = '$' + Math.round(data.bollinger_upper).toLocaleString();
             }
             
             const bollingerLowerElement = document.getElementById('techBollingerLower');
             if (bollingerLowerElement && data.bollinger_lower !== undefined) {
-                bollingerLowerElement.textContent = '$' + data.bollinger_lower.toLocaleString();
+                bollingerLowerElement.textContent = '$' + Math.round(data.bollinger_lower).toLocaleString();
+            }
+            
+            // 计算并显示布林带中轨 (SMA20)
+            const bollingerMiddleElement = document.getElementById('techBollingerMiddle');
+            if (bollingerMiddleElement && data.sma_20 !== undefined) {
+                bollingerMiddleElement.textContent = '$' + Math.round(data.sma_20).toLocaleString();
+            }
+            
+            // 更新技术信号
+            const rsiSignalElement = document.getElementById('techRsiSignal');
+            if (rsiSignalElement && data.rsi !== undefined) {
+                let signal = data.rsi < 30 ? getText('超卖', 'Oversold') : 
+                            data.rsi > 70 ? getText('超买', 'Overbought') : 
+                            getText('中性', 'Neutral');
+                rsiSignalElement.textContent = signal;
+            }
+            
+            const macdSignalElement = document.getElementById('techMacdSignal');
+            if (macdSignalElement && data.macd !== undefined) {
+                let signal = data.macd > 0 ? getText('看涨', 'Bullish') : getText('看跌', 'Bearish');
+                macdSignalElement.textContent = signal;
+            }
+            
+            const bollingerSignalElement = document.getElementById('techBollingerSignal');
+            if (bollingerSignalElement && data.bollinger_upper !== undefined && data.bollinger_lower !== undefined) {
+                let signal = getText('正常区间', 'Normal Range');
+                bollingerSignalElement.textContent = signal;
+            }
+            
+            // 更新综合信号
+            const overallSignalElement = document.getElementById('techOverallSignal');
+            if (overallSignalElement && data.rsi !== undefined && data.macd !== undefined) {
+                let overallSignal = '中性';
+                if (data.rsi < 30 && data.macd < 0) overallSignal = getText('强烈看跌', 'Strong Bearish');
+                else if (data.rsi > 70 && data.macd > 0) overallSignal = getText('强烈看涨', 'Strong Bullish');
+                else if (data.macd < 0) overallSignal = getText('偏空', 'Bearish Bias');
+                else overallSignal = getText('中性', 'Neutral');
+                
+                overallSignalElement.textContent = overallSignal;
             }
             
             console.log('Technical indicators updated with real data');
