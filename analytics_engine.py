@@ -235,36 +235,14 @@ class DataCollector:
             return None
 
     def collect_blockchain_hashrate_data(self) -> Optional[Dict]:
-        """从多个数据源收集算力数据，优先使用最准确的Minerstat API"""
+        """从多个数据源收集算力数据，优先使用CoinWarz专业API"""
         try:
-            # 方法1: 优先使用Minerstat API (最准确，911 EH/s)
-            try:
-                minerstat_response = self.session.get('https://api.minerstat.com/v2/coins?list=BTC', timeout=15)
-                if minerstat_response.status_code == 200:
-                    data = minerstat_response.json()
-                    if data and len(data) > 0:
-                        btc_data = data[0]
-                        # minerstat返回的是H/s格式的科学记数法
-                        hashrate_hs = float(btc_data.get('network_hashrate', 0))
-                        hashrate_eh = hashrate_hs / 1e18  # H/s to EH/s
-                        difficulty = float(btc_data.get('difficulty', 0))
-                        
-                        logger.info(f"✅ Minerstat实时算力数据: {hashrate_eh:.2f} EH/s")
-                        return {
-                            'network_hashrate': hashrate_eh,
-                            'network_difficulty': difficulty,
-                            'hashrate_timestamp': int(time.time()),
-                            'source': 'minerstat'
-                        }
-            except Exception as e:
-                logger.warning(f"Minerstat算力获取失败: {e}")
-            
-            # 方法2: 备用CoinWarz API
+            # 方法1: 优先使用CoinWarz API (专业挖矿数据)
             try:
                 coinwarz_response = self.session.get('https://www.coinwarz.com/v1/api/nethash?apikey=Free&coin=btc', timeout=15)
                 if coinwarz_response.status_code == 200:
                     data = coinwarz_response.json()
-                    if data and 'Data' in data:
+                    if data and data.get('Success') and 'Data' in data:
                         # CoinWarz返回的可能是H/s或GH/s
                         hashrate_value = float(data['Data']['NetHash'])
                         hashrate_unit = data['Data'].get('Unit', 'H/s')
@@ -279,14 +257,36 @@ class DataCollector:
                         else:
                             hashrate_eh = hashrate_value / 1e18  # H/s to EH/s
                         
-                        logger.info(f"CoinWarz实时算力: {hashrate_eh:.2f} EH/s")
+                        logger.info(f"✅ CoinWarz专业算力数据: {hashrate_eh:.2f} EH/s")
                         return {
                             'network_hashrate': hashrate_eh,
                             'hashrate_timestamp': int(time.time()),
                             'source': 'coinwarz'
                         }
             except Exception as e:
-                logger.debug(f"CoinWarz算力获取失败: {e}")
+                logger.warning(f"CoinWarz算力获取失败，回退至Minerstat: {e}")
+            
+            # 方法2: 备用Minerstat API
+            try:
+                minerstat_response = self.session.get('https://api.minerstat.com/v2/coins?list=BTC', timeout=15)
+                if minerstat_response.status_code == 200:
+                    data = minerstat_response.json()
+                    if data and len(data) > 0:
+                        btc_data = data[0]
+                        # minerstat返回的是H/s格式的科学记数法
+                        hashrate_hs = float(btc_data.get('network_hashrate', 0))
+                        hashrate_eh = hashrate_hs / 1e18  # H/s to EH/s
+                        difficulty = float(btc_data.get('difficulty', 0))
+                        
+                        logger.info(f"⚠️ Minerstat备用算力数据: {hashrate_eh:.2f} EH/s (CoinWarz不可用)")
+                        return {
+                            'network_hashrate': hashrate_eh,
+                            'network_difficulty': difficulty,
+                            'hashrate_timestamp': int(time.time()),
+                            'source': 'minerstat'
+                        }
+            except Exception as e:
+                logger.warning(f"Minerstat算力获取失败: {e}")
             
             # 方法3: 最后备用blockchain.info (经常不准确)
             try:
