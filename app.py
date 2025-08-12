@@ -2317,7 +2317,7 @@ def network_history():
         # 从数据库获取历史数据
         snapshots = NetworkSnapshot.query.filter(
             NetworkSnapshot.recorded_at >= start_date,
-            NetworkSnapshot.is_valid.is_(True)
+            NetworkSnapshot.is_valid == True
         ).order_by(NetworkSnapshot.recorded_at.asc()).all()
         
         # 准备图表数据
@@ -2939,7 +2939,7 @@ def analytics_dashboard():
                         return 100.0
                     rs = avg_gain / avg_loss
                     rsi = 100 - (100 / (1 + rs))
-                    return min(max(rsi, 0), 100)
+                    return float(min(max(rsi, 0), 100))
                 
                 def calculate_sma(prices, period):
                     if len(prices) < period:
@@ -3655,15 +3655,59 @@ def analytics_price_history_api():
 # 添加缺失的API路由修复404错误
 @app.route('/api/price-trend')
 @login_required
-def api_price_trend_missing():
-    """价格趋势API - 缺失路由修复"""
-    return api_price_trend()
+def api_price_trend():
+    """价格趋势API"""
+    try:
+        from analytics_engine import DatabaseManager
+        db_manager = DatabaseManager()
+        db_manager.connect()
+        
+        if db_manager.connection:
+            cursor = db_manager.connection.cursor()
+            cursor.execute("""
+                SELECT btc_price, timestamp 
+                FROM market_analytics 
+                ORDER BY timestamp DESC 
+                LIMIT 30
+            """)
+            results = cursor.fetchall()
+            cursor.close()
+            
+            if results:
+                data = [{'price': row[0], 'timestamp': row[1].isoformat() if row[1] else None} for row in results]
+                return jsonify({'success': True, 'data': data})
+        
+        return jsonify({'success': False, 'error': '暂无价格趋势数据'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
-@app.route('/api/difficulty-trend')
+@app.route('/api/difficulty-trend') 
 @login_required
-def api_difficulty_trend_missing():
-    """难度趋势API - 缺失路由修复"""
-    return api_difficulty_trend()
+def api_difficulty_trend():
+    """难度趋势API"""
+    try:
+        from analytics_engine import DatabaseManager
+        db_manager = DatabaseManager()
+        db_manager.connect()
+        
+        if db_manager.connection:
+            cursor = db_manager.connection.cursor()
+            cursor.execute("""
+                SELECT network_difficulty, timestamp 
+                FROM market_analytics 
+                ORDER BY timestamp DESC 
+                LIMIT 30
+            """)
+            results = cursor.fetchall()
+            cursor.close()
+            
+            if results:
+                data = [{'difficulty': row[0], 'timestamp': row[1].isoformat() if row[1] else None} for row in results]
+                return jsonify({'success': True, 'data': data})
+        
+        return jsonify({'success': False, 'error': '暂无难度趋势数据'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/analytics/detailed-report', methods=['GET'])
 @login_required
@@ -3920,20 +3964,22 @@ def legal_terms():
 
 # 注册蓝图
 # Register billing blueprint if available
-if BILLING_ENABLED and 'billing_bp' in globals():
-    try:
+try:
+    if BILLING_ENABLED:
+        from billing_routes import billing_bp
         app.register_blueprint(billing_bp, url_prefix="/billing")
         logging.info("Stripe billing routes registered successfully")
-    except Exception as e:
-        logging.error(f"Failed to register billing routes: {e}")
+except Exception as e:
+    logging.warning(f"Billing routes not available: {e}")
 
 # Register batch calculator blueprint
-if BATCH_CALCULATOR_ENABLED and 'batch_calculator_bp' in globals():
-    try:
+try:
+    if BATCH_CALCULATOR_ENABLED:
+        from batch_calculator_routes import batch_calculator_bp
         app.register_blueprint(batch_calculator_bp)
         logging.info("Batch calculator routes registered successfully")
-    except Exception as e:
-        logging.error(f"Failed to register batch calculator routes: {e}")
+except Exception as e:
+    logging.warning(f"Batch calculator routes not available: {e}")
 
 # 添加安全头
 @app.after_request  
@@ -4208,8 +4254,12 @@ def admin_extend_access(user_id):
 def pricing():
     """订阅计划页面"""
     try:
-        from models_subscription import Plan
-        plans = Plan.query.all()
+        try:
+            from models_subscription import Plan
+        except ImportError:
+            logging.warning("Subscription models not available")
+            Plan = None
+        plans = Plan.query.all() if Plan else []
         return render_template('pricing.html', plans=plans)
     except Exception as e:
         logging.error(f"Pricing page error: {e}")
@@ -4225,9 +4275,13 @@ def subscription():
         if not user:
             return redirect(url_for('login'))
         
-        from models_subscription import Subscription, Plan
-        subscription = Subscription.query.filter_by(user_id=user.id).first()
-        plans = Plan.query.all()
+        try:
+            from models_subscription import Subscription, Plan
+        except ImportError:
+            logging.warning("Subscription models not available")
+            Subscription = Plan = None
+        subscription = Subscription.query.filter_by(user_id=user.id).first() if Subscription else None
+        plans = Plan.query.all() if Plan else []
         
         return render_template('subscription.html', 
                              user=user, 
@@ -4409,10 +4463,18 @@ def api_network_history():
     """API endpoint for network history data"""
     try:
         # 获取最近30天的网络历史数据
+        def get_network_snapshots(limit=30):
+            """获取网络快照数据"""
+            try:
+                return NetworkSnapshot.query.order_by(NetworkSnapshot.recorded_at.desc()).limit(limit).all()
+            except Exception as e:
+                logging.error(f"Error getting network snapshots: {e}")
+                return []
+        
         historical_data = get_network_snapshots(limit=30)
         
         if not historical_data:
-            logger.warning("No network history data available")
+            logging.warning("No network history data available")
             return jsonify({
                 'success': False,
                 'error': 'No network history data available'
@@ -4428,7 +4490,7 @@ def api_network_history():
                 'network_hashrate': float(data.network_hashrate)
             })
         
-        logger.info(f"网络历史数据API返回 {len(formatted_data)} 条记录")
+        logging.info(f"网络历史数据API返回 {len(formatted_data)} 条记录")
         
         return jsonify({
             'success': True,
@@ -4437,7 +4499,7 @@ def api_network_history():
         })
         
     except Exception as e:
-        logger.error(f"网络历史数据API错误: {e}")
+        logging.error(f"网络历史数据API错误: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
