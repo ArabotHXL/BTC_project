@@ -4296,5 +4296,23 @@ def api_network_stats_alias():
     """网络统计API端点（别名）"""
     return api_network_data()
 
+# 错误处理器
+@app.errorhandler(404)
+def not_found_error(error):
+    """自定义404页面 - 提供友好的错误提示和导航"""
+    current_lang = session.get('language', 'zh')
+    return render_template('errors/404.html', 
+                         current_lang=current_lang,
+                         title="页面未找到" if current_lang == 'zh' else "Page Not Found"), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    """自定义500页面"""
+    current_lang = session.get('language', 'zh')
+    db.session.rollback()
+    return render_template('errors/500.html', 
+                         current_lang=current_lang,
+                         title="服务器错误" if current_lang == 'zh' else "Server Error"), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
