@@ -296,10 +296,15 @@ class UpgradeRequired(Exception):
         super().__init__(f"Feature '{feature_name}' requires {required_plan or 'upgrade'}")
 
 def require_plan(plan_name):
-    """需要特定计划的装饰器"""
+    """需要特定计划的装饰器 - Owner账户不受限制"""
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
+            # Owner账户不受订阅计划限制
+            current_role = session.get('role', 'guest')
+            if current_role == 'owner':
+                return func(*args, **kwargs)
+            
             user_plan = get_user_plan()
             current_plan = getattr(user_plan, 'id', 'free')
             
@@ -320,10 +325,15 @@ def require_plan(plan_name):
     return decorator
 
 def require_feature(feature_name):
-    """需要特定功能的装饰器"""
+    """需要特定功能的装饰器 - Owner账户不受限制"""
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
+            # Owner账户不受订阅功能限制
+            current_role = session.get('role', 'guest')
+            if current_role == 'owner':
+                return func(*args, **kwargs)
+            
             user_plan = get_user_plan()
             
             # 检查功能权限映射

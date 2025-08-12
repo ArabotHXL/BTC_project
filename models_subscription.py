@@ -105,22 +105,21 @@ def initialize_default_plans():
             return
         
         # Free Plan
-        free_plan = SubscriptionPlan(
-            id='free',
-            name='Free',
-            price=0,
-            max_miners=1,
-            max_historical_days=7,
-            allow_batch_calculator=False,
-            allow_crm_system=False,
-            allow_advanced_analytics=False,
-            allow_api_access=False,
-            allow_custom_scenarios=False,
-            allow_professional_reports=False,
-            allow_user_management=False,
-            allow_priority_support=False,
-            available_miner_models=3
-        )
+        free_plan = SubscriptionPlan()
+        free_plan.id = 'free'
+        free_plan.name = 'Free'
+        free_plan.price = 0
+        free_plan.max_miners = 1
+        free_plan.max_historical_days = 7
+        free_plan.allow_batch_calculator = False
+        free_plan.allow_crm_system = False
+        free_plan.allow_advanced_analytics = False
+        free_plan.allow_api_access = False
+        free_plan.allow_custom_scenarios = False
+        free_plan.allow_professional_reports = False
+        free_plan.allow_user_management = False
+        free_plan.allow_priority_support = False
+        free_plan.available_miner_models = 3
         
         # Basic Plan
         basic_plan = SubscriptionPlan(
