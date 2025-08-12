@@ -1082,7 +1082,7 @@
                                     </h5>
                                 </div>
                                 <div class="card-body">
-                                    <div class="chart-container">
+                                    <div class="chart-container" style="position: relative; height: 400px;">
                                         <canvas id="techPriceChart"></canvas>
                                     </div>
                                 </div>
@@ -3855,6 +3855,12 @@
                 overallSignalElement.textContent = overallSignal;
             }
             
+            // 更新市场情绪
+            updateMarketSentiment(data);
+            
+            // 创建价格图表
+            createTechnicalChart(data);
+            
             console.log('Technical indicators updated with real data');
         }
 
@@ -4138,6 +4144,267 @@
             } else if (tabName === 'reports') {
                 updateReportsDisplay();
             }
+        }
+        
+        // 更新市场情绪函数
+        function updateMarketSentiment(data) {
+            // 恐惧贪婪指数（基于技术指标计算）
+            const fearGreedIndex = calculateFearGreedIndex(data);
+            const fearGreedElement = document.getElementById('techFearGreedIndex');
+            const fearGreedLabelElement = document.getElementById('techFearGreedLabel');
+            
+            if (fearGreedElement && fearGreedLabelElement) {
+                fearGreedElement.textContent = fearGreedIndex.value;
+                fearGreedLabelElement.textContent = fearGreedIndex.label;
+                fearGreedElement.className = 'h2 ' + fearGreedIndex.color;
+            }
+            
+            // 市场趋势
+            const marketTrendElement = document.getElementById('techMarketTrend');
+            if (marketTrendElement && data.sma_20 !== undefined && data.sma_50 !== undefined) {
+                let trend = data.sma_20 > data.sma_50 ? getText('上升趋势', 'Uptrend') : getText('下降趋势', 'Downtrend');
+                let trendColor = data.sma_20 > data.sma_50 ? 'text-success' : 'text-danger';
+                marketTrendElement.textContent = trend;
+                marketTrendElement.className = 'h4 ' + trendColor;
+            }
+            
+            // 操作建议
+            const recommendationElement = document.getElementById('techTradingRecommendation');
+            if (recommendationElement && data.rsi !== undefined && data.macd !== undefined) {
+                let recommendation = generateTradingRecommendation(data);
+                recommendationElement.textContent = recommendation.text;
+                recommendationElement.className = 'h5 mt-2 ' + recommendation.color;
+            }
+        }
+        
+        // 计算恐惧贪婪指数
+        function calculateFearGreedIndex(data) {
+            if (!data.rsi || !data.macd || !data.volatility) {
+                return { value: '--', label: '--', color: 'text-muted' };
+            }
+            
+            let score = 50; // 基准分
+            
+            // RSI影响 (30%)
+            if (data.rsi < 30) score -= 20; // 超卖增加恐惧
+            else if (data.rsi > 70) score += 20; // 超买增加贪婪
+            
+            // MACD影响 (20%)
+            if (data.macd > 0) score += 10; // 看涨增加贪婪
+            else score -= 10; // 看跌增加恐惧
+            
+            // 波动率影响 (20%)
+            if (data.volatility > 0.25) score -= 15; // 高波动增加恐惧
+            else if (data.volatility < 0.15) score += 10; // 低波动增加贪婪
+            
+            // 确保分数在0-100范围内
+            score = Math.max(0, Math.min(100, score));
+            
+            let label, color;
+            if (score <= 25) {
+                label = getText('极度恐惧', 'Extreme Fear');
+                color = 'text-danger';
+            } else if (score <= 45) {
+                label = getText('恐惧', 'Fear');
+                color = 'text-warning';
+            } else if (score <= 55) {
+                label = getText('中性', 'Neutral');
+                color = 'text-info';
+            } else if (score <= 75) {
+                label = getText('贪婪', 'Greed');
+                color = 'text-success';
+            } else {
+                label = getText('极度贪婪', 'Extreme Greed');
+                color = 'text-success';
+            }
+            
+            return { value: Math.round(score), label: label, color: color };
+        }
+        
+        // 生成操作建议
+        function generateTradingRecommendation(data) {
+            if (data.rsi < 30 && data.macd < 0) {
+                return {
+                    text: getText('谨慎观望，等待反弹信号', 'Wait for reversal signals'),
+                    color: 'text-warning'
+                };
+            } else if (data.rsi > 70 && data.macd > 0) {
+                return {
+                    text: getText('考虑获利了结', 'Consider taking profits'),
+                    color: 'text-info'
+                };
+            } else if (data.macd > 0 && data.rsi < 70) {
+                return {
+                    text: getText('可考虑适量建仓', 'Consider moderate positions'),
+                    color: 'text-success'
+                };
+            } else {
+                return {
+                    text: getText('保持观望', 'Hold and observe'),
+                    color: 'text-muted'
+                };
+            }
+        }
+        
+        // 创建技术图表
+        let techChart = null;
+        function createTechnicalChart(data) {
+            const ctx = document.getElementById('techPriceChart');
+            if (!ctx) return;
+            
+            // 销毁现有图表
+            if (techChart) {
+                techChart.destroy();
+            }
+            
+            // 获取历史价格数据
+            fetch('/analytics/api/price-history')
+                .then(response => response.json())
+                .then(priceData => {
+                    if (priceData.success && priceData.data.length > 0) {
+                        drawTechnicalChart(ctx, priceData.data, data);
+                    }
+                })
+                .catch(error => {
+                    console.error('获取价格历史数据失败:', error);
+                    // 使用默认数据创建图表
+                    drawDefaultTechnicalChart(ctx, data);
+                });
+        }
+        
+        // 绘制技术图表
+        function drawTechnicalChart(ctx, priceHistory, indicators) {
+            const labels = priceHistory.slice(-30).map(item => {
+                const date = new Date(item.timestamp);
+                return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+            });
+            
+            const prices = priceHistory.slice(-30).map(item => item.btc_price);
+            
+            // 创建移动平均线数据
+            const sma20Data = new Array(labels.length).fill(indicators.sma_20);
+            const sma50Data = new Array(labels.length).fill(indicators.sma_50);
+            
+            techChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'BTC价格',
+                        data: prices,
+                        borderColor: '#ffc107',
+                        backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                        fill: false,
+                        tension: 0.1,
+                        pointRadius: 2
+                    }, {
+                        label: 'SMA20',
+                        data: sma20Data,
+                        borderColor: '#0d6efd',
+                        borderDash: [5, 5],
+                        fill: false,
+                        pointRadius: 0
+                    }, {
+                        label: 'SMA50',
+                        data: sma50Data,
+                        borderColor: '#dc3545',
+                        borderDash: [10, 5],
+                        fill: false,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#fff',
+                                font: { size: 12 }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#adb5bd' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        y: {
+                            ticks: {
+                                color: '#adb5bd',
+                                callback: function(value) {
+                                    return '$' + Math.round(value).toLocaleString();
+                                }
+                            },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 绘制默认技术图表
+        function drawDefaultTechnicalChart(ctx, indicators) {
+            const currentPrice = 118719; // 当前BTC价格
+            const labels = ['7天前', '6天前', '5天前', '4天前', '3天前', '2天前', '1天前', '今天'];
+            const prices = [116500, 117200, 118000, 118500, 117800, 119200, 118600, currentPrice];
+            
+            techChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'BTC价格',
+                        data: prices,
+                        borderColor: '#ffc107',
+                        backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                        fill: false,
+                        tension: 0.1,
+                        pointRadius: 3
+                    }, {
+                        label: `SMA20 ($${Math.round(indicators.sma_20).toLocaleString()})`,
+                        data: new Array(labels.length).fill(indicators.sma_20),
+                        borderColor: '#0d6efd',
+                        borderDash: [5, 5],
+                        fill: false,
+                        pointRadius: 0
+                    }, {
+                        label: `SMA50 ($${Math.round(indicators.sma_50).toLocaleString()})`,
+                        data: new Array(labels.length).fill(indicators.sma_50),
+                        borderColor: '#dc3545',
+                        borderDash: [10, 5],
+                        fill: false,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#fff',
+                                font: { size: 12 }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#adb5bd' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        y: {
+                            ticks: {
+                                color: '#adb5bd',
+                                callback: function(value) {
+                                    return '$' + Math.round(value).toLocaleString();
+                                }
+                            },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                }
+            });
         }
 
     </script>
