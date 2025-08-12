@@ -1682,7 +1682,13 @@ def edit_user_access(user_id):
         
         # GET请求：显示编辑表单
         current_lang = session.get('language', 'en')
-        return render_template('admin/edit_user.html', user=user, current_lang=current_lang)
+        try:
+            return render_template('admin/edit_user.html', user=user, current_lang=current_lang)
+        except Exception as template_error:
+            logging.error(f"模板渲染错误: {str(template_error)}")
+            # 如果模板渲染失败，直接重定向回用户列表
+            flash(f'无法加载编辑页面: {str(template_error)}', 'danger')
+            return redirect('/admin/user_access')
         
     except Exception as e:
         db.session.rollback()
