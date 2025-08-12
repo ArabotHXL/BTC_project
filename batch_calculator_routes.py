@@ -36,7 +36,8 @@ def batch_calculator():
         current_lang = request.args.get('lang', session.get('language', 'zh'))
         session['language'] = current_lang
         
-        logger.info(f"Rendering batch calculator with plan: {user_plan.name}, language: {current_lang}")
+        plan_name = getattr(user_plan, 'name', user_plan) if user_plan else 'Free'
+        logger.info(f"Rendering batch calculator with plan: {plan_name}, language: {current_lang}")
         
         # Pass session data to template
         template_data = {
