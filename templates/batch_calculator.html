@@ -102,12 +102,16 @@
                             <div class="small text-muted">{% if current_lang == 'en' %}Miners Quota{% else %}矿机配额{% endif %}</div>
                             <div class="quota-bar">
                                 <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar bg-primary" role="progressbar" 
+                                    <div class="progress-bar bg-warning" role="progressbar" 
                                          style="width: 0%" id="quotaProgress"></div>
                                 </div>
                                 <div class="small mt-1">
                                     <span id="currentCount">0</span> / {{ user_plan.max_miners }} 
                                     {% if current_lang == 'en' %}miners{% else %}台{% endif %}
+                                    <div class="text-muted mt-1">
+                                        <span id="remainingCount">{{ user_plan.max_miners }}</span>
+                                        {% if current_lang == 'en' %}more miners can be added{% else %}台矿机仍可添加{% endif %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -528,11 +532,27 @@
                 }
             });
             
-            document.getElementById('currentCount').textContent = totalMiners;
-            
-            const progress = Math.min((totalMiners / maxMiners) * 100, 100);
+            // Update quota display
+            const currentCountSpan = document.getElementById('currentCount');
+            const remainingCountSpan = document.getElementById('remainingCount');
             const progressBar = document.getElementById('quotaProgress');
-            progressBar.style.width = progress + '%';
+            
+            if (currentCountSpan && remainingCountSpan && progressBar) {
+                currentCountSpan.textContent = totalMiners;
+                remainingCountSpan.textContent = Math.max(0, maxMiners - totalMiners);
+                
+                const progress = Math.min((totalMiners / maxMiners) * 100, 100);
+                progressBar.style.width = progress + '%';
+                
+                // Update progress bar color based on usage
+                if (progress >= 100) {
+                    progressBar.className = 'progress-bar bg-danger';
+                } else if (progress >= 80) {
+                    progressBar.className = 'progress-bar bg-warning';
+                } else {
+                    progressBar.className = 'progress-bar bg-success';
+                }
+            }
             
             // Change color based on usage
             progressBar.className = 'progress-bar';
