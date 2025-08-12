@@ -20,7 +20,8 @@ class BitcoinRPCClient:
                  rpc_host="127.0.0.1", 
                  rpc_port=8332, 
                  rpc_user=None, 
-                 rpc_password=None):
+                 rpc_password=None,
+                 rpc_url=None):
         """
         初始化RPC客户端
         
@@ -29,16 +30,34 @@ class BitcoinRPCClient:
             rpc_port: RPC端口 (主网:8332, 测试网:18332)
             rpc_user: RPC用户名
             rpc_password: RPC密码
+            rpc_url: 直接指定RPC URL (如Ankr等云服务)
         """
+        # 优先使用Ankr免费RPC服务
+        self.ankr_url = "https://rpc.ankr.com/btc/3c1e57e178ff7195c7fc9c6d31b8d21d58fca3b0960067febe0026b2348d5f45"
+        
+        if rpc_url:
+            self.rpc_url = rpc_url
+            self.use_ankr = False
+        elif os.environ.get('BITCOIN_RPC_URL'):
+            self.rpc_url = os.environ.get('BITCOIN_RPC_URL')
+            self.use_ankr = False
+        else:
+            # 默认使用Ankr免费服务
+            self.rpc_url = self.ankr_url
+            self.use_ankr = True
+        
         self.rpc_host = rpc_host
         self.rpc_port = rpc_port
         self.rpc_user = rpc_user or os.environ.get('BITCOIN_RPC_USER')
         self.rpc_password = rpc_password or os.environ.get('BITCOIN_RPC_PASSWORD')
-        self.rpc_url = f"http://{rpc_host}:{rpc_port}/"
         
-        # 检查RPC连接配置
-        if not self.rpc_user or not self.rpc_password:
-            logger.warning("Bitcoin RPC凭据未配置，某些功能可能不可用")
+        # 如果使用本地节点才需要用户名密码
+        if not self.use_ankr and (not self.rpc_url.startswith('http')):
+            self.rpc_url = f"http://{rpc_host}:{rpc_port}/"
+            if not self.rpc_user or not self.rpc_password:
+                logger.warning("本地Bitcoin RPC凭据未配置，将尝试使用Ankr服务")
+                self.rpc_url = self.ankr_url
+                self.use_ankr = True
     
     def make_rpc_call(self, method: str, params: list = None) -> Optional[Dict]:
         """
@@ -51,25 +70,39 @@ class BitcoinRPCClient:
         Returns:
             RPC响应数据或None
         """
-        if not self.rpc_user or not self.rpc_password:
-            logger.error("Bitcoin RPC凭据未配置")
-            return None
-            
         payload = {
-            "jsonrpc": "1.0",
+            "jsonrpc": "2.0",
             "id": "mining_calculator",
             "method": method,
             "params": params or []
         }
         
         try:
-            response = requests.post(
-                self.rpc_url,
-                data=json.dumps(payload),
-                headers={'content-type': 'text/plain'},
-                auth=(self.rpc_user, self.rpc_password),
-                timeout=30
-            )
+            headers = {'content-type': 'application/json'}
+            
+            # 根据是否使用Ankr服务选择不同的请求方式
+            if self.use_ankr or self.rpc_url.startswith('https://rpc.ankr.com'):
+                # Ankr服务不需要认证
+                response = requests.post(
+                    self.rpc_url,
+                    data=json.dumps(payload),
+                    headers=headers,
+                    timeout=30
+                )
+            else:
+                # 本地或其他需要认证的服务
+                if not self.rpc_user or not self.rpc_password:
+                    logger.error("本地Bitcoin RPC凭据未配置")
+                    return None
+                    
+                response = requests.post(
+                    self.rpc_url,
+                    data=json.dumps(payload),
+                    headers=headers,
+                    auth=(self.rpc_user, self.rpc_password),
+                    timeout=30
+                )
+            
             response.raise_for_status()
             
             result = response.json()
@@ -108,6 +141,7 @@ class BitcoinRPCClient:
     def get_network_hashps(self, blocks: int = 120) -> Optional[float]:
         """
         获取网络算力 (基于最近N个区块)
+        注意: Ankr免费服务不支持此方法，会返回None
         
         Args:
             blocks: 计算算力的区块数量 (默认120个区块)
@@ -116,6 +150,8 @@ class BitcoinRPCClient:
             网络算力 (H/s) 或 None
         """
         result = self.make_rpc_call("getnetworkhashps", [blocks])
+        if result is None and self.use_ankr:
+            logger.debug("Ankr服务不支持网络算力查询，这是正常的限制")
         return float(result) if result else None
     
     def get_block_count(self) -> Optional[int]:
@@ -149,9 +185,12 @@ class BitcoinRPCClient:
         # 估算到下次调整的时间 (假设10分钟一个区块)
         time_to_adjustment_hours = (blocks_until_adjustment * 10) / 60
         
+        # 确定数据源标识
+        source_name = 'ankr_rpc' if self.use_ankr else 'bitcoin_rpc'
+        
         comprehensive_data = {
             'timestamp': datetime.now().isoformat(),
-            'source': 'bitcoin_rpc',
+            'source': source_name,
             
             # 基础网络信息
             'network': blockchain_info.get('chain', 'unknown'),
@@ -186,8 +225,12 @@ class BitcoinRPCClient:
         """检查RPC服务是否可用"""
         try:
             result = self.get_block_count()
-            return result is not None
-        except Exception:
+            if result is not None:
+                logger.info(f"Bitcoin RPC连接成功 - 当前区块: {result}")
+                return True
+            return False
+        except Exception as e:
+            logger.debug(f"RPC连接检查失败: {e}")
             return False
 
 # 示例用法和测试函数

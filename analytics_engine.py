@@ -498,13 +498,14 @@ class DataCollector:
         current_time = datetime.now(est_tz)
         
         # 优先使用RPC数据（最准确），其次使用mempool数据
-        if rpc_data:
+        if rpc_data and rpc_data.get('difficulty', 0) > 0:
             difficulty = rpc_data.get('difficulty', 0)
             block_reward = 3.125  # 当前区块奖励
             current_block_height = rpc_data.get('current_block_height', 0)
             median_time = rpc_data.get('median_time', 0)
             blocks_until_adjustment = rpc_data.get('blocks_until_difficulty_adjustment', 0)
-            logger.info(f"使用Bitcoin RPC数据: 区块{current_block_height}, 难度={difficulty:.0f}")
+            source_name = rpc_data.get('source', 'bitcoin_rpc')
+            logger.info(f"使用{source_name}数据: 区块{current_block_height}, 难度={difficulty:.0f}")
         elif mempool_data:
             difficulty = mempool_data.get('network_difficulty', 0)
             block_reward = mempool_data.get('block_reward', 3.125)
@@ -517,8 +518,8 @@ class DataCollector:
         # 算力数据优先级: RPC > Minerstat > Blockchain.info  
         if rpc_data and rpc_data.get('network_hashrate_eh'):
             hashrate = rpc_data['network_hashrate_eh']
-            hashrate_source = 'bitcoin_rpc'
-            logger.info(f"使用RPC算力数据: {hashrate:.2f} EH/s")
+            hashrate_source = rpc_data.get('source', 'bitcoin_rpc')
+            logger.info(f"使用RPC算力数据: {hashrate:.2f} EH/s (来源: {hashrate_source})")
         elif hashrate_data and hashrate_data.get('source') == 'minerstat':
             network_hashrate = hashrate_data.get('network_hashrate', 0)
             logger.info(f"使用Minerstat算力: {network_hashrate:.2f} EH/s")
