@@ -3498,6 +3498,20 @@ def analytics_main():
     
     return render_template('analytics_main.html', technical_indicators=technical_indicators)
 
+@app.route('/technical-analysis')
+@app.route('/technical_analysis') 
+@login_required
+@log_access_attempt('技术分析')
+def technical_analysis():
+    """技术分析页面"""
+    if not has_role(['owner', 'manager', 'mining_site']):
+        flash('您没有权限访问此页面', 'danger')
+        return redirect(url_for('index'))
+    
+    lang = session.get('language', 'zh')
+    
+    return render_template('technical_analysis.html', current_lang=lang)
+
 # 修复专业报告路由
 @app.route('/api/professional-report')
 @login_required
