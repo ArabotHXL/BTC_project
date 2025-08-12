@@ -39,6 +39,9 @@ def batch_calculator():
         elif user_plan_raw == 'basic':
             user_plan.name = 'Basic' 
             user_plan.max_miners = 5
+        else:
+            # Ensure free plan has proper max_miners
+            user_plan.max_miners = 1
         
         # Get current language
         current_lang = request.args.get('lang', session.get('language', 'zh'))
