@@ -112,27 +112,29 @@
                     <div class="text-end">
                         <div class="small text-muted">{% if current_lang == 'en' %}Current Plan{% else %}当前套餐{% endif %}</div>
                         <div class="fw-bold text-primary">{{ user_plan.name.title() }}</div>
-                        <div class="quota-display mt-2">
+                        <div class="quota-display mt-2" style="min-width: 200px;">
                             <div class="small text-muted">{% if current_lang == 'en' %}Miners Quota{% else %}矿机配额{% endif %}</div>
-                            <div class="quota-bar">
-                                <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar bg-warning" role="progressbar" 
-                                         style="width: 0%" id="quotaProgress"></div>
+                            
+                            <!-- Large, visible quota counter -->
+                            <div class="text-center my-2">
+                                <div class="d-flex justify-content-center align-items-center">
+                                    <span id="currentCount" class="fw-bold text-warning" style="font-size: 1.5rem;">0</span>
+                                    <span class="text-muted mx-2" style="font-size: 1.2rem;">/</span>
+                                    <span class="fw-bold" style="font-size: 1.5rem;">{{ user_plan.max_miners }}</span>
+                                    <span class="small text-muted ms-2">
+                                        {% if current_lang == 'en' %}miners{% else %}台{% endif %}
+                                    </span>
                                 </div>
-                                <div class="d-flex justify-content-between align-items-center mt-1">
-                                    <div class="quota-counter">
-                                        <span id="currentCount" class="fw-bold text-warning">0</span>
-                                        <span class="text-muted mx-1">/</span>
-                                        <span class="fw-bold">{{ user_plan.max_miners }}</span>
-                                        <span class="small text-muted ms-1">
-                                            {% if current_lang == 'en' %}miners{% else %}台{% endif %}
-                                        </span>
-                                    </div>
-                                    <div class="remaining-display small text-muted">
-                                        <span id="remainingCount">{{ user_plan.max_miners }}</span>
-                                        {% if current_lang == 'en' %}left{% else %}剩余{% endif %}
-                                    </div>
+                                <div class="small text-muted mt-1">
+                                    <span id="remainingCount">{{ user_plan.max_miners }}</span>
+                                    {% if current_lang == 'en' %}remaining{% else %}剩余{% endif %}
                                 </div>
+                            </div>
+                            
+                            <!-- Progress bar -->
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-warning" role="progressbar" 
+                                     style="width: 0%" id="quotaProgress"></div>
                             </div>
                         </div>
                     </div>
