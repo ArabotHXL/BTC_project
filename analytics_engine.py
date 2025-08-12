@@ -337,6 +337,31 @@ class DataCollector:
             logger.error(f"所有算力数据源收集失败: {e}")
             return None
 
+    def collect_bitcoin_rpc_data(self) -> Optional[Dict]:
+        """从Bitcoin RPC节点收集数据"""
+        try:
+            from bitcoin_rpc_client import BitcoinRPCClient
+            
+            client = BitcoinRPCClient()
+            if not client.is_rpc_available():
+                logger.debug("Bitcoin RPC不可用，跳过RPC数据收集")
+                return None
+                
+            rpc_data = client.get_comprehensive_mining_data()
+            if rpc_data:
+                logger.info(f"RPC数据收集成功: 区块{rpc_data.get('current_block_height', 0)}")
+                return rpc_data
+            else:
+                logger.warning("RPC数据收集失败")
+                return None
+                
+        except ImportError:
+            logger.debug("bitcoin_rpc_client模块不可用")
+            return None
+        except Exception as e:
+            logger.debug(f"Bitcoin RPC数据收集失败: {e}")
+            return None
+
     def collect_blockchain_info_data(self) -> Optional[Dict]:
         """从Blockchain.info收集网络数据 - 备用方法"""
         try:
@@ -414,7 +439,8 @@ class DataCollector:
         # 优先使用Mempool.space获取最新区块数据
         mempool_data = self.collect_mempool_data()
         
-        # 使用Blockchain.info获取算力数据
+        # 优先使用本地Bitcoin RPC，备用Blockchain.info算力数据
+        rpc_data = self.collect_bitcoin_rpc_data()
         hashrate_data = self.collect_blockchain_hashrate_data()
         
         # 尝试简单CoinGecko API获取价格
@@ -471,8 +497,15 @@ class DataCollector:
         est_tz = pytz.timezone('US/Eastern')
         current_time = datetime.now(est_tz)
         
-        # 从最佳可用源获取数据
-        if mempool_data:
+        # 优先使用RPC数据（最准确），其次使用mempool数据
+        if rpc_data:
+            difficulty = rpc_data.get('difficulty', 0)
+            block_reward = 3.125  # 当前区块奖励
+            current_block_height = rpc_data.get('current_block_height', 0)
+            median_time = rpc_data.get('median_time', 0)
+            blocks_until_adjustment = rpc_data.get('blocks_until_difficulty_adjustment', 0)
+            logger.info(f"使用Bitcoin RPC数据: 区块{current_block_height}, 难度={difficulty:.0f}")
+        elif mempool_data:
             difficulty = mempool_data.get('network_difficulty', 0)
             block_reward = mempool_data.get('block_reward', 3.125)
             logger.info(f"使用Mempool数据: 难度={difficulty:.0f}, 奖励={block_reward}")
@@ -481,8 +514,12 @@ class DataCollector:
             block_reward = blockchain_data.get('block_reward', 3.125)
             logger.info(f"使用Blockchain.info数据: 难度={difficulty:.0f}, 奖励={block_reward}")
         
-        # 统一使用Minerstat算力数据，确保与主系统一致
-        if hashrate_data and hashrate_data.get('source') == 'minerstat':
+        # 算力数据优先级: RPC > Minerstat > Blockchain.info  
+        if rpc_data and rpc_data.get('network_hashrate_eh'):
+            hashrate = rpc_data['network_hashrate_eh']
+            hashrate_source = 'bitcoin_rpc'
+            logger.info(f"使用RPC算力数据: {hashrate:.2f} EH/s")
+        elif hashrate_data and hashrate_data.get('source') == 'minerstat':
             network_hashrate = hashrate_data.get('network_hashrate', 0)
             logger.info(f"使用Minerstat算力: {network_hashrate:.2f} EH/s")
         elif hashrate_data:
