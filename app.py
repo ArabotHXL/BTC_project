@@ -2862,12 +2862,15 @@ def analytics_unified_data():
         return jsonify({'error': f'获取市场数据失败: {str(e)}'}), 500
 
 @app.route('/analytics/api/technical-indicators')
-@login_required
 def analytics_technical_indicators():
     """计算技术指标 - 使用真实数据库数据"""
+    # 检查用户是否已登录
+    if not session.get('authenticated'):
+        return jsonify({'success': False, 'error': '用户未登录'}), 401
+    
     user_role = get_user_role(session.get('email'))
     if user_role not in ['owner', 'manager', 'mining_site']:
-        return jsonify({'error': '权限不足'}), 403
+        return jsonify({'success': False, 'error': '权限不足'}), 403
     
     try:
         import psycopg2

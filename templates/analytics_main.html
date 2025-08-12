@@ -3744,9 +3744,55 @@
             
             console.log('Technical indicators set to error state');
         }
+        
+        function updateTechnicalIndicators(data) {
+            console.log('Updating technical indicators with API data:', data);
+            
+            // 更新RSI指标
+            const rsiElement = document.getElementById('techRsiValue');
+            if (rsiElement && data.rsi !== undefined) {
+                rsiElement.textContent = data.rsi.toFixed(1);
+            }
+            
+            // 更新MACD指标
+            const macdElement = document.getElementById('techMacdValue');
+            if (macdElement && data.macd !== undefined) {
+                macdElement.textContent = data.macd.toFixed(2);
+            }
+            
+            // 更新波动率
+            const volatilityElement = document.getElementById('techVolatilityValue');
+            if (volatilityElement && data.volatility !== undefined) {
+                const volatilityPercent = (data.volatility * 100).toFixed(2);
+                volatilityElement.textContent = volatilityPercent + '%';
+            }
+            
+            // 更新移动平均线
+            const sma20Element = document.getElementById('techSMA20');
+            if (sma20Element && data.sma_20 !== undefined) {
+                sma20Element.textContent = '$' + data.sma_20.toLocaleString();
+            }
+            
+            const sma50Element = document.getElementById('techSMA50');  
+            if (sma50Element && data.sma_50 !== undefined) {
+                sma50Element.textContent = '$' + data.sma_50.toLocaleString();
+            }
+            
+            // 更新EMA
+            const ema12Element = document.getElementById('techEMA12');
+            if (ema12Element && data.ema_12 !== undefined) {
+                ema12Element.textContent = '$' + data.ema_12.toLocaleString();
+            }
+            
+            const ema26Element = document.getElementById('techEMA26');
+            if (ema26Element && data.ema_26 !== undefined) {
+                ema26Element.textContent = '$' + data.ema_26.toLocaleString();
+            }
+            
+            console.log('Technical indicators updated with real data');
         }
 
-        function updateTechnicalIndicators(marketData) {
+        function updateTechnicalIndicatorsLegacy(marketData) {
             console.log('Updating technical indicators with:', marketData);
             
             const currentPrice = marketData.btc_price;
