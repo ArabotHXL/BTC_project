@@ -200,60 +200,162 @@ def requires_advanced_features(func):
         return func(*args, **kwargs)
     return wrapper
 
-# 订阅计划相关（临时占位函数）
+# 订阅计划相关功能实现
 def get_user_plan(user_id=None):
-    """获取用户订阅计划 - 占位函数"""
-    # TODO: 实现订阅计划逻辑
-    return 'free'
+    """获取用户订阅计划"""
+    if not user_id:
+        user_id = session.get('user_id')
+    
+    if not user_id:
+        return get_default_free_plan()
+    
+    try:
+        from models_subscription import UserSubscription, SubscriptionPlan
+        
+        # 查找用户当前的有效订阅
+        subscription = UserSubscription.query.filter_by(
+            user_id=user_id,
+            status='active'
+        ).first()
+        
+        if subscription and subscription.is_active():
+            return subscription.plan
+        else:
+            return get_default_free_plan()
+            
+    except Exception as e:
+        logging.error(f"获取用户计划失败: {e}")
+        return get_default_free_plan()
+
+def get_default_free_plan():
+    """获取默认免费计划"""
+    try:
+        from models_subscription import SubscriptionPlan
+        plan = SubscriptionPlan.query.filter_by(id='free').first()
+        if plan:
+            return plan
+    except:
+        pass
+    
+    # 创建临时免费计划对象
+    class FreePlan:
+        id = 'free'
+        name = 'Free'
+        max_miners = 1
+        max_historical_days = 7
+        allow_batch_calculator = False
+        allow_crm_system = False
+        allow_advanced_analytics = False
+        allow_api_access = False
+        allow_custom_scenarios = False
+        allow_professional_reports = False
+        allow_user_management = False
+        allow_priority_support = False
+        available_miner_models = 3
+    
+    return FreePlan()
 
 def get_user_subscription(user_id=None):
-    """获取用户订阅信息 - 占位函数"""
-    # TODO: 实现订阅信息逻辑
-    return {'plan': 'free', 'status': 'active'}
+    """获取用户订阅信息"""
+    if not user_id:
+        user_id = session.get('user_id')
+    
+    try:
+        from models_subscription import UserSubscription
+        subscription = UserSubscription.query.filter_by(
+            user_id=user_id,
+            status='active'
+        ).first()
+        
+        if subscription:
+            return {
+                'plan': subscription.plan.id,
+                'status': subscription.status,
+                'expires_at': subscription.expires_at
+            }
+        else:
+            return {'plan': 'free', 'status': 'active', 'expires_at': None}
+    except Exception as e:
+        logging.error(f"获取用户订阅信息失败: {e}")
+        return {'plan': 'free', 'status': 'active', 'expires_at': None}
 
-def check_miner_limit(user_id=None):
-    """检查用户矿机数量限制 - 占位函数"""
-    # TODO: 实现矿机数量限制检查
-    return True
+def check_miner_limit(user_id=None, requested_miners=1):
+    """检查用户矿机数量限制"""
+    user_plan = get_user_plan(user_id)
+    max_allowed = getattr(user_plan, 'max_miners', 1)
+    
+    if requested_miners > max_allowed:
+        return False, max_allowed
+    return True, max_allowed
+
+class UpgradeRequired(Exception):
+    """需要升级订阅的异常"""
+    def __init__(self, feature_name, required_plan=None):
+        self.feature_name = feature_name
+        self.required_plan = required_plan
+        super().__init__(f"Feature '{feature_name}' requires {required_plan or 'upgrade'}")
 
 def require_plan(plan_name):
-    """需要特定计划的装饰器 - 占位实现"""
+    """需要特定计划的装饰器"""
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            # TODO: 实现计划检查
+            user_plan = get_user_plan()
+            current_plan = getattr(user_plan, 'id', 'free')
+            
+            plan_hierarchy = {'free': 0, 'basic': 1, 'pro': 2}
+            
+            required_level = plan_hierarchy.get(plan_name, 2)
+            current_level = plan_hierarchy.get(current_plan, 0)
+            
+            if current_level < required_level:
+                from flask import render_template, request
+                return render_template('upgrade_required.html',
+                                     feature=func.__name__,
+                                     required_plan=plan_name,
+                                     current_plan=current_plan), 402
+            
             return func(*args, **kwargs)
         return wrapper
     return decorator
 
 def require_feature(feature_name):
-    """需要特定功能的装饰器 - 占位实现"""
+    """需要特定功能的装饰器"""
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            # TODO: 实现功能检查
+            user_plan = get_user_plan()
+            
+            # 检查功能权限映射
+            feature_map = {
+                'batch_calculator': 'allow_batch_calculator',
+                'crm_system': 'allow_crm_system',
+                'advanced_analytics': 'allow_advanced_analytics',
+                'api_access': 'allow_api_access',
+                'custom_scenarios': 'allow_custom_scenarios',
+                'professional_reports': 'allow_professional_reports',
+                'user_management': 'allow_user_management'
+            }
+            
+            required_attr = feature_map.get(feature_name)
+            if required_attr and not getattr(user_plan, required_attr, False):
+                from flask import render_template
+                return render_template('upgrade_required.html',
+                                     feature=feature_name,
+                                     current_plan=getattr(user_plan, 'id', 'free')), 402
+            
             return func(*args, **kwargs)
         return wrapper
     return decorator
 
 def allow_advanced_analytics(func):
-    """允许高级分析的装饰器 - 占位实现"""
+    """允许高级分析的装饰器"""
+    @require_feature('advanced_analytics')
     @wraps(func)
     def wrapper(*args, **kwargs):
-        # TODO: 实现高级分析权限检查
         return func(*args, **kwargs)
     return wrapper
 
-class UpgradeRequired(Exception):
-    """需要升级异常 - 占位类"""
-    pass
-
 def requires_subscription_plan(required_plan):
-    """需要特定订阅计划的装饰器 - 占位实现"""
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            # TODO: 实现订阅计划检查
-            return func(*args, **kwargs)
-        return wrapper
-    return decorator
+    """需要特定订阅计划的装饰器"""
+    return require_plan(required_plan)

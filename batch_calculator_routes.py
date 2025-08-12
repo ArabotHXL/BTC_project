@@ -2,7 +2,7 @@
 Batch calculator routes for handling multiple miner calculations.
 """
 from flask import Blueprint, request, jsonify, render_template, session, render_template_string
-from decorators import check_miner_limit, get_user_plan, UpgradeRequired
+from decorators import check_miner_limit, get_user_plan, UpgradeRequired, require_feature
 from mining_calculator import calculate_mining_profitability, MINER_DATA
 import logging
 
@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 @batch_calculator_bp.route('/batch-calculator')
+@require_feature('batch_calculator')
 def batch_calculator():
     """Display the batch calculator interface."""
     try:

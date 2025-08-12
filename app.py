@@ -168,8 +168,17 @@ db.init_app(app)
 with app.app_context():
     # 在导入models前确保数据库已初始化
     from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot
+    import models_subscription  # noqa: F401
     db.create_all()
     logging.info("Database tables created successfully")
+    
+    # Initialize subscription plans
+    try:
+        from models_subscription import initialize_default_plans
+        initialize_default_plans()
+        logging.info("Subscription plans initialized successfully")
+    except Exception as e:
+        logging.warning(f"Failed to initialize subscription plans: {e}")
 
 # Health check route for deployment - no authentication required
 @app.route('/health', methods=['GET'])
@@ -549,7 +558,7 @@ def login_records():
 @app.route('/login-dashboard')
 @login_required
 def login_dashboard():
-    """拥有者查看登录数据分析仪表盘"""
+    """拥有者查看登录数据分析仪表盘 - 需要Pro订阅"""
     # 只允许拥有者角色访问
     if not has_role(['owner']):
         if g.language == 'en':
@@ -557,6 +566,16 @@ def login_dashboard():
         else:
             flash('您没有权限访问此页面，需要拥有者权限', 'danger')
         return redirect(url_for('index'))
+    
+    # Check subscription plan for advanced analytics
+    from decorators import get_user_plan
+    user_plan = get_user_plan()
+    
+    if not getattr(user_plan, 'allow_advanced_analytics', False):
+        return render_template('upgrade_required.html',
+                             feature='Advanced Analytics Dashboard',
+                             required_plan='pro',
+                             current_plan=getattr(user_plan, 'id', 'free')), 402
     
     # 从数据库获取登录记录
     all_records = LoginRecord.query.order_by(LoginRecord.login_time.desc()).all()
@@ -1433,7 +1452,16 @@ def get_miners():
 @requires_admin_or_owner
 @log_access_attempt('用户访问管理')
 def user_access():
-    """管理员管理用户访问权限"""
+    """管理员管理用户访问权限 - 需要Pro订阅"""
+    # Check subscription plan for user management access
+    from decorators import get_user_plan
+    user_plan = get_user_plan()
+    
+    if not getattr(user_plan, 'allow_user_management', False):
+        return render_template('upgrade_required.html',
+                             feature='User Management System',
+                             required_plan='pro',
+                             current_plan=getattr(user_plan, 'id', 'free')), 402
     
     # 获取所有用户
     users = UserAccess.query.order_by(UserAccess.created_at.desc()).all()
