@@ -34,6 +34,10 @@ Preferred communication style: Simple, everyday language.
 - Added subscription plan badges in user management interface
 - Database schema updated with subscription_plan field and proper migration
 - Enhanced user editing capabilities with role-based permission controls
+- **CRITICAL FIX**: Owner accounts are now exempt from all subscription restrictions
+  - CRM system access unrestricted for Owner accounts
+  - User management system unrestricted for Owner accounts
+  - All subscription decorators check for Owner role and bypass restrictions
 
 ## System Architecture
 
