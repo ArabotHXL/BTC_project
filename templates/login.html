@@ -1,11 +1,15 @@
-<!DOCTYPE html>
-<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ t('login_title') }}</title>
-    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
-    <style>
+{% extends "base.html" %}
+
+{% block title %}
+    {{ t('login_title') }} - BTC Mining Calculator
+{% endblock %}
+
+{% block header_title %}
+    {{ t('login_title') }}
+{% endblock %}
+
+{% block extra_css %}
+<style>
         body {
             background-color: #121212;
             color: #f8f9fa;

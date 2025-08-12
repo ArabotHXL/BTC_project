@@ -31,12 +31,13 @@
 }
 
 .dashboard-card {
-    background: #1a1a1a;
-    border: 2px solid #333;
-    border-radius: 15px;
+    /* Using unified design system */
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-card);
     padding: 3rem 2rem;
     text-align: center;
-    transition: all 0.3s ease;
+    transition: var(--transition-default);
     cursor: pointer;
     position: relative;
     overflow: hidden;
@@ -44,12 +45,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    backdrop-filter: blur(10px);
 }
 
 .dashboard-card:hover {
-    border-color: #ffc107;
+    border-color: var(--border-accent);
     transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(255, 193, 7, 0.2);
+    box-shadow: 0 10px 25px var(--shadow-color);
     background: rgba(255, 193, 7, 0.05);
 }
 
