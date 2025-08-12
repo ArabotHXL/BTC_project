@@ -4061,10 +4061,8 @@
             });
         }
 
-        // 修改页面标签切换功能以支持技术分析
-        const originalShowTab = showTab;
-        
-        showTab = function(tabName) {
+        // 页面标签切换功能，支持技术分析
+        function showTab(tabName) {
             console.log('Enhanced showTab called for:', tabName);
             
             $('.analytics-tab').removeClass('active');
@@ -4087,7 +4085,7 @@
             } else if (tabName === 'reports') {
                 updateReportsDisplay();
             }
-        };
+        }
 
     </script>
 </body>

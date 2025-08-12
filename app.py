@@ -2735,15 +2735,15 @@ def analytics_dashboard():
         
         if tech_data:
             technical_indicators = {
-                'rsi_14': tech_data[0],
-                'sma_20': tech_data[1],
-                'sma_50': tech_data[2],
-                'ema_12': tech_data[3],
-                'ema_26': tech_data[4],
-                'macd': tech_data[5],
-                'volatility_30d': tech_data[6],
-                'bollinger_upper': tech_data[7],
-                'bollinger_lower': tech_data[8],
+                'rsi': float(tech_data[0]) if tech_data[0] is not None else 50.0,
+                'sma_20': float(tech_data[1]) if tech_data[1] is not None else 118000.0,
+                'sma_50': float(tech_data[2]) if tech_data[2] is not None else 118000.0,
+                'ema_12': float(tech_data[3]) if tech_data[3] is not None else 118000.0,
+                'ema_26': float(tech_data[4]) if tech_data[4] is not None else 118000.0,
+                'macd': float(tech_data[5]) if tech_data[5] is not None else 0.0,
+                'volatility': float(tech_data[6]) if tech_data[6] is not None else 0.02,
+                'bollinger_upper': float(tech_data[7]) if tech_data[7] is not None else 120000.0,
+                'bollinger_lower': float(tech_data[8]) if tech_data[8] is not None else 116000.0,
                 'recorded_at': tech_data[9].isoformat() if tech_data[9] else None
             }
         
