@@ -67,6 +67,20 @@
     transition: width 0.3s ease;
 }
 
+.quota-counter {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.quota-counter .fw-bold {
+    font-size: 1rem;
+}
+
+.remaining-display {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
 @media (max-width: 768px) {
     .batch-calculator-container {
         padding: 1rem;
@@ -105,12 +119,18 @@
                                     <div class="progress-bar bg-warning" role="progressbar" 
                                          style="width: 0%" id="quotaProgress"></div>
                                 </div>
-                                <div class="small mt-1">
-                                    <span id="currentCount">0</span> / {{ user_plan.max_miners }} 
-                                    {% if current_lang == 'en' %}miners{% else %}台{% endif %}
-                                    <div class="text-muted mt-1">
+                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                    <div class="quota-counter">
+                                        <span id="currentCount" class="fw-bold text-warning">0</span>
+                                        <span class="text-muted mx-1">/</span>
+                                        <span class="fw-bold">{{ user_plan.max_miners }}</span>
+                                        <span class="small text-muted ms-1">
+                                            {% if current_lang == 'en' %}miners{% else %}台{% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="remaining-display small text-muted">
                                         <span id="remainingCount">{{ user_plan.max_miners }}</span>
-                                        {% if current_lang == 'en' %}more miners can be added{% else %}台矿机仍可添加{% endif %}
+                                        {% if current_lang == 'en' %}left{% else %}剩余{% endif %}
                                     </div>
                                 </div>
                             </div>
