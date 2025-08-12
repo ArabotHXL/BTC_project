@@ -1681,7 +1681,7 @@ def edit_user_access(user_id):
             return redirect(url_for('user_access'))
         
         # GET请求：显示编辑表单
-        return render_template('admin/edit_user.html', user=user)
+        return render_template('admin/edit_user.html', user=user, current_lang=get_current_language())
         
     except Exception as e:
         db.session.rollback()
