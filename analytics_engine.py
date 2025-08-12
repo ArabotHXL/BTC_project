@@ -235,31 +235,9 @@ class DataCollector:
             return None
 
     def collect_blockchain_hashrate_data(self) -> Optional[Dict]:
-        """从多个数据源收集算力数据，优先使用实时blockchain.info API"""
+        """从多个数据源收集算力数据，优先使用最准确的Minerstat API"""
         try:
-            # 方法1: 使用blockchain.info直接算力API（更实时）
-            try:
-                blockchain_response = self.session.get('https://blockchain.info/q/hashrate', timeout=15)
-                if blockchain_response.status_code == 200:
-                    # blockchain.info返回的是GH/s，需要转换为EH/s
-                    hashrate_gh = float(blockchain_response.text.strip())
-                    hashrate_eh = hashrate_gh / 1000000000  # GH/s to EH/s
-                    
-                    # 获取难度数据
-                    difficulty_response = self.session.get('https://blockchain.info/q/getdifficulty', timeout=15)
-                    difficulty = float(difficulty_response.text.strip()) if difficulty_response.status_code == 200 else 0
-                    
-                    logger.info(f"Blockchain.info实时算力: {hashrate_eh:.2f} EH/s (原始: {hashrate_gh:.0f} GH/s)")
-                    return {
-                        'network_hashrate': hashrate_eh,
-                        'network_difficulty': difficulty,
-                        'hashrate_timestamp': int(time.time()),
-                        'source': 'blockchain.info'
-                    }
-            except Exception as e:
-                logger.debug(f"Blockchain.info算力获取失败: {e}")
-            
-            # 方法2: 备用minerstat API
+            # 方法1: 优先使用Minerstat API (最准确，911 EH/s)
             try:
                 minerstat_response = self.session.get('https://api.minerstat.com/v2/coins?list=BTC', timeout=15)
                 if minerstat_response.status_code == 200:
@@ -271,7 +249,7 @@ class DataCollector:
                         hashrate_eh = hashrate_hs / 1e18  # H/s to EH/s
                         difficulty = float(btc_data.get('difficulty', 0))
                         
-                        logger.info(f"Minerstat备用算力数据: {hashrate_eh:.2f} EH/s")
+                        logger.info(f"✅ Minerstat实时算力数据: {hashrate_eh:.2f} EH/s")
                         return {
                             'network_hashrate': hashrate_eh,
                             'network_difficulty': difficulty,
@@ -279,7 +257,64 @@ class DataCollector:
                             'source': 'minerstat'
                         }
             except Exception as e:
-                logger.debug(f"Minerstat算力获取失败: {e}")
+                logger.warning(f"Minerstat算力获取失败: {e}")
+            
+            # 方法2: 备用CoinWarz API
+            try:
+                coinwarz_response = self.session.get('https://www.coinwarz.com/v1/api/nethash?apikey=Free&coin=btc', timeout=15)
+                if coinwarz_response.status_code == 200:
+                    data = coinwarz_response.json()
+                    if data and 'Data' in data:
+                        # CoinWarz返回的可能是H/s或GH/s
+                        hashrate_value = float(data['Data']['NetHash'])
+                        hashrate_unit = data['Data'].get('Unit', 'H/s')
+                        
+                        # 根据单位转换为EH/s
+                        if 'EH/s' in hashrate_unit:
+                            hashrate_eh = hashrate_value
+                        elif 'TH/s' in hashrate_unit:
+                            hashrate_eh = hashrate_value / 1000  # TH/s to EH/s
+                        elif 'GH/s' in hashrate_unit:
+                            hashrate_eh = hashrate_value / 1000000  # GH/s to EH/s
+                        else:
+                            hashrate_eh = hashrate_value / 1e18  # H/s to EH/s
+                        
+                        logger.info(f"CoinWarz实时算力: {hashrate_eh:.2f} EH/s")
+                        return {
+                            'network_hashrate': hashrate_eh,
+                            'hashrate_timestamp': int(time.time()),
+                            'source': 'coinwarz'
+                        }
+            except Exception as e:
+                logger.debug(f"CoinWarz算力获取失败: {e}")
+            
+            # 方法3: 最后备用blockchain.info (经常不准确)
+            try:
+                blockchain_response = self.session.get('https://blockchain.info/q/hashrate', timeout=15)
+                if blockchain_response.status_code == 200:
+                    # blockchain.info返回的是GH/s，需要转换为EH/s
+                    hashrate_gh = float(blockchain_response.text.strip())
+                    hashrate_eh = hashrate_gh / 1e9  # GH/s to EH/s (正确的转换: 1 EH/s = 10^9 GH/s)
+                    
+                    # 验证算力值是否合理 (当前应该在700-1000 EH/s范围)
+                    if hashrate_eh < 100 or hashrate_eh > 2000:
+                        logger.warning(f"Blockchain.info算力值异常: {hashrate_eh:.2f} EH/s，跳过此数据源")
+                        # 如果值异常，跳过这个数据源
+                        return None
+                    
+                    # 获取难度数据
+                    difficulty_response = self.session.get('https://blockchain.info/q/getdifficulty', timeout=15)
+                    difficulty = float(difficulty_response.text.strip()) if difficulty_response.status_code == 200 else 0
+                    
+                    logger.warning(f"⚠️ 使用Blockchain.info备用算力: {hashrate_eh:.2f} EH/s (可能不准确)")
+                    return {
+                        'network_hashrate': hashrate_eh,
+                        'network_difficulty': difficulty,
+                        'hashrate_timestamp': int(time.time()),
+                        'source': 'blockchain.info'
+                    }
+            except Exception as e:
+                logger.debug(f"Blockchain.info算力获取失败: {e}")
             
             # 方法2: 尝试从mempool.space获取最新算力数据
             try:
@@ -442,6 +477,7 @@ class DataCollector:
         # 优先使用本地Bitcoin RPC，备用Blockchain.info算力数据
         rpc_data = self.collect_bitcoin_rpc_data()
         hashrate_data = self.collect_blockchain_hashrate_data()
+        logger.info(f"算力数据收集结果: {hashrate_data}")
         
         # 尝试简单CoinGecko API获取价格
         price_data = self.collect_coingecko_simple_data()
@@ -515,23 +551,39 @@ class DataCollector:
             block_reward = blockchain_data.get('block_reward', 3.125)
             logger.info(f"使用Blockchain.info数据: 难度={difficulty:.0f}, 奖励={block_reward}")
         
-        # 算力数据优先级: RPC > Minerstat > Blockchain.info  
-        if rpc_data and rpc_data.get('network_hashrate_eh'):
-            hashrate = rpc_data['network_hashrate_eh']
+        # 算力数据优先级: Minerstat > CoinWarz > RPC > Blockchain.info  
+        if hashrate_data and hashrate_data.get('source') == 'minerstat':
+            network_hashrate = hashrate_data.get('network_hashrate', 0)
+            hashrate_source = 'minerstat'
+            logger.info(f"使用Minerstat实时算力: {network_hashrate:.2f} EH/s")
+        elif hashrate_data and hashrate_data.get('source') == 'coinwarz':
+            network_hashrate = hashrate_data.get('network_hashrate', 0)
+            hashrate_source = 'coinwarz'
+            logger.info(f"使用CoinWarz算力: {network_hashrate:.2f} EH/s")
+        elif rpc_data and rpc_data.get('network_hashrate_eh'):
+            network_hashrate = rpc_data['network_hashrate_eh']
             hashrate_source = rpc_data.get('source', 'bitcoin_rpc')
-            logger.info(f"使用RPC算力数据: {hashrate:.2f} EH/s (来源: {hashrate_source})")
-        elif hashrate_data and hashrate_data.get('source') == 'minerstat':
-            network_hashrate = hashrate_data.get('network_hashrate', 0)
-            logger.info(f"使用Minerstat算力: {network_hashrate:.2f} EH/s")
+            logger.info(f"使用RPC算力数据: {network_hashrate:.2f} EH/s (来源: {hashrate_source})")
         elif hashrate_data:
-            network_hashrate = hashrate_data.get('network_hashrate', 0)
-            logger.info(f"使用备用算力源: {network_hashrate:.2f} EH/s")
+            potential_hashrate = hashrate_data.get('network_hashrate', 0)
+            # 验证算力值合理性 (当前范围应该在700-1000 EH/s)
+            if 100 <= potential_hashrate <= 2000:
+                network_hashrate = potential_hashrate
+                hashrate_source = hashrate_data.get('source', 'unknown')
+                logger.info(f"使用备用算力源: {network_hashrate:.2f} EH/s")
+            else:
+                # 算力值异常，使用从难度计算的值
+                network_hashrate = (difficulty * (2**32)) / (10 * 60) / 1e18 if difficulty else 850.0
+                hashrate_source = 'difficulty_calculation'
+                logger.warning(f"算力数据异常({potential_hashrate:.2f} EH/s)，使用难度计算: {network_hashrate:.2f} EH/s")
         elif mempool_data:
             # 如果没有专用算力数据，从难度计算
             network_hashrate = (difficulty * (2**32)) / (10 * 60) / 1e18 if difficulty else 0
+            hashrate_source = 'difficulty_calculation'
             logger.info(f"从难度计算算力: {network_hashrate:.2f} EH/s")
         else:
-            network_hashrate = blockchain_data.get('network_hashrate', 0) if blockchain_data else 0
+            network_hashrate = blockchain_data.get('network_hashrate', 0) if blockchain_data else 850.0
+            hashrate_source = 'fallback'
         
         # 价格数据
         if price_data:
