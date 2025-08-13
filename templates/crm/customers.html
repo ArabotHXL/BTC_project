@@ -1,16 +1,16 @@
 {% extends "crm/base.html" %}
 
-{% block title %}客户管理 | BTC Mining CRM{% endblock %}
+{% block title %}{{ t('customer_management') }} | BTC Mining CRM{% endblock %}
 
-{% block page_title %}客户管理{% endblock %}
+{% block page_title %}{{ t('customer_management') }}{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item active" aria-current="page">客户列表</li>
+<li class="breadcrumb-item active" aria-current="page">{{ t('customers') }}</li>
 {% endblock %}
 
 {% block action_buttons %}
 <a href="{{ url_for('crm.new_customer') }}" class="btn btn-primary">
-    <i class="bi bi-plus-circle me-1"></i> 新建客户
+    <i class="bi bi-plus-circle me-1"></i> {{ t('add_customer') }}
 </a>
 {% endblock %}
 
@@ -22,19 +22,19 @@
             <div class="col-md-6">
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="搜索客户名称、公司或邮箱...">
+                    <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="{{ t('search_placeholder') if current_lang == 'zh' else 'Search customers, companies or emails...' }}">
                 </div>
             </div>
             <div class="col-md-4">
                 <select name="tag" class="form-select">
-                    <option value="">所有标签</option>
+                    <option value="">{{ t('all_tags') }}</option>
                     {% for tag in all_tags %}
                     <option value="{{ tag }}" {% if tag == tag %}selected{% endif %}>{{ tag }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100">筛选</button>
+                <button type="submit" class="btn btn-primary w-100">{{ t('filter') }}</button>
             </div>
         </form>
     </div>

@@ -1,11 +1,11 @@
 {% extends "crm/base.html" %}
 
-{% block title %}CRM 仪表盘 | BTC Mining CRM{% endblock %}
+{% block title %}{{ t('dashboard') }} | BTC Mining CRM{% endblock %}
 
-{% block page_title %}CRM 仪表盘{% endblock %}
+{% block page_title %}{{ t('dashboard') }}{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item active" aria-current="page">仪表盘</li>
+<li class="breadcrumb-item active" aria-current="page">{{ t('dashboard') }}</li>
 {% endblock %}
 
 {% block content %}
@@ -16,7 +16,7 @@
             <div class="card-body text-center">
                 <i class="bi bi-building icon"></i>
                 <div class="value">{{ customers_count }}</div>
-                <div class="label">客户总数</div>
+                <div class="label">{{ t('customers') }}</div>
             </div>
         </div>
     </div>
@@ -25,7 +25,7 @@
             <div class="card-body text-center">
                 <i class="bi bi-lightbulb icon"></i>
                 <div class="value">{{ leads_count }}</div>
-                <div class="label">潜在商机</div>
+                <div class="label">{{ t('leads') }}</div>
             </div>
         </div>
     </div>
@@ -34,7 +34,7 @@
             <div class="card-body text-center">
                 <i class="bi bi-currency-dollar icon"></i>
                 <div class="value">{{ deals_count }}</div>
-                <div class="label">交易项目</div>
+                <div class="label">{{ t('deals') }}</div>
             </div>
         </div>
     </div>
@@ -43,7 +43,7 @@
             <div class="card-body text-center">
                 <i class="bi bi-cash-stack icon"></i>
                 <div class="value">${{ "{:,.2f}".format(deals_value) }}</div>
-                <div class="label">交易总额</div>
+                <div class="label">{{ t('total_value') }}</div>
             </div>
         </div>
     </div>
@@ -55,7 +55,7 @@
     <div class="col-md-6">
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>最近活动</h5>
+                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>{{ t('recent_activities') }}</h5>
             </div>
             <div class="card-body p-0">
                 <div class="list-group list-group-flush">
@@ -88,12 +88,12 @@
                     {% else %}
                         <div class="list-group-item bg-dark text-center py-5">
                             <i class="bi bi-calendar-x text-secondary mb-3" style="font-size: 2rem;"></i>
-                            <p class="text-muted mb-0">暂无活动记录</p>
+                            <p class="text-muted mb-0">{{ t('no_activities') if current_lang == 'zh' else 'No activity records' }}</p>
                         </div>
                     {% endif %}
                 </div>
                 <div class="card-footer text-center">
-                    <a href="{{ url_for('crm.activities') }}" class="btn btn-sm btn-outline-info">查看所有活动</a>
+                    <a href="{{ url_for('crm.activities') }}" class="btn btn-sm btn-outline-info">{{ t('view_all_activities') if current_lang == 'zh' else 'View All Activities' }}</a>
                 </div>
             </div>
         </div>
@@ -103,7 +103,7 @@
     <div class="col-md-6">
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>待跟进的商机</h5>
+                <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>{{ t('follow_up_leads') if current_lang == 'zh' else 'Follow-up Leads' }}</h5>
             </div>
             <div class="card-body p-0">
                 <div class="list-group list-group-flush">

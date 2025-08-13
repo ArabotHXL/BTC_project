@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}客户关系管理系统 | BTC Mining CRM{% endblock %}</title>
+    <title>{% block title %}{{ t('customer_management') }} | BTC Mining CRM{% endblock %}</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -199,11 +199,11 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" href="{{ url_for('index') }}">
-                            <i class="bi bi-calculator me-2"></i>返回计算器
+                            <i class="bi bi-calculator me-2"></i>{{ t('mining_calculator') }}
                         </a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{{ url_for('logout') }}">
-                            <i class="bi bi-box-arrow-right me-2"></i>退出登录
+                            <i class="bi bi-box-arrow-right me-2"></i>{{ t('logout') }}
                         </a></li>
                     </ul>
                 </div>
@@ -215,43 +215,43 @@
     <div class="sidebar">
         <div class="nav flex-column">
             <a href="{{ url_for('crm.dashboard') }}" class="nav-link {% if request.endpoint == 'crm.dashboard' %}active{% endif %}">
-                <i class="bi bi-speedometer2"></i> 仪表盘
+                <i class="bi bi-speedometer2"></i> {{ t('dashboard') }}
             </a>
             <a href="{{ url_for('crm.customers') }}" class="nav-link {% if 'customers' in request.endpoint %}active{% endif %}">
-                <i class="bi bi-building"></i> 客户管理
+                <i class="bi bi-building"></i> {{ t('customer_management') }}
             </a>
             <a href="{{ url_for('crm.leads') }}" class="nav-link {% if 'leads' in request.endpoint %}active{% endif %}">
-                <i class="bi bi-lightbulb"></i> 商机管理
+                <i class="bi bi-lightbulb"></i> {{ t('leads') }}
             </a>
             <a href="{{ url_for('crm.deals') }}" class="nav-link {% if 'deals' in request.endpoint %}active{% endif %}">
-                <i class="bi bi-currency-dollar"></i> 交易管理
+                <i class="bi bi-currency-dollar"></i> {{ t('deals') }}
             </a>
             <a href="{{ url_for('crm.activities') }}" class="nav-link {% if request.endpoint == 'crm.activities' %}active{% endif %}">
-                <i class="bi bi-journal-text"></i> 活动记录
+                <i class="bi bi-journal-text"></i> {{ t('activities') }}
             </a>
             
             <!-- 矿场中介业务 (仅所有者可见) -->
             {% if session.role == 'owner' %}
             <div class="mt-4 px-3">
                 <hr class="border-secondary">
-                <p class="text-muted small mb-2">矿场中介业务</p>
+                <p class="text-muted small mb-2">{{ t('broker_business') }}</p>
                 <a href="{{ url_for('crm.broker_dashboard') }}" class="nav-link {% if 'broker' in request.endpoint %}active{% endif %}">
-                    <i class="bi bi-graph-up-arrow"></i> 中介仪表盘
+                    <i class="bi bi-graph-up-arrow"></i> {{ t('broker_dashboard') }}
                 </a>
                 <a href="{{ url_for('crm.broker_deals') }}" class="nav-link {% if request.endpoint == 'crm.broker_deals' %}active{% endif %}">
-                    <i class="bi bi-building"></i> 矿场交易
+                    <i class="bi bi-building"></i> {{ t('mining_farm_deals') }}
                 </a>
                 <a href="{{ url_for('crm.broker_commissions') }}" class="nav-link {% if request.endpoint == 'crm.broker_commissions' %}active{% endif %}">
-                    <i class="bi bi-cash-coin"></i> 佣金管理
+                    <i class="bi bi-cash-coin"></i> {{ t('commission_management') }}
                 </a>
             </div>
             {% endif %}
             
             <div class="mt-4 px-3">
                 <hr class="border-secondary">
-                <p class="text-muted small mb-2">BTC挖矿客户管理</p>
+                <p class="text-muted small mb-2">{{ t('btc_mining_calculator') }}</p>
                 <a href="{{ url_for('index') }}" class="nav-link">
-                    <i class="bi bi-house-door"></i> 返回首页
+                    <i class="bi bi-house-door"></i> {{ t('home') }}
                 </a>
             </div>
         </div>
@@ -263,7 +263,7 @@
             <!-- Page Title -->
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h1 class="h3 mb-0">{% block page_title %}客户关系管理{% endblock %}</h1>
+                    <h1 class="h3 mb-0">{% block page_title %}{{ t('customer_management') }}{% endblock %}</h1>
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item"><a href="{{ url_for('crm.dashboard') }}">CRM</a></li>

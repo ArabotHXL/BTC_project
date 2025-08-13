@@ -1063,7 +1063,7 @@
                                         </div>
                                         <div>
                                             <span class="text-muted">布林带信号:</span>
-                                            <span id="techBbAnalysis" class="ms-2 text-success">正常区间</span>
+                                            <span id="techBbAnalysis" class="ms-2 text-success">{{ t('normal') }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -2952,7 +2952,7 @@
                     type: 'success',
                     icon: 'check-circle',
                     title: '网络强劲',
-                    message: '网络算力' + formatNumber(hashrate, 1) + ' EH/s，网络安全性极高'
+                    message: '{{ t("network_hashrate") }}' + formatNumber(hashrate, 1) + ' EH/s，{{ t("network_security_high") if current_lang == "zh" else "extremely high network security" }}'
                 });
             } else if (hashrate < 600) {
                 alerts.push({
