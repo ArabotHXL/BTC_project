@@ -251,7 +251,7 @@ def get_real_time_btc_hashrate():
 
 def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electricity_cost=0.05, client_electricity_cost=None, 
                              btc_price=None, difficulty=None, block_reward=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0.0, 
-                             shutdown_strategy="efficiency", host_investment=0.0, client_investment=0.0, maintenance_fee=0.0, manual_network_hashrate=None):
+                             shutdown_strategy="efficiency", host_investment=0.0, client_investment=0.0, maintenance_fee=0.0, manual_network_hashrate=None, manual_network_difficulty=None):
     """
     Calculate Bitcoin mining profitability using the exact calculation method from the original code
     
@@ -270,6 +270,8 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
     - host_investment: Total investment made by mining site owner (USD)
     - client_investment: Total investment made by client (USD)
     - maintenance_fee: Monthly maintenance fee in USD (default is 0)
+    - manual_network_hashrate: Manual network hashrate in EH/s for scenario analysis
+    - manual_network_difficulty: Manual network difficulty for scenario analysis
     
     Returns:
     - Dictionary containing profitability metrics including ROI calculations
@@ -295,7 +297,12 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         # Get real-time data if requested
         if use_real_time_data:
             real_time_btc_price = get_real_time_btc_price()
-            difficulty_raw = get_real_time_difficulty()
+            # Use manual difficulty if provided, otherwise get from API
+            if manual_network_difficulty is not None:
+                difficulty_raw = manual_network_difficulty
+                logging.info(f"使用手动输入的网络难度: {manual_network_difficulty:,.0f}")
+            else:
+                difficulty_raw = get_real_time_difficulty()
             # Use manual hashrate if provided, otherwise get from API
             if manual_network_hashrate is not None:
                 real_time_btc_hashrate = manual_network_hashrate  # EH/s (manual input)
@@ -305,7 +312,12 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             current_block_reward = get_real_time_block_reward()
         else:
             real_time_btc_price = btc_price or DEFAULT_BTC_PRICE
-            difficulty_raw = difficulty or DEFAULT_NETWORK_DIFFICULTY
+            # Use manual difficulty if provided, otherwise use provided/default
+            if manual_network_difficulty is not None:
+                difficulty_raw = manual_network_difficulty
+                logging.info(f"使用手动输入的网络难度: {manual_network_difficulty:,.0f}")
+            else:
+                difficulty_raw = difficulty or DEFAULT_NETWORK_DIFFICULTY
             # Use manual hashrate if provided, otherwise use default
             if manual_network_hashrate is not None:
                 real_time_btc_hashrate = manual_network_hashrate  # EH/s (manual input)

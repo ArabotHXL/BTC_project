@@ -539,10 +539,37 @@
                                 <div class="mb-3" id="manual-hashrate-container" style="display: none;">
                                     <label for="manual-hashrate" class="form-label">{% if current_lang == 'en' %}Network Hashrate{% else %}全网算力{% endif %}</label>
                                     <div class="input-group">
-                                        <input type="number" class="form-control" id="manual-hashrate" name="manual_hashrate" value="921.8" step="0.1" min="0">
+                                        <input type="number" class="form-control" id="manual-hashrate" name="manual_hashrate" value="997.31" step="0.1" min="0">
                                         <span class="input-group-text">EH/s</span>
                                     </div>
-                                    <div class="form-text">{% if current_lang == 'en' %}Manually enter network hashrate in EH/s{% else %}手动输入全网算力，单位：EH/s{% endif %}</div>
+                                    <div class="form-text">{% if current_lang == 'en' %}Manually enter network hashrate in EH/s (Current: ~997 EH/s){% else %}手动输入全网算力，单位：EH/s (当前约997 EH/s){% endif %}</div>
+                                </div>
+
+                                <!-- Network Difficulty Source Selection -->
+                                <div class="mb-3">
+                                    <label class="form-label">{% if current_lang == 'en' %}Network Difficulty Source{% else %}网络难度来源{% endif %}</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="difficulty_source" id="difficulty-api" value="api" checked onchange="toggleDifficultyInput()">
+                                        <label class="form-check-label" for="difficulty-api">
+                                            {% if current_lang == 'en' %}Use API Data{% else %}使用API获取{% endif %}
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="difficulty_source" id="difficulty-manual" value="manual" onchange="toggleDifficultyInput()">
+                                        <label class="form-check-label" for="difficulty-manual">
+                                            {% if current_lang == 'en' %}Manual Input{% else %}手动输入{% endif %}
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Manual Network Difficulty Input -->
+                                <div class="mb-3" id="manual-difficulty-container" style="display: none;">
+                                    <label for="manual-difficulty" class="form-label">{% if current_lang == 'en' %}Network Difficulty{% else %}网络难度{% endif %}</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="manual-difficulty" name="manual_difficulty" value="129435235580344" step="1" min="0">
+                                        <span class="input-group-text">T</span>
+                                    </div>
+                                    <div class="form-text">{% if current_lang == 'en' %}Manually enter network difficulty (Current: ~129.4T){% else %}手动输入网络难度（当前约129.4万亿）{% endif %}</div>
                                 </div>
 
                                 <!-- Real-time data option -->
@@ -999,6 +1026,22 @@
                     manualHashrateContainer.style.display = 'block';
                 } else {
                     manualHashrateContainer.style.display = 'none';
+                }
+            }
+        }
+        
+        // 网络难度输入切换功能
+        function toggleDifficultyInput() {
+            var difficultyApiRadio = document.getElementById('difficulty-api');
+            var difficultyManualRadio = document.getElementById('difficulty-manual');
+            var manualDifficultyContainer = document.getElementById('manual-difficulty-container');
+            
+            // 检查元素是否存在
+            if (difficultyManualRadio && manualDifficultyContainer) {
+                if (difficultyManualRadio.checked) {
+                    manualDifficultyContainer.style.display = 'block';
+                } else {
+                    manualDifficultyContainer.style.display = 'none';
                 }
             }
         }
