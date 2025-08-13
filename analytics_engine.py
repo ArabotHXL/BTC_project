@@ -288,25 +288,22 @@ class DataCollector:
             except Exception as e:
                 logger.warning(f"Minerstat算力获取失败: {e}")
             
-            # 方法3: 最后备用blockchain.info (经常不准确)
+            # 方法3: 最后备用blockchain.info stats接口 (875 EH/s)
             try:
-                blockchain_response = self.session.get('https://blockchain.info/q/hashrate', timeout=15)
+                blockchain_response = self.session.get('https://blockchain.info/stats?format=json', timeout=15)
                 if blockchain_response.status_code == 200:
-                    # blockchain.info返回的是GH/s，需要转换为EH/s
-                    hashrate_gh = float(blockchain_response.text.strip())
-                    hashrate_eh = hashrate_gh / 1e9  # GH/s to EH/s (正确的转换: 1 EH/s = 10^9 GH/s)
+                    data = blockchain_response.json()
+                    # blockchain.info/stats返回的hash_rate是GH/s，需要转换为EH/s
+                    hashrate_gh = float(data.get('hash_rate', 0))
+                    hashrate_eh = hashrate_gh / 1e9  # GH/s to EH/s
+                    difficulty = float(data.get('difficulty', 0))
                     
                     # 验证算力值是否合理 (当前应该在700-1000 EH/s范围)
                     if hashrate_eh < 100 or hashrate_eh > 2000:
                         logger.warning(f"Blockchain.info算力值异常: {hashrate_eh:.2f} EH/s，跳过此数据源")
-                        # 如果值异常，跳过这个数据源
                         return None
                     
-                    # 获取难度数据
-                    difficulty_response = self.session.get('https://blockchain.info/q/getdifficulty', timeout=15)
-                    difficulty = float(difficulty_response.text.strip()) if difficulty_response.status_code == 200 else 0
-                    
-                    logger.warning(f"⚠️ 使用Blockchain.info备用算力: {hashrate_eh:.2f} EH/s (可能不准确)")
+                    logger.warning(f"⚠️ 使用Blockchain.info备用算力: {hashrate_eh:.2f} EH/s (stats接口)")
                     return {
                         'network_hashrate': hashrate_eh,
                         'network_difficulty': difficulty,
@@ -314,7 +311,7 @@ class DataCollector:
                         'source': 'blockchain.info'
                     }
             except Exception as e:
-                logger.debug(f"Blockchain.info算力获取失败: {e}")
+                logger.debug(f"Blockchain.info stats接口获取失败: {e}")
             
             # 方法2: 尝试从mempool.space获取最新算力数据
             try:
