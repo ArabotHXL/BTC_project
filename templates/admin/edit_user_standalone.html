@@ -157,15 +157,44 @@
             margin-bottom: 4px;
         }
         
-        .plan-duration {
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: #28a745;
-            margin-bottom: 8px;
-        }
-        
         .plan-features {
             color: #aaa;
+        }
+        
+        .subscription-assignment {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .subscription-assignment h6 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        .form-select-sm, .form-control-sm {
+            background: #333;
+            border-color: #555;
+            color: #fff;
+        }
+        
+        .form-select-sm:focus, .form-control-sm:focus {
+            background: #333;
+            border-color: var(--primary-color);
+            color: #fff;
+            box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+        }
+        
+        .btn-outline-warning {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-outline-warning:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #000;
         }
         
         .subscription-plan-card input[type="radio"] {
@@ -295,7 +324,6 @@
                                                 <h6>{% if current_lang == 'en' %}Free{% else %}免费版{% endif %}</h6>
                                             </div>
                                             <div class="plan-price">$0/月</div>
-                                            <div class="plan-duration">{% if current_lang == 'en' %}7 days trial{% else %}7天试用{% endif %}</div>
                                             <div class="plan-features">
                                                 <small>{% if current_lang == 'en' %}Basic calculator{% else %}基础计算器{% endif %}</small>
                                             </div>
@@ -312,7 +340,6 @@
                                                 <h6>{% if current_lang == 'en' %}Basic{% else %}基础版{% endif %}</h6>
                                             </div>
                                             <div class="plan-price">$29/月</div>
-                                            <div class="plan-duration">{% if current_lang == 'en' %}30 days access{% else %}30天时限{% endif %}</div>
                                             <div class="plan-features">
                                                 <small>{% if current_lang == 'en' %}Advanced features{% else %}高级功能{% endif %}</small>
                                             </div>
@@ -329,13 +356,47 @@
                                                 <h6>{% if current_lang == 'en' %}Pro{% else %}专业版{% endif %}</h6>
                                             </div>
                                             <div class="plan-price">$99/月</div>
-                                            <div class="plan-duration">{% if current_lang == 'en' %}365 days access{% else %}365天时限{% endif %}</div>
                                             <div class="plan-features">
                                                 <small>{% if current_lang == 'en' %}All features{% else %}全部功能{% endif %}</small>
                                             </div>
                                         </label>
                                     </div>
                                 </div>
+                            </div>
+                            
+                            <!-- 订阅分配控制 -->
+                            <div class="subscription-assignment mt-3">
+                                <h6 class="mb-3">
+                                    <i class="bi bi-calendar-plus me-2"></i>
+                                    {% if current_lang == 'en' %}Assign Subscription{% else %}分配订阅{% endif %}
+                                </h6>
+                                <div class="row g-2">
+                                    <div class="col-md-4">
+                                        <label class="form-label small">
+                                            {% if current_lang == 'en' %}Plan Type{% else %}计划类型{% endif %}
+                                        </label>
+                                        <select class="form-select form-select-sm" name="assign_plan_type">
+                                            <option value="free">{% if current_lang == 'en' %}Free{% else %}免费版{% endif %}</option>
+                                            <option value="basic">{% if current_lang == 'en' %}Basic{% else %}基础版{% endif %}</option>
+                                            <option value="pro">{% if current_lang == 'en' %}Pro{% else %}专业版{% endif %}</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small">
+                                            {% if current_lang == 'en' %}Days to Add{% else %}添加天数{% endif %}
+                                        </label>
+                                        <input type="number" class="form-control form-control-sm" name="assign_days" value="30" min="1" max="365">
+                                    </div>
+                                    <div class="col-md-4 d-flex align-items-end">
+                                        <button type="button" class="btn btn-outline-warning btn-sm w-100" onclick="assignSubscription()">
+                                            <i class="bi bi-plus-circle me-1"></i>
+                                            {% if current_lang == 'en' %}Assign{% else %}分配{% endif %}
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="text-muted">
+                                    {% if current_lang == 'en' %}Current remaining: {{ user.days_remaining or 0 }} days{% else %}当前剩余: {{ user.days_remaining or 0 }} 天{% endif %}
+                                </small>
                             </div>
                         </div>
                         {% endif %}
@@ -391,6 +452,44 @@
         
         // 选中对应的radio按钮
         document.querySelector(`#plan_${planType}`).checked = true;
+        
+        // 同步到分配控制器
+        document.querySelector('select[name="assign_plan_type"]').value = planType;
+    }
+    
+    function assignSubscription() {
+        const planType = document.querySelector('select[name="assign_plan_type"]').value;
+        const days = document.querySelector('input[name="assign_days"]').value;
+        
+        if (!days || days < 1) {
+            alert('{% if current_lang == "en" %}Please enter a valid number of days{% else %}请输入有效的天数{% endif %}');
+            return;
+        }
+        
+        // 确认分配
+        const planNames = {
+            'free': '{% if current_lang == "en" %}Free{% else %}免费版{% endif %}',
+            'basic': '{% if current_lang == "en" %}Basic{% else %}基础版{% endif %}',
+            'pro': '{% if current_lang == "en" %}Pro{% else %}专业版{% endif %}'
+        };
+        
+        const confirmMessage = `{% if current_lang == "en" %}Assign ${days} days of ${planNames[planType]} plan to this user?{% else %}给该用户分配 ${days} 天的 ${planNames[planType]} 计划？{% endif %}`;
+        
+        if (confirm(confirmMessage.replace('${days}', days).replace('${planNames[planType]}', planNames[planType]))) {
+            // 设置主要订阅计划选择
+            selectPlan(planType);
+            
+            // 这里可以添加额外的逻辑来处理天数分配
+            // 暂时将天数值设置到一个隐藏字段或直接提交
+            const form = document.querySelector('form');
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'subscription_days';
+            hiddenInput.value = days;
+            form.appendChild(hiddenInput);
+            
+            alert('{% if current_lang == "en" %}Subscription assigned! Click Save Changes to apply.{% else %}订阅已分配！点击保存更改来应用。{% endif %}');
+        }
     }
     
     // 页面加载时设置初始选中状态
