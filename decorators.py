@@ -86,7 +86,7 @@ def requires_admin_or_owner(func):
     return wrapper
 
 def requires_crm_access(func):
-    """需要CRM访问权限的装饰器 - 仅限管理员和矿场主"""
+    """需要CRM访问权限的装饰器 - 仅限拥有者和管理员"""
     @wraps(func)
     def wrapper(*args, **kwargs):
         if not session.get('authenticated'):
@@ -94,11 +94,11 @@ def requires_crm_access(func):
             return redirect(url_for('login'))
         
         current_role = session.get('role', 'guest')
-        if current_role not in ['owner', 'admin', 'mining_site']:
+        if current_role not in ['owner', 'admin']:
             logging.warning(f"用户 {session.get('email')} (角色: {current_role}) 尝试访问CRM功能")
             return render_template('unauthorized.html', 
-                                 message='CRM系统目前仅限管理员和矿场主使用',
-                                 required_roles=['owner', 'admin', 'mining_site'],
+                                 message='CRM系统仅限拥有者和管理员使用',
+                                 required_roles=['owner', 'admin'],
                                  current_role=current_role), 403
         
         return func(*args, **kwargs)
