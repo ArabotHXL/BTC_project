@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="user-role" content="owner">
+    <meta name="language" content="zh">
+    <title>
+    批量挖矿计算器 - BTC Mining Calculator
+</title>
+    <!-- Bootstrap CSS from Replit CDN -->
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- Animation CSS -->
+    <link rel="stylesheet" href="/static/css/animations.css">
+    <!-- Responsive CSS -->
+    <link rel="stylesheet" href="/static/css/responsive.css">
+    
+<style>
+/* Batch Calculator Styles */
+.batch-calculator-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.miner-card {
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.miner-card:hover {
+    border-color: #ffc107;
+    box-shadow: 0 5px 15px rgba(255, 193, 7, 0.2);
+}
+
+.calculation-results {
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.result-summary {
+    background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);
+    color: #000;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.quota-display {
+    background: rgba(255, 193, 7, 0.08);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 8px;    
+    padding: 0.6rem 0.5rem;    
+    box-shadow: 0 1px 4px rgba(255, 193, 7, 0.1);
+}
+    
+.quota-bar {
+    background: #333;
+    border-radius: 4px;
+    height: 8px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.quota-fill {
+    background: linear-gradient(90deg, #ffc107, #ff8c00);
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.quota-counter {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.quota-counter .fw-bold {
+    font-size: 1rem;
+}
+
+.remaining-display {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+    .batch-calculator-container {
+        padding: 1rem;
+    }
+    
+    .miner-card {
+        padding: 1rem;
+    }
+}
+</style>
+
+    
+</head>
+<body>
+    <div class="container-fluid">
+        
+        <header class="py-3 mb-4 border-bottom">
+            <div class="container d-flex align-items-center justify-content-between">
+                <h1 class="fs-4">
+    批量挖矿计算器
+</h1>
+                
+                <div class="d-flex gap-4 align-items-center">
+                    <!-- Language Switcher -->
+                    <div class="d-flex align-items-center">
+                        <div class="btn-group btn-group-sm me-3" role="group" aria-label="语言">
+                            <a href="/batch-calculator?lang=zh" class="btn btn-outline-light active">中文</a>
+                            <a href="/batch-calculator?lang=en" class="btn btn-outline-light ">English</a>
+                        </div>
+                    </div>
+                    
+                    <!-- User Account Info -->
+                    <div class="dropdown">
+                        <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle me-1"></i>
+                            
+                                hxl2022hao@gmail.com
+                            
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><h6 class="dropdown-header">账户信息</h6></li>
+                            
+                                <li><span class="dropdown-item-text">hxl2022hao@gmail.com</span></li>
+                                
+                                <!-- Admin options based on role -->
+                                
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header">管理功能</h6></li>
+                                    
+                                    <!-- Owner can view login records -->
+                                    
+                                    <li><a class="dropdown-item" href="/login-records">
+                                        <i class="bi bi-file-text me-1"></i> 
+                                        查看登录记录
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/login-dashboard">
+                                        <i class="bi bi-graph-up me-1"></i> 
+                                        登录分析仪表盘
+                                    </a></li>
+                                    
+                                    
+                                    <!-- Owner and admin can manage user access -->
+                                    
+                                    <li><a class="dropdown-item" href="/user-access">
+                                        <i class="bi bi-people me-1"></i> 
+                                        用户访问管理
+                                    </a></li>
+                                    
+                                    
+                                    <!-- Mining site operators can manage their customers -->
+                                    
+                                    
+                                    <!-- CRM System Access -->
+                                    
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header">客户关系管理</h6></li>
+                                    <li><a class="dropdown-item" href="/crm/">
+                                        <i class="bi bi-speedometer2 me-1"></i> 
+                                        CRM仪表盘
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/crm/customers">
+                                        <i class="bi bi-people me-1"></i> 
+                                        客户管理
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/crm/leads">
+                                        <i class="bi bi-funnel me-1"></i> 
+                                        商机管理
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/crm/deals">
+                                        <i class="bi bi-handshake me-1"></i> 
+                                        交易管理
+                                    </a></li>
+                                    
+                                    
+                                    <!-- Mining Broker Business Access -->
+                                    
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header">矿场中介业务</h6></li>
+                                    <li><a class="dropdown-item" href="/crm/broker">
+                                        <i class="bi bi-graph-up-arrow me-1"></i> 
+                                        中介仪表盘
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/crm/broker/deals">
+                                        <i class="bi bi-building me-1"></i> 
+                                        矿场交易
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/crm/broker/commissions">
+                                        <i class="bi bi-cash-coin me-1"></i> 
+                                        佣金管理
+                                    </a></li>
+                                    
+                                    
+                                    <!-- Display current user role -->
+                                    <li><span class="dropdown-item-text">
+                                        <i class="bi bi-person-badge me-1"></i> 
+                                        角色: 
+                                        
+                                            <span class="badge bg-danger">所有者</span>
+                                        
+                                    </span></li>
+                                
+                                
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header">数据分析平台</h6></li>
+                                
+                                <!-- Analytics for all users -->
+                                
+                                <li><a class="dropdown-item" href="/analytics_dashboard">
+                                    <i class="bi bi-graph-up me-1"></i> 
+                                    数据分析平台
+                                </a></li>
+                                
+                                
+                                <!-- Technical Analysis for owner, manager, mining_site -->
+                                
+                                <li><a class="dropdown-item" href="/technical_analysis">
+                                    <i class="bi bi-bar-chart-line me-1"></i> 
+                                    技术分析
+                                </a></li>
+                                
+                                
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="/main">
+                                    <i class="bi bi-calculator me-1"></i>
+                                    挖矿计算器
+                                </a></li>
+                                <li><a class="dropdown-item" href="/logout">
+                                    退出登录 <i class="bi bi-box-arrow-right ms-1"></i>
+                                </a></li>
+                            
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+
+        <main class="container mb-5">
+            <!-- Flash messages -->
+            
+                
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    登录成功！欢迎使用BTC挖矿计算器
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            
+                        </div>
+                    </div>
+                
+            
+            
+            
+<div class="batch-calculator-container">
+    <!-- Header Section -->
+    <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h2 class="mb-1">
+                            批量挖矿计算器
+                        </h2>
+                        <p class="text-muted mb-0">
+                            一次性计算多台矿机的收益率
+                        </p>
+                    </div>
+                    
+                    <!-- Plan Quota Display -->
+                    <div class="text-end">
+                        <div class="small text-muted">当前套餐</div>
+                        <div class="fw-bold text-primary">Basic</div>
+                        <div class="quota-display mt-2" style="min-width: 120px; max-width: 160px;">
+                            <div class="text-center">
+                                <div class="small text-muted mb-1">配额</div>
+                                
+                                <!-- Compact quota counter -->
+                                <div class="d-flex justify-content-center align-items-baseline mb-1">
+                                    <span id="currentCount" class="fw-bold text-warning" style="font-size: 1.3rem; line-height: 1;">0</span>
+                                    <span class="text-muted mx-1" style="font-size: 0.9rem;">/</span>
+                                    <span class="fw-bold text-light" style="font-size: 1.3rem; line-height: 1;">100</span>
+                                </div>
+                                
+                                <!-- Progress bar -->
+                                <div class="progress mb-1" style="height: 3px;">
+                                    <div class="progress-bar bg-warning" role="progressbar" 
+                                         style="width: 0%" id="quotaProgress"></div>
+                                </div>
+                                
+                                <div class="small text-muted" style="font-size: 0.7rem;">
+                                    <span id="remainingCount">100</span>
+                                    剩余
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Batch Input Section -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-table me-2"></i>
+                            矿机配置
+                        </h5>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="addMinerRow()">
+                                <i class="bi bi-plus-circle me-1"></i>
+                                添加矿机
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllMiners()">
+                                <i class="bi bi-trash me-1"></i>
+                                清空所有
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- CSV Upload Section -->
+                        <div class="mb-4">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">
+                                        <i class="bi bi-file-earmark-spreadsheet me-1"></i>
+                                        上传CSV文件
+                                    </label>
+                                    <input type="file" class="form-control" id="csvFile" accept=".csv" onchange="processCsvFile(event)">
+                                    <div class="form-text">
+                                        
+                                        格式: 型号, 数量, 功耗(W), 电费($/kWh)
+                                        
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">
+                                        CSV示例
+                                    </label>
+                                    <div class="bg-dark p-2 rounded small">
+                                        <code>
+                                            Model,Quantity,Power,Electricity<br>
+                                            Antminer S19 Pro,10,3250,0.08<br>
+                                            Antminer S21,5,3550,0.08
+                                        </code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Miners Table -->
+                        <div class="table-responsive">
+                            <table class="table table-dark table-striped" id="minersTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 30%">
+                                            矿机型号
+                                        </th>
+                                        <th style="width: 15%">
+                                            数量
+                                        </th>
+                                        <th style="width: 20%">
+                                            功耗(W)
+                                        </th>
+                                        <th style="width: 20%">
+                                            电费($/kWh)
+                                        </th>
+                                        <th style="width: 15%">
+                                            操作
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="minersTableBody">
+                                    <!-- Miner rows will be added here -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Add first row button when table is empty -->
+                        <div id="emptyState" class="text-center py-4">
+                            <i class="bi bi-table text-muted" style="font-size: 3rem;"></i>
+                            <p class="text-muted mt-2">
+                                暂无矿机配置，添加第一台矿机开始计算。
+                            </p>
+                            <button class="btn btn-primary" onclick="addMinerRow()">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                添加第一台矿机
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Global Settings -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-gear me-2"></i>
+                            全局设置
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    BTC价格
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="globalBtcPrice" 
+                                           value="116000" min="1000" max="1000000">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    使用实时数据
+                                </label>
+                                <div class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" id="useRealTimeData" checked onchange="handleRealtimeToggle()">
+                                    <label class="form-check-label" for="useRealTimeData">
+                                        自动更新价格和难度
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Network Status -->
+                        <div class="mt-4 pt-3 border-top">
+                            <h6 class="text-muted mb-3">
+                                <i class="bi bi-globe2 me-2"></i>
+                                网络状态
+                                <span id="dataUpdateTime" class="small text-success ms-2"></span>
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-3 col-6">
+                                    <div class="text-center p-2 bg-dark rounded">
+                                        <div class="small text-muted">
+                                            BTC价格
+                                        </div>
+                                        <div class="fw-bold text-warning" id="currentBtcPrice">$116,644</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="text-center p-2 bg-dark rounded">
+                                        <div class="small text-muted">
+                                            难度
+                                        </div>
+                                        <div class="fw-bold text-info" id="currentDifficulty">129.4T</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="text-center p-2 bg-dark rounded">
+                                        <div class="small text-muted">
+                                            算力
+                                        </div>
+                                        <div class="fw-bold text-primary" id="currentHashrate">752.81 EH/s</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="text-center p-2 bg-dark rounded">
+                                        <div class="small text-muted">
+                                            区块奖励
+                                        </div>
+                                        <div class="fw-bold text-success" id="currentBlockReward">3.125 BTC</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calculate Button -->
+                <div class="text-center mt-4">
+                    <button class="btn btn-primary btn-lg" onclick="calculateBatchProfitability()" id="calculateBtn">
+                        <i class="bi bi-calculator me-2"></i>
+                        计算批量收益
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-bar-chart me-2"></i>
+                            批量结果
+                        </h6>
+                    </div>
+                    <div class="card-body" id="resultsSection">
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-calculator" style="font-size: 2rem;"></i>
+                            <p class="mt-2">
+                                配置矿机并点击计算查看结果
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export Options -->
+                <div class="card mt-3" id="exportCard" style="display: none;">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-download me-2"></i>
+                            导出结果
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-success btn-sm" onclick="exportToCSV()">
+                                <i class="bi bi-file-earmark-spreadsheet me-1"></i>
+                                导出CSV
+                            </button>
+                            
+                            <button class="btn btn-outline-primary btn-sm" onclick="exportToExcel()">
+                                <i class="bi bi-file-earmark-excel me-1"></i>
+                                导出Excel
+                            </button>
+                            
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upgrade Modal -->
+    <div class="modal fade" id="upgradeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-star me-2"></i>
+                        需要升级套餐
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <i class="bi bi-exclamation-circle text-warning" style="font-size: 3rem;"></i>
+                        <h6 class="mt-3">超过配额限制</h6>
+                        <p class="text-muted" id="upgradeMessage">
+                            
+                            您正在尝试处理超过当前套餐允许的矿机数量。
+                            
+                        </p>
+                        
+                        <!-- One-time bypass option for Basic+ users -->
+                        
+                        <div class="alert alert-info">
+                            <i class="bi bi-gift me-2"></i>
+                            <strong>一次性放行可用</strong>
+                            <p class="mb-0 small">
+                                
+                                作为礼遇，本月可为您处理一次超限请求。
+                                
+                            </p>
+                        </div>
+                        
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    
+                    <button type="button" class="btn btn-outline-secondary" onclick="useBypassOnce()">
+                        <i class="bi bi-shield-check me-1"></i>
+                        使用一次性放行
+                    </button>
+                    
+                    <a href="#" onclick="alert('订阅计划功能暂时维护中')" class="btn btn-primary">
+                        <i class="bi bi-arrow-up-circle me-1"></i>
+                        升级套餐
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Available miner models with specifications
+        const minerModels = {
+            'Antminer S19 Pro': { hashrate: 110, power: 3250 },
+            'Antminer S19j Pro': { hashrate: 100, power: 3068 },
+            'Antminer S21': { hashrate: 200, power: 3550 },
+            'Antminer S19 XP': { hashrate: 140, power: 3010 },
+            'Antminer T19': { hashrate: 84, power: 3150 },
+            'WhatsMiner M50S': { hashrate: 126, power: 3276 },
+            'WhatsMiner M53S': { hashrate: 226, power: 6554 },
+            'WhatsMiner M56S': { hashrate: 212, power: 5550 },
+            'AvalonMiner 1366': { hashrate: 100, power: 3420 },
+            'AvalonMiner 1466': { hashrate: 150, power: 3420 }
+        };
+
+        let minerRowCount = 0;
+        let calculationResults = [];
+        const maxMiners = 100;
+        let bypassUsed = false;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            updateQuotaDisplay();
+            updateEmptyState();
+            
+            // Load network data immediately and update price if real-time is enabled
+            loadNetworkData().then(() => {
+                // Ensure price is updated on initial load
+                const useRealtime = document.getElementById('useRealTimeData');
+                if (useRealtime && useRealtime.checked && networkDataCache && networkDataCache.btc_price) {
+                    document.getElementById('globalBtcPrice').value = Math.round(networkDataCache.btc_price);
+                }
+            });
+            
+            // Auto-refresh network data every 30 seconds if real-time is enabled
+            setInterval(() => {
+                const useRealtime = document.getElementById('useRealTimeData');
+                if (useRealtime && useRealtime.checked) {
+                    loadNetworkData();
+                }
+            }, 30000);
+        });
+
+        // Update quota display in the header
+        function updateQuotaDisplay() {
+            const currentCountEl = document.getElementById('currentCount');
+            const progressBarEl = document.getElementById('quotaProgress');
+            
+            if (currentCountEl) {
+                currentCountEl.textContent = '0';
+            }
+            
+            if (progressBarEl) {
+                progressBarEl.style.width = '0%';
+                progressBarEl.className = 'progress-bar bg-primary';
+            }
+        }
+
+        function addMinerRow() {
+            const tbody = document.getElementById('minersTableBody');
+            const rowId = `miner-row-${++minerRowCount}`;
+            
+            const row = document.createElement('tr');
+            row.id = rowId;
+            row.innerHTML = `
+                <td>
+                    <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, '${rowId}')">
+                        <option value="">选择型号</option>
+                        ${Object.keys(minerModels).map(model => 
+                            `<option value="${model}">${model}</option>`
+                        ).join('')}
+                    </select>
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm" 
+                           min="1" max="1000" value="1" onchange="updateTotalCount()">
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm" 
+                           min="100" max="10000" placeholder="3250" step="10">
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm" 
+                           min="0.01" max="1" value="0.08" step="0.001">
+                </td>
+                <td>
+                    <button class="btn btn-outline-danger btn-sm" onclick="removeMinerRow('${rowId}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+            updateEmptyState();
+            updateTotalCount();
+        }
+
+        function removeMinerRow(rowId) {
+            document.getElementById(rowId).remove();
+            updateEmptyState();
+            updateTotalCount();
+        }
+
+        function updateMinerSpecs(selectElement, rowId) {
+            const selectedModel = selectElement.value;
+            if (selectedModel && minerModels[selectedModel]) {
+                const row = document.getElementById(rowId);
+                const powerInput = row.querySelector('td:nth-child(3) input');
+                powerInput.value = minerModels[selectedModel].power;
+            }
+        }
+
+        function updateTotalCount() {
+            const rows = document.querySelectorAll('#minersTableBody tr');
+            let totalMiners = 0;
+            
+            rows.forEach(row => {
+                const quantityInput = row.querySelector('td:nth-child(2) input');
+                if (quantityInput && quantityInput.value) {
+                    totalMiners += parseInt(quantityInput.value) || 0;
+                }
+            });
+            
+            // Update quota display
+            const currentCountSpan = document.getElementById('currentCount');
+            const remainingCountSpan = document.getElementById('remainingCount');
+            const progressBar = document.getElementById('quotaProgress');
+            
+            if (currentCountSpan && remainingCountSpan && progressBar) {
+                currentCountSpan.textContent = totalMiners;
+                remainingCountSpan.textContent = Math.max(0, maxMiners - totalMiners);
+                
+                const progressPercent = Math.min((totalMiners / maxMiners) * 100, 100);
+                progressBar.style.width = progressPercent + '%';
+                
+                // Update progress bar color based on usage
+                if (progressPercent >= 100) {
+                    progressBar.className = 'progress-bar bg-danger';
+                } else if (progressPercent >= 80) {
+                    progressBar.className = 'progress-bar bg-warning';
+                } else {
+                    progressBar.className = 'progress-bar bg-success';
+                }
+            }
+            
+            // Update calculate button state
+            updateCalculateButton(totalMiners);
+        }
+
+        function updateCalculateButton(totalMiners) {
+            const calculateBtn = document.getElementById('calculateBtn');
+            if (calculateBtn) {
+                if (totalMiners > maxMiners && !bypassUsed) {
+                    calculateBtn.disabled = true;
+                    calculateBtn.innerHTML = '<i class="bi bi-lock me-2"></i>需要升级';
+                } else {
+                    calculateBtn.disabled = false;
+                    calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>计算批量收益';
+                }
+            }
+        }
+
+        function updateEmptyState() {
+            const tbody = document.getElementById('minersTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const table = document.getElementById('minersTable');
+            
+            if (tbody.children.length === 0) {
+                emptyState.style.display = 'block';
+                table.style.display = 'none';
+            } else {
+                emptyState.style.display = 'none';
+                table.style.display = 'table';
+            }
+        }
+
+        function clearAllMiners() {
+            if (confirm('确定要清空所有矿机吗？')) {
+                document.getElementById('minersTableBody').innerHTML = '';
+                updateEmptyState();
+                updateTotalCount();
+                hideResults();
+            }
+        }
+
+        function calculateBatchProfitability() {
+            const miners = collectMinerData();
+            
+            if (miners.length === 0) {
+                alert('请至少添加一台矿机再进行计算。');
+                return;
+            }
+
+            const totalMiners = miners.reduce((sum, m) => sum + m.quantity, 0);
+            
+            // Check quota limits
+            if (totalMiners > maxMiners && !bypassUsed) {
+                showUpgradeModal(totalMiners);
+                return;
+            }
+
+            // Show loading state
+            showLoadingResults();
+
+            // Prepare request data with safe defaults
+            const btcPriceEl = document.getElementById('globalBtcPrice');
+            const useRealtimeEl = document.getElementById('useRealTimeData');
+            
+            const requestData = {
+                miners: miners,
+                settings: {
+                    btc_price: btcPriceEl ? btcPriceEl.value : null,
+                    use_realtime: useRealtimeEl ? useRealtimeEl.checked : true
+                }
+            };
+
+            // Send batch calculation request
+            fetch('/api/batch-calculate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Received data:', data);
+                if (data.success) {
+                    calculationResults = data.results;
+                    displayBatchResults(data.results, data.summary);
+                    showExportOptions();
+                } else {
+                    if (data.error === 'upgrade_required') {
+                        showUpgradeModal(totalMiners);
+                    } else {
+                        showErrorResults(data.message || 'Unknown error');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Calculation error:', error);
+                console.error('Error details:', error.message);
+                showErrorResults('计算失败，请重试。');
+            });
+        }
+
+        function collectMinerData() {
+            const miners = [];
+            const rows = document.querySelectorAll('#minersTableBody tr');
+            
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const model = cells[0].querySelector('select').value;
+                const quantity = parseInt(cells[1].querySelector('input').value) || 0;
+                const power = parseFloat(cells[2].querySelector('input').value) || 0;
+                const electricity = parseFloat(cells[3].querySelector('input').value) || 0;
+                
+                if (model && quantity > 0 && power > 0 && electricity > 0) {
+                    miners.push({
+                        model: model,
+                        quantity: quantity,
+                        power_consumption: power,  // Fixed: use correct field name
+                        electricity_cost: electricity,
+                        hashrate: minerModels[model]?.hashrate || 0
+                    });
+                }
+            });
+            
+            return miners;
+        }
+
+        function showUpgradeModal(attemptedMiners) {
+            const modal = new bootstrap.Modal(document.getElementById('upgradeModal'));
+            const message = document.getElementById('upgradeMessage');
+            
+            message.innerHTML = `
+                
+                您正在尝试处理 <strong>${attemptedMiners} 台矿机</strong>，但您的当前套餐只允许 <strong>${maxMiners} 台矿机</strong>。
+                
+            `;
+            
+            modal.show();
+        }
+
+        function useBypassOnce() {
+            bypassUsed = true;
+            const modal = bootstrap.Modal.getInstance(document.getElementById('upgradeModal'));
+            modal.hide();
+            
+            // Re-enable calculate button and try calculation
+            updateTotalCount();
+            setTimeout(() => calculateBatchProfitability(), 500);
+        }
+
+        function showLoadingResults() {
+            const resultsSection = document.getElementById('resultsSection');
+            resultsSection.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p>正在计算收益...</p>
+                </div>
+            `;
+        }
+
+        function displayBatchResults(results, summary) {
+            const resultsSection = document.getElementById('resultsSection');
+            
+            let html = `
+                <!-- Summary -->
+                <div class="mb-4">
+                    <h6 class="text-primary mb-3">
+                        <i class="bi bi-bar-chart me-2"></i>
+                        汇总
+                    </h6>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="bg-dark p-2 rounded text-center">
+                                <div class="small text-muted">总矿机数</div>
+                                <div class="fw-bold">${summary.total_miners}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-dark p-2 rounded text-center">
+                                <div class="small text-muted">日收益</div>
+                                <div class="fw-bold ${summary.total_daily_profit >= 0 ? 'text-success' : 'text-danger'}">$${(summary.total_daily_profit || 0).toFixed(3)}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-dark p-2 rounded text-center">
+                                <div class="small text-muted">月收益</div>
+                                <div class="fw-bold">$${((summary.total_daily_profit || 0) * 30).toFixed(3)}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-dark p-2 rounded text-center">
+                                <div class="small text-muted">平均回本天数</div>
+                                <div class="fw-bold text-warning">${summary.average_roi_days ? summary.average_roi_days.toFixed(3) : 'N/A'}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Individual Results -->
+                <div>
+                    <h6 class="text-primary mb-3">
+                        <i class="bi bi-list-ul me-2"></i>
+                        单项结果
+                    </h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-dark">
+                            <thead>
+                                <tr>
+                                    <th>型号</th>
+                                    <th>数量</th>
+                                    <th>日收益</th>
+                                    <th>回本天数</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+
+            results.forEach(result => {
+                const profitClass = result.daily_profit > 0 ? 'text-success' : 'text-danger';
+                html += `
+                    <tr>
+                        <td class="small">${result.model}</td>
+                        <td>${result.quantity}</td>
+                        <td class="${profitClass}">$${(result.daily_profit || 0).toFixed(3)}</td>
+                        <td>${result.roi_days ? result.roi_days + ' days' : 'N/A'}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            resultsSection.innerHTML = html;
+        }
+
+        function showErrorResults(message) {
+            const resultsSection = document.getElementById('resultsSection');
+            resultsSection.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="bi bi-exclamation-triangle text-danger" style="font-size: 2rem;"></i>
+                    <p class="text-danger mt-2">${message}</p>
+                </div>
+            `;
+        }
+
+        function hideResults() {
+            const resultsSection = document.getElementById('resultsSection');
+            resultsSection.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-calculator" style="font-size: 2rem;"></i>
+                    <p class="mt-2">
+                        配置矿机并点击计算查看结果
+                    </p>
+                </div>
+            `;
+            document.getElementById('exportCard').style.display = 'none';
+        }
+
+        function showExportOptions() {
+            document.getElementById('exportCard').style.display = 'block';
+        }
+
+        // CSV file processing
+        function processCsvFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const csv = e.target.result;
+                const lines = csv.split('\n');
+                
+                // Clear existing miners
+                clearAllMiners();
+                
+                // Skip header line
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    const [model, quantity, power, electricity] = line.split(',').map(s => s.trim());
+                    
+                    if (model && quantity && power && electricity) {
+                        addMinerRowFromData(model, quantity, power, electricity);
+                    }
+                }
+                
+                updateTotalCount();
+            };
+            
+            reader.readAsText(file);
+        }
+
+        function addMinerRowFromData(model, quantity, power, electricity) {
+            addMinerRow();
+            
+            // Get the last added row
+            const rows = document.querySelectorAll('#minersTableBody tr');
+            const lastRow = rows[rows.length - 1];
+            
+            // Fill in the data
+            const cells = lastRow.querySelectorAll('td');
+            cells[0].querySelector('select').value = model;
+            cells[1].querySelector('input').value = quantity;
+            cells[2].querySelector('input').value = power;
+            cells[3].querySelector('input').value = electricity;
+        }
+
+        // Export functions
+        function exportToCSV() {
+            if (calculationResults.length === 0) {
+                alert('没有结果可导出，请先进行计算。');
+                return;
+            }
+            
+            // Implementation for CSV export
+            console.log('Exporting to CSV...');
+        }
+
+        function exportToExcel() {
+            // Implementation for Excel export
+            console.log('Exporting to Excel...');
+        }
+
+        function exportToPDF() {
+            // Implementation for PDF export
+            console.log('Exporting to PDF...');
+        }
+
+        // Handle real-time toggle change
+        function handleRealtimeToggle() {
+            const useRealtime = document.getElementById('useRealTimeData');
+            if (useRealtime && useRealtime.checked) {
+                // Immediately update price when toggled on
+                loadNetworkData();
+            }
+        }
+
+        // Network data loading
+        let networkDataCache = null;
+        let lastNetworkDataUpdate = 0;
+        const CACHE_DURATION = 30000; // 30 seconds
+
+        async function loadNetworkData() {
+            const now = Date.now();
+            
+            // Use cache if data is fresh
+            if (networkDataCache && (now - lastNetworkDataUpdate) < CACHE_DURATION) {
+                updateNetworkDisplay(networkDataCache);
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/analytics-data');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.data) {
+                        networkDataCache = data.data;
+                        lastNetworkDataUpdate = now;
+                        updateNetworkDisplay(data.data);
+                        
+                        // Update BTC price input if real-time is enabled
+                        const useRealtime = document.getElementById('useRealTimeData');
+                        if (useRealtime && useRealtime.checked && data.data.btc_price) {
+                            document.getElementById('globalBtcPrice').value = Math.round(data.data.btc_price);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.warn('Failed to load network data:', error);
+            }
+        }
+
+        function updateNetworkDisplay(data) {
+            // Update network status display
+            if (data.btc_price) {
+                document.getElementById('currentBtcPrice').textContent = `$${data.btc_price.toLocaleString()}`;
+            }
+            if (data.network_difficulty) {
+                const difficultyT = (data.network_difficulty / 1e12).toFixed(3);
+                document.getElementById('currentDifficulty').textContent = `${difficultyT}T`;
+            }
+            if (data.network_hashrate) {
+                document.getElementById('currentHashrate').textContent = `${data.network_hashrate} EH/s`;
+            }
+            
+            // Update timestamp
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            document.getElementById('dataUpdateTime').textContent = `(Updated: ${timeStr})`;
+        }
+
+
+    </script>
+</div>
+
+        </main>
+
+        <footer class="py-3 my-4 border-top">
+            <div class="container text-center">
+                <p class="text-muted">© 2025 BTC Mining Calculator</p>
+            </div>
+        </footer>
+    </div>
+
+    
+</body>
+</html>

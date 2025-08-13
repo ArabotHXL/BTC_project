@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理 - BTC Mining Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-dark text-light">
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card bg-secondary">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3><i class="bi bi-people-fill me-2"></i>用户管理</h3>
+                        <div>
+                            <a href="/admin/create-user" class="btn btn-primary me-2">
+                                <i class="bi bi-plus-circle me-1"></i>创建用户
+                            </a>
+                            <a href="/main" class="btn btn-outline-secondary">
+                                <i class="bi bi-house me-1"></i>返回首页
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-striped mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>邮箱</th>
+                                        <th>用户名</th>
+                                        <th>显示名</th>
+                                        <th>角色</th>
+                                        <th>验证状态</th>
+                                        <th>访问状态</th>
+                                        <th>剩余天数</th>
+                                        <th>最后登录</th>
+                                        <th>创建时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    
+                                    <tr>
+                                        <td>18</td>
+                                        <td>
+                                            test_pro@test.com
+                                            
+                                                <i class="bi bi-shield-check text-success" title="已设置密码"></i>
+                                            
+                                        </td>
+                                        <td>-</td>
+                                        <td>test_pro</td>
+                                        <td>
+                                            <span class="badge 
+                                                bg-secondary
+                                                ">
+                                                GUEST
+                                            </span>
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">已验证</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">有效</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                5 天
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                2025-08-13 20:55
+                                            
+                                        </td>
+                                        <td>2025-08-12 21:56</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                
+                                                
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>17</td>
+                                        <td>
+                                            test_basic@test.com
+                                            
+                                                <i class="bi bi-shield-check text-success" title="已设置密码"></i>
+                                            
+                                        </td>
+                                        <td>-</td>
+                                        <td>test_basic</td>
+                                        <td>
+                                            <span class="badge 
+                                                bg-secondary
+                                                ">
+                                                GUEST
+                                            </span>
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">已验证</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">有效</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                5 天
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="text-muted">从未登录</span>
+                                            
+                                        </td>
+                                        <td>2025-08-12 21:56</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                
+                                                
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>16</td>
+                                        <td>
+                                            test_free@test.com
+                                            
+                                                <i class="bi bi-shield-check text-success" title="已设置密码"></i>
+                                            
+                                        </td>
+                                        <td>-</td>
+                                        <td>test_free</td>
+                                        <td>
+                                            <span class="badge 
+                                                bg-primary
+                                                ">
+                                                USER
+                                            </span>
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">已验证</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">有效</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                5 天
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="text-muted">从未登录</span>
+                                            
+                                        </td>
+                                        <td>2025-08-12 21:56</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                
+                                                
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>15</td>
+                                        <td>
+                                            admin@test.com
+                                            
+                                                <i class="bi bi-shield-check text-success" title="已设置密码"></i>
+                                            
+                                        </td>
+                                        <td>admin</td>
+                                        <td>Admin User</td>
+                                        <td>
+                                            <span class="badge 
+                                                bg-warning
+                                                ">
+                                                ADMIN
+                                            </span>
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">已验证</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">有效</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                362 天
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                2025-08-12 22:14
+                                            
+                                        </td>
+                                        <td>2025-08-11 15:25</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                
+                                                
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>14</td>
+                                        <td>
+                                            test_user_1754846938@example.com
+                                            
+                                        </td>
+                                        <td>-</td>
+                                        <td>testuser_1754846938</td>
+                                        <td>
+                                            <span class="badge 
+                                                bg-primary
+                                                ">
+                                                USER
+                                            </span>
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-warning">未验证</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">有效</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                26 天
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="text-muted">从未登录</span>
+                                            
+                                        </td>
+                                        <td>2025-08-10 17:28</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                
+                                                <button class="btn btn-outline-success btn-sm" 
+                                                        onclick="verifyUser(14)" 
+                                                        title="验证邮箱">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                                
+                                                
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>13</td>
+                                        <td>
+                                            test_user_1754800052@example.com
+                                            
+                                        </td>
+                                        <td>-</td>
+                                        <td>testuser_1754800052</td>
+                                        <td>
+                                            <span class="badge 
+                                                bg-primary
+                                                ">
+                                                USER
+                                            </span>
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-warning">未验证</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">有效</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                26 天
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="text-muted">从未登录</span>
+                                            
+                                        </td>
+                                        <td>2025-08-10 04:27</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                
+                                                <button class="btn btn-outline-success btn-sm" 
+                                                        onclick="verifyUser(13)" 
+                                                        title="验证邮箱">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                                
+                                                
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>12</td>
+                                        <td>
+                                            test_user_1754800028@example.com
+                                            
+                                        </td>
+                                        <td>-</td>
+                                        <td>testuser_1754800028</td>
+                                        <td>
+                                            <span class="badge 
+                                                bg-primary
+                                                ">
+                                                USER
+                                            </span>
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-warning">未验证</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">有效</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                26 天
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="text-muted">从未登录</span>
+                                            
+                                        </td>
+                                        <td>2025-08-10 04:27</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                
+                                                <button class="btn btn-outline-success btn-sm" 
+                                                        onclick="verifyUser(12)" 
+                                                        title="验证邮箱">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                                
+                                                
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>11</td>
+                                        <td>
+                                            test_user_1754799999@example.com
+                                            
+                                        </td>
+                                        <td>-</td>
+                                        <td>testuser_1754799999</td>
+                                        <td>
+                                            <span class="badge 
+                                                bg-primary
+                                                ">
+                                                USER
+                                            </span>
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-warning">未验证</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">有效</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                26 天
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="text-muted">从未登录</span>
+                                            
+                                        </td>
+                                        <td>2025-08-10 04:26</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                
+                                                <button class="btn btn-outline-success btn-sm" 
+                                                        onclick="verifyUser(11)" 
+                                                        title="验证邮箱">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                                
+                                                
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>10</td>
+                                        <td>
+                                            test_user_1754799878@example.com
+                                            
+                                        </td>
+                                        <td>-</td>
+                                        <td>testuser_1754799878</td>
+                                        <td>
+                                            <span class="badge 
+                                                bg-primary
+                                                ">
+                                                USER
+                                            </span>
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-warning">未验证</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">有效</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                26 天
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="text-muted">从未登录</span>
+                                            
+                                        </td>
+                                        <td>2025-08-10 04:24</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                
+                                                <button class="btn btn-outline-success btn-sm" 
+                                                        onclick="verifyUser(10)" 
+                                                        title="验证邮箱">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                                
+                                                
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>8</td>
+                                        <td>
+                                            admin@gmail.com
+                                            
+                                        </td>
+                                        <td>-</td>
+                                        <td>admin</td>
+                                        <td>
+                                            <span class="badge 
+                                                bg-danger
+                                                ">
+                                                OWNER
+                                            </span>
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">已验证</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">有效</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                3644 天
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                2025-08-11 00:54
+                                            
+                                        </td>
+                                        <td>2025-08-06 22:16</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                
+                                                
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>7</td>
+                                        <td>
+                                            testing123@example.com
+                                            
+                                                <i class="bi bi-shield-check text-success" title="已设置密码"></i>
+                                            
+                                        </td>
+                                        <td>-</td>
+                                        <td>test</td>
+                                        <td>
+                                            <span class="badge 
+                                                bg-secondary
+                                                ">
+                                                GUEST
+                                            </span>
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">已验证</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">有效</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                346 天
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                2025-08-13 03:36
+                                            
+                                        </td>
+                                        <td>2025-05-08 01:02</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                
+                                                
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>6</td>
+                                        <td>
+                                            mx665@nyu.edu
+                                            
+                                        </td>
+                                        <td>-</td>
+                                        <td>Lucy</td>
+                                        <td>
+                                            <span class="badge 
+                                                bg-secondary
+                                                ">
+                                                MINING_SITE
+                                            </span>
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-warning">未验证</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-danger">已过期</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="text-danger">-</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                2025-05-06 03:15
+                                            
+                                        </td>
+                                        <td>2025-05-05 04:51</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                
+                                                <button class="btn btn-outline-success btn-sm" 
+                                                        onclick="verifyUser(6)" 
+                                                        title="验证邮箱">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                                
+                                                
+                                                <button class="btn btn-outline-primary btn-sm" 
+                                                        onclick="extendAccess(6)" 
+                                                        title="延长访问">
+                                                    <i class="bi bi-clock"></i>
+                                                </button>
+                                                
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>5</td>
+                                        <td>
+                                            yangming1956@gmail.com
+                                            
+                                        </td>
+                                        <td>-</td>
+                                        <td>Yang Ming</td>
+                                        <td>
+                                            <span class="badge 
+                                                bg-secondary
+                                                ">
+                                                MINING_SITE
+                                            </span>
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-warning">未验证</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">有效</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                49 天
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="text-muted">从未登录</span>
+                                            
+                                        </td>
+                                        <td>2025-05-05 04:42</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                
+                                                <button class="btn btn-outline-success btn-sm" 
+                                                        onclick="verifyUser(5)" 
+                                                        title="验证邮箱">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                                
+                                                
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>4</td>
+                                        <td>
+                                            site@example.com
+                                            
+                                        </td>
+                                        <td>-</td>
+                                        <td>Tim</td>
+                                        <td>
+                                            <span class="badge 
+                                                bg-secondary
+                                                ">
+                                                MINING_SITE
+                                            </span>
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-warning">未验证</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">有效</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                293 天
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                2025-08-06 23:09
+                                            
+                                        </td>
+                                        <td>2025-05-04 07:00</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                
+                                                <button class="btn btn-outline-success btn-sm" 
+                                                        onclick="verifyUser(4)" 
+                                                        title="验证邮箱">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                                
+                                                
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>3</td>
+                                        <td>
+                                            user@example.com
+                                            
+                                                <i class="bi bi-shield-check text-success" title="已设置密码"></i>
+                                            
+                                        </td>
+                                        <td>user</td>
+                                        <td>Test user</td>
+                                        <td>
+                                            <span class="badge 
+                                                bg-secondary
+                                                ">
+                                                GUEST
+                                            </span>
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">已验证</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">有效</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                263 天
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                2025-08-12 22:09
+                                            
+                                        </td>
+                                        <td>2025-05-04 05:09</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                
+                                                
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>2</td>
+                                        <td>
+                                            hxl2022hao@gmail.com
+                                            
+                                                <i class="bi bi-shield-check text-success" title="已设置密码"></i>
+                                            
+                                        </td>
+                                        <td>-</td>
+                                        <td>Nick</td>
+                                        <td>
+                                            <span class="badge 
+                                                bg-danger
+                                                ">
+                                                OWNER
+                                            </span>
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">已验证</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">有效</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                36398 天
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                2025-08-13 22:55
+                                            
+                                        </td>
+                                        <td>2025-05-04 05:04</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                
+                                                
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>1</td>
+                                        <td>
+                                            admin@example.com
+                                            
+                                        </td>
+                                        <td>-</td>
+                                        <td>管理员</td>
+                                        <td>
+                                            <span class="badge 
+                                                bg-warning
+                                                ">
+                                                ADMIN
+                                            </span>
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-warning">未验证</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                <span class="badge bg-success">有效</span>
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                346 天
+                                            
+                                        </td>
+                                        <td>
+                                            
+                                                2025-08-02 22:20
+                                            
+                                        </td>
+                                        <td>2025-05-04 05:01</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                
+                                                <button class="btn btn-outline-success btn-sm" 
+                                                        onclick="verifyUser(1)" 
+                                                        title="验证邮箱">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                                
+                                                
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer text-center">
+                        <small class="text-muted">
+                            共 17 个用户 | 
+                            已验证: 8 | 
+                            有效访问: 16
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function verifyUser(userId) {
+            if (confirm('确认验证此用户的邮箱？')) {
+                try {
+                    const response = await fetch(`/admin/verify-user/${userId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('操作失败，请重试');
+                    }
+                } catch (error) {
+                    alert('网络错误，请重试');
+                }
+            }
+        }
+
+        async function extendAccess(userId) {
+            const days = prompt('延长访问天数:', '30');
+            if (days && !isNaN(days) && parseInt(days) > 0) {
+                try {
+                    const response = await fetch(`/admin/extend-access/${userId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({days: parseInt(days)})
+                    });
+                    
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('操作失败，请重试');
+                    }
+                } catch (error) {
+                    alert('网络错误，请重试');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
