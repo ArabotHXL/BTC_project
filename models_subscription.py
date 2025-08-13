@@ -111,7 +111,7 @@ def initialize_default_plans():
         free_plan.price = 0
         free_plan.max_miners = 1
         free_plan.max_historical_days = 7
-        free_plan.allow_batch_calculator = False
+        free_plan.allow_batch_calculator = True  # Free现在允许基础批量计算
         free_plan.allow_crm_system = False
         free_plan.allow_advanced_analytics = False
         free_plan.allow_api_access = False
@@ -121,15 +121,15 @@ def initialize_default_plans():
         free_plan.allow_priority_support = False
         free_plan.available_miner_models = 3
         
-        # Basic Plan - 无天数限制
+        # Basic Plan - 批量计算套餐
         basic_plan = SubscriptionPlan(
             id='basic',
             name='Basic',
             price=29.0,
-            max_miners=5,
-            max_historical_days=365,  # 移除天数限制，设置为365天
+            max_miners=100,  # ≤100台矿机
+            max_historical_days=30,  # 30天历史数据
             allow_batch_calculator=True,
-            allow_crm_system=True,
+            allow_crm_system=False,  # Basic不包含CRM
             allow_advanced_analytics=False,
             allow_api_access=False,
             allow_custom_scenarios=False,
@@ -139,13 +139,13 @@ def initialize_default_plans():
             available_miner_models=17
         )
         
-        # Pro Plan
+        # Pro Plan - 无限制专业套餐
         pro_plan = SubscriptionPlan(
             id='pro',
             name='Pro',
             price=99.0,
-            max_miners=10,
-            max_historical_days=365,
+            max_miners=999999,  # 不限台数
+            max_historical_days=365,  # 365天历史数据
             allow_batch_calculator=True,
             allow_crm_system=True,
             allow_advanced_analytics=True,

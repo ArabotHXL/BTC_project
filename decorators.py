@@ -252,7 +252,7 @@ def get_default_free_plan():
         name = 'Free'
         max_miners = 1
         max_historical_days = 7
-        allow_batch_calculator = False
+        allow_batch_calculator = True  # Free现在允许基础批量计算
         allow_crm_system = False
         allow_advanced_analytics = False
         allow_api_access = False

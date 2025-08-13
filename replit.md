@@ -76,6 +76,14 @@ Preferred communication style: Simple, everyday language.
 - Validated with real market data showing 58 trades in 10-minute window
 - Integration value: Provides options market sentiment analysis for mining investment decisions
 
+### Subscription Plan Specification Update (August 13, 2025)
+- **订阅计划规格更新完成**: 按照用户提供的规格表更新了所有订阅计划
+- **Free计划**: 1台矿机，7天历史，现在允许基础批量计算功能（付费墙入口）
+- **Basic计划**: ≤100台矿机，30天历史，批量计算、Excel导出、短期预测、邮件告警
+- **Pro计划**: 不限台数（999999），365天历史，全功能包含API访问、高级分析、专业报告
+- **测试账户权限修复**: 解决了用户表不一致问题，测试账户现在可以正确使用相应权限
+- **数据库更新**: 订阅计划配置已同步到数据库和代码定义
+
 ### Code Lock Status (August 13, 2025)
 - **CODE LOCKED**: All development work has been completed and frozen
 - No further modifications to be made to the codebase
