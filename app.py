@@ -993,7 +993,7 @@ def calculate_internal(request_obj):
         
         if hashrate_source == 'manual':
             try:
-                manual_hashrate_raw = request.form.get('manual_hashrate', 800.0)
+                manual_hashrate_raw = request.form.get('manual_hashrate', 997.31)
                 # Guard against NaN injection
                 if isinstance(manual_hashrate_raw, str) and manual_hashrate_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
                     raise ValueError(f"Invalid numeric value: {manual_hashrate_raw}")
@@ -1007,6 +1007,27 @@ def calculate_internal(request_obj):
                 logging.warning("手动全网算力输入无效，回退到API获取")
                 hashrate_source = 'api'
                 manual_hashrate = None
+        
+        # 处理网络难度来源选择
+        difficulty_source = request.form.get('difficulty_source', 'api')
+        manual_difficulty = None
+        
+        if difficulty_source == 'manual':
+            try:
+                manual_difficulty_raw = request.form.get('manual_difficulty', 129435235580344)
+                # Guard against NaN injection
+                if isinstance(manual_difficulty_raw, str) and manual_difficulty_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
+                    raise ValueError(f"Invalid numeric value: {manual_difficulty_raw}")
+                manual_difficulty = float(manual_difficulty_raw)
+                # Additional check for NaN/inf after conversion
+                if not (manual_difficulty == manual_difficulty and abs(manual_difficulty) != float('inf')):
+                    raise ValueError("NaN or infinite value detected")
+                logging.info(f"使用手动输入的网络难度: {manual_difficulty:,.0f}")
+            except ValueError as e:
+                logging.error(f"Invalid manual difficulty value: {request.form.get('manual_difficulty')} - {str(e)}")
+                logging.warning("手动网络难度输入无效，回退到API获取")
+                difficulty_source = 'api'
+                manual_difficulty = None
         
         # 添加错误处理来确保即使API调用失败计算仍能继续
         try:
@@ -1026,7 +1047,8 @@ def calculate_internal(request_obj):
                 host_investment=host_investment,
                 client_investment=client_investment,
                 maintenance_fee=maintenance_fee,
-                manual_network_hashrate=manual_hashrate  # 新增参数：手动全网算力
+                manual_network_hashrate=manual_hashrate,  # 新增参数：手动全网算力
+                manual_network_difficulty=manual_difficulty  # 新增参数：手动网络难度
             )
             
             # 确保返回完整的计算结果格式

@@ -1,10 +1,17 @@
 """
 Batch calculator routes for handling multiple miner calculations.
 """
-from flask import Blueprint, request, jsonify, render_template, session, render_template_string
+from flask import Blueprint, request, jsonify, render_template, session, render_template_string, send_file
 from decorators import check_miner_limit, get_user_plan, UpgradeRequired, require_feature
 from mining_calculator import calculate_mining_profitability, MINER_DATA
 import logging
+import io
+import os
+from datetime import datetime
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils.dataframe import dataframe_to_rows
+import xlsxwriter
 
 # Create blueprint
 batch_calculator_bp = Blueprint('batch_calculator', __name__)
@@ -236,19 +243,23 @@ def export_batch_csv():
                 'message': 'No results to export'
             }), 400
         
-        # Generate CSV content
-        csv_lines = ['Model,Quantity,Daily Revenue,Daily Cost,Daily Profit,Monthly Profit,Annual ROI,Payback Days']
+        # Generate CSV content with 3 decimal places precision
+        csv_lines = ['Model,Quantity,Daily Revenue,Daily Cost,Daily Profit,Monthly Profit,Annual ROI,Payback Days,Hash Rate (TH/s),Power (W),Daily BTC,Monthly BTC']
         
         for result in results:
             line = ','.join([
-                result.get('model', ''),
+                f'"{result.get("model", "")}"',
                 str(result.get('quantity', 0)),
-                f"{result.get('daily_revenue', 0):.2f}",
-                f"{result.get('daily_cost', 0):.2f}",
-                f"{result.get('daily_profit', 0):.2f}",
-                f"{result.get('monthly_profit', 0):.2f}",
-                f"{result.get('annual_roi', 0):.1f}%",
-                str(result.get('payback_days', 0))
+                f"{result.get('daily_revenue', 0):.3f}",
+                f"{result.get('daily_cost', 0):.3f}",
+                f"{result.get('daily_profit', 0):.3f}",
+                f"{result.get('monthly_profit', 0):.3f}",
+                f"{result.get('annual_roi', 0):.3f}%",
+                f"{result.get('payback_days', 0):.3f}",
+                f"{result.get('hashrate', 0):.3f}",
+                f"{result.get('power', 0):.3f}",
+                f"{result.get('daily_btc', 0):.8f}",
+                f"{result.get('monthly_btc', 0):.8f}"
             ])
             csv_lines.append(line)
         
@@ -292,14 +303,93 @@ def export_batch_excel():
                 'message': 'No results to export'
             }), 400
         
-        # For now, return success message
-        # TODO: Implement actual Excel generation using openpyxl or xlsxwriter
+        # Generate Excel file using openpyxl
+        workbook = openpyxl.Workbook()
+        worksheet = workbook.active
+        if worksheet is not None:
+            worksheet.title = "Mining Results"
         
-        return jsonify({
-            'success': True,
-            'message': 'Excel export feature coming soon',
-            'filename': f"batch_mining_results_{len(results)}_miners.xlsx"
-        })
+        # Define styles
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+        header_alignment = Alignment(horizontal="center", vertical="center")
+        border = Border(
+            left=Side(style='thin'),
+            right=Side(style='thin'),
+            top=Side(style='thin'),
+            bottom=Side(style='thin')
+        )
+        
+        # Headers with 3 decimal places precision
+        headers = [
+            'Miner Model', 'Quantity', 'Daily Revenue (USD)', 'Daily Cost (USD)', 
+            'Daily Profit (USD)', 'Monthly Profit (USD)', 'Annual ROI (%)', 
+            'Payback Days', 'Hash Rate (TH/s)', 'Power (W)', 
+            'Daily BTC', 'Monthly BTC'
+        ]
+        
+        # Set headers
+        if worksheet is not None:
+            for col, header in enumerate(headers, 1):
+                cell = worksheet.cell(row=1, column=col, value=header)
+                cell.font = header_font
+                cell.fill = header_fill
+                cell.alignment = header_alignment
+                cell.border = border
+        
+        # Add data rows with 3 decimal places
+        if worksheet is not None:
+            for row, result in enumerate(results, 2):
+                data_row = [
+                    result.get('model', ''),
+                    result.get('quantity', 0),
+                    round(result.get('daily_revenue', 0), 3),
+                    round(result.get('daily_cost', 0), 3),
+                    round(result.get('daily_profit', 0), 3),
+                    round(result.get('monthly_profit', 0), 3),
+                    round(result.get('annual_roi', 0), 3),
+                    round(result.get('payback_days', 0), 3),
+                    round(result.get('hashrate', 0), 3),
+                    round(result.get('power', 0), 3),
+                    round(result.get('daily_btc', 0), 8),
+                    round(result.get('monthly_btc', 0), 8)
+                ]
+                
+                for col, value in enumerate(data_row, 1):
+                    cell = worksheet.cell(row=row, column=col, value=value)
+                    cell.border = border
+                    if isinstance(value, (int, float)) and col > 2:
+                        cell.number_format = '0.000'  # 3 decimal places
+        
+        # Auto-adjust column widths
+        if worksheet is not None:
+            for column in worksheet.columns:
+                max_length = 0
+                column_letter = column[0].column_letter
+                for cell in column:
+                    try:
+                        if len(str(cell.value)) > max_length:
+                            max_length = len(str(cell.value))
+                    except:
+                        pass
+                adjusted_width = min(max_length + 2, 20)
+                worksheet.column_dimensions[column_letter].width = adjusted_width
+        
+        # Save to BytesIO
+        excel_buffer = io.BytesIO()
+        workbook.save(excel_buffer)
+        excel_buffer.seek(0)
+        
+        # Create filename with timestamp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"batch_mining_results_{len(results)}_miners_{timestamp}.xlsx"
+        
+        return send_file(
+            excel_buffer,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
         
     except Exception as e:
         logger.error(f"Excel export error: {e}")
