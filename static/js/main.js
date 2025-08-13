@@ -45,25 +45,28 @@ document.addEventListener('DOMContentLoaded', function() {
         const currentLang = document.querySelector('meta[name="language"]')?.content || 'zh';
         console.log("当前语言设置 (Current language):", currentLang);
         
-        // 清除可能存在的旧格式缓存数据
+        // 清除所有可能的旧格式缓存数据
         localStorage.removeItem('last_block_reward');
+        localStorage.removeItem('last_btc_price');
+        localStorage.removeItem('last_network_difficulty');
+        localStorage.removeItem('last_network_hashrate');
+        console.log("已清除所有localStorage缓存数据");
         
-        // 检查是否有预加载的网络数据
-        var cachedData = window.getNetworkDataCache && window.getNetworkDataCache();
-        if (cachedData && cachedData.data && (Date.now() - cachedData.lastUpdate < 30000)) {
-            console.log("使用预加载的网络数据", cachedData.data);
-            updateNetworkStatsDisplay(cachedData.data);
-        } else {
-            console.log("缓存数据不可用，获取实时网络数据");
-            // 加载网络数据 (Load network data)
-            fetchNetworkStats();
-        }
+        // 强制跳过预加载数据，直接获取实时数据
+        console.log("强制跳过预加载数据，直接获取最新的网络统计数据");
+        fetchNetworkStats();
         
         // 无论如何都强制获取一次最新的网络统计数据以确保区块奖励正确
         setTimeout(function() {
             console.log("强制刷新网络统计数据以确保区块奖励格式正确");
             fetchNetworkStats();
         }, 1000);
+        
+        // 额外在3秒后再次强制刷新，确保数据更新
+        setTimeout(function() {
+            console.log("二次强制刷新网络统计数据");
+            fetchNetworkStats();
+        }, 3000);
         
         // 延迟启动自动刷新
         setTimeout(function() {
@@ -1432,9 +1435,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('缓存区块奖励调试 - 格式化值:', formatNumber(blockReward, 3));
                     blockRewardEl.textContent = formatNumber(blockReward, 3) + ' BTC';
                 } else {
-                    console.log('缓存数据中没有区块奖励，获取实时数据');
+                    console.log('警告：缓存数据中没有区块奖励字段！');
+                    console.log('立即获取实时网络统计数据...');
                     // 如果缓存数据没有区块奖励，立即获取实时数据
                     fetchNetworkStats();
+                    // 同时设置临时显示
+                    blockRewardEl.innerHTML = '<small class="text-warning">加载中...</small>';
                 }
             }
         }
