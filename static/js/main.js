@@ -45,6 +45,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const currentLang = document.querySelector('meta[name="language"]')?.content || 'zh';
         console.log("当前语言设置 (Current language):", currentLang);
         
+        // 清除可能存在的旧格式缓存数据
+        localStorage.removeItem('last_block_reward');
+        
         // 检查是否有预加载的网络数据
         var cachedData = window.getNetworkDataCache && window.getNetworkDataCache();
         if (cachedData && cachedData.data && (Date.now() - cachedData.lastUpdate < 30000)) {
@@ -580,6 +583,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (lastBlockReward && blockRewardEl) {
+            console.log('后备区块奖励数据 - 原始值:', lastBlockReward);
+            console.log('后备区块奖励数据 - 格式化值:', formatNumber(parseFloat(lastBlockReward), 3));
             blockRewardEl.textContent = formatNumber(parseFloat(lastBlockReward), 3) + ' BTC';
         } else if (blockRewardEl) {
             blockRewardEl.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
@@ -1393,10 +1398,33 @@ document.addEventListener('DOMContentLoaded', function() {
         xhr.send();
     }
 
+    // 创建缺失的updateNetworkStatsDisplay函数
+    function updateNetworkStatsDisplay(data) {
+        console.log('更新网络统计显示 - 数据:', data);
+        
+        if (data) {
+            if (btcPriceEl && data.btc_price) {
+                btcPriceEl.textContent = formatCurrency(data.btc_price, 2);
+            }
+            if (networkDifficultyEl && data.network_difficulty) {
+                networkDifficultyEl.textContent = formatNumber(data.network_difficulty) + 'T';
+            }
+            if (networkHashrateEl && data.network_hashrate) {
+                networkHashrateEl.textContent = formatNumber(data.network_hashrate) + ' EH/s';
+            }
+            if (blockRewardEl && data.block_reward) {
+                console.log('缓存区块奖励调试 - 原始值:', data.block_reward);
+                console.log('缓存区块奖励调试 - 格式化值:', formatNumber(data.block_reward, 3));
+                blockRewardEl.textContent = formatNumber(data.block_reward, 3) + ' BTC';
+            }
+        }
+    }
+
     // 导出关键函数到全局作用域，便于优化器使用
     window.fetchNetworkStats = fetchNetworkStats;
     window.fetchMiners = fetchMiners;
     window.fetchNetworkStatsForDetails = fetchNetworkStatsForDetails;
+    window.updateNetworkStatsDisplay = updateNetworkStatsDisplay;
     window.initializeCharts = function() {
         // 图表初始化逻辑可以放在这里
         console.log("图表初始化完成");
