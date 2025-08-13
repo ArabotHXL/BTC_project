@@ -1761,7 +1761,11 @@ def edit_user_access(user_id):
             # 更新用户信息
             user.name = request.form['name']
             user.email = request.form['email']
-            user.username = request.form.get('username')
+            
+            # 处理用户名：空字符串转换为None以避免唯一约束冲突
+            username_value = request.form.get('username', '').strip()
+            user.username = username_value if username_value else None
+            
             user.company = request.form.get('company')
             user.position = request.form.get('position')
             user.notes = request.form.get('notes')
