@@ -418,8 +418,8 @@
                                             
                                             if (minerCount > 0 && powerWatt > 0) {
                                                 var requiredPowerMw = (minerCount * powerWatt) / 1000000;
-                                                document.getElementById('site-power-mw').value = requiredPowerMw.toFixed(2);
-                                                console.log("[直接更新] 矿机数量: " + minerCount + ", 单机功率: " + powerWatt + ", 计算得到矿场功率: " + requiredPowerMw.toFixed(2) + "MW");
+                                                document.getElementById('site-power-mw').value = requiredPowerMw.toFixed(3);
+                                                console.log("[直接更新] 矿机数量: " + minerCount + ", 单机功率: " + powerWatt + ", 计算得到矿场功率: " + requiredPowerMw.toFixed(3) + "MW");
                                             }
                                         } catch (error) {
                                             console.error("直接更新矿场功率时出错:", error);
@@ -1135,7 +1135,7 @@
             var priceChangeEl = document.getElementById('widget-price-change');
             if (priceChangeEl && data.price_change_24h !== null && data.price_change_24h !== undefined) {
                 var change = data.price_change_24h;
-                priceChangeEl.textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
+                priceChangeEl.textContent = (change >= 0 ? '+' : '') + change.toFixed(3) + '%';
                 priceChangeEl.className = 'small ' + (change >= 0 ? 'text-success' : 'text-danger');
             } else if (priceChangeEl) {
                 priceChangeEl.textContent = '--';
@@ -1145,7 +1145,7 @@
             // Update Network Hashrate
             var hashrateEl = document.getElementById('widget-hashrate');
             if (hashrateEl) {
-                hashrateEl.textContent = data.network_hashrate ? data.network_hashrate.toFixed(1) : '--';
+                hashrateEl.textContent = data.network_hashrate ? data.network_hashrate.toFixed(3) : '--';
             }
 
             // Update Fear & Greed Index
@@ -1393,7 +1393,7 @@
             
             function safeFormatNumber(value, decimals) {
                 if (typeof decimals === 'undefined') {
-                    decimals = 2;
+                    decimals = 3;  // 更新默认为3位小数
                 }
                 return value !== null && value !== undefined ? formatNumber(value, decimals) : '--';
             }
@@ -1416,8 +1416,8 @@
                     '<div class="col-md-6">' +
                         '<h6>' + (currentLang === 'en' ? 'Momentum' : '动量指标') + '</h6>' +
                         '<table class="table table-sm">' +
-                            '<tr><td>RSI (14)</td><td>' + safeFormatNumber(indicators.rsi_14, 1) + '</td></tr>' +
-                            '<tr><td>MACD</td><td>' + safeFormatNumber(indicators.macd, 4) + '</td></tr>' +
+                            '<tr><td>RSI (14)</td><td>' + safeFormatNumber(indicators.rsi_14, 3) + '</td></tr>' +
+                            '<tr><td>MACD</td><td>' + safeFormatNumber(indicators.macd, 3) + '</td></tr>' +
                             '<tr><td>' + (currentLang === 'en' ? '30D Volatility' : '30日波动率') + '</td><td>' + safeFormatPercent(indicators.volatility_30d) + '</td></tr>' +
                         '</table>' +
                     '</div>' +
@@ -1467,13 +1467,13 @@
 
         function formatNumber(num, decimals) {
             if (typeof decimals === 'undefined') {
-                decimals = 2;
+                decimals = 3;  // 更新默认为3位小数
             }
             return num ? num.toFixed(decimals) : '--';
         }
 
         function formatPercent(percent) {
-            return percent ? (percent >= 0 ? '+' : '') + percent.toFixed(2) + '%' : '--';
+            return percent ? (percent >= 0 ? '+' : '') + percent.toFixed(3) + '%' : '--';  // 更新为3位小数
         }
     </script>
 
