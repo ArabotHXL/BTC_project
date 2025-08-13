@@ -37,11 +37,14 @@ Preferred communication style: Simple, everyday language.
 - Achieved 97%+ data accuracy improvement using mixed RPC and API sources while maintaining zero cost
 - Fixed API priority logic with proper error handling and automatic fallback for service disruptions
 
-### Data Pipeline Optimization (August 12, 2025)
-- Modified data collection frequency from 30 minutes to 15 minutes for better real-time accuracy
-- Enabled background services by default (changed default from disabled to enabled)
-- Improved data collection pipeline to support Bitcoin RPC integration as primary source
+### Data Pipeline Optimization (August 13, 2025)
+- Modified data collection frequency from 15 minutes to 10 minutes to match Bitcoin block time
+- Optimized API update frequencies based on source characteristics:
+  - Blockchain.info: ~10 minutes (follows block production)
+  - Minerstat: 5-10 minutes (aggregated sources)
+  - Mempool.space: Real-time (blockchain-synchronized)
 - Enhanced system responsiveness and data freshness for mining calculations
+- Enabled background services by default for continuous operation
 
 ### Subscription Management System (August 12, 2025)
 - Added comprehensive subscription plan management with three tiers (Free/Basic $29/Pro $99)
