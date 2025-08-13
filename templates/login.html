@@ -104,15 +104,15 @@
                         <h5 class="card-title text-center mb-4">{{ t('email_verification_login') }}</h5>
                         <form class="login-form" method="post" action="{{ url_for('login') }}">
                             <div class="mb-3">
-                                <label for="email" class="form-label">邮箱或用户名</label>
+                                <label for="email" class="form-label">{{ t('email_or_username') }}</label>
                                 <input type="text" class="form-control" id="email" name="email" 
-                                       placeholder="输入邮箱地址或用户名" required autofocus>
+                                       placeholder="{{ t('email_placeholder') }}" required autofocus>
                             </div>
                             <div class="mb-3">
-                                <label for="password" class="form-label">密码</label>
+                                <label for="password" class="form-label">{{ t('password') }}</label>
                                 <input type="password" class="form-control" id="password" name="password" 
-                                       placeholder="输入密码（新用户密码可选）">
-                                <div class="form-text text-muted">新注册用户请先注册账户</div>
+                                       placeholder="{{ t('password_placeholder') }}">
+                                <div class="form-text text-muted">{{ t('new_user_register') }}</div>
                             </div>
                             <div class="d-grid">
                                 <button type="submit" class="btn btn-primary">{{ t('login') }}</button>
@@ -120,9 +120,9 @@
                         </form>
                         <div class="text-center mt-4">
                             <p class="text-muted">
-                                还没有账户？ 
+                                {{ t('no_account') }} 
                                 <a href="{{ url_for('register') }}" class="text-primary text-decoration-none">
-                                    立即注册
+                                    {{ t('register_now') }}
                                 </a>
                             </p>
                             {% if session.get('role') in ['owner', 'admin'] %}

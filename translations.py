@@ -118,6 +118,13 @@ TRANSLATIONS = {
         'network_strong': 'Network Strong',
         'bearish_warning': 'Bearish Warning',
         'market_indicators_normal': 'Current market indicators are normal, no special alerts',
+        # Login form translations
+        'email_or_username': 'Email or Username',
+        'email_placeholder': 'Enter email address or username',
+        'password_placeholder': 'Enter password (optional for new users)',
+        'new_user_register': 'New users please register first',
+        'no_account': "Don't have an account?",
+        'register_now': 'Register Now',
     },
     'zh': {
         'btc_mining_calculator': 'BTC挖矿计算器',
@@ -230,6 +237,13 @@ TRANSLATIONS = {
         'network_strong': '网络强劲',
         'bearish_warning': '贪婪警告',
         'market_indicators_normal': '当前市场指标正常，无特殊警报',
+        # 登录表单翻译
+        'email_or_username': '邮箱或用户名',
+        'email_placeholder': '输入邮箱地址或用户名',
+        'password_placeholder': '输入密码（新用户密码可选）',
+        'new_user_register': '新注册用户请先注册账户',
+        'no_account': '还没有账户？',
+        'register_now': '立即注册',
     }
 }
 
