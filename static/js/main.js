@@ -499,7 +499,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (btcPriceEl) btcPriceEl.textContent = formatCurrency(data.price, 2);
                         if (networkDifficultyEl) networkDifficultyEl.textContent = formatNumber(data.difficulty) + 'T';
                         if (networkHashrateEl) networkHashrateEl.textContent = formatNumber(data.hashrate) + ' EH/s';
-                        if (blockRewardEl) blockRewardEl.textContent = formatNumber(data.block_reward) + ' BTC';
+                        if (blockRewardEl) blockRewardEl.textContent = formatNumber(data.block_reward, 3) + ' BTC';
                         
                         // 更新BTC价格输入框 (Update BTC price input)
                         if (useRealTimeCheckbox && useRealTimeCheckbox.checked && btcPriceInput) {
@@ -576,7 +576,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (lastBlockReward && blockRewardEl) {
-            blockRewardEl.textContent = formatNumber(parseFloat(lastBlockReward), 4) + ' BTC';
+            blockRewardEl.textContent = formatNumber(parseFloat(lastBlockReward), 3) + ' BTC';
         } else if (blockRewardEl) {
             blockRewardEl.innerHTML = '<small class="text-danger">数据获取失败 / Data fetch failed</small>';
         }
@@ -810,7 +810,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentBtcPriceEl.textContent = formatCurrency(data.network_data.btc_price, 2);
             }
             if (blockRewardEl) {
-                blockRewardEl.textContent = formatNumber(data.network_data.block_reward, 4) + ' BTC';
+                blockRewardEl.textContent = formatNumber(data.network_data.block_reward, 3) + ' BTC';
             }
         }
         
