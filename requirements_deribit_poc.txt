@@ -1,0 +1,2 @@
+# Deribit期权数据POC所需依赖
+requests>=2.25.0
