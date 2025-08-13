@@ -15,12 +15,12 @@ logging.basicConfig(level=logging.INFO)
 _API_CACHE = {}
 _CACHE_TIMEOUT = 60  # 60秒缓存
 
-# Constants
+# Constants - Updated 2025-08-13
 BLOCKS_PER_DAY = 144
-DEFAULT_BTC_PRICE = 80000  # USD
-DEFAULT_NETWORK_DIFFICULTY = 119116256505723  # ~119.12T
-DEFAULT_NETWORK_HASHRATE = 752.81  # EH/s (Updated to current network state)
-BLOCK_REWARD = 3.125  # BTC
+DEFAULT_BTC_PRICE = 120499  # USD - Last updated from live API
+DEFAULT_NETWORK_DIFFICULTY = 129435235580344  # ~129.44T - Last updated from blockchain.info
+DEFAULT_NETWORK_HASHRATE = 997.31  # EH/s - Last updated from blockchain.info 2025-08-13
+BLOCK_REWARD = 3.125  # BTC - Post-halving April 2024
 
 # Fixed miner data including hashrate and power consumption for each model
 MINER_DATA = {
