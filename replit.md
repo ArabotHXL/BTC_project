@@ -38,7 +38,7 @@ Preferred communication style: Simple, everyday language.
 - Fixed API priority logic with proper error handling and automatic fallback for service disruptions
 
 ### Data Pipeline Optimization (August 13, 2025)
-- Modified data collection frequency from 15 minutes to 10 minutes to match Bitcoin block time
+- Modified data collection frequency from 30 minutes to 15 minutes for better real-time accuracy
 - Optimized API update frequencies based on source characteristics:
   - Blockchain.info: ~10 minutes (follows block production)
   - Minerstat: 5-10 minutes (aggregated sources)
