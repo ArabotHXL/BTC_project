@@ -31,8 +31,8 @@ Preferred communication style: Simple, everyday language.
 ### Bitcoin RPC Integration & Network Hashrate Fix (August 12, 2025)
 - **✅ Ankr RPC Integration Complete**: Successfully integrated Ankr's free Bitcoin RPC service for real-time blockchain data
 - **✅ Network Hashrate Accuracy Fixed**: Corrected hashrate from 405 EH/s to accurate 911 EH/s using optimal data source priority
-- **Data Source Priority Updated**: CoinWarz API (primary) → Minerstat API (backup) → Blockchain.info stats接口 (fallback, 875 EH/s)
-- **CoinWarz API Status**: Currently experiencing service issues, system automatically uses Minerstat backup (911 EH/s)
+- **Data Source Priority Updated**: Blockchain.info stats接口 (primary, 875 EH/s) → Minerstat API (backup) → CoinWarz API (fallback)
+- **Primary Data Source**: Blockchain.info stats接口提供稳定的875 EH/s算力数据，系统现在使用此接口作为主要数据源
 - Enhanced data reliability with intelligent fallback mechanism ensuring continuous accurate data collection
 - Achieved 97%+ data accuracy improvement using mixed RPC and API sources while maintaining zero cost
 - Fixed API priority logic with proper error handling and automatic fallback for service disruptions
