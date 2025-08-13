@@ -2732,11 +2732,11 @@ def calculate_curtailment():
 def inject_nav_menu():
     """向模板注入导航菜单项"""
     def user_has_crm_access():
-        """检查用户是否有访问CRM的权限"""
+        """检查用户是否有访问CRM的权限 - 仅限管理员和矿场主"""
         if not session.get('authenticated'):
             return False
         role = session.get('role')
-        return role in ['owner', 'admin', 'manager', 'mining_site']
+        return role in ['owner', 'admin', 'mining_site']
     
     def user_has_network_analysis_access():
         """检查用户是否有访问网络分析的权限"""

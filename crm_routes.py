@@ -21,12 +21,12 @@ crm = Blueprint('crm', __name__, url_prefix='/crm')
 
 # 权限验证装饰器
 def crm_access_required(view_function):
-    """验证用户是否有CRM访问权限 - 基于订阅计划和角色，Owner不受订阅限制"""
+    """验证用户是否有CRM访问权限 - 仅限管理员和矿场主，基于订阅计划和角色，Owner不受订阅限制"""
     @login_required
     def wrapped_view(*args, **kwargs):
-        # 首先检查角色权限
-        if session.get('role') not in ['owner', 'admin', 'manager', 'mining_site']:
-            flash('您没有权限访问CRM系统', 'danger')
+        # 首先检查角色权限 - 移除客户访问权限
+        if session.get('role') not in ['owner', 'admin', 'mining_site']:
+            flash('CRM系统目前仅限管理员和矿场主使用', 'danger')
             return redirect(url_for('index'))
         
         # Owner账户不受订阅计划限制

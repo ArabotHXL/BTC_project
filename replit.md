@@ -60,6 +60,10 @@ Preferred communication style: Simple, everyday language.
 - **August 13**: Removed time limitations for Basic plan - upgraded from 30 days to 365 days historical data access
   - Basic plan users now have nearly unlimited historical data access
   - Maintains feature restrictions while removing time-based limitations
+- **August 13**: Restricted CRM system access to administrators and mining sites only
+  - Removed customer/manager role access to CRM system as it's still under development
+  - Updated access control in both route decorators and template navigation functions
+  - CRM system now only available to: Owner, Admin, Mining_site roles
 
 ## System Architecture
 
