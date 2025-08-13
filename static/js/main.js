@@ -812,6 +812,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (blockRewardEl) {
                 blockRewardEl.textContent = formatNumber(data.network_data.block_reward, 3) + ' BTC';
             }
+        } else {
+            // 如果没有network_data，尝试从网络统计API获取实时数据
+            fetchNetworkStatsForDetails();
         }
         
         // 更新挖矿场信息
@@ -1350,9 +1353,46 @@ document.addEventListener('DOMContentLoaded', function() {
         return window.getCachedElement ? window.getCachedElement(id) : document.getElementById(id);
     }
     
+    // 为详细信息表格获取网络统计数据
+    function fetchNetworkStatsForDetails() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/network_stats', true);
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                try {
+                    var data = JSON.parse(xhr.responseText);
+                    if (data && data.success) {
+                        // 更新详细信息表格中的网络数据
+                        var networkDifficultyEl = document.getElementById('network-difficulty-value');
+                        var networkHashrateEl = document.getElementById('network-hashrate-value');
+                        var currentBtcPriceEl = document.getElementById('current-btc-price-value');
+                        var blockRewardEl = document.getElementById('block-reward-value');
+                        
+                        if (networkDifficultyEl) {
+                            networkDifficultyEl.textContent = formatNumber(data.difficulty, 2) + ' T';
+                        }
+                        if (networkHashrateEl) {
+                            networkHashrateEl.textContent = formatNumber(data.hashrate, 2) + ' EH/s';
+                        }
+                        if (currentBtcPriceEl) {
+                            currentBtcPriceEl.textContent = formatCurrency(data.price, 2);
+                        }
+                        if (blockRewardEl) {
+                            blockRewardEl.textContent = formatNumber(data.block_reward, 3) + ' BTC';
+                        }
+                    }
+                } catch (error) {
+                    console.error('获取详细网络统计失败:', error);
+                }
+            }
+        };
+        xhr.send();
+    }
+
     // 导出关键函数到全局作用域，便于优化器使用
     window.fetchNetworkStats = fetchNetworkStats;
     window.fetchMiners = fetchMiners;
+    window.fetchNetworkStatsForDetails = fetchNetworkStatsForDetails;
     window.initializeCharts = function() {
         // 图表初始化逻辑可以放在这里
         console.log("图表初始化完成");
