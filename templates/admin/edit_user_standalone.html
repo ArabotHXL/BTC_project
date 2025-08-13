@@ -309,63 +309,8 @@
                         </div>
                         {% if session.get('role') == 'owner' %}
                         <div class="col-12">
-                            <label class="form-label">
-                                <i class="bi bi-credit-card me-1"></i>
-                                {% if current_lang == 'en' %}Subscription Plan{% else %}订阅计划{% endif %}
-                            </label>
-                            <div class="row g-2">
-                                <div class="col-md-4">
-                                    <div class="subscription-plan-card" onclick="selectPlan('free')">
-                                        <input type="radio" name="subscription_plan" value="free" id="plan_free" 
-                                               {{ 'checked' if (user.subscription_plan or 'free') == 'free' else '' }}>
-                                        <label for="plan_free" class="plan-label">
-                                            <div class="plan-header">
-                                                <i class="bi bi-person"></i>
-                                                <h6>{% if current_lang == 'en' %}Free{% else %}免费版{% endif %}</h6>
-                                            </div>
-                                            <div class="plan-price">$0/月</div>
-                                            <div class="plan-features">
-                                                <small>{% if current_lang == 'en' %}Basic calculator{% else %}基础计算器{% endif %}</small>
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="subscription-plan-card" onclick="selectPlan('basic')">
-                                        <input type="radio" name="subscription_plan" value="basic" id="plan_basic"
-                                               {{ 'checked' if user.subscription_plan == 'basic' else '' }}>
-                                        <label for="plan_basic" class="plan-label">
-                                            <div class="plan-header">
-                                                <i class="bi bi-star"></i>
-                                                <h6>{% if current_lang == 'en' %}Basic{% else %}基础版{% endif %}</h6>
-                                            </div>
-                                            <div class="plan-price">$29/月</div>
-                                            <div class="plan-features">
-                                                <small>{% if current_lang == 'en' %}Advanced features{% else %}高级功能{% endif %}</small>
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="subscription-plan-card" onclick="selectPlan('pro')">
-                                        <input type="radio" name="subscription_plan" value="pro" id="plan_pro"
-                                               {{ 'checked' if user.subscription_plan == 'pro' else '' }}>
-                                        <label for="plan_pro" class="plan-label">
-                                            <div class="plan-header">
-                                                <i class="bi bi-gem"></i>
-                                                <h6>{% if current_lang == 'en' %}Pro{% else %}专业版{% endif %}</h6>
-                                            </div>
-                                            <div class="plan-price">$99/月</div>
-                                            <div class="plan-features">
-                                                <small>{% if current_lang == 'en' %}All features{% else %}全部功能{% endif %}</small>
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            
                             <!-- 订阅分配控制 -->
-                            <div class="subscription-assignment mt-3">
+                            <div class="subscription-assignment">
                                 <h6 class="mb-3">
                                     <i class="bi bi-calendar-plus me-2"></i>
                                     {% if current_lang == 'en' %}Assign Subscription{% else %}分配订阅{% endif %}
@@ -394,9 +339,25 @@
                                         </button>
                                     </div>
                                 </div>
-                                <small class="text-muted">
-                                    {% if current_lang == 'en' %}Current remaining: {{ user.days_remaining or 0 }} days{% else %}当前剩余: {{ user.days_remaining or 0 }} 天{% endif %}
-                                </small>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <strong>{% if current_lang == 'en' %}Current Plan{% else %}当前计划{% endif %}:</strong>
+                                        {% if user.subscription_plan == 'free' %}
+                                            <span class="badge bg-secondary ms-1">{% if current_lang == 'en' %}Free{% else %}免费版{% endif %}</span>
+                                        {% elif user.subscription_plan == 'basic' %}
+                                            <span class="badge bg-warning text-dark ms-1">{% if current_lang == 'en' %}Basic{% else %}基础版{% endif %}</span>
+                                        {% elif user.subscription_plan == 'pro' %}
+                                            <span class="badge bg-success ms-1">{% if current_lang == 'en' %}Pro{% else %}专业版{% endif %}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary ms-1">{% if current_lang == 'en' %}Free{% else %}免费版{% endif %}</span>
+                                        {% endif %}
+                                    </small>
+                                    <br>
+                                    <small class="text-muted">
+                                        {% if current_lang == 'en' %}Remaining: {{ user.days_remaining or 0 }} days{% else %}剩余: {{ user.days_remaining or 0 }} 天{% endif %}
+                                    </small>
+                                </div>
+                                <input type="hidden" name="subscription_plan" value="{{ user.subscription_plan or 'free' }}">
                             </div>
                         </div>
                         {% endif %}
@@ -440,23 +401,6 @@
         }
     }
     
-    function selectPlan(planType) {
-        // 移除所有选中状态
-        document.querySelectorAll('.subscription-plan-card').forEach(card => {
-            card.classList.remove('selected');
-        });
-        
-        // 添加选中状态到当前卡片
-        const selectedCard = document.querySelector(`#plan_${planType}`).closest('.subscription-plan-card');
-        selectedCard.classList.add('selected');
-        
-        // 选中对应的radio按钮
-        document.querySelector(`#plan_${planType}`).checked = true;
-        
-        // 同步到分配控制器
-        document.querySelector('select[name="assign_plan_type"]').value = planType;
-    }
-    
     function assignSubscription() {
         const planType = document.querySelector('select[name="assign_plan_type"]').value;
         const days = document.querySelector('input[name="assign_days"]').value;
@@ -476,30 +420,29 @@
         const confirmMessage = `{% if current_lang == "en" %}Assign ${days} days of ${planNames[planType]} plan to this user?{% else %}给该用户分配 ${days} 天的 ${planNames[planType]} 计划？{% endif %}`;
         
         if (confirm(confirmMessage.replace('${days}', days).replace('${planNames[planType]}', planNames[planType]))) {
-            // 设置主要订阅计划选择
-            selectPlan(planType);
+            // 更新隐藏字段中的订阅计划
+            document.querySelector('input[name="subscription_plan"]').value = planType;
             
-            // 这里可以添加额外的逻辑来处理天数分配
-            // 暂时将天数值设置到一个隐藏字段或直接提交
+            // 添加天数信息到表单
             const form = document.querySelector('form');
-            const hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.name = 'subscription_days';
-            hiddenInput.value = days;
-            form.appendChild(hiddenInput);
+            let daysInput = document.querySelector('input[name="subscription_days"]');
+            if (!daysInput) {
+                daysInput = document.createElement('input');
+                daysInput.type = 'hidden';
+                daysInput.name = 'subscription_days';
+                form.appendChild(daysInput);
+            }
+            daysInput.value = days;
             
             alert('{% if current_lang == "en" %}Subscription assigned! Click Save Changes to apply.{% else %}订阅已分配！点击保存更改来应用。{% endif %}');
         }
     }
     
-    // 页面加载时设置初始选中状态
+    // 页面加载时设置分配控制器的默认值
     document.addEventListener('DOMContentLoaded', function() {
-        const checkedRadio = document.querySelector('input[name="subscription_plan"]:checked');
-        if (checkedRadio) {
-            const card = checkedRadio.closest('.subscription-plan-card');
-            if (card) {
-                card.classList.add('selected');
-            }
+        const currentPlan = document.querySelector('input[name="subscription_plan"]').value;
+        if (currentPlan) {
+            document.querySelector('select[name="assign_plan_type"]').value = currentPlan;
         }
     });
     </script>
