@@ -499,7 +499,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (btcPriceEl) btcPriceEl.textContent = formatCurrency(data.price, 2);
                         if (networkDifficultyEl) networkDifficultyEl.textContent = formatNumber(data.difficulty) + 'T';
                         if (networkHashrateEl) networkHashrateEl.textContent = formatNumber(data.hashrate) + ' EH/s';
-                        if (blockRewardEl) blockRewardEl.textContent = formatNumber(data.block_reward, 3) + ' BTC';
+                        if (blockRewardEl) {
+                            console.log('区块奖励调试 - 原始值:', data.block_reward);
+                            console.log('区块奖励调试 - 格式化值:', formatNumber(data.block_reward, 3));
+                            blockRewardEl.textContent = formatNumber(data.block_reward, 3) + ' BTC';
+                        }
                         
                         // 更新BTC价格输入框 (Update BTC price input)
                         if (useRealTimeCheckbox && useRealTimeCheckbox.checked && btcPriceInput) {
