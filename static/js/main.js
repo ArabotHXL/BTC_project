@@ -51,12 +51,19 @@ document.addEventListener('DOMContentLoaded', function() {
         // 检查是否有预加载的网络数据
         var cachedData = window.getNetworkDataCache && window.getNetworkDataCache();
         if (cachedData && cachedData.data && (Date.now() - cachedData.lastUpdate < 30000)) {
-            console.log("使用预加载的网络数据");
+            console.log("使用预加载的网络数据", cachedData.data);
             updateNetworkStatsDisplay(cachedData.data);
         } else {
+            console.log("缓存数据不可用，获取实时网络数据");
             // 加载网络数据 (Load network data)
             fetchNetworkStats();
         }
+        
+        // 无论如何都强制获取一次最新的网络统计数据以确保区块奖励正确
+        setTimeout(function() {
+            console.log("强制刷新网络统计数据以确保区块奖励格式正确");
+            fetchNetworkStats();
+        }, 1000);
         
         // 延迟启动自动刷新
         setTimeout(function() {
@@ -1400,7 +1407,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 创建缺失的updateNetworkStatsDisplay函数
     function updateNetworkStatsDisplay(data) {
-        console.log('更新网络统计显示 - 数据:', data);
+        console.log('更新网络统计显示 - 完整数据结构:', data);
         
         if (data) {
             if (btcPriceEl && data.btc_price) {
@@ -1412,10 +1419,23 @@ document.addEventListener('DOMContentLoaded', function() {
             if (networkHashrateEl && data.network_hashrate) {
                 networkHashrateEl.textContent = formatNumber(data.network_hashrate) + ' EH/s';
             }
-            if (blockRewardEl && data.block_reward) {
-                console.log('缓存区块奖励调试 - 原始值:', data.block_reward);
-                console.log('缓存区块奖励调试 - 格式化值:', formatNumber(data.block_reward, 3));
-                blockRewardEl.textContent = formatNumber(data.block_reward, 3) + ' BTC';
+            
+            // 检查区块奖励字段的多种可能性
+            var blockReward = data.block_reward || data.blockReward || null;
+            console.log('区块奖励字段检查 - block_reward:', data.block_reward);
+            console.log('区块奖励字段检查 - blockReward:', data.blockReward);
+            console.log('区块奖励字段检查 - 最终使用值:', blockReward);
+            
+            if (blockRewardEl) {
+                if (blockReward) {
+                    console.log('缓存区块奖励调试 - 原始值:', blockReward);
+                    console.log('缓存区块奖励调试 - 格式化值:', formatNumber(blockReward, 3));
+                    blockRewardEl.textContent = formatNumber(blockReward, 3) + ' BTC';
+                } else {
+                    console.log('缓存数据中没有区块奖励，获取实时数据');
+                    // 如果缓存数据没有区块奖励，立即获取实时数据
+                    fetchNetworkStats();
+                }
             }
         }
     }
