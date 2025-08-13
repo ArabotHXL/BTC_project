@@ -121,13 +121,13 @@ def initialize_default_plans():
         free_plan.allow_priority_support = False
         free_plan.available_miner_models = 3
         
-        # Basic Plan
+        # Basic Plan - 无天数限制
         basic_plan = SubscriptionPlan(
             id='basic',
             name='Basic',
             price=29.0,
             max_miners=5,
-            max_historical_days=30,
+            max_historical_days=365,  # 移除天数限制，设置为365天
             allow_batch_calculator=True,
             allow_crm_system=True,
             allow_advanced_analytics=False,

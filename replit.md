@@ -46,7 +46,7 @@ Preferred communication style: Simple, everyday language.
 - Enhanced system responsiveness and data freshness for mining calculations
 - Enabled background services by default for continuous operation
 
-### Subscription Management System (August 12, 2025)
+### Subscription Management System (August 12-13, 2025)
 - Added comprehensive subscription plan management with three tiers (Free/Basic $29/Pro $99)
 - Implemented Owner-only access control for subscription plan assignment
 - Created visual subscription plan selection interface with billing information
@@ -57,6 +57,9 @@ Preferred communication style: Simple, everyday language.
   - CRM system access unrestricted for Owner accounts
   - User management system unrestricted for Owner accounts
   - All subscription decorators check for Owner role and bypass restrictions
+- **August 13**: Removed time limitations for Basic plan - upgraded from 30 days to 365 days historical data access
+  - Basic plan users now have nearly unlimited historical data access
+  - Maintains feature restrictions while removing time-based limitations
 
 ## System Architecture
 
