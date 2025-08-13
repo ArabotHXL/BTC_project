@@ -154,6 +154,13 @@
             font-size: 1.1rem;
             font-weight: bold;
             color: var(--primary-color);
+            margin-bottom: 4px;
+        }
+        
+        .plan-duration {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #28a745;
             margin-bottom: 8px;
         }
         
@@ -272,13 +279,6 @@
                             <textarea class="form-control" name="notes" rows="3">{{ user.notes or '' }}</textarea>
                         </div>
                         {% if session.get('role') == 'owner' %}
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="bi bi-calendar me-1"></i>
-                                {% if current_lang == 'en' %}Access Days{% else %}访问天数{% endif %}
-                            </label>
-                            <input type="number" class="form-control" name="access_days" value="{{ user.access_days or '' }}" min="1">
-                        </div>
                         <div class="col-12">
                             <label class="form-label">
                                 <i class="bi bi-credit-card me-1"></i>
@@ -295,6 +295,7 @@
                                                 <h6>{% if current_lang == 'en' %}Free{% else %}免费版{% endif %}</h6>
                                             </div>
                                             <div class="plan-price">$0/月</div>
+                                            <div class="plan-duration">{% if current_lang == 'en' %}7 days trial{% else %}7天试用{% endif %}</div>
                                             <div class="plan-features">
                                                 <small>{% if current_lang == 'en' %}Basic calculator{% else %}基础计算器{% endif %}</small>
                                             </div>
@@ -311,6 +312,7 @@
                                                 <h6>{% if current_lang == 'en' %}Basic{% else %}基础版{% endif %}</h6>
                                             </div>
                                             <div class="plan-price">$29/月</div>
+                                            <div class="plan-duration">{% if current_lang == 'en' %}30 days access{% else %}30天时限{% endif %}</div>
                                             <div class="plan-features">
                                                 <small>{% if current_lang == 'en' %}Advanced features{% else %}高级功能{% endif %}</small>
                                             </div>
@@ -327,6 +329,7 @@
                                                 <h6>{% if current_lang == 'en' %}Pro{% else %}专业版{% endif %}</h6>
                                             </div>
                                             <div class="plan-price">$99/月</div>
+                                            <div class="plan-duration">{% if current_lang == 'en' %}365 days access{% else %}365天时限{% endif %}</div>
                                             <div class="plan-features">
                                                 <small>{% if current_lang == 'en' %}All features{% else %}全部功能{% endif %}</small>
                                             </div>
