@@ -115,7 +115,7 @@ def get_real_time_btc_price():
         response.raise_for_status()
         data = response.json()
         real_time_price = float(data['bitcoin']['usd'])
-        logging.info(f"使用CoinGecko实时价格: ${real_time_price:,.3f}")
+        logging.info(f"使用CoinGecko实时价格: ${real_time_price:,.2f}")
         return real_time_price
     except Exception as e:
         logging.warning(f"CoinGecko API获取失败: {e}，尝试analytics备用数据")
@@ -139,14 +139,14 @@ def get_real_time_btc_price():
         
         if result and result[0]:
             analytics_price = float(result[0])
-            logging.info(f"使用analytics备用价格: ${analytics_price:,.3f}")
+            logging.info(f"使用analytics备用价格: ${analytics_price:,.2f}")
             return analytics_price
             
     except Exception as e:
         logging.warning(f"Analytics数据库价格获取失败: {e}")
     
     # 最后备用：使用默认值
-    logging.warning(f"使用默认BTC价格: ${DEFAULT_BTC_PRICE:,.3f}")
+    logging.warning(f"使用默认BTC价格: ${DEFAULT_BTC_PRICE:,.2f}")
     return DEFAULT_BTC_PRICE
 
 def get_real_time_difficulty():
@@ -218,7 +218,7 @@ def get_real_time_btc_hashrate():
                 hashrate_hs = float(btc_data.get('network_hashrate', 0))
                 hashrate_eh = hashrate_hs / 1e18  # H/s to EH/s
                 
-                logging.info(f"Minerstat算力数据: {hashrate_eh:.3f} EH/s")
+                logging.info(f"Minerstat算力数据: {hashrate_eh:.2f} EH/s")
                 return hashrate_eh
         
         # 方法2：备用 - blockchain.info hashrate API
@@ -228,7 +228,7 @@ def get_real_time_btc_hashrate():
             # 转换GH/s到EH/s
             hashrate_eh = hashrate_gh / 1e9  # GH/s to EH/s
             
-            logging.info(f"Blockchain.info备用算力数据: {hashrate_eh:.3f} EH/s")
+            logging.info(f"Blockchain.info备用算力数据: {hashrate_eh:.2f} EH/s")
             return hashrate_eh
         
         # 方法3：基于难度计算（最后备用）
@@ -239,7 +239,7 @@ def get_real_time_btc_hashrate():
             hashrate_from_difficulty = (difficulty * (2**32)) / 600
             hashrate_eh = hashrate_from_difficulty / 1e18  # 转换为EH/s
             
-            logging.info(f"基于难度计算的网络算力: {hashrate_eh:.3f} EH/s")
+            logging.info(f"基于难度计算的网络算力: {hashrate_eh:.2f} EH/s")
             return hashrate_eh
             
     except Exception as e:
@@ -251,7 +251,7 @@ def get_real_time_btc_hashrate():
 
 def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electricity_cost=0.05, client_electricity_cost=None, 
                              btc_price=None, difficulty=None, block_reward=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0.0, 
-                             shutdown_strategy="efficiency", host_investment=0.0, client_investment=0.0, maintenance_fee=0.0, manual_network_hashrate=None, manual_network_difficulty=None):
+                             shutdown_strategy="efficiency", host_investment=0.0, client_investment=0.0, maintenance_fee=0.0, manual_network_hashrate=None):
     """
     Calculate Bitcoin mining profitability using the exact calculation method from the original code
     
@@ -270,8 +270,6 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
     - host_investment: Total investment made by mining site owner (USD)
     - client_investment: Total investment made by client (USD)
     - maintenance_fee: Monthly maintenance fee in USD (default is 0)
-    - manual_network_hashrate: Manual network hashrate in EH/s for scenario analysis
-    - manual_network_difficulty: Manual network difficulty for scenario analysis
     
     Returns:
     - Dictionary containing profitability metrics including ROI calculations
@@ -297,12 +295,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         # Get real-time data if requested
         if use_real_time_data:
             real_time_btc_price = get_real_time_btc_price()
-            # Use manual difficulty if provided, otherwise get from API
-            if manual_network_difficulty is not None:
-                difficulty_raw = manual_network_difficulty
-                logging.info(f"使用手动输入的网络难度: {manual_network_difficulty:,.0f}")
-            else:
-                difficulty_raw = get_real_time_difficulty()
+            difficulty_raw = get_real_time_difficulty()
             # Use manual hashrate if provided, otherwise get from API
             if manual_network_hashrate is not None:
                 real_time_btc_hashrate = manual_network_hashrate  # EH/s (manual input)
@@ -312,12 +305,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             current_block_reward = get_real_time_block_reward()
         else:
             real_time_btc_price = btc_price or DEFAULT_BTC_PRICE
-            # Use manual difficulty if provided, otherwise use provided/default
-            if manual_network_difficulty is not None:
-                difficulty_raw = manual_network_difficulty
-                logging.info(f"使用手动输入的网络难度: {manual_network_difficulty:,.0f}")
-            else:
-                difficulty_raw = difficulty or DEFAULT_NETWORK_DIFFICULTY
+            difficulty_raw = difficulty or DEFAULT_NETWORK_DIFFICULTY
             # Use manual hashrate if provided, otherwise use default
             if manual_network_hashrate is not None:
                 real_time_btc_hashrate = manual_network_hashrate  # EH/s (manual input)
@@ -394,7 +382,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         
         # 如果API哈希率与难度推导哈希率相差过大(>50%)，使用加权平均值
         if hashrate_ratio > 1.5 or hashrate_ratio < 0.67:
-            print(f"API哈希率与难度推导哈希率差异过大 (比率: {hashrate_ratio:.3f})，使用加权平均值")
+            print(f"API哈希率与难度推导哈希率差异过大 (比率: {hashrate_ratio:.2f})，使用加权平均值")
             network_TH = (api_network_TH * 0.4 + network_TH_from_difficulty * 0.6)  # 偏向难度推导值，因为更稳定
         else:
             # 差异在合理范围内，直接使用API返回的哈希率
@@ -412,7 +400,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         site_monthly_btc_output = site_daily_btc_output * 30.5
         
         # 打印推导的网络哈希率与API返回的对比，便于调试
-        print(f"API Network Hashrate: {real_time_btc_hashrate:.3f} EH/s vs Derived from Difficulty: {network_TH_from_difficulty/1e6:.3f} EH/s")
+        print(f"API Network Hashrate: {real_time_btc_hashrate:.2f} EH/s vs Derived from Difficulty: {network_TH_from_difficulty/1e6:.2f} EH/s")
         
         # 计算单个矿机每日BTC产出
         single_miner_hashrate = None

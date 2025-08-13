@@ -764,19 +764,19 @@
                         <div class="col-6">
                             <div class="bg-dark p-2 rounded text-center">
                                 <div class="small text-muted">{% if current_lang == "en" %}Daily Profit{% else %}日收益{% endif %}</div>
-                                <div class="fw-bold ${summary.total_daily_profit >= 0 ? 'text-success' : 'text-danger'}">$${(summary.total_daily_profit || 0).toFixed(3)}</div>
+                                <div class="fw-bold ${summary.total_daily_profit >= 0 ? 'text-success' : 'text-danger'}">$${(summary.total_daily_profit || 0).toFixed(2)}</div>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="bg-dark p-2 rounded text-center">
                                 <div class="small text-muted">{% if current_lang == "en" %}Monthly{% else %}月收益{% endif %}</div>
-                                <div class="fw-bold">$${((summary.total_daily_profit || 0) * 30).toFixed(3)}</div>
+                                <div class="fw-bold">$${((summary.total_daily_profit || 0) * 30).toFixed(2)}</div>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="bg-dark p-2 rounded text-center">
                                 <div class="small text-muted">{% if current_lang == "en" %}Avg ROI Days{% else %}平均回本天数{% endif %}</div>
-                                <div class="fw-bold text-warning">${summary.average_roi_days ? summary.average_roi_days.toFixed(3) : 'N/A'}</div>
+                                <div class="fw-bold text-warning">${summary.average_roi_days ? summary.average_roi_days.toFixed(0) : 'N/A'}</div>
                             </div>
                         </div>
                     </div>
@@ -807,7 +807,7 @@
                     <tr>
                         <td class="small">${result.model}</td>
                         <td>${result.quantity}</td>
-                        <td class="${profitClass}">$${(result.daily_profit || 0).toFixed(3)}</td>
+                        <td class="${profitClass}">$${(result.daily_profit || 0).toFixed(2)}</td>
                         <td>${result.roi_days ? result.roi_days + ' days' : 'N/A'}</td>
                     </tr>
                 `;
@@ -967,7 +967,7 @@
                 document.getElementById('currentBtcPrice').textContent = `$${data.btc_price.toLocaleString()}`;
             }
             if (data.network_difficulty) {
-                const difficultyT = (data.network_difficulty / 1e12).toFixed(3);
+                const difficultyT = (data.network_difficulty / 1e12).toFixed(1);
                 document.getElementById('currentDifficulty').textContent = `${difficultyT}T`;
             }
             if (data.network_hashrate) {
