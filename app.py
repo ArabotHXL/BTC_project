@@ -1316,7 +1316,7 @@ def get_network_stats():
             cursor = conn.cursor()
             cursor.execute("""
                 SELECT btc_price, network_hashrate, network_difficulty,
-                       price_change_24h, fear_greed_index
+                       price_change_24h, fear_greed_index, block_reward
                 FROM market_analytics 
                 ORDER BY recorded_at DESC LIMIT 1
             """)
@@ -1330,6 +1330,7 @@ def get_network_stats():
                 network_difficulty = float(data[2]) if data[2] else 129435235580345
                 price_change_24h = float(data[3]) if data[3] else 0.01
                 fear_greed_index = int(data[4]) if data[4] else 68
+                block_reward = float(data[5]) if data[5] else 3.125
             else:
                 # 默认值
                 btc_price = 119876.0
@@ -1337,6 +1338,7 @@ def get_network_stats():
                 network_difficulty = 129435235580345
                 price_change_24h = 0.01
                 fear_greed_index = 68
+                block_reward = 3.125
         except Exception as e:
             logging.error(f"从数据库获取网络统计数据失败: {str(e)}")
             # 默认值
@@ -1345,6 +1347,7 @@ def get_network_stats():
             network_difficulty = 129435235580345
             price_change_24h = 0.01
             fear_greed_index = 68
+            block_reward = 3.125
             
         response_data = {
             'success': True,
@@ -1354,7 +1357,7 @@ def get_network_stats():
             'network_difficulty': network_difficulty,  # 添加测试需要的字段
             'network_hashrate': network_hashrate,
             'hashrate': network_hashrate,  # 兼容性字段
-            'block_reward': 3.125,  # 当前比特币区块奖励
+            'block_reward': block_reward,  # 实时比特币区块奖励
             'price_change_24h': price_change_24h,
             'fear_greed_index': fear_greed_index,
             'data_source': 'market_analytics (database)',
