@@ -242,20 +242,34 @@ class DataCollector:
                 blockchain_response = self.session.get('https://blockchain.info/stats?format=json', timeout=15)
                 if blockchain_response.status_code == 200:
                     data = blockchain_response.json()
-                    # blockchain.info/stats返回的hash_rate是GH/s，需要转换为EH/s
-                    hashrate_gh = float(data.get('hash_rate', 0))
-                    hashrate_eh = hashrate_gh / 1e9  # GH/s to EH/s
-                    difficulty = float(data.get('difficulty', 0))
+                    # blockchain.info/stats返回的hash_rate字段实际上需要特殊处理
+                    hashrate_raw = float(data.get('hash_rate', 0))
                     
-                    # 验证算力值是否合理 (当前应该在700-1000 EH/s范围)
-                    if hashrate_eh < 100 or hashrate_eh > 2000:
-                        logger.warning(f"Blockchain.info算力值异常: {hashrate_eh:.2f} EH/s，跳过此数据源")
+                    # 检查hash_rate字段是否有效
+                    if hashrate_raw == 0:
+                        logger.warning(f"Blockchain.info hash_rate字段为0，尝试使用难度计算算力")
+                        # 使用难度计算算力: hashrate = difficulty * 2^32 / 600
+                        difficulty = float(data.get('difficulty', 0))
+                        if difficulty > 0:
+                            hashrate_eh = (difficulty * (2**32)) / 600 / 1e18  # 转换为EH/s
+                            logger.info(f"✅ Blockchain.info基于难度计算算力: {hashrate_eh:.2f} EH/s (难度: {difficulty:.0f})")
+                        else:
+                            logger.warning("Blockchain.info难度数据也不可用")
+                            return None
+                    else:
+                        # hash_rate字段有效，进行转换 (实际测试表明需要除以1e9)
+                        hashrate_eh = hashrate_raw / 1e9  # 转换为EH/s
+                        difficulty = float(data.get('difficulty', 0))
+                        logger.info(f"✅ Blockchain.info主要算力数据: {hashrate_eh:.2f} EH/s (hash_rate字段)")
+                    
+                    # 验证算力值是否合理 (当前应该在700-1200 EH/s范围)
+                    if hashrate_eh < 500 or hashrate_eh > 1500:
+                        logger.warning(f"Blockchain.info算力值异常: {hashrate_eh:.2f} EH/s，尝试备用数据源")
                         return None
                     
-                    logger.info(f"✅ Blockchain.info主要算力数据: {hashrate_eh:.2f} EH/s (stats接口)")
                     return {
                         'network_hashrate': hashrate_eh,
-                        'network_difficulty': difficulty,
+                        'network_difficulty': difficulty if 'difficulty' in locals() else float(data.get('difficulty', 0)),
                         'hashrate_timestamp': int(time.time()),
                         'source': 'blockchain.info'
                     }
