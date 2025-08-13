@@ -108,7 +108,7 @@
                             <p class="text-muted">
                                 {% if current_lang == 'en' %}Already have an account?{% else %}已有账户？{% endif %}
                                 <a href="{{ url_for('login') }}" class="text-primary text-decoration-none">
-                                    {% if current_lang == 'en' %}Sign in{% else %}立即登录{% endif %}
+                                    {{ t('login') }}
                                 </a>
                             </p>
                         </div>

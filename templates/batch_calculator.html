@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
 {% block title %}
-    {% if current_lang == 'en' %}Batch Mining Calculator{% else %}批量挖矿计算器{% endif %} - BTC Mining Calculator
+    {{ t('batch_mining_calculator') }} - BTC Mining Calculator
 {% endblock %}
 
 {% block header_title %}
-    {% if current_lang == 'en' %}Batch Mining Calculator{% else %}批量挖矿计算器{% endif %}
+    {{ t('batch_mining_calculator') }}
 {% endblock %}
 
 {% block extra_css %}

@@ -125,6 +125,17 @@ TRANSLATIONS = {
         'new_user_register': 'New users please register first',
         'no_account': "Don't have an account?",
         'register_now': 'Register Now',
+        'password': 'Password',
+        # Batch calculator translations
+        'batch_mining_calculator': 'Batch Mining Calculator',
+        'batch_calculation': 'Batch Calculation',
+        'add_miner': 'Add Miner',
+        'calculate_all': 'Calculate All',
+        'export_excel': 'Export to Excel',
+        'total_miners': 'Total Miners',
+        'total_hashrate': 'Total Hashrate',
+        'total_power': 'Total Power',
+        'total_daily_profit': 'Total Daily Profit',
     },
     'zh': {
         'btc_mining_calculator': 'BTC挖矿计算器',
@@ -244,6 +255,17 @@ TRANSLATIONS = {
         'new_user_register': '新注册用户请先注册账户',
         'no_account': '还没有账户？',
         'register_now': '立即注册',
+        'password': '密码',
+        # 批量计算器翻译
+        'batch_mining_calculator': '批量挖矿计算器',
+        'batch_calculation': '批量计算',
+        'add_miner': '添加矿机',
+        'calculate_all': '全部计算',
+        'export_excel': '导出Excel',
+        'total_miners': '矿机总数',
+        'total_hashrate': '总算力',
+        'total_power': '总功耗',
+        'total_daily_profit': '日收益总计',
     }
 }
 
