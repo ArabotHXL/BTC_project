@@ -3134,25 +3134,46 @@
             // Store data for insights generation
             currentTechnicalData = data;
 
-            // Dashboard RSI - support both rsi and rsi_14 fields
+            // Dashboard RSI - support both rsi and rsi_14 fields with null checks
             const rsiValue = data.rsi !== undefined ? data.rsi : data.rsi_14;
             if (rsiValue !== null && rsiValue !== undefined) {
-                document.getElementById('rsiValue').textContent = formatNumber(rsiValue, 1);
-                document.getElementById('rsiSignal').textContent = getRSISignal(rsiValue);
+                const rsiElement = document.getElementById('rsiValue');
+                const rsiSignalElement = document.getElementById('rsiSignal');
+                
+                if (rsiElement) {
+                    rsiElement.textContent = formatNumber(rsiValue, 1);
+                }
+                if (rsiSignalElement) {
+                    rsiSignalElement.textContent = getRSISignal(rsiValue);
+                }
                 console.log('RSI updated in main dashboard:', rsiValue);
             }
 
-            // Technical tab details
-            document.getElementById('techSma20').textContent = formatPrice(data.sma_20);
-            document.getElementById('techSma50').textContent = formatPrice(data.sma_50);
-            document.getElementById('techEma12').textContent = formatPrice(data.ema_12);
-            document.getElementById('techEma26').textContent = formatPrice(data.ema_26);
-            document.getElementById('techRsi').textContent = formatNumber(data.rsi_14, 1);
-            document.getElementById('techMacd').textContent = formatNumber(data.macd, 4);
-            document.getElementById('techVolatility').textContent = formatPercent(data.volatility_30d);
-            document.getElementById('techBollingerUpper').textContent = formatPrice(data.bollinger_upper);
-            document.getElementById('techBollingerLower').textContent = formatPrice(data.bollinger_lower);
-            document.getElementById('techBollingerMiddle').textContent = formatPrice(data.sma_20);
+            // Technical tab details with null checks
+            const techElements = {
+                'techSma20': () => formatPrice(data.sma_20),
+                'techSma50': () => formatPrice(data.sma_50),
+                'techEma12': () => formatPrice(data.ema_12),
+                'techEma26': () => formatPrice(data.ema_26),
+                'techRsi': () => formatNumber(rsiValue, 1),
+                'techMacd': () => formatNumber(data.macd, 4),
+                'techVolatility': () => formatPercent(data.volatility_30d || data.volatility),
+                'techBollingerUpper': () => formatPrice(data.bollinger_upper),
+                'techBollingerLower': () => formatPrice(data.bollinger_lower),
+                'techBollingerMiddle': () => formatPrice(data.sma_20)
+            };
+            
+            Object.keys(techElements).forEach(elementId => {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    try {
+                        element.textContent = techElements[elementId]();
+                    } catch (e) {
+                        console.warn(`Error updating ${elementId}:`, e);
+                        element.textContent = '--';
+                    }
+                }
+            });
         }
 
         function updatePriceChart(data) {
@@ -3674,13 +3695,18 @@
         function initServerSideTechnicalData() {
             // Get server-side technical indicators data from global variable
             var serverTechData = window.serverTechnicalIndicators || null;
+            
+            console.log('DEBUG: Checking server technical indicators data:', serverTechData);
+            console.log('DEBUG: Type of serverTechnicalIndicators:', typeof serverTechData);
 
-            if (serverTechData) {
+            if (serverTechData && typeof serverTechData === 'object') {
                 console.log('Loading server-side technical indicators:', serverTechData);
+                console.log('DEBUG: RSI value found:', serverTechData.rsi);
                 // Use the main dashboard update function for consistency
                 updateTechnicalIndicatorsDisplay(serverTechData);
             } else {
-                console.log('No server-side technical indicators available');
+                console.log('No server-side technical indicators available or invalid data type');
+                console.log('DEBUG: Will show error state');
                 // 如果没有服务器数据，显示错误状态
                 showTechnicalIndicatorsError();
             }
