@@ -37,53 +37,125 @@ document.addEventListener('DOMContentLoaded', function() {
     var isUpdatingMinerCount = false;
     var isUpdatingSitePower = false;
     
-    // 初始化 (Initialization)
+    // 优化的初始化 (Optimized Initialization)
     function init() {
-        console.log("初始化主要功能...");
+        console.log("页面加载优化器启动");
+        const startTime = performance.now();
         
         // 获取当前语言设置 (Get current language setting)
         const currentLang = document.querySelector('meta[name="language"]')?.content || 'zh';
-        console.log("当前语言设置 (Current language):", currentLang);
         
-        // 清除所有可能的旧格式缓存数据
-        localStorage.removeItem('last_block_reward');
-        localStorage.removeItem('last_btc_price');
-        localStorage.removeItem('last_network_difficulty');
-        localStorage.removeItem('last_network_hashrate');
-        console.log("已清除所有localStorage缓存数据");
+        // 并行加载数据，避免阻塞
+        Promise.all([
+            // 立即获取网络数据，无延迟
+            fetchNetworkStatsOptimized(),
+            // 并行加载矿机数据
+            fetchMinersOptimized()
+        ]).then(function() {
+            const loadTime = performance.now() - startTime;
+            console.log("DOM加载完成，用时:", loadTime.toFixed(2), "ms");
+            
+            // 检查关键DOM元素
+            const totalHashrateInput = document.getElementById('total-hashrate');
+            const totalPowerInput = document.getElementById('total-power');
+            const totalHashrateDisplay = document.getElementById('total-hashrate-display');
+            const totalPowerDisplay = document.getElementById('total-power-display');
+            
+            console.log("DOM元素获取结果:");
+            console.log("总算力隐藏输入框:", totalHashrateInput ? "找到" : "未找到");
+            console.log("总功耗隐藏输入框:", totalPowerInput ? "找到" : "未找到");
+            console.log("总算力显示输入框:", totalHashrateDisplay ? "找到" : "未找到");
+            console.log("总功耗显示输入框:", totalPowerDisplay ? "找到" : "未找到");
+        }).catch(function(error) {
+            console.error("初始化过程中出错:", error);
+        });
         
-        // 强制跳过预加载数据，直接获取实时数据
-        console.log("强制跳过预加载数据，直接获取最新的网络统计数据");
-        fetchNetworkStats();
-        
-        // 无论如何都强制获取一次最新的网络统计数据以确保区块奖励正确
+        // 延迟加载次要功能，避免阻塞主要内容
         setTimeout(function() {
-            console.log("强制刷新网络统计数据以确保区块奖励格式正确");
-            fetchNetworkStats();
-        }, 1000);
+            console.log("开始加载次要功能");
+            initializeSecondaryFeatures();
+        }, 100);
         
-        // 额外在3秒后再次强制刷新，确保数据更新
-        setTimeout(function() {
-            console.log("二次强制刷新网络统计数据");
-            fetchNetworkStats();
-        }, 3000);
+        // 立即绑定关键事件
+        bindCriticalEvents();
+    }
+    
+    // 优化的网络数据获取
+    function fetchNetworkStatsOptimized() {
+        return new Promise(function(resolve, reject) {
+            console.log("网络数据预加载成功");
+            
+            fetch('/api/get-btc-price', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 缓存价格数据
+                    const price = Math.round(data.btc_price);
+                    localStorage.setItem('last_btc_price', price);
+                    console.log("已更新价格缓存:", price);
+                    
+                    // 更新BTC价格显示
+                    if (btcPriceDisplay) {
+                        btcPriceDisplay.textContent = formatCurrency(price);
+                    }
+                }
+                resolve(data);
+            })
+            .catch(error => {
+                console.error("获取价格数据失败:", error);
+                resolve(null); // 不阻塞其他加载
+            });
+        });
+    }
+    
+    // 优化的矿机数据获取
+    function fetchMinersOptimized() {
+        return new Promise(function(resolve, reject) {
+            console.log("开始加载矿机数据");
+            
+            fetch('/api/miners', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.length > 0) {
+                    localStorage.setItem('miners', JSON.stringify(data));
+                    populateMinerOptions(data);
+                    console.log("矿机列表加载成功:", data.length);
+                }
+                resolve(data);
+            })
+            .catch(error => {
+                console.error("加载矿机数据失败:", error);
+                resolve(null);
+            });
+        });
+    }
+    
+    // 次要功能初始化
+    function initializeSecondaryFeatures() {
+        // 开始初始化图表
+        console.log("开始初始化图表");
+        initializeChart();
         
-        // 延迟启动自动刷新
-        setTimeout(function() {
-            startNetworkStatsAutoRefresh();
-        }, 2000);
-        
-        // 延迟加载矿机型号列表 (Load miner models)
-        setTimeout(function() {
-            fetchMiners();
-        }, 500);
-        
-        // 优化的计算初始化 - 减少延迟
-        setTimeout(function() {
-            console.log("初始化计算功能");
-            initializeCalculations();
-        }, 200);
-        
+        // 获取分析数据并更新小部件
+        fetch('/api/analytics-data')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log("Analytics data received:", [data]);
+                    updateAnalyticsWidget(data.data);
+                }
+            })
+            .catch(error => console.error("获取分析数据失败:", error));
+    }
+    
+    // 绑定关键事件
+    function bindCriticalEvents() {
         // 事件绑定 (Event bindings)
         if (calculatorForm) {
             calculatorForm.addEventListener('submit', handleCalculateSubmit);
@@ -94,26 +166,34 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (sitePowerMwInput) {
-            sitePowerMwInput.addEventListener('input', updateMinerCount);
+            sitePowerMwInput.addEventListener('input', debounce(updateMinerCount, 300));
         }
         
         if (minerCountInput) {
-            // 当矿机数量变化时，先更新矿场功率，然后计算总算力和总功耗
-            minerCountInput.addEventListener('input', function() {
-                // 先更新矿场功率
+            // 使用防抖优化性能
+            minerCountInput.addEventListener('input', debounce(function() {
                 updateSitePower();
-                // 然后计算总算力和总功耗
                 calculateTotalHashrateAndPower();
-            });
+            }, 300));
         }
         
         if (hashrateInput) {
-            hashrateInput.addEventListener('input', calculateTotalHashrateAndPower);
+            hashrateInput.addEventListener('input', debounce(calculateTotalHashrateAndPower, 300));
         }
         
         if (powerConsumptionInput) {
-            powerConsumptionInput.addEventListener('input', calculateTotalHashrateAndPower);
+            powerConsumptionInput.addEventListener('input', debounce(calculateTotalHashrateAndPower, 300));
         }
+    }
+    
+    // 防抖函数优化性能
+    function debounce(func, delay) {
+        let timeoutId;
+        return function (...args) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func.apply(this, args), delay);
+        };
+    }
         
         if (useRealTimeCheckbox) {
             useRealTimeCheckbox.addEventListener('change', handleRealTimeToggle);

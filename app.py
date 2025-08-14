@@ -17,6 +17,7 @@ from sqlalchemy import text
 # 本地模块导入
 from db import db
 from auth import verify_email, login_required
+from cache_manager import cache as cache_manager
 try:
     from decorators import (requires_role, requires_owner_only, requires_admin_or_owner, 
                            requires_crm_access, requires_network_analysis_access, 
@@ -1321,7 +1322,7 @@ def get_btc_price():
 @app.route('/get_network_stats', methods=['GET'])
 @app.route('/network_stats', methods=['GET'])
 def get_network_stats():
-    """Get current Bitcoin network statistics from market_analytics table"""
+    """Get current Bitcoin network statistics from market_analytics table (缓存优化版本)"""
     # Remove authentication for testing compatibility
     # if not session.get('email'):
     #     return jsonify({
@@ -1330,6 +1331,13 @@ def get_network_stats():
     #     }), 401
         
     try:
+        # 检查缓存
+        cache_key = 'network_stats_api'
+        cached_data = cache_manager.get(cache_key)
+        
+        if cached_data:
+            return jsonify(cached_data)
+        
         import psycopg2
         
         # 从 market_analytics 表获取网络统计数据
@@ -1385,6 +1393,9 @@ def get_network_stats():
             'data_source': 'market_analytics (database)',
             'health_status': 'Stable'
         }
+        
+        # 缓存数据40秒
+        cache_manager.set(cache_key, response_data, 40)
         
         logging.info(f"网络统计数据从market_analytics表获取: BTC=${btc_price}, 算力={network_hashrate}EH/s")
         return jsonify(response_data)
@@ -1460,8 +1471,15 @@ def get_sha256_mining_comparison():
 # Add API route for miners data that the test is looking for
 @app.route('/api/get_miners_data', methods=['GET'])
 def api_get_miners_data():
-    """API endpoint for miners data - public access for compatibility"""
+    """API endpoint for miners data - public access for compatibility (缓存优化版本)"""
     try:
+        # 检查缓存
+        cache_key = 'miners_data_api'
+        cached_data = cache_manager.get(cache_key)
+        
+        if cached_data:
+            return jsonify(cached_data)
+        
         miners_list = []
         # 计算效率时使用正确的公式：W/TH（能效比）
         for name, specs in MINER_DATA.items():
@@ -1473,10 +1491,14 @@ def api_get_miners_data():
                 'efficiency': round(specs['power_watt'] / specs['hashrate'], 2)  # W/TH
             })
         
-        return jsonify({
+        response_data = {
             'success': True,
             'miners': miners_list
-        })
+        }
+        
+        # 矿机数据相对稳定，缓存300秒（5分钟）
+        cache_manager.set(cache_key, response_data, 300)
+        return jsonify(response_data)
     except Exception as e:
         logging.error(f"Error fetching miners data: {str(e)}")
         return jsonify({
@@ -4325,8 +4347,15 @@ def subscription():
 
 @app.route('/api/network-data')
 def api_network_data():
-    """网络数据API端点 - 使用market_analytics表数据"""
+    """网络数据API端点 - 使用market_analytics表数据（优化缓存版本）"""
     try:
+        # 检查缓存
+        cache_key = 'network_data_api'
+        cached_data = cache_manager.get(cache_key)
+        
+        if cached_data:
+            return jsonify(cached_data)
+        
         # 优先从market_analytics表获取最新数据
         import psycopg2
         conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
@@ -4352,7 +4381,7 @@ def api_network_data():
             
             logging.info(f"网络统计数据从market_analytics表获取: BTC=${btc_price}, 算力={hashrate}EH/s")
             
-            return jsonify({
+            response_data = {
                 'success': True,
                 'data': {
                     'btc_price': btc_price,
@@ -4362,7 +4391,7 @@ def api_network_data():
                     'timestamp': datetime.now().isoformat()
                 },
                 'data_source': 'market_analytics'
-            })
+            }
         else:
             # 如果数据库没有数据，回退到实时API
             from mining_calculator import get_real_time_btc_price, get_real_time_difficulty, get_real_time_btc_hashrate, get_real_time_block_reward
@@ -4374,7 +4403,7 @@ def api_network_data():
             
             logging.info(f"回退到实时API数据: BTC=${btc_price}, 算力={hashrate}EH/s")
             
-            return jsonify({
+            response_data = {
                 'success': True,
                 'data': {
                     'btc_price': btc_price,
@@ -4384,7 +4413,11 @@ def api_network_data():
                     'timestamp': datetime.now().isoformat()
                 },
                 'data_source': 'real_time_apis'
-            })
+            }
+        
+        # 缓存数据30秒
+        cache_manager.set(cache_key, response_data, 30)
+        return jsonify(response_data)
         
     except Exception as e:
         logging.error(f"获取网络数据错误: {e}")
@@ -4396,8 +4429,15 @@ def api_network_data():
 # 添加缺失的API端点
 @app.route('/api/get-btc-price')
 def api_get_btc_price():
-    """API端点：从market_analytics表获取BTC价格"""
+    """API端点：从market_analytics表获取BTC价格（缓存优化版本）"""
     try:
+        # 检查缓存
+        cache_key = 'btc_price_api'
+        cached_data = cache_manager.get(cache_key)
+        
+        if cached_data:
+            return jsonify(cached_data)
+        
         import psycopg2
         conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
         cursor = conn.cursor()
@@ -4416,22 +4456,26 @@ def api_get_btc_price():
         if result:
             price = float(result[0])
             logging.info(f"BTC价格从market_analytics表获取: ${price}")
-            return jsonify({
+            response_data = {
                 'success': True,
                 'btc_price': price,
                 'timestamp': datetime.now().isoformat(),
                 'data_source': 'market_analytics'
-            })
+            }
         else:
             # 回退到实时API
             from mining_calculator import get_real_time_btc_price
             price = get_real_time_btc_price()
-            return jsonify({
+            response_data = {
                 'success': True,
                 'btc_price': price,
                 'timestamp': datetime.now().isoformat(),
                 'data_source': 'real_time_api'
-            })
+            }
+        
+        # 缓存数据20秒
+        cache_manager.set(cache_key, response_data, 20)
+        return jsonify(response_data)
     except Exception as e:
         return jsonify({
             'success': False,
