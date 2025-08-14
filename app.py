@@ -3938,10 +3938,10 @@ def api_generate_detailed_report():
     """生成详细分析报告API"""
     try:
         # 检查用户权限
-        if not has_role(['owner', 'admin']):
+        if not user_has_analytics_access():
             return jsonify({
                 'success': False,
-                'error': '需要管理员权限'
+                'error': 'Access denied. Analytics API requires Owner privileges or Pro subscription.'
             }), 403
             
         logging.info("开始生成详细报告...")
