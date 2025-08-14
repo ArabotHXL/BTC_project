@@ -40,7 +40,7 @@ The application is a modular Flask web application with a mobile-first design.
 
 ### Key Features
 - **Mining Calculator Engine**: Core business logic for profitability calculations.
-- **Authentication System**: Manages user access, email-based verification, role-based permissions, and session security.
+- **Authentication System**: Manages user access, Gmail-based email verification, role-based permissions, and session security.
 - **CRM System**: Handles customer lifecycle management, lead and deal tracking, and commission management.
 - **Network Data Collection**: Automated historical data accumulation for BTC price, difficulty, and network hashrate from multiple sources.
 - **Multilingual System**: Provides dynamic Chinese/English interface support.
@@ -68,3 +68,4 @@ The application is a modular Flask web application with a mobile-first design.
 - **PostgreSQL**: Relational database.
 - **Python 3.9+**: Runtime environment.
 - **Gunicorn**: Production WSGI server.
+- **Gmail SMTP**: Email service for user verification and notifications.
