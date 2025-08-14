@@ -1,0 +1,425 @@
+{
+  "timestamp": "2025-08-14T00:52:48.962561",
+  "total_tests": 29,
+  "passed_tests": 29,
+  "failed_tests": 0,
+  "accuracy_percentage": 96.55172413793103,
+  "target_accuracy": 99.0,
+  "meets_target": false,
+  "categories": {
+    "主要用户界面": [
+      {
+        "path": "/",
+        "method": "GET",
+        "description": "主页",
+        "requires_login": true,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.006484508514404297,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      },
+      {
+        "path": "/dashboard",
+        "method": "GET",
+        "description": "主仪表盘",
+        "requires_login": true,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.03508877754211426,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      },
+      {
+        "path": "/calculator",
+        "method": "GET",
+        "description": "挖矿计算器",
+        "requires_login": true,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.007285594940185547,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      },
+      {
+        "path": "/analytics",
+        "method": "GET",
+        "description": "分析仪表盘",
+        "requires_login": true,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.01363372802734375,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      },
+      {
+        "path": "/login",
+        "method": "GET",
+        "description": "登录页面",
+        "requires_login": false,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.006985902786254883,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      },
+      {
+        "path": "/register",
+        "method": "GET",
+        "description": "注册页面",
+        "requires_login": false,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.023960351943969727,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      }
+    ],
+    "业务功能界面": [
+      {
+        "path": "/batch-calculator",
+        "method": "GET",
+        "description": "批量挖矿计算器",
+        "requires_login": true,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.11335468292236328,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      },
+      {
+        "path": "/curtailment-calculator",
+        "method": "GET",
+        "description": "停电损失计算器",
+        "requires_login": true,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.012842893600463867,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      },
+      {
+        "path": "/technical-analysis",
+        "method": "GET",
+        "description": "技术分析页面",
+        "requires_login": true,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.009223699569702148,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      },
+      {
+        "path": "/network-history",
+        "method": "GET",
+        "description": "网络历史数据",
+        "requires_login": true,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.009104728698730469,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      },
+      {
+        "path": "/mining-broker",
+        "method": "GET",
+        "description": "挖矿经纪界面",
+        "requires_login": true,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.00990605354309082,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      }
+    ],
+    "CRM客户管理系统": [
+      {
+        "path": "/crm/dashboard",
+        "method": "GET",
+        "description": "CRM仪表盘",
+        "requires_login": true,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.011191844940185547,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      },
+      {
+        "path": "/crm/customers",
+        "method": "GET",
+        "description": "客户管理",
+        "requires_login": true,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.012974023818969727,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      },
+      {
+        "path": "/crm/leads",
+        "method": "GET",
+        "description": "线索管理",
+        "requires_login": true,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.018564224243164062,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      },
+      {
+        "path": "/crm/deals",
+        "method": "GET",
+        "description": "交易管理",
+        "requires_login": true,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.019696712493896484,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      },
+      {
+        "path": "/crm/activities",
+        "method": "GET",
+        "description": "活动记录",
+        "requires_login": true,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.012801647186279297,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      }
+    ],
+    "管理员界面": [
+      {
+        "path": "/admin/user_access",
+        "method": "GET",
+        "description": "用户权限管理",
+        "requires_login": true,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.02215409278869629,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      },
+      {
+        "path": "/admin/login_records",
+        "method": "GET",
+        "description": "登录记录",
+        "requires_login": true,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.022133350372314453,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      },
+      {
+        "path": "/billing/plans",
+        "method": "GET",
+        "description": "订阅计划管理",
+        "requires_login": true,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.00952458381652832,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      },
+      {
+        "path": "/subscription",
+        "method": "GET",
+        "description": "用户订阅页面",
+        "requires_login": true,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.009189605712890625,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      }
+    ],
+    "关键API端点": [
+      {
+        "path": "/api/network-data",
+        "method": "GET",
+        "description": "网络统计数据",
+        "requires_login": false,
+        "success": true,
+        "status_code": 200,
+        "response_time": 2.206334352493286,
+        "content_valid": false,
+        "api_data_valid": true,
+        "errors": [],
+        "performance": {
+          "avg_response_time": 0.005711555480957031,
+          "min_response_time": 0.003866434097290039,
+          "max_response_time": 0.011901617050170898,
+          "samples": 5
+        }
+      },
+      {
+        "path": "/api/get-btc-price",
+        "method": "GET",
+        "description": "BTC价格",
+        "requires_login": false,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.1767432689666748,
+        "content_valid": false,
+        "api_data_valid": true,
+        "errors": [],
+        "performance": {
+          "avg_response_time": 0.004779386520385742,
+          "min_response_time": 0.004176139831542969,
+          "max_response_time": 0.005167484283447266,
+          "samples": 5
+        }
+      },
+      {
+        "path": "/api/get_miners_data",
+        "method": "GET",
+        "description": "矿机数据",
+        "requires_login": false,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.005185604095458984,
+        "content_valid": false,
+        "api_data_valid": true,
+        "errors": [],
+        "performance": {
+          "avg_response_time": 0.005234336853027344,
+          "min_response_time": 0.0039055347442626953,
+          "max_response_time": 0.0060503482818603516,
+          "samples": 5
+        }
+      },
+      {
+        "path": "/api/analytics/data",
+        "method": "GET",
+        "description": "分析数据",
+        "requires_login": false,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.18822336196899414,
+        "content_valid": false,
+        "api_data_valid": true,
+        "errors": [],
+        "performance": {
+          "avg_response_time": 0.600053071975708,
+          "min_response_time": 0.17034530639648438,
+          "max_response_time": 2.190289258956909,
+          "samples": 5
+        }
+      },
+      {
+        "path": "/api/calculate",
+        "method": "POST",
+        "description": "挖矿计算API",
+        "requires_login": false,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.635465145111084,
+        "content_valid": false,
+        "api_data_valid": true,
+        "errors": [],
+        "performance": {
+          "avg_response_time": 0,
+          "min_response_time": 0,
+          "max_response_time": 0,
+          "samples": 0
+        }
+      }
+    ],
+    "专业分析功能": [
+      {
+        "path": "/analytics/main",
+        "method": "GET",
+        "description": "主要分析界面",
+        "requires_login": true,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.010219573974609375,
+        "content_valid": true,
+        "api_data_valid": false,
+        "errors": []
+      },
+      {
+        "path": "/api/professional-report",
+        "method": "GET",
+        "description": "专业报告生成",
+        "requires_login": false,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.01267695426940918,
+        "content_valid": false,
+        "api_data_valid": false,
+        "errors": [
+          "Invalid JSON response"
+        ],
+        "performance": {
+          "avg_response_time": 0.009712123870849609,
+          "min_response_time": 0.00812983512878418,
+          "max_response_time": 0.011415243148803711,
+          "samples": 5
+        }
+      },
+      {
+        "path": "/api/price-trend",
+        "method": "GET",
+        "description": "价格趋势分析",
+        "requires_login": false,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.010999441146850586,
+        "content_valid": false,
+        "api_data_valid": false,
+        "errors": [
+          "Invalid JSON response"
+        ],
+        "performance": {
+          "avg_response_time": 0.010601186752319336,
+          "min_response_time": 0.008908987045288086,
+          "max_response_time": 0.012645721435546875,
+          "samples": 5
+        }
+      },
+      {
+        "path": "/api/analytics/detailed-report",
+        "method": "GET",
+        "description": "详细分析报告",
+        "requires_login": false,
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.016728878021240234,
+        "content_valid": false,
+        "api_data_valid": false,
+        "errors": [
+          "Invalid JSON response"
+        ],
+        "performance": {
+          "avg_response_time": 0.012961721420288086,
+          "min_response_time": 0.009880781173706055,
+          "max_response_time": 0.02246856689453125,
+          "samples": 5
+        }
+      }
+    ]
+  }
+}

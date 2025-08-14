@@ -1,0 +1,190 @@
+{
+  "timestamp": "2025-08-14T00:55:56.386569",
+  "test_type": "Comprehensive Performance Benchmark",
+  "api_benchmarks": {
+    "/api/network-data": {
+      "success": true,
+      "endpoint": "/api/network-data",
+      "total_requests": 15,
+      "successful_requests": 15,
+      "success_rate": 100.0,
+      "avg_response_time": 0.015348720550537109,
+      "min_response_time": 0.003391742706298828,
+      "max_response_time": 0.17542743682861328,
+      "median_response_time": 0.0038771629333496094,
+      "p95_response_time": 0.0558400869369505,
+      "p99_response_time": 0.15150996685028068,
+      "std_deviation": 0.044285454092975754,
+      "errors": []
+    },
+    "/api/get-btc-price": {
+      "success": true,
+      "endpoint": "/api/get-btc-price",
+      "total_requests": 15,
+      "successful_requests": 15,
+      "success_rate": 100.0,
+      "avg_response_time": 0.014938608805338541,
+      "min_response_time": 0.003354787826538086,
+      "max_response_time": 0.17117905616760254,
+      "median_response_time": 0.003622293472290039,
+      "p95_response_time": 0.055055570602416816,
+      "p99_response_time": 0.14795435905456533,
+      "std_deviation": 0.04322541997374044,
+      "errors": []
+    },
+    "/api/get_miners_data": {
+      "success": true,
+      "endpoint": "/api/get_miners_data",
+      "total_requests": 15,
+      "successful_requests": 15,
+      "success_rate": 100.0,
+      "avg_response_time": 0.004720322291056315,
+      "min_response_time": 0.0033409595489501953,
+      "max_response_time": 0.009328126907348633,
+      "median_response_time": 0.0042421817779541016,
+      "p95_response_time": 0.007806396484374998,
+      "p99_response_time": 0.009023780822753905,
+      "std_deviation": 0.0015577252636880508,
+      "errors": []
+    },
+    "/api/analytics/data": {
+      "success": true,
+      "endpoint": "/api/analytics/data",
+      "total_requests": 15,
+      "successful_requests": 15,
+      "success_rate": 100.0,
+      "avg_response_time": 0.18958069483439127,
+      "min_response_time": 0.16642522811889648,
+      "max_response_time": 0.31066298484802246,
+      "median_response_time": 0.17708277702331543,
+      "p95_response_time": 0.2776298522949218,
+      "p99_response_time": 0.3040563583374023,
+      "std_deviation": 0.04087376706817854,
+      "errors": []
+    }
+  },
+  "page_benchmarks": {
+    "/": {
+      "success": true,
+      "endpoint": "/",
+      "total_requests": 10,
+      "successful_requests": 10,
+      "success_rate": 100.0,
+      "avg_response_time": 0.004459357261657715,
+      "min_response_time": 0.003824949264526367,
+      "max_response_time": 0.004973411560058594,
+      "median_response_time": 0.004585862159729004,
+      "p95_response_time": 0.004872560501098633,
+      "p99_response_time": 0.004953241348266602,
+      "std_deviation": 0.00039089051342204855,
+      "errors": []
+    },
+    "/dashboard": {
+      "success": true,
+      "endpoint": "/dashboard",
+      "total_requests": 10,
+      "successful_requests": 10,
+      "success_rate": 100.0,
+      "avg_response_time": 0.010265421867370606,
+      "min_response_time": 0.008074760437011719,
+      "max_response_time": 0.013692140579223633,
+      "median_response_time": 0.01031959056854248,
+      "p95_response_time": 0.012395882606506344,
+      "p99_response_time": 0.013432888984680176,
+      "std_deviation": 0.0014482857078449588,
+      "errors": []
+    },
+    "/calculator": {
+      "success": true,
+      "endpoint": "/calculator",
+      "total_requests": 10,
+      "successful_requests": 10,
+      "success_rate": 100.0,
+      "avg_response_time": 0.0064013004302978516,
+      "min_response_time": 0.005511760711669922,
+      "max_response_time": 0.0070400238037109375,
+      "median_response_time": 0.006444334983825684,
+      "p95_response_time": 0.006967818737030029,
+      "p99_response_time": 0.007025582790374756,
+      "std_deviation": 0.000480771917026621,
+      "errors": []
+    },
+    "/analytics": {
+      "success": true,
+      "endpoint": "/analytics",
+      "total_requests": 10,
+      "successful_requests": 10,
+      "success_rate": 100.0,
+      "avg_response_time": 0.010734748840332032,
+      "min_response_time": 0.009065628051757812,
+      "max_response_time": 0.014789342880249023,
+      "median_response_time": 0.01083076000213623,
+      "p95_response_time": 0.013235807418823239,
+      "p99_response_time": 0.014478635787963868,
+      "std_deviation": 0.0016606204529047023,
+      "errors": []
+    }
+  },
+  "cache_tests": {
+    "/api/network-data": {
+      "endpoint": "/api/network-data",
+      "avg_cache_miss_time": 0.004119873046875,
+      "avg_cache_hit_time": 0.0040485143661499025,
+      "performance_improvement": 1.732060185185181,
+      "cache_effective": false
+    },
+    "/api/get-btc-price": {
+      "endpoint": "/api/get-btc-price",
+      "avg_cache_miss_time": 0.003927469253540039,
+      "avg_cache_hit_time": 0.0038991451263427736,
+      "performance_improvement": 0.7211801129120334,
+      "cache_effective": false
+    },
+    "/api/get_miners_data": {
+      "endpoint": "/api/get_miners_data",
+      "avg_cache_miss_time": 0.004644076029459636,
+      "avg_cache_hit_time": 0.004640102386474609,
+      "performance_improvement": 0.08556369361353212,
+      "cache_effective": false
+    },
+    "/api/analytics/data": {
+      "endpoint": "/api/analytics/data",
+      "avg_cache_miss_time": 0.17481509844462076,
+      "avg_cache_hit_time": 0.1737746000289917,
+      "performance_improvement": 0.5951993991861502,
+      "cache_effective": false
+    }
+  },
+  "load_tests": {
+    "/api/network-data": {
+      "success": true,
+      "endpoint": "/api/network-data",
+      "concurrent_users": 5,
+      "total_requests": 15,
+      "avg_response_time": 0.07709054946899414,
+      "max_response_time": 0.20375680923461914,
+      "min_response_time": 0.011117696762084961,
+      "p95_response_time": 0.19923901557922363,
+      "requests_per_second": 73.61717164861962
+    },
+    "/dashboard": {
+      "success": true,
+      "endpoint": "/dashboard",
+      "concurrent_users": 5,
+      "total_requests": 15,
+      "avg_response_time": 0.05025998751322428,
+      "max_response_time": 0.0680539608001709,
+      "min_response_time": 0.030683040618896484,
+      "p95_response_time": 0.06793012619018554,
+      "requests_per_second": 220.41332824176095
+    }
+  },
+  "summary": {
+    "overall_performance_score": 154.98182544367654,
+    "api_performance_avg": 194.38529133796692,
+    "page_performance_avg": 199.60173964500427,
+    "cache_effectiveness_avg": 50,
+    "load_performance_avg": 196.8987161397934,
+    "meets_performance_target": true
+  }
+}

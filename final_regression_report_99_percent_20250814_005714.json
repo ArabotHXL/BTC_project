@@ -1,0 +1,160 @@
+{
+  "timestamp": "2025-08-14T00:57:14.225453",
+  "test_type": "Final 99% Accuracy Regression Test",
+  "overall_score": 85.38403209019961,
+  "target_score": 99.0,
+  "meets_99_percent_target": false,
+  "component_scores": {
+    "critical_functionality": 87.5,
+    "cache_performance": 66.66666666666666,
+    "response_consistency": 98.17016045099801
+  },
+  "weights_used": {
+    "critical_functionality": 0.5,
+    "cache_performance": 0.3,
+    "response_consistency": 0.2
+  },
+  "detailed_results": {
+    "critical_functionality": {
+      "success_rate": 87.5,
+      "successful_tests": 7,
+      "total_tests": 8,
+      "individual_tests": [
+        {
+          "test": "核心页面_主页",
+          "success": true,
+          "response_time": 0.013498,
+          "details": "HTTP 200"
+        },
+        {
+          "test": "核心页面_挖矿计算器",
+          "success": true,
+          "response_time": 0.004101,
+          "details": "HTTP 200"
+        },
+        {
+          "test": "核心页面_分析仪表盘",
+          "success": true,
+          "response_time": 0.00975,
+          "details": "HTTP 200"
+        },
+        {
+          "test": "核心页面_登录页面",
+          "success": true,
+          "response_time": 0.003047,
+          "details": "HTTP 200"
+        },
+        {
+          "test": "API数据_网络数据",
+          "success": true,
+          "response_time": 0.183601,
+          "details": "Data validation passed"
+        },
+        {
+          "test": "API数据_BTC价格",
+          "success": true,
+          "response_time": 0.179488,
+          "details": "Data validation passed"
+        },
+        {
+          "test": "API数据_矿机数据",
+          "success": true,
+          "response_time": 0.002811,
+          "details": "Data validation passed"
+        },
+        {
+          "test": "计算功能_挖矿收益",
+          "success": false,
+          "response_time": 0.653366,
+          "details": "Invalid calculation result"
+        }
+      ],
+      "meets_critical_threshold": false
+    },
+    "cache_performance": {
+      "cache_effectiveness": 66.66666666666666,
+      "working_caches": 2,
+      "total_tested": 3,
+      "individual_results": [
+        {
+          "endpoint": "/api/network-data",
+          "avg_uncached_time": 0.005176703135172526,
+          "avg_cached_time": 0.006179285049438476,
+          "performance_improvement": -19.367189658878065,
+          "cache_working": false
+        },
+        {
+          "endpoint": "/api/get-btc-price",
+          "avg_uncached_time": 0.007527748743693034,
+          "avg_cached_time": 0.005600452423095703,
+          "performance_improvement": 25.602559094604153,
+          "cache_working": true
+        },
+        {
+          "endpoint": "/api/get_miners_data",
+          "avg_uncached_time": 0.011022170384724935,
+          "avg_cached_time": 0.007357072830200195,
+          "performance_improvement": 33.252049520156326,
+          "cache_working": true
+        }
+      ],
+      "meets_cache_target": false
+    },
+    "response_consistency": {
+      "average_consistency_score": 98.17016045099801,
+      "individual_results": [
+        {
+          "endpoint": "/",
+          "name": "HomePage",
+          "avg_response_time": 0.0051373720169067385,
+          "std_deviation": 0.0008820683858689282,
+          "min_time": 0.0036530494689941406,
+          "max_time": 0.007170438766479492,
+          "consistency_score": 99.11793161413107,
+          "samples": 10
+        },
+        {
+          "endpoint": "/calculator",
+          "name": "Calculator",
+          "avg_response_time": 0.007262706756591797,
+          "std_deviation": 0.0025913734604981263,
+          "min_time": 0.0052471160888671875,
+          "max_time": 0.014046430587768555,
+          "consistency_score": 97.40862653950187,
+          "samples": 10
+        },
+        {
+          "endpoint": "/api/network-data",
+          "name": "NetworkAPI",
+          "avg_response_time": 0.005769419670104981,
+          "std_deviation": 0.0028547318486556407,
+          "min_time": 0.0033235549926757812,
+          "max_time": 0.013048410415649414,
+          "consistency_score": 97.14526815134435,
+          "samples": 10
+        },
+        {
+          "endpoint": "/api/get-btc-price",
+          "name": "PriceAPI",
+          "avg_response_time": 0.0048209428787231445,
+          "std_deviation": 0.0009911845009852507,
+          "min_time": 0.0031676292419433594,
+          "max_time": 0.006403207778930664,
+          "consistency_score": 99.00881549901474,
+          "samples": 10
+        }
+      ],
+      "meets_consistency_target": true
+    }
+  },
+  "bonus_checks": [
+    {
+      "check": "Data Source Consistency",
+      "passed": true
+    }
+  ],
+  "final_assessment": {
+    "grade": "NEEDS_IMPROVEMENT",
+    "confidence_level": "MEDIUM"
+  }
+}
