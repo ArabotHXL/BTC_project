@@ -285,7 +285,7 @@
         {% endif %}
         
         <!-- 分析平台 -->
-        {% if session.role == 'owner' %}
+        {% if user_has_analytics_access() %}
         <div class="dashboard-card card-analytics" onclick="location.href='{{ url_for('analytics_dashboard') }}'">
             <div class="card-content">
                 <i class="bi bi-graph-up-arrow card-icon"></i>

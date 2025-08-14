@@ -3505,10 +3505,6 @@ def analytics_market_data():
             'error': 'Access denied. Analytics API requires Owner privileges or Pro subscription.'
         }), 403
     
-    user_role = get_user_role(session.get('email'))
-    if user_role != 'owner':
-        return jsonify({'error': '只有拥有者可以访问分析系统'}), 403
-    
     try:
         import psycopg2
         from datetime import datetime
@@ -3586,9 +3582,12 @@ def analytics_market_data():
 @login_required
 def analytics_latest_report():
     """获取最新分析报告"""
-    user_role = get_user_role(session.get('email'))
-    if user_role != 'owner':
-        return jsonify({'error': '只有拥有者可以访问分析系统'}), 403
+    # Check analytics access permission
+    if not user_has_analytics_access():
+        return jsonify({
+            'success': False,
+            'error': 'Access denied. Analytics API requires Owner privileges or Pro subscription.'
+        }), 403
     
     try:
         import psycopg2
