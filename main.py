@@ -21,6 +21,38 @@ def create_app():
         if not os.environ.get("SESSION_SECRET"):
             os.environ["SESSION_SECRET"] = "bitcoin_mining_calculator_secret"
 
+    # Database health check before app initialization
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        from database_health import db_health_manager
+        
+        logging.info("Performing database health check...")
+        db_status = db_health_manager.check_database_connection(database_url)
+        
+        if not db_status['connected']:
+            error_msg = db_status.get('error', 'Unknown database error')
+            suggestion = db_status.get('suggestion', 'Check database configuration')
+            
+            logging.error(f"Database connection failed: {error_msg}")
+            logging.error(f"Suggested fix: {suggestion}")
+            
+            # For Neon-specific errors, provide detailed guidance
+            if db_status.get('neon_specific'):
+                logging.error("NEON DATABASE ENDPOINT DISABLED:")
+                logging.error("1. Go to your Neon console (https://console.neon.tech/)")
+                logging.error("2. Select your project and database")
+                logging.error("3. Enable the endpoint in the database settings")
+                logging.error("4. Update your DATABASE_URL environment variable if needed")
+                
+            # Wait for database with timeout
+            logging.info("Waiting for database to become available...")
+            if not db_health_manager.wait_for_database(database_url, timeout=60):
+                logging.error("Database unavailable after timeout. Starting with limited functionality.")
+            else:
+                logging.info("Database connection established successfully")
+        else:
+            logging.info(f"Database connection successful: {db_status.get('database_version', 'Unknown version')}")
+
     from app import app
     # db已在app模块中初始化
 

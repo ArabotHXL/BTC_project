@@ -9,19 +9,25 @@ class Config:
     # 基本设置
     SECRET_KEY = os.environ.get('SESSION_SECRET') or 'dev-secret-key-change-in-production'
     
-    # 数据库配置
+    # 数据库配置 - 增强版连接参数
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_size': 10,
-        'pool_recycle': 300,
-        'pool_pre_ping': True,
-        'max_overflow': 20,
+        'pool_recycle': 300,  # 5 minutes
+        'pool_pre_ping': True,  # Test connections before use
+        'pool_timeout': 30,     # Wait up to 30 seconds for connection from pool
+        'max_overflow': 20,     # Allow up to 20 connections beyond pool_size
         'connect_args': {
-            'connect_timeout': 10,
+            'connect_timeout': 15,  # Increased timeout for Neon
             'application_name': 'btc_mining_calculator'
         }
     }
+    
+    # Database retry configuration
+    DB_MAX_RETRIES = 5
+    DB_RETRY_DELAY = 2  # seconds
+    DB_CONNECTION_TIMEOUT = 60  # seconds
     
     # 会话配置
     SESSION_COOKIE_SECURE = True

@@ -153,52 +153,113 @@ app = Flask(__name__)
 # 设置安全的会话密钥
 app.secret_key = os.environ.get("SESSION_SECRET", secrets.token_hex(32))
 
-# 配置数据库
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,
-}
+# 配置数据库 - 使用增强的配置
+from config import Config
+app.config.from_object(Config)
 
 # 初始化数据库
 db.init_app(app)
 
-# 创建数据库表
-with app.app_context():
-    # 在导入models前确保数据库已初始化
-    from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot
-    import models_subscription  # noqa: F401
-    db.create_all()
-    logging.info("Database tables created successfully")
-    
-    # Initialize subscription plans
+# 创建数据库表 - 带错误处理
+def initialize_database():
+    """Initialize database with graceful error handling"""
     try:
-        from models_subscription import initialize_default_plans
-        initialize_default_plans()
-        logging.info("Subscription plans initialized successfully")
+        with app.app_context():
+            # 在导入models前确保数据库已初始化
+            from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot
+            import models_subscription  # noqa: F401
+            
+            # Test database connection before creating tables
+            from database_health import db_health_manager
+            database_url = os.environ.get('DATABASE_URL')
+            
+            if database_url:
+                db_status = db_health_manager.check_database_connection(database_url)
+                if not db_status['connected']:
+                    logging.error(f"Database connection failed during initialization: {db_status.get('error')}")
+                    return False
+            
+            db.create_all()
+            logging.info("Database tables created successfully")
+            
+            # Initialize subscription plans
+            try:
+                from models_subscription import initialize_default_plans
+                initialize_default_plans()
+                logging.info("Subscription plans initialized successfully")
+            except Exception as e:
+                logging.warning(f"Failed to initialize subscription plans: {e}")
+            
+            return True
+            
     except Exception as e:
-        logging.warning(f"Failed to initialize subscription plans: {e}")
+        logging.error(f"Database initialization failed: {e}")
+        return False
+
+# Initialize database
+if not initialize_database():
+    logging.warning("Database initialization failed - some features may not work correctly")
 
 # Health check route for deployment - no authentication required
 @app.route('/health', methods=['GET'])
 def health_check():
-    """Simple health check endpoint for deployment monitoring"""
+    """Enhanced health check endpoint for deployment monitoring"""
     try:
-        # Basic health check - verify database connection
+        # Enhanced health check with detailed database status
         from db import db
-        # Test database connection
-        from sqlalchemy import text
-        db.session.execute(text('SELECT 1'))
-        return jsonify({
-            'status': 'healthy',
-            'database': 'connected',
-            'timestamp': datetime.now().isoformat()
-        }), 200
+        from database_health import db_health_manager
+        
+        # Test database connection with detailed status
+        database_url = os.environ.get('DATABASE_URL')
+        db_status = db_health_manager.check_database_connection(database_url)
+        
+        if db_status['connected']:
+            # Additional SQLAlchemy connection test
+            from sqlalchemy import text
+            db.session.execute(text('SELECT version()'))
+            db.session.commit()
+            
+            return jsonify({
+                'status': 'healthy',
+                'database': {
+                    'status': 'connected',
+                    'version': db_status.get('database_version', 'Unknown'),
+                    'connection_test': 'passed'
+                },
+                'services': {
+                    'app': 'running',
+                    'database': 'connected'
+                },
+                'timestamp': datetime.now().isoformat()
+            }), 200
+        else:
+            # Database connection failed
+            return jsonify({
+                'status': 'unhealthy',
+                'database': {
+                    'status': 'disconnected',
+                    'error': db_status.get('error', 'Unknown error'),
+                    'suggestion': db_status.get('suggestion', 'Check database configuration'),
+                    'neon_specific': db_status.get('neon_specific', False)
+                },
+                'services': {
+                    'app': 'running',
+                    'database': 'failed'
+                },
+                'timestamp': datetime.now().isoformat()
+            }), 503  # Service Unavailable
+            
     except Exception as e:
         return jsonify({
             'status': 'unhealthy',
-            'database': 'disconnected',
-            'error': str(e),
+            'database': {
+                'status': 'error',
+                'error': str(e)
+            },
+            'services': {
+                'app': 'running',
+                'database': 'error'
+            },
             'timestamp': datetime.now().isoformat()
         }), 500
 
