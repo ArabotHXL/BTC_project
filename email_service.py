@@ -12,7 +12,8 @@ class ElasticEmailService:
     def __init__(self):
         self.api_key = os.environ.get('ELASTIC_EMAIL_API_KEY')
         self.base_url = "https://api.elasticemail.com/v2"
-        self.from_email = os.environ.get('EMAIL_FROM', 'noreply@btc-mining-calculator.com')
+        # 使用注册Elastic Email账户的邮箱作为发件人
+        self.from_email = os.environ.get('EMAIL_FROM', 'hxl2022hao@gmail.com')
         self.from_name = os.environ.get('EMAIL_FROM_NAME', 'BTC Mining Calculator')
     
     def send_verification_email(self, to_email: str, verification_url: str) -> bool:
