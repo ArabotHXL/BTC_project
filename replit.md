@@ -5,7 +5,7 @@ The BTC Mining Calculator is a web application designed for Bitcoin mining profi
 
 **MILESTONE ACHIEVED (August 14, 2025)**: Successfully reached 99.17% accuracy target through comprehensive regression testing and optimization. System demonstrates exceptional performance with 100% API availability, sub-200ms response times, and 98.3% cache effectiveness.
 
-**EMAIL SERVICE STATUS (August 14, 2025)**: Removed all email service dependencies including Gmail SMTP and Elastic Email. System now uses console-based verification link display for user email verification. All hardcoded Gmail addresses have been removed from the codebase.
+**EMAIL SERVICE STATUS (August 14, 2025)**: Gmail SMTP service successfully configured with application-specific password authentication. System sends professional verification emails via Gmail SMTP with fallback to console display. All hardcoded email addresses have been removed from the codebase.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -42,7 +42,7 @@ The application is a modular Flask web application with a mobile-first design.
 
 ### Key Features
 - **Mining Calculator Engine**: Core business logic for profitability calculations.
-- **Authentication System**: Manages user access, console-based email verification, role-based permissions, and session security.
+- **Authentication System**: Manages user access, Gmail SMTP email verification with console fallback, role-based permissions, and session security.
 - **CRM System**: Handles customer lifecycle management, lead and deal tracking, and commission management.
 - **Network Data Collection**: Automated historical data accumulation for BTC price, difficulty, and network hashrate from multiple sources.
 - **Multilingual System**: Provides dynamic Chinese/English interface support.
@@ -56,6 +56,7 @@ The application is a modular Flask web application with a mobile-first design.
 - **Blockchain.info API**: Bitcoin network statistics.
 - **IP-API**: Geographic location services for login tracking.
 - **Ankr RPC**: Free Bitcoin RPC service for real-time blockchain data.
+- **Gmail SMTP**: Email service for user verification and notifications via application-specific password.
 
 ### Third-party Libraries
 - **Flask**: Web application framework.

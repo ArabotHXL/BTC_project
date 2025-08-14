@@ -71,7 +71,16 @@ def send_verification_email(email, token):
         logging.info(f"邮箱验证链接已生成: {verification_url}")
         logging.info(f"发送验证邮件到: {email}")
         
-        # 显示验证链接在控制台
+        # 尝试使用Gmail SMTP发送邮件
+        try:
+            from gmail_oauth_service import send_verification_email_smtp
+            if send_verification_email_smtp(email, verification_url):
+                logging.info(f"Gmail SMTP验证邮件已成功发送到: {email}")
+                return True
+        except Exception as e:
+            logging.warning(f"Gmail SMTP服务出错: {e}")
+        
+        # 如果OAuth邮件发送失败，显示验证链接在控制台
         print("=" * 60)
         print("📧 邮箱验证链接:")
         print(f"用户: {email}")
