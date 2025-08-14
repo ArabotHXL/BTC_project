@@ -113,15 +113,6 @@ from mining_broker_routes import init_broker_routes
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
-# Helper functions
-def get_user_by_email(email):
-    """根据邮箱获取用户信息"""
-    try:
-        return UserAccess.query.filter_by(email=email).first()
-    except Exception as e:
-        logging.error(f"Error getting user by email: {e}")
-        return None
-
 def safe_float_conversion(value, default=0):
     """
     安全的float转换函数，防护NaN注入攻击
@@ -223,6 +214,39 @@ except ImportError as e:
 
 if not initialize_database_result:
     logging.warning("Database initialization failed - some features may not work correctly")
+
+# Helper functions that use database models - defined AFTER model imports
+def get_user_by_email(email):
+    """根据邮箱获取用户信息"""
+    try:
+        return UserAccess.query.filter_by(email=email).first()
+    except Exception as e:
+        logging.error(f"Error getting user by email: {e}")
+        return None
+
+def get_user_role(email):
+    """根据用户邮箱获取角色"""
+    user = UserAccess.query.filter_by(email=email).first()
+    if user and user.has_access:
+        return user.role
+    return None
+    
+def has_role(required_roles):
+    """检查当前用户是否拥有指定角色之一"""
+    email = session.get('email')
+    if not email:
+        return False
+    
+    user_role = get_user_role(email)
+    if not user_role:
+        return False
+        
+    # 如果用户是 owner，那么拥有所有权限
+    if user_role == 'owner':
+        return True
+        
+    # 检查用户角色是否在所需角色列表中
+    return user_role in required_roles
 
 # Health check route for deployment - no authentication required
 @app.route('/health', methods=['GET'])
@@ -329,30 +353,6 @@ def inject_translator():
     def translate(text):
         return get_translation(text, to_lang=g.language)
     return dict(t=translate, current_lang=g.language)
-
-def get_user_role(email):
-    """根据用户邮箱获取角色"""
-    user = UserAccess.query.filter_by(email=email).first()
-    if user and user.has_access:
-        return user.role
-    return None
-    
-def has_role(required_roles):
-    """检查当前用户是否拥有指定角色之一"""
-    email = session.get('email')
-    if not email:
-        return False
-    
-    user_role = get_user_role(email)
-    if not user_role:
-        return False
-        
-    # 如果用户是 owner，那么拥有所有权限
-    if user_role == 'owner':
-        return True
-        
-    # 检查用户角色是否在所需角色列表中
-    return user_role in required_roles
 
 # 登录页面
 @app.route('/login', methods=['GET', 'POST'])
