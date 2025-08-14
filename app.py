@@ -4489,46 +4489,63 @@ def api_analytics_data():
 @app.route('/api/network-history')
 @login_required
 def api_network_history():
-    """API endpoint for network history data"""
+    """API endpoint for network history data using market_analytics table"""
     try:
-        # 获取最近30天的网络历史数据
-        def get_network_snapshots(limit=30):
-            """获取网络快照数据"""
-            try:
-                return NetworkSnapshot.query.order_by(NetworkSnapshot.recorded_at.desc()).limit(limit).all()
-            except Exception as e:
-                logging.error(f"Error getting network snapshots: {e}")
-                return []
+        # 直接使用SQL查询market_analytics表获取更完整的历史数据
+        import psycopg2
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        cursor = conn.cursor()
         
-        historical_data = get_network_snapshots(limit=30)
+        # 获取最近30天的市场分析数据，包含更多字段
+        cursor.execute("""
+            SELECT recorded_at, btc_price, network_hashrate, network_difficulty, 
+                   btc_market_cap, btc_volume_24h, fear_greed_index,
+                   price_change_1h, price_change_24h, price_change_7d
+            FROM market_analytics 
+            WHERE recorded_at >= NOW() - INTERVAL '30 days'
+            ORDER BY recorded_at ASC
+            LIMIT 1000
+        """)
+        
+        historical_data = cursor.fetchall()
+        cursor.close()
+        conn.close()
         
         if not historical_data:
-            logging.warning("No network history data available")
+            logging.warning("No market analytics data available")
             return jsonify({
                 'success': False,
-                'error': 'No network history data available'
+                'error': 'No market analytics data available'
             })
         
         # 格式化数据
         formatted_data = []
-        for data in reversed(historical_data):  # 按时间顺序排列
+        for data in historical_data:
             formatted_data.append({
-                'timestamp': data.timestamp.isoformat(),
-                'btc_price': float(data.btc_price),
-                'network_difficulty': float(data.network_difficulty),
-                'network_hashrate': float(data.network_hashrate)
+                'timestamp': data[0].isoformat(),
+                'btc_price': float(data[1]) if data[1] else 0,
+                'network_hashrate': float(data[2]) if data[2] else 0,
+                'network_difficulty': float(data[3]) if data[3] else 0,
+                'btc_market_cap': int(data[4]) if data[4] else 0,
+                'btc_volume_24h': int(data[5]) if data[5] else 0,
+                'fear_greed_index': int(data[6]) if data[6] else None,
+                'price_change_1h': float(data[7]) if data[7] else 0,
+                'price_change_24h': float(data[8]) if data[8] else 0,
+                'price_change_7d': float(data[9]) if data[9] else 0
             })
         
-        logging.info(f"网络历史数据API返回 {len(formatted_data)} 条记录")
+        logging.info(f"市场分析历史数据API返回 {len(formatted_data)} 条记录 (来源: market_analytics表)")
         
         return jsonify({
             'success': True,
             'data': formatted_data,
+            'data_source': 'market_analytics',
+            'records_count': len(formatted_data),
             'timestamp': datetime.now().isoformat()
         })
         
     except Exception as e:
-        logging.error(f"网络历史数据API错误: {e}")
+        logging.error(f"市场分析历史数据API错误: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
