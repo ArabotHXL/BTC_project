@@ -425,7 +425,7 @@
         // 获取市场数据
         async function fetchMarketData() {
             try {
-                const response = await fetch('/analytics/api/market-data');
+                const response = await fetch('/api/market-data');
                 const data = await response.json();
                 
                 if (data.error) {
@@ -517,17 +517,17 @@
                 updateElementSafely('ema26', formatPrice(data.ema_26));
                 
                 // 更新动量指标
-                updateElementSafely('rsiValue', formatNumber(data.rsi, 1));
+                updateElementSafely('rsiValue', formatNumber(data.rsi_14, 1));
                 updateElementSafely('macd', formatNumber(data.macd, 4));
-                updateElementSafely('volatility', formatPercent(data.volatility));
+                updateElementSafely('volatility', formatPercent(data.volatility_30d));
                 
                 // 更新布林带
                 updateElementSafely('bollingerUpper', formatPrice(data.bollinger_upper));
                 updateElementSafely('bollingerLower', formatPrice(data.bollinger_lower));
                 
                 // 更新RSI信号
-                if (data.rsi !== null) {
-                    const rsi = data.rsi;
+                if (data.rsi_14 !== null) {
+                    const rsi = data.rsi_14;
                     let rsiSignal = '--';
                     if (rsi < 30) rsiSignal = '超卖';
                     else if (rsi > 70) rsiSignal = '超买';
@@ -541,8 +541,14 @@
                 
             } catch (error) {
                 console.error('Error fetching technical indicators:', error);
-                // API失败时，不覆盖服务器端数据，只是记录错误
-                console.log('Using server-side technical indicators data instead of API');
+                // 显示权限错误提示
+                const errorMsg = error.toString().includes('401') || error.toString().includes('403') ? 
+                                '需要拥有者权限' : '加载失败';
+                document.getElementById('smaValue').textContent = errorMsg;
+                document.getElementById('emaValue').textContent = errorMsg;
+                document.getElementById('rsiValue').textContent = errorMsg;
+                document.getElementById('macdValue').textContent = errorMsg;
+                document.getElementById('bbValue').textContent = errorMsg;
             }
         }
         
@@ -550,42 +556,16 @@
         async function fetchPriceHistory() {
             try {
                 const response = await fetch('/analytics/api/price-history?hours=24');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                const data = await response.json();
                 
-                const result = await response.json();
-                console.log('Price history response:', result);
+                if (data.length === 0) return;
                 
-                // Handle different response formats
-                let data = [];
-                if (result.success && result.data) {
-                    data = result.data;
-                } else if (Array.isArray(result)) {
-                    data = result;
-                } else {
-                    console.log('No price history data available');
-                    return;
-                }
+                const labels = data.map(item => new Date(item.time).toLocaleTimeString());
+                const prices = data.map(item => item.price);
                 
-                if (data.length === 0) {
-                    console.log('Empty price history data');
-                    return;
-                }
-                
-                // Map data with flexible field names
-                const labels = data.map(item => {
-                    const timestamp = item.timestamp || item.time || item.recorded_at;
-                    return timestamp ? new Date(timestamp).toLocaleTimeString() : '';
-                });
-                const prices = data.map(item => item.price || item.btc_price || 0);
-                
-                if (priceChart && prices.length > 0) {
-                    priceChart.data.labels = labels;
-                    priceChart.data.datasets[0].data = prices;
-                    priceChart.update();
-                    console.log('Price chart updated with', prices.length, 'data points');
-                }
+                priceChart.data.labels = labels;
+                priceChart.data.datasets[0].data = prices;
+                priceChart.update();
                 
             } catch (error) {
                 console.error('Error fetching price history:', error);
@@ -691,8 +671,7 @@
         function getRSISignal(rsi) {
             if (rsi > 70) return '超买';
             if (rsi < 30) return '超卖';
-            if (rsi >= 50) return '偏强';
-            return '偏弱';
+            return '中性';
         }
         
         // 加载服务器端传递的数据
@@ -705,26 +684,9 @@
             console.log('Technical indicators from server:', techData);
             
             // 更新RSI
-            if (techData.rsi !== null && techData.rsi !== undefined) {
-                console.log('Updating RSI value:', techData.rsi);
-                const rsiElement = document.getElementById('rsiValue');
-                const rsiSignalElement = document.getElementById('rsiSignal');
-                
-                if (rsiElement) {
-                    rsiElement.textContent = formatNumber(techData.rsi, 1);
-                    console.log('RSI value updated to:', rsiElement.textContent);
-                } else {
-                    console.error('rsiValue element not found');
-                }
-                
-                if (rsiSignalElement) {
-                    rsiSignalElement.textContent = getRSISignal(techData.rsi);
-                    console.log('RSI signal updated to:', rsiSignalElement.textContent);
-                } else {
-                    console.error('rsiSignal element not found');
-                }
-            } else {
-                console.log('RSI data is null or undefined:', techData.rsi);
+            if (techData.rsi_14 !== null) {
+                document.getElementById('rsiValue').textContent = formatNumber(techData.rsi_14, 1);
+                document.getElementById('rsiSignal').textContent = getRSISignal(techData.rsi_14);
             }
             
             // 更新其他技术指标
@@ -732,9 +694,9 @@
             if (techData.sma_50) document.getElementById('sma50').textContent = formatPrice(techData.sma_50);
             if (techData.ema_12) document.getElementById('ema12').textContent = formatPrice(techData.ema_12);
             if (techData.ema_26) document.getElementById('ema26').textContent = formatPrice(techData.ema_26);
-            if (techData.rsi) document.getElementById('rsi14').textContent = formatNumber(techData.rsi, 1);
+            if (techData.rsi_14) document.getElementById('rsi14').textContent = formatNumber(techData.rsi_14, 1);
             if (techData.macd) document.getElementById('macd').textContent = formatNumber(techData.macd, 4);
-            if (techData.volatility) document.getElementById('volatility').textContent = formatPercent(techData.volatility);
+            if (techData.volatility_30d) document.getElementById('volatility').textContent = formatPercent(techData.volatility_30d);
             if (techData.bollinger_upper) document.getElementById('bollingerUpper').textContent = formatPrice(techData.bollinger_upper);
             if (techData.bollinger_lower) document.getElementById('bollingerLower').textContent = formatPrice(techData.bollinger_lower);
             if (techData.sma_20) document.getElementById('bollingerMiddle').textContent = formatPrice(techData.sma_20);
@@ -776,15 +738,15 @@
             initPriceChart();
             initNetworkHistoryCharts();
             
-            // 首先加载服务器端传递的数据
-            console.log('Loading server-side data...');
-            loadServerSideData();
-            
-            // 然后尝试加载API数据（作为更新）
+            // 立即加载数据
             fetchMarketData();
             fetchTechnicalIndicators(); // 立即加载技术指标
             fetchPriceHistory();
             fetchNetworkHistory(); // 加载网络历史数据
+            
+            // 加载服务器端传递的数据
+            console.log('Loading server-side data...');
+            loadServerSideData();
             
             // 设置定时更新
             setInterval(fetchMarketData, 60000);        // 每分钟更新市场数据

@@ -3106,8 +3106,6 @@ def analytics_dashboard():
     
     # 如果技术指标数据为空，计算基于服务器端数据
     app.logger.info(f"检查技术指标数据: {technical_indicators}")
-    if technical_indicators:
-        app.logger.info(f"找到技术指标数据，RSI: {technical_indicators.get('rsi', 'N/A')}")
     if not technical_indicators:
         try:
             import psycopg2
@@ -3245,7 +3243,7 @@ def analytics_dashboard():
                 'bollinger_lower': current_market_price - 1500
             }
 
-    return render_template('analytics_dashboard.html', 
+    return render_template('analytics_main.html', 
                           user_role=user_role,
                           technical_indicators=technical_indicators,
                           latest_report=latest_report,
@@ -3344,6 +3342,10 @@ def analytics_technical_indicators():
     # 检查用户是否已登录
     if not session.get('authenticated'):
         return jsonify({'success': False, 'error': '用户未登录'}), 401
+    
+    user_role = get_user_role(session.get('email'))
+    if user_role not in ['owner', 'manager', 'mining_site']:
+        return jsonify({'success': False, 'error': '权限不足'}), 403
     
     try:
         import psycopg2
@@ -3795,16 +3797,12 @@ def analytics_latest_report_api():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-@app.route('/analytics/api/technical-indicators-old')
+@app.route('/analytics/api/technical-indicators')
 @login_required
 def analytics_technical_indicators_api():
-    """获取技术指标API - 旧版本（已弃用）"""
-    # Check analytics access permission
-    if not user_has_analytics_access():
-        return jsonify({
-            'success': False,
-            'error': 'Access denied. Analytics API requires Owner privileges or Pro subscription.'
-        }), 403
+    """获取技术指标API"""
+    if not has_role(['owner']):
+        return jsonify({'error': '需要拥有者权限'}), 403
     
     try:
         import psycopg2
@@ -3848,12 +3846,8 @@ def analytics_technical_indicators_api():
 @login_required
 def analytics_price_history_api():
     """获取价格历史数据API"""
-    # Check analytics access permission
-    if not user_has_analytics_access():
-        return jsonify({
-            'success': False,
-            'error': 'Access denied. Analytics API requires Owner privileges or Pro subscription.'
-        }), 403
+    if not has_role(['owner']):
+        return jsonify({'error': '需要拥有者权限'}), 403
     
     try:
         from analytics_engine import DatabaseManager
@@ -3865,20 +3859,18 @@ def analytics_price_history_api():
         if db_manager.connection:
             cursor = db_manager.connection.cursor()
             cursor.execute("""
-                SELECT btc_price, recorded_at
+                SELECT btc_price, timestamp
                 FROM market_analytics 
-                ORDER BY recorded_at DESC 
+                ORDER BY timestamp DESC 
                 LIMIT 100
             """)
             results = cursor.fetchall()
         
         if results:
-            data = [{'price': float(row[0]) if row[0] else 0, 'timestamp': row[1].isoformat() if row[1] else None} for row in results]
-            app.logger.info(f"价格历史API返回 {len(data)} 条记录")
+            data = [{'price': row[0], 'timestamp': row[1].isoformat() if row[1] else None} for row in results]
             return jsonify({'success': True, 'data': data})
         else:
-            app.logger.info("价格历史API: 暂无数据")
-            return jsonify({'success': True, 'data': [], 'message': '暂无价格历史数据'})
+            return jsonify({'success': False, 'error': '暂无价格历史数据'})
             
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
