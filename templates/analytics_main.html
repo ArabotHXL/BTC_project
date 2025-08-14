@@ -1754,13 +1754,22 @@
         // Data loading functions
         function loadAllData() {
             showLoading();
+            
+            // Load market data first and immediately show Quick Insights
+            loadMarketData().then(function() {
+                generateQuickInsights(); // Show insights as soon as market data is available
+            }).catch(function(error) {
+                console.error('Market data error:', error);
+            });
+            
+            // Load all data in parallel for complete dashboard
             Promise.all([
                 loadMarketData(),
                 loadPriceHistory(),
                 loadLatestReport()
             ]).then(function() {
                 updateConnectionStatus(true);
-                generateQuickInsights();
+                generateQuickInsights(); // Refresh insights with complete data
             }).catch(function(error) {
                 console.error('Error loading data:', error);
                 updateConnectionStatus(false);
@@ -2049,6 +2058,11 @@
 
             // Store data for insights generation
             currentMarketData = data;
+            
+            // Immediately generate Quick Insights with available data
+            setTimeout(function() {
+                generateQuickInsights();
+            }, 50);
 
             // Dashboard metrics - check each element exists before updating
             var btcPriceElement = document.getElementById('btcPrice');
@@ -3466,11 +3480,14 @@
             var insightsContainer = document.getElementById('quickInsights');
             if (!insightsContainer) return;
 
-            // Clear loading spinner
+            // Clear loading spinner immediately
             insightsContainer.innerHTML = '';
 
             if (!currentMarketData) {
-                insightsContainer.innerHTML = '<div class="text-muted">' + getText('等待数据加载...', 'Waiting for data...') + '</div>';
+                insightsContainer.innerHTML = '<div class="text-muted text-center p-3">' + 
+                    '<div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>' +
+                    getText('正在加载洞察...', 'Loading insights...') + 
+                    '</div>';
                 return;
             }
 
