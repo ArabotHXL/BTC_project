@@ -168,6 +168,10 @@ BTC Mining Calculator - 密码重置请求
     
     def _send_email(self, to_email: str, subject: str, html_body: str, text_body: str) -> bool:
         """发送邮件的核心方法"""
+        if not self.password:
+            logging.error("GMAIL_APP_PASSWORD 未设置")
+            return False
+            
         try:
             # 创建邮件
             msg = MIMEMultipart('alternative')

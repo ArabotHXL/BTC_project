@@ -71,19 +71,33 @@ def send_verification_email(email, token):
         logging.info(f"邮箱验证链接已生成: {verification_url}")
         logging.info(f"发送验证邮件到: {email}")
         
-        # 使用Elastic Email发送验证邮件
-        from email_service import send_verification_email
+        # 首先尝试Gmail发送验证邮件
+        from gmail_service import send_verification_email_gmail
         
-        if send_verification_email(email, verification_url):
-            logging.info(f"验证邮件已成功发送到: {email}")
-            return True
-        else:
-            logging.error(f"验证邮件发送失败: {email}")
+        gmail_success = False
+        try:
+            if send_verification_email_gmail(email, verification_url):
+                logging.info(f"Gmail验证邮件已成功发送到: {email}")
+                gmail_success = True
+        except Exception as e:
+            logging.warning(f"Gmail服务出错: {e}")
+        
+        # 如果Gmail失败，使用Elastic Email作为备用
+        if not gmail_success:
+            try:
+                from email_service import send_verification_email
+                if send_verification_email(email, verification_url):
+                    logging.info(f"Elastic Email备用服务发送成功到: {email}")
+                    return True
+            except Exception as e:
+                logging.warning(f"Elastic Email服务也失败: {e}")
+            
             # 即使邮件发送失败，也返回True，因为用户已经创建成功
-            # 可以在管理界面手动重发验证邮件
             print(f"注意: 验证邮件发送失败，请检查邮件配置")
             print(f"验证链接: {verification_url}")
             return True
+        
+        return gmail_success
         
     except Exception as e:
         logging.error(f"发送验证邮件失败: {e}")
