@@ -3854,8 +3854,6 @@ def analytics_price_history_api():
             'success': False,
             'error': 'Access denied. Analytics API requires Owner privileges or Pro subscription.'
         }), 403
-    if not has_role(['owner']):
-        return jsonify({'error': '需要拥有者权限'}), 403
     
     try:
         from analytics_engine import DatabaseManager
