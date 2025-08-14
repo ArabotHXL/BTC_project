@@ -3062,6 +3062,7 @@ def analytics_dashboard():
                 'bollinger_lower': float(tech_data[8]) if tech_data[8] is not None else 116000.0,
                 'recorded_at': tech_data[9].isoformat() if tech_data[9] else None
             }
+            app.logger.info(f"数据库技术指标: RSI={technical_indicators['rsi']}, 类型={type(technical_indicators['rsi'])}")
         
         # 获取最新分析报告
         report_data = None
@@ -3226,6 +3227,7 @@ def analytics_dashboard():
                 }
                 
                 app.logger.info(f"修正后技术指标: RSI={rsi:.1f}, MACD={macd:.2f}, 波动率={volatility_percentage:.1f}%, SMA20=${sma_20:.0f}, 当前价格=${current_price:.0f}")
+                app.logger.info(f"计算技术指标: RSI={technical_indicators['rsi']}, 类型={type(technical_indicators['rsi'])}")
                 
         except Exception as e:
             app.logger.error(f"服务器端技术指标计算失败: {e}")
@@ -3243,6 +3245,7 @@ def analytics_dashboard():
                 'bollinger_lower': current_market_price - 1500
             }
 
+    app.logger.info(f"传递给模板的技术指标: {technical_indicators}")
     return render_template('analytics_main.html', 
                           user_role=user_role,
                           technical_indicators=technical_indicators,
