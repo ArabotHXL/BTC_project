@@ -3728,6 +3728,9 @@
         // Inject server-side technical indicators data as global variable
         // eslint-disable-next-line
         window.serverTechnicalIndicators = {{ technical_indicators | tojson | default('null') | safe }};
+        
+        // Debug: Log what's being injected
+        console.log('TEMPLATE DEBUG: technical_indicators from server:', {{ technical_indicators | tojson | default('null') | safe }});
         // 技术分析相关功能
         let technicalChart = null;
         
