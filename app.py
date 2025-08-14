@@ -3329,6 +3329,7 @@ def analytics_unified_data():
         return jsonify({'error': f'获取市场数据失败: {str(e)}'}), 500
 
 @app.route('/analytics/api/technical-indicators')
+@app.route('/api/analytics/technical-indicators')
 @login_required
 def analytics_technical_indicators():
     """计算技术指标 - 使用真实数据库数据"""
