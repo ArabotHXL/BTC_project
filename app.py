@@ -3865,17 +3865,19 @@ def analytics_price_history_api():
         if db_manager.connection:
             cursor = db_manager.connection.cursor()
             cursor.execute("""
-                SELECT btc_price, timestamp
+                SELECT btc_price, recorded_at
                 FROM market_analytics 
-                ORDER BY timestamp DESC 
+                ORDER BY recorded_at DESC 
                 LIMIT 100
             """)
             results = cursor.fetchall()
         
         if results:
             data = [{'price': float(row[0]) if row[0] else 0, 'timestamp': row[1].isoformat() if row[1] else None} for row in results]
+            app.logger.info(f"价格历史API返回 {len(data)} 条记录")
             return jsonify({'success': True, 'data': data})
         else:
+            app.logger.info("价格历史API: 暂无数据")
             return jsonify({'success': True, 'data': [], 'message': '暂无价格历史数据'})
             
     except Exception as e:
