@@ -550,16 +550,42 @@
         async function fetchPriceHistory() {
             try {
                 const response = await fetch('/analytics/api/price-history?hours=24');
-                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 
-                if (data.length === 0) return;
+                const result = await response.json();
+                console.log('Price history response:', result);
                 
-                const labels = data.map(item => new Date(item.time).toLocaleTimeString());
-                const prices = data.map(item => item.price);
+                // Handle different response formats
+                let data = [];
+                if (result.success && result.data) {
+                    data = result.data;
+                } else if (Array.isArray(result)) {
+                    data = result;
+                } else {
+                    console.log('No price history data available');
+                    return;
+                }
                 
-                priceChart.data.labels = labels;
-                priceChart.data.datasets[0].data = prices;
-                priceChart.update();
+                if (data.length === 0) {
+                    console.log('Empty price history data');
+                    return;
+                }
+                
+                // Map data with flexible field names
+                const labels = data.map(item => {
+                    const timestamp = item.timestamp || item.time || item.recorded_at;
+                    return timestamp ? new Date(timestamp).toLocaleTimeString() : '';
+                });
+                const prices = data.map(item => item.price || item.btc_price || 0);
+                
+                if (priceChart && prices.length > 0) {
+                    priceChart.data.labels = labels;
+                    priceChart.data.datasets[0].data = prices;
+                    priceChart.update();
+                    console.log('Price chart updated with', prices.length, 'data points');
+                }
                 
             } catch (error) {
                 console.error('Error fetching price history:', error);

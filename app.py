@@ -3873,10 +3873,10 @@ def analytics_price_history_api():
             results = cursor.fetchall()
         
         if results:
-            data = [{'price': row[0], 'timestamp': row[1].isoformat() if row[1] else None} for row in results]
+            data = [{'price': float(row[0]) if row[0] else 0, 'timestamp': row[1].isoformat() if row[1] else None} for row in results]
             return jsonify({'success': True, 'data': data})
         else:
-            return jsonify({'success': False, 'error': '暂无价格历史数据'})
+            return jsonify({'success': True, 'data': [], 'message': '暂无价格历史数据'})
             
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
