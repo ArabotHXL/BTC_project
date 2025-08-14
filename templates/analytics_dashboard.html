@@ -517,17 +517,17 @@
                 updateElementSafely('ema26', formatPrice(data.ema_26));
                 
                 // 更新动量指标
-                updateElementSafely('rsiValue', formatNumber(data.rsi_14, 1));
+                updateElementSafely('rsiValue', formatNumber(data.rsi, 1));
                 updateElementSafely('macd', formatNumber(data.macd, 4));
-                updateElementSafely('volatility', formatPercent(data.volatility_30d));
+                updateElementSafely('volatility', formatPercent(data.volatility));
                 
                 // 更新布林带
                 updateElementSafely('bollingerUpper', formatPrice(data.bollinger_upper));
                 updateElementSafely('bollingerLower', formatPrice(data.bollinger_lower));
                 
                 // 更新RSI信号
-                if (data.rsi_14 !== null) {
-                    const rsi = data.rsi_14;
+                if (data.rsi !== null) {
+                    const rsi = data.rsi;
                     let rsiSignal = '--';
                     if (rsi < 30) rsiSignal = '超卖';
                     else if (rsi > 70) rsiSignal = '超买';
@@ -684,9 +684,9 @@
             console.log('Technical indicators from server:', techData);
             
             // 更新RSI
-            if (techData.rsi_14 !== null) {
-                document.getElementById('rsiValue').textContent = formatNumber(techData.rsi_14, 1);
-                document.getElementById('rsiSignal').textContent = getRSISignal(techData.rsi_14);
+            if (techData.rsi !== null) {
+                document.getElementById('rsiValue').textContent = formatNumber(techData.rsi, 1);
+                document.getElementById('rsiSignal').textContent = getRSISignal(techData.rsi);
             }
             
             // 更新其他技术指标
@@ -694,9 +694,9 @@
             if (techData.sma_50) document.getElementById('sma50').textContent = formatPrice(techData.sma_50);
             if (techData.ema_12) document.getElementById('ema12').textContent = formatPrice(techData.ema_12);
             if (techData.ema_26) document.getElementById('ema26').textContent = formatPrice(techData.ema_26);
-            if (techData.rsi_14) document.getElementById('rsi14').textContent = formatNumber(techData.rsi_14, 1);
+            if (techData.rsi) document.getElementById('rsi14').textContent = formatNumber(techData.rsi, 1);
             if (techData.macd) document.getElementById('macd').textContent = formatNumber(techData.macd, 4);
-            if (techData.volatility_30d) document.getElementById('volatility').textContent = formatPercent(techData.volatility_30d);
+            if (techData.volatility) document.getElementById('volatility').textContent = formatPercent(techData.volatility);
             if (techData.bollinger_upper) document.getElementById('bollingerUpper').textContent = formatPrice(techData.bollinger_upper);
             if (techData.bollinger_lower) document.getElementById('bollingerLower').textContent = formatPrice(techData.bollinger_lower);
             if (techData.sma_20) document.getElementById('bollingerMiddle').textContent = formatPrice(techData.sma_20);
