@@ -71,12 +71,19 @@ def send_verification_email(email, token):
         logging.info(f"邮箱验证链接已生成: {verification_url}")
         logging.info(f"发送验证邮件到: {email}")
         
-        # TODO: 这里可以集成SendGrid等邮件服务
-        # 现在先记录到日志，实际部署时需要配置邮件服务
-        print(f"验证邮件发送到 {email}")
-        print(f"验证链接: {verification_url}")
+        # 使用Elastic Email发送验证邮件
+        from email_service import send_verification_email
         
-        return True
+        if send_verification_email(email, verification_url):
+            logging.info(f"验证邮件已成功发送到: {email}")
+            return True
+        else:
+            logging.error(f"验证邮件发送失败: {email}")
+            # 即使邮件发送失败，也返回True，因为用户已经创建成功
+            # 可以在管理界面手动重发验证邮件
+            print(f"注意: 验证邮件发送失败，请检查邮件配置")
+            print(f"验证链接: {verification_url}")
+            return True
         
     except Exception as e:
         logging.error(f"发送验证邮件失败: {e}")
