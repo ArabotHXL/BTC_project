@@ -3144,7 +3144,8 @@
                     rsiElement.textContent = formatNumber(rsiValue, 1);
                 }
                 if (rsiSignalElement) {
-                    rsiSignalElement.textContent = getRSISignal(rsiValue);
+                    const signal = getRSISignal(rsiValue);
+                    rsiSignalElement.textContent = signal.text || signal;
                 }
                 console.log('RSI updated in main dashboard:', rsiValue);
             }
@@ -3352,10 +3353,10 @@
         }
 
         function getRSISignal(rsi) {
-            if (!rsi) return '--';
-            if (rsi > 70) return '超买';
-            if (rsi < 30) return '超卖';
-            return '中性';
+            if (!rsi) return { text: '--', class: 'signal-hold' };
+            if (rsi > 70) return { text: currentLanguage === 'en' ? 'Overbought' : '超买', class: 'signal-sell' };
+            if (rsi < 30) return { text: currentLanguage === 'en' ? 'Oversold' : '超卖', class: 'signal-buy' };
+            return { text: currentLanguage === 'en' ? 'Neutral' : '中性', class: 'signal-hold' };
         }
 
         function getRiskColor(level) {
@@ -3914,7 +3915,8 @@
             const rsiElement = document.getElementById('techRsiValue');
             if (rsiElement) {
                 rsiElement.textContent = rsi.toFixed(1);
-                updateSignalBadge('techRsiSignal', getRSISignal(rsi));
+                const rsiSignal = getRSISignal(rsi);
+                updateSignalBadge('techRsiSignal', rsiSignal.text);
             }
             
             // 更新MACD
@@ -3963,11 +3965,7 @@
             return baseVol + priceAdj;
         }
         
-        function getRSISignal(rsi) {
-            if (rsi > 70) return { text: currentLanguage === 'en' ? 'Overbought' : '超买', class: 'signal-sell' };
-            if (rsi < 30) return { text: currentLanguage === 'en' ? 'Oversold' : '超卖', class: 'signal-buy' };
-            return { text: currentLanguage === 'en' ? 'Neutral' : '中性', class: 'signal-hold' };
-        }
+
         
         function getMACDSignal(macd) {
             if (macd > 5) return { text: currentLanguage === 'en' ? 'Buy' : '买入', class: 'signal-buy' };
@@ -4034,7 +4032,8 @@
         function updateTechnicalSignals(rsi, macd, volatility) {
             const rsiAnalysis = document.getElementById('techRsiAnalysis');
             if (rsiAnalysis) {
-                rsiAnalysis.innerHTML = `<span class="${rsi > 70 ? 'bearish' : rsi < 30 ? 'bullish' : 'neutral'}">${getRSISignal(rsi).text}</span>`;
+                const rsiSignal = getRSISignal(rsi);
+                rsiAnalysis.innerHTML = `<span class="${rsi > 70 ? 'bearish' : rsi < 30 ? 'bullish' : 'neutral'}">${rsiSignal.text}</span>`;
             }
             
             const macdAnalysis = document.getElementById('techMacdAnalysis');
