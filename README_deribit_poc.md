@@ -1,15 +1,15 @@
-# Deribit BTC期权交易数据POC
+# Deribit期权交易数据分析POC
 
-这是一个基于Deribit公开API的比特币期权交易数据概念验证脚本，可以获取和分析最近的BTC期权交易数据。
+这是一个使用Deribit Public API采集和分析期权交易数据的概念验证(POC)系统。
 
 ## 功能特性
 
-- 🔍 获取最近15分钟（可配置）的BTC期权交易数据
-- 📊 按期权价格或行权价进行分组统计
-- 📈 支持看涨(CALL)/看跌(PUT)期权分类分析
-- 💾 支持CSV格式数据导出
-- 🌐 使用Deribit公开API，无需身份验证
-- 📝 详细的日志记录和错误处理
+- ✅ **实时数据采集**: 从Deribit Public API获取最新的期权交易数据
+- ✅ **价格区间分析**: 将交易按价格区间分组，统计交易量分布
+- ✅ **数据存储**: 使用SQLite数据库持久化存储交易数据
+- ✅ **定时采集**: 支持定时自动采集数据
+- ✅ **分析报告**: 生成详细的交易分析报告
+- ✅ **多合约支持**: 支持分析不同的期权合约
 
 ## 安装依赖
 
@@ -19,94 +19,137 @@ pip install -r requirements_deribit_poc.txt
 
 ## 使用方法
 
-### 基本用法
+### 1. 测试API连接
 
 ```bash
-# 默认参数：15分钟窗口，5美元价格区间
-python deribit_options_poc.py
-
-# 自定义参数
-python deribit_options_poc.py --minutes 30 --bucket 10
+python test_deribit_poc.py
 ```
 
-### 高级功能
+### 2. 列出活跃期权合约
 
 ```bash
-# 按看涨/看跌期权分类统计
-python deribit_options_poc.py --by-type
-
-# 按行权价分组（而非期权价格）
-python deribit_options_poc.py --by strike --bucket 1000
-
-# 导出数据到CSV文件
-python deribit_options_poc.py --csv btc_options_trades.csv
-
-# 组合使用
-python deribit_options_poc.py --minutes 60 --bucket 2.5 --by-type --csv data.csv
+python deribit_options_poc.py --list
 ```
 
-## 参数说明
+### 3. 分析特定合约
 
-- `--minutes`: 时间窗口（分钟），默认15分钟
-- `--bucket`: 分组区间大小，默认5.0美元
-- `--by`: 分组依据，可选 `price`（期权价格）或 `strike`（行权价）
-- `--by-type`: 是否按看涨/看跌期权分类统计
-- `--csv`: CSV导出文件路径（可选）
+```bash
+python deribit_options_poc.py --instrument BTC-27DEC24-100000-C
+```
 
-## 输出示例
+### 4. 启动定时采集 (每15分钟)
+
+```bash
+python deribit_options_poc.py --schedule 15
+```
+
+## API端点说明
+
+### 主要使用的Deribit API端点：
+
+1. **`public/get_instruments`**: 获取可用的期权合约列表
+2. **`public/get_last_trades_by_instrument`**: 获取指定合约的最新交易数据
+3. **`public/ticker`**: 获取合约的实时行情数据
+4. **`public/get_time`**: 获取服务器时间
+
+### 数据结构
+
+#### 交易数据 (TradeData)
+```python
+@dataclass
+class TradeData:
+    trade_id: str           # 交易ID
+    timestamp: int          # 时间戳
+    price: float           # 交易价格
+    amount: float          # 交易数量
+    direction: str         # 买卖方向 (buy/sell)
+    instrument_name: str   # 合约名称
+    index_price: float     # 指数价格
+    mark_price: float      # 标记价格
+```
+
+#### 价格区间分析 (PriceRangeAnalysis)
+```python
+@dataclass
+class PriceRangeAnalysis:
+    price_range: str       # 价格区间范围
+    trade_count: int       # 交易笔数
+    total_volume: float    # 总交易量
+    avg_price: float       # 平均价格
+    percentage: float      # 占总量百分比
+```
+
+## 分析报告示例
 
 ```
-BTC期权交易数据统计
 ============================================================
+Deribit期权交易分析报告
+============================================================
+合约名称: BTC-27DEC24-100000-C
+分析时间: 2025-08-14 23:54:12
+总交易数: 156
+总交易量: 12.5640
+平均价格: $1,245.67
 
-               价格区间 |   交易笔数 |      总交易量 |     平均价格
------------------------------------------------------------------
-        $0.00–$5.00 |       15 |      45.2340 |      $2.35
-        $5.00–$10.00 |        8 |      23.1200 |      $7.80
-       $10.00–$15.00 |        3 |       8.4500 |     $12.50
------------------------------------------------------------------
-                 总计 |       26 |      76.8040 |           
-
---- 看涨/看跌期权分类统计 ---
-               价格区间 |   看涨笔数 |     看涨量 |   看跌笔数 |     看跌量
-----------------------------------------------------------------------
-        $0.00–$5.00 |        9 |    28.1200 |        6 |    17.1140
-        $5.00–$10.00 |        5 |    15.2300 |        3 |     7.8900
-       $10.00–$15.00 |        2 |     5.4500 |        1 |     3.0000
+价格区间分析:
+价格区间               交易数    交易量        占比     均价
+------------------------------------------------------------
+$1200.00-$1250.00     45       4.2150       33.55%   $1,225.34
+$1250.00-$1300.00     38       3.1250       24.87%   $1,275.89
+$1150.00-$1200.00     29       2.4560       19.55%   $1,178.45
+...
+============================================================
 ```
 
-## 技术说明
+## 数据库结构
 
-### API端点
-- 使用Deribit公开API：`/api/v2/public/get_last_trades_by_currency_and_time`
-- 支持分页获取大量数据
-- 内置请求频率限制，避免API限制
+### trades表
+存储原始交易数据：
+- trade_id (主键)
+- timestamp (时间戳)
+- price (价格)
+- amount (数量)
+- direction (方向)
+- instrument_name (合约名)
+- index_price (指数价格)
+- mark_price (标记价格)
+- collected_at (采集时间)
 
-### 数据解析
-- 自动解析期权合约名称格式：`BTC-30AUG24-60000-C`
-- 提取到期日、行权价、期权类型等信息
-- 支持价格区间自动分组和标签生成
-
-### 错误处理
-- 网络请求异常处理
-- 数据格式验证
-- 详细的日志记录
-
-## 集成到主项目
-
-这个POC脚本可以作为独立模块集成到主要的BTC挖矿计算器项目中：
-
-1. **期权数据分析模块**：为挖矿投资决策提供期权市场参考
-2. **市场情绪指标**：通过期权交易活动分析市场情绪
-3. **风险对冲工具**：为矿场运营提供期权对冲策略参考
+### price_range_analysis表
+存储价格区间分析结果：
+- id (主键)
+- instrument_name (合约名)
+- analysis_time (分析时间)
+- price_range (价格区间)
+- trade_count (交易数)
+- total_volume (总量)
+- avg_price (均价)
+- percentage (占比)
 
 ## 注意事项
 
-- Deribit API有请求频率限制，脚本已内置合理的请求间隔
-- 大时间窗口可能产生大量数据，建议合理设置参数
-- 网络连接问题可能影响数据获取完整性
-- 期权数据仅供分析参考，不构成投资建议
+1. **API限制**: Deribit Public API有频率限制，请合理设置采集间隔
+2. **数据准确性**: 此POC仅用于演示，生产环境需要更多错误处理
+3. **存储空间**: 长时间运行会积累大量数据，注意磁盘空间
+4. **网络稳定性**: 确保网络连接稳定，API可能偶尔超时
 
-## 许可证
+## 扩展功能建议
 
-本POC脚本遵循MIT许可证，可自由使用和修改。
+- [ ] 添加WebSocket实时数据流
+- [ ] 支持多币种期权分析
+- [ ] 集成可视化图表
+- [ ] 添加异常报警机制
+- [ ] 支持CSV数据导出
+- [ ] 增加更多统计指标
+
+## 技术架构
+
+```
+DeribitAnalysisPOC
+├── DeribitDataCollector    # API数据采集
+├── DataStorage            # 数据存储管理
+├── PriceRangeAnalyzer     # 价格区间分析
+└── 定时任务调度           # Schedule管理
+```
+
+这个POC展示了如何使用Deribit Public API构建交易数据分析系统的基础框架。
