@@ -144,8 +144,8 @@
                                 <li><hr class="dropdown-divider"></li>
                                 <li><h6 class="dropdown-header">{% if current_lang == 'en' %}Analytics Platform{% else %}数据分析平台{% endif %}</h6></li>
                                 
-                                <!-- Analytics for all users -->
-                                {% if session.role == 'owner' %}
+                                <!-- Analytics for all users with analytics access -->
+                                {% if user_has_analytics_access() %}
                                 <li><a class="dropdown-item" href="{{ url_for('analytics_dashboard') }}">
                                     <i class="bi bi-graph-up me-1"></i> 
                                     {% if current_lang == 'en' %}Analytics Dashboard{% else %}数据分析平台{% endif %}
