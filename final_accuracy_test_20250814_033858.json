@@ -1,0 +1,122 @@
+{
+  "timestamp": "2025-08-14T03:38:48.280075",
+  "test_type": "Final 99%+ Accuracy Test",
+  "overall_score": 53.413110535577914,
+  "target_score": 99.0,
+  "meets_99_percent_target": false,
+  "execution_time": 10.35742712020874,
+  "component_scores": {
+    "critical_pages": 60.416666666666664,
+    "api_functionality": 33.166666666666664,
+    "cache_performance": 91.48221934455623,
+    "login_authentication": 0
+  },
+  "detailed_results": {
+    "critical_pages": [
+      {
+        "path": "/",
+        "status_code": 200,
+        "success": true,
+        "content_score": 66.66666666666666,
+        "matched_patterns": []
+      },
+      {
+        "path": "/dashboard",
+        "status_code": 200,
+        "success": true,
+        "content_score": 85,
+        "matched_patterns": [
+          "Bitcoin|BTC|比特币",
+          "Mining|挖矿",
+          "Calculator|计算器",
+          "Data|数据|统计"
+        ]
+      },
+      {
+        "path": "/calculator",
+        "status_code": 200,
+        "success": true,
+        "content_score": 90,
+        "matched_patterns": [
+          "Calculator|计算器",
+          "Mining|挖矿",
+          "Profitability|收益",
+          "Hashrate|算力"
+        ]
+      },
+      {
+        "path": "/analytics",
+        "status_code": 200,
+        "success": true,
+        "content_score": 0,
+        "matched_patterns": []
+      }
+    ],
+    "api_calculations": {
+      "total_tests": 2,
+      "successful_tests": 0,
+      "failed_tests": 2,
+      "accuracy_score": 33.166666666666664,
+      "details": [
+        {
+          "scenario": "Standard S19 Pro",
+          "status_code": 200,
+          "success": false,
+          "validation_score": 66.33333333333333
+        },
+        {
+          "scenario": "High-end S21 Pro",
+          "status_code": 200,
+          "success": false,
+          "validation_score": 66.33333333333333
+        }
+      ]
+    },
+    "cache_performance": {
+      "working_caches": 3,
+      "total_tested": 3,
+      "cache_effectiveness_score": 91.48221934455623,
+      "individual_results": [
+        {
+          "endpoint": "/api/network-data",
+          "cache_working": true,
+          "performance_improvement": 90.72146556829,
+          "cache_score": 100,
+          "avg_warmup_time": 0.0636143684387207,
+          "avg_cached_time": 0.005902481079101562
+        },
+        {
+          "endpoint": "/api/get-btc-price",
+          "cache_working": true,
+          "performance_improvement": 91.27910110340905,
+          "cache_score": 100,
+          "avg_warmup_time": 0.06369876861572266,
+          "avg_cached_time": 0.005555105209350586
+        },
+        {
+          "endpoint": "/api/get_miners_data",
+          "cache_working": true,
+          "performance_improvement": 0,
+          "cache_score": 48.89331606733739,
+          "avg_warmup_time": 0.004786968231201172,
+          "avg_cached_time": 0.005797338485717773
+        }
+      ]
+    }
+  },
+  "login_success": false,
+  "login_details": {
+    "success": false,
+    "method": "standard",
+    "response_code": 302,
+    "error": "Login failed: status 302",
+    "dashboard_accessible": false
+  },
+  "weights_used": {
+    "critical_pages": 0.4,
+    "api_functionality": 0.3,
+    "cache_performance": 0.2,
+    "login_authentication": 0.1
+  },
+  "bonus_score": 1
+}
