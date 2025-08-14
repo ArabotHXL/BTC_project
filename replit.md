@@ -5,7 +5,7 @@ The BTC Mining Calculator is a web application designed for Bitcoin mining profi
 
 **MILESTONE ACHIEVED (August 14, 2025)**: Successfully reached 99.17% accuracy target through comprehensive regression testing and optimization. System demonstrates exceptional performance with 100% API availability, sub-200ms response times, and 98.3% cache effectiveness.
 
-**EMAIL SERVICE STATUS (August 14, 2025)**: Transitioned to Gmail SMTP-only architecture. Removed Elastic Email dependencies. Gmail authentication requires updated application-specific password to resolve current 535 authentication error.
+**EMAIL SERVICE STATUS (August 14, 2025)**: Removed all email service dependencies including Gmail SMTP and Elastic Email. System now uses console-based verification link display for user email verification. All hardcoded Gmail addresses have been removed from the codebase.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -42,7 +42,7 @@ The application is a modular Flask web application with a mobile-first design.
 
 ### Key Features
 - **Mining Calculator Engine**: Core business logic for profitability calculations.
-- **Authentication System**: Manages user access, Gmail SMTP email verification, role-based permissions, and session security.
+- **Authentication System**: Manages user access, console-based email verification, role-based permissions, and session security.
 - **CRM System**: Handles customer lifecycle management, lead and deal tracking, and commission management.
 - **Network Data Collection**: Automated historical data accumulation for BTC price, difficulty, and network hashrate from multiple sources.
 - **Multilingual System**: Provides dynamic Chinese/English interface support.
@@ -70,4 +70,3 @@ The application is a modular Flask web application with a mobile-first design.
 - **PostgreSQL**: Relational database.
 - **Python 3.9+**: Runtime environment.
 - **Gunicorn**: Production WSGI server.
-- **Gmail SMTP**: Email service for user verification and notifications.

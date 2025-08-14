@@ -70,7 +70,7 @@ class ComprehensiveRegressionTest:
     def test_authentication_system(self):
         """认证系统测试"""
         test_credentials = [
-            {'email': 'hxl2022hao@gmail.com', 'password': 'Hxl,04141992', 'expected': 'owner'},
+            {'email': 'owner@test.com', 'password': 'Hxl,04141992', 'expected': 'owner'},
             {'email': 'admin@test.com', 'password': 'admin123', 'expected': 'admin'},
             {'email': 'test_free@test.com', 'password': 'test123', 'expected': 'guest'}
         ]

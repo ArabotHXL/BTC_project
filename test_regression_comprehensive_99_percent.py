@@ -38,7 +38,7 @@ class ComprehensiveRegressionTester:
         
         # 登录凭据（测试用户）
         self.test_user = {
-            'email': 'hxl2022hao@gmail.com',
+            'email': 'owner@test.com',
             'password': 'test123'  # 假设测试密码
         }
         

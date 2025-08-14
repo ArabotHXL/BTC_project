@@ -46,7 +46,7 @@ class EnhancedRegressionTester:
         
         # 登录凭据
         self.test_user = {
-            'email': 'hxl2022hao@gmail.com',
+            'email': 'owner@test.com',
             'password': 'test123'
         }
         

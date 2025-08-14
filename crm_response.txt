@@ -195,7 +195,7 @@
                 <div class="dropdown">
                     <button class="btn btn-dark dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-person-circle me-1"></i>
-                        hxl2022hao@gmail.com
+                        owner@test.com
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" href="/main">
@@ -610,7 +610,7 @@
                                     </td>
                                     <td>$0.00</td>
                                     <td>2025-06-30</td>
-                                    <td>hxl2022hao@gmail.com</td>
+                                    <td>owner@test.com</td>
                                 </tr>
                                 
                                 <tr>
@@ -631,7 +631,7 @@
                                     </td>
                                     <td>$0.00</td>
                                     <td>未设置</td>
-                                    <td>hxl2022hao@gmail.com</td>
+                                    <td>owner@test.com</td>
                                 </tr>
                                 
                             

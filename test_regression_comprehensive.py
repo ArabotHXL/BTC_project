@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # 测试配置
 BASE_URL = "http://localhost:5000"
 TEST_USERS = {
-    'owner': {'email': 'hxl2022hao@gmail.com', 'password': 'Hxl,04141992'},
+    'owner': {'email': 'owner@test.com', 'password': 'owner123'},
     'admin': {'email': 'admin@test.com', 'password': 'admin123'},
     'free_user': {'email': 'test_free@test.com', 'password': 'test123'},
     'basic_user': {'email': 'test_basic@test.com', 'password': 'test123'},

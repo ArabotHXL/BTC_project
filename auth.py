@@ -37,7 +37,6 @@ def get_authorized_emails():
     # 默认授权邮箱列表（仅在开发环境使用，生产环境应使用数据库或环境变量）
     default_emails = [
         'admin@example.com',
-        'hxl2022hao@gmail.com', 
         'user@example.com',
         'site@example.com',
         'testing123@example.com'

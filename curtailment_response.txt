@@ -42,13 +42,13 @@
                         <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-person-circle me-1"></i>
                             
-                                hxl2022hao@gmail.com
+                                owner@test.com
                             
                         </button>
                         <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="userDropdown">
                             <li><h6 class="dropdown-header">账户信息</h6></li>
                             
-                                <li><span class="dropdown-item-text">hxl2022hao@gmail.com</span></li>
+                                <li><span class="dropdown-item-text">owner@test.com</span></li>
                                 
                                 <!-- Admin options based on role -->
                                 
