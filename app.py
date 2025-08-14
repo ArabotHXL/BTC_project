@@ -2873,11 +2873,34 @@ def inject_nav_menu():
         return role in ['owner', 'admin', 'mining_site']
     
     def user_has_analytics_access():
-        """检查用户是否有访问数据分析的权限"""
+        """检查用户是否有访问数据分析的权限 - 支持Pro订阅用户"""
         if not session.get('authenticated'):
             return False
+        
         role = session.get('role')
-        return role == 'owner'
+        # Owner always has access
+        if role == 'owner':
+            return True
+        
+        # Check if user has Pro subscription with analytics access
+        try:
+            from models_subscription import SubscriptionPlan, UserSubscription
+            user_id = session.get('user_id')
+            if user_id:
+                # Get user's active subscription
+                subscription = UserSubscription.query.filter_by(
+                    user_id=user_id, 
+                    status='active'
+                ).first()
+                
+                if subscription and subscription.is_active():
+                    plan = subscription.plan
+                    if plan and plan.allow_advanced_analytics:
+                        return True
+        except Exception as e:
+            logging.warning(f"Error checking subscription for analytics access: {e}")
+        
+        return False
     
     def user_has_user_management_access():
         """检查用户是否有访问用户管理的权限"""
@@ -2942,7 +2965,7 @@ def network_history_main():
 
 @app.route('/analytics')
 @app.route('/analytics_dashboard')
-@requires_owner_only
+@login_required
 @log_access_attempt('数据分析平台')
 def analytics_dashboard():
     """数据分析仪表盘 - 仅限拥有者"""
@@ -2953,7 +2976,16 @@ def analytics_dashboard():
     session['language'] = lang
     
     user_role = get_user_role(session.get('email'))
-    # 允许所有已登录用户访问analytics页面
+    
+    # Check if user has analytics access (owner or Pro subscription)
+    if not user_has_analytics_access():
+        if g.language == 'en':
+            flash('Access denied. Analytics platform requires Owner privileges or Pro subscription.', 'danger')
+        else:
+            flash('访问被拒绝。数据分析平台需要拥有者权限或Pro订阅。', 'danger')
+        return redirect(url_for('index'))
+    
+    # 允许有权限的用户访问analytics页面
     if not user_role:
         user_role = 'customer'  # 默认为客户角色
     
@@ -3181,8 +3213,16 @@ def analytics_dashboard():
 
 # Unified analytics data endpoint for testing and general use
 @app.route('/api/analytics/data', methods=['GET'])
+@login_required
 def analytics_unified_data():
     """统一的分析数据端点 - 统一从 market_analytics 表获取数据"""
+    # Check analytics access permission
+    if not user_has_analytics_access():
+        return jsonify({
+            'success': False,
+            'error': 'Access denied. Analytics API requires Owner privileges or Pro subscription.'
+        }), 403
+    
     try:
         import psycopg2
         from datetime import datetime
@@ -3251,8 +3291,16 @@ def analytics_unified_data():
         return jsonify({'error': f'获取市场数据失败: {str(e)}'}), 500
 
 @app.route('/analytics/api/technical-indicators')
+@login_required
 def analytics_technical_indicators():
     """计算技术指标 - 使用真实数据库数据"""
+    # Check analytics access permission
+    if not user_has_analytics_access():
+        return jsonify({
+            'success': False,
+            'error': 'Access denied. Analytics API requires Owner privileges or Pro subscription.'
+        }), 403
+    
     # 检查用户是否已登录
     if not session.get('authenticated'):
         return jsonify({'success': False, 'error': '用户未登录'}), 401
@@ -3412,6 +3460,13 @@ def analytics_technical_indicators():
 @login_required
 def analytics_market_data():
     """获取分析系统的市场数据 - 统一从 market_analytics 表获取数据"""
+    # Check analytics access permission
+    if not user_has_analytics_access():
+        return jsonify({
+            'success': False,
+            'error': 'Access denied. Analytics API requires Owner privileges or Pro subscription.'
+        }), 403
+    
     user_role = get_user_role(session.get('email'))
     if user_role != 'owner':
         return jsonify({'error': '只有拥有者可以访问分析系统'}), 403
@@ -3650,8 +3705,11 @@ def curtailment_calculator_redirect():
 @login_required
 def analytics_dashboard_alt():
     """数据分析仪表盘 - 替代路由"""
-    if not has_role(['owner']):
-        flash('您没有权限访问分析仪表盘', 'danger')
+    if not user_has_analytics_access():
+        if g.language == 'en':
+            flash('Access denied. Analytics platform requires Owner privileges or Pro subscription.', 'danger')
+        else:
+            flash('您没有权限访问分析仪表盘，需要拥有者权限或Pro订阅', 'danger')
         return redirect(url_for('index'))
     return analytics_dashboard()
 

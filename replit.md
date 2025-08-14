@@ -11,6 +11,8 @@ The BTC Mining Calculator is a web application designed for Bitcoin mining profi
 
 **LOGIN SYSTEM FIX (August 14, 2025)**: Resolved critical NameError in login system where database models (UserAccess, LoginRecord) were not available in function scope. Fixed by ensuring models are imported at module level after database initialization, preventing login failures and 500 errors.
 
+**ANALYTICS PLATFORM ACCESS EXPANDED (August 14, 2025)**: Successfully granted analytics platform access to Pro subscription users. Updated user_has_analytics_access() function to check for Pro subscription with allow_advanced_analytics permission. Analytics dashboard and API endpoints now support both Owner privileges and Pro subscription access. Test Pro subscription created and verified functional.
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
