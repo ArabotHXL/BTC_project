@@ -1,7 +1,7 @@
 """
 订阅计划模型 - Subscription Plan Models
 """
-from app import db
+from db import db
 from datetime import datetime
 from enum import Enum
 
@@ -97,7 +97,7 @@ class UserSubscription(db.Model):
 
 def initialize_default_plans():
     """初始化默认订阅计划"""
-    from app import app, db
+    from flask import current_app as app
     
     with app.app_context():
         # 检查是否已存在计划
@@ -161,3 +161,7 @@ def initialize_default_plans():
         db.session.commit()
         
         print("默认订阅计划已初始化")
+
+# Create aliases for backwards compatibility
+Plan = SubscriptionPlan
+Subscription = UserSubscription
