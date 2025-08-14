@@ -9,6 +9,8 @@ The BTC Mining Calculator is a web application designed for Bitcoin mining profi
 
 **DATABASE DEPLOYMENT FIXES (August 14, 2025)**: Applied comprehensive database connection fixes for production deployment. Added database health monitoring, connection retry logic, and Neon-specific error handling. Enhanced configuration includes optimized connection pooling, graceful startup procedures, and robust health check endpoints. Application now handles database connection issues gracefully during deployment with detailed error reporting and recovery guidance.
 
+**LOGIN SYSTEM FIX (August 14, 2025)**: Resolved critical NameError in login system where database models (UserAccess, LoginRecord) were not available in function scope. Fixed by ensuring models are imported at module level after database initialization, preventing login failures and 500 errors.
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
