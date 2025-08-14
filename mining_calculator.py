@@ -150,8 +150,32 @@ def get_real_time_btc_price():
     return DEFAULT_BTC_PRICE
 
 def get_real_time_difficulty():
-    """Get the current Bitcoin network difficulty with fallback options"""
-    # blockchain.info public APIs don't require authentication, but use env var if needed
+    """获取网络难度 - 优先使用market_analytics表数据"""
+    # 优先从market_analytics表获取最新数据
+    try:
+        import psycopg2
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT network_difficulty FROM market_analytics 
+            WHERE network_difficulty > 0
+            ORDER BY recorded_at DESC 
+            LIMIT 1
+        """)
+        
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if result:
+            difficulty = float(result[0])
+            logging.info(f"使用market_analytics表网络难度: {difficulty:.0f}")
+            return difficulty
+    except Exception as e:
+        logging.warning(f"从market_analytics表获取网络难度失败: {e}")
+    
+    # 回退到实时API
     api_key = os.getenv('BLOCKCHAIN_API_KEY')
     headers = {'X-API-Key': api_key} if api_key else {}
     apis = [
@@ -167,9 +191,13 @@ def get_real_time_difficulty():
                 if 'stats' in api_url:  # 处理JSON格式的响应
                     data = response.json()
                     if 'difficulty' in data:
-                        return float(data['difficulty'])
+                        difficulty = float(data['difficulty'])
+                        logging.info(f"使用API获取的网络难度: {difficulty:.0f}")
+                        return difficulty
                 else:  # 处理纯文本响应
-                    return float(response.text.strip())
+                    difficulty = float(response.text.strip())
+                    logging.info(f"使用API获取的网络难度: {difficulty:.0f}")
+                    return difficulty
             else:
                 logging.warning(f"API {api_url} 返回状态码 {response.status_code}")
                 # 继续尝试下一个API
@@ -183,7 +211,32 @@ def get_real_time_difficulty():
     return DEFAULT_NETWORK_DIFFICULTY
 
 def get_real_time_block_reward():
-    """Get the current Bitcoin block reward based on block height"""
+    """获取区块奖励 - 优先使用market_analytics表数据"""
+    # 优先从market_analytics表获取最新数据
+    try:
+        import psycopg2
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT block_reward FROM market_analytics 
+            WHERE block_reward > 0
+            ORDER BY recorded_at DESC 
+            LIMIT 1
+        """)
+        
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if result:
+            block_reward = float(result[0])
+            logging.info(f"使用market_analytics表区块奖励: {block_reward}")
+            return block_reward
+    except Exception as e:
+        logging.warning(f"从market_analytics表获取区块奖励失败: {e}")
+    
+    # 回退到基于区块高度计算
     try:
         response = requests.get('https://blockchain.info/q/getblockcount', timeout=10)
         if response.status_code == 200:
@@ -198,6 +251,7 @@ def get_real_time_block_reward():
                 block_reward = 25.0
             else:
                 block_reward = 50.0
+            logging.info(f"基于区块高度计算区块奖励: {block_reward}")
             return block_reward
         else:
             raise Exception(f"API returned status code {response.status_code}")
@@ -206,7 +260,32 @@ def get_real_time_block_reward():
         return BLOCK_REWARD
         
 def get_real_time_btc_hashrate():
-    """获取实时比特币网络哈希率 - 使用minerstat API作为主要数据源"""
+    """获取网络算力 - 优先使用market_analytics表数据"""
+    # 优先从market_analytics表获取最新数据
+    try:
+        import psycopg2
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT network_hashrate FROM market_analytics 
+            WHERE network_hashrate > 0
+            ORDER BY recorded_at DESC 
+            LIMIT 1
+        """)
+        
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if result:
+            hashrate = float(result[0])
+            logging.info(f"使用market_analytics表网络算力: {hashrate:.3f} EH/s")
+            return hashrate
+    except Exception as e:
+        logging.warning(f"从market_analytics表获取网络算力失败: {e}")
+    
+    # 回退到实时API
     try:
         # 方法1：从minerstat API获取数据（专业挖矿数据源）
         minerstat_response = requests.get('https://api.minerstat.com/v2/coins?list=BTC', timeout=10)

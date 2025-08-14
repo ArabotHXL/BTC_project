@@ -4325,26 +4325,69 @@ def subscription():
 
 @app.route('/api/network-data')
 def api_network_data():
-    """网络数据API端点"""
+    """网络数据API端点 - 使用market_analytics表数据"""
     try:
-        from mining_calculator import get_real_time_btc_price, get_real_time_difficulty, get_real_time_btc_hashrate, get_real_time_block_reward
+        # 优先从market_analytics表获取最新数据
+        import psycopg2
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        cursor = conn.cursor()
         
-        btc_price = get_real_time_btc_price()
-        difficulty = get_real_time_difficulty()
-        hashrate = get_real_time_btc_hashrate()
-        block_reward = get_real_time_block_reward()
+        cursor.execute("""
+            SELECT btc_price, network_difficulty, network_hashrate, block_reward
+            FROM market_analytics 
+            WHERE btc_price > 0 AND network_hashrate > 0
+            ORDER BY recorded_at DESC 
+            LIMIT 1
+        """)
         
-        return jsonify({
-            'success': True,
-            'data': {
-                'btc_price': btc_price,
-                'difficulty': difficulty,
-                'hashrate': hashrate,
-                'block_reward': block_reward,
-                'timestamp': datetime.now().isoformat()
-            }
-        })
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if result:
+            btc_price = float(result[0])
+            difficulty = float(result[1])
+            hashrate = float(result[2])
+            block_reward = float(result[3]) if result[3] else 3.125
+            
+            logging.info(f"网络统计数据从market_analytics表获取: BTC=${btc_price}, 算力={hashrate}EH/s")
+            
+            return jsonify({
+                'success': True,
+                'data': {
+                    'btc_price': btc_price,
+                    'difficulty': difficulty,
+                    'hashrate': hashrate,
+                    'block_reward': block_reward,
+                    'timestamp': datetime.now().isoformat()
+                },
+                'data_source': 'market_analytics'
+            })
+        else:
+            # 如果数据库没有数据，回退到实时API
+            from mining_calculator import get_real_time_btc_price, get_real_time_difficulty, get_real_time_btc_hashrate, get_real_time_block_reward
+            
+            btc_price = get_real_time_btc_price()
+            difficulty = get_real_time_difficulty()
+            hashrate = get_real_time_btc_hashrate()
+            block_reward = get_real_time_block_reward()
+            
+            logging.info(f"回退到实时API数据: BTC=${btc_price}, 算力={hashrate}EH/s")
+            
+            return jsonify({
+                'success': True,
+                'data': {
+                    'btc_price': btc_price,
+                    'difficulty': difficulty,
+                    'hashrate': hashrate,
+                    'block_reward': block_reward,
+                    'timestamp': datetime.now().isoformat()
+                },
+                'data_source': 'real_time_apis'
+            })
+        
     except Exception as e:
+        logging.error(f"获取网络数据错误: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -4353,15 +4396,42 @@ def api_network_data():
 # 添加缺失的API端点
 @app.route('/api/get-btc-price')
 def api_get_btc_price():
-    """API端点：获取实时BTC价格"""
+    """API端点：从market_analytics表获取BTC价格"""
     try:
-        from mining_calculator import get_real_time_btc_price
-        price = get_real_time_btc_price()
-        return jsonify({
-            'success': True,
-            'btc_price': price,
-            'timestamp': datetime.now().isoformat()
-        })
+        import psycopg2
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT btc_price FROM market_analytics 
+            WHERE btc_price > 0
+            ORDER BY recorded_at DESC 
+            LIMIT 1
+        """)
+        
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if result:
+            price = float(result[0])
+            logging.info(f"BTC价格从market_analytics表获取: ${price}")
+            return jsonify({
+                'success': True,
+                'btc_price': price,
+                'timestamp': datetime.now().isoformat(),
+                'data_source': 'market_analytics'
+            })
+        else:
+            # 回退到实时API
+            from mining_calculator import get_real_time_btc_price
+            price = get_real_time_btc_price()
+            return jsonify({
+                'success': True,
+                'btc_price': price,
+                'timestamp': datetime.now().isoformat(),
+                'data_source': 'real_time_api'
+            })
     except Exception as e:
         return jsonify({
             'success': False,
@@ -4409,64 +4479,69 @@ def price_page():
 # 添加缺失的分析数据API端点 - 使用数据库数据
 @app.route('/api/analytics-data')
 def api_analytics_data():
-    """分析数据API端点 - 优先使用实时数据，数据库作为备用"""
+    """分析数据API端点 - 优先使用market_analytics表数据"""
     try:
-        # 首先尝试获取实时数据
-        from mining_calculator import get_real_time_btc_price, get_real_time_difficulty, get_real_time_btc_hashrate
+        # 优先从market_analytics表获取最新完整数据
+        import psycopg2
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        cursor = conn.cursor()
         
-        try:
-            # 获取实时数据
+        cursor.execute("""
+            SELECT btc_price, network_difficulty, network_hashrate, block_reward,
+                   btc_market_cap, btc_volume_24h, fear_greed_index,
+                   price_change_1h, price_change_24h, price_change_7d, recorded_at
+            FROM market_analytics 
+            WHERE btc_price > 0 AND network_hashrate > 0
+            ORDER BY recorded_at DESC 
+            LIMIT 1
+        """)
+        
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if result:
+            btc_price = float(result[0])
+            difficulty = float(result[1])
+            hashrate = float(result[2])
+            block_reward = float(result[3]) if result[3] else 3.125
+            btc_market_cap = int(result[4]) if result[4] else None
+            btc_volume_24h = int(result[5]) if result[5] else None
+            fear_greed = int(result[6]) if result[6] else 69
+            price_change_1h = float(result[7]) if result[7] else 0.0
+            price_change_24h = float(result[8]) if result[8] else 0.0
+            price_change_7d = float(result[9]) if result[9] else 0.0
+            timestamp = result[10].isoformat() if result[10] else datetime.now().isoformat()
+            
+            logging.info(f"分析仪表盘使用数据库数据: BTC=${btc_price}, 算力={hashrate}EH/s")
+            data_source = 'market_analytics'
+        else:
+            # 如果数据库没有数据，回退到实时API
+            from mining_calculator import get_real_time_btc_price, get_real_time_difficulty, get_real_time_btc_hashrate
+            
             btc_price = get_real_time_btc_price()
             difficulty = get_real_time_difficulty()
             hashrate = get_real_time_btc_hashrate()
-            fear_greed = 69  # 默认值
+            block_reward = 3.125
+            btc_market_cap = None
+            btc_volume_24h = None
+            fear_greed = 69
             price_change_1h = 0.0
             price_change_24h = 0.0
             price_change_7d = 0.0
             timestamp = datetime.now().isoformat()
             
-            logging.info(f"使用实时API数据: BTC=${btc_price}, 算力={hashrate}EH/s")
-            
-        except Exception as api_error:
-            logging.warning(f"实时API获取失败: {api_error}，切换到数据库数据")
-            
-            # API失败时，从数据库获取最新数据作为备用
-            latest_data = db.session.execute(
-                text("SELECT btc_price, network_difficulty, network_hashrate, fear_greed_index, price_change_1h, price_change_24h, price_change_7d, recorded_at FROM market_analytics ORDER BY recorded_at DESC LIMIT 1")
-            ).fetchone()
-            
-            if latest_data:
-                # 使用数据库中的最新数据
-                btc_price = float(latest_data[0]) if latest_data[0] else 116644.0
-                difficulty = float(latest_data[1]) if latest_data[1] else 129435235580345.0
-                hashrate = float(latest_data[2]) if latest_data[2] else 752.81
-                fear_greed = int(latest_data[3]) if latest_data[3] else 69
-                price_change_1h = float(latest_data[4]) if latest_data[4] else 0.0
-                price_change_24h = float(latest_data[5]) if latest_data[5] else 0.0
-                price_change_7d = float(latest_data[6]) if latest_data[6] else 0.0
-                timestamp = latest_data[7].isoformat() if latest_data[7] else datetime.now().isoformat()
-                
-                logging.info(f"使用数据库备用数据: BTC=${btc_price}, 算力={hashrate}EH/s")
-            else:
-                # 都失败了，使用默认值
-                btc_price = 116644.0
-                difficulty = 129435235580345.0
-                hashrate = 752.81
-                fear_greed = 69
-                price_change_1h = 0.0
-                price_change_24h = 0.0
-                price_change_7d = 0.0
-                timestamp = datetime.now().isoformat()
-                
-                logging.warning("数据库也无数据，使用默认值")
+            logging.info(f"分析仪表盘使用备用API数据: BTC=${btc_price}, 算力={hashrate}EH/s")
+            data_source = 'real_time_apis'
         
-        # 构建分析数据 - 匹配批量计算器期望的格式
+        # 构建分析数据
         analytics_data = {
             'btc_price': btc_price,
-            'btc_market_cap': None,
-            'btc_volume_24h': None,
+            'btc_market_cap': btc_market_cap,
+            'btc_volume_24h': btc_volume_24h,
             'network_difficulty': difficulty,
             'network_hashrate': hashrate,
+            'block_reward': block_reward,
             'fear_greed_index': str(fear_greed),
             'price_change_1h': price_change_1h,
             'price_change_24h': price_change_24h,
@@ -4476,7 +4551,8 @@ def api_analytics_data():
         
         return jsonify({
             'success': True,
-            'data': analytics_data
+            'data': analytics_data,
+            'data_source': data_source
         })
     except Exception as e:
         logging.error(f"获取分析数据失败: {str(e)}")
