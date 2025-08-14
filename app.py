@@ -35,57 +35,43 @@ except ImportError:
 # Models将在数据库初始化时导入
 from translations import get_translation
 
-def send_verification_email(email, token):
-    """发送邮箱验证邮件"""
+def send_verification_email(email, token, language='zh'):
+    """发送邮箱验证邮件
+    
+    Args:
+        email: 接收邮箱
+        token: 验证令牌
+        language: 语言 ('zh' 中文, 'en' 英文)
+    """
     try:
         # 构建验证链接
         domain = os.environ.get('REPLIT_DOMAINS', 'localhost:5000').split(',')[0]
         verification_url = f"https://{domain}/verify-email/{token}"
         
-        # 邮件内容
-        subject = "BTC Mining Calculator - 邮箱验证"
-        html_body = f"""
-        <html>
-        <body style="font-family: Arial, sans-serif;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h2 style="color: #f8d000;">欢迎注册 BTC Mining Calculator</h2>
-                <p>感谢您注册我们的比特币挖矿计算平台！</p>
-                <p>请点击下面的链接验证您的邮箱地址：</p>
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="{verification_url}" 
-                       style="background-color: #f8d000; color: #000; padding: 12px 24px; 
-                              text-decoration: none; border-radius: 4px; font-weight: bold;">
-                        验证邮箱
-                    </a>
-                </div>
-                <p>如果按钮无法点击，请复制以下链接到浏览器：</p>
-                <p style="word-break: break-all; color: #666;">{verification_url}</p>
-                <p style="color: #666; font-size: 12px; margin-top: 40px;">
-                    此链接有效期为24小时。如果您没有注册此账户，请忽略这封邮件。
-                </p>
-            </div>
-        </body>
-        </html>
-        """
-        
         logging.info(f"邮箱验证链接已生成: {verification_url}")
-        logging.info(f"发送验证邮件到: {email}")
+        logging.info(f"发送验证邮件到: {email} (语言: {language})")
         
         # 尝试使用Gmail SMTP发送邮件
         try:
             from gmail_oauth_service import send_verification_email_smtp
-            if send_verification_email_smtp(email, verification_url):
+            if send_verification_email_smtp(email, verification_url, language):
                 logging.info(f"Gmail SMTP验证邮件已成功发送到: {email}")
                 return True
         except Exception as e:
             logging.warning(f"Gmail SMTP服务出错: {e}")
         
-        # 如果OAuth邮件发送失败，显示验证链接在控制台
+        # 如果SMTP邮件发送失败，显示验证链接在控制台
         print("=" * 60)
-        print("📧 邮箱验证链接:")
-        print(f"用户: {email}")
-        print(f"验证链接: {verification_url}")
-        print("请复制上述链接到浏览器完成邮箱验证")
+        if language == 'en':
+            print("📧 Email Verification Link:")
+            print(f"User: {email}")
+            print(f"Verification Link: {verification_url}")
+            print("Please copy the above link to your browser to complete email verification")
+        else:
+            print("📧 邮箱验证链接:")
+            print(f"用户: {email}")
+            print(f"验证链接: {verification_url}")
+            print("请复制上述链接到浏览器完成邮箱验证")
         print("=" * 60)
         logging.info(f"验证链接已生成并显示在控制台: {email}")
         return True
@@ -4172,10 +4158,15 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         
-        # 发送验证邮件
-        send_verification_email(email, verification_token)
+        # 发送验证邮件（根据当前界面语言）
+        user_language = g.get('language', 'zh')  # 获取用户当前的界面语言
+        send_verification_email(email, verification_token, user_language)
         
-        flash('注册成功！请检查您的邮箱并点击验证链接完成注册', 'success')
+        # 根据语言显示成功消息
+        if user_language == 'en':
+            flash('Registration successful! Please check your email and click the verification link to complete registration', 'success')
+        else:
+            flash('注册成功！请检查您的邮箱并点击验证链接完成注册', 'success')
         return redirect(url_for('login'))
         
     except Exception as e:
@@ -4191,19 +4182,32 @@ def verify_email_token(token):
         user = UserAccess.query.filter_by(email_verification_token=token).first()
         
         if not user:
-            flash('无效的验证链接', 'error')
+            user_language = g.get('language', 'zh')
+            if user_language == 'en':
+                flash('Invalid verification link', 'error')
+            else:
+                flash('无效的验证链接', 'error')
             return redirect(url_for('login'))
         
         # 验证邮箱
         user.verify_email()
         db.session.commit()
         
-        flash('邮箱验证成功！现在可以登录了', 'success')
+        # 根据用户的界面语言显示消息
+        user_language = g.get('language', 'zh')
+        if user_language == 'en':
+            flash('Email verification successful! You can now log in', 'success')
+        else:
+            flash('邮箱验证成功！现在可以登录了', 'success')
         return redirect(url_for('login'))
         
     except Exception as e:
         logging.error(f"邮箱验证错误: {e}")
-        flash('验证失败，请重试', 'error')
+        user_language = g.get('language', 'zh')
+        if user_language == 'en':
+            flash('Verification failed, please try again', 'error')
+        else:
+            flash('验证失败，请重试', 'error')
         return redirect(url_for('login'))
 
 @app.route('/admin/create-user', methods=['GET', 'POST'])

@@ -5,7 +5,7 @@ The BTC Mining Calculator is a web application designed for Bitcoin mining profi
 
 **MILESTONE ACHIEVED (August 14, 2025)**: Successfully reached 99.17% accuracy target through comprehensive regression testing and optimization. System demonstrates exceptional performance with 100% API availability, sub-200ms response times, and 98.3% cache effectiveness.
 
-**EMAIL SERVICE STATUS (August 14, 2025)**: Gmail SMTP service successfully configured with application-specific password authentication. System sends professional verification emails via Gmail SMTP with fallback to console display. All hardcoded email addresses have been removed from the codebase.
+**EMAIL SERVICE STATUS (August 14, 2025)**: Gmail SMTP service successfully configured with application-specific password authentication. System sends professional verification emails via Gmail SMTP with fallback to console display. **BILINGUAL EMAIL SUPPORT**: Email verification templates now automatically adapt to user's interface language - English templates for English interface users, Chinese templates for Chinese interface users. All hardcoded email addresses have been removed from the codebase.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -42,7 +42,7 @@ The application is a modular Flask web application with a mobile-first design.
 
 ### Key Features
 - **Mining Calculator Engine**: Core business logic for profitability calculations.
-- **Authentication System**: Manages user access, Gmail SMTP email verification with console fallback, role-based permissions, and session security.
+- **Authentication System**: Manages user access, Gmail SMTP bilingual email verification (Chinese/English templates) with console fallback, role-based permissions, and session security.
 - **CRM System**: Handles customer lifecycle management, lead and deal tracking, and commission management.
 - **Network Data Collection**: Automated historical data accumulation for BTC price, difficulty, and network hashrate from multiple sources.
 - **Multilingual System**: Provides dynamic Chinese/English interface support.
