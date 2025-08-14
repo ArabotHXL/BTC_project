@@ -3106,6 +3106,8 @@ def analytics_dashboard():
     
     # 如果技术指标数据为空，计算基于服务器端数据
     app.logger.info(f"检查技术指标数据: {technical_indicators}")
+    if technical_indicators:
+        app.logger.info(f"找到技术指标数据，RSI: {technical_indicators.get('rsi', 'N/A')}")
     if not technical_indicators:
         try:
             import psycopg2
@@ -3243,7 +3245,7 @@ def analytics_dashboard():
                 'bollinger_lower': current_market_price - 1500
             }
 
-    return render_template('analytics_main.html', 
+    return render_template('analytics_dashboard.html', 
                           user_role=user_role,
                           technical_indicators=technical_indicators,
                           latest_report=latest_report,
