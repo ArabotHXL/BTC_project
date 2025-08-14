@@ -71,32 +71,15 @@ def send_verification_email(email, token):
         logging.info(f"邮箱验证链接已生成: {verification_url}")
         logging.info(f"发送验证邮件到: {email}")
         
-        # 使用Gmail SMTP发送验证邮件
-        from gmail_service import send_verification_email_gmail
-        
-        try:
-            if send_verification_email_gmail(email, verification_url):
-                logging.info(f"Gmail验证邮件已成功发送到: {email}")
-                return True
-            else:
-                # Gmail发送失败，显示验证链接
-                print("=" * 60)
-                print("📧 Gmail邮件发送失败，请手动验证邮箱:")
-                print(f"用户: {email}")
-                print(f"验证链接: {verification_url}")
-                print("请复制上述链接到浏览器完成邮箱验证")
-                print("=" * 60)
-                logging.warning(f"Gmail发送失败，验证链接已显示在控制台: {email}")
-                return True
-        except Exception as e:
-            logging.error(f"Gmail服务错误: {e}")
-            print("=" * 60)
-            print("📧 Gmail配置有问题，请手动验证邮箱:")
-            print(f"用户: {email}")
-            print(f"验证链接: {verification_url}")
-            print("请复制上述链接到浏览器完成邮箱验证")
-            print("=" * 60)
-            return True
+        # 显示验证链接在控制台
+        print("=" * 60)
+        print("📧 邮箱验证链接:")
+        print(f"用户: {email}")
+        print(f"验证链接: {verification_url}")
+        print("请复制上述链接到浏览器完成邮箱验证")
+        print("=" * 60)
+        logging.info(f"验证链接已生成并显示在控制台: {email}")
+        return True
         
     except Exception as e:
         logging.error(f"发送验证邮件失败: {e}")
