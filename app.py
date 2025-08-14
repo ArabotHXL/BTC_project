@@ -2885,18 +2885,22 @@ def inject_nav_menu():
         # Check if user has Pro subscription with analytics access
         try:
             from models_subscription import SubscriptionPlan, UserSubscription
-            user_id = session.get('user_id')
-            if user_id:
-                # Get user's active subscription
-                subscription = UserSubscription.query.filter_by(
-                    user_id=user_id, 
-                    status='active'
-                ).first()
-                
-                if subscription and subscription.is_active():
-                    plan = subscription.plan
-                    if plan and plan.allow_advanced_analytics:
-                        return True
+            from models import User
+            user_email = session.get('email')
+            if user_email:
+                # Find user by email in the users table (subscription system)
+                user = User.query.filter_by(email=user_email).first()
+                if user:
+                    # Get user's active subscription
+                    subscription = UserSubscription.query.filter_by(
+                        user_id=user.id, 
+                        status='active'
+                    ).first()
+                    
+                    if subscription and subscription.is_active():
+                        plan = subscription.plan
+                        if plan and plan.allow_advanced_analytics:
+                            return True
         except Exception as e:
             logging.warning(f"Error checking subscription for analytics access: {e}")
         
