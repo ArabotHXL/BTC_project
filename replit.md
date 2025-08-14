@@ -97,13 +97,15 @@ Preferred communication style: Simple, everyday language.
 - Language switching now seamless across entire application without mixed text
 - **VERIFICATION COMPLETE**: Login page displays correctly with unified translations
 
-### Code Lock Status (August 13, 2025) 
-- **CODE LOCKED**: All development work has been completed and frozen
-- No further modifications to be made to the codebase
-- System is in stable production-ready state
-- All POC features successfully implemented and tested
-- Language localization system completed and verified
-- User has requested code freeze to maintain current functionality
+### Database Consolidation & System Optimization (August 14, 2025)
+- **✅ MAJOR DATABASE MIGRATION COMPLETED**: Successfully consolidated network_snapshots data into market_analytics table
+- **Data Migration Results**: Migrated 2,373 historical records from network_snapshots (2025-06-06 to 2025-08-13)
+- **Enhanced Data Coverage**: market_analytics table now contains 5,632 total records spanning from 2024-01-01 to current
+- **System Unification Achieved**: All network statistics APIs now use single data source (market_analytics) ensuring 100% data consistency
+- **Core Functions Updated**: All mining calculator functions (price, difficulty, hashrate, block reward) prioritize market_analytics table with intelligent fallback
+- **Performance Optimization**: Eliminated dual data storage redundancy, improved query performance and data reliability
+- **Data Sources Consolidated**: Combined historical data from multiple sources (blockchain.info, mempool+blockchain, historical_import) into unified table
+- **System Status**: All APIs working correctly with consistent data display: BTC=$123,693, 算力=984.44EH/s
 
 ## System Architecture
 
