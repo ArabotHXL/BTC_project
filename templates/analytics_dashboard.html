@@ -516,8 +516,9 @@
                 updateElementSafely('ema12', formatPrice(data.ema_12));
                 updateElementSafely('ema26', formatPrice(data.ema_26));
                 
-                // 更新动量指标
+                // 更新动量指标 - 同时更新两个RSI显示位置
                 updateElementSafely('rsiValue', formatNumber(data.rsi, 1));
+                updateElementSafely('rsi14', formatNumber(data.rsi, 1));
                 updateElementSafely('macd', formatNumber(data.macd, 4));
                 updateElementSafely('volatility', formatPercent(data.volatility));
                 
@@ -685,10 +686,12 @@
             const techData = {{ technical_indicators | tojson | safe }};
             console.log('Technical indicators from server:', techData);
             
-            // 更新RSI
+            // 更新RSI - 同时更新两个显示位置
             if (techData.rsi !== null) {
                 document.getElementById('rsiValue').textContent = formatNumber(techData.rsi, 1);
+                document.getElementById('rsi14').textContent = formatNumber(techData.rsi, 1);
                 document.getElementById('rsiSignal').textContent = getRSISignal(techData.rsi);
+                console.log('Server-side RSI updated:', techData.rsi);
             }
             
             // 更新其他技术指标

@@ -3134,10 +3134,12 @@
             // Store data for insights generation
             currentTechnicalData = data;
 
-            // Dashboard RSI
-            if (data.rsi_14 !== null) {
-                document.getElementById('rsiValue').textContent = formatNumber(data.rsi_14, 1);
-                document.getElementById('rsiSignal').textContent = getRSISignal(data.rsi_14);
+            // Dashboard RSI - support both rsi and rsi_14 fields
+            const rsiValue = data.rsi !== undefined ? data.rsi : data.rsi_14;
+            if (rsiValue !== null && rsiValue !== undefined) {
+                document.getElementById('rsiValue').textContent = formatNumber(rsiValue, 1);
+                document.getElementById('rsiSignal').textContent = getRSISignal(rsiValue);
+                console.log('RSI updated in main dashboard:', rsiValue);
             }
 
             // Technical tab details
@@ -3675,7 +3677,8 @@
 
             if (serverTechData) {
                 console.log('Loading server-side technical indicators:', serverTechData);
-                updateTechnicalIndicators(serverTechData);
+                // Use the main dashboard update function for consistency
+                updateTechnicalIndicatorsDisplay(serverTechData);
             } else {
                 console.log('No server-side technical indicators available');
                 // 如果没有服务器数据，显示错误状态
