@@ -3345,10 +3345,6 @@ def analytics_technical_indicators():
     if not session.get('authenticated'):
         return jsonify({'success': False, 'error': '用户未登录'}), 401
     
-    user_role = get_user_role(session.get('email'))
-    if user_role not in ['owner', 'manager', 'mining_site']:
-        return jsonify({'success': False, 'error': '权限不足'}), 403
-    
     try:
         import psycopg2
         import numpy as np
@@ -3799,12 +3795,16 @@ def analytics_latest_report_api():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-@app.route('/analytics/api/technical-indicators')
+@app.route('/analytics/api/technical-indicators-old')
 @login_required
 def analytics_technical_indicators_api():
-    """获取技术指标API"""
-    if not has_role(['owner']):
-        return jsonify({'error': '需要拥有者权限'}), 403
+    """获取技术指标API - 旧版本（已弃用）"""
+    # Check analytics access permission
+    if not user_has_analytics_access():
+        return jsonify({
+            'success': False,
+            'error': 'Access denied. Analytics API requires Owner privileges or Pro subscription.'
+        }), 403
     
     try:
         import psycopg2
@@ -3848,6 +3848,12 @@ def analytics_technical_indicators_api():
 @login_required
 def analytics_price_history_api():
     """获取价格历史数据API"""
+    # Check analytics access permission
+    if not user_has_analytics_access():
+        return jsonify({
+            'success': False,
+            'error': 'Access denied. Analytics API requires Owner privileges or Pro subscription.'
+        }), 403
     if not has_role(['owner']):
         return jsonify({'error': '需要拥有者权限'}), 403
     
