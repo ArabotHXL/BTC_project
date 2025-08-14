@@ -197,23 +197,32 @@ def initialize_database():
         return False
 
 # Initialize database
-if not initialize_database():
-    logging.warning("Database initialization failed - some features may not work correctly")
+initialize_database_result = initialize_database()
 
-# Import models at module level for use in functions
+# Import models at module level immediately after database initialization
+# This ensures models are available for all functions defined below
 try:
     from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot
     import models_subscription  # noqa: F401
-    logging.info("Models imported successfully")
+    logging.info("Models imported successfully at module level")
 except ImportError as e:
     logging.error(f"Failed to import models: {e}")
     # Create placeholder classes to prevent NameError
     class LoginRecord:
-        pass
+        def __init__(self, **kwargs):
+            pass
     class UserAccess:
         @classmethod
         def query(cls):
-            return None
+            class MockQuery:
+                def filter_by(self, **kwargs):
+                    return self
+                def first(self):
+                    return None
+            return MockQuery()
+
+if not initialize_database_result:
+    logging.warning("Database initialization failed - some features may not work correctly")
 
 # Health check route for deployment - no authentication required
 @app.route('/health', methods=['GET'])
