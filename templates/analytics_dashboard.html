@@ -665,7 +665,8 @@
         function getRSISignal(rsi) {
             if (rsi > 70) return '超买';
             if (rsi < 30) return '超卖';
-            return '中性';
+            if (rsi >= 50) return '偏强';
+            return '偏弱';
         }
         
         // 加载服务器端传递的数据
@@ -678,9 +679,26 @@
             console.log('Technical indicators from server:', techData);
             
             // 更新RSI
-            if (techData.rsi !== null) {
-                document.getElementById('rsiValue').textContent = formatNumber(techData.rsi, 1);
-                document.getElementById('rsiSignal').textContent = getRSISignal(techData.rsi);
+            if (techData.rsi !== null && techData.rsi !== undefined) {
+                console.log('Updating RSI value:', techData.rsi);
+                const rsiElement = document.getElementById('rsiValue');
+                const rsiSignalElement = document.getElementById('rsiSignal');
+                
+                if (rsiElement) {
+                    rsiElement.textContent = formatNumber(techData.rsi, 1);
+                    console.log('RSI value updated to:', rsiElement.textContent);
+                } else {
+                    console.error('rsiValue element not found');
+                }
+                
+                if (rsiSignalElement) {
+                    rsiSignalElement.textContent = getRSISignal(techData.rsi);
+                    console.log('RSI signal updated to:', rsiSignalElement.textContent);
+                } else {
+                    console.error('rsiSignal element not found');
+                }
+            } else {
+                console.log('RSI data is null or undefined:', techData.rsi);
             }
             
             // 更新其他技术指标
