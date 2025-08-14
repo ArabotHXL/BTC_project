@@ -2982,7 +2982,41 @@ def analytics_dashboard():
     user_role = get_user_role(session.get('email'))
     
     # Check if user has analytics access (owner or Pro subscription)
-    if not user_has_analytics_access():
+    def check_analytics_access():
+        """检查用户是否有访问数据分析的权限 - 支持Pro订阅用户"""
+        if not session.get('authenticated'):
+            return False
+        
+        role = session.get('role')
+        # Owner always has access
+        if role == 'owner':
+            return True
+        
+        # Check if user has Pro subscription with analytics access
+        try:
+            from models_subscription import SubscriptionPlan, UserSubscription
+            from models import User
+            user_email = session.get('email')
+            if user_email:
+                # Find user by email in the users table (subscription system)
+                user = User.query.filter_by(email=user_email).first()
+                if user:
+                    # Get user's active subscription
+                    subscription = UserSubscription.query.filter_by(
+                        user_id=user.id, 
+                        status='active'
+                    ).first()
+                    
+                    if subscription and subscription.is_active():
+                        plan = subscription.plan
+                        if plan and plan.allow_advanced_analytics:
+                            return True
+        except Exception as e:
+            logging.warning(f"Error checking subscription for analytics access: {e}")
+        
+        return False
+    
+    if not check_analytics_access():
         if g.language == 'en':
             flash('Access denied. Analytics platform requires Owner privileges or Pro subscription.', 'danger')
         else:
@@ -3709,13 +3743,7 @@ def curtailment_calculator_redirect():
 @login_required
 def analytics_dashboard_alt():
     """数据分析仪表盘 - 替代路由"""
-    if not user_has_analytics_access():
-        if g.language == 'en':
-            flash('Access denied. Analytics platform requires Owner privileges or Pro subscription.', 'danger')
-        else:
-            flash('您没有权限访问分析仪表盘，需要拥有者权限或Pro订阅', 'danger')
-        return redirect(url_for('index'))
-    return analytics_dashboard()
+    return redirect(url_for('analytics_dashboard'))
 
 @app.route('/algorithm/test')
 @login_required
