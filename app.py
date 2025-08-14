@@ -71,40 +71,32 @@ def send_verification_email(email, token):
         logging.info(f"邮箱验证链接已生成: {verification_url}")
         logging.info(f"发送验证邮件到: {email}")
         
-        # 尝试发送验证邮件（多种方式）
-        email_sent = False
+        # 使用Gmail SMTP发送验证邮件
+        from gmail_service import send_verification_email_gmail
         
-        # 1. 尝试SendGrid
         try:
-            from sendgrid_service import send_verification_email_sendgrid
-            if send_verification_email_sendgrid(email, verification_url):
-                logging.info(f"SendGrid验证邮件已成功发送到: {email}")
-                email_sent = True
+            if send_verification_email_gmail(email, verification_url):
+                logging.info(f"Gmail验证邮件已成功发送到: {email}")
+                return True
+            else:
+                # Gmail发送失败，显示验证链接
+                print("=" * 60)
+                print("📧 Gmail邮件发送失败，请手动验证邮箱:")
+                print(f"用户: {email}")
+                print(f"验证链接: {verification_url}")
+                print("请复制上述链接到浏览器完成邮箱验证")
+                print("=" * 60)
+                logging.warning(f"Gmail发送失败，验证链接已显示在控制台: {email}")
+                return True
         except Exception as e:
-            logging.warning(f"SendGrid服务出错: {e}")
-        
-        # 2. 如果SendGrid失败，尝试Gmail
-        if not email_sent:
-            try:
-                from gmail_service import send_verification_email_gmail
-                if send_verification_email_gmail(email, verification_url):
-                    logging.info(f"Gmail验证邮件已成功发送到: {email}")
-                    email_sent = True
-            except Exception as e:
-                logging.warning(f"Gmail服务出错: {e}")
-        
-        # 3. 如果所有邮件服务都失败，在控制台显示验证链接
-        if not email_sent:
+            logging.error(f"Gmail服务错误: {e}")
             print("=" * 60)
-            print("📧 邮件发送失败，请手动验证邮箱:")
+            print("📧 Gmail配置有问题，请手动验证邮箱:")
             print(f"用户: {email}")
             print(f"验证链接: {verification_url}")
-            print("请复制上述链接到浏览器验证邮箱")
+            print("请复制上述链接到浏览器完成邮箱验证")
             print("=" * 60)
-            logging.warning(f"邮件服务不可用，验证链接已显示在控制台: {email}")
-        
-        # 无论邮件是否发送成功，用户注册都算成功
-        return True
+            return True
         
     except Exception as e:
         logging.error(f"发送验证邮件失败: {e}")
