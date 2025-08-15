@@ -671,7 +671,7 @@
                                                     <h4 id="exchangeAvgPrice">
                                                         <div class="spinner-border spinner-border-sm" role="status"></div>
                                                     </h4>
-                                                    <small>{% if current_lang == 'en' %}Avg Option Price{% else %}期权平均价格{% endif %}</small>
+                                                    <small>{% if current_lang == 'en' %}Avg Option Price (Premium){% else %}期权平均价格 (溢价){% endif %}</small>
                                                 </div>
                                             </div>
                                         </div>
@@ -4797,10 +4797,14 @@
                         console.log('📊 Total volume updated:', data.total_volume);
                     }
                     if (avgPriceEl) {
-                        // 期权价格以BTC为单位，需要显示更多小数位
+                        // 期权价格显示格式优化
                         const price = data.avg_price || 0;
-                        avgPriceEl.innerHTML = `<strong>${price.toFixed(6)} BTC</strong>`;
-                        console.log('📊 Average price updated:', price, 'BTC');
+                        if (price < 0.01) {
+                            avgPriceEl.innerHTML = `<strong>${price.toFixed(4)}</strong>`;
+                        } else {
+                            avgPriceEl.innerHTML = `<strong>${price.toFixed(3)}</strong>`;
+                        }
+                        console.log('📊 Average price updated:', price);
                     }
                     if (lastUpdateEl) {
                         lastUpdateEl.innerHTML = `<strong>${data.last_update || '未知'}</strong>`;
