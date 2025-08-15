@@ -159,30 +159,51 @@ class MultiExchangeCollector:
                     trades_response = requests.get(
                         "https://www.okx.com/api/v5/market/history-trades",
                         params={"instId": inst_id, "limit": "100"},
-                        timeout=20
+                        timeout=10  # 减少超时时间
                     )
                     trades_response.raise_for_status()
                     
-                    for trade in trades_response.json().get("data", []):
-                        ts = datetime.fromtimestamp(float(trade["ts"]) / 1000, tz=timezone.utc)
-                        if ts < cutoff:
+                    trade_data = trades_response.json().get("data", [])
+                    if not trade_data:
+                        continue
+                    
+                    for trade in trade_data:
+                        # 检查必需字段是否存在
+                        if not all(key in trade for key in ["ts", "fillPx", "sz"]):
                             continue
-                        
-                        expiry, strike, typ = self.parse_generic(inst_id)
-                        trades.append({
-                            "exchange": "OKX",
-                            "timestamp": int(float(trade["ts"])),
-                            "instrument": inst_id,
-                            "price": float(trade["fillPx"]),
-                            "amount": float(trade["sz"]),
-                            "side": trade.get("side", ""),
-                            "expiry": expiry,
-                            "strike": strike,
-                            "option_type": typ
-                        })
+                            
+                        try:
+                            ts = datetime.fromtimestamp(float(trade["ts"]) / 1000, tz=timezone.utc)
+                            if ts < cutoff:
+                                continue
+                            
+                            price = float(trade["fillPx"])
+                            amount = float(trade["sz"])
+                            
+                            # 过滤无效价格数据
+                            if price <= 0 or amount <= 0:
+                                continue
+                            
+                            expiry, strike, typ = self.parse_generic(inst_id)
+                            trades.append({
+                                "exchange": "OKX",
+                                "timestamp": int(float(trade["ts"])),
+                                "instrument": inst_id,
+                                "price": price,
+                                "amount": amount,
+                                "side": trade.get("side", ""),
+                                "expiry": expiry,
+                                "strike": strike,
+                                "option_type": typ
+                            })
+                        except (ValueError, KeyError) as ve:
+                            continue  # 跳过无效的交易数据
                     
-                    time.sleep(0.05)  # 节流
+                    time.sleep(0.1)  # 增加节流延迟
                     
+                except (requests.exceptions.RequestException, requests.exceptions.Timeout) as e:
+                    logger.warning(f"OKX合约 {inst_id} 网络请求失败: {e}")
+                    continue
                 except Exception as e:
                     logger.warning(f"OKX合约 {inst_id} 获取失败: {e}")
                     continue
@@ -217,30 +238,51 @@ class MultiExchangeCollector:
                     trades_response = requests.get(
                         "https://eapi.binance.com/eapi/v1/trades",
                         params={"symbol": symbol},
-                        timeout=20
+                        timeout=10
                     )
                     trades_response.raise_for_status()
                     
-                    for trade in trades_response.json():
-                        ts = datetime.fromtimestamp(trade["time"] / 1000, tz=timezone.utc)
-                        if ts < cutoff:
+                    trade_data = trades_response.json()
+                    if not isinstance(trade_data, list):
+                        continue
+                    
+                    for trade in trade_data:
+                        # 检查必需字段
+                        if not all(key in trade for key in ["time", "price", "qty"]):
                             continue
-                        
-                        expiry, strike, typ = self.parse_generic(symbol)
-                        trades.append({
-                            "exchange": "Binance",
-                            "timestamp": trade["time"],
-                            "instrument": symbol,
-                            "price": float(trade["price"]),
-                            "amount": float(trade["qty"]),
-                            "side": "",  # Binance公共API不提供方向信息
-                            "expiry": expiry,
-                            "strike": strike,
-                            "option_type": typ
-                        })
+                            
+                        try:
+                            ts = datetime.fromtimestamp(trade["time"] / 1000, tz=timezone.utc)
+                            if ts < cutoff:
+                                continue
+                            
+                            price = float(trade["price"])
+                            amount = float(trade["qty"])
+                            
+                            # 过滤无效数据
+                            if price <= 0 or amount <= 0:
+                                continue
+                            
+                            expiry, strike, typ = self.parse_generic(symbol)
+                            trades.append({
+                                "exchange": "Binance",
+                                "timestamp": trade["time"],
+                                "instrument": symbol,
+                                "price": price,
+                                "amount": amount,
+                                "side": "",  # Binance公共API不提供方向信息
+                                "expiry": expiry,
+                                "strike": strike,
+                                "option_type": typ
+                            })
+                        except (ValueError, KeyError):
+                            continue
                     
-                    time.sleep(0.05)  # 节流
+                    time.sleep(0.1)  # 增加节流延迟
                     
+                except (requests.exceptions.RequestException, requests.exceptions.Timeout) as e:
+                    logger.warning(f"Binance合约 {symbol} 网络请求失败: {e}")
+                    continue
                 except Exception as e:
                     logger.warning(f"Binance合约 {symbol} 获取失败: {e}")
                     continue
