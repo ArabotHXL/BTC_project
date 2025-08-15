@@ -747,7 +747,7 @@
             
             rows.forEach((row, index) => {
                 const cells = row.querySelectorAll('td');
-                const minerNumber = cells[0].querySelector('.badge').textContent;  // 获取编号
+                const minerNumber = cells[0].querySelector('input')?.value || 'N/A';  // 获取编号
                 const model = cells[1].querySelector('select').value;  // 第2列（编号后）
                 const quantity = parseInt(cells[2].querySelector('input').value) || 0;
                 const power = parseFloat(cells[3].querySelector('input').value) || 0;
@@ -1301,22 +1301,30 @@
         }
 
         function updateNetworkDisplay(data) {
-            // Update network status display
-            if (data.btc_price) {
-                document.getElementById('currentBtcPrice').textContent = `$${data.btc_price.toLocaleString()}`;
+            // Update network status display with null checks
+            const btcPriceEl = document.getElementById('currentBtcPrice');
+            if (data.btc_price && btcPriceEl) {
+                btcPriceEl.textContent = `$${data.btc_price.toLocaleString()}`;
             }
-            if (data.network_difficulty) {
+            
+            const difficultyEl = document.getElementById('currentDifficulty');
+            if (data.network_difficulty && difficultyEl) {
                 const difficultyT = (data.network_difficulty / 1e12).toFixed(3);
-                document.getElementById('currentDifficulty').textContent = `${difficultyT}T`;
+                difficultyEl.textContent = `${difficultyT}T`;
             }
-            if (data.network_hashrate) {
-                document.getElementById('currentHashrate').textContent = `${data.network_hashrate} EH/s`;
+            
+            const hashrateEl = document.getElementById('currentHashrate');
+            if (data.network_hashrate && hashrateEl) {
+                hashrateEl.textContent = `${data.network_hashrate} EH/s`;
             }
             
             // Update timestamp
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString();
-            document.getElementById('dataUpdateTime').textContent = `(Updated: ${timeStr})`;
+            const timestampEl = document.getElementById('dataUpdateTime');
+            if (timestampEl) {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString();
+                timestampEl.textContent = `(Updated: ${timeStr})`;
+            }
         }
 
         // Template download function
