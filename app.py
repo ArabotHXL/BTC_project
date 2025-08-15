@@ -4208,6 +4208,14 @@ try:
 except Exception as e:
     logging.warning(f"Batch calculator routes not available: {e}")
 
+# Register Deribit analysis blueprint
+try:
+    from deribit_web_routes import deribit_bp
+    app.register_blueprint(deribit_bp)
+    logging.info("Deribit analysis routes registered successfully")
+except ImportError as e:
+    logging.warning(f"Deribit routes not available: {e}")
+
 # 添加安全头
 @app.after_request  
 def add_security_headers(response):
