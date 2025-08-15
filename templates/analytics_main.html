@@ -647,6 +647,97 @@
                         </div>
                     </div>
 
+                    <!-- 三大交易所实时交易数据分析 (重要功能区域) -->
+                    <div class="row mt-5">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-graph-up-arrow"></i>
+                                        {% if current_lang == 'en' %}Three-Exchange Real-time Trading Data (Deribit + OKX + Binance){% else %}三大交易所实时交易数据 (Deribit + OKX + Binance){% endif %}
+                                        <span class="badge bg-success ms-2" id="tradingDataStatus">{% if current_lang == 'en' %}Live Monitoring{% else %}实时监控{% endif %}</span>
+                                    </h5>
+                                    <button class="btn btn-sm btn-warning" onclick="window.loadExchangeTradingData()">
+                                        <i class="bi bi-arrow-clockwise"></i> {% if current_lang == 'en' %}Manual Refresh{% else %}手动刷新{% endif %}
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <!-- 交易统计概览 -->
+                                    <div class="row mb-4">
+                                        <div class="col-lg-3 col-md-6 mb-3">
+                                            <div class="card bg-primary text-white">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-bar-chart h2"></i>
+                                                    <h4 id="exchangeTotalTrades">
+                                                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                                                    </h4>
+                                                    <small>{% if current_lang == 'en' %}Total Trades{% else %}总交易数{% endif %}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-3 col-md-6 mb-3">
+                                            <div class="card bg-success text-white">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-currency-bitcoin h2"></i>
+                                                    <h4 id="exchangeTotalVolume">
+                                                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                                                    </h4>
+                                                    <small>{% if current_lang == 'en' %}Total Volume (BTC){% else %}总成交量 (BTC){% endif %}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-3 col-md-6 mb-3">
+                                            <div class="card bg-info text-white">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-graph-up h2"></i>
+                                                    <h4 id="exchangeAvgPrice">
+                                                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                                                    </h4>
+                                                    <small>{% if current_lang == 'en' %}Average Price{% else %}平均价格{% endif %}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-3 col-md-6 mb-3">
+                                            <div class="card bg-warning text-white">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-clock h2"></i>
+                                                    <h4 id="exchangeLastUpdate">
+                                                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                                                    </h4>
+                                                    <small>{% if current_lang == 'en' %}Last Update{% else %}最后更新{% endif %}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 交易分析图表 -->
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <div class="card">
+                                                <div class="card-header">
+                                                    <h6 class="mb-0">{% if current_lang == 'en' %}Price Range Distribution{% else %}价格区间分布{% endif %}</h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <canvas id="exchangePriceRangeChart" width="400" height="200"></canvas>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="card">
+                                                <div class="card-header">
+                                                    <h6 class="mb-0">{% if current_lang == 'en' %}Direction Analysis{% else %}方向性分析{% endif %}</h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <canvas id="exchangeDirectionChart" width="400" height="200"></canvas>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 <!-- Market Data Tab -->
@@ -4523,6 +4614,241 @@
                 ctx.parentNode.appendChild(errorDiv);
             }
         }
+
+        // ===== 三大交易所交易数据功能区 =====
+        
+        // 全局变量
+        var exchangePriceRangeChart;
+        var exchangeDirectionChart;
+        
+        // 初始化三大交易所图表
+        function initExchangeCharts() {
+            console.log('🎯 Initializing exchange charts...');
+            
+            // 初始化价格区间分布图表
+            try {
+                const priceCtx = document.getElementById('exchangePriceRangeChart');
+                if (priceCtx) {
+                    exchangePriceRangeChart = new Chart(priceCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['加载中...'],
+                            datasets: [{
+                                label: '交易数量',
+                                data: [0],
+                                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: true, labels: { color: '#ffffff' } }
+                            },
+                            scales: {
+                                y: { 
+                                    beginAtZero: true,
+                                    ticks: { color: '#ffffff' },
+                                    grid: { color: 'rgba(255,255,255,0.1)' }
+                                },
+                                x: { 
+                                    ticks: { color: '#ffffff' },
+                                    grid: { color: 'rgba(255,255,255,0.1)' }
+                                }
+                            }
+                        }
+                    });
+                    console.log('✅ Price range chart initialized');
+                }
+            } catch (error) {
+                console.error('❌ Error initializing price range chart:', error);
+            }
+            
+            // 初始化方向性分析图表
+            try {
+                const dirCtx = document.getElementById('exchangeDirectionChart');
+                if (dirCtx) {
+                    exchangeDirectionChart = new Chart(dirCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['看涨', '看跌', '中性'],
+                            datasets: [{
+                                data: [33, 33, 34],
+                                backgroundColor: [
+                                    'rgba(75, 192, 192, 0.8)',
+                                    'rgba(255, 99, 132, 0.8)',
+                                    'rgba(255, 205, 86, 0.8)'
+                                ],
+                                borderColor: [
+                                    'rgba(75, 192, 192, 1)',
+                                    'rgba(255, 99, 132, 1)',
+                                    'rgba(255, 205, 86, 1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { 
+                                    display: true, 
+                                    labels: { color: '#ffffff' },
+                                    position: 'bottom'
+                                }
+                            }
+                        }
+                    });
+                    console.log('✅ Direction chart initialized');
+                }
+            } catch (error) {
+                console.error('❌ Error initializing direction chart:', error);
+            }
+        }
+        
+        // 加载三大交易所统计数据
+        window.loadExchangeTradingData = async function() {
+            console.log('🚀🚀🚀 loadExchangeTradingData function called! 🚀🚀🚀');
+            try {
+                console.log('Loading exchange trading data...');
+                const response = await fetch('/api/deribit/multi-exchange-trades');
+                const result = await response.json();
+                console.log('Exchange trading data response:', result);
+                
+                if (result.success && result.data) {
+                    const data = result.data;
+                    
+                    // 更新统计卡片
+                    document.getElementById('exchangeTotalTrades').innerHTML = `<strong>${data.total_trades || 0}</strong>`;
+                    document.getElementById('exchangeTotalVolume').innerHTML = `<strong>${(data.total_volume || 0).toFixed(2)}</strong>`;
+                    document.getElementById('exchangeAvgPrice').innerHTML = `<strong>${(data.avg_price || 0).toFixed(4)}</strong>`;
+                    document.getElementById('exchangeLastUpdate').innerHTML = `<strong>${data.last_update || '未知'}</strong>`;
+                    
+                    console.log('✅ Exchange data cards updated successfully');
+                    
+                    // 更新价格区间图表
+                    if (exchangePriceRangeChart && data.sample_trades) {
+                        updatePriceRangeChart(data.sample_trades);
+                    }
+                    
+                    // 更新方向性分析
+                    if (exchangeDirectionChart) {
+                        updateDirectionChart(data.sample_trades);
+                    }
+                    
+                } else {
+                    console.error('❌ Failed to load exchange data:', result.message || 'Unknown error');
+                    showExchangeError('获取交易数据失败');
+                }
+            } catch (error) {
+                console.error('❌ Error loading exchange trading data:', error);
+                showExchangeError('网络请求失败');
+            }
+        };
+        
+        // 更新价格区间图表
+        function updatePriceRangeChart(trades) {
+            if (!trades || !Array.isArray(trades)) return;
+            
+            // 按价格分组
+            const priceRanges = {};
+            trades.forEach(trade => {
+                const price = trade.price || 0;
+                const range = Math.floor(price * 1000) / 1000; // 保留3位小数作为区间
+                priceRanges[range] = (priceRanges[range] || 0) + 1;
+            });
+            
+            const labels = Object.keys(priceRanges).sort((a, b) => parseFloat(a) - parseFloat(b));
+            const data = labels.map(label => priceRanges[label]);
+            
+            exchangePriceRangeChart.data.labels = labels.slice(0, 10); // 只显示前10个区间
+            exchangePriceRangeChart.data.datasets[0].data = data.slice(0, 10);
+            exchangePriceRangeChart.update();
+            
+            console.log('📊 Price range chart updated');
+        }
+        
+        // 更新方向性分析图表
+        function updateDirectionChart(trades) {
+            if (!trades || !Array.isArray(trades)) return;
+            
+            // 简单的方向性分析 - 基于期权类型
+            let calls = 0, puts = 0, others = 0;
+            
+            trades.forEach(trade => {
+                const instrument = trade.instrument || '';
+                if (instrument.includes('-C')) {
+                    calls++;
+                } else if (instrument.includes('-P')) {
+                    puts++;
+                } else {
+                    others++;
+                }
+            });
+            
+            exchangeDirectionChart.data.datasets[0].data = [calls, puts, others];
+            exchangeDirectionChart.update();
+            
+            console.log('📊 Direction chart updated');
+        }
+        
+        // 显示交易所错误信息
+        function showExchangeError(message) {
+            const errorElements = [
+                'exchangeTotalTrades', 'exchangeTotalVolume', 
+                'exchangeAvgPrice', 'exchangeLastUpdate'
+            ];
+            
+            errorElements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.innerHTML = `<span class="text-danger">${message}</span>`;
+                }
+            });
+        }
+        
+        // 加载三大交易所分析数据
+        function loadExchangeAnalysisData() {
+            console.log('📈 Loading exchange analysis data...');
+            // 这里可以扩展更多分析功能
+        }
+        
+        // 页面加载完成后初始化三大交易所功能
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                console.log('🔍🔍🔍 Starting three-exchange initialization check 🔍🔍🔍');
+                
+                // 检查必要元素是否存在
+                const exchangeElements = [
+                    'exchangeTotalTrades', 'exchangeTotalVolume', 
+                    'exchangeAvgPrice', 'exchangeLastUpdate',
+                    'exchangePriceRangeChart', 'exchangeDirectionChart'
+                ];
+                
+                exchangeElements.forEach(id => {
+                    const element = document.getElementById(id);
+                    console.log(`🔍 Element ${id}: ${element ? '✅ Found' : '❌ Missing'}`);
+                });
+                
+                try {
+                    console.log('🚀🚀🚀 STARTING THREE-EXCHANGE INITIALIZATION 🚀🚀🚀');
+                    initExchangeCharts();
+                    console.log('📊📊📊 CHARTS INITIALIZED, NOW LOADING TRADING DATA 📊📊📊');
+                    window.loadExchangeTradingData();
+                    console.log('📈📈📈 TRADING DATA LOADING STARTED 📈📈📈');
+                    loadExchangeAnalysisData();
+                    console.log('✅✅✅ THREE-EXCHANGE INITIALIZATION COMPLETED ✅✅✅');
+                } catch (error) {
+                    console.error('❌❌❌ ERROR INITIALIZING THREE-EXCHANGE FEATURES:', error);
+                }
+            }, 2000); // 延迟2秒执行，确保页面完全加载
+            
+            // 设置定时更新 (每30秒更新统计，每15分钟更新详细分析)
+            setInterval(window.loadExchangeTradingData, 30000);  // 30秒更新统计
+            setInterval(loadExchangeAnalysisData, 900000);       // 15分钟更新分析
+        });
 
     </script>
 </body>
