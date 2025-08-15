@@ -173,9 +173,9 @@
                                     <input type="file" class="form-control" id="csvFile" accept=".csv" onchange="processCsvFile(event)">
                                     <div class="form-text">
                                         {% if current_lang == 'en' %}
-                                        Format: Model, Quantity, Power (W), Price ($), Electricity ($/kWh)
+                                        Format: Model, Quantity, Power (W), Price ($), Electricity ($/kWh), Decay Rate (%/month)
                                         {% else %}
-                                        格式: 型号, 数量, 功耗(W), 价格($), 电费($/kWh)
+                                        格式: 型号, 数量, 功耗(W), 价格($), 电费($/kWh), 衰减率(%/月)
                                         {% endif %}
                                     </div>
                                 </div>
@@ -185,9 +185,9 @@
                                     </label>
                                     <div class="bg-dark p-2 rounded small">
                                         <code>
-                                            Model,Quantity,Power,Price,Electricity<br>
-                                            Antminer S19 Pro,10,3250,2500,0.08<br>
-                                            Antminer S21,5,3550,4200,0.08
+                                            Model,Quantity,Power,Price,Electricity,DecayRate<br>
+                                            Antminer S19 Pro,10,3250,2500,0.08,0.5<br>
+                                            Antminer S21,5,3550,4200,0.08,0.3
                                         </code>
                                     </div>
                                 </div>
@@ -214,7 +214,10 @@
                                         <th style="width: 15%">
                                             {% if current_lang == 'en' %}Electricity ($/kWh){% else %}电费($/kWh){% endif %}
                                         </th>
-                                        <th style="width: 15%">
+                                        <th style="width: 12%">
+                                            {% if current_lang == 'en' %}Decay Rate (%/month){% else %}衰减率(%/月){% endif %}
+                                        </th>
+                                        <th style="width: 13%">
                                             {% if current_lang == 'en' %}Action{% else %}操作{% endif %}
                                         </th>
                                     </tr>
@@ -523,6 +526,10 @@
                            min="0.01" max="1" value="0.08" step="0.001">
                 </td>
                 <td>
+                    <input type="number" class="form-control form-control-sm" 
+                           min="0" max="5" value="0" step="0.1" placeholder="0.5">
+                </td>
+                <td>
                     <button class="btn btn-outline-danger btn-sm" onclick="removeMinerRow('${rowId}')">
                         <i class="bi bi-trash"></i>
                     </button>
@@ -713,6 +720,7 @@
                 const power = parseFloat(cells[2].querySelector('input').value) || 0;
                 const price = parseFloat(cells[3].querySelector('input').value) || 0;
                 const electricity = parseFloat(cells[4].querySelector('input').value) || 0;
+                const decayRate = parseFloat(cells[5].querySelector('input').value) || 0;
                 
                 if (model && quantity > 0 && power > 0 && electricity > 0 && price > 0) {
                     miners.push({
@@ -721,6 +729,7 @@
                         power_consumption: power,
                         machine_price: price,
                         electricity_cost: electricity,
+                        decay_rate: decayRate,
                         hashrate: minerModels[model]?.hashrate || 0
                     });
                 }
@@ -890,10 +899,10 @@
                     const line = lines[i].trim();
                     if (!line) continue;
                     
-                    const [model, quantity, power, electricity] = line.split(',').map(s => s.trim());
+                    const [model, quantity, power, price, electricity, decayRate] = line.split(',').map(s => s.trim());
                     
-                    if (model && quantity && power && electricity) {
-                        addMinerRowFromData(model, quantity, power, electricity);
+                    if (model && quantity && power && price && electricity) {
+                        addMinerRowFromData(model, quantity, power, price, electricity, decayRate || '0');
                     }
                 }
                 
@@ -903,7 +912,7 @@
             reader.readAsText(file);
         }
 
-        function addMinerRowFromData(model, quantity, power, electricity) {
+        function addMinerRowFromData(model, quantity, power, price, electricity, decayRate) {
             addMinerRow();
             
             // Get the last added row
@@ -915,7 +924,9 @@
             cells[0].querySelector('select').value = model;
             cells[1].querySelector('input').value = quantity;
             cells[2].querySelector('input').value = power;
-            cells[3].querySelector('input').value = electricity;
+            cells[3].querySelector('input').value = price;
+            cells[4].querySelector('input').value = electricity;
+            cells[5].querySelector('input').value = decayRate || 0;
         }
 
         // Export functions

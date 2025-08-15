@@ -58,7 +58,7 @@ class OptimizedBatchProcessor:
                 'block_reward': BLOCK_REWARD
             }
     
-    def calculate_single_miner_group(self, model, quantity, power_consumption, electricity_cost, machine_price, network_data):
+    def calculate_single_miner_group(self, model, quantity, power_consumption, electricity_cost, machine_price, network_data, decay_rate=0):
         """计算单个矿机组的收益（内存优化版本）"""
         try:
             # 获取矿机规格
@@ -102,13 +102,21 @@ class OptimizedBatchProcessor:
             daily_profit = daily_revenue - daily_cost
             monthly_profit = daily_profit * 30
             
-            # ROI计算（真实回本计算）
-            if daily_profit > 0 and total_machine_cost > 0:
-                roi_days = total_machine_cost / daily_profit  # 总成本 ÷ 日净利润
-                # 限制在合理范围内，避免极大值
-                roi_days = min(roi_days, 999999)
+            # ROI计算 - 根据是否有衰减率选择计算方法
+            if decay_rate > 0:
+                # 考虑算力衰减的回本计算
+                roi_days = self.calculate_payback_days_with_decay(
+                    total_hashrate, total_power, total_machine_cost, 
+                    electricity_cost, decay_rate, network_data
+                )
             else:
-                roi_days = 999999  # 无法回本或亏损
+                # 传统回本计算（无衰减）
+                if daily_profit > 0 and total_machine_cost > 0:
+                    roi_days = total_machine_cost / daily_profit  # 总成本 ÷ 日净利润
+                    # 限制在合理范围内，避免极大值
+                    roi_days = min(roi_days, 999999)
+                else:
+                    roi_days = 999999  # 无法回本或亏损
             
             return {
                 'model': model,
@@ -124,12 +132,72 @@ class OptimizedBatchProcessor:
                 'roi_days': round(roi_days, 0),
                 'hash_rate': total_hashrate,
                 'daily_btc': daily_btc,
-                'monthly_btc': daily_btc * 30
+                'monthly_btc': daily_btc * 30,
+                'decay_rate': decay_rate
             }
             
         except Exception as e:
             logger.error(f"计算矿机组 {model} 时出错: {e}")
             return None
+    
+    def get_effective_hashrate(self, initial_th, decay_rate_monthly, day_index):
+        """
+        根据初始算力和衰减率，返回指定天数后的有效算力
+        @param initial_th: 初始算力 (TH/s)
+        @param decay_rate_monthly: 月衰减率 (百分比，如0.5表示0.5%/月)
+        @param day_index: 第几天
+        """
+        if not decay_rate_monthly or decay_rate_monthly <= 0:
+            return initial_th
+        
+        daily_rate = decay_rate_monthly / 100 / 30  # 转成每天的比例
+        return initial_th * (1 - daily_rate) ** day_index
+    
+    def calculate_payback_days_with_decay(self, hashrate_th, power_w, price_usd, 
+                                         electricity_usd, decay_rate_monthly, 
+                                         network_data, max_days=3650):
+        """
+        计算考虑算力衰减的回本天数
+        @param hashrate_th: 初始算力 (TH/s)
+        @param power_w: 功耗 (W)
+        @param price_usd: 机器成本 (USD)
+        @param electricity_usd: 电价 (USD/kWh)
+        @param decay_rate_monthly: 月衰减率 (%)
+        @param network_data: 网络参数
+        @param max_days: 最大计算天数
+        """
+        total_profit = 0
+        btc_price = network_data['btc_price']
+        network_hashrate_th = network_data['hashrate'] * 1e6  # EH/s to TH/s
+        block_reward = network_data['block_reward']
+        blocks_per_day = 144
+        
+        for day in range(1, max_days + 1):
+            # 当天有效算力（考虑衰减）
+            eff_th = self.get_effective_hashrate(hashrate_th, decay_rate_monthly, day)
+            
+            # 当天产出BTC
+            if network_hashrate_th > 0:
+                miner_share = eff_th / network_hashrate_th
+                btc_per_day = miner_share * block_reward * blocks_per_day
+            else:
+                btc_per_day = 0
+            
+            # 当天收入(USD)
+            rev_usd = btc_per_day * btc_price
+            
+            # 当天耗电成本
+            kwh_per_day = (power_w / 1000) * 24
+            elec_cost_usd = kwh_per_day * electricity_usd
+            
+            # 当天净利润
+            net_usd = rev_usd - elec_cost_usd
+            total_profit += net_usd
+            
+            if total_profit >= price_usd:
+                return day  # 回本天数
+        
+        return max_days  # 在max_days内未回本
     
     def process_large_batch(self, miners_data, use_real_time_data=True):
         """处理大批量矿机数据（内存优化）"""
@@ -148,7 +216,8 @@ class OptimizedBatchProcessor:
                     miner.get('model', 'Antminer S19 Pro'),
                     float(miner.get('power_consumption', 3250)),
                     float(miner.get('electricity_cost', 0.08)),
-                    float(miner.get('machine_price', 2500))
+                    float(miner.get('machine_price', 2500)),
+                    float(miner.get('decay_rate', 0))
                 )
                 quantity = int(miner.get('quantity', 1))
                 
@@ -165,9 +234,9 @@ class OptimizedBatchProcessor:
             total_daily_revenue = 0
             total_daily_cost = 0
             
-            for (model, power_consumption, electricity_cost, machine_price), quantity in miner_groups.items():
+            for (model, power_consumption, electricity_cost, machine_price, decay_rate), quantity in miner_groups.items():
                 result = self.calculate_single_miner_group(
-                    model, quantity, power_consumption, electricity_cost, machine_price, network_data
+                    model, quantity, power_consumption, electricity_cost, machine_price, network_data, decay_rate
                 )
                 
                 if result:
