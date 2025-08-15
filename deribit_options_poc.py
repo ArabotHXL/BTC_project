@@ -285,7 +285,16 @@ class PriceRangeAnalyzer:
                 )
                 analysis_results.append(analysis)
         
-        return sorted(analysis_results, key=lambda x: x.total_volume, reverse=True)
+        # 按价格区间排序（从高到低）
+        def price_sort_key(x):
+            try:
+                # 提取高价部分（$符号后的第一个数字）
+                high_price = x.price_range.split(" - ")[0].replace("$", "")
+                return float(high_price)
+            except:
+                return 0.0
+        
+        return sorted(analysis_results, key=price_sort_key, reverse=True)
 
 class DeribitAnalysisPOC:
     """Deribit分析POC主类"""

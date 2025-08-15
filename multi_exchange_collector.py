@@ -315,15 +315,17 @@ class MultiExchangeCollector:
                 cp[bucket][trade["option_type"]]["trades"] += 1
                 cp[bucket][trade["option_type"]]["amount"] += trade["amount"]
         
-        # 排序
+        # 排序 - 按高价排序（从高到低）
         def sort_key(k):
             try:
-                return float(k.split("–")[0])
+                # 提取高价部分（$符号后的第一个数字）
+                high_price = k.split(" - ")[0].replace("$", "")
+                return float(high_price)
             except:
                 return 0.0
         
-        agg_sorted = sorted(agg.items(), key=lambda kv: sort_key(kv[0]))
-        cp_sorted = sorted(cp.items(), key=lambda kv: sort_key(kv[0])) if by_type else []
+        agg_sorted = sorted(agg.items(), key=lambda kv: sort_key(kv[0]), reverse=True)
+        cp_sorted = sorted(cp.items(), key=lambda kv: sort_key(kv[0]), reverse=True) if by_type else []
         
         return agg_sorted, cp_sorted
     
@@ -373,7 +375,7 @@ class MultiExchangeCollector:
                    put_trades, put_amount, analysis_time
             FROM bucket_analysis 
             ORDER BY analysis_time DESC, 
-                     CAST(SUBSTR(bucket_range, 1, INSTR(bucket_range, '–')-1) AS REAL) ASC
+                     CAST(REPLACE(SUBSTR(bucket_range, 2, INSTR(bucket_range, ' - ')-2), '$', '') AS REAL) DESC
             LIMIT ?
         ''', (limit,))
         
