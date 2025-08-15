@@ -142,6 +142,127 @@
         </div>
 
         <!-- Batch Input Section -->
+        <!-- Global Settings and Network Status -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-gear me-2"></i>
+                            {% if current_lang == 'en' %}Global Settings{% else %}全局设置{% endif %}
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    {% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="globalBtcPrice" 
+                                           value="116000" min="1000" max="1000000">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    {% if current_lang == 'en' %}Use Real-time Data{% else %}使用实时数据{% endif %}
+                                </label>
+                                <div class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" id="useRealTimeData" checked onchange="handleRealtimeToggle()">
+                                    <label class="form-check-label" for="useRealTimeData">
+                                        {% if current_lang == 'en' %}Auto-update prices and difficulty{% else %}自动更新价格和难度{% endif %}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Network Status -->
+                        <div class="mt-4 pt-3 border-top">
+                            <h6 class="text-muted mb-3">
+                                <i class="bi bi-globe2 me-2"></i>
+                                {% if current_lang == 'en' %}Network Status{% else %}网络状态{% endif %}
+                                <span id="dataUpdateTime" class="small text-success ms-2"></span>
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-3 col-6">
+                                    <div class="text-center p-2 bg-dark rounded">
+                                        <div class="small text-muted">
+                                            {% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}
+                                        </div>
+                                        <div class="fw-bold text-warning" id="currentBtcPrice">$116,644</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="text-center p-2 bg-dark rounded">
+                                        <div class="small text-muted">
+                                            {% if current_lang == 'en' %}Difficulty{% else %}难度{% endif %}
+                                        </div>
+                                        <div class="fw-bold text-info" id="currentDifficulty">129.4T</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="text-center p-2 bg-dark rounded">
+                                        <div class="small text-muted">
+                                            {% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}
+                                        </div>
+                                        <div class="fw-bold text-primary" id="currentHashrate">752.81 EH/s</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="text-center p-2 bg-dark rounded">
+                                        <div class="small text-muted">
+                                            {% if current_lang == 'en' %}Block Reward{% else %}区块奖励{% endif %}
+                                        </div>
+                                        <div class="fw-bold text-success" id="currentBlockReward">3.125 BTC</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <!-- Calculate Button -->
+                <div class="text-center mb-3">
+                    <button class="btn btn-primary btn-lg" onclick="calculateBatchProfitability()" id="calculateBtn">
+                        <i class="bi bi-calculator me-2"></i>
+                        {% if current_lang == 'en' %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}
+                    </button>
+                </div>
+                
+                <!-- Export Options -->
+                <div class="card" id="exportCard" style="display: none;">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-download me-2"></i>
+                            {% if current_lang == 'en' %}Export Results{% else %}导出结果{% endif %}
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-success btn-sm" onclick="exportToCSV()">
+                                <i class="bi bi-file-earmark-spreadsheet me-1"></i>
+                                {% if current_lang == 'en' %}Export CSV{% else %}导出CSV{% endif %}
+                            </button>
+                            {% if user_plan.id != 'free' %}
+                            <button class="btn btn-outline-primary btn-sm" onclick="exportToExcel()">
+                                <i class="bi bi-file-earmark-excel me-1"></i>
+                                {% if current_lang == 'en' %}Export Excel{% else %}导出Excel{% endif %}
+                            </button>
+                            {% endif %}
+                            {% if user_plan.allow_advanced_analytics %}
+                            <button class="btn btn-outline-danger btn-sm" onclick="exportToPDF()">
+                                <i class="bi bi-file-earmark-pdf me-1"></i>
+                                {% if current_lang == 'en' %}Export PDF Report{% else %}导出PDF报告{% endif %}
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <div class="col-md-8">
                 <div class="card">
@@ -252,92 +373,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Global Settings -->
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h6 class="mb-0">
-                            <i class="bi bi-gear me-2"></i>
-                            {% if current_lang == 'en' %}Global Settings{% else %}全局设置{% endif %}
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label class="form-label">
-                                    {% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control" id="globalBtcPrice" 
-                                           value="116000" min="1000" max="1000000">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">
-                                    {% if current_lang == 'en' %}Use Real-time Data{% else %}使用实时数据{% endif %}
-                                </label>
-                                <div class="form-check form-switch mt-2">
-                                    <input class="form-check-input" type="checkbox" id="useRealTimeData" checked onchange="handleRealtimeToggle()">
-                                    <label class="form-check-label" for="useRealTimeData">
-                                        {% if current_lang == 'en' %}Auto-update prices and difficulty{% else %}自动更新价格和难度{% endif %}
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Network Status -->
-                        <div class="mt-4 pt-3 border-top">
-                            <h6 class="text-muted mb-3">
-                                <i class="bi bi-globe2 me-2"></i>
-                                {% if current_lang == 'en' %}Network Status{% else %}网络状态{% endif %}
-                                <span id="dataUpdateTime" class="small text-success ms-2"></span>
-                            </h6>
-                            <div class="row g-3">
-                                <div class="col-md-3 col-6">
-                                    <div class="text-center p-2 bg-dark rounded">
-                                        <div class="small text-muted">
-                                            {% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}
-                                        </div>
-                                        <div class="fw-bold text-warning" id="currentBtcPrice">$116,644</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 col-6">
-                                    <div class="text-center p-2 bg-dark rounded">
-                                        <div class="small text-muted">
-                                            {% if current_lang == 'en' %}Difficulty{% else %}难度{% endif %}
-                                        </div>
-                                        <div class="fw-bold text-info" id="currentDifficulty">129.4T</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 col-6">
-                                    <div class="text-center p-2 bg-dark rounded">
-                                        <div class="small text-muted">
-                                            {% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}
-                                        </div>
-                                        <div class="fw-bold text-primary" id="currentHashrate">752.81 EH/s</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 col-6">
-                                    <div class="text-center p-2 bg-dark rounded">
-                                        <div class="small text-muted">
-                                            {% if current_lang == 'en' %}Block Reward{% else %}区块奖励{% endif %}
-                                        </div>
-                                        <div class="fw-bold text-success" id="currentBlockReward">3.125 BTC</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Calculate Button -->
-                <div class="text-center mt-4">
-                    <button class="btn btn-primary btn-lg" onclick="calculateBatchProfitability()" id="calculateBtn">
-                        <i class="bi bi-calculator me-2"></i>
-                        {% if current_lang == 'en' %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}
-                    </button>
-                </div>
             </div>
 
             <!-- Results Section -->
@@ -355,36 +390,6 @@
                             <p class="mt-2">
                                 {% if current_lang == 'en' %}Configure miners and click calculate to see results{% else %}配置矿机并点击计算查看结果{% endif %}
                             </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Export Options -->
-                <div class="card mt-3" id="exportCard" style="display: none;">
-                    <div class="card-header">
-                        <h6 class="mb-0">
-                            <i class="bi bi-download me-2"></i>
-                            {% if current_lang == 'en' %}Export Results{% else %}导出结果{% endif %}
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-outline-success btn-sm" onclick="exportToCSV()">
-                                <i class="bi bi-file-earmark-spreadsheet me-1"></i>
-                                {% if current_lang == 'en' %}Export CSV{% else %}导出CSV{% endif %}
-                            </button>
-                            {% if user_plan.id != 'free' %}
-                            <button class="btn btn-outline-primary btn-sm" onclick="exportToExcel()">
-                                <i class="bi bi-file-earmark-excel me-1"></i>
-                                {% if current_lang == 'en' %}Export Excel{% else %}导出Excel{% endif %}
-                            </button>
-                            {% endif %}
-                            {% if user_plan.allow_advanced_analytics %}
-                            <button class="btn btn-outline-danger btn-sm" onclick="exportToPDF()">
-                                <i class="bi bi-file-earmark-pdf me-1"></i>
-                                {% if current_lang == 'en' %}Export PDF Report{% else %}导出PDF报告{% endif %}
-                            </button>
-                            {% endif %}
                         </div>
                     </div>
                 </div>
