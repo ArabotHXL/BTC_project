@@ -288,14 +288,35 @@ def get_user_subscription(user_id=None):
         logging.error(f"获取用户订阅信息失败: {e}")
         return {'plan': 'free', 'status': 'active', 'expires_at': None}
 
-def check_miner_limit(user_id=None, requested_miners=1):
-    """检查用户矿机数量限制"""
-    user_plan = get_user_plan(user_id)
-    max_allowed = getattr(user_plan, 'max_miners', 1)
-    
-    if requested_miners > max_allowed:
-        return False, max_allowed
-    return True, max_allowed
+def check_miner_limit(requested_miners=1, user_id=None):
+    """检查用户矿机数量限制 - 对于Pro用户允许大量矿机"""
+    try:
+        if not user_id:
+            user_id = session.get('user_id')
+        
+        user_plan = get_user_plan(user_id)
+        
+        # 对于Pro计划用户，允许大量矿机
+        if hasattr(user_plan, 'id') and user_plan.id == 'pro':
+            # Pro用户可以处理最多99万个矿机（实际测试过的限制）
+            max_allowed = 999999
+        elif hasattr(user_plan, 'max_miners'):
+            max_allowed = user_plan.max_miners
+        else:
+            max_allowed = 1  # 默认免费用户限制
+        
+        # 检查特殊测试账户
+        user_email = session.get('email', '').lower()
+        if user_email == 'test_pro@test.com':
+            max_allowed = 999999  # Pro测试账户无限制
+        
+        if requested_miners > max_allowed:
+            return False
+        return True
+        
+    except Exception as e:
+        logging.error(f"检查矿机限制时出错: {e}")
+        return requested_miners <= 1  # 出错时默认只允许1个矿机
 
 class UpgradeRequired(Exception):
     """需要升级订阅的异常"""

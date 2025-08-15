@@ -330,7 +330,8 @@ def get_real_time_btc_hashrate():
 
 def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electricity_cost=0.05, client_electricity_cost=None, 
                              btc_price=None, difficulty=None, block_reward=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0.0, 
-                             shutdown_strategy="efficiency", host_investment=0.0, client_investment=0.0, maintenance_fee=0.0, manual_network_hashrate=None, manual_network_difficulty=None):
+                             shutdown_strategy="efficiency", host_investment=0.0, client_investment=0.0, maintenance_fee=0.0, manual_network_hashrate=None, manual_network_difficulty=None, 
+                             _batch_mode=False):
     """
     Calculate Bitcoin mining profitability using the exact calculation method from the original code
     

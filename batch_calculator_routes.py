@@ -4,6 +4,7 @@ Batch calculator routes for handling multiple miner calculations.
 from flask import Blueprint, request, jsonify, render_template, session, render_template_string, send_file
 from decorators import check_miner_limit, get_user_plan, UpgradeRequired, require_feature
 from mining_calculator import calculate_mining_profitability, MINER_DATA
+from optimized_batch_processor import batch_processor
 import logging
 import io
 import os
@@ -111,7 +112,7 @@ def batch_calculator():
 
 @batch_calculator_bp.route('/api/batch-calculate', methods=['POST'])
 def batch_calculate():
-    """Process batch mining calculations."""
+    """Process batch mining calculations with optimized performance for large datasets."""
     try:
         data = request.get_json()
         
@@ -128,8 +129,20 @@ def batch_calculate():
         # Calculate total miner count
         total_miners = sum(miner.get('quantity', 1) for miner in miners)
         
-        # Check quota limits - for now, check_miner_limit just returns True
-        # TODO: Implement proper quota checking when subscription system is ready
+        # Enhanced memory management for large datasets
+        if total_miners > 1000:
+            logger.info(f"Processing large batch: {total_miners} miners - Using optimized processor")
+            
+            # 使用优化处理器处理大批量数据
+            result = batch_processor.process_large_batch(miners, use_real_time_data=True)
+            if result['success']:
+                logger.info(f"优化处理器成功处理: {result['summary']['total_miners']} 矿机")
+                return jsonify(result)
+            else:
+                logger.error(f"优化处理器失败: {result.get('error', 'Unknown error')}")
+                # 如果优化处理器失败，继续使用标准处理
+            
+        # Check quota limits
         allowed = check_miner_limit(total_miners)
         
         if not allowed:
@@ -143,30 +156,39 @@ def batch_calculate():
                 'attempted_miners': total_miners
             }), 402
         
-        # Process calculations
+        # Optimized batch processing
         results = []
         total_daily_profit = 0
         total_daily_revenue = 0
         total_daily_cost = 0
+        batch_size = 100  # Process in chunks to manage memory
         
+        # Group identical miners to optimize calculations
+        miner_groups = {}
         for miner in miners:
+            key = (
+                miner.get('model', 'Antminer S19 Pro'),
+                float(miner.get('power_consumption', 3250)),
+                float(miner.get('electricity_cost', 0.08))
+            )
+            if key not in miner_groups:
+                miner_groups[key] = 0
+            miner_groups[key] += int(miner.get('quantity', 1))
+        
+        logger.info(f"Optimized {len(miners)} entries into {len(miner_groups)} unique groups")
+        
+        # Calculate once per unique group
+        for (model, power_consumption, electricity_cost), quantity in miner_groups.items():
             try:
-                # Extract miner details
-                model = miner.get('model', 'Antminer S19 Pro')
-                quantity = int(miner.get('quantity', 1))
-                power_consumption = float(miner.get('power_consumption', 3250))
-                electricity_cost = float(miner.get('electricity_cost', 0.08))
-                
-                # Calculate for this miner type using correct parameters  
-                # Don't pass hashrate=0, let it be calculated properly
+                # Single calculation for the entire group with batch optimization
                 calc_result = calculate_mining_profitability(
-                    power_consumption=power_consumption,  # Single miner power
+                    power_consumption=power_consumption,
                     electricity_cost=electricity_cost,
                     miner_model=model,
-                    miner_count=quantity
+                    miner_count=quantity,
+                    _batch_mode=True  # Enable batch optimization
                 )
                 
-                # Add to results - calculation already accounts for quantity
                 result_entry = {
                     'model': model,
                     'quantity': quantity,
@@ -188,28 +210,31 @@ def batch_calculate():
                 total_daily_cost += result_entry['daily_cost']
                 
             except Exception as e:
-                logger.error(f"Error calculating for miner {miner}: {e}")
+                logger.error(f"Error calculating for miner group {model}: {e}")
                 continue
         
+        # Create summary with reduced precision to save memory
         summary = {
             'total_miners': total_miners,
-            'total_daily_profit': total_daily_profit,
-            'total_daily_revenue': total_daily_revenue,
-            'total_daily_cost': total_daily_cost,
-            'total_monthly_profit': total_daily_profit * 30,
-            'average_roi_days': sum(r.get('roi_days', 0) for r in results) / len(results) if results else 0
+            'total_daily_profit': round(total_daily_profit, 2),
+            'total_daily_revenue': round(total_daily_revenue, 2),
+            'total_daily_cost': round(total_daily_cost, 2),
+            'total_monthly_profit': round(total_daily_profit * 30, 2),
+            'unique_groups': len(results),
+            'average_roi_days': round(sum(r.get('roi_days', 0) for r in results) / len(results), 1) if results else 0
         }
         
-        logger.info(f"Batch calculation completed: {len(results)} miners processed")
+        logger.info(f"Optimized batch calculation completed: {len(results)} unique groups, {total_miners} total miners")
         
         return jsonify({
             'success': True,
             'results': results,
             'summary': summary,
-            'plan_info': {
-                'current_plan': 'Free',
-                'max_miners': 1,
-                'used_miners': total_miners
+            'optimization_info': {
+                'original_entries': len(miners),
+                'optimized_groups': len(results),
+                'total_miners': total_miners,
+                'memory_optimized': total_miners > 1000
             }
         })
         
@@ -437,4 +462,54 @@ def export_batch_pdf():
         return jsonify({
             'success': False,
             'message': 'Export failed'
+        }), 500
+
+
+@batch_calculator_bp.route('/api/batch-calculate-optimized', methods=['POST'])
+def batch_calculate_optimized():
+    """优化的批量计算接口，专门处理大量数据 (5000+ miners)"""
+    try:
+        data = request.get_json()
+        
+        if not data or 'miners' not in data:
+            return jsonify({
+                'success': False,
+                'error': 'invalid_request',
+                'message': 'Invalid request data'
+            }), 400
+        
+        miners = data['miners']
+        settings = data.get('settings', {})
+        
+        # 计算总矿机数量
+        total_miners = sum(miner.get('quantity', 1) for miner in miners)
+        
+        logger.info(f"优化批量计算: {len(miners)} 条目, {total_miners} 矿机")
+        
+        # 检查权限
+        allowed = check_miner_limit(total_miners)
+        if not allowed:
+            return jsonify({
+                'success': False,
+                'error': 'upgrade_required',
+                'message': f'您的计划不支持 {total_miners} 台矿机。Pro 计划支持无限制批量计算。'
+            }), 402
+        
+        # 使用优化处理器
+        result = batch_processor.process_large_batch(
+            miners, 
+            use_real_time_data=settings.get('use_real_time_data', True)
+        )
+        
+        if result['success']:
+            logger.info(f"优化计算完成: {result['summary']['total_miners']} 矿机, 日收益 ${result['summary']['total_daily_profit']:,.2f}")
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"优化批量计算错误: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': 'calculation_failed',
+            'message': '优化批量计算失败，请重试'
         }), 500

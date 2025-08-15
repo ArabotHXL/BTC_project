@@ -647,7 +647,13 @@
             };
 
             // Send batch calculation request
-            fetch('/api/batch-calculate', {
+            // 根据矿机数量选择合适的计算接口
+            const totalMinersForApi = miners.reduce((sum, miner) => sum + parseInt(miner.quantity || 1), 0);
+            const apiEndpoint = totalMinersForApi > 1000 ? '/api/batch-calculate-optimized' : '/api/batch-calculate';
+            
+            console.log(`使用${apiEndpoint}处理${totalMinersForApi}台矿机`);
+            
+            fetch(apiEndpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
