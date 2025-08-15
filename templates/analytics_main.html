@@ -4809,10 +4809,8 @@
                     
                     console.log('✅ Exchange data cards updated successfully');
                     
-                    // 更新价格区间图表
-                    if (exchangePriceRangeChart && data.sample_trades) {
-                        updatePriceRangeChart(data.sample_trades);
-                    }
+                    // 价格区间图表现在由价格区间详情表格函数统一处理
+                    // 不再从这里更新图表，避免数据不一致
                     
                     // 更新方向性分析
                     if (exchangeDirectionChart) {
@@ -4829,27 +4827,8 @@
             }
         };
         
-        // 更新价格区间图表
-        function updatePriceRangeChart(trades) {
-            if (!trades || !Array.isArray(trades)) return;
-            
-            // 按价格分组
-            const priceRanges = {};
-            trades.forEach(trade => {
-                const price = trade.price || 0;
-                const range = Math.floor(price * 1000) / 1000; // 保留3位小数作为区间
-                priceRanges[range] = (priceRanges[range] || 0) + 1;
-            });
-            
-            const labels = Object.keys(priceRanges).sort((a, b) => parseFloat(a) - parseFloat(b));
-            const data = labels.map(label => priceRanges[label]);
-            
-            exchangePriceRangeChart.data.labels = labels.slice(0, 10); // 只显示前10个区间
-            exchangePriceRangeChart.data.datasets[0].data = data.slice(0, 10);
-            exchangePriceRangeChart.update();
-            
-            console.log('📊 Price range chart updated');
-        }
+        // 旧的价格区间图表更新函数已被移除
+        // 现在统一使用 updatePriceRangeChart(priceRanges) 函数来处理价格区间分析数据
         
         // 更新方向性分析图表
         function updateDirectionChart(trades) {
@@ -4910,14 +4889,18 @@
         
         // 加载价格区间分析详情
         window.loadPriceRangeDetails = async function() {
-            console.log('📊 Loading price range analysis details...');
+            console.log('📊📊📊 Loading price range analysis details... 📊📊📊');
             try {
                 const response = await fetch('/api/deribit/analysis-data');
                 const result = await response.json();
                 
+                console.log('📊 Analysis data response:', result);
+                
                 if (result.success && result.data && result.data.price_ranges) {
+                    console.log('📊 Found price ranges data:', result.data.price_ranges);
                     updatePriceRangeDetailsTable(result.data.price_ranges);
                 } else {
+                    console.log('❌ No price ranges data in response');
                     showPriceRangeError('暂无价格区间数据');
                 }
             } catch (error) {
@@ -4942,6 +4925,8 @@
                         </td>
                     </tr>
                 `;
+                // 清空图表
+                updatePriceRangeChart([]);
                 return;
             }
             
@@ -4978,7 +4963,106 @@
                 `;
             }).join('');
             
-            console.log('✅ Price range details table updated successfully');
+            // 同时更新价格区间分布图表 - 使用相同的分析数据
+            updatePriceRangeChart(priceRanges);
+            
+            console.log('✅ Price range details table AND chart updated successfully with analysis data');
+        }
+        
+        // 更新价格区间分布图表 - 使用与表格相同的分析数据
+        function updatePriceRangeChart(priceRanges) {
+            const chartCanvas = document.getElementById('exchangePriceRangeChart');
+            if (!chartCanvas) {
+                console.log('❌ Price range chart canvas not found');
+                return;
+            }
+            
+            console.log('📊📊📊 Updating PRICE RANGE CHART with ANALYSIS DATA 📊📊📊', priceRanges);
+            
+            // 准备图表数据
+            const labels = [];
+            const data = [];
+            const backgroundColors = [];
+            
+            if (priceRanges && priceRanges.length > 0) {
+                priceRanges.forEach((range, index) => {
+                    labels.push(range.price_range || '--');
+                    data.push(range.trade_count || 0);
+                    
+                    // 根据百分比设置颜色
+                    const percentage = range.percentage || 0;
+                    if (percentage > 20) {
+                        backgroundColors.push('#28a745'); // green
+                    } else if (percentage > 10) {
+                        backgroundColors.push('#ffc107'); // yellow
+                    } else {
+                        backgroundColors.push('#17a2b8'); // blue
+                    }
+                });
+            }
+            
+            // 销毁旧图表
+            if (window.exchangePriceRangeChart) {
+                window.exchangePriceRangeChart.destroy();
+            }
+            
+            // 创建新图表
+            try {
+                const ctx = chartCanvas.getContext('2d');
+                window.exchangePriceRangeChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '交易数量',
+                            data: data,
+                            backgroundColor: backgroundColors,
+                            borderColor: backgroundColors.map(color => color),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: {
+                                    color: '#ffffff'
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: '价格区间交易分布',
+                                color: '#ffffff'
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    color: '#ffffff',
+                                    maxRotation: 45
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            y: {
+                                ticks: {
+                                    color: '#ffffff'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                console.log('✅✅✅ PRICE RANGE CHART UPDATED WITH ANALYSIS DATA ✅✅✅');
+            } catch (error) {
+                console.error('❌ Error updating price range chart:', error);
+            }
         }
         
         // 显示价格区间分析错误
