@@ -1333,87 +1333,101 @@
             }
         }
         
-        // 加载三大交易所统计数据
-        async function loadExchangeTradingData() {
-            try {
-                console.log('Loading exchange trading data...');
-                const response = await fetch('/api/deribit/multi-exchange-trades');
-                const result = await response.json();
-                console.log('Exchange trading data response:', result);
-                
-                if (result.success && result.data) {
-                    const data = result.data;
-                    
-                    // 更新统计卡片
-                    document.getElementById('exchangeTotalTrades').textContent = data.total_trades || 0;
-                    document.getElementById('exchangeTotalVolume').textContent = (data.total_volume || 0).toFixed(2);
-                    document.getElementById('exchangeAvgPrice').textContent = '$' + (data.avg_price || 0).toFixed(4);
-                    document.getElementById('exchangeLastUpdate').textContent = data.last_update || '--';
-                    
-                    // 更新状态
-                    document.getElementById('tradingDataStatus').textContent = '数据已更新';
-                    document.getElementById('tradingDataStatus').className = 'badge bg-success ms-2';
-                    
-                    console.log('Exchange trading data updated successfully');
-                } else {
-                    console.error('Failed to load exchange trading data:', result);
-                    document.getElementById('tradingDataStatus').textContent = '数据加载失败';
-                    document.getElementById('tradingDataStatus').className = 'badge bg-danger ms-2';
-                }
-            } catch (error) {
-                console.error('Error loading exchange trading data:', error);
-                document.getElementById('tradingDataStatus').textContent = '网络错误';
-                document.getElementById('tradingDataStatus').className = 'badge bg-warning ms-2';
-            }
-        }
-        
-        // 加载三大交易所分析数据
+        // 加载三大交易所分析数据（图表和详细信息）  
         async function loadExchangeAnalysisData() {
             try {
-                console.log('Loading exchange analysis data...');
+                document.getElementById('exchangeLoadingIndicator').style.display = 'block';
+                document.getElementById('exchangePriceRangeDetails').style.display = 'none';
+                
                 const response = await fetch('/api/deribit/analysis-data');
                 const result = await response.json();
-                console.log('Exchange analysis data response:', result);
                 
-                if (result.success && result.data && result.data.price_ranges) {
-                    const priceRanges = result.data.price_ranges;
+                if (result.success && result.data.price_ranges && result.data.price_ranges.length > 0) {
+                    const data = result.data;
                     
                     // 更新价格区间图表
-                    if (exchangePriceRangeChart && priceRanges.length > 0) {
-                        const labels = priceRanges.map(range => range.range);
-                        const volumes = priceRanges.map(range => range.volume);
-                        
-                        exchangePriceRangeChart.data.labels = labels;
-                        exchangePriceRangeChart.data.datasets[0].data = volumes;
-                        exchangePriceRangeChart.update();
+                    updateExchangePriceRangeChart(data.price_ranges);
+                    
+                    // 更新交易方向图表
+                    if (data.direction_stats) {
+                        updateExchangeDirectionChart(data.direction_stats);
                     }
                     
-                    // 更新价格区间表格
-                    const tableBody = document.getElementById('exchangePriceRangeTable');
-                    if (tableBody && priceRanges.length > 0) {
-                        tableBody.innerHTML = '';
-                        priceRanges.forEach(range => {
-                            const row = document.createElement('tr');
-                            row.innerHTML = `
-                                <td>${range.range}</td>
-                                <td>${range.count}</td>
-                                <td>${range.volume.toFixed(2)}</td>
-                                <td>${range.percentage}%</td>
-                                <td>$${range.avg_price.toFixed(4)}</td>
-                            `;
-                            tableBody.appendChild(row);
-                        });
-                    }
+                    // 显示详细表格
+                    displayExchangePriceRangeDetails(data.price_ranges);
                     
-                    console.log('Exchange analysis data updated successfully');
+                    document.getElementById('exchangeLoadingIndicator').style.display = 'none';
+                    document.getElementById('exchangePriceRangeDetails').style.display = 'block';
                 } else {
-                    console.error('Failed to load exchange analysis data:', result);
+                    document.getElementById('exchangeLoadingIndicator').innerHTML = '<p class="text-warning">暂无交易数据</p>';
                 }
             } catch (error) {
-                console.error('Error loading exchange analysis data:', error);
+                console.error('加载分析数据失败:', error);
+                document.getElementById('exchangeLoadingIndicator').innerHTML = '<p class="text-danger">数据加载失败</p>';
             }
         }
-        });
+
+        // 更新价格区间图表
+        function updateExchangePriceRangeChart(priceRanges) {
+            if (!exchangePriceRangeChart) return;
+            
+            const labels = priceRanges.map(range => range.range);
+            const data = priceRanges.map(range => parseFloat(range.volume));
+            
+            exchangePriceRangeChart.data.labels = labels;
+            exchangePriceRangeChart.data.datasets[0].data = data;
+            exchangePriceRangeChart.update();
+        }
+
+        // 更新交易方向图表
+        function updateExchangeDirectionChart(directionStats) {
+            if (!exchangeDirectionChart) return;
+            
+            const buyData = directionStats.buy || 0;
+            const sellData = directionStats.sell || 0;
+            
+            exchangeDirectionChart.data.datasets[0].data = [buyData, sellData];
+            exchangeDirectionChart.update();
+        }
+
+        // 显示价格区间详细数据
+        function displayExchangePriceRangeDetails(priceRanges) {
+            const detailsContainer = document.getElementById('exchangePriceRangeDetails');
+            if (!detailsContainer) return;
+            
+            let tableHtml = `
+                <table class="table table-dark table-striped">
+                    <thead>
+                        <tr>
+                            <th>价格区间</th>
+                            <th>交易笔数</th>
+                            <th>交易量</th>
+                            <th>占比</th>
+                            <th>平均价格</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            priceRanges.forEach(range => {
+                tableHtml += `
+                    <tr>
+                        <td>${range.range}</td>
+                        <td>${range.count}</td>
+                        <td>${parseFloat(range.volume).toFixed(2)}</td>
+                        <td>${range.percentage}%</td>
+                        <td>$${parseFloat(range.avg_price).toFixed(4)}</td>
+                    </tr>
+                `;
+            });
+            
+            tableHtml += `
+                    </tbody>
+                </table>
+            `;
+            
+            detailsContainer.innerHTML = tableHtml;
+        }
         
         // 网络历史图表变量
         let priceHistoryChart, difficultyHistoryChart, hashrateHistoryChart;
