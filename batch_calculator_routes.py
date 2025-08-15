@@ -1,7 +1,7 @@
 """
 Batch calculator routes for handling multiple miner calculations.
 """
-from flask import Blueprint, request, jsonify, render_template, session, render_template_string, send_file, make_response
+from flask import Blueprint, request, jsonify, render_template, session, render_template_string, send_file, make_response, Response
 from decorators import check_miner_limit, get_user_plan, UpgradeRequired, require_feature
 from mining_calculator import calculate_mining_profitability, MINER_DATA
 from optimized_batch_processor import batch_processor
@@ -575,21 +575,21 @@ def export_batch_pdf():
         doc.build(story)
         buffer.seek(0)
         
-        # Generate filename
+        # Generate filename and return PDF directly as response
         timestamp = int(datetime.datetime.now().timestamp() * 1000)
-        filename = f"mining_batch_results_{timestamp}_{timestamp}.pdf"
+        filename = f"mining_batch_results_{timestamp}.pdf"
         
-        # Save file 
-        filepath = f"attached_assets/{filename}"
-        with open(filepath, 'wb') as f:
-            f.write(buffer.getvalue())
+        # Create response with PDF content
+        response = Response(
+            buffer.getvalue(),
+            mimetype='application/pdf',
+            headers={
+                'Content-Disposition': f'attachment; filename={filename}',
+                'Content-Type': 'application/pdf'
+            }
+        )
         
-        return jsonify({
-            'success': True,
-            'message': 'PDF report generated successfully',
-            'filename': filename,
-            'download_url': f'/download/{filename}'
-        })
+        return response
         
     except Exception as e:
         logger.error(f"PDF export error: {e}")
