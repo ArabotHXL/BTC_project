@@ -962,12 +962,18 @@
         // CSV file processing
         function processCsvFile(event) {
             const file = event.target.files[0];
-            if (!file) return;
+            if (!file) {
+                console.log('未选择文件');
+                return;
+            }
+
+            console.log('开始处理CSV文件:', file.name, '大小:', file.size);
 
             const reader = new FileReader();
             reader.onload = function(e) {
                 const csv = e.target.result;
                 const lines = csv.split('\n');
+                console.log('CSV文件读取完成, 总行数:', lines.length);
                 
                 // Clear existing miners
                 clearAllMiners();
@@ -1003,11 +1009,20 @@
                     }
                     
                     if (model && quantity && power && price && electricity) {
+                        console.log('添加矿机:', {model, quantity, power, price, electricity, hashrate, decayRate});
                         addMinerRowFromData(model, parseInt(quantity), parseInt(power), parseFloat(price), parseFloat(electricity), decayRate, hashrate);
+                    } else {
+                        console.warn('数据不完整，跳过:', {model, quantity, power, price, electricity});
                     }
                 }
                 
+                console.log('CSV处理完成，开始更新计数');
                 updateTotalCount();
+            };
+            
+            reader.onerror = function(e) {
+                console.error('文件读取错误:', e);
+                alert('文件读取失败，请检查文件格式');
             };
             
             reader.readAsText(file);
