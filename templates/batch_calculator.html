@@ -593,15 +593,25 @@
         }
 
         function updateTotalCount() {
-            const rows = document.querySelectorAll('#minersTableBody tr');
             let totalMiners = 0;
             
-            rows.forEach(row => {
-                const quantityInput = row.querySelector('td:nth-child(3) input');  // 第3列（编号+型号后）
-                if (quantityInput && quantityInput.value) {
-                    totalMiners += parseInt(quantityInput.value) || 0;
-                }
-            });
+            // 优先使用完整CSV数据来计算总数
+            if (window.allMinersData && window.allMinersData.length > 0) {
+                totalMiners = window.allMinersData.reduce((sum, miner) => {
+                    return sum + (miner.quantity || 0);
+                }, 0);
+                console.log('使用完整数据计算总矿机数:', totalMiners);
+            } else {
+                // 从DOM计算
+                const rows = document.querySelectorAll('#minersTableBody tr');
+                rows.forEach(row => {
+                    const quantityInput = row.querySelector('td:nth-child(3) input');
+                    if (quantityInput && quantityInput.value) {
+                        totalMiners += parseInt(quantityInput.value) || 0;
+                    }
+                });
+                console.log('从DOM计算总矿机数:', totalMiners);
+            }
             
             // Update quota display
             const currentCountSpan = document.getElementById('currentCount');
@@ -609,8 +619,8 @@
             const progressBar = document.getElementById('quotaProgress');
             
             if (currentCountSpan && remainingCountSpan && progressBar) {
-                currentCountSpan.textContent = totalMiners;
-                remainingCountSpan.textContent = Math.max(0, maxMiners - totalMiners);
+                currentCountSpan.textContent = totalMiners.toLocaleString();
+                remainingCountSpan.textContent = Math.max(0, maxMiners - totalMiners).toLocaleString();
                 
                 const progressPercent = Math.min((totalMiners / maxMiners) * 100, 100);
                 progressBar.style.width = progressPercent + '%';
