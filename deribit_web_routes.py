@@ -165,11 +165,11 @@ def get_analysis_data():
         
         conn.close()
         
-        # 从多交易所数据获取方向统计
-        multi_conn = sqlite3.connect('multi_exchange_trades.db')
-        multi_cursor = multi_conn.cursor()
-        
+        # 尝试从多交易所数据获取方向统计
         try:
+            multi_conn = sqlite3.connect('multi_exchange_trades.db')
+            multi_cursor = multi_conn.cursor()
+            
             # 获取最近24小时的多交易所买卖统计
             cutoff_time = collector.now_ms() - 24 * 60 * 60 * 1000
             multi_cursor.execute('''
@@ -185,10 +185,11 @@ def get_analysis_data():
                 if side in ['buy', 'sell']:
                     direction_stats[side] += volume
                     
+            multi_conn.close()
+            
         except Exception as e:
             logger.warning(f"获取多交易所方向统计失败: {e}")
-            
-        multi_conn.close()
+            # 继续使用Deribit数据，不影响核心功能
         
         # 合并所有交易所数据
         total_trades = multi_stats.get('total_trades', 0) + deribit_trades
