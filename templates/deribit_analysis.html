@@ -619,9 +619,17 @@
                     displayMultiExchangeResults(result.data);
                     statusDiv.style.display = 'none';
                     resultsDiv.style.display = 'block';
+                    
+                    // 如果有警告信息，显示但不阻止结果显示
+                    if (result.warning) {
+                        const warningDiv = document.createElement('div');
+                        warningDiv.className = 'alert alert-warning mt-2';
+                        warningDiv.innerHTML = `<i class="bi bi-exclamation-triangle"></i> ${result.warning}`;
+                        resultsDiv.insertBefore(warningDiv, resultsDiv.firstChild);
+                    }
                 } else {
                     statusDiv.innerHTML = `<div class="alert alert-danger">
-                        <i class="bi bi-exclamation-triangle"></i> 收集失败: ${result.error}
+                        <i class="bi bi-exclamation-triangle"></i> 收集失败: ${result.error || result.message}
                     </div>`;
                 }
             } catch (error) {

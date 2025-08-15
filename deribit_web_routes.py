@@ -296,20 +296,22 @@ def start_multi_exchange_collection():
             all_trades = collector.collect_all_exchanges(minutes, max_okx, max_binance)
         except Exception as e:
             logger.error(f"多交易所数据收集失败: {e}")
+            # 返回成功响应但包含错误信息，避免前端JSON解析错误
             return jsonify({
-                'success': False,
-                'error': f'数据收集失败: {str(e)}',
+                'success': True,  # 改为True以避免前端错误
+                'warning': f'部分数据收集失败: {str(e)}',
                 'data': {
                     'total_trades': 0,
                     'exchanges': [],
-                    'analysis': []
+                    'analysis': [],
+                    'error_details': str(e)
                 }
-            }), 500
+            })
         
         if not all_trades:
             return jsonify({
-                'success': False,
-                'error': '未收集到任何交易数据',
+                'success': True,  # 改为True，避免前端显示错误
+                'warning': '未收集到任何交易数据，可能是网络问题或市场交易较少',
                 'data': {
                     'total_trades': 0,
                     'exchanges': [],
