@@ -22,8 +22,8 @@ class OptimizedBatchProcessor:
         import time
         current_time = time.time()
         
-        # 缓存5分钟
-        if self.cached_network_data and (current_time - self.cache_timestamp) < 300:
+        # 缓存2分钟以提升性能
+        if self.cached_network_data and (current_time - self.cache_timestamp) < 120:
             return self.cached_network_data
             
         try:
@@ -167,57 +167,97 @@ class OptimizedBatchProcessor:
     
     def calculate_payback_days_with_decay(self, hashrate_th, power_w, price_usd, 
                                          electricity_usd, decay_rate_monthly, 
-                                         network_data, max_days=3650):
+                                         network_data, max_days=1825):  # 减少到5年
         """
-        计算考虑算力衰减的回本天数
-        @param hashrate_th: 初始算力 (TH/s)
-        @param power_w: 功耗 (W)
-        @param price_usd: 机器成本 (USD)
-        @param electricity_usd: 电价 (USD/kWh)
-        @param decay_rate_monthly: 月衰减率 (%)
-        @param network_data: 网络参数
-        @param max_days: 最大计算天数
+        优化的算力衰减回本计算 - 使用块计算和数值逼近
         """
-        total_profit = 0
         btc_price = network_data['btc_price']
         network_hashrate_th = network_data['hashrate'] * 1e6  # EH/s to TH/s
         block_reward = network_data['block_reward']
         blocks_per_day = 144
         
-        logger.debug(f"衰减计算参数: 算力={hashrate_th}TH/s, 功耗={power_w}W, 成本=${price_usd}, 电价=${electricity_usd}, 衰减={decay_rate_monthly}%/月")
+        # 预计算固定成本
+        kwh_per_day = (power_w / 1000) * 24
+        daily_elec_cost = kwh_per_day * electricity_usd
         
-        for day in range(1, max_days + 1):
-            # 当天有效算力（考虑衰减）
-            eff_th = self.get_effective_hashrate(hashrate_th, decay_rate_monthly, day)
+        # 使用月度块计算，然后精确到天
+        total_profit = 0
+        daily_decay_rate = decay_rate_monthly / 100 / 30  # 每日衰减率
+        
+        # 按30天为一块进行粗略计算，最后1000天内精确计算
+        rough_days = min(max_days - 1000, max_days)
+        
+        # 粗略计算（月度块）
+        for month in range(rough_days // 30):
+            days_start = month * 30
+            days_end = min((month + 1) * 30, rough_days)
             
-            # 当天产出BTC
+            # 该月平均算力
+            avg_day = days_start + 15  # 月中位置
+            avg_hashrate = hashrate_th * (1 - daily_decay_rate) ** avg_day
+            
+            # 该月每日收益
+            if network_hashrate_th > 0:
+                miner_share = avg_hashrate / network_hashrate_th
+                daily_btc = miner_share * block_reward * blocks_per_day
+                daily_revenue = daily_btc * btc_price
+            else:
+                daily_revenue = 0
+            
+            daily_net = daily_revenue - daily_elec_cost
+            month_net = daily_net * (days_end - days_start)
+            total_profit += month_net
+            
+            if total_profit >= price_usd:
+                # 在这个月内回本，精确计算这个月的天数
+                return self._precise_payback_calculation(
+                    hashrate_th, power_w, price_usd, electricity_usd, 
+                    decay_rate_monthly, network_data, 
+                    days_start, total_profit - month_net
+                )
+        
+        # 如果粗略计算没回本，精确计算剩余天数
+        if total_profit < price_usd and rough_days < max_days:
+            return self._precise_payback_calculation(
+                hashrate_th, power_w, price_usd, electricity_usd, 
+                decay_rate_monthly, network_data, 
+                rough_days, total_profit
+            )
+        
+        return 999999
+    
+    def _precise_payback_calculation(self, hashrate_th, power_w, price_usd, 
+                                   electricity_usd, decay_rate_monthly, network_data,
+                                   start_day, initial_profit):
+        """精确的逐日回本计算"""
+        btc_price = network_data['btc_price']
+        network_hashrate_th = network_data['hashrate'] * 1e6
+        block_reward = network_data['block_reward']
+        blocks_per_day = 144
+        
+        kwh_per_day = (power_w / 1000) * 24
+        daily_elec_cost = kwh_per_day * electricity_usd
+        daily_decay_rate = decay_rate_monthly / 100 / 30
+        
+        total_profit = initial_profit
+        
+        for day in range(start_day, min(start_day + 1000, 1825)):  # 最多精确计算1000天
+            eff_th = hashrate_th * (1 - daily_decay_rate) ** day
+            
             if network_hashrate_th > 0:
                 miner_share = eff_th / network_hashrate_th
                 btc_per_day = miner_share * block_reward * blocks_per_day
+                daily_revenue = btc_per_day * btc_price
             else:
-                btc_per_day = 0
+                daily_revenue = 0
             
-            # 当天收入(USD)
-            rev_usd = btc_per_day * btc_price
-            
-            # 当天耗电成本
-            kwh_per_day = (power_w / 1000) * 24
-            elec_cost_usd = kwh_per_day * electricity_usd
-            
-            # 当天净利润
-            net_usd = rev_usd - elec_cost_usd
-            total_profit += net_usd
-            
-            # 每100天记录一次进度
-            if day % 100 == 0:
-                logger.debug(f"第{day}天: 有效算力={eff_th:.1f}TH/s, 累计利润=${total_profit:.2f}")
+            net_profit = daily_revenue - daily_elec_cost
+            total_profit += net_profit
             
             if total_profit >= price_usd:
-                logger.debug(f"回本完成: 第{day}天, 累计利润=${total_profit:.2f}")
-                return day  # 回本天数
+                return day
         
-        logger.debug(f"未能回本: {max_days}天内累计利润=${total_profit:.2f}, 需要${price_usd}")
-        return 999999  # 在max_days内未回本，返回999999作为标识
+        return 999999
     
     def process_large_batch(self, miners_data, use_real_time_data=True):
         """处理大批量矿机数据（内存优化）"""

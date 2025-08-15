@@ -989,6 +989,10 @@
             }
 
             console.log('开始处理CSV文件:', file.name, '大小:', file.size);
+            
+            // 显示加载提示
+            const tbody = document.getElementById('minersTableBody');
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center"><i class="bi bi-hourglass-split"></i> 正在加载CSV文件...</td></tr>';
 
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -996,10 +1000,11 @@
                 const lines = csv.split('\n');
                 console.log('CSV文件读取完成, 总行数:', lines.length);
                 
-                // Clear existing miners
-                clearAllMiners();
+                // 使用批量DOM更新提升性能
+                const fragment = document.createDocumentFragment();
+                const validLines = [];
                 
-                // Skip header line
+                // 预处理所有有效行
                 for (let i = 1; i < lines.length; i++) {
                     const line = lines[i].trim();
                     if (!line) continue;
@@ -1030,15 +1035,47 @@
                     }
                     
                     if (model && quantity && power && price && electricity) {
-                        console.log('添加矿机:', {model, quantity, power, price, electricity, hashrate, decayRate});
-                        addMinerRowFromData(model, parseInt(quantity), parseInt(power), parseFloat(price), parseFloat(electricity), decayRate, hashrate);
-                    } else {
-                        console.warn('数据不完整，跳过:', {model, quantity, power, price, electricity});
+                        validLines.push({
+                            model, 
+                            quantity: parseInt(quantity), 
+                            power: parseInt(power), 
+                            price: parseFloat(price), 
+                            electricity: parseFloat(electricity), 
+                            decayRate: decayRate || 0,
+                            hashrate: hashrate
+                        });
                     }
                 }
                 
-                console.log('CSV处理完成，开始更新计数');
-                updateTotalCount();
+                // 批量创建DOM元素
+                tbody.innerHTML = ''; // 清空加载提示
+                
+                // 分批处理以避免UI阻塞
+                let processedCount = 0;
+                const batchSize = 100;
+                
+                function processBatch() {
+                    const endIndex = Math.min(processedCount + batchSize, validLines.length);
+                    
+                    for (let i = processedCount; i < endIndex; i++) {
+                        const data = validLines[i];
+                        addMinerRowFromDataOptimized(data);
+                    }
+                    
+                    processedCount = endIndex;
+                    
+                    // 如果还有未处理的数据，延迟处理下一批
+                    if (processedCount < validLines.length) {
+                        setTimeout(processBatch, 10);
+                    } else {
+                        // 所有数据处理完成
+                        console.log('CSV处理完成，共处理:', validLines.length, '行');
+                        updateTotalCount();
+                        updateEmptyState();
+                    }
+                }
+                
+                processBatch();
             };
             
             reader.onerror = function(e) {
@@ -1049,42 +1086,48 @@
             reader.readAsText(file);
         }
 
+        function addMinerRowFromDataOptimized(data) {
+            const {model, quantity, power, price, electricity, decayRate, hashrate} = data;
+            
+            minerRowCount++;
+            const tbody = document.getElementById('minersTableBody');
+            const tr = document.createElement('tr');
+            
+            // 优化的算力值
+            const finalHashrate = hashrate || (minerModels[model]?.hashrate || 110);
+            
+            // 直接构建完整的HTML字符串
+            tr.innerHTML = `
+                <td>
+                    <input type="text" class="form-control" value="${minerRowCount}" readonly style="max-width: 80px;">
+                </td>
+                <td>
+                    <select class="form-select" onchange="updateMinerDefaults('minerRow${minerRowCount}')">
+                        ${Object.keys(minerModels).map(m => 
+                            `<option value="${m}" ${m === model ? 'selected' : ''}>${m}</option>`
+                        ).join('')}
+                    </select>
+                </td>
+                <td><input type="number" class="form-control" value="${quantity}" min="1" onchange="updateTotalCount()"></td>
+                <td><input type="number" class="form-control" value="${power}" min="1"></td>
+                <td><input type="number" class="form-control" value="${price}" min="0" step="0.01"></td>
+                <td><input type="number" class="form-control" value="${electricity}" min="0" step="0.001"></td>
+                <td><input type="number" class="form-control" value="${finalHashrate}" min="1" step="0.1"></td>
+                <td><input type="number" class="form-control" value="${decayRate}" min="0" max="5" step="0.01"></td>
+                <td>
+                    <button class="btn btn-outline-danger btn-sm" onclick="removeMinerRow(this)">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+            
+            tr.id = `minerRow${minerRowCount}`;
+            tbody.appendChild(tr);
+        }
+        
+        // 保持向后兼容的函数
         function addMinerRowFromData(model, quantity, power, price, electricity, decayRate, hashrate) {
-            addMinerRow();
-            
-            // Get the last added row
-            const rows = document.querySelectorAll('#minersTableBody tr');
-            const lastRow = rows[rows.length - 1];
-            
-            // Fill in the data
-            const cells = lastRow.querySelectorAll('td');
-            
-            // 设置矿机型号
-            const selectElement = cells[1].querySelector('select');
-            if (selectElement) {
-                if (minerModels[model]) {
-                    selectElement.value = model;
-                    console.log('设置矿机型号成功:', model);
-                } else {
-                    console.warn('未找到矿机型号:', model, '使用默认型号');
-                    // 使用第一个可用的型号作为默认值
-                    selectElement.value = Object.keys(minerModels)[0];
-                }
-            }
-            
-            // 直接设置所有输入值，不依赖默认值更新
-            cells[2].querySelector('input').value = quantity;  // 数量
-            cells[3].querySelector('input').value = power;     // 功率
-            cells[4].querySelector('input').value = price;     // 价格
-            cells[5].querySelector('input').value = electricity; // 电费
-            cells[6].querySelector('input').value = hashrate || (minerModels[model]?.hashrate || 110); // 算力
-            cells[7].querySelector('input').value = decayRate || 0;  // 衰减率
-            
-            console.log('设置行数据完成:', {
-                model, quantity, power, price, electricity, 
-                hashrate: hashrate || (minerModels[model]?.hashrate || 110), 
-                decayRate: decayRate || 0
-            });
+            addMinerRowFromDataOptimized({model, quantity, power, price, electricity, decayRate, hashrate});
         }
 
         // Export functions
