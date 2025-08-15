@@ -4797,14 +4797,17 @@
                         console.log('📊 Total volume updated:', data.total_volume);
                     }
                     if (avgPriceEl) {
-                        // 期权价格显示格式优化
+                        // 期权价格显示格式优化 - 以BTC为单位，但也显示美元等值
                         const price = data.avg_price || 0;
+                        const btcPrice = 118815; // 当前BTC价格，实际应该从API获取
+                        const usdValue = price * btcPrice;
+                        
                         if (price < 0.01) {
-                            avgPriceEl.innerHTML = `<strong>${price.toFixed(4)}</strong>`;
+                            avgPriceEl.innerHTML = `<strong>${price.toFixed(4)} BTC</strong><br><small>≈ $${usdValue.toFixed(0)}</small>`;
                         } else {
-                            avgPriceEl.innerHTML = `<strong>${price.toFixed(3)}</strong>`;
+                            avgPriceEl.innerHTML = `<strong>${price.toFixed(3)} BTC</strong><br><small>≈ $${usdValue.toFixed(0)}</small>`;
                         }
-                        console.log('📊 Average price updated:', price);
+                        console.log('📊 Average price updated:', price, 'BTC ≈ $' + usdValue.toFixed(0));
                     }
                     if (lastUpdateEl) {
                         lastUpdateEl.innerHTML = `<strong>${data.last_update || '未知'}</strong>`;
