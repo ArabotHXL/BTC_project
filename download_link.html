@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deribit Analysis Package Download</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            line-height: 1.6;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        h1 {
+            color: #ffd700;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+        .download-btn {
+            display: inline-block;
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #000;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin: 10px;
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        }
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+        }
+        .file-info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .feature-list li:before {
+            content: "✅ ";
+            margin-right: 10px;
+        }
+        .highlight {
+            color: #ffd700;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 Deribit Analysis Package</h1>
+        
+        <div class="file-info">
+            <h3>📦 包内容</h3>
+            <ul class="feature-list">
+                <li><strong>deribit_web_routes.py</strong> - Flask路由和API端点</li>
+                <li><strong>multi_exchange_collector.py</strong> - 多交易所数据聚合器</li>
+                <li><strong>deribit_options_poc.py</strong> - 核心数据采集引擎</li>
+                <li><strong>deribit_analysis.html</strong> - 响应式Web界面</li>
+                <li><strong>deribit_trades.db</strong> - 历史交易数据库 (443KB)</li>
+                <li><strong>requirements.txt</strong> - Python依赖列表</li>
+                <li><strong>README.md</strong> - 详细文档说明</li>
+                <li><strong>INSTALL.md</strong> - 安装部署指南</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="/deribit_analysis_package.tar.gz" class="download-btn" download>
+                📥 下载完整包 (tar.gz)
+            </a>
+        </div>
+
+        <div class="file-info">
+            <h3>🎯 核心功能</h3>
+            <ul class="feature-list">
+                <li>多交易所集成 (Deribit + OKX + Binance)</li>
+                <li>实时BTC期权价格分析 (<span class="highlight">$118,475+</span>)</li>
+                <li>交易方向分布可视化</li>
+                <li>价格区间智能分桶</li>
+                <li>API状态实时监控</li>
+                <li>历史数据持久化存储</li>
+                <li>响应式中英文界面</li>
+            </ul>
+        </div>
+
+        <div class="file-info">
+            <h3>🚀 快速开始</h3>
+            <pre style="background: rgba(0,0,0,0.5); padding: 15px; border-radius: 5px; overflow-x: auto;">
+# 1. 解压文件
+tar -xzf deribit_analysis_package.tar.gz
+
+# 2. 安装依赖
+pip install -r requirements.txt
+
+# 3. 集成到Flask应用
+from deribit_web_routes import deribit_bp
+app.register_blueprint(deribit_bp)
+
+# 4. 访问页面
+http://localhost:5000/deribit-analysis</pre>
+        </div>
+
+        <p style="text-align: center; margin-top: 30px; color: #ccc;">
+            <strong>版本:</strong> 2.0 (多交易所集成版) | 
+            <strong>更新:</strong> 2025-08-15 | 
+            <strong>大小:</strong> ~500KB
+        </p>
+    </div>
+</body>
+</html>
