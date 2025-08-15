@@ -526,6 +526,153 @@ def get_exchange_data(exchange):
             }
         })
 
+@deribit_bp.route('/api/deribit/multi-exchange-trades')
+def get_multi_exchange_trades():
+    """获取三大交易所的交易数据统计"""
+    try:
+        import requests
+        
+        # 存储所有交易所的数据
+        all_trades = []
+        total_volume = 0
+        total_count = 0
+        price_sum = 0
+        price_count = 0
+        
+        # 获取Deribit交易数据
+        try:
+            deribit_response = requests.get("https://www.deribit.com/api/v2/public/get_last_trades_by_currency?currency=BTC&kind=option&count=100", timeout=10)
+            if deribit_response.status_code == 200:
+                deribit_data = deribit_response.json()
+                deribit_trades = deribit_data.get('result', {}).get('trades', [])
+                
+                for trade in deribit_trades:
+                    price = trade.get('price', 0)
+                    amount = trade.get('amount', 0)
+                    
+                    all_trades.append({
+                        'exchange': 'Deribit',
+                        'price': price,
+                        'amount': amount,
+                        'timestamp': trade.get('timestamp', 0),
+                        'instrument': trade.get('instrument_name', '')
+                    })
+                    
+                    total_volume += amount
+                    total_count += 1
+                    if price > 0:
+                        price_sum += price
+                        price_count += 1
+        except Exception as e:
+            logger.warning(f"Deribit数据获取失败: {e}")
+        
+        # 获取OKX交易数据
+        try:
+            okx_response = requests.get("https://www.okx.com/api/v5/market/trades?instId=BTC-USD-241227-70000-C", timeout=10)
+            if okx_response.status_code == 200:
+                okx_data = okx_response.json()
+                okx_trades = okx_data.get('data', [])
+                
+                for trade in okx_trades:
+                    price = float(trade.get('px', 0))
+                    size = float(trade.get('sz', 0))
+                    
+                    all_trades.append({
+                        'exchange': 'OKX',
+                        'price': price,
+                        'amount': size,
+                        'timestamp': int(trade.get('ts', 0)),
+                        'instrument': trade.get('instId', '')
+                    })
+                    
+                    total_volume += size
+                    total_count += 1
+                    if price > 0:
+                        price_sum += price
+                        price_count += 1
+        except Exception as e:
+            logger.warning(f"OKX数据获取失败: {e}")
+        
+        # 获取Binance交易数据（使用期权API）
+        try:
+            binance_response = requests.get("https://eapi.binance.com/eapi/v1/ticker/24hr", timeout=10)
+            if binance_response.status_code == 200:
+                binance_data = binance_response.json()
+                
+                # 筛选BTC期权合约
+                btc_options = [item for item in binance_data if 'BTC' in item.get('symbol', '')][:50]
+                
+                for option in btc_options:
+                    price = float(option.get('lastPrice', 0))
+                    volume = float(option.get('volume', 0))
+                    
+                    if price > 0 and volume > 0:
+                        all_trades.append({
+                            'exchange': 'Binance',
+                            'price': price,
+                            'amount': volume,
+                            'timestamp': int(option.get('closeTime', 0)),
+                            'instrument': option.get('symbol', '')
+                        })
+                        
+                        total_volume += volume
+                        total_count += 1
+                        price_sum += price
+                        price_count += 1
+        except Exception as e:
+            logger.warning(f"Binance数据获取失败: {e}")
+        
+        # 计算平均价格
+        avg_price = price_sum / price_count if price_count > 0 else 0
+        
+        # 按交易所分组统计
+        exchange_stats = {}
+        for trade in all_trades:
+            exchange = trade['exchange']
+            if exchange not in exchange_stats:
+                exchange_stats[exchange] = {
+                    'count': 0,
+                    'volume': 0,
+                    'price_sum': 0,
+                    'price_count': 0
+                }
+            
+            exchange_stats[exchange]['count'] += 1
+            exchange_stats[exchange]['volume'] += trade['amount']
+            if trade['price'] > 0:
+                exchange_stats[exchange]['price_sum'] += trade['price']
+                exchange_stats[exchange]['price_count'] += 1
+        
+        # 计算各交易所平均价格
+        for exchange in exchange_stats:
+            stats = exchange_stats[exchange]
+            stats['avg_price'] = stats['price_sum'] / stats['price_count'] if stats['price_count'] > 0 else 0
+        
+        # 转换为EST时区
+        from pytz import timezone
+        est = timezone('US/Eastern')
+        utc_now = datetime.utcnow().replace(tzinfo=timezone('UTC'))
+        est_now = utc_now.astimezone(est)
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'total_trades': total_count,
+                'total_volume': round(total_volume, 2),
+                'avg_price': round(avg_price, 2),
+                'last_update': est_now.strftime('%Y-%m-%d %H:%M:%S EST'),
+                'exchange_breakdown': exchange_stats,
+                'sample_trades': all_trades[:20]  # 返回前20笔交易作为样本
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"多交易所交易数据获取失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'数据获取失败: {str(e)}'
+        })
+
 @deribit_bp.route('/api/deribit/compare-exchanges')
 def compare_exchanges():
     """对比三大交易所数据"""

@@ -176,6 +176,66 @@
             </div>
         </div>
 
+        <!-- 三大交易所交易数据统计卡片 -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card bg-dark text-light border-warning">
+                    <div class="card-body text-center">
+                        <i class="bi bi-graph-up text-warning h3"></i>
+                        <h5 class="card-title">总交易数</h5>
+                        <h3 class="text-warning" id="totalTrades">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </h3>
+                        <small class="text-muted">三大交易所合计</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-dark text-light border-info">
+                    <div class="card-body text-center">
+                        <i class="bi bi-currency-bitcoin text-info h3"></i>
+                        <h5 class="card-title">总交易量</h5>
+                        <h3 class="text-info" id="totalVolume">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </h3>
+                        <small class="text-muted">Deribit + OKX + Binance</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-dark text-light border-success">
+                    <div class="card-body text-center">
+                        <i class="bi bi-cash text-success h3"></i>
+                        <h5 class="card-title">平均价格</h5>
+                        <h3 class="text-success" id="avgPrice">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </h3>
+                        <small class="text-muted">加权平均价格</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-dark text-light border-secondary">
+                    <div class="card-body text-center">
+                        <i class="bi bi-clock text-secondary h3"></i>
+                        <h5 class="card-title">最新更新</h5>
+                        <h6 class="text-secondary" id="lastUpdate">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </h6>
+                        <small class="text-muted">EST时区</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 三大交易所API数据对比面板 -->
         <div class="row mb-4">
             <div class="col-12">
@@ -356,8 +416,9 @@
                 alert('交易量分析功能开发中...');
             });
             
-            // 页面加载时自动获取三大交易所数据
+            // 页面加载时自动获取三大交易所数据和统计数据
             refreshExchangeData();
+            loadMultiExchangeStats();
         });
         
         function initializeCharts() {
@@ -931,6 +992,38 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        }
+        
+        // 加载多交易所统计数据
+        async function loadMultiExchangeStats() {
+            try {
+                const response = await fetch('/api/deribit/multi-exchange-trades');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const data = result.data;
+                    
+                    // 更新统计卡片
+                    document.getElementById('totalTrades').textContent = data.total_trades.toLocaleString();
+                    document.getElementById('totalVolume').textContent = data.total_volume.toLocaleString();
+                    document.getElementById('avgPrice').textContent = '$' + data.avg_price.toLocaleString();
+                    document.getElementById('lastUpdate').textContent = data.last_update;
+                    
+                } else {
+                    // 显示错误状态
+                    document.getElementById('totalTrades').innerHTML = '<small class="text-danger">获取失败</small>';
+                    document.getElementById('totalVolume').innerHTML = '<small class="text-danger">获取失败</small>';
+                    document.getElementById('avgPrice').innerHTML = '<small class="text-danger">获取失败</small>';
+                    document.getElementById('lastUpdate').innerHTML = '<small class="text-danger">获取失败</small>';
+                }
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+                // 显示错误状态
+                document.getElementById('totalTrades').innerHTML = '<small class="text-danger">网络错误</small>';
+                document.getElementById('totalVolume').innerHTML = '<small class="text-danger">网络错误</small>';
+                document.getElementById('avgPrice').innerHTML = '<small class="text-danger">网络错误</small>';
+                document.getElementById('lastUpdate').innerHTML = '<small class="text-danger">网络错误</small>';
+            }
         }
     </script>
 </body>
