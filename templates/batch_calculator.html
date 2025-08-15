@@ -810,7 +810,7 @@
                         <div class="col-6">
                             <div class="bg-dark p-2 rounded text-center">
                                 <div class="small text-muted">{% if current_lang == "en" %}Avg ROI Days{% else %}平均回本天数{% endif %}</div>
-                                <div class="fw-bold text-warning">${summary.average_roi_days ? summary.average_roi_days.toFixed(3) : 'N/A'}</div>
+                                <div class="fw-bold text-warning">${summary.average_roi_days && summary.average_roi_days < 999999 ? summary.average_roi_days.toFixed(0) + ' days' : 'N/A'}</div>
                             </div>
                         </div>
                     </div>
@@ -842,7 +842,7 @@
                         <td class="small">${result.model}</td>
                         <td>${result.quantity}</td>
                         <td class="${profitClass}">$${(result.daily_profit || 0).toFixed(3)}</td>
-                        <td>${result.roi_days ? result.roi_days + ' days' : 'N/A'}</td>
+                        <td>${result.roi_days && result.roi_days < 999999 ? result.roi_days + ' days' : 'N/A'}</td>
                     </tr>
                 `;
             });

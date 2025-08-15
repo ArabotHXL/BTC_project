@@ -80,6 +80,8 @@ class OptimizedBatchProcessor:
             total_power = single_power * quantity  # Watts
             total_machine_cost = machine_price * quantity  # Total cost
             
+            logger.debug(f"矿机计算详情: {model}, 数量={quantity}, 单机算力={single_hashrate}TH/s, 总算力={total_hashrate}TH/s")
+            
             # 网络数据
             btc_price = network_data['btc_price']
             difficulty = network_data['difficulty']
@@ -110,7 +112,7 @@ class OptimizedBatchProcessor:
             # ROI计算 - 根据是否有衰减率选择计算方法
             if decay_rate > 0:
                 # 考虑算力衰减的回本计算
-                logger.debug(f"计算衰减ROI: 模型={model}, 算力={total_hashrate}TH/s, 衰减率={decay_rate}%/月")
+                logger.debug(f"计算衰减ROI: 模型={model}, 算力={total_hashrate}TH/s, 衰减率={decay_rate}%/月, 成本=${total_machine_cost}")
                 roi_days = self.calculate_payback_days_with_decay(
                     total_hashrate, total_power, total_machine_cost, 
                     electricity_cost, decay_rate, network_data
@@ -118,12 +120,15 @@ class OptimizedBatchProcessor:
                 logger.debug(f"衰减ROI结果: {roi_days}天")
             else:
                 # 传统回本计算（无衰减）
+                logger.debug(f"传统ROI计算: 日利润=${daily_profit}, 总成本=${total_machine_cost}")
                 if daily_profit > 0 and total_machine_cost > 0:
                     roi_days = total_machine_cost / daily_profit  # 总成本 ÷ 日净利润
                     # 限制在合理范围内，避免极大值
                     roi_days = min(roi_days, 999999)
+                    logger.debug(f"传统ROI结果: {roi_days}天")
                 else:
                     roi_days = 999999  # 无法回本或亏损
+                    logger.debug("无法回本或亏损，ROI设为999999天")
             
             return {
                 'model': model,
@@ -212,7 +217,7 @@ class OptimizedBatchProcessor:
                 return day  # 回本天数
         
         logger.debug(f"未能回本: {max_days}天内累计利润=${total_profit:.2f}, 需要${price_usd}")
-        return max_days  # 在max_days内未回本
+        return 999999  # 在max_days内未回本，返回999999作为标识
     
     def process_large_batch(self, miners_data, use_real_time_data=True):
         """处理大批量矿机数据（内存优化）"""
