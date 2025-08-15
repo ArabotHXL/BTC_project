@@ -478,13 +478,117 @@ def export_batch_pdf():
                 'message': 'No results to export'
             }), 400
         
-        # For now, return success message
-        # TODO: Implement actual PDF generation using reportlab or weasyprint
+        # Generate PDF using reportlab
+        from reportlab.lib.pagesizes import letter, A4
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from reportlab.lib import colors
+        from io import BytesIO
+        import datetime
+        
+        # Create buffer for PDF
+        buffer = BytesIO()
+        
+        # Create PDF document
+        doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.5*inch)
+        story = []
+        styles = getSampleStyleSheet()
+        
+        # Title
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=20,
+            spaceAfter=30,
+            textColor=colors.HexColor('#1f2937'),
+            alignment=1  # Center
+        )
+        
+        story.append(Paragraph("Bitcoin Mining Profitability Report", title_style))
+        story.append(Paragraph(f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles['Normal']))
+        story.append(Spacer(1, 20))
+        
+        # Summary
+        summary = data.get('summary', {})
+        summary_data = [
+            ['Summary', ''],
+            ['Total Miners', f"{summary.get('total_miners', 0):,}"],
+            ['Daily Profit', f"${summary.get('total_daily_profit', 0):,.2f}"],
+            ['Monthly Profit', f"${summary.get('total_monthly_profit', 0):,.2f}"],
+            ['Average ROI Days', f"{summary.get('average_roi_days', 'N/A')} days" if summary.get('average_roi_days', 999999) < 999999 else 'N/A']
+        ]
+        
+        summary_table = Table(summary_data, colWidths=[2*inch, 2*inch])
+        summary_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#3b82f6')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        story.append(summary_table)
+        story.append(Spacer(1, 30))
+        
+        # Results table
+        story.append(Paragraph("Individual Results", styles['Heading2']))
+        story.append(Spacer(1, 10))
+        
+        # Table headers
+        table_data = [['#', 'Model', 'Qty', 'Daily Profit', 'ROI Days', 'Hashrate (TH/s)']]
+        
+        # Sort results by daily profit (descending)
+        sorted_results = sorted(results, key=lambda x: x.get('daily_profit', 0), reverse=True)
+        
+        for result in sorted_results[:50]:  # Limit to first 50 for PDF size
+            table_data.append([
+                result.get('miner_number', '-'),
+                result.get('model', '-'),
+                str(result.get('quantity', 0)),
+                f"${result.get('daily_profit', 0):.2f}",
+                f"{result.get('roi_days', 'N/A')} days" if result.get('roi_days', 999999) < 999999 else 'N/A',
+                f"{result.get('hash_rate', 0):.1f}"
+            ])
+        
+        # Create table
+        results_table = Table(table_data, colWidths=[0.8*inch, 1.5*inch, 0.7*inch, 1.2*inch, 1.2*inch, 1.1*inch])
+        results_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#374151')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('FONTSIZE', (0, 1), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        
+        story.append(results_table)
+        
+        # Build PDF
+        doc.build(story)
+        buffer.seek(0)
+        
+        # Generate filename
+        timestamp = int(datetime.datetime.now().timestamp() * 1000)
+        filename = f"mining_batch_results_{timestamp}_{timestamp}.pdf"
+        
+        # Save file 
+        filepath = f"attached_assets/{filename}"
+        with open(filepath, 'wb') as f:
+            f.write(buffer.getvalue())
         
         return jsonify({
             'success': True,
-            'message': 'PDF export feature coming soon',
-            'filename': f"batch_mining_report_{len(results)}_miners.pdf"
+            'message': 'PDF report generated successfully',
+            'filename': filename,
+            'download_url': f'/download/{filename}'
         })
         
     except Exception as e:
