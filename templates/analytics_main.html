@@ -4713,20 +4713,46 @@
         // 加载三大交易所统计数据
         window.loadExchangeTradingData = async function() {
             console.log('🚀🚀🚀 loadExchangeTradingData function called! 🚀🚀🚀');
+            
+            // 显示加载状态
+            showExchangeLoading();
+            
             try {
                 console.log('Loading exchange trading data...');
                 const response = await fetch('/api/deribit/multi-exchange-trades');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+                
                 const result = await response.json();
                 console.log('Exchange trading data response:', result);
                 
                 if (result.success && result.data) {
                     const data = result.data;
                     
-                    // 更新统计卡片
-                    document.getElementById('exchangeTotalTrades').innerHTML = `<strong>${data.total_trades || 0}</strong>`;
-                    document.getElementById('exchangeTotalVolume').innerHTML = `<strong>${(data.total_volume || 0).toFixed(2)}</strong>`;
-                    document.getElementById('exchangeAvgPrice').innerHTML = `<strong>${(data.avg_price || 0).toFixed(4)}</strong>`;
-                    document.getElementById('exchangeLastUpdate').innerHTML = `<strong>${data.last_update || '未知'}</strong>`;
+                    // 更新统计卡片 - 确保spinner被正确替换
+                    const totalTradesEl = document.getElementById('exchangeTotalTrades');
+                    const totalVolumeEl = document.getElementById('exchangeTotalVolume');
+                    const avgPriceEl = document.getElementById('exchangeAvgPrice');
+                    const lastUpdateEl = document.getElementById('exchangeLastUpdate');
+                    
+                    if (totalTradesEl) {
+                        totalTradesEl.innerHTML = `<strong>${data.total_trades || 0}</strong>`;
+                        console.log('📊 Total trades updated:', data.total_trades);
+                    }
+                    if (totalVolumeEl) {
+                        totalVolumeEl.innerHTML = `<strong>${(data.total_volume || 0).toFixed(2)}</strong>`;
+                        console.log('📊 Total volume updated:', data.total_volume);
+                    }
+                    if (avgPriceEl) {
+                        avgPriceEl.innerHTML = `<strong>${(data.avg_price || 0).toFixed(4)}</strong>`;
+                        console.log('📊 Average price updated:', data.avg_price);
+                    }
+                    if (lastUpdateEl) {
+                        lastUpdateEl.innerHTML = `<strong>${data.last_update || '未知'}</strong>`;
+                        console.log('📊 Last update time updated:', data.last_update);
+                    }
                     
                     console.log('✅ Exchange data cards updated successfully');
                     
@@ -4798,6 +4824,7 @@
         
         // 显示交易所错误信息
         function showExchangeError(message) {
+            console.log('❌ Showing exchange error:', message);
             const errorElements = [
                 'exchangeTotalTrades', 'exchangeTotalVolume', 
                 'exchangeAvgPrice', 'exchangeLastUpdate'
@@ -4807,6 +4834,23 @@
                 const element = document.getElementById(id);
                 if (element) {
                     element.innerHTML = `<span class="text-danger">${message}</span>`;
+                    console.log(`❌ Error set for ${id}:`, message);
+                }
+            });
+        }
+        
+        // 显示交易所加载状态
+        function showExchangeLoading() {
+            console.log('⏳ Showing exchange loading state');
+            const loadingElements = [
+                'exchangeTotalTrades', 'exchangeTotalVolume', 
+                'exchangeAvgPrice', 'exchangeLastUpdate'
+            ];
+            
+            loadingElements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.innerHTML = `<div class="spinner-border spinner-border-sm" role="status"></div>`;
                 }
             });
         }
