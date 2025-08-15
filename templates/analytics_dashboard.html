@@ -1222,10 +1222,28 @@
             loadServerSideData();
             
             // 初始化三大交易所图表和数据
-            console.log('Initializing three-exchange trading data visualization...');
-            initExchangeCharts();
-            loadExchangeTradingData();
-            loadExchangeAnalysisData();
+            console.log('🚀 Initializing three-exchange trading data visualization...');
+            
+            // 先检查HTML元素是否存在
+            const exchangeElements = [
+                'exchangeTotalTrades', 'exchangeTotalVolume', 
+                'exchangeAvgPrice', 'exchangeLastUpdate', 'tradingDataStatus'
+            ];
+            
+            console.log('🔍 Checking if exchange elements exist...');
+            exchangeElements.forEach(id => {
+                const element = document.getElementById(id);
+                console.log(`Element ${id}: ${element ? '✅ Found' : '❌ Missing'}`);
+            });
+            
+            try {
+                initExchangeCharts();
+                loadExchangeTradingData();
+                loadExchangeAnalysisData();
+                console.log('✅ Three-exchange initialization completed successfully');
+            } catch (error) {
+                console.error('❌ Error initializing three-exchange features:', error);
+            }
             
             // 设置定时更新
             setInterval(fetchMarketData, 60000);        // 每分钟更新市场数据
