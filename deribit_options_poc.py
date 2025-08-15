@@ -277,7 +277,7 @@ class PriceRangeAnalyzer:
             
             if len(range_trades) > 0:
                 analysis = PriceRangeAnalysis(
-                    price_range=f"${range_start:.2f}-${range_end:.2f}",
+                    price_range=f"{int(range_end)} - {int(range_start)}",
                     trade_count=len(range_trades),
                     total_volume=float(range_trades['amount'].sum()),
                     avg_price=float(range_trades['price'].mean()),
@@ -309,6 +309,11 @@ class DeribitAnalysisPOC:
             # 选择第一个活跃合约
             instrument_name = instruments[0]['instrument_name']
             logger.info(f"选择分析合约: {instrument_name}")
+        
+        # 确保instrument_name不为None
+        if not instrument_name:
+            logger.error("无法确定分析合约")
+            return
         
         # 采集交易数据
         trades = self.collector.get_last_trades(instrument_name, count=500)
