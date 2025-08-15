@@ -163,13 +163,15 @@ def batch_calculate():
         total_daily_cost = 0
         batch_size = 100  # Process in chunks to manage memory
         
-        # Group identical miners to optimize calculations
+        # Group identical miners to optimize calculations (including hashrate and decay_rate)
         miner_groups = {}
         for miner in miners:
             key = (
                 miner.get('model', 'Antminer S19 Pro'),
                 float(miner.get('power_consumption', 3250)),
-                float(miner.get('electricity_cost', 0.08))
+                float(miner.get('electricity_cost', 0.08)),
+                float(miner.get('hashrate', 0)),
+                float(miner.get('decay_rate', 0))
             )
             if key not in miner_groups:
                 miner_groups[key] = 0
@@ -178,16 +180,27 @@ def batch_calculate():
         logger.info(f"Optimized {len(miners)} entries into {len(miner_groups)} unique groups")
         
         # Calculate once per unique group
-        for (model, power_consumption, electricity_cost), quantity in miner_groups.items():
+        for (model, power_consumption, electricity_cost, hashrate, decay_rate), quantity in miner_groups.items():
             try:
                 # Single calculation for the entire group with batch optimization
-                calc_result = calculate_mining_profitability(
-                    power_consumption=power_consumption,
-                    electricity_cost=electricity_cost,
-                    miner_model=model,
-                    miner_count=quantity,
-                    _batch_mode=True  # Enable batch optimization
-                )
+                # 如果有自定义算力，直接使用算力值；否则使用矿机型号
+                if hashrate > 0:
+                    # 使用自定义算力
+                    calc_result = calculate_mining_profitability(
+                        hashrate=hashrate * quantity,  # 总算力
+                        power_consumption=power_consumption * quantity,  # 总功耗
+                        electricity_cost=electricity_cost,
+                        _batch_mode=True
+                    )
+                else:
+                    # 使用矿机型号默认值
+                    calc_result = calculate_mining_profitability(
+                        power_consumption=power_consumption,
+                        electricity_cost=electricity_cost,
+                        miner_model=model,
+                        miner_count=quantity,
+                        _batch_mode=True
+                    )
                 
                 result_entry = {
                     'model': model,
@@ -199,7 +212,8 @@ def batch_calculate():
                     'daily_cost': calc_result.get('daily_cost', 0),
                     'monthly_profit': calc_result.get('monthly_profit', 0),
                     'roi_days': calc_result.get('roi_days', 0),
-                    'hash_rate': calc_result.get('hash_rate', 0)
+                    'hash_rate': calc_result.get('hash_rate', hashrate),
+                    'decay_rate': decay_rate
                 }
                 
                 results.append(result_entry)

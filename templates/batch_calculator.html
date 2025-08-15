@@ -199,7 +199,10 @@
                             <table class="table table-dark table-striped" id="minersTable">
                                 <thead>
                                     <tr>
-                                        <th style="width: 20%">
+                                        <th style="width: 5%">
+                                            {% if current_lang == 'en' %}#{% else %}编号{% endif %}
+                                        </th>
+                                        <th style="width: 18%">
                                             {% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %}
                                         </th>
                                         <th style="width: 10%">
@@ -504,6 +507,9 @@
             const row = document.createElement('tr');
             row.id = rowId;
             row.innerHTML = `
+                <td class="text-center">
+                    <span class="badge bg-secondary">${minerRowCount}</span>
+                </td>
                 <td>
                     <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, '${rowId}')">
                         <option value="">{% if current_lang == 'en' %}Select Model{% else %}选择型号{% endif %}</option>
@@ -558,9 +564,9 @@
             const selectedModel = selectElement.value;
             if (selectedModel && minerModels[selectedModel]) {
                 const row = document.getElementById(rowId);
-                const powerInput = row.querySelector('td:nth-child(3) input');
-                const priceInput = row.querySelector('td:nth-child(4) input');
-                const hashrateInput = row.querySelector('td:nth-child(6) input');
+                const powerInput = row.querySelector('td:nth-child(4) input');
+                const priceInput = row.querySelector('td:nth-child(5) input');
+                const hashrateInput = row.querySelector('td:nth-child(7) input');
                 
                 if (powerInput) {
                     powerInput.value = minerModels[selectedModel].power;
@@ -579,7 +585,7 @@
             let totalMiners = 0;
             
             rows.forEach(row => {
-                const quantityInput = row.querySelector('td:nth-child(2) input');
+                const quantityInput = row.querySelector('td:nth-child(3) input');  // 第3列（编号+型号后）
                 if (quantityInput && quantityInput.value) {
                     totalMiners += parseInt(quantityInput.value) || 0;
                 }
@@ -677,6 +683,8 @@
                     use_realtime: useRealtimeEl ? useRealtimeEl.checked : true
                 }
             };
+            
+            console.log('发送到后端的矿机数据样例:', JSON.stringify(miners.slice(0, 2), null, 2));
 
             // Send batch calculation request
             // 根据矿机数量选择合适的计算接口
@@ -726,13 +734,13 @@
             
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
-                const model = cells[0].querySelector('select').value;
-                const quantity = parseInt(cells[1].querySelector('input').value) || 0;
-                const power = parseFloat(cells[2].querySelector('input').value) || 0;
-                const price = parseFloat(cells[3].querySelector('input').value) || 0;
-                const electricity = parseFloat(cells[4].querySelector('input').value) || 0;
-                const customHashrate = parseFloat(cells[5].querySelector('input').value) || null;
-                const decayRate = parseFloat(cells[6].querySelector('input').value) || 0;
+                const model = cells[1].querySelector('select').value;  // 第2列（编号后）
+                const quantity = parseInt(cells[2].querySelector('input').value) || 0;
+                const power = parseFloat(cells[3].querySelector('input').value) || 0;
+                const price = parseFloat(cells[4].querySelector('input').value) || 0;
+                const electricity = parseFloat(cells[5].querySelector('input').value) || 0;
+                const customHashrate = parseFloat(cells[6].querySelector('input').value) || null;
+                const decayRate = parseFloat(cells[7].querySelector('input').value) || 0;
                 
                 if (model && quantity > 0 && power > 0 && electricity > 0 && price > 0) {
                     // 使用输入框中的自定义算力，如果没有则使用矿机模型默认值
@@ -960,13 +968,13 @@
             
             // Fill in the data
             const cells = lastRow.querySelectorAll('td');
-            cells[0].querySelector('select').value = model;
-            cells[1].querySelector('input').value = quantity;
-            cells[2].querySelector('input').value = power;
-            cells[3].querySelector('input').value = price;
-            cells[4].querySelector('input').value = electricity;
-            cells[5].querySelector('input').value = hashrate || (minerModels[model]?.hashrate || 110);
-            cells[6].querySelector('input').value = decayRate || 0;
+            cells[1].querySelector('select').value = model;  // 第2列
+            cells[2].querySelector('input').value = quantity;  // 第3列
+            cells[3].querySelector('input').value = power;     // 第4列
+            cells[4].querySelector('input').value = price;     // 第5列
+            cells[5].querySelector('input').value = electricity; // 第6列
+            cells[6].querySelector('input').value = hashrate || (minerModels[model]?.hashrate || 110); // 第7列
+            cells[7].querySelector('input').value = decayRate || 0;  // 第8列
         }
 
         // Export functions
