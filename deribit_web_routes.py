@@ -3,14 +3,16 @@ Deribit 交易数据分析 Web 路由
 为Deribit POC系统提供Web界面和API端点
 """
 
-from flask import Blueprint, render_template, jsonify, request
+from flask import Blueprint, render_template, jsonify, request, send_file
 import sqlite3
 import threading
 import time
 from datetime import datetime, timedelta
+import pytz
 from deribit_options_poc import DeribitAnalysisPOC, DeribitDataCollector
 from multi_exchange_collector import MultiExchangeCollector
 import logging
+import os
 
 # 创建蓝图
 deribit_bp = Blueprint('deribit', __name__)
@@ -35,6 +37,23 @@ def get_multi_collector():
 def deribit_analysis_page():
     """Deribit分析页面"""
     return render_template('deribit_analysis.html')
+
+@deribit_bp.route('/download/deribit-package')
+def download_deribit_package():
+    """下载Deribit分析包"""
+    try:
+        package_path = os.path.join('static', 'deribit_analysis_package.tar.gz')
+        if os.path.exists(package_path):
+            return send_file(package_path, as_attachment=True, download_name='deribit_analysis_package.tar.gz')
+        else:
+            return jsonify({'error': 'Package file not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@deribit_bp.route('/deribit-download')
+def deribit_download_page():
+    """Deribit分析包下载页面"""
+    return render_template('deribit_download.html')
 
 @deribit_bp.route('/api/deribit/status')
 def api_status():
@@ -132,9 +151,32 @@ def get_analysis_data():
         deribit_volume = deribit_stats[0] if deribit_stats[0] else 0
         deribit_avg_price = deribit_stats[1] if deribit_stats[1] else 0
         
-        # 获取最新更新时间
+        # 获取最新更新时间并转换为EST时区
         cursor.execute('SELECT MAX(collected_at) FROM trades')
-        last_update = cursor.fetchone()[0]
+        last_update_raw = cursor.fetchone()[0]
+        
+        # 转换为EST时区显示
+        if last_update_raw:
+            try:
+                # 数据库中的时间格式是 '2025-08-15 00:56:28'，假设是UTC时间
+                dt = datetime.strptime(last_update_raw, '%Y-%m-%d %H:%M:%S')
+                # 设置为UTC时区
+                dt_utc = pytz.UTC.localize(dt)
+                # 转换为EST时区
+                est_tz = pytz.timezone('US/Eastern')
+                est_time = dt_utc.astimezone(est_tz)
+                last_update = est_time.strftime('%Y-%m-%d %H:%M:%S EST')
+            except Exception as e:
+                logger.warning(f"时间转换失败: {e}")
+                # 如果转换失败，使用当前EST时间
+                est_tz = pytz.timezone('US/Eastern')
+                current_est = datetime.now(est_tz)
+                last_update = current_est.strftime('%Y-%m-%d %H:%M:%S EST')
+        else:
+            # 如果没有时间戳，使用当前EST时间
+            est_tz = pytz.timezone('US/Eastern')
+            current_est = datetime.now(est_tz)
+            last_update = current_est.strftime('%Y-%m-%d %H:%M:%S EST')
         
         # 获取价格区间分析（从多交易所数据）
         cursor.execute('''
