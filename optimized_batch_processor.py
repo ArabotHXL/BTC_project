@@ -227,7 +227,7 @@ class OptimizedBatchProcessor:
             # 获取网络数据（缓存）
             network_data = self.get_network_data(use_real_time_data)
             
-            # 分组相同的矿机配置
+            # 分组相同的矿机配置，并记录矿机编号
             miner_groups = {}
             total_miners = 0
             
@@ -241,10 +241,12 @@ class OptimizedBatchProcessor:
                     float(miner.get('hashrate', 0)) if miner.get('hashrate') else None  # 自定义算力
                 )
                 quantity = int(miner.get('quantity', 1))
+                miner_number = miner.get('miner_number', 'undefined')
                 
                 if key not in miner_groups:
-                    miner_groups[key] = 0
-                miner_groups[key] += quantity
+                    miner_groups[key] = {'quantity': 0, 'miner_numbers': []}
+                miner_groups[key]['quantity'] += quantity
+                miner_groups[key]['miner_numbers'].append(miner_number)
                 total_miners += quantity
             
             logger.info(f"优化: {len(miners_data)} 条目 → {len(miner_groups)} 组, 总矿机: {total_miners}")
@@ -255,12 +257,22 @@ class OptimizedBatchProcessor:
             total_daily_revenue = 0
             total_daily_cost = 0
             
-            for (model, power_consumption, electricity_cost, machine_price, decay_rate, custom_hashrate), quantity in miner_groups.items():
+            for (model, power_consumption, electricity_cost, machine_price, decay_rate, custom_hashrate), group_info in miner_groups.items():
+                quantity = group_info['quantity']
+                miner_numbers = group_info['miner_numbers']
+                
                 result = self.calculate_single_miner_group(
                     model, quantity, power_consumption, electricity_cost, machine_price, network_data, decay_rate, custom_hashrate
                 )
                 
                 if result:
+                    # 添加矿机编号信息（显示第一个编号或编号范围）
+                    if len(miner_numbers) == 1:
+                        result['miner_number'] = miner_numbers[0]
+                    else:
+                        # 如果有多个矿机编号，显示范围或第一个
+                        result['miner_number'] = f"{miner_numbers[0]}-{miner_numbers[-1]}" if len(miner_numbers) > 1 else miner_numbers[0]
+                    
                     results.append(result)
                     total_daily_profit += result['daily_profit']
                     total_daily_revenue += result['daily_revenue']
