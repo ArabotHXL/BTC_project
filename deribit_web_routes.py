@@ -9,6 +9,7 @@ import threading
 import time
 from datetime import datetime, timedelta
 from deribit_options_poc import DeribitAnalysisPOC, DeribitDataCollector
+from multi_exchange_collector import MultiExchangeCollector
 import logging
 
 # 创建蓝图
@@ -18,8 +19,16 @@ deribit_bp = Blueprint('deribit', __name__)
 collection_thread = None
 collection_active = False
 poc_instance = None
+multi_collector = None
 
 logger = logging.getLogger(__name__)
+
+def get_multi_collector():
+    """获取多交易所收集器实例"""
+    global multi_collector
+    if multi_collector is None:
+        multi_collector = MultiExchangeCollector()
+    return multi_collector
 
 @deribit_bp.route('/deribit-analysis')
 @deribit_bp.route('/deribit_analysis')
@@ -266,3 +275,158 @@ def collection_worker(instrument, interval):
             time.sleep(1)
     
     logger.info("数据采集线程已停止")
+
+@deribit_bp.route('/api/deribit/multi-exchange-collect', methods=['POST'])
+def start_multi_exchange_collection():
+    """启动多交易所数据收集"""
+    try:
+        # 获取请求参数
+        data = request.get_json() or {}
+        minutes = data.get('minutes', 15)
+        bucket_width = data.get('bucket_width', 5.0)
+        bucket_by = data.get('bucket_by', 'price')
+        max_okx = data.get('max_okx', 400)
+        max_binance = data.get('max_binance', 400)
+        by_type = data.get('by_type', True)
+        
+        collector = get_multi_collector()
+        
+        # 收集所有交易所数据
+        all_trades = collector.collect_all_exchanges(minutes, max_okx, max_binance)
+        
+        if not all_trades:
+            return jsonify({
+                'success': False,
+                'error': '未收集到任何交易数据',
+                'data': {
+                    'total_trades': 0,
+                    'exchanges': [],
+                    'analysis': []
+                }
+            })
+        
+        # 进行聚合分析
+        agg_all, agg_cp = collector.aggregate_analysis(all_trades, bucket_width, by=bucket_by, by_type=by_type)
+        
+        # 保存分析结果
+        cp_dict = dict(agg_cp) if agg_cp else {}
+        collector.save_bucket_analysis(agg_all, cp_dict, bucket_width, bucket_by, minutes)
+        
+        # 获取各交易所摘要
+        exchange_summary = collector.get_exchange_summary(minutes)
+        
+        return jsonify({
+            'success': True,
+            'message': f'成功收集到 {len(all_trades)} 笔交易数据',
+            'data': {
+                'total_trades': len(all_trades),
+                'time_window_minutes': minutes,
+                'bucket_width': bucket_width,
+                'bucket_type': bucket_by,
+                'exchanges': exchange_summary,
+                'bucket_analysis': [{'bucket': k, 'trades': v['trades'], 'amount': v['amount']} for k, v in agg_all],
+                'call_put_analysis': [{'bucket': k, 'call': v['CALL'], 'put': v['PUT']} for k, v in agg_cp] if agg_cp else [],
+                'collection_time': datetime.now().isoformat()
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"多交易所数据收集失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'收集失败: {str(e)}'
+        }), 500
+
+@deribit_bp.route('/api/deribit/multi-exchange-analysis')
+def get_multi_exchange_analysis():
+    """获取多交易所分析结果"""
+    try:
+        collector = get_multi_collector()
+        
+        # 获取最新分析结果
+        analysis_data = collector.get_latest_analysis(limit=50)
+        
+        # 获取交易所摘要
+        exchange_summary = collector.get_exchange_summary(minutes=60)  # 最近1小时
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'bucket_analysis': analysis_data,
+                'exchange_summary': exchange_summary,
+                'analysis_count': len(analysis_data),
+                'last_updated': datetime.now().isoformat()
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取多交易所分析失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'获取分析数据失败: {str(e)}'
+        }), 500
+
+@deribit_bp.route('/api/deribit/multi-exchange-csv')
+def export_multi_exchange_csv():
+    """导出多交易所数据为CSV"""
+    try:
+        from flask import Response, make_response
+        import io
+        import csv
+        
+        collector = get_multi_collector()
+        
+        # 获取最近的交易数据 (最近1小时)
+        conn = sqlite3.connect(collector.db_path)
+        cursor = conn.cursor()
+        
+        # 查询最近1小时的数据
+        cutoff_time = int(time.time() * 1000) - (60 * 60 * 1000)  # 1小时前
+        
+        cursor.execute('''
+            SELECT exchange, timestamp, instrument, price, amount, side, 
+                   expiry, strike, option_type, created_at
+            FROM multi_exchange_trades 
+            WHERE timestamp > ?
+            ORDER BY timestamp DESC
+        ''', (cutoff_time,))
+        
+        rows = cursor.fetchall()
+        conn.close()
+        
+        # 创建CSV内容
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # 写入标题
+        writer.writerow([
+            'Exchange', 'Timestamp', 'Instrument', 'Price', 'Amount', 'Side',
+            'Expiry', 'Strike', 'Option Type', 'Created At'
+        ])
+        
+        # 写入数据
+        for row in rows:
+            # 转换时间戳为可读格式
+            timestamp = datetime.fromtimestamp(row[1] / 1000).strftime('%Y-%m-%d %H:%M:%S')
+            writer.writerow([
+                row[0], timestamp, row[2], row[3], row[4], row[5],
+                row[6], row[7], row[8], row[9]
+            ])
+        
+        # 准备响应
+        csv_content = output.getvalue()
+        output.close()
+        
+        # 创建响应
+        response = make_response(csv_content)
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = f'attachment; filename=multi_exchange_trades_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"CSV导出失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'CSV导出失败: {str(e)}'
+        }), 500
