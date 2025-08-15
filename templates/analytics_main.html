@@ -5256,6 +5256,15 @@
                 console.log('✅ Deribit tab data updated successfully!');
             }
             
+            // 确保综合概览标签页在页面加载时激活
+            const overviewTab = document.getElementById('overview-tab');
+            const overviewPane = document.getElementById('overview');
+            if (overviewTab && overviewPane) {
+                overviewTab.classList.add('active');
+                overviewPane.classList.add('show', 'active');
+                console.log('✅ Overview tab activated on page load');
+            }
+            
             // 初始化数据更新
             setTimeout(updateDeribitTabData, 1000);
             
