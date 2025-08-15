@@ -574,81 +574,8 @@
                         </div>
                     </div>
 
-                    <!-- Performance Summary Row -->
-                    <div class="row mb-4">
-                        <div class="col-md-6 mb-3">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        <i class="bi bi-trophy"></i>
-                                        {% if current_lang == 'en' %}Top Mining Performers{% else %}挖矿性能排行{% endif %}
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row text-center">
-                                        <div class="col-4">
-                                            <div class="text-success">
-                                                <i class="bi bi-award h4"></i>
-                                                <div class="small">S21 XP</div>
-                                                <div class="fw-bold">$0.195/kWh</div>
-                                            </div>
-                                        </div>
-                                        <div class="col-4">
-                                            <div class="text-warning">
-                                                <i class="bi bi-award h4"></i>
-                                                <div class="small">S21</div>
-                                                <div class="fw-bold">$0.173/kWh</div>
-                                            </div>
-                                        </div>
-                                        <div class="col-4">
-                                            <div class="text-info">
-                                                <i class="bi bi-award h4"></i>
-                                                <div class="small">S19 Pro</div>
-                                                <div class="fw-bold">$0.109/kWh</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        <i class="bi bi-speedometer2"></i>
-                                        {% if current_lang == 'en' %}System Status{% else %}系统状态{% endif %}
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="d-flex align-items-center mb-2">
-                                                <span class="status-indicator status-online me-2"></span>
-                                                <span class="small">{% if current_lang == 'en' %}Data Feed{% else %}数据源{% endif %}</span>
-                                            </div>
-                                            <div class="d-flex align-items-center mb-2">
-                                                <span class="status-indicator status-online me-2"></span>
-                                                <span class="small">{% if current_lang == 'en' %}API Services{% else %}API服务{% endif %}</span>
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="d-flex align-items-center mb-2">
-                                                <span class="status-indicator status-online me-2"></span>
-                                                <span class="small">{% if current_lang == 'en' %}Database{% else %}数据库{% endif %}</span>
-                                            </div>
-                                            <div class="d-flex align-items-center mb-2">
-                                                <span class="status-indicator status-online me-2"></span>
-                                                <span class="small">{% if current_lang == 'en' %}Analytics{% else %}分析引擎{% endif %}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 三大交易所实时交易数据分析 (重要功能区域) -->
-                    <div class="row mt-5">
+                    <!-- 三大交易所实时交易数据分析 (重要功能区域 - 移到顶部) -->
+                    <div class="row mt-4 mb-5">
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -737,6 +664,81 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Performance Summary Row -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-trophy"></i>
+                                        {% if current_lang == 'en' %}Top Mining Performers{% else %}挖矿性能排行{% endif %}
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <div class="text-success">
+                                                <i class="bi bi-award h4"></i>
+                                                <div class="small">S21 XP</div>
+                                                <div class="fw-bold">$0.195/kWh</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="text-warning">
+                                                <i class="bi bi-award h4"></i>
+                                                <div class="small">S21</div>
+                                                <div class="fw-bold">$0.173/kWh</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="text-info">
+                                                <i class="bi bi-award h4"></i>
+                                                <div class="small">S19 Pro</div>
+                                                <div class="fw-bold">$0.109/kWh</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-speedometer2"></i>
+                                        {% if current_lang == 'en' %}System Status{% else %}系统状态{% endif %}
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <span class="status-indicator status-online me-2"></span>
+                                                <span class="small">{% if current_lang == 'en' %}Data Feed{% else %}数据源{% endif %}</span>
+                                            </div>
+                                            <div class="d-flex align-items-center mb-2">
+                                                <span class="status-indicator status-online me-2"></span>
+                                                <span class="small">{% if current_lang == 'en' %}API Services{% else %}API服务{% endif %}</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <span class="status-indicator status-online me-2"></span>
+                                                <span class="small">{% if current_lang == 'en' %}Database{% else %}数据库{% endif %}</span>
+                                            </div>
+                                            <div class="d-flex align-items-center mb-2">
+                                                <span class="status-indicator status-online me-2"></span>
+                                                <span class="small">{% if current_lang == 'en' %}Analytics{% else %}分析引擎{% endif %}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
 
                 </div>
 
