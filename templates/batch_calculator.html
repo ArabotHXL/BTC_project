@@ -170,12 +170,18 @@
                                         <i class="bi bi-file-earmark-spreadsheet me-1"></i>
                                         {% if current_lang == 'en' %}Upload CSV File{% else %}上传CSV文件{% endif %}
                                     </label>
-                                    <input type="file" class="form-control" id="csvFile" accept=".csv" onchange="processCsvFile(event)">
+                                    <div class="input-group mb-2">
+                                        <input type="file" class="form-control" id="csvFile" accept=".csv" onchange="processCsvFile(event)">
+                                        <button class="btn btn-outline-success" type="button" onclick="downloadTemplate()">
+                                            <i class="bi bi-download me-1"></i>
+                                            {% if current_lang == 'en' %}Template{% else %}模板{% endif %}
+                                        </button>
+                                    </div>
                                     <div class="form-text">
                                         {% if current_lang == 'en' %}
-                                        Format: Model, Quantity, Power (W), Price ($), Electricity ($/kWh), Decay Rate (%/month)
+                                        Format: Model, Quantity, Power (W), Price ($), Electricity ($/kWh), Decay Rate (%/month), Hashrate (TH/s)
                                         {% else %}
-                                        格式: 型号, 数量, 功耗(W), 价格($), 电费($/kWh), 衰减率(%/月)
+                                        格式: 型号, 数量, 功耗(W), 价格($), 电费($/kWh), 衰减率(%/月), 算力(TH/s)
                                         {% endif %}
                                     </div>
                                 </div>
@@ -185,9 +191,10 @@
                                     </label>
                                     <div class="bg-dark p-2 rounded small">
                                         <code>
-                                            Model,Quantity,Power,Price,Electricity,DecayRate<br>
-                                            Antminer S19 Pro,10,3250,2500,0.08,0.5<br>
-                                            Antminer S21,5,3550,4200,0.08,0.3
+                                            Model,Quantity,Power,Price,Electricity,DecayRate,Hashrate<br>
+                                            Antminer S19 Pro,10,3250,2500,0.08,0.5,110<br>
+                                            WhatsMiner M53S,5,6554,4500,0.07,0.3,226<br>
+                                            Antminer S21,8,3550,3200,0.06,0.4,200
                                         </code>
                                     </div>
                                 </div>
@@ -1213,6 +1220,48 @@
             const now = new Date();
             const timeStr = now.toLocaleTimeString();
             document.getElementById('dataUpdateTime').textContent = `(Updated: ${timeStr})`;
+        }
+
+        // Template download function
+        function downloadTemplate() {
+            const csvContent = `Model,Quantity,Power,Price,Electricity,DecayRate,Hashrate
+Antminer S19 Pro,10,3250,2500,0.08,0.5,110
+WhatsMiner M53S,5,6554,4500,0.07,0.3,226
+Antminer S21,8,3550,3200,0.06,0.4,200
+Antminer S19 XP,12,3010,2800,0.075,0.35,140
+WhatsMiner M50S,6,3276,2200,0.09,0.6,126
+Antminer T19,15,3150,1800,0.05,0.4,84
+AvalonMiner 1366,4,3420,2000,0.08,0.5,100
+Antminer S21 Pro,3,3531,3800,0.065,0.3,234
+WhatsMiner M56S,7,5550,4200,0.07,0.25,212
+Antminer S19j Pro,9,3068,2300,0.085,0.45,100`;
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'batch_calculator_template.csv');
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Show success message
+            const isEnglish = '{% if current_lang == "en" %}true{% else %}false{% endif %}' === 'true';
+            const message = isEnglish ? 'Template downloaded successfully!' : '模板下载成功！';
+            
+            // Create a simple toast notification
+            const toast = document.createElement('div');
+            toast.className = 'alert alert-success position-fixed';
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 250px;';
+            toast.innerHTML = `<i class="bi bi-check-circle me-2"></i>${message}`;
+            
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 3000);
         }
 
 
