@@ -277,7 +277,7 @@ class PriceRangeAnalyzer:
             
             if len(range_trades) > 0:
                 analysis = PriceRangeAnalysis(
-                    price_range=f"{int(range_end)} - {int(range_start)}",
+                    price_range=f"${int(range_end)} - ${int(range_start)}",
                     trade_count=len(range_trades),
                     total_volume=float(range_trades['amount'].sum()),
                     avg_price=float(range_trades['price'].mean()),

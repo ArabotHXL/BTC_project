@@ -80,10 +80,10 @@ class MultiExchangeCollector:
     
     @staticmethod
     def bucket_label(value, step):
-        """生成分桶标签 - 高价在前，低价在后，去掉小数"""
+        """生成分桶标签 - 高价在前，低价在后，带美元符号"""
         lo = math.floor(value / step) * step
         hi = lo + step
-        return f"{int(hi)} - {int(lo)}"
+        return f"${int(hi)} - ${int(lo)}"
     
     @staticmethod
     def parse_generic(name):
