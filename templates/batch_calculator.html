@@ -456,10 +456,11 @@
             'Antminer S19 XP': { hashrate: 140, power: 3010, price: 2800 },
             'WhatsMiner M50S': { hashrate: 126, power: 3276, price: 2200 },
             'Antminer T19': { hashrate: 84, power: 3150, price: 1800 },
-            'AvalonMiner 1366': { hashrate: 100, power: 3420, price: 2000 },
+            'AvalonMiner 1366': { hashrate: 130, power: 3310, price: 2900 },
+            'AvalonMiner 1466': { hashrate: 150, power: 3400, price: 3100 },
             'Antminer S21 Pro': { hashrate: 234, power: 3531, price: 3800 },
             'WhatsMiner M56S': { hashrate: 212, power: 5550, price: 4200 },
-            'Antminer S19j Pro': { hashrate: 100, power: 3068, price: 2300 }
+            'Antminer S19j Pro': { hashrate: 104, power: 3068, price: 2300 }
         };
 
         let minerRowCount = 0;
@@ -752,6 +753,11 @@
                     // 使用输入框中的自定义算力，如果没有则使用矿机模型默认值
                     const hashrateValue = customHashrate || minerModels[model]?.hashrate || 0;
                     
+                    console.log('收集矿机数据:', {
+                        minerNumber, model, quantity, power, price, electricity, 
+                        customHashrate, hashrateValue, decayRate
+                    });
+                    
                     miners.push({
                         miner_number: minerNumber,  // 添加矿机编号
                         model: model,
@@ -761,6 +767,14 @@
                         electricity_cost: electricity,
                         decay_rate: decayRate,
                         hashrate: hashrateValue
+                    });
+                } else {
+                    console.warn('数据验证失败，跳过矿机:', {
+                        model, quantity, power, electricity, price,
+                        quantityValid: quantity > 0,
+                        powerValid: power > 0,
+                        electricityValid: electricity > 0,
+                        priceValid: price > 0
                     });
                 }
             });
@@ -1040,20 +1054,30 @@
             
             // 设置矿机型号
             const selectElement = cells[1].querySelector('select');
-            if (selectElement && minerModels[model]) {
-                selectElement.value = model;
-                // 触发change事件以更新默认值
-                updateMinerSpecs(selectElement, lastRow.id);
-            } else {
-                console.warn('未找到矿机型号:', model);
+            if (selectElement) {
+                if (minerModels[model]) {
+                    selectElement.value = model;
+                    console.log('设置矿机型号成功:', model);
+                } else {
+                    console.warn('未找到矿机型号:', model, '使用默认型号');
+                    // 使用第一个可用的型号作为默认值
+                    selectElement.value = Object.keys(minerModels)[0];
+                }
             }
             
-            cells[2].querySelector('input').value = quantity;  // 第3列
-            cells[3].querySelector('input').value = power;     // 第4列
-            cells[4].querySelector('input').value = price;     // 第5列
-            cells[5].querySelector('input').value = electricity; // 第6列
-            cells[6].querySelector('input').value = hashrate || (minerModels[model]?.hashrate || 110); // 第7列
-            cells[7].querySelector('input').value = decayRate || 0;  // 第8列
+            // 直接设置所有输入值，不依赖默认值更新
+            cells[2].querySelector('input').value = quantity;  // 数量
+            cells[3].querySelector('input').value = power;     // 功率
+            cells[4].querySelector('input').value = price;     // 价格
+            cells[5].querySelector('input').value = electricity; // 电费
+            cells[6].querySelector('input').value = hashrate || (minerModels[model]?.hashrate || 110); // 算力
+            cells[7].querySelector('input').value = decayRate || 0;  // 衰减率
+            
+            console.log('设置行数据完成:', {
+                model, quantity, power, price, electricity, 
+                hashrate: hashrate || (minerModels[model]?.hashrate || 110), 
+                decayRate: decayRate || 0
+            });
         }
 
         // Export functions
