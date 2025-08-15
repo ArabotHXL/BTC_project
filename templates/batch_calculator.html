@@ -191,17 +191,17 @@
                                     </label>
                                     <div class="bg-dark p-2 rounded small" style="max-height: 200px; overflow-y: auto;">
                                         <code>
-                                            Model,Quantity,Power,Price,Electricity,DecayRate,Hashrate<br>
-                                            Antminer S19 Pro,10,3250,2500,0.08,0.5,110<br>
-                                            WhatsMiner M53S,5,6554,4500,0.07,0.3,226<br>
-                                            Antminer S21,8,3550,3200,0.08,0.4,200<br>
-                                            Antminer S19 XP,12,3010,2800,0.08,0.5,140<br>
-                                            WhatsMiner M50S,6,3276,2200,0.08,0.6,126<br>
-                                            Antminer T19,15,3150,1800,0.08,0.4,84<br>
-                                            AvalonMiner 1366,4,3420,2000,0.08,0.5,100<br>
-                                            Antminer S21 Pro,3,3531,3800,0.08,0.3,234<br>
-                                            WhatsMiner M56S,7,5550,4200,0.08,0.4,212<br>
-                                            Antminer S19j Pro,9,3068,2300,0.08,0.5,100
+                                            Model,Quantity,Power,Price,Electricity,Hashrate,DecayRate<br>
+                                            Antminer S19 Pro,10,3250,2500,0.08,110,0.5<br>
+                                            WhatsMiner M53S,5,6554,4500,0.07,226,0.3<br>
+                                            Antminer S21,8,3550,3200,0.08,200,0.4<br>
+                                            Antminer S19 XP,12,3010,2800,0.08,140,0.5<br>
+                                            WhatsMiner M50S,6,3276,2200,0.08,126,0.6<br>
+                                            Antminer T19,15,3150,1800,0.08,84,0.4<br>
+                                            AvalonMiner 1366,4,3420,2000,0.08,100,0.5<br>
+                                            Antminer S21 Pro,3,3531,3800,0.08,234,0.3<br>
+                                            WhatsMiner M56S,7,5550,4200,0.08,212,0.4<br>
+                                            Antminer S19j Pro,9,3068,2300,0.08,100,0.5
                                         </code>
                                     </div>
                                 </div>
@@ -988,32 +988,31 @@
                     
                     const parts = line.split(',').map(s => s.trim());
                     
-                    // 支持两种CSV格式:
-                    // 格式1: Model,Quantity,Power,Price,Electricity,DecayRate
-                    // 格式2: Model,Quantity,Power,Price,Electricity,Hashrate(TH/s),DecayRate(%/月)
-                    let model, quantity, power, price, electricity, decayRate;
+                    // 支持三种CSV格式:
+                    // 格式1: Model,Quantity,Power,Price,Electricity (老格式)
+                    // 格式2: Model,Quantity,Power,Price,Electricity,DecayRate (旧格式)
+                    // 格式3: Model,Quantity,Power,Price,Electricity,Hashrate,DecayRate (新格式)
+                    let model, quantity, power, price, electricity, hashrate, decayRate;
                     
-                    if (parts.length >= 6) {
-                        if (parts.length === 6) {
-                            // 格式1: Model,Quantity,Power,Price,Electricity,DecayRate
-                            [model, quantity, power, price, electricity, decayRate] = parts;
-                        } else if (parts.length === 7) {
-                            // 格式2: Model,Quantity,Power,Price,Electricity,Hashrate,DecayRate
-                            [model, quantity, power, price, electricity, , decayRate] = parts;
-                        }
+                    if (parts.length === 7) {
+                        // 新格式: Model,Quantity,Power,Price,Electricity,Hashrate,DecayRate
+                        [model, quantity, power, price, electricity, hashrate, decayRate] = parts;
+                        hashrate = parseFloat(hashrate) || null;
+                        decayRate = parseFloat(decayRate) || 0;
+                    } else if (parts.length === 6) {
+                        // 旧格式: Model,Quantity,Power,Price,Electricity,DecayRate
+                        [model, quantity, power, price, electricity, decayRate] = parts;
+                        hashrate = null;
+                        decayRate = parseFloat(decayRate) || 0;
                     } else if (parts.length === 5) {
                         // 老格式: Model,Quantity,Power,Price,Electricity
                         [model, quantity, power, price, electricity] = parts;
-                        decayRate = '0';
+                        hashrate = null;
+                        decayRate = 0;
                     }
                     
                     if (model && quantity && power && price && electricity) {
-                        // 处理算力字段 - 如果是7字段格式，提取算力值
-                        let hashrate = null;
-                        if (parts.length === 7) {
-                            hashrate = parseFloat(parts[5]) || null; // Hashrate(TH/s)字段
-                        }
-                        addMinerRowFromData(model, quantity, power, price, electricity, decayRate || '0', hashrate);
+                        addMinerRowFromData(model, parseInt(quantity), parseInt(power), parseFloat(price), parseFloat(electricity), decayRate, hashrate);
                     }
                 }
                 
@@ -1241,17 +1240,17 @@
 
         // Template download function
         function downloadTemplate() {
-            const csvContent = `Model,Quantity,Power,Price,Electricity,DecayRate,Hashrate
-Antminer S19 Pro,10,3250,2500,0.08,0.5,110
-WhatsMiner M53S,5,6554,4500,0.07,0.3,226
-Antminer S21,8,3550,3200,0.08,0.4,200
-Antminer S19 XP,12,3010,2800,0.08,0.5,140
-WhatsMiner M50S,6,3276,2200,0.08,0.6,126
-Antminer T19,15,3150,1800,0.08,0.4,84
-AvalonMiner 1366,4,3420,2000,0.08,0.5,100
-Antminer S21 Pro,3,3531,3800,0.08,0.3,234
-WhatsMiner M56S,7,5550,4200,0.08,0.4,212
-Antminer S19j Pro,9,3068,2300,0.08,0.5,100`;
+            const csvContent = `Model,Quantity,Power,Price,Electricity,Hashrate,DecayRate
+Antminer S19 Pro,10,3250,2500,0.08,110,0.5
+WhatsMiner M53S,5,6554,4500,0.07,226,0.3
+Antminer S21,8,3550,3200,0.08,200,0.4
+Antminer S19 XP,12,3010,2800,0.08,140,0.5
+WhatsMiner M50S,6,3276,2200,0.08,126,0.6
+Antminer T19,15,3150,1800,0.08,84,0.4
+AvalonMiner 1366,4,3420,2000,0.08,100,0.5
+Antminer S21 Pro,3,3531,3800,0.08,234,0.3
+WhatsMiner M56S,7,5550,4200,0.08,212,0.4
+Antminer S19j Pro,9,3068,2300,0.08,100,0.5`;
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
