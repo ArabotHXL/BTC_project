@@ -1358,8 +1358,11 @@
             });
             
             try {
+                console.log('🚀 Starting three-exchange initialization...');
                 initExchangeCharts();
+                console.log('📊 Charts initialized, now loading trading data...');
                 loadExchangeTradingData();
+                console.log('📈 Trading data loading started, now loading analysis data...');
                 loadExchangeAnalysisData();
                 console.log('✅ Three-exchange initialization completed successfully');
             } catch (error) {
