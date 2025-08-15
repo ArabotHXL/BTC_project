@@ -925,18 +925,122 @@
                 return;
             }
             
-            // Implementation for CSV export
             console.log('Exporting to CSV...');
+            
+            // Send request to backend
+            fetch('/api/export/batch-csv', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    results: calculationResults
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                } else {
+                    throw new Error('Export failed');
+                }
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `mining_batch_results_${new Date().getTime()}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(error => {
+                console.error('CSV export error:', error);
+                alert('{% if current_lang == "en" %}Export failed. Please try again.{% else %}导出失败，请重试。{% endif %}');
+            });
         }
 
         function exportToExcel() {
-            // Implementation for Excel export
+            if (calculationResults.length === 0) {
+                alert('{% if current_lang == "en" %}No results to export. Please calculate first.{% else %}没有结果可导出，请先进行计算。{% endif %}');
+                return;
+            }
+            
             console.log('Exporting to Excel...');
+            
+            fetch('/api/export/batch-excel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    results: calculationResults
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                } else {
+                    throw new Error('Export failed');
+                }
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `mining_batch_results_${new Date().getTime()}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(error => {
+                console.error('Excel export error:', error);
+                alert('{% if current_lang == "en" %}Export failed. Please try again.{% else %}导出失败，请重试。{% endif %}');
+            });
         }
 
         function exportToPDF() {
-            // Implementation for PDF export
+            if (calculationResults.length === 0) {
+                alert('{% if current_lang == "en" %}No results to export. Please calculate first.{% else %}没有结果可导出，请先进行计算。{% endif %}');
+                return;
+            }
+            
             console.log('Exporting to PDF...');
+            
+            fetch('/api/export/batch-pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    results: calculationResults
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                } else {
+                    throw new Error('Export failed');
+                }
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `mining_batch_report_${new Date().getTime()}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(error => {
+                console.error('PDF export error:', error);
+                alert('{% if current_lang == "en" %}Export failed. Please try again.{% else %}导出失败，请重试。{% endif %}');
+            });
         }
 
         // Handle real-time toggle change

@@ -1,7 +1,7 @@
 """
 Batch calculator routes for handling multiple miner calculations.
 """
-from flask import Blueprint, request, jsonify, render_template, session, render_template_string, send_file
+from flask import Blueprint, request, jsonify, render_template, session, render_template_string, send_file, make_response
 from decorators import check_miner_limit, get_user_plan, UpgradeRequired, require_feature
 from mining_calculator import calculate_mining_profitability, MINER_DATA
 from optimized_batch_processor import batch_processor
@@ -269,20 +269,21 @@ def export_batch_csv():
             }), 400
         
         # Generate CSV content with 3 decimal places precision
-        csv_lines = ['Model,Quantity,Daily Revenue,Daily Cost,Daily Profit,Monthly Profit,Annual ROI,Payback Days,Hash Rate (TH/s),Power (W),Daily BTC,Monthly BTC']
+        csv_lines = ['Model,Quantity,Daily Revenue,Daily Cost,Daily Profit,Monthly Profit,ROI Days,Hash Rate (TH/s),Power (W),Machine Price,Total Cost,Daily BTC,Monthly BTC']
         
         for result in results:
             line = ','.join([
                 f'"{result.get("model", "")}"',
                 str(result.get('quantity', 0)),
-                f"{result.get('daily_revenue', 0):.3f}",
-                f"{result.get('daily_cost', 0):.3f}",
-                f"{result.get('daily_profit', 0):.3f}",
-                f"{result.get('monthly_profit', 0):.3f}",
-                f"{result.get('annual_roi', 0):.3f}%",
-                f"{result.get('payback_days', 0):.3f}",
-                f"{result.get('hashrate', 0):.3f}",
-                f"{result.get('power', 0):.3f}",
+                f"{result.get('daily_revenue', 0):.2f}",
+                f"{result.get('daily_cost', 0):.2f}",
+                f"{result.get('daily_profit', 0):.2f}",
+                f"{result.get('monthly_profit', 0):.2f}",
+                str(result.get('roi_days', 0)),
+                f"{result.get('hash_rate', 0):.0f}",
+                f"{result.get('power_consumption', 0):.0f}",
+                f"{result.get('machine_price', 0):.2f}",
+                f"{result.get('total_machine_cost', 0):.2f}",
                 f"{result.get('daily_btc', 0):.8f}",
                 f"{result.get('monthly_btc', 0):.8f}"
             ])
@@ -290,11 +291,11 @@ def export_batch_csv():
         
         csv_content = '\n'.join(csv_lines)
         
-        return jsonify({
-            'success': True,
-            'csv_content': csv_content,
-            'filename': f"batch_mining_results_{len(results)}_miners.csv"
-        })
+        # Return CSV file as download
+        response = make_response(csv_content)
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = f'attachment; filename="batch_mining_results_{len(results)}_miners.csv"'
+        return response
         
     except Exception as e:
         logger.error(f"CSV export error: {e}")
