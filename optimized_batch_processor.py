@@ -58,7 +58,7 @@ class OptimizedBatchProcessor:
                 'block_reward': BLOCK_REWARD
             }
     
-    def calculate_single_miner_group(self, model, quantity, power_consumption, electricity_cost, network_data):
+    def calculate_single_miner_group(self, model, quantity, power_consumption, electricity_cost, machine_price, network_data):
         """计算单个矿机组的收益（内存优化版本）"""
         try:
             # 获取矿机规格
@@ -73,6 +73,7 @@ class OptimizedBatchProcessor:
             # 计算总算力和功耗
             total_hashrate = single_hashrate * quantity  # TH/s
             total_power = single_power * quantity  # Watts
+            total_machine_cost = machine_price * quantity  # Total cost
             
             # 网络数据
             btc_price = network_data['btc_price']
@@ -101,22 +102,26 @@ class OptimizedBatchProcessor:
             daily_profit = daily_revenue - daily_cost
             monthly_profit = daily_profit * 30
             
-            # ROI计算（简化）
-            if daily_profit > 0:
-                roi_days = 365  # 默认值，可以根据需要调整
+            # ROI计算（真实回本计算）
+            if daily_profit > 0 and total_machine_cost > 0:
+                roi_days = total_machine_cost / daily_profit  # 总成本 ÷ 日净利润
+                # 限制在合理范围内，避免极大值
+                roi_days = min(roi_days, 999999)
             else:
-                roi_days = 999999  # 使用大数值代替infinity，避免JSON序列化问题
+                roi_days = 999999  # 无法回本或亏损
             
             return {
                 'model': model,
                 'quantity': quantity,
                 'power_consumption': single_power,
                 'electricity_cost': electricity_cost,
+                'machine_price': machine_price,
+                'total_machine_cost': total_machine_cost,
                 'daily_profit': round(daily_profit, 2),
                 'daily_revenue': round(daily_revenue, 2),
                 'daily_cost': round(daily_cost, 2),
                 'monthly_profit': round(monthly_profit, 2),
-                'roi_days': roi_days,
+                'roi_days': round(roi_days, 0),
                 'hash_rate': total_hashrate,
                 'daily_btc': daily_btc,
                 'monthly_btc': daily_btc * 30
@@ -142,7 +147,8 @@ class OptimizedBatchProcessor:
                 key = (
                     miner.get('model', 'Antminer S19 Pro'),
                     float(miner.get('power_consumption', 3250)),
-                    float(miner.get('electricity_cost', 0.08))
+                    float(miner.get('electricity_cost', 0.08)),
+                    float(miner.get('machine_price', 2500))
                 )
                 quantity = int(miner.get('quantity', 1))
                 
@@ -159,9 +165,9 @@ class OptimizedBatchProcessor:
             total_daily_revenue = 0
             total_daily_cost = 0
             
-            for (model, power_consumption, electricity_cost), quantity in miner_groups.items():
+            for (model, power_consumption, electricity_cost, machine_price), quantity in miner_groups.items():
                 result = self.calculate_single_miner_group(
-                    model, quantity, power_consumption, electricity_cost, network_data
+                    model, quantity, power_consumption, electricity_cost, machine_price, network_data
                 )
                 
                 if result:

@@ -173,9 +173,9 @@
                                     <input type="file" class="form-control" id="csvFile" accept=".csv" onchange="processCsvFile(event)">
                                     <div class="form-text">
                                         {% if current_lang == 'en' %}
-                                        Format: Model, Quantity, Power Consumption (W), Electricity Cost ($/kWh)
+                                        Format: Model, Quantity, Power (W), Price ($), Electricity ($/kWh)
                                         {% else %}
-                                        格式: 型号, 数量, 功耗(W), 电费($/kWh)
+                                        格式: 型号, 数量, 功耗(W), 价格($), 电费($/kWh)
                                         {% endif %}
                                     </div>
                                 </div>
@@ -185,9 +185,9 @@
                                     </label>
                                     <div class="bg-dark p-2 rounded small">
                                         <code>
-                                            Model,Quantity,Power,Electricity<br>
-                                            Antminer S19 Pro,10,3250,0.08<br>
-                                            Antminer S21,5,3550,0.08
+                                            Model,Quantity,Power,Price,Electricity<br>
+                                            Antminer S19 Pro,10,3250,2500,0.08<br>
+                                            Antminer S21,5,3550,4200,0.08
                                         </code>
                                     </div>
                                 </div>
@@ -199,16 +199,19 @@
                             <table class="table table-dark table-striped" id="minersTable">
                                 <thead>
                                     <tr>
-                                        <th style="width: 30%">
+                                        <th style="width: 20%">
                                             {% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %}
                                         </th>
-                                        <th style="width: 15%">
-                                            {% if current_lang == 'en' %}Quantity{% else %}数量{% endif %}
+                                        <th style="width: 10%">
+                                            {% if current_lang == 'en' %}Qty{% else %}数量{% endif %}
                                         </th>
-                                        <th style="width: 20%">
+                                        <th style="width: 15%">
                                             {% if current_lang == 'en' %}Power (W){% else %}功耗(W){% endif %}
                                         </th>
-                                        <th style="width: 20%">
+                                        <th style="width: 15%">
+                                            {% if current_lang == 'en' %}Price ($){% else %}价格($){% endif %}
+                                        </th>
+                                        <th style="width: 15%">
                                             {% if current_lang == 'en' %}Electricity ($/kWh){% else %}电费($/kWh){% endif %}
                                         </th>
                                         <th style="width: 15%">
@@ -433,16 +436,16 @@
     <script>
         // Available miner models with specifications
         const minerModels = {
-            'Antminer S19 Pro': { hashrate: 110, power: 3250 },
-            'Antminer S19j Pro': { hashrate: 100, power: 3068 },
-            'Antminer S21': { hashrate: 200, power: 3550 },
-            'Antminer S19 XP': { hashrate: 140, power: 3010 },
-            'Antminer T19': { hashrate: 84, power: 3150 },
-            'WhatsMiner M50S': { hashrate: 126, power: 3276 },
-            'WhatsMiner M53S': { hashrate: 226, power: 6554 },
-            'WhatsMiner M56S': { hashrate: 212, power: 5550 },
-            'AvalonMiner 1366': { hashrate: 100, power: 3420 },
-            'AvalonMiner 1466': { hashrate: 150, power: 3420 }
+            'Antminer S19 Pro': { hashrate: 110, power: 3250, price: 2500 },
+            'Antminer S19j Pro': { hashrate: 100, power: 3068, price: 2200 },
+            'Antminer S21': { hashrate: 200, power: 3550, price: 4200 },
+            'Antminer S19 XP': { hashrate: 140, power: 3010, price: 3100 },
+            'Antminer T19': { hashrate: 84, power: 3150, price: 1800 },
+            'WhatsMiner M50S': { hashrate: 126, power: 3276, price: 2800 },
+            'WhatsMiner M53S': { hashrate: 226, power: 6554, price: 5500 },
+            'WhatsMiner M56S': { hashrate: 212, power: 5550, price: 4800 },
+            'AvalonMiner 1366': { hashrate: 100, power: 3420, price: 2300 },
+            'AvalonMiner 1466': { hashrate: 150, power: 3420, price: 3200 }
         };
 
         let minerRowCount = 0;
@@ -513,6 +516,10 @@
                 </td>
                 <td>
                     <input type="number" class="form-control form-control-sm" 
+                           min="100" max="20000" placeholder="2500" step="100">
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm" 
                            min="0.01" max="1" value="0.08" step="0.001">
                 </td>
                 <td>
@@ -538,7 +545,14 @@
             if (selectedModel && minerModels[selectedModel]) {
                 const row = document.getElementById(rowId);
                 const powerInput = row.querySelector('td:nth-child(3) input');
-                powerInput.value = minerModels[selectedModel].power;
+                const priceInput = row.querySelector('td:nth-child(4) input');
+                
+                if (powerInput) {
+                    powerInput.value = minerModels[selectedModel].power;
+                }
+                if (priceInput) {
+                    priceInput.value = minerModels[selectedModel].price;
+                }
             }
         }
 
@@ -697,13 +711,15 @@
                 const model = cells[0].querySelector('select').value;
                 const quantity = parseInt(cells[1].querySelector('input').value) || 0;
                 const power = parseFloat(cells[2].querySelector('input').value) || 0;
-                const electricity = parseFloat(cells[3].querySelector('input').value) || 0;
+                const price = parseFloat(cells[3].querySelector('input').value) || 0;
+                const electricity = parseFloat(cells[4].querySelector('input').value) || 0;
                 
-                if (model && quantity > 0 && power > 0 && electricity > 0) {
+                if (model && quantity > 0 && power > 0 && electricity > 0 && price > 0) {
                     miners.push({
                         model: model,
                         quantity: quantity,
-                        power_consumption: power,  // Fixed: use correct field name
+                        power_consumption: power,
+                        machine_price: price,
                         electricity_cost: electricity,
                         hashrate: minerModels[model]?.hashrate || 0
                     });
