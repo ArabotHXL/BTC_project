@@ -436,79 +436,132 @@ def collection_worker(instrument, interval):
     
     logger.info("数据采集线程已停止")
 
-@deribit_bp.route('/api/deribit/multi-exchange-collect', methods=['POST'])
-def start_multi_exchange_collection():
-    """启动多交易所数据收集"""
+@deribit_bp.route('/api/deribit/exchange-data/<exchange>')
+def get_exchange_data(exchange):
+    """获取指定交易所的实时数据"""
     try:
-        # 获取请求参数
-        data = request.get_json() or {}
-        minutes = data.get('minutes', 15)
-        bucket_width = data.get('bucket_width', 5.0)
-        bucket_by = data.get('bucket_by', 'price')
-        max_okx = data.get('max_okx', 400)
-        max_binance = data.get('max_binance', 400)
-        by_type = data.get('by_type', True)
+        import requests
         
-        collector = get_multi_collector()
-        
-        # 收集所有交易所数据
-        try:
-            all_trades = collector.collect_all_exchanges(minutes, max_okx, max_binance)
-        except Exception as e:
-            logger.error(f"多交易所数据收集失败: {e}")
-            # 返回成功响应但包含错误信息，避免前端JSON解析错误
-            return jsonify({
-                'success': True,  # 改为True以避免前端错误
-                'warning': f'部分数据收集失败: {str(e)}',
-                'data': {
-                    'total_trades': 0,
-                    'exchanges': [],
-                    'analysis': [],
-                    'error_details': str(e)
+        if exchange.lower() == 'deribit':
+            # 获取Deribit数据
+            response = requests.get("https://www.deribit.com/api/v2/public/get_instruments?currency=BTC&kind=option&expired=false", timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                instruments = data.get('result', [])[:20]  # 获取前20个期权合约
+                
+                result_data = {
+                    'exchange': 'Deribit',
+                    'status': 'online',
+                    'instruments_count': len(instruments),
+                    'top_instruments': [
+                        {
+                            'name': inst.get('instrument_name'),
+                            'strike': inst.get('strike'),
+                            'expiry': inst.get('expiration_timestamp'),
+                            'type': inst.get('option_type')
+                        } for inst in instruments[:5]
+                    ],
+                    'last_update': datetime.now().isoformat()
                 }
-            })
+                return jsonify({'success': True, 'data': result_data})
         
-        if not all_trades:
-            return jsonify({
-                'success': True,  # 改为True，避免前端显示错误
-                'warning': '未收集到任何交易数据，可能是网络问题或市场交易较少',
-                'data': {
-                    'total_trades': 0,
-                    'exchanges': [],
-                    'analysis': []
+        elif exchange.lower() == 'okx':
+            # 获取OKX数据
+            response = requests.get("https://www.okx.com/api/v5/public/instruments?instType=OPTION&uly=BTC-USD", timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                instruments = data.get('data', [])[:20]
+                
+                result_data = {
+                    'exchange': 'OKX',
+                    'status': 'online',
+                    'instruments_count': len(instruments),
+                    'top_instruments': [
+                        {
+                            'name': inst.get('instId'),
+                            'strike': inst.get('stk'),
+                            'expiry': inst.get('expTime'),
+                            'type': inst.get('optType')
+                        } for inst in instruments[:5]
+                    ],
+                    'last_update': datetime.now().isoformat()
                 }
-            })
+                return jsonify({'success': True, 'data': result_data})
         
-        # 进行聚合分析
-        agg_all, agg_cp = collector.aggregate_analysis(all_trades, bucket_width, by=bucket_by, by_type=by_type)
+        elif exchange.lower() == 'binance':
+            # 获取Binance数据
+            response = requests.get("https://eapi.binance.com/eapi/v1/exchangeInfo", timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                symbols = [s for s in data.get('symbols', []) if s.get('underlying') == 'BTCUSDT'][:20]
+                
+                result_data = {
+                    'exchange': 'Binance',
+                    'status': 'online',
+                    'instruments_count': len(symbols),
+                    'top_instruments': [
+                        {
+                            'name': symbol.get('symbol'),
+                            'strike': symbol.get('strikePrice'),
+                            'expiry': symbol.get('expiryDate'),
+                            'type': symbol.get('side')
+                        } for symbol in symbols[:5]
+                    ],
+                    'last_update': datetime.now().isoformat()
+                }
+                return jsonify({'success': True, 'data': result_data})
         
-        # 保存分析结果
-        cp_dict = dict(agg_cp) if agg_cp else {}
-        collector.save_bucket_analysis(agg_all, cp_dict, bucket_width, bucket_by, minutes)
+        else:
+            return jsonify({'success': False, 'error': 'Unsupported exchange'})
+            
+    except Exception as e:
+        logger.error(f"获取{exchange}数据失败: {e}")
+        return jsonify({
+            'success': False, 
+            'error': f'获取{exchange}数据失败: {str(e)}',
+            'data': {
+                'exchange': exchange.title(),
+                'status': 'error',
+                'last_update': datetime.now().isoformat()
+            }
+        })
+
+@deribit_bp.route('/api/deribit/compare-exchanges')
+def compare_exchanges():
+    """对比三大交易所数据"""
+    try:
+        exchanges = ['deribit', 'okx', 'binance']
+        comparison_data = {
+            'timestamp': datetime.now().isoformat(),
+            'exchanges': {}
+        }
         
-        # 获取各交易所摘要
-        exchange_summary = collector.get_exchange_summary(minutes)
+        for exchange in exchanges:
+            try:
+                # 这里可以调用上面的get_exchange_data逻辑
+                # 简化版本，直接返回基础比较数据
+                comparison_data['exchanges'][exchange] = {
+                    'name': exchange.title(),
+                    'status': 'checking',
+                    'last_check': datetime.now().isoformat()
+                }
+            except Exception as e:
+                comparison_data['exchanges'][exchange] = {
+                    'name': exchange.title(),
+                    'status': 'error',
+                    'error': str(e)
+                }
         
         return jsonify({
             'success': True,
-            'message': f'成功收集到 {len(all_trades)} 笔交易数据',
-            'data': {
-                'total_trades': len(all_trades),
-                'time_window_minutes': minutes,
-                'bucket_width': bucket_width,
-                'bucket_type': bucket_by,
-                'exchanges': exchange_summary,
-                'bucket_analysis': [{'bucket': k, 'trades': v['trades'], 'amount': v['amount']} for k, v in agg_all],
-                'call_put_analysis': [{'bucket': k, 'call': v['CALL'], 'put': v['PUT']} for k, v in agg_cp] if agg_cp else [],
-                'collection_time': datetime.now().isoformat()
-            }
+            'data': comparison_data
         })
         
     except Exception as e:
-        logger.error(f"多交易所数据收集失败: {e}")
+        logger.error(f"交易所对比失败: {e}")
         return jsonify({
             'success': False,
-            'message': f'收集失败: {str(e)}'
+            'error': f'对比失败: {str(e)}'
         })
 
 @deribit_bp.route('/api/deribit/multi-exchange-analysis')

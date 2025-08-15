@@ -176,78 +176,91 @@
             </div>
         </div>
 
-        <!-- 多交易所数据收集控制面板 -->
+        <!-- 三大交易所API数据对比面板 -->
         <div class="row mb-4">
             <div class="col-12">
-                <div class="card border-info">
-                    <div class="card-header bg-info text-white">
-                        <h5 class="mb-0"><i class="bi bi-globe"></i> 多交易所数据收集 (Deribit + OKX + Binance)</h5>
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> 三大交易所实时数据对比 (Deribit + OKX + Binance)</h5>
                     </div>
                     <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-2">
-                                <label for="timeWindowSelect" class="form-label">时间窗口</label>
-                                <select class="form-select" id="timeWindowSelect">
-                                    <option value="15" selected>15分钟</option>
-                                    <option value="30">30分钟</option>
-                                    <option value="60">1小时</option>
-                                    <option value="120">2小时</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <label for="bucketWidthInput" class="form-label">分桶宽度</label>
-                                <input type="number" class="form-control" id="bucketWidthInput" 
-                                       value="5.0" min="0.1" step="0.1" max="100">
-                            </div>
-                            <div class="col-md-2">
-                                <label for="bucketTypeSelect" class="form-label">分桶类型</label>
-                                <select class="form-select" id="bucketTypeSelect">
-                                    <option value="price" selected>按价格</option>
-                                    <option value="strike">按行权价</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <label for="maxOkxInput" class="form-label">OKX合约数</label>
-                                <input type="number" class="form-control" id="maxOkxInput" 
-                                       value="400" min="10" max="1000">
-                            </div>
-                            <div class="col-md-2">
-                                <label for="maxBinanceInput" class="form-label">Binance合约数</label>
-                                <input type="number" class="form-control" id="maxBinanceInput" 
-                                       value="400" min="10" max="1000">
-                            </div>
-                            <div class="col-md-2">
-                                <div class="form-check mt-4">
-                                    <input class="form-check-input" type="checkbox" id="callPutSeparate" checked>
-                                    <label class="form-check-label" for="callPutSeparate">
-                                        CALL/PUT分离
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <button type="button" class="btn btn-info btn-lg" id="multiExchangeBtn">
-                                    <i class="bi bi-collection"></i> 收集多交易所数据
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-success w-100" id="refreshExchangeDataBtn">
+                                    <i class="bi bi-arrow-clockwise"></i> 刷新三大交易所数据
                                 </button>
-                                <button type="button" class="btn btn-outline-info" id="viewMultiAnalysisBtn">
-                                    <i class="bi bi-graph-up"></i> 查看分析结果
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-info w-100" id="compareOptionsBtn">
+                                    <i class="bi bi-bar-chart"></i> 期权价格对比
                                 </button>
-                                <button type="button" class="btn btn-outline-success" id="exportCsvBtn">
-                                    <i class="bi bi-download"></i> 导出CSV
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-warning w-100" id="volumeAnalysisBtn">
+                                    <i class="bi bi-activity"></i> 交易量分析
                                 </button>
                             </div>
                         </div>
-                        <div class="mt-3">
-                            <div id="multiExchangeStatus" class="alert alert-info" style="display: none;">
-                                <div class="d-flex align-items-center">
-                                    <div class="spinner-border spinner-border-sm me-2" role="status">
-                                        <span class="visually-hidden">Loading...</span>
+                        
+                        <!-- 三个交易所数据显示区域 -->
+                        <div id="exchangeDataContainer">
+                            <div class="row" id="exchangeCards">
+                                <!-- Deribit 卡片 -->
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-info">
+                                        <div class="card-header bg-info text-white">
+                                            <h6 class="mb-0"><i class="bi bi-building"></i> Deribit</h6>
+                                        </div>
+                                        <div class="card-body" id="deribitData">
+                                            <div class="text-center">
+                                                <div class="spinner-border text-info" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                                <p class="mt-2 text-muted">加载中...</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <span>正在收集多交易所数据，请稍候...</span>
+                                </div>
+                                
+                                <!-- OKX 卡片 -->
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-warning">
+                                        <div class="card-header bg-warning text-dark">
+                                            <h6 class="mb-0"><i class="bi bi-building"></i> OKX</h6>
+                                        </div>
+                                        <div class="card-body" id="okxData">
+                                            <div class="text-center">
+                                                <div class="spinner-border text-warning" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                                <p class="mt-2 text-muted">加载中...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Binance 卡片 -->
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-success">
+                                        <div class="card-header bg-success text-white">
+                                            <h6 class="mb-0"><i class="bi bi-building"></i> Binance</h6>
+                                        </div>
+                                        <div class="card-body" id="binanceData">
+                                            <div class="text-center">
+                                                <div class="spinner-border text-success" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                                <p class="mt-2 text-muted">加载中...</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div id="multiExchangeResults" style="display: none;">
-                                <!-- 动态生成结果 -->
-                            </div>
+                        </div>
+                        
+                        <!-- 对比分析结果显示区域 -->
+                        <div id="comparisonResults" style="display: none;">
+                            <!-- 动态生成对比结果 -->
                         </div>
                     </div>
                 </div>
@@ -337,9 +350,14 @@
             document.getElementById('startCollection').addEventListener('click', startDataCollection);
             document.getElementById('stopCollection').addEventListener('click', stopDataCollection);
             document.getElementById('manualAnalysis').addEventListener('click', performManualAnalysis);
-            document.getElementById('multiExchangeBtn').addEventListener('click', collectMultiExchangeData);
-            document.getElementById('viewMultiAnalysisBtn').addEventListener('click', viewMultiExchangeAnalysis);
-            document.getElementById('exportCsvBtn').addEventListener('click', exportMultiExchangeCsv);
+            document.getElementById('refreshExchangeDataBtn').addEventListener('click', refreshExchangeData);
+            document.getElementById('compareOptionsBtn').addEventListener('click', compareOptions);
+            document.getElementById('volumeAnalysisBtn').addEventListener('click', () => {
+                alert('交易量分析功能开发中...');
+            });
+            
+            // 页面加载时自动获取三大交易所数据
+            refreshExchangeData();
         });
         
         function initializeCharts() {
@@ -592,63 +610,163 @@
             }
         }
 
-        // 多交易所数据收集功能
-        async function collectMultiExchangeData() {
-            const statusDiv = document.getElementById('multiExchangeStatus');
-            const resultsDiv = document.getElementById('multiExchangeResults');
-            const button = document.getElementById('multiExchangeBtn');
+        // 三大交易所数据获取功能
+        async function refreshExchangeData() {
+            const exchanges = ['deribit', 'okx', 'binance'];
+            const button = document.getElementById('refreshExchangeDataBtn');
             
-            // 获取配置参数
-            const config = {
-                minutes: parseInt(document.getElementById('timeWindowSelect').value),
-                bucket_width: parseFloat(document.getElementById('bucketWidthInput').value),
-                bucket_by: document.getElementById('bucketTypeSelect').value,
-                max_okx: parseInt(document.getElementById('maxOkxInput').value),
-                max_binance: parseInt(document.getElementById('maxBinanceInput').value),
-                by_type: document.getElementById('callPutSeparate').checked
-            };
-            
-            // 显示加载状态
-            statusDiv.style.display = 'block';
-            resultsDiv.style.display = 'none';
             button.disabled = true;
+            button.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> 获取中...';
+            
+            // 并行获取三个交易所的数据
+            const promises = exchanges.map(exchange => fetchExchangeData(exchange));
             
             try {
-                const response = await fetch('/api/deribit/multi-exchange-collect', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(config)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    displayMultiExchangeResults(result.data);
-                    statusDiv.style.display = 'none';
-                    resultsDiv.style.display = 'block';
-                    
-                    // 如果有警告信息，显示但不阻止结果显示
-                    if (result.warning) {
-                        const warningDiv = document.createElement('div');
-                        warningDiv.className = 'alert alert-warning mt-2';
-                        warningDiv.innerHTML = `<i class="bi bi-exclamation-triangle"></i> ${result.warning}`;
-                        resultsDiv.insertBefore(warningDiv, resultsDiv.firstChild);
-                    }
-                } else {
-                    statusDiv.innerHTML = `<div class="alert alert-danger">
-                        <i class="bi bi-exclamation-triangle"></i> 收集失败: ${result.error || result.message}
-                    </div>`;
-                }
+                await Promise.all(promises);
+                button.innerHTML = '<i class="bi bi-check-circle"></i> 数据已更新';
+                setTimeout(() => {
+                    button.innerHTML = '<i class="bi bi-arrow-clockwise"></i> 刷新三大交易所数据';
+                }, 2000);
             } catch (error) {
-                console.error('Multi-exchange collection error:', error);
-                statusDiv.innerHTML = `<div class="alert alert-danger">
-                    <i class="bi bi-exclamation-triangle"></i> 网络错误: ${error.message}
-                </div>`;
+                button.innerHTML = '<i class="bi bi-exclamation-triangle"></i> 获取失败';
+                console.error('Error refreshing exchange data:', error);
             } finally {
                 button.disabled = false;
             }
+        }
+        
+        async function fetchExchangeData(exchange) {
+            const dataDiv = document.getElementById(`${exchange}Data`);
+            
+            try {
+                const response = await fetch(`/api/deribit/exchange-data/${exchange}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayExchangeData(exchange, result.data);
+                } else {
+                    displayExchangeError(exchange, result.error);
+                }
+            } catch (error) {
+                console.error(`Error fetching ${exchange} data:`, error);
+                displayExchangeError(exchange, error.message);
+            }
+        }
+        
+        function displayExchangeData(exchange, data) {
+            const dataDiv = document.getElementById(`${exchange}Data`);
+            
+            let html = `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge bg-success">在线</span>
+                    <small class="text-muted">${new Date(data.last_update).toLocaleTimeString()}</small>
+                </div>
+                <div class="row text-center mb-3">
+                    <div class="col-6">
+                        <h5 class="text-primary">${data.instruments_count}</h5>
+                        <small class="text-muted">期权合约</small>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-success">${data.top_instruments.length}</h5>
+                        <small class="text-muted">显示数量</small>
+                    </div>
+                </div>
+                <h6><i class="bi bi-list"></i> 热门合约</h6>
+                <div class="list-group list-group-flush">`;
+            
+            data.top_instruments.forEach(inst => {
+                const expiry = inst.expiry ? new Date(inst.expiry).toLocaleDateString() : 'N/A';
+                html += `
+                    <div class="list-group-item p-2">
+                        <div class="d-flex justify-content-between">
+                            <small><strong>${inst.name}</strong></small>
+                            <small class="text-muted">${inst.type || 'N/A'}</small>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <small>行权价: $${inst.strike || 'N/A'}</small>
+                            <small>到期: ${expiry}</small>
+                        </div>
+                    </div>`;
+            });
+            
+            html += '</div>';
+            dataDiv.innerHTML = html;
+        }
+        
+        function displayExchangeError(exchange, error) {
+            const dataDiv = document.getElementById(`${exchange}Data`);
+            dataDiv.innerHTML = `
+                <div class="text-center">
+                    <span class="badge bg-danger mb-2">离线</span>
+                    <p class="text-danger small">错误: ${error}</p>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="fetchExchangeData('${exchange}')">
+                        <i class="bi bi-arrow-clockwise"></i> 重试
+                    </button>
+                </div>`;
+        }
+        
+        async function compareOptions() {
+            const button = document.getElementById('compareOptionsBtn');
+            const resultsDiv = document.getElementById('comparisonResults');
+            
+            button.disabled = true;
+            button.innerHTML = '<i class="bi bi-hourglass-split"></i> 对比中...';
+            
+            try {
+                const response = await fetch('/api/deribit/compare-exchanges');
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayComparisonResults(result.data);
+                    resultsDiv.style.display = 'block';
+                    button.innerHTML = '<i class="bi bi-check-circle"></i> 对比完成';
+                } else {
+                    alert('对比失败: ' + result.error);
+                    button.innerHTML = '<i class="bi bi-bar-chart"></i> 期权价格对比';
+                }
+            } catch (error) {
+                console.error('Comparison error:', error);
+                alert('对比失败: ' + error.message);
+                button.innerHTML = '<i class="bi bi-bar-chart"></i> 期权价格对比';
+            } finally {
+                button.disabled = false;
+            }
+        }
+        
+        function displayComparisonResults(data) {
+            const resultsDiv = document.getElementById('comparisonResults');
+            
+            let html = `
+                <div class="card mt-3">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0"><i class="bi bi-graph-up"></i> 交易所对比分析</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted">更新时间: ${new Date(data.timestamp).toLocaleString()}</p>
+                        <div class="row">`;
+            
+            Object.entries(data.exchanges).forEach(([exchange, info]) => {
+                const statusColor = info.status === 'checking' ? 'warning' : 
+                                   info.status === 'error' ? 'danger' : 'success';
+                
+                html += `
+                    <div class="col-md-4 mb-2">
+                        <div class="card border-${statusColor}">
+                            <div class="card-body text-center">
+                                <h6>${info.name}</h6>
+                                <span class="badge bg-${statusColor}">${info.status}</span>
+                                <p class="small mt-2">${info.error || '状态检查中...'}</p>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            
+            html += `
+                        </div>
+                    </div>
+                </div>`;
+            
+            resultsDiv.innerHTML = html;
         }
 
         function displayMultiExchangeResults(data) {
