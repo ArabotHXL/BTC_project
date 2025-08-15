@@ -489,27 +489,59 @@ def get_exchange_data(exchange):
                 return jsonify({'success': True, 'data': result_data})
         
         elif exchange.lower() == 'binance':
-            # 获取Binance数据
-            response = requests.get("https://eapi.binance.com/eapi/v1/exchangeInfo", timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                symbols = [s for s in data.get('symbols', []) if s.get('underlying') == 'BTCUSDT'][:20]
-                
-                result_data = {
-                    'exchange': 'Binance',
-                    'status': 'online',
-                    'instruments_count': len(symbols),
-                    'top_instruments': [
-                        {
-                            'name': symbol.get('symbol'),
-                            'strike': symbol.get('strikePrice'),
-                            'expiry': symbol.get('expiryDate'),
-                            'type': symbol.get('side')
-                        } for symbol in symbols[:5]
-                    ],
-                    'last_update': datetime.now().isoformat()
-                }
-                return jsonify({'success': True, 'data': result_data})
+            # 获取Binance数据 - 使用现货API作为备用
+            try:
+                response = requests.get("https://eapi.binance.com/eapi/v1/exchangeInfo", timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    symbols = [s for s in data.get('symbols', []) if s.get('underlying') == 'BTCUSDT'][:20]
+                    
+                    result_data = {
+                        'exchange': 'Binance',
+                        'status': 'online',
+                        'instruments_count': len(symbols),
+                        'top_instruments': [
+                            {
+                                'name': symbol.get('symbol'),
+                                'strike': symbol.get('strikePrice'),
+                                'expiry': symbol.get('expiryDate'),
+                                'type': symbol.get('side')
+                            } for symbol in symbols[:5]
+                        ],
+                        'last_update': datetime.now().isoformat()
+                    }
+                    return jsonify({'success': True, 'data': result_data})
+                else:
+                    # 如果期权API失败，使用现货API作为备用
+                    response = requests.get("https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT", timeout=10)
+                    if response.status_code == 200:
+                        data = response.json()
+                        result_data = {
+                            'exchange': 'Binance',
+                            'status': 'online (spot)',
+                            'instruments_count': 1,
+                            'top_instruments': [
+                                {
+                                    'name': 'BTCUSDT',
+                                    'strike': 'N/A',
+                                    'expiry': 'Perpetual',
+                                    'type': 'Spot'
+                                }
+                            ],
+                            'last_update': datetime.now().isoformat()
+                        }
+                        return jsonify({'success': True, 'data': result_data})
+            except Exception as binance_error:
+                logger.warning(f"Binance API错误: {binance_error}")
+                return jsonify({
+                    'success': False, 
+                    'error': f'Binance API暂时不可用: {str(binance_error)}',
+                    'data': {
+                        'exchange': 'Binance',
+                        'status': 'error',
+                        'last_update': datetime.now().isoformat()
+                    }
+                })
         
         else:
             return jsonify({'success': False, 'error': 'Unsupported exchange'})
@@ -593,8 +625,9 @@ def get_multi_exchange_trades():
         except Exception as e:
             logger.warning(f"OKX数据获取失败: {e}")
         
-        # 获取Binance交易数据（使用期权API）
+        # 获取Binance交易数据（优先使用期权API，失败时使用现货API）
         try:
+            # 尝试期权API
             binance_response = requests.get("https://eapi.binance.com/eapi/v1/ticker/24hr", timeout=10)
             if binance_response.status_code == 200:
                 binance_data = binance_response.json()
@@ -603,16 +636,40 @@ def get_multi_exchange_trades():
                 btc_options = [item for item in binance_data if 'BTC' in item.get('symbol', '')][:50]
                 
                 for option in btc_options:
-                    price = float(option.get('lastPrice', 0))
-                    volume = float(option.get('volume', 0))
+                    try:
+                        price = float(option.get('lastPrice', 0))
+                        volume = float(option.get('volume', 0))
+                        
+                        if price > 0 and volume > 0:
+                            all_trades.append({
+                                'exchange': 'Binance',
+                                'price': price,
+                                'amount': volume,
+                                'timestamp': int(option.get('closeTime', 0)),
+                                'instrument': option.get('symbol', '')
+                            })
+                            
+                            total_volume += volume
+                            total_count += 1
+                            price_sum += price
+                            price_count += 1
+                    except (ValueError, TypeError) as parse_error:
+                        continue  # 跳过解析失败的数据
+            else:
+                # 如果期权API失败，使用现货数据作为备用
+                spot_response = requests.get("https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT", timeout=10)
+                if spot_response.status_code == 200:
+                    spot_data = spot_response.json()
+                    price = float(spot_data.get('lastPrice', 0))
+                    volume = float(spot_data.get('volume', 0))
                     
                     if price > 0 and volume > 0:
                         all_trades.append({
                             'exchange': 'Binance',
                             'price': price,
                             'amount': volume,
-                            'timestamp': int(option.get('closeTime', 0)),
-                            'instrument': option.get('symbol', '')
+                            'timestamp': int(spot_data.get('closeTime', 0)),
+                            'instrument': 'BTCUSDT-SPOT'
                         })
                         
                         total_volume += volume
