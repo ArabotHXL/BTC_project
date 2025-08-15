@@ -211,13 +211,16 @@
                                         <th style="width: 15%">
                                             {% if current_lang == 'en' %}Price ($){% else %}价格($){% endif %}
                                         </th>
-                                        <th style="width: 15%">
+                                        <th style="width: 12%">
                                             {% if current_lang == 'en' %}Electricity ($/kWh){% else %}电费($/kWh){% endif %}
+                                        </th>
+                                        <th style="width: 12%">
+                                            {% if current_lang == 'en' %}Hashrate (TH/s){% else %}算力(TH/s){% endif %}
                                         </th>
                                         <th style="width: 12%">
                                             {% if current_lang == 'en' %}Decay Rate (%/month){% else %}衰减率(%/月){% endif %}
                                         </th>
-                                        <th style="width: 13%">
+                                        <th style="width: 11%">
                                             {% if current_lang == 'en' %}Action{% else %}操作{% endif %}
                                         </th>
                                     </tr>
@@ -527,6 +530,10 @@
                 </td>
                 <td>
                     <input type="number" class="form-control form-control-sm" 
+                           min="1" max="500" placeholder="110" step="1" title="{% if current_lang == 'en' %}Custom hashrate (TH/s){% else %}自定义算力(TH/s){% endif %}">
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm" 
                            min="0" max="5" value="0" step="0.1" placeholder="0.5">
                 </td>
                 <td>
@@ -553,12 +560,16 @@
                 const row = document.getElementById(rowId);
                 const powerInput = row.querySelector('td:nth-child(3) input');
                 const priceInput = row.querySelector('td:nth-child(4) input');
+                const hashrateInput = row.querySelector('td:nth-child(6) input');
                 
                 if (powerInput) {
                     powerInput.value = minerModels[selectedModel].power;
                 }
                 if (priceInput) {
                     priceInput.value = minerModels[selectedModel].price;
+                }
+                if (hashrateInput) {
+                    hashrateInput.value = minerModels[selectedModel].hashrate;
                 }
             }
         }
@@ -720,11 +731,12 @@
                 const power = parseFloat(cells[2].querySelector('input').value) || 0;
                 const price = parseFloat(cells[3].querySelector('input').value) || 0;
                 const electricity = parseFloat(cells[4].querySelector('input').value) || 0;
-                const decayRate = parseFloat(cells[5].querySelector('input').value) || 0;
+                const customHashrate = parseFloat(cells[5].querySelector('input').value) || null;
+                const decayRate = parseFloat(cells[6].querySelector('input').value) || 0;
                 
                 if (model && quantity > 0 && power > 0 && electricity > 0 && price > 0) {
-                    // 检查是否有自定义算力
-                    const customHashrate = row.getAttribute('data-custom-hashrate');
+                    // 使用输入框中的自定义算力，如果没有则使用矿机模型默认值
+                    const hashrateValue = customHashrate || minerModels[model]?.hashrate || 0;
                     
                     miners.push({
                         model: model,
@@ -733,7 +745,7 @@
                         machine_price: price,
                         electricity_cost: electricity,
                         decay_rate: decayRate,
-                        hashrate: customHashrate ? parseFloat(customHashrate) : (minerModels[model]?.hashrate || 0)
+                        hashrate: hashrateValue
                     });
                 }
             });
@@ -953,12 +965,8 @@
             cells[2].querySelector('input').value = power;
             cells[3].querySelector('input').value = price;
             cells[4].querySelector('input').value = electricity;
-            cells[5].querySelector('input').value = decayRate || 0;
-            
-            // 如果有自定义算力，存储在row的data属性中
-            if (hashrate) {
-                lastRow.setAttribute('data-custom-hashrate', hashrate);
-            }
+            cells[5].querySelector('input').value = hashrate || (minerModels[model]?.hashrate || 110);
+            cells[6].querySelector('input').value = decayRate || 0;
         }
 
         // Export functions
