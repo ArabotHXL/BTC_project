@@ -136,6 +136,7 @@ TRANSLATIONS = {
         'total_hashrate': 'Total Hashrate',
         'total_power': 'Total Power',
         'total_daily_profit': 'Total Daily Profit',
+        'daily_profit': 'Daily Profit',
     },
     'zh': {
         'btc_mining_calculator': 'BTC挖矿计算器',
@@ -266,6 +267,7 @@ TRANSLATIONS = {
         'total_hashrate': '总算力',
         'total_power': '总功耗',
         'total_daily_profit': '日收益总计',
+        'daily_profit': '日收益',
     }
 }
 

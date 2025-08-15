@@ -1,0 +1,74 @@
+{
+  "timestamp": "2025-08-15T20:32:18.851788",
+  "overall_accuracy": 87.5,
+  "passed_tests": 7,
+  "total_tests": 8,
+  "total_duration": 1.2168779373168945,
+  "test_results": [
+    {
+      "test_name": "挖矿计算器准确性测试",
+      "passed": true,
+      "accuracy": 100.0,
+      "duration": 0.001447916030883789,
+      "error": null,
+      "timestamp": "2025-08-15T20:32:17.634955"
+    },
+    {
+      "test_name": "批量处理器性能测试",
+      "passed": true,
+      "accuracy": 100.0,
+      "duration": 0.0005059242248535156,
+      "error": null,
+      "timestamp": "2025-08-15T20:32:17.635534"
+    },
+    {
+      "test_name": "API端点测试",
+      "passed": false,
+      "accuracy": 66.66666666666666,
+      "duration": 0.6059553623199463,
+      "error": null,
+      "timestamp": "2025-08-15T20:32:18.241560"
+    },
+    {
+      "test_name": "数据库操作测试",
+      "passed": true,
+      "accuracy": 100.0,
+      "duration": 0.5305955410003662,
+      "error": null,
+      "timestamp": "2025-08-15T20:32:18.772310"
+    },
+    {
+      "test_name": "算力衰减计算测试",
+      "passed": true,
+      "accuracy": 100.0,
+      "duration": 1.239776611328125e-05,
+      "error": null,
+      "timestamp": "2025-08-15T20:32:18.772511"
+    },
+    {
+      "test_name": "多语言支持测试",
+      "passed": true,
+      "accuracy": 100.0,
+      "duration": 0.0013766288757324219,
+      "error": null,
+      "timestamp": "2025-08-15T20:32:18.773970"
+    },
+    {
+      "test_name": "导出功能测试",
+      "passed": true,
+      "accuracy": 100.0,
+      "duration": 5.0067901611328125e-06,
+      "error": null,
+      "timestamp": "2025-08-15T20:32:18.774431"
+    },
+    {
+      "test_name": "内存性能测试",
+      "passed": true,
+      "accuracy": 100.0,
+      "duration": 0.07480025291442871,
+      "error": null,
+      "timestamp": "2025-08-15T20:32:18.849294"
+    }
+  ],
+  "success": false
+}

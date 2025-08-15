@@ -1,1 +1,0 @@
-{"error":"'NetworkSnapshot' object has no attribute 'timestamp'","success":false}

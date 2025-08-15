@@ -1,1 +1,0 @@
-{"data":{"btc_market_cap":null,"btc_price":123480.0,"btc_volume_24h":null,"fear_greed_index":"69","network_difficulty":129435235580345.0,"network_hashrate":891.0,"price_change_1h":0.0,"price_change_24h":0.0,"price_change_7d":0.0,"timestamp":"2025-08-13T22:57:07.639389"},"success":true}
