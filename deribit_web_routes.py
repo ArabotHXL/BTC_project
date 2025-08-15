@@ -38,51 +38,105 @@ def deribit_analysis_page():
 
 @deribit_bp.route('/api/deribit/status')
 def api_status():
-    """检查Deribit API连接状态"""
+    """检查所有交易所API连接状态"""
     try:
-        collector = DeribitDataCollector()
-        result = collector.make_request("public/get_time")
+        collector = get_multi_collector()
+        status_results = {}
         
-        if result:
-            return jsonify({
-                'success': True,
+        # 检查Deribit API
+        try:
+            deribit_collector = DeribitDataCollector()
+            deribit_result = deribit_collector.make_request("public/get_time")
+            status_results['deribit'] = {
+                'status': 'online' if deribit_result else 'offline',
+                'message': 'API连接正常' if deribit_result else 'API连接失败',
+                'server_time': deribit_result if deribit_result else None
+            }
+        except Exception as e:
+            status_results['deribit'] = {
+                'status': 'error',
+                'message': f'检查失败: {str(e)}'
+            }
+        
+        # 检查OKX API
+        try:
+            import requests
+            okx_response = requests.get("https://www.okx.com/api/v5/public/time", timeout=10)
+            okx_response.raise_for_status()
+            status_results['okx'] = {
+                'status': 'online',
                 'message': 'API连接正常',
-                'server_time': result
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'message': 'API连接失败'
-            })
+                'server_time': okx_response.json().get('data', [{}])[0].get('ts')
+            }
+        except Exception as e:
+            status_results['okx'] = {
+                'status': 'error',
+                'message': f'OKX API检查失败: {str(e)}'
+            }
+        
+        # 检查Binance API
+        try:
+            import requests
+            binance_response = requests.get("https://eapi.binance.com/eapi/v1/time", timeout=10)
+            binance_response.raise_for_status()
+            status_results['binance'] = {
+                'status': 'online',
+                'message': 'API连接正常',
+                'server_time': binance_response.json().get('serverTime')
+            }
+        except Exception as e:
+            status_results['binance'] = {
+                'status': 'error',
+                'message': f'Binance API检查失败: {str(e)}'
+            }
+        
+        # 计算总体状态
+        online_count = sum(1 for status in status_results.values() if status['status'] == 'online')
+        overall_success = online_count > 0
+        
+        return jsonify({
+            'success': overall_success,
+            'message': f'{online_count}/3 个交易所API连接正常',
+            'exchanges': status_results,
+            'online_count': online_count,
+            'total_count': 3
+        })
+        
     except Exception as e:
-        logger.error(f"API状态检查失败: {e}")
+        logger.error(f"多交易所API状态检查失败: {e}")
         return jsonify({
             'success': False,
-            'message': f'检查失败: {str(e)}'
+            'message': f'检查失败: {str(e)}',
+            'exchanges': {}
         })
 
 @deribit_bp.route('/api/deribit/analysis-data')
 def get_analysis_data():
-    """获取分析数据"""
+    """获取多交易所分析数据"""
     try:
-        # 连接数据库
+        collector = get_multi_collector()
+        
+        # 获取多交易所统计数据
+        multi_stats = collector.get_multi_exchange_stats()
+        
+        # 连接Deribit数据库获取历史数据
         conn = sqlite3.connect('deribit_trades.db')
         cursor = conn.cursor()
         
-        # 获取基础统计
+        # 获取Deribit历史统计
         cursor.execute('SELECT COUNT(*) FROM trades')
-        total_trades = cursor.fetchone()[0]
+        deribit_trades = cursor.fetchone()[0]
         
         cursor.execute('SELECT SUM(amount), AVG(price) FROM trades')
-        stats = cursor.fetchone()
-        total_volume = stats[0] if stats[0] else 0
-        avg_price = stats[1] if stats[1] else 0
+        deribit_stats = cursor.fetchone()
+        deribit_volume = deribit_stats[0] if deribit_stats[0] else 0
+        deribit_avg_price = deribit_stats[1] if deribit_stats[1] else 0
         
         # 获取最新更新时间
         cursor.execute('SELECT MAX(collected_at) FROM trades')
         last_update = cursor.fetchone()[0]
         
-        # 获取价格区间分析
+        # 获取价格区间分析（从多交易所数据）
         cursor.execute('''
             SELECT price_range, trade_count, total_volume, avg_price, percentage
             FROM price_range_analysis
@@ -99,17 +153,12 @@ def get_analysis_data():
                 'percentage': row[4]
             })
         
-        # 获取买卖方向统计
-        cursor.execute('''
-            SELECT direction, COUNT(*), SUM(amount)
-            FROM trades
-            GROUP BY direction
-        ''')
-        direction_stats = {'buy': 0, 'sell': 0}
-        for row in cursor.fetchall():
-            direction_stats[row[0]] = row[2] if row[2] else 0
-        
         conn.close()
+        
+        # 合并所有交易所数据
+        total_trades = multi_stats.get('total_trades', 0) + deribit_trades
+        total_volume = multi_stats.get('total_volume', 0) + deribit_volume
+        avg_price = multi_stats.get('avg_price', deribit_avg_price)
         
         return jsonify({
             'success': True,
@@ -120,12 +169,17 @@ def get_analysis_data():
                 'last_update': last_update,
                 'db_records': total_trades,
                 'price_ranges': price_ranges,
-                'direction_stats': direction_stats
+                'exchange_breakdown': {
+                    'deribit': {'trades': deribit_trades, 'volume': deribit_volume},
+                    'okx': multi_stats.get('okx_stats', {}),
+                    'binance': multi_stats.get('binance_stats', {})
+                },
+                'multi_exchange_active': True
             }
         })
         
     except Exception as e:
-        logger.error(f"获取分析数据失败: {e}")
+        logger.error(f"获取多交易所分析数据失败: {e}")
         return jsonify({
             'success': False,
             'message': f'获取数据失败: {str(e)}'
@@ -193,22 +247,36 @@ def stop_collection():
 
 @deribit_bp.route('/api/deribit/manual-analysis', methods=['POST'])
 def manual_analysis():
-    """手动执行数据分析"""
+    """手动执行多交易所数据分析"""
     try:
         data = request.get_json()
         instrument = data.get('instrument', 'BTC-PERPETUAL')
         
-        # 执行分析
+        # 执行原Deribit分析
         poc = DeribitAnalysisPOC()
-        
         if instrument == 'auto':
             instrument = None
-            
         poc.collect_and_analyze(instrument)
+        
+        # 执行多交易所数据收集
+        collector = get_multi_collector()
+        all_trades = collector.collect_all_exchanges(minutes=15, max_okx=50, max_binance=50)
+        
+        if all_trades:
+            # 进行聚合分析
+            agg_all, agg_cp = collector.aggregate_analysis(all_trades, 5.0, by="price", by_type=True)
+            
+            # 保存分析结果
+            cp_dict = dict(agg_cp) if agg_cp else {}
+            collector.save_bucket_analysis(agg_all, cp_dict, 5.0, "price", 15)
+            
+            message = f'多交易所分析完成 (Deribit + OKX + Binance)，收集到 {len(all_trades)} 笔交易'
+        else:
+            message = 'Deribit分析完成，多交易所数据收集无结果'
         
         return jsonify({
             'success': True,
-            'message': '分析完成'
+            'message': message
         })
         
     except Exception as e:

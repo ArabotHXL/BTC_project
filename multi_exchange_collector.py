@@ -371,6 +371,63 @@ class MultiExchangeCollector:
         
         return agg_sorted, cp_sorted
     
+    def get_multi_exchange_stats(self):
+        """获取多交易所统计数据"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # 获取各交易所统计（最近24小时）
+            cutoff_time = self.now_ms() - 24 * 60 * 60 * 1000
+            cursor.execute('''
+                SELECT exchange, COUNT(*), SUM(amount), AVG(price)
+                FROM multi_exchange_trades
+                WHERE timestamp > ?
+                GROUP BY exchange
+            ''', (cutoff_time,))
+            
+            exchange_stats = {}
+            total_trades = 0
+            total_volume = 0
+            
+            for row in cursor.fetchall():
+                exchange, trades, volume, avg_price = row
+                exchange_stats[exchange.lower() + '_stats'] = {
+                    'trades': trades,
+                    'volume': volume if volume else 0,
+                    'avg_price': avg_price if avg_price else 0
+                }
+                total_trades += trades
+                total_volume += volume if volume else 0
+            
+            # 计算总平均价格
+            cursor.execute('''
+                SELECT AVG(price) FROM multi_exchange_trades
+                WHERE timestamp > ?
+            ''', (cutoff_time,))
+            
+            avg_price_result = cursor.fetchone()
+            avg_price = avg_price_result[0] if avg_price_result and avg_price_result[0] else 0
+            
+            conn.close()
+            
+            return {
+                'total_trades': total_trades,
+                'total_volume': total_volume,
+                'avg_price': avg_price,
+                **exchange_stats
+            }
+            
+        except Exception as e:
+            logger.error(f"获取多交易所统计失败: {e}")
+            return {
+                'total_trades': 0,
+                'total_volume': 0,
+                'avg_price': 0,
+                'okx_stats': {},
+                'binance_stats': {}
+            }
+    
     def save_bucket_analysis(self, agg_data, cp_data, bucket_width, bucket_type, time_window_minutes):
         """保存分桶分析结果到数据库"""
         conn = sqlite3.connect(self.db_path)
