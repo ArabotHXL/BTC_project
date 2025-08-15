@@ -142,6 +142,120 @@
             </div>
         </div>
 
+        <!-- 三大交易所交易数据分析 (顶部重要位置) -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            三大交易所实时交易数据 (Deribit + OKX + Binance)
+                            <span class="badge bg-success ms-2" id="tradingDataStatus">实时监控</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- 统计卡片行 -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card bg-dark text-light border-warning">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-graph-up text-warning h3"></i>
+                                        <h5 class="card-title">总交易数</h5>
+                                        <h3 class="text-warning" id="exchangeTotalTrades">
+                                            <div class="spinner-border spinner-border-sm" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </h3>
+                                        <small class="text-muted">三大交易所合计</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-dark text-light border-info">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-currency-bitcoin text-info h3"></i>
+                                        <h5 class="card-title">总交易量</h5>
+                                        <h3 class="text-info" id="exchangeTotalVolume">
+                                            <div class="spinner-border spinner-border-sm" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </h3>
+                                        <small class="text-muted">Deribit + OKX + Binance</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-dark text-light border-success">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-cash text-success h3"></i>
+                                        <h5 class="card-title">平均价格</h5>
+                                        <h3 class="text-success" id="exchangeAvgPrice">
+                                            <div class="spinner-border spinner-border-sm" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </h3>
+                                        <small class="text-muted">加权平均价格</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-dark text-light border-secondary">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-clock text-secondary h3"></i>
+                                        <h5 class="card-title">最新更新</h5>
+                                        <h6 class="text-secondary" id="exchangeLastUpdate">
+                                            <div class="spinner-border spinner-border-sm" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </h6>
+                                        <small class="text-muted">EST时区</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 图表行 -->
+                        <div class="row mb-4">
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5><i class="bi bi-bar-chart"></i> 价格区间交易量分布</h5>
+                                        <canvas id="exchangePriceRangeChart" width="400" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5><i class="bi bi-pie-chart"></i> 交易方向分布</h5>
+                                        <canvas id="exchangeDirectionChart" width="200" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 价格区间详细数据 -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5><i class="bi bi-table"></i> 价格区间分析详情</h5>
+                                        <div id="exchangeLoadingIndicator" class="text-center p-4">
+                                            <div class="spinner-border text-primary mx-auto mb-2"></div>
+                                            <p>正在加载交易数据...</p>
+                                        </div>
+                                        <div id="exchangePriceRangeDetails" style="display: none;">
+                                            <!-- 动态生成内容 -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 图表和分析行 -->
         <div class="row">
             <div class="col-md-8">
