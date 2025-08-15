@@ -470,6 +470,7 @@
 
         let minerRowCount = 0;
         let calculationResults = [];
+        let calculationSummary = {};
         const maxMiners = {{ user_plan.max_miners }};
         let bypassUsed = false;
 
@@ -722,6 +723,7 @@
                 console.log('Received data:', data);
                 if (data.success) {
                     calculationResults = data.results;
+                    calculationSummary = data.summary;
                     displayBatchResults(data.results, data.summary);
                     showExportOptions();
                 } else {
