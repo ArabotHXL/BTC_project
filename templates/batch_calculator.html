@@ -845,15 +845,22 @@
                             const worst = sortedForSummary[sortedForSummary.length - 1];
                             
                             if (best && worst && best.daily_profit !== worst.daily_profit) {
-                                return \`
+                                const isEnglish = '{% if current_lang == "en" %}true{% else %}false{% endif %}' === 'true';
+                                const analysisTitle = isEnglish ? 'Performance Analysis:' : '效率分析:';
+                                const bestLabel = isEnglish ? 'Best: Miner #' : '最佳: #';
+                                const worstLabel = isEnglish ? 'Lowest: Miner #' : '最差: #';
+                                const dayUnit = isEnglish ? '/day' : '/天';
+                                const minerUnit = isEnglish ? ' - $' : '号矿机 - $';
+                                
+                                return `
                                 <div class="mt-3 p-2 bg-info bg-opacity-10 border border-info rounded">
                                     <div class="small">
-                                        <strong>{% if current_lang == "en" %}Performance Analysis:{% else %}效率分析:{% endif %}</strong><br>
-                                        <span class="text-success">🏆 {% if current_lang == "en" %}Best: Miner #\${best.miner_number} - $\${(best.daily_profit || 0).toFixed(2)}/day{% else %}最佳: #\${best.miner_number}号矿机 - $\${(best.daily_profit || 0).toFixed(2)}/天{% endif %}</span><br>
-                                        <span class="text-warning">📊 {% if current_lang == "en" %}Lowest: Miner #\${worst.miner_number} - $\${(worst.daily_profit || 0).toFixed(2)}/day{% else %}最差: #\${worst.miner_number}号矿机 - $\${(worst.daily_profit || 0).toFixed(2)}/天{% endif %}</span>
+                                        <strong>${analysisTitle}</strong><br>
+                                        <span class="text-success">🏆 ${bestLabel}${best.miner_number}${minerUnit}${(best.daily_profit || 0).toFixed(2)}${dayUnit}</span><br>
+                                        <span class="text-warning">📊 ${worstLabel}${worst.miner_number}${minerUnit}${(worst.daily_profit || 0).toFixed(2)}${dayUnit}</span>
                                     </div>
                                 </div>
-                                \`;
+                                `;
                             }
                         }
                         return '';
@@ -889,10 +896,13 @@
                 
                 // 标记最高和最低效率矿机
                 if (sortedResults.length > 1) {
+                    const isEnglish = '{% if current_lang == "en" %}true{% else %}false{% endif %}' === 'true';
                     if (index === 0 && result.daily_profit > 0) {
-                        statusBadge = '<span class="badge bg-success ms-1">{% if current_lang == "en" %}BEST{% else %}最佳{% endif %}</span>';
+                        const bestText = isEnglish ? 'BEST' : '最佳';
+                        statusBadge = `<span class="badge bg-success ms-1">${bestText}</span>`;
                     } else if (index === sortedResults.length - 1 && sortedResults.length > 2) {
-                        statusBadge = '<span class="badge bg-warning ms-1">{% if current_lang == "en" %}LOWEST{% else %}最差{% endif %}</span>';
+                        const worstText = isEnglish ? 'LOWEST' : '最差';
+                        statusBadge = `<span class="badge bg-warning ms-1">${worstText}</span>`;
                     }
                 }
                 
