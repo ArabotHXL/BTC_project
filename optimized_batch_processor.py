@@ -105,7 +105,7 @@ class OptimizedBatchProcessor:
             if daily_profit > 0:
                 roi_days = 365  # 默认值，可以根据需要调整
             else:
-                roi_days = float('inf')
+                roi_days = 999999  # 使用大数值代替infinity，避免JSON序列化问题
             
             return {
                 'model': model,
@@ -175,6 +175,10 @@ class OptimizedBatchProcessor:
                     gc.collect()
             
             # 创建摘要
+            # 计算平均ROI（排除无效值）
+            valid_roi_results = [r for r in results if r.get('roi_days', 0) < 999999 and r.get('roi_days', 0) > 0]
+            average_roi = round(sum(r.get('roi_days', 0) for r in valid_roi_results) / max(1, len(valid_roi_results)), 1) if valid_roi_results else 999999
+            
             summary = {
                 'total_miners': total_miners,
                 'total_daily_profit': round(total_daily_profit, 2),
@@ -182,7 +186,7 @@ class OptimizedBatchProcessor:
                 'total_daily_cost': round(total_daily_cost, 2),
                 'total_monthly_profit': round(total_daily_profit * 30, 2),
                 'unique_groups': len(results),
-                'average_roi_days': round(sum(r.get('roi_days', 0) for r in results if r.get('roi_days', 0) != float('inf')) / max(1, len([r for r in results if r.get('roi_days', 0) != float('inf')])), 1)
+                'average_roi_days': average_roi
             }
             
             logger.info(f"批量处理完成: {len(results)} 组, 总矿机: {total_miners}, 日收益: ${total_daily_profit:,.2f}")
