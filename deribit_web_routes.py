@@ -237,19 +237,19 @@ def get_analysis_data():
         total_trades = multi_stats.get('total_trades', 0) + deribit_trades
         total_volume = multi_stats.get('total_volume', 0) + deribit_volume
         
-        # 修复平均价格计算 - 始终优先使用Deribit的真实价格数据
-        if deribit_avg_price and deribit_avg_price > 50000:  # 确保使用合理的BTC价格
+        # 正确计算期权平均价格 - 期权价格以BTC为单位，通常是小数
+        if deribit_avg_price and deribit_avg_price > 0:  # 期权价格应该大于0
             avg_price = deribit_avg_price
-            logger.info(f"使用Deribit平均价格: ${avg_price:,.2f}")
+            logger.info(f"使用Deribit期权平均价格: {avg_price:.6f} BTC")
         else:
             # 如果没有Deribit数据，使用多交易所数据
             multi_avg = multi_stats.get('avg_price', 0)
-            if multi_avg and multi_avg > 50000:
+            if multi_avg and multi_avg > 0:
                 avg_price = multi_avg
-                logger.info(f"使用多交易所平均价格: ${avg_price:,.2f}")
+                logger.info(f"使用多交易所期权平均价格: {avg_price:.6f} BTC")
             else:
-                avg_price = 118500  # 使用当前BTC价格作为后备
-                logger.warning(f"使用后备价格: ${avg_price:,.2f}")
+                avg_price = 0.001  # 使用典型期权价格作为后备
+                logger.warning(f"使用后备期权价格: {avg_price:.6f} BTC")
         
         return jsonify({
             'success': True,
