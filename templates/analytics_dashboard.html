@@ -1208,21 +1208,28 @@
         
         // 初始化和定时更新
         document.addEventListener('DOMContentLoaded', function() {
-            initPriceChart();
-            initNetworkHistoryCharts();
+            console.log('🔥 DOMContentLoaded fired - starting initialization...');
             
-            // 立即加载数据
-            fetchMarketData();
-            fetchTechnicalIndicators(); // 立即加载技术指标
-            fetchPriceHistory();
-            fetchNetworkHistory(); // 加载网络历史数据
+            try {
+                initPriceChart();
+                initNetworkHistoryCharts();
+                
+                // 立即加载数据
+                fetchMarketData();
+                fetchTechnicalIndicators(); // 立即加载技术指标
+                fetchPriceHistory();
+                fetchNetworkHistory(); // 加载网络历史数据
+                
+                // 加载服务器端传递的数据
+                console.log('Loading server-side data...');
+                loadServerSideData();
+            } catch (error) {
+                console.error('❌ Error in initial setup:', error);
+            }
             
-            // 加载服务器端传递的数据
-            console.log('Loading server-side data...');
-            loadServerSideData();
-            
-            // 初始化三大交易所图表和数据
-            console.log('🚀 Initializing three-exchange trading data visualization...');
+            // 初始化三大交易所图表和数据 (独立执行，避免被前面的错误影响)
+            setTimeout(function() {
+                console.log('🚀 Initializing three-exchange trading data visualization...');
             
             // 先检查HTML元素是否存在
             const exchangeElements = [
@@ -1244,6 +1251,7 @@
             } catch (error) {
                 console.error('❌ Error initializing three-exchange features:', error);
             }
+            }, 1000); // 延迟1秒执行，确保页面完全加载
             
             // 设置定时更新
             setInterval(fetchMarketData, 60000);        // 每分钟更新市场数据
