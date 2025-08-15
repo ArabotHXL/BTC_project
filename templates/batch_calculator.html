@@ -742,6 +742,23 @@
         }
 
         function collectMinerData() {
+            // 优先使用全部数据（如果有CSV上传的完整数据）
+            if (window.allMinersData && window.allMinersData.length > 0) {
+                const miners = window.allMinersData.map((data, index) => ({
+                    miner_number: (index + 1).toString(),
+                    model: data.model,
+                    quantity: data.quantity,
+                    power_consumption: data.power,
+                    machine_price: data.price,
+                    electricity_cost: data.electricity,
+                    decay_rate: data.decayRate || 0,
+                    hashrate: data.hashrate
+                }));
+                console.log('使用完整CSV数据:', miners.length, '台矿机');
+                return miners;
+            }
+            
+            // 否则从DOM收集数据
             const miners = [];
             const rows = document.querySelectorAll('#minersTableBody tr');
             
@@ -1118,9 +1135,42 @@
                     if (processedCount < validLines.length) {
                         setTimeout(processBatch, 1); // 最小延迟
                     } else {
-                        // 一次性插入所有HTML
-                        tbody.innerHTML = htmlChunks.join('');
-                        console.log('CSV处理完成，共处理:', validLines.length, '行');
+                        // 性能优化：只显示前100行，存储全部数据
+                        const MAX_DISPLAY_ROWS = 100;
+                        const allRowsHTML = htmlChunks.join('');
+                        
+                        if (validLines.length > MAX_DISPLAY_ROWS) {
+                            // 只显示前100行
+                            const parser = new DOMParser();
+                            const tempDoc = parser.parseFromString(`<table><tbody>${allRowsHTML}</tbody></table>`, 'text/html');
+                            const allRows = tempDoc.querySelectorAll('tr');
+                            const limitedHTML = Array.from(allRows).slice(0, MAX_DISPLAY_ROWS).map(row => row.outerHTML).join('');
+                            
+                            tbody.innerHTML = limitedHTML;
+                            
+                            // 显示性能提示
+                            const notice = document.getElementById('performanceNotice') || document.createElement('div');
+                            notice.id = 'performanceNotice';
+                            notice.className = 'alert alert-info mb-3';
+                            notice.innerHTML = `<i class="bi bi-info-circle me-2"></i>
+                                {% if current_lang == 'en' %}
+                                Showing first ${MAX_DISPLAY_ROWS} of ${validLines.length} rows for optimal performance. All data is included in calculations.
+                                {% else %}
+                                为保持最佳性能，显示${validLines.length}行中的前${MAX_DISPLAY_ROWS}行。所有数据都会参与计算。
+                                {% endif %}`;
+                            
+                            const tableContainer = tbody.closest('.table-responsive').parentElement;
+                            if (!document.getElementById('performanceNotice')) {
+                                tableContainer.insertBefore(notice, tbody.closest('.table-responsive'));
+                            }
+                        } else {
+                            tbody.innerHTML = allRowsHTML;
+                        }
+                        
+                        // 存储所有数据到全局变量供计算使用
+                        window.allMinersData = validLines;
+                        
+                        console.log('CSV处理完成，共处理:', validLines.length, '行，显示:', Math.min(validLines.length, MAX_DISPLAY_ROWS), '行');
                         updateTotalCount();
                         updateEmptyState();
                     }
