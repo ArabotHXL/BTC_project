@@ -1064,51 +1064,69 @@
                 `;
                 tbody.appendChild(progressContainer);
                 
-                // 优化的批量处理 - 使用requestAnimationFrame
+                // 超快速批量处理 - 大块HTML字符串
                 let processedCount = 0;
-                const batchSize = 50;  // 减少批次大小
+                const batchSize = 200; // 增加批次大小
+                let htmlChunks = [];
                 
                 function processBatch() {
                     const endIndex = Math.min(processedCount + batchSize, validLines.length);
-                    const fragment = document.createDocumentFragment();
+                    let batchHTML = '';
                     
-                    // 批量创建DOM元素到fragment
+                    // 预构建HTML字符串
                     for (let i = processedCount; i < endIndex; i++) {
                         const data = validLines[i];
-                        const row = createMinerRowElement(data);
-                        fragment.appendChild(row);
+                        minerRowCount++;
+                        const finalHashrate = data.hashrate || (minerModels[data.model]?.hashrate || 110);
+                        
+                        batchHTML += `
+                            <tr id="minerRow${minerRowCount}">
+                                <td><input type="text" class="form-control" value="${minerRowCount}" readonly style="max-width: 80px;"></td>
+                                <td>
+                                    <select class="form-select" onchange="updateMinerDefaults('minerRow${minerRowCount}')">
+                                        ${Object.keys(minerModels).map(m => 
+                                            `<option value="${m}" ${m === data.model ? 'selected' : ''}>${m}</option>`
+                                        ).join('')}
+                                    </select>
+                                </td>
+                                <td><input type="number" class="form-control" value="${data.quantity}" min="1" onchange="updateTotalCount()"></td>
+                                <td><input type="number" class="form-control" value="${data.power}" min="1"></td>
+                                <td><input type="number" class="form-control" value="${data.price}" min="0" step="0.01"></td>
+                                <td><input type="number" class="form-control" value="${data.electricity}" min="0" step="0.001"></td>
+                                <td><input type="number" class="form-control" value="${finalHashrate}" min="1" step="0.1"></td>
+                                <td><input type="number" class="form-control" value="${data.decayRate}" min="0" max="5" step="0.01"></td>
+                                <td>
+                                    <button class="btn btn-outline-danger btn-sm" onclick="removeMinerRow(this)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
                     }
                     
-                    // 一次性添加到DOM
-                    if (processedCount === 0) {
-                        tbody.innerHTML = ''; // 清除进度条
-                    }
-                    tbody.appendChild(fragment);
-                    
+                    htmlChunks.push(batchHTML);
                     processedCount = endIndex;
                     
                     // 更新进度
                     const progress = Math.round((processedCount / validLines.length) * 100);
                     const progressBar = document.getElementById('csvProgress');
                     const progressText = document.getElementById('csvProgressText');
-                    if (progressBar) {
-                        progressBar.style.width = progress + '%';
-                    }
-                    if (progressText) {
-                        progressText.textContent = `Loading... ${progress}%`;
-                    }
+                    if (progressBar) progressBar.style.width = progress + '%';
+                    if (progressText) progressText.textContent = `Loading... ${progress}%`;
                     
                     // 继续处理或完成
                     if (processedCount < validLines.length) {
-                        requestAnimationFrame(processBatch); // 使用requestAnimationFrame减少卡顿
+                        setTimeout(processBatch, 1); // 最小延迟
                     } else {
+                        // 一次性插入所有HTML
+                        tbody.innerHTML = htmlChunks.join('');
                         console.log('CSV处理完成，共处理:', validLines.length, '行');
                         updateTotalCount();
                         updateEmptyState();
                     }
                 }
                 
-                requestAnimationFrame(processBatch);
+                processBatch();
             };
             
             reader.onerror = function(e) {
