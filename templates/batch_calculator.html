@@ -899,7 +899,26 @@
                     const line = lines[i].trim();
                     if (!line) continue;
                     
-                    const [model, quantity, power, price, electricity, decayRate] = line.split(',').map(s => s.trim());
+                    const parts = line.split(',').map(s => s.trim());
+                    
+                    // 支持两种CSV格式:
+                    // 格式1: Model,Quantity,Power,Price,Electricity,DecayRate
+                    // 格式2: Model,Quantity,Power,Price,Electricity,Hashrate(TH/s),DecayRate(%/月)
+                    let model, quantity, power, price, electricity, decayRate;
+                    
+                    if (parts.length >= 6) {
+                        if (parts.length === 6) {
+                            // 格式1: Model,Quantity,Power,Price,Electricity,DecayRate
+                            [model, quantity, power, price, electricity, decayRate] = parts;
+                        } else if (parts.length === 7) {
+                            // 格式2: Model,Quantity,Power,Price,Electricity,Hashrate,DecayRate
+                            [model, quantity, power, price, electricity, , decayRate] = parts;
+                        }
+                    } else if (parts.length === 5) {
+                        // 老格式: Model,Quantity,Power,Price,Electricity
+                        [model, quantity, power, price, electricity] = parts;
+                        decayRate = '0';
+                    }
                     
                     if (model && quantity && power && price && electricity) {
                         addMinerRowFromData(model, quantity, power, price, electricity, decayRate || '0');

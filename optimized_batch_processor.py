@@ -66,7 +66,7 @@ class OptimizedBatchProcessor:
                 single_hashrate = MINER_DATA[model]["hashrate"]
                 single_power = MINER_DATA[model]["power_watt"]
             else:
-                # 使用提供的数据
+                # 使用提供的数据，如果有算力字段就用，否则用默认值
                 single_hashrate = 110  # 默认算力
                 single_power = power_consumption / quantity if quantity > 0 else power_consumption
             
@@ -105,10 +105,12 @@ class OptimizedBatchProcessor:
             # ROI计算 - 根据是否有衰减率选择计算方法
             if decay_rate > 0:
                 # 考虑算力衰减的回本计算
+                logger.debug(f"计算衰减ROI: 模型={model}, 算力={total_hashrate}TH/s, 衰减率={decay_rate}%/月")
                 roi_days = self.calculate_payback_days_with_decay(
                     total_hashrate, total_power, total_machine_cost, 
                     electricity_cost, decay_rate, network_data
                 )
+                logger.debug(f"衰减ROI结果: {roi_days}天")
             else:
                 # 传统回本计算（无衰减）
                 if daily_profit > 0 and total_machine_cost > 0:
@@ -172,6 +174,8 @@ class OptimizedBatchProcessor:
         block_reward = network_data['block_reward']
         blocks_per_day = 144
         
+        logger.debug(f"衰减计算参数: 算力={hashrate_th}TH/s, 功耗={power_w}W, 成本=${price_usd}, 电价=${electricity_usd}, 衰减={decay_rate_monthly}%/月")
+        
         for day in range(1, max_days + 1):
             # 当天有效算力（考虑衰减）
             eff_th = self.get_effective_hashrate(hashrate_th, decay_rate_monthly, day)
@@ -194,9 +198,15 @@ class OptimizedBatchProcessor:
             net_usd = rev_usd - elec_cost_usd
             total_profit += net_usd
             
+            # 每100天记录一次进度
+            if day % 100 == 0:
+                logger.debug(f"第{day}天: 有效算力={eff_th:.1f}TH/s, 累计利润=${total_profit:.2f}")
+            
             if total_profit >= price_usd:
+                logger.debug(f"回本完成: 第{day}天, 累计利润=${total_profit:.2f}")
                 return day  # 回本天数
         
+        logger.debug(f"未能回本: {max_days}天内累计利润=${total_profit:.2f}, 需要${price_usd}")
         return max_days  # 在max_days内未回本
     
     def process_large_batch(self, miners_data, use_real_time_data=True):
