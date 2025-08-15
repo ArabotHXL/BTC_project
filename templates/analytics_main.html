@@ -574,6 +574,57 @@
                         </div>
                     </div>
 
+                    <!-- 价格区间分析详情表格 -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-list-ol"></i>
+                                        {% if current_lang == 'en' %}Price Range Analysis Details{% else %}价格区间分析详情{% endif %}
+                                    </h5>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="window.loadPriceRangeDetails()">
+                                        <i class="bi bi-arrow-clockwise"></i> {% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-dark table-striped table-hover">
+                                            <thead>
+                                                <tr class="table-secondary">
+                                                    <th>{% if current_lang == 'en' %}Price Range{% else %}价格区间{% endif %}</th>
+                                                    <th class="text-center">{% if current_lang == 'en' %}Trades{% else %}交易数{% endif %}</th>
+                                                    <th class="text-center">{% if current_lang == 'en' %}Volume{% else %}交易量{% endif %}</th>
+                                                    <th class="text-center">{% if current_lang == 'en' %}Percentage{% else %}百分比{% endif %}</th>
+                                                    <th class="text-end">{% if current_lang == 'en' %}Avg Price{% else %}平均价格{% endif %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="priceRangeDetailsTableBody">
+                                                <!-- 加载中状态 -->
+                                                <tr>
+                                                    <td colspan="5" class="text-center py-4">
+                                                        <div class="spinner-border text-primary" role="status">
+                                                            <span class="visually-hidden">{% if current_lang == 'en' %}Loading...{% else %}加载中...{% endif %}</span>
+                                                        </div>
+                                                        <div class="mt-2 text-muted">{% if current_lang == 'en' %}Loading price range analysis...{% else %}正在加载价格区间分析...{% endif %}</div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-12">
+                                            <small class="text-muted">
+                                                <i class="bi bi-info-circle"></i>
+                                                {% if current_lang == 'en' %}Data shows trading distribution across different price ranges in the last 24 hours. Updated in real-time.{% else %}数据显示过去24小时内不同价格区间的交易分布情况，实时更新。{% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- 三大交易所实时交易数据分析 (重要功能区域 - 移到顶部) -->
                     <div class="row mt-4 mb-5">
                         <div class="col-12">
@@ -4857,10 +4908,99 @@
             });
         }
         
+        // 加载价格区间分析详情
+        window.loadPriceRangeDetails = async function() {
+            console.log('📊 Loading price range analysis details...');
+            try {
+                const response = await fetch('/api/deribit/analysis-data');
+                const result = await response.json();
+                
+                if (result.success && result.data && result.data.price_ranges) {
+                    updatePriceRangeDetailsTable(result.data.price_ranges);
+                } else {
+                    showPriceRangeError('暂无价格区间数据');
+                }
+            } catch (error) {
+                console.error('❌ Error loading price range details:', error);
+                showPriceRangeError('加载失败');
+            }
+        }
+        
+        // 更新价格区间详情表格
+        function updatePriceRangeDetailsTable(priceRanges) {
+            const tableBody = document.getElementById('priceRangeDetailsTableBody');
+            if (!tableBody) return;
+            
+            console.log('📊 Updating price range details table with data:', priceRanges);
+            
+            if (!priceRanges || priceRanges.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            <i class="bi bi-info-circle"></i>
+                            暂无价格区间分析数据
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            // 渲染价格区间数据
+            tableBody.innerHTML = priceRanges.map((range, index) => {
+                const percentage = range.percentage || 0;
+                const progressBarClass = percentage > 20 ? 'bg-success' : percentage > 10 ? 'bg-warning' : 'bg-info';
+                
+                return `
+                    <tr>
+                        <td>
+                            <span class="fw-bold text-primary">${range.price_range || '--'}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-primary">${range.trade_count || 0}笔</span>
+                        </td>
+                        <td class="text-center">
+                            <small class="text-muted">${(range.total_volume || 0).toFixed(3)}</small>
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <div class="progress me-2" style="width: 60px; height: 8px;">
+                                    <div class="progress-bar ${progressBarClass}" 
+                                         role="progressbar" 
+                                         style="width: ${Math.min(percentage, 100)}%"></div>
+                                </div>
+                                <span class="fw-bold text-warning">${percentage.toFixed(1)}%</span>
+                            </div>
+                        </td>
+                        <td class="text-end">
+                            <span class="fw-bold">${range.avg_price ? `$${range.avg_price.toLocaleString()}` : '--'}</span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            console.log('✅ Price range details table updated successfully');
+        }
+        
+        // 显示价格区间分析错误
+        function showPriceRangeError(message) {
+            const tableBody = document.getElementById('priceRangeDetailsTableBody');
+            if (tableBody) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            <i class="bi bi-exclamation-triangle text-danger"></i>
+                            <div class="mt-2 text-danger">${message}</div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+        
         // 加载三大交易所分析数据
         function loadExchangeAnalysisData() {
             console.log('📈 Loading exchange analysis data...');
-            // 这里可以扩展更多分析功能
+            // 同时加载价格区间详情
+            window.loadPriceRangeDetails();
         }
         
         // 页面加载完成后初始化三大交易所功能
@@ -4886,6 +5026,8 @@
                     console.log('📊📊📊 CHARTS INITIALIZED, NOW LOADING TRADING DATA 📊📊📊');
                     window.loadExchangeTradingData();
                     console.log('📈📈📈 TRADING DATA LOADING STARTED 📈📈📈');
+                    window.loadPriceRangeDetails();
+                    console.log('📊📊📊 PRICE RANGE DETAILS LOADING STARTED 📊📊📊');
                     loadExchangeAnalysisData();
                     console.log('✅✅✅ THREE-EXCHANGE INITIALIZATION COMPLETED ✅✅✅');
                 } catch (error) {
@@ -4895,6 +5037,7 @@
             
             // 设置定时更新 (每30秒更新统计，每15分钟更新详细分析)
             setInterval(window.loadExchangeTradingData, 30000);  // 30秒更新统计
+            setInterval(window.loadPriceRangeDetails, 60000);    // 60秒更新价格区间详情
             setInterval(loadExchangeAnalysisData, 900000);       // 15分钟更新分析
         });
 
