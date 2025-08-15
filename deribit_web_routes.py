@@ -3,7 +3,7 @@ Deribit 交易数据分析 Web 路由
 为Deribit POC系统提供Web界面和API端点
 """
 
-from flask import Blueprint, render_template, jsonify, request, send_file
+from flask import Blueprint, render_template, jsonify, request, send_file, redirect, url_for
 import sqlite3
 import threading
 import time
@@ -35,8 +35,8 @@ def get_multi_collector():
 @deribit_bp.route('/deribit-analysis')
 @deribit_bp.route('/deribit_analysis')
 def deribit_analysis_page():
-    """Deribit分析页面"""
-    return render_template('deribit_analysis.html')
+    """重定向到统一的Analytics仪表盘的Deribit标签页"""
+    return redirect(url_for('analytics_dashboard') + '?tab=deribit')
 
 @deribit_bp.route('/download/deribit-package')
 def download_deribit_package():

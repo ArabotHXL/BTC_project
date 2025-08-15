@@ -84,6 +84,41 @@
             border-radius: 4px;
             border-left: 4px solid #667eea;
         }
+        
+        /* 标签页切换动画 */
+        .tab-pane {
+            transition: opacity 0.3s ease-in-out;
+        }
+        
+        .tab-pane.fade:not(.show) {
+            opacity: 0;
+        }
+        
+        .nav-tabs .nav-link {
+            transition: all 0.3s ease;
+            border-color: transparent;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .nav-tabs .nav-link.active {
+            background-color: #1a202c;
+            border-color: #f39c12 #f39c12 transparent;
+            color: #f39c12;
+        }
+        
+        /* Deribit专用加载动画 */
+        @keyframes deribitSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .deribit-loading {
+            animation: deribitSpin 1s linear infinite;
+        }
     </style>
 </head>
 <body>
@@ -102,8 +137,26 @@
     </nav>
 
     <div class="container-fluid mt-4">
-        <!-- 主要指标行 -->
-        <div class="row mb-4">
+        <!-- 标签页导航 -->
+        <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">
+                    <i class="bi bi-speedometer2"></i> 综合概览
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="deribit-tab" data-bs-toggle="tab" data-bs-target="#deribit" type="button" role="tab" aria-controls="deribit" aria-selected="false">
+                    <i class="bi bi-graph-up-arrow"></i> Deribit深度分析
+                </button>
+            </li>
+        </ul>
+
+        <!-- 标签页内容 -->
+        <div class="tab-content" id="dashboardTabContent">
+            <!-- 综合概览标签页 -->
+            <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+                <!-- 主要指标行 -->
+                <div class="row mb-4">
             <div class="col-md-3">
                 <div class="card metric-card text-white">
                     <div class="card-body text-center">
@@ -689,6 +742,205 @@
                 </div>
             </div>
         </div>
+            </div>
+            <!-- /概览标签页结束 -->
+
+            <!-- Deribit深度分析标签页 -->
+            <div class="tab-pane fade" id="deribit" role="tabpanel" aria-labelledby="deribit-tab">
+                <!-- Deribit页面标题 -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card" style="background: linear-gradient(135deg, rgba(243, 156, 18, 0.2), rgba(230, 126, 34, 0.2)); border: 1px solid rgba(243, 156, 18, 0.3);">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h2><i class="bi bi-bar-chart-line"></i> Deribit交易数据深度分析系统</h2>
+                                    <div>
+                                        <span id="deribitConnectionStatus" class="status-indicator status-offline"></span>
+                                        <span id="deribitStatusText">连接中...</span>
+                                    </div>
+                                </div>
+                                <p class="text-muted">实时采集Deribit + OKX + Binance交易数据，深度分析价格区间的交易量分布和期权交易模式</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 控制面板和系统状态 -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5><i class="bi bi-gear"></i> 数据采集控制</h5>
+                                <div class="mb-3">
+                                    <label for="deribitInstrumentSelect" class="form-label">选择合约:</label>
+                                    <select id="deribitInstrumentSelect" class="form-select">
+                                        <option value="BTC-PERPETUAL">BTC-PERPETUAL (永续合约)</option>
+                                        <option value="auto">自动选择活跃期权</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="deribitIntervalSelect" class="form-label">采集间隔:</label>
+                                    <select id="deribitIntervalSelect" class="form-select">
+                                        <option value="1">1分钟</option>
+                                        <option value="5">5分钟</option>
+                                        <option value="15" selected>15分钟</option>
+                                        <option value="30">30分钟</option>
+                                        <option value="60">1小时</option>
+                                    </select>
+                                </div>
+                                <button id="deribitStartCollection" class="btn btn-primary me-2">
+                                    <i class="bi bi-play-fill"></i> 开始采集
+                                </button>
+                                <button id="deribitStopCollection" class="btn btn-secondary me-2" disabled>
+                                    <i class="bi bi-stop-fill"></i> 停止采集
+                                </button>
+                                <button id="deribitManualAnalysis" class="btn btn-warning" onclick="loadDeribitAnalysisData()">
+                                    <i class="bi bi-arrow-clockwise"></i> 手动分析
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5><i class="bi bi-info-circle"></i> 系统状态</h5>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="metric-card" style="background: linear-gradient(135deg, rgba(243, 156, 18, 0.2), rgba(230, 126, 34, 0.2)); border: 1px solid rgba(243, 156, 18, 0.3); border-radius: 15px; padding: 20px; text-align: center; margin-bottom: 20px;">
+                                            <h6>API状态</h6>
+                                            <span id="deribitApiStatus" class="h4">检查中...</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="metric-card" style="background: linear-gradient(135deg, rgba(243, 156, 18, 0.2), rgba(230, 126, 34, 0.2)); border: 1px solid rgba(243, 156, 18, 0.3); border-radius: 15px; padding: 20px; text-align: center; margin-bottom: 20px;">
+                                            <h6>数据库记录</h6>
+                                            <span id="deribitDbRecords" class="h4">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deribit交易数据统计卡片 -->
+                <div class="row mb-4">
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-dark text-light border-warning">
+                            <div class="card-body text-center">
+                                <i class="bi bi-graph-up text-warning h3"></i>
+                                <h5 class="card-title">Deribit交易数</h5>
+                                <h3 class="text-warning" id="deribitTotalTrades">
+                                    <div class="spinner-border spinner-border-sm" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </h3>
+                                <small class="text-muted">实时期权交易</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-dark text-light border-info">
+                            <div class="card-body text-center">
+                                <i class="bi bi-currency-bitcoin text-info h3"></i>
+                                <h5 class="card-title">Deribit交易量</h5>
+                                <h3 class="text-info" id="deribitTotalVolume">
+                                    <div class="spinner-border spinner-border-sm" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </h3>
+                                <small class="text-muted">期权合约总量</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-dark text-light border-success">
+                            <div class="card-body text-center">
+                                <i class="bi bi-cash text-success h3"></i>
+                                <h5 class="card-title">平均期权价格</h5>
+                                <h3 class="text-success" id="deribitAvgPrice">
+                                    <div class="spinner-border spinner-border-sm" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </h3>
+                                <small class="text-muted">USD 基准价格</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-dark text-light border-secondary">
+                            <div class="card-body text-center">
+                                <i class="bi bi-clock text-secondary h3"></i>
+                                <h5 class="card-title">最新更新</h5>
+                                <h6 class="text-secondary" id="deribitLastUpdate">
+                                    <div class="spinner-border spinner-border-sm" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </h6>
+                                <small class="text-muted">EST时区</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 图表和分析 -->
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5><i class="bi bi-bar-chart"></i> 价格区间交易量分布 (Deribit专用)</h5>
+                                <canvas id="deribitPriceRangeChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5><i class="bi bi-pie-chart"></i> 交易方向分布 (Deribit)</h5>
+                                <canvas id="deribitDirectionChart" width="200" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 价格区间详细数据 -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5><i class="bi bi-table"></i> Deribit价格区间分析详情</h5>
+                                <div id="deribitLoadingIndicator" class="text-center p-4">
+                                    <div class="loading-spinner mx-auto mb-2" style="border: 3px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top: 3px solid #f39c12; width: 30px; height: 30px; animation: spin 1s linear infinite;"></div>
+                                    <p>正在加载Deribit专用数据...</p>
+                                </div>
+                                <div id="deribitPriceRangeDetails" style="display: none;">
+                                    <div class="table-responsive">
+                                        <table class="table table-dark table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>价格区间 ($)</th>
+                                                    <th>期权交易数</th>
+                                                    <th>交易量 (BTC)</th>
+                                                    <th>市场占比</th>
+                                                    <th>平均价格 (USD)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="deribitPriceRangeTable">
+                                                <tr>
+                                                    <td colspan="5" class="text-center">等待数据加载...</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /Deribit深度分析标签页结束 -->
+        </div>
+        <!-- /标签页容器结束 -->
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -1742,6 +1994,219 @@
                 console.error('获取网络历史数据失败:', error);
             }
         }
+        
+        <!-- Deribit分析标签页相关函数 -->
+        let deribitPriceRangeChart = null;
+        let deribitDirectionChart = null;
+        let deribitCollectionInterval = null;
+        
+        // 初始化Deribit图表
+        function initializeDeribitCharts() {
+            // 价格区间图表
+            const priceCtx = document.getElementById('deribitPriceRangeChart');
+            if (priceCtx) {
+                deribitPriceRangeChart = new Chart(priceCtx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: '交易量',
+                            data: [],
+                            backgroundColor: 'rgba(243, 156, 18, 0.6)',
+                            borderColor: 'rgba(243, 156, 18, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { labels: { color: '#fff' } }
+                        },
+                        scales: {
+                            y: { 
+                                beginAtZero: true,
+                                ticks: { color: '#fff' }
+                            },
+                            x: { 
+                                ticks: { color: '#fff' }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // 方向图表
+            const dirCtx = document.getElementById('deribitDirectionChart');
+            if (dirCtx) {
+                deribitDirectionChart = new Chart(dirCtx.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['买入', '卖出'],
+                        datasets: [{
+                            data: [0, 0],
+                            backgroundColor: ['#27ae60', '#e74c3c']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { labels: { color: '#fff' } }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // 检查API状态
+        async function checkDeribitApiStatus() {
+            try {
+                const response = await fetch('/api/deribit/status');
+                const data = await response.json();
+                
+                const statusElement = document.getElementById('deribitApiStatus');
+                if (statusElement) {
+                    statusElement.textContent = data.success ? '✓ 正常' : '✗ 异常';
+                    statusElement.className = data.success ? 'h4 text-success' : 'h4 text-danger';
+                }
+            } catch (error) {
+                const statusElement = document.getElementById('deribitApiStatus');
+                if (statusElement) {
+                    statusElement.textContent = '✗ 连接失败';
+                    statusElement.className = 'h4 text-danger';
+                }
+            }
+        }
+        
+        // 加载Deribit初始数据
+        function loadDeribitInitialData() {
+            loadDeribitMultiExchangeStats();
+            loadDeribitAnalysisData();
+        }
+        
+        // 加载多交易所统计数据（Deribit标签页）
+        async function loadDeribitMultiExchangeStats() {
+            try {
+                const response = await fetch('/api/deribit/multi-exchange-trades');
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    const data = result.data;
+                    
+                    // 计算USD价格（假设当前BTC价格）
+                    const btcPrice = 118000; // 这里可以从市场数据获取
+                    const avgPriceUSD = (data.avg_price * btcPrice).toFixed(0);
+                    
+                    // 更新统计卡片
+                    updateElement('deribitTotalTrades', data.exchange_breakdown?.Deribit?.count || 0);
+                    updateElement('deribitTotalVolume', formatNumber(data.exchange_breakdown?.Deribit?.volume || 0, 1));
+                    updateElement('deribitAvgPrice', `$${formatNumber(avgPriceUSD)} (${formatNumber(data.avg_price, 4)} BTC)`);
+                    updateElement('deribitLastUpdate', data.last_update || '--');
+                }
+            } catch (error) {
+                console.error('加载Deribit交易数据失败:', error);
+            }
+        }
+        
+        // 加载Deribit分析数据
+        async function loadDeribitAnalysisData() {
+            try {
+                const response = await fetch('/api/deribit/analysis-data');
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    updateDeribitPriceRangeChart(result.data.price_ranges || []);
+                    if (result.data.direction_stats) {
+                        updateDeribitDirectionChart(result.data.direction_stats);
+                    }
+                }
+            } catch (error) {
+                console.error('加载Deribit分析数据失败:', error);
+            }
+        }
+        
+        // 更新Deribit价格区间图表
+        function updateDeribitPriceRangeChart(priceRanges) {
+            if (!deribitPriceRangeChart || !priceRanges.length) return;
+            
+            const labels = priceRanges.map(range => range.range);
+            const data = priceRanges.map(range => parseFloat(range.volume));
+            
+            deribitPriceRangeChart.data.labels = labels;
+            deribitPriceRangeChart.data.datasets[0].data = data;
+            deribitPriceRangeChart.update();
+        }
+        
+        // 更新Deribit方向图表
+        function updateDeribitDirectionChart(directionStats) {
+            if (!deribitDirectionChart) return;
+            
+            const buyCount = directionStats.buy_count || 0;
+            const sellCount = directionStats.sell_count || 0;
+            
+            deribitDirectionChart.data.datasets[0].data = [buyCount, sellCount];
+            deribitDirectionChart.update();
+        }
+        
+        // 通用元素更新函数
+        function updateElement(id, value) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+            }
+        }
+        
+        // URL参数处理和标签页自动切换
+        function checkUrlParametersAndSwitchTab() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+            
+            if (tabParam === 'deribit') {
+                // 自动激活Deribit标签页
+                const deribitTab = document.getElementById('deribit-tab');
+                const deribitTabPane = document.getElementById('deribit');
+                const overviewTab = document.getElementById('overview-tab');
+                const overviewTabPane = document.getElementById('overview');
+                
+                if (deribitTab && deribitTabPane && overviewTab && overviewTabPane) {
+                    // 移除概览标签的激活状态
+                    overviewTab.classList.remove('active');
+                    overviewTab.setAttribute('aria-selected', 'false');
+                    overviewTabPane.classList.remove('show', 'active');
+                    
+                    // 激活Deribit标签
+                    deribitTab.classList.add('active');
+                    deribitTab.setAttribute('aria-selected', 'true');
+                    deribitTabPane.classList.add('show', 'active');
+                    
+                    // 初始化Deribit图表和数据
+                    setTimeout(() => {
+                        initializeDeribitCharts();
+                        checkDeribitApiStatus();
+                        loadDeribitInitialData();
+                        console.log('✅ Automatically switched to Deribit analysis tab');
+                    }, 200);
+                }
+            }
+        }
+
+        // 标签页切换事件处理
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查URL参数并自动切换标签页
+            checkUrlParametersAndSwitchTab();
+            
+            const deribitTab = document.getElementById('deribit-tab');
+            if (deribitTab) {
+                deribitTab.addEventListener('shown.bs.tab', function() {
+                    // 当切换到Deribit标签页时，初始化图表和加载数据
+                    setTimeout(() => {
+                        initializeDeribitCharts();
+                        checkDeribitApiStatus();
+                        loadDeribitInitialData();
+                    }, 100);
+                });
+            }
+        });
+        
     </script>
 </body>
 </html>
