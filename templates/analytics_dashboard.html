@@ -146,12 +146,15 @@
         <div class="row mt-4">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">
                             <i class="bi bi-graph-up-arrow"></i>
                             三大交易所实时交易数据 (Deribit + OKX + Binance)
                             <span class="badge bg-success ms-2" id="tradingDataStatus">实时监控</span>
                         </h5>
+                        <button class="btn btn-sm btn-warning" onclick="window.loadExchangeTradingData()">
+                            <i class="bi bi-arrow-clockwise"></i> 手动刷新
+                        </button>
                     </div>
                     <div class="card-body">
                         <!-- 统计卡片行 -->
@@ -820,7 +823,7 @@
         }
 
         // 加载三大交易所统计数据
-        async function loadExchangeTradingData() {
+        window.loadExchangeTradingData = async function() {
             console.log('🚀🚀🚀 loadExchangeTradingData function called! 🚀🚀🚀');
             try {
                 console.log('Loading exchange trading data...');
@@ -1333,7 +1336,7 @@
                 console.log('🚀 Starting three-exchange initialization...');
                 initExchangeCharts();
                 console.log('📊 Charts initialized, now loading trading data...');
-                loadExchangeTradingData();
+                window.loadExchangeTradingData();
                 console.log('📈 Trading data loading started, now loading analysis data...');
                 loadExchangeAnalysisData();
                 console.log('✅ Three-exchange initialization completed successfully');
@@ -1350,7 +1353,7 @@
             setInterval(fetchNetworkHistory, 600000);    // 每10分钟更新网络历史数据
             
             // 设置三大交易所数据定时更新 (每15分钟)
-            setInterval(loadExchangeTradingData, 900000);
+            setInterval(window.loadExchangeTradingData, 900000);
             setInterval(loadExchangeAnalysisData, 900000);
         });
 
