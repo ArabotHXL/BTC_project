@@ -471,6 +471,7 @@ def export_batch_pdf():
         
         data = request.get_json()
         results = data.get('results', [])
+        summary = data.get('summary', {})
         
         if not results:
             return jsonify({

@@ -1183,7 +1183,8 @@
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    results: calculationResults
+                    results: calculationResults,
+                    summary: calculationSummary || {}
                 })
             })
             .then(response => {
