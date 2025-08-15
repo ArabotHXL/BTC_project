@@ -176,80 +176,12 @@
             </div>
         </div>
 
-        <!-- 多交易所数据收集控制面板 -->
+        <!-- 注意：多交易所数据收集功能已禁用 -->
         <div class="row mb-4">
             <div class="col-12">
-                <div class="card border-info">
-                    <div class="card-header bg-info text-white">
-                        <h5 class="mb-0"><i class="bi bi-globe"></i> 多交易所数据收集 (Deribit + OKX + Binance)</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-2">
-                                <label for="timeWindowSelect" class="form-label">时间窗口</label>
-                                <select class="form-select" id="timeWindowSelect">
-                                    <option value="15" selected>15分钟</option>
-                                    <option value="30">30分钟</option>
-                                    <option value="60">1小时</option>
-                                    <option value="120">2小时</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <label for="bucketWidthInput" class="form-label">分桶宽度</label>
-                                <input type="number" class="form-control" id="bucketWidthInput" 
-                                       value="5.0" min="0.1" step="0.1" max="100">
-                            </div>
-                            <div class="col-md-2">
-                                <label for="bucketTypeSelect" class="form-label">分桶类型</label>
-                                <select class="form-select" id="bucketTypeSelect">
-                                    <option value="price" selected>按价格</option>
-                                    <option value="strike">按行权价</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <label for="maxOkxInput" class="form-label">OKX合约数</label>
-                                <input type="number" class="form-control" id="maxOkxInput" 
-                                       value="400" min="10" max="1000">
-                            </div>
-                            <div class="col-md-2">
-                                <label for="maxBinanceInput" class="form-label">Binance合约数</label>
-                                <input type="number" class="form-control" id="maxBinanceInput" 
-                                       value="400" min="10" max="1000">
-                            </div>
-                            <div class="col-md-2">
-                                <div class="form-check mt-4">
-                                    <input class="form-check-input" type="checkbox" id="callPutSeparate" checked>
-                                    <label class="form-check-label" for="callPutSeparate">
-                                        CALL/PUT分离
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <button type="button" class="btn btn-info btn-lg" id="multiExchangeBtn">
-                                    <i class="bi bi-collection"></i> 收集多交易所数据
-                                </button>
-                                <button type="button" class="btn btn-outline-info" id="viewMultiAnalysisBtn">
-                                    <i class="bi bi-graph-up"></i> 查看分析结果
-                                </button>
-                                <button type="button" class="btn btn-outline-success" id="exportCsvBtn">
-                                    <i class="bi bi-download"></i> 导出CSV
-                                </button>
-                            </div>
-                        </div>
-                        <div class="mt-3">
-                            <div id="multiExchangeStatus" class="alert alert-info" style="display: none;">
-                                <div class="d-flex align-items-center">
-                                    <div class="spinner-border spinner-border-sm me-2" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                    <span>正在收集多交易所数据，请稍候...</span>
-                                </div>
-                            </div>
-                            <div id="multiExchangeResults" style="display: none;">
-                                <!-- 动态生成结果 -->
-                            </div>
-                        </div>
-                    </div>
+                <div class="alert alert-warning">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>注意：</strong> 多交易所数据收集功能已禁用。当前仅使用Deribit数据进行分析。
                 </div>
             </div>
         </div>
