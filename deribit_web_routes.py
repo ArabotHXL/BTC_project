@@ -153,7 +153,42 @@ def get_analysis_data():
                 'percentage': row[4]
             })
         
+        # 获取买卖方向统计（从Deribit历史数据）
+        cursor.execute('''
+            SELECT direction, COUNT(*), SUM(amount)
+            FROM trades
+            GROUP BY direction
+        ''')
+        direction_stats = {'buy': 0, 'sell': 0}
+        for row in cursor.fetchall():
+            direction_stats[row[0]] = row[2] if row[2] else 0
+        
         conn.close()
+        
+        # 从多交易所数据获取方向统计
+        multi_conn = sqlite3.connect('multi_exchange_trades.db')
+        multi_cursor = multi_conn.cursor()
+        
+        try:
+            # 获取最近24小时的多交易所买卖统计
+            cutoff_time = collector.now_ms() - 24 * 60 * 60 * 1000
+            multi_cursor.execute('''
+                SELECT side, COUNT(*), SUM(amount)
+                FROM multi_exchange_trades
+                WHERE timestamp > ?
+                GROUP BY side
+            ''', (cutoff_time,))
+            
+            for row in multi_cursor.fetchall():
+                side = row[0].lower() if row[0] else 'unknown'
+                volume = row[2] if row[2] else 0
+                if side in ['buy', 'sell']:
+                    direction_stats[side] += volume
+                    
+        except Exception as e:
+            logger.warning(f"获取多交易所方向统计失败: {e}")
+            
+        multi_conn.close()
         
         # 合并所有交易所数据
         total_trades = multi_stats.get('total_trades', 0) + deribit_trades
@@ -174,6 +209,7 @@ def get_analysis_data():
                     'okx': multi_stats.get('okx_stats', {}),
                     'binance': multi_stats.get('binance_stats', {})
                 },
+                'direction_stats': direction_stats,
                 'multi_exchange_active': True
             }
         })

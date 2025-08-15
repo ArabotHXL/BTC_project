@@ -467,8 +467,17 @@
         }
         
         function updateDirectionChart(directionStats) {
-            directionChart.data.datasets[0].data = [directionStats.buy, directionStats.sell];
+            // 确保数据存在且为数字
+            const buyVolume = directionStats && directionStats.buy ? directionStats.buy : 0;
+            const sellVolume = directionStats && directionStats.sell ? directionStats.sell : 0;
+            
+            directionChart.data.datasets[0].data = [buyVolume, sellVolume];
             directionChart.update();
+            
+            // 如果数据为空，显示提示
+            if (buyVolume === 0 && sellVolume === 0) {
+                console.log('方向统计数据为空，可能需要先收集交易数据');
+            }
         }
         
         function updatePriceRangeDetails(priceRanges) {
