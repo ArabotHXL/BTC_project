@@ -1050,32 +1050,65 @@
                 // 批量创建DOM元素
                 tbody.innerHTML = ''; // 清空加载提示
                 
-                // 分批处理以避免UI阻塞
+                // 显示进度条
+                const progressContainer = document.createElement('div');
+                progressContainer.className = 'text-center mt-3';
+                progressContainer.innerHTML = `
+                    <div class="progress mb-2" style="height: 25px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" id="csvProgress" style="width: 0%">
+                            <span id="csvProgressText">Loading... 0%</span>
+                        </div>
+                    </div>
+                    <small class="text-muted">Processing CSV file...</small>
+                `;
+                tbody.appendChild(progressContainer);
+                
+                // 优化的批量处理 - 使用requestAnimationFrame
                 let processedCount = 0;
-                const batchSize = 100;
+                const batchSize = 50;  // 减少批次大小
                 
                 function processBatch() {
                     const endIndex = Math.min(processedCount + batchSize, validLines.length);
+                    const fragment = document.createDocumentFragment();
                     
+                    // 批量创建DOM元素到fragment
                     for (let i = processedCount; i < endIndex; i++) {
                         const data = validLines[i];
-                        addMinerRowFromDataOptimized(data);
+                        const row = createMinerRowElement(data);
+                        fragment.appendChild(row);
                     }
+                    
+                    // 一次性添加到DOM
+                    if (processedCount === 0) {
+                        tbody.innerHTML = ''; // 清除进度条
+                    }
+                    tbody.appendChild(fragment);
                     
                     processedCount = endIndex;
                     
-                    // 如果还有未处理的数据，延迟处理下一批
+                    // 更新进度
+                    const progress = Math.round((processedCount / validLines.length) * 100);
+                    const progressBar = document.getElementById('csvProgress');
+                    const progressText = document.getElementById('csvProgressText');
+                    if (progressBar) {
+                        progressBar.style.width = progress + '%';
+                    }
+                    if (progressText) {
+                        progressText.textContent = `Loading... ${progress}%`;
+                    }
+                    
+                    // 继续处理或完成
                     if (processedCount < validLines.length) {
-                        setTimeout(processBatch, 10);
+                        requestAnimationFrame(processBatch); // 使用requestAnimationFrame减少卡顿
                     } else {
-                        // 所有数据处理完成
                         console.log('CSV处理完成，共处理:', validLines.length, '行');
                         updateTotalCount();
                         updateEmptyState();
                     }
                 }
                 
-                processBatch();
+                requestAnimationFrame(processBatch);
             };
             
             reader.onerror = function(e) {
@@ -1086,12 +1119,12 @@
             reader.readAsText(file);
         }
 
-        function addMinerRowFromDataOptimized(data) {
+        function createMinerRowElement(data) {
             const {model, quantity, power, price, electricity, decayRate, hashrate} = data;
             
             minerRowCount++;
-            const tbody = document.getElementById('minersTableBody');
             const tr = document.createElement('tr');
+            tr.id = `minerRow${minerRowCount}`;
             
             // 优化的算力值
             const finalHashrate = hashrate || (minerModels[model]?.hashrate || 110);
@@ -1121,7 +1154,12 @@
                 </td>
             `;
             
-            tr.id = `minerRow${minerRowCount}`;
+            return tr;
+        }
+        
+        function addMinerRowFromDataOptimized(data) {
+            const tbody = document.getElementById('minersTableBody');
+            const tr = createMinerRowElement(data);
             tbody.appendChild(tr);
         }
         
