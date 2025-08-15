@@ -164,7 +164,10 @@ def batch_calculate():
         batch_size = 100  # Process in chunks to manage memory
         
         # Group identical miners to optimize calculations (including hashrate and decay_rate)
+        # 但保留矿机编号信息以便在结果中显示
         miner_groups = {}
+        miner_numbers_map = {}  # 记录每组的矿机编号
+        
         for miner in miners:
             key = (
                 miner.get('model', 'Antminer S19 Pro'),
@@ -173,14 +176,21 @@ def batch_calculate():
                 float(miner.get('hashrate', 0)),
                 float(miner.get('decay_rate', 0))
             )
+            miner_number = miner.get('miner_number', '')
+            
             if key not in miner_groups:
                 miner_groups[key] = 0
+                miner_numbers_map[key] = []
+            
             miner_groups[key] += int(miner.get('quantity', 1))
+            if miner_number:
+                miner_numbers_map[key].append(miner_number)
         
         logger.info(f"Optimized {len(miners)} entries into {len(miner_groups)} unique groups")
         
         # Calculate once per unique group
-        for (model, power_consumption, electricity_cost, hashrate, decay_rate), quantity in miner_groups.items():
+        for groupKey, quantity in miner_groups.items():
+            (model, power_consumption, electricity_cost, hashrate, decay_rate) = groupKey
             try:
                 # Single calculation for the entire group with batch optimization
                 # 如果有自定义算力，直接使用算力值；否则使用矿机型号
@@ -202,7 +212,12 @@ def batch_calculate():
                         _batch_mode=True
                     )
                 
+                # 获取这组矿机的编号
+                group_numbers = miner_numbers_map.get(groupKey, [])
+                display_number = ', '.join(group_numbers) if group_numbers else '-'
+                
                 result_entry = {
+                    'miner_number': display_number,  # 添加矿机编号
                     'model': model,
                     'quantity': quantity,
                     'power_consumption': power_consumption,

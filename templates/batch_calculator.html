@@ -732,8 +732,9 @@
             const miners = [];
             const rows = document.querySelectorAll('#minersTableBody tr');
             
-            rows.forEach(row => {
+            rows.forEach((row, index) => {
                 const cells = row.querySelectorAll('td');
+                const minerNumber = cells[0].querySelector('.badge').textContent;  // 获取编号
                 const model = cells[1].querySelector('select').value;  // 第2列（编号后）
                 const quantity = parseInt(cells[2].querySelector('input').value) || 0;
                 const power = parseFloat(cells[3].querySelector('input').value) || 0;
@@ -747,6 +748,7 @@
                     const hashrateValue = customHashrate || minerModels[model]?.hashrate || 0;
                     
                     miners.push({
+                        miner_number: minerNumber,  // 添加矿机编号
                         model: model,
                         quantity: quantity,
                         power_consumption: power,
@@ -834,18 +836,41 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- 效率分析摘要 -->
+                    ${(() => {
+                        if (results.length > 1) {
+                            const sortedForSummary = [...results].sort((a, b) => (b.daily_profit || 0) - (a.daily_profit || 0));
+                            const best = sortedForSummary[0];
+                            const worst = sortedForSummary[sortedForSummary.length - 1];
+                            
+                            if (best && worst && best.daily_profit !== worst.daily_profit) {
+                                return \`
+                                <div class="mt-3 p-2 bg-info bg-opacity-10 border border-info rounded">
+                                    <div class="small">
+                                        <strong>{% if current_lang == "en" %}Performance Analysis:{% else %}效率分析:{% endif %}</strong><br>
+                                        <span class="text-success">🏆 {% if current_lang == "en" %}Best: Miner #\${best.miner_number} - $\${(best.daily_profit || 0).toFixed(2)}/day{% else %}最佳: #\${best.miner_number}号矿机 - $\${(best.daily_profit || 0).toFixed(2)}/天{% endif %}</span><br>
+                                        <span class="text-warning">📊 {% if current_lang == "en" %}Lowest: Miner #\${worst.miner_number} - $\${(worst.daily_profit || 0).toFixed(2)}/day{% else %}最差: #\${worst.miner_number}号矿机 - $\${(worst.daily_profit || 0).toFixed(2)}/天{% endif %}</span>
+                                    </div>
+                                </div>
+                                \`;
+                            }
+                        }
+                        return '';
+                    })()}
                 </div>
 
                 <!-- Individual Results -->
                 <div>
                     <h6 class="text-primary mb-3">
                         <i class="bi bi-list-ul me-2"></i>
-                        {% if current_lang == "en" %}Individual Results{% else %}单项结果{% endif %}
+                        {% if current_lang == "en" %}Individual Results (Sorted by Performance){% else %}单项结果 (按效率排序){% endif %}
                     </h6>
                     <div class="table-responsive">
                         <table class="table table-sm table-dark">
                             <thead>
                                 <tr>
+                                    <th>{% if current_lang == "en" %}#{% else %}编号{% endif %}</th>
                                     <th>{% if current_lang == "en" %}Model{% else %}型号{% endif %}</th>
                                     <th>{% if current_lang == "en" %}Qty{% else %}数量{% endif %}</th>
                                     <th>{% if current_lang == "en" %}Daily{% else %}日收益{% endif %}</th>
@@ -855,10 +880,25 @@
                             <tbody>
             `;
 
-            results.forEach(result => {
+            // 按每日收益排序（降序），显示效率最高和最低的矿机
+            const sortedResults = [...results].sort((a, b) => (b.daily_profit || 0) - (a.daily_profit || 0));
+            
+            sortedResults.forEach((result, index) => {
                 const profitClass = result.daily_profit > 0 ? 'text-success' : 'text-danger';
+                let statusBadge = '';
+                
+                // 标记最高和最低效率矿机
+                if (sortedResults.length > 1) {
+                    if (index === 0 && result.daily_profit > 0) {
+                        statusBadge = '<span class="badge bg-success ms-1">{% if current_lang == "en" %}BEST{% else %}最佳{% endif %}</span>';
+                    } else if (index === sortedResults.length - 1 && sortedResults.length > 2) {
+                        statusBadge = '<span class="badge bg-warning ms-1">{% if current_lang == "en" %}LOWEST{% else %}最差{% endif %}</span>';
+                    }
+                }
+                
                 html += `
                     <tr>
+                        <td><span class="badge bg-secondary">${result.miner_number || '-'}</span>${statusBadge}</td>
                         <td class="small">${result.model}</td>
                         <td>${result.quantity}</td>
                         <td class="${profitClass}">$${(result.daily_profit || 0).toFixed(3)}</td>
