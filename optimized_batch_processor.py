@@ -58,15 +58,20 @@ class OptimizedBatchProcessor:
                 'block_reward': BLOCK_REWARD
             }
     
-    def calculate_single_miner_group(self, model, quantity, power_consumption, electricity_cost, machine_price, network_data, decay_rate=0):
+    def calculate_single_miner_group(self, model, quantity, power_consumption, electricity_cost, machine_price, network_data, decay_rate=0, custom_hashrate=None):
         """计算单个矿机组的收益（内存优化版本）"""
         try:
             # 获取矿机规格
-            if model in MINER_DATA:
+            if custom_hashrate is not None:
+                # 使用CSV中提供的算力数据
+                single_hashrate = custom_hashrate
+                single_power = power_consumption / quantity if quantity > 0 else power_consumption
+                logger.debug(f"使用自定义算力: {model} = {single_hashrate}TH/s")
+            elif model in MINER_DATA:
                 single_hashrate = MINER_DATA[model]["hashrate"]
                 single_power = MINER_DATA[model]["power_watt"]
             else:
-                # 使用提供的数据，如果有算力字段就用，否则用默认值
+                # 使用默认值
                 single_hashrate = 110  # 默认算力
                 single_power = power_consumption / quantity if quantity > 0 else power_consumption
             
@@ -227,7 +232,8 @@ class OptimizedBatchProcessor:
                     float(miner.get('power_consumption', 3250)),
                     float(miner.get('electricity_cost', 0.08)),
                     float(miner.get('machine_price', 2500)),
-                    float(miner.get('decay_rate', 0))
+                    float(miner.get('decay_rate', 0)),
+                    float(miner.get('hashrate', 0)) if miner.get('hashrate') else None  # 自定义算力
                 )
                 quantity = int(miner.get('quantity', 1))
                 
@@ -244,9 +250,9 @@ class OptimizedBatchProcessor:
             total_daily_revenue = 0
             total_daily_cost = 0
             
-            for (model, power_consumption, electricity_cost, machine_price, decay_rate), quantity in miner_groups.items():
+            for (model, power_consumption, electricity_cost, machine_price, decay_rate, custom_hashrate), quantity in miner_groups.items():
                 result = self.calculate_single_miner_group(
-                    model, quantity, power_consumption, electricity_cost, machine_price, network_data, decay_rate
+                    model, quantity, power_consumption, electricity_cost, machine_price, network_data, decay_rate, custom_hashrate
                 )
                 
                 if result:

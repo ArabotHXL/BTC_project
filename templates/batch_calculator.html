@@ -723,6 +723,9 @@
                 const decayRate = parseFloat(cells[5].querySelector('input').value) || 0;
                 
                 if (model && quantity > 0 && power > 0 && electricity > 0 && price > 0) {
+                    // 检查是否有自定义算力
+                    const customHashrate = row.getAttribute('data-custom-hashrate');
+                    
                     miners.push({
                         model: model,
                         quantity: quantity,
@@ -730,7 +733,7 @@
                         machine_price: price,
                         electricity_cost: electricity,
                         decay_rate: decayRate,
-                        hashrate: minerModels[model]?.hashrate || 0
+                        hashrate: customHashrate ? parseFloat(customHashrate) : (minerModels[model]?.hashrate || 0)
                     });
                 }
             });
@@ -921,7 +924,12 @@
                     }
                     
                     if (model && quantity && power && price && electricity) {
-                        addMinerRowFromData(model, quantity, power, price, electricity, decayRate || '0');
+                        // 处理算力字段 - 如果是7字段格式，提取算力值
+                        let hashrate = null;
+                        if (parts.length === 7) {
+                            hashrate = parseFloat(parts[5]) || null; // Hashrate(TH/s)字段
+                        }
+                        addMinerRowFromData(model, quantity, power, price, electricity, decayRate || '0', hashrate);
                     }
                 }
                 
@@ -931,7 +939,7 @@
             reader.readAsText(file);
         }
 
-        function addMinerRowFromData(model, quantity, power, price, electricity, decayRate) {
+        function addMinerRowFromData(model, quantity, power, price, electricity, decayRate, hashrate) {
             addMinerRow();
             
             // Get the last added row
@@ -946,6 +954,11 @@
             cells[3].querySelector('input').value = price;
             cells[4].querySelector('input').value = electricity;
             cells[5].querySelector('input').value = decayRate || 0;
+            
+            // 如果有自定义算力，存储在row的data属性中
+            if (hashrate) {
+                lastRow.setAttribute('data-custom-hashrate', hashrate);
+            }
         }
 
         // Export functions
