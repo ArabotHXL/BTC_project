@@ -400,14 +400,14 @@ class MultiExchangeCollector:
                 total_trades += trades
                 total_volume += volume if volume else 0
             
-            # 计算总平均价格
+            # 计算总平均价格 - 确保使用合理的BTC价格范围
             cursor.execute('''
                 SELECT AVG(price) FROM multi_exchange_trades
-                WHERE timestamp > ?
+                WHERE timestamp > ? AND price > 50000 AND price < 200000
             ''', (cutoff_time,))
             
             avg_price_result = cursor.fetchone()
-            avg_price = avg_price_result[0] if avg_price_result and avg_price_result[0] else 0
+            avg_price = avg_price_result[0] if avg_price_result and avg_price_result[0] and avg_price_result[0] > 50000 else 0
             
             conn.close()
             
