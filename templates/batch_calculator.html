@@ -457,18 +457,18 @@
     </div>
 
     <script>
-        // Available miner models with specifications
+        // Available miner models with specifications (匹配CSV模板)
         const minerModels = {
             'Antminer S19 Pro': { hashrate: 110, power: 3250, price: 2500 },
-            'Antminer S19j Pro': { hashrate: 100, power: 3068, price: 2200 },
-            'Antminer S21': { hashrate: 200, power: 3550, price: 4200 },
-            'Antminer S19 XP': { hashrate: 140, power: 3010, price: 3100 },
+            'WhatsMiner M53S': { hashrate: 226, power: 6554, price: 4500 },
+            'Antminer S21': { hashrate: 200, power: 3550, price: 3200 },
+            'Antminer S19 XP': { hashrate: 140, power: 3010, price: 2800 },
+            'WhatsMiner M50S': { hashrate: 126, power: 3276, price: 2200 },
             'Antminer T19': { hashrate: 84, power: 3150, price: 1800 },
-            'WhatsMiner M50S': { hashrate: 126, power: 3276, price: 2800 },
-            'WhatsMiner M53S': { hashrate: 226, power: 6554, price: 5500 },
-            'WhatsMiner M56S': { hashrate: 212, power: 5550, price: 4800 },
-            'AvalonMiner 1366': { hashrate: 100, power: 3420, price: 2300 },
-            'AvalonMiner 1466': { hashrate: 150, power: 3420, price: 3200 }
+            'AvalonMiner 1366': { hashrate: 100, power: 3420, price: 2000 },
+            'Antminer S21 Pro': { hashrate: 234, power: 3531, price: 3800 },
+            'WhatsMiner M56S': { hashrate: 212, power: 5550, price: 4200 },
+            'Antminer S19j Pro': { hashrate: 100, power: 3068, price: 2300 }
         };
 
         let minerRowCount = 0;
@@ -1032,7 +1032,17 @@
             
             // Fill in the data
             const cells = lastRow.querySelectorAll('td');
-            cells[1].querySelector('select').value = model;  // 第2列
+            
+            // 设置矿机型号
+            const selectElement = cells[1].querySelector('select');
+            if (selectElement && minerModels[model]) {
+                selectElement.value = model;
+                // 触发change事件以更新默认值
+                updateMinerSpecs(selectElement, lastRow.id);
+            } else {
+                console.warn('未找到矿机型号:', model);
+            }
+            
             cells[2].querySelector('input').value = quantity;  // 第3列
             cells[3].querySelector('input').value = power;     // 第4列
             cells[4].querySelector('input').value = price;     // 第5列
