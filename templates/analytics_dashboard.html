@@ -456,11 +456,157 @@
                 </div>
             </div>
         </div>
+        
+        <!-- 三大交易所交易数据分析 -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            三大交易所实时交易数据 (Deribit + OKX + Binance)
+                            <span class="badge bg-success ms-2" id="tradingDataStatus">实时监控</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- 统计卡片行 -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card bg-dark text-light border-warning">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-graph-up text-warning h3"></i>
+                                        <h5 class="card-title">总交易数</h5>
+                                        <h3 class="text-warning" id="exchangeTotalTrades">
+                                            <div class="spinner-border spinner-border-sm" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </h3>
+                                        <small class="text-muted">三大交易所合计</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-dark text-light border-info">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-currency-bitcoin text-info h3"></i>
+                                        <h5 class="card-title">总交易量</h5>
+                                        <h3 class="text-info" id="exchangeTotalVolume">
+                                            <div class="spinner-border spinner-border-sm" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </h3>
+                                        <small class="text-muted">Deribit + OKX + Binance</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-dark text-light border-success">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-cash text-success h3"></i>
+                                        <h5 class="card-title">平均价格</h5>
+                                        <h3 class="text-success" id="exchangeAvgPrice">
+                                            <div class="spinner-border spinner-border-sm" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </h3>
+                                        <small class="text-muted">成交均价</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-dark text-light border-primary">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-clock text-primary h3"></i>
+                                        <h5 class="card-title">最新更新</h5>
+                                        <h6 class="text-primary" id="exchangeLastUpdate">
+                                            <div class="spinner-border spinner-border-sm" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </h6>
+                                        <small class="text-muted">数据时间</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 图表行 -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card bg-dark text-light border-secondary">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="bi bi-bar-chart-line"></i>
+                                            价格区间交易量分布
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="exchangePriceRangeChart" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-dark text-light border-secondary">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="bi bi-pie-chart"></i>
+                                            交易方向分布
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="exchangeDirectionChart" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 价格区间分析表格 -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card bg-dark text-light border-secondary">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="bi bi-table"></i>
+                                            价格区间详细分析
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-dark table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>价格区间</th>
+                                                        <th>交易次数</th>
+                                                        <th>总交易量</th>
+                                                        <th>占比</th>
+                                                        <th>平均价格</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="exchangePriceRangeTable">
+                                                    <tr>
+                                                        <td colspan="5" class="text-center">
+                                                            <div class="spinner-border spinner-border-sm" role="status">
+                                                                <span class="visually-hidden">Loading...</span>
+                                                            </div>
+                                                            <span class="ms-2">加载中...</span>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let priceChart;
+        let exchangePriceRangeChart, exchangeDirectionChart;
         
         // 初始化价格图表
         function initPriceChart() {
@@ -1091,6 +1237,156 @@
             // 设置三大交易所数据定时更新 (每15分钟)
             setInterval(loadExchangeTradingData, 900000);
             setInterval(loadExchangeAnalysisData, 900000);
+        });
+
+        // 初始化三大交易所图表
+        function initExchangeCharts() {
+            console.log('Initializing exchange charts...');
+            
+            // 价格区间图表
+            const priceRangeCtx = document.getElementById('exchangePriceRangeChart');
+            if (priceRangeCtx) {
+                exchangePriceRangeChart = new Chart(priceRangeCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: '交易量',
+                            data: [],
+                            backgroundColor: 'rgba(255, 193, 7, 0.8)',
+                            borderColor: 'rgba(255, 193, 7, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#ffffff' }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                ticks: { color: '#ffffff' }
+                            },
+                            y: {
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                ticks: { color: '#ffffff' }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // 交易方向图表
+            const directionCtx = document.getElementById('exchangeDirectionChart');
+            if (directionCtx) {
+                exchangeDirectionChart = new Chart(directionCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['买入', '卖出'],
+                        datasets: [{
+                            data: [50, 50],
+                            backgroundColor: ['#48bb78', '#e53e3e'],
+                            borderColor: ['#48bb78', '#e53e3e'],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#ffffff' }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // 加载三大交易所统计数据
+        async function loadExchangeTradingData() {
+            try {
+                console.log('Loading exchange trading data...');
+                const response = await fetch('/api/deribit/multi-exchange-trades');
+                const result = await response.json();
+                console.log('Exchange trading data response:', result);
+                
+                if (result.success && result.data) {
+                    const data = result.data;
+                    
+                    // 更新统计卡片
+                    document.getElementById('exchangeTotalTrades').textContent = data.total_trades || 0;
+                    document.getElementById('exchangeTotalVolume').textContent = (data.total_volume || 0).toFixed(2);
+                    document.getElementById('exchangeAvgPrice').textContent = '$' + (data.avg_price || 0).toFixed(4);
+                    document.getElementById('exchangeLastUpdate').textContent = data.last_update || '--';
+                    
+                    // 更新状态
+                    document.getElementById('tradingDataStatus').textContent = '数据已更新';
+                    document.getElementById('tradingDataStatus').className = 'badge bg-success ms-2';
+                    
+                    console.log('Exchange trading data updated successfully');
+                } else {
+                    console.error('Failed to load exchange trading data:', result);
+                    document.getElementById('tradingDataStatus').textContent = '数据加载失败';
+                    document.getElementById('tradingDataStatus').className = 'badge bg-danger ms-2';
+                }
+            } catch (error) {
+                console.error('Error loading exchange trading data:', error);
+                document.getElementById('tradingDataStatus').textContent = '网络错误';
+                document.getElementById('tradingDataStatus').className = 'badge bg-warning ms-2';
+            }
+        }
+        
+        // 加载三大交易所分析数据
+        async function loadExchangeAnalysisData() {
+            try {
+                console.log('Loading exchange analysis data...');
+                const response = await fetch('/api/deribit/analysis-data');
+                const result = await response.json();
+                console.log('Exchange analysis data response:', result);
+                
+                if (result.success && result.data && result.data.price_ranges) {
+                    const priceRanges = result.data.price_ranges;
+                    
+                    // 更新价格区间图表
+                    if (exchangePriceRangeChart && priceRanges.length > 0) {
+                        const labels = priceRanges.map(range => range.range);
+                        const volumes = priceRanges.map(range => range.volume);
+                        
+                        exchangePriceRangeChart.data.labels = labels;
+                        exchangePriceRangeChart.data.datasets[0].data = volumes;
+                        exchangePriceRangeChart.update();
+                    }
+                    
+                    // 更新价格区间表格
+                    const tableBody = document.getElementById('exchangePriceRangeTable');
+                    if (tableBody && priceRanges.length > 0) {
+                        tableBody.innerHTML = '';
+                        priceRanges.forEach(range => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${range.range}</td>
+                                <td>${range.count}</td>
+                                <td>${range.volume.toFixed(2)}</td>
+                                <td>${range.percentage}%</td>
+                                <td>$${range.avg_price.toFixed(4)}</td>
+                            `;
+                            tableBody.appendChild(row);
+                        });
+                    }
+                    
+                    console.log('Exchange analysis data updated successfully');
+                } else {
+                    console.error('Failed to load exchange analysis data:', result);
+                }
+            } catch (error) {
+                console.error('Error loading exchange analysis data:', error);
+            }
+        }
         });
         
         // 网络历史图表变量
