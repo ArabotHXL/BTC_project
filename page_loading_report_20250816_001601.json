@@ -1,0 +1,195 @@
+{
+  "summary": {
+    "total_pages_tested": 11,
+    "successful_pages": 11,
+    "overall_avg_time_ms": 60.8,
+    "fastest_page_ms": 10.6,
+    "slowest_page_ms": 319.8,
+    "test_timestamp": "2025-08-16T00:16:01.492823"
+  },
+  "page_results": [
+    {
+      "path": "/analytics",
+      "page_name": "数据分析",
+      "avg_time_ms": 10.6,
+      "min_time_ms": 9.8,
+      "max_time_ms": 11.8,
+      "avg_content_size_kb": 7.4,
+      "success_rate": 100.0,
+      "status_codes": [
+        200,
+        200,
+        200
+      ],
+      "grade": "优秀 ⭐⭐⭐",
+      "timestamp": "2025-08-16T00:16:00.634381"
+    },
+    {
+      "path": "/curtailment_calculator",
+      "page_name": "电力削减计算器",
+      "avg_time_ms": 11.2,
+      "min_time_ms": 9.7,
+      "max_time_ms": 12.9,
+      "avg_content_size_kb": 7.4,
+      "success_rate": 100.0,
+      "status_codes": [
+        200,
+        200,
+        200
+      ],
+      "grade": "优秀 ⭐⭐⭐",
+      "timestamp": "2025-08-16T00:16:00.647381"
+    },
+    {
+      "path": "/network_history",
+      "page_name": "网络历史",
+      "avg_time_ms": 12.4,
+      "min_time_ms": 10.8,
+      "max_time_ms": 15.1,
+      "avg_content_size_kb": 7.4,
+      "success_rate": 100.0,
+      "status_codes": [
+        200,
+        200,
+        200
+      ],
+      "grade": "优秀 ⭐⭐⭐",
+      "timestamp": "2025-08-16T00:16:00.672899"
+    },
+    {
+      "path": "/admin/user_access",
+      "page_name": "用户管理",
+      "avg_time_ms": 14.8,
+      "min_time_ms": 10.2,
+      "max_time_ms": 21.7,
+      "avg_content_size_kb": 7.4,
+      "success_rate": 100.0,
+      "status_codes": [
+        200,
+        200,
+        200
+      ],
+      "grade": "优秀 ⭐⭐⭐",
+      "timestamp": "2025-08-16T00:16:00.718511"
+    },
+    {
+      "path": "/crm/dashboard",
+      "page_name": "CRM仪表盘",
+      "avg_time_ms": 16.3,
+      "min_time_ms": 9.5,
+      "max_time_ms": 22.8,
+      "avg_content_size_kb": 7.4,
+      "success_rate": 100.0,
+      "status_codes": [
+        200,
+        200,
+        200
+      ],
+      "grade": "优秀 ⭐⭐⭐",
+      "timestamp": "2025-08-16T00:16:00.697310"
+    },
+    {
+      "path": "/deribit-analysis",
+      "page_name": "Deribit分析",
+      "avg_time_ms": 18.2,
+      "min_time_ms": 14.4,
+      "max_time_ms": 20.8,
+      "avg_content_size_kb": 7.4,
+      "success_rate": 100.0,
+      "status_codes": [
+        200,
+        200,
+        200
+      ],
+      "grade": "优秀 ⭐⭐⭐",
+      "timestamp": "2025-08-16T00:16:00.753349"
+    },
+    {
+      "path": "/",
+      "page_name": "首页",
+      "avg_time_ms": 29.3,
+      "min_time_ms": 15.5,
+      "max_time_ms": 39.4,
+      "avg_content_size_kb": 19.7,
+      "success_rate": 100.0,
+      "status_codes": [
+        200,
+        200,
+        200
+      ],
+      "grade": "优秀 ⭐⭐⭐",
+      "timestamp": "2025-08-16T00:16:00.528990"
+    },
+    {
+      "path": "/login",
+      "page_name": "登录页",
+      "avg_time_ms": 52.8,
+      "min_time_ms": 7.3,
+      "max_time_ms": 130.2,
+      "avg_content_size_kb": 7.4,
+      "success_rate": 100.0,
+      "status_codes": [
+        200,
+        200,
+        200
+      ],
+      "grade": "优秀 ⭐⭐⭐",
+      "timestamp": "2025-08-16T00:16:00.601648"
+    },
+    {
+      "path": "/calculator",
+      "page_name": "挖矿计算器",
+      "avg_time_ms": 56.3,
+      "min_time_ms": 6.7,
+      "max_time_ms": 154.8,
+      "avg_content_size_kb": 63.7,
+      "success_rate": 100.0,
+      "status_codes": [
+        200,
+        200,
+        200
+      ],
+      "grade": "优秀 ⭐⭐⭐",
+      "timestamp": "2025-08-16T00:16:00.611462"
+    },
+    {
+      "path": "/batch-calculator",
+      "page_name": "批量计算器",
+      "avg_time_ms": 127.0,
+      "min_time_ms": 109.9,
+      "max_time_ms": 161.0,
+      "avg_content_size_kb": 67.6,
+      "success_rate": 100.0,
+      "status_codes": [
+        200,
+        200,
+        200
+      ],
+      "grade": "优秀 ⭐⭐⭐",
+      "timestamp": "2025-08-16T00:16:01.100257"
+    },
+    {
+      "path": "/price",
+      "page_name": "价格页面",
+      "avg_time_ms": 319.8,
+      "min_time_ms": 257.5,
+      "max_time_ms": 372.9,
+      "avg_content_size_kb": 2.5,
+      "success_rate": 100.0,
+      "status_codes": [
+        200,
+        200,
+        200
+      ],
+      "grade": "良好 ⭐⭐",
+      "timestamp": "2025-08-16T00:16:01.489172"
+    }
+  ],
+  "recommendations": [
+    "所有页面性能表现良好！",
+    "启用Gzip压缩减少传输大小",
+    "使用CDN加速静态资源",
+    "优化数据库查询",
+    "实施更积极的缓存策略"
+  ]
+}
