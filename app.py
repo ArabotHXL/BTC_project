@@ -296,10 +296,21 @@ def health_check():
         db_status = db_health_manager.check_database_connection(database_url)
         
         if db_status['connected']:
-            # Additional SQLAlchemy connection test
-            from sqlalchemy import text
-            db.session.execute(text('SELECT version()'))
-            db.session.commit()
+            try:
+                # Additional SQLAlchemy connection test
+                from sqlalchemy import text
+                db.session.execute(text('SELECT version()'))
+                db.session.commit()
+            except Exception as e:
+                logging.warning(f"SQLAlchemy health check failed: {e}")
+                return jsonify({
+                    'status': 'degraded',
+                    'database': {
+                        'status': 'connected_with_issues',
+                        'error': str(e)
+                    },
+                    'timestamp': datetime.now().isoformat()
+                }), 200
             
             return jsonify({
                 'status': 'healthy',

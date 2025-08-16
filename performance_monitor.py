@@ -3,8 +3,13 @@
 """
 import time
 import logging
-import psutil
 from functools import wraps
+try:
+    import psutil
+    HAS_PSUTIL = True
+except ImportError:
+    HAS_PSUTIL = False
+    logging.warning("psutil not available, system stats will be limited")
 from typing import Callable, Dict, List
 from datetime import datetime, timedelta
 
@@ -71,6 +76,19 @@ class PerformanceMonitor:
     
     def get_system_stats(self) -> Dict:
         """获取系统状态"""
+        if not HAS_PSUTIL:
+            return {
+                'cpu_percent': 0,
+                'memory_percent': 0,
+                'memory_used_mb': 0,
+                'memory_total_mb': 0,
+                'disk_percent': 0,
+                'disk_used_gb': 0,
+                'disk_total_gb': 0,
+                'uptime_hours': (time.time() - self._start_time) / 3600,
+                'note': 'psutil not available'
+            }
+        
         try:
             cpu_percent = psutil.cpu_percent(interval=1)
             memory = psutil.virtual_memory()
