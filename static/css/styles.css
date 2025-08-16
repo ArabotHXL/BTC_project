@@ -127,6 +127,37 @@ body {
     justify-content: center;
 }
 
+/* 不同功能区域的图标颜色 */
+.dashboard-item:nth-child(1) .bi, 
+.dashboard-item:nth-child(1) i {
+    color: #ffc107; /* 计算器 - 金黄色 */
+}
+
+.dashboard-item:nth-child(2) .bi,
+.dashboard-item:nth-child(2) i {
+    color: #28a745; /* 批量计算 - 绿色 */
+}
+
+.dashboard-item:nth-child(3) .bi,
+.dashboard-item:nth-child(3) i {
+    color: #17a2b8; /* 客户管理 - 青色 */
+}
+
+.dashboard-item:nth-child(4) .bi,
+.dashboard-item:nth-child(4) i {
+    color: #dc3545; /* 分析平台 - 红色 */
+}
+
+.dashboard-item:nth-child(5) .bi,
+.dashboard-item:nth-child(5) i {
+    color: #6f42c1; /* 挖矿经纪 - 紫色 */
+}
+
+.dashboard-item:nth-child(6) .bi,
+.dashboard-item:nth-child(6) i {
+    color: #fd7e14; /* 性能监控 - 橙色 */
+}
+
 .dashboard-item:hover {
     border-color: var(--border-accent);
     transform: translateY(-5px);
