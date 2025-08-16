@@ -212,12 +212,29 @@
 }
 
 /* 为特定卡片添加图标颜色 */
-.calculator-item .card-icon { color: #28a745; } /* 绿色 */
-.batch-item .card-icon { color: #17a2b8; } /* 青色 */
-.customer-item .card-icon { color: #dc3545; } /* 红色 */
-.analytics-item .card-icon { color: #dc3545; } /* 红色 */
-.user-item .card-icon { color: #6f42c1; } /* 紫色 */
-.performance-item .card-icon { color: #007bff; } /* 蓝色，之前是橙色，现在统一为蓝色 */
+.calculator-item .card-icon,
+.calculator-item .bi,
+.calculator-item i { color: #ffc107 !important; } /* 挖矿计算器 - 金黄色 */
+
+.batch-item .card-icon,
+.batch-item .bi,
+.batch-item i { color: #28a745 !important; } /* 批量计算器 - 绿色 */
+
+.customer-item .card-icon,
+.customer-item .bi,
+.customer-item i { color: #dc3545 !important; } /* 客户管理 - 红色 */
+
+.analytics-item .card-icon,
+.analytics-item .bi,
+.analytics-item i { color: #dc3545 !important; } /* 分析平台 - 红色 */
+
+.user-item .card-icon,
+.user-item .bi,
+.user-item i { color: #6f42c1 !important; } /* 用户管理 - 紫色 */
+
+.performance-item .card-icon,
+.performance-item .bi,
+.performance-item i { color: #fd7e14 !important; } /* 性能监控 - 橙色 */
 
 </style>
 {% endblock %}
