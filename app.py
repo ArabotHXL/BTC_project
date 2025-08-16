@@ -4227,6 +4227,26 @@ try:
 except ImportError as e:
     logging.warning(f"Deribit routes not available: {e}")
 
+# 添加性能监控中间件
+@app.before_request
+def before_request_monitoring():
+    g.start_time = time.time()
+
+@app.after_request
+def after_request_monitoring(response):
+    if hasattr(g, 'start_time'):
+        duration = time.time() - g.start_time
+        endpoint = request.endpoint or request.path
+        
+        # 记录性能指标
+        from performance_monitor import monitor
+        monitor.track_request(endpoint, duration, response.status_code)
+        
+        # 添加性能头部用于调试
+        response.headers['X-Response-Time'] = f"{duration*1000:.1f}ms"
+    
+    return response
+
 # 添加安全头
 @app.after_request  
 def add_security_headers(response):
@@ -4234,6 +4254,39 @@ def add_security_headers(response):
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['Content-Security-Policy'] = "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data:; img-src 'self' data: https:;"
     return response
+
+# 性能监控API端点
+@app.route('/api/performance-stats')
+@login_required
+def api_performance_stats():
+    """获取性能统计数据"""
+    if not has_role(['owner', 'admin']):
+        return jsonify({'error': '权限不足'}), 403
+    
+    from performance_monitor import monitor
+    stats = monitor.get_performance_summary()
+    return jsonify(stats)
+
+@app.route('/api/slow-endpoints')
+@login_required
+def api_slow_endpoints():
+    """获取慢速端点数据"""
+    if not has_role(['owner', 'admin']):
+        return jsonify({'error': '权限不足'}), 403
+    
+    from performance_monitor import monitor
+    slow_endpoints = monitor.get_slow_endpoints(threshold_ms=1000)
+    return jsonify(slow_endpoints)
+
+@app.route('/performance-monitor')
+@login_required
+def performance_monitor_page():
+    """性能监控页面"""
+    if not has_role(['owner', 'admin']):
+        flash('需要管理员权限', 'error')
+        return redirect(url_for('index'))
+    
+    return render_template('performance_monitor.html')
 
 # 添加缺失的API端点
 @app.route('/api/miner-data', methods=['GET'])
