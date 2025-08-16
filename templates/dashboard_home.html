@@ -124,43 +124,21 @@
 }
 
 .card-analytics {
-    border-left: 4px solid #6f42c1;
-}
-
-.card-calculator:hover {
-    border-color: #28a745;
-    box-shadow: 0 10px 25px rgba(40, 167, 69, 0.2);
-}
-
-.card-batch:hover {
-    border-color: #17a2b8;
-    box-shadow: 0 10px 25px rgba(23, 162, 184, 0.2);
-}
-
-.card-crm:hover {
-    border-color: #dc3545;
-    box-shadow: 0 10px 25px rgba(220, 53, 69, 0.2);
+    border-left: 5px solid #dc3545;
+    background: linear-gradient(135deg, #1a1a1a, #2d1b2e);
 }
 
 .card-analytics:hover {
-    border-color: #6f42c1;
-    box-shadow: 0 10px 25px rgba(111, 66, 193, 0.2);
+    box-shadow: 0 0 30px rgba(220, 53, 85, 0.3);
 }
 
-.card-calculator .card-icon {
-    color: #28a745;
+.card-performance {
+    border-left: 5px solid #6f42c1;
+    background: linear-gradient(135deg, #1a1a1a, #2e1c3e);
 }
 
-.card-batch .card-icon {
-    color: #17a2b8;
-}
-
-.card-crm .card-icon {
-    color: #dc3545;
-}
-
-.card-analytics .card-icon {
-    color: #6f42c1;
+.card-performance:hover {
+    box-shadow: 0 0 30px rgba(111, 66, 193, 0.3);
 }
 
 /* 响应式设计 */
@@ -168,26 +146,26 @@
     .dashboard-container {
         padding: 1rem;
     }
-    
+
     .dashboard-title {
         font-size: 1.5rem;
         margin-bottom: 2rem;
     }
-    
+
     .dashboard-grid {
         grid-template-columns: 1fr;
         gap: 1.5rem;
     }
-    
+
     .dashboard-card {
         padding: 2rem 1.5rem;
         height: 180px; /* 移动端固定高度 */
     }
-    
+
     .card-icon {
         font-size: 2.5rem;
     }
-    
+
     .card-title {
         font-size: 1.1rem;
     }
@@ -205,6 +183,7 @@
 .dashboard-card:nth-child(3) { animation-delay: 0.3s; }
 .dashboard-card:nth-child(4) { animation-delay: 0.4s; }
 .dashboard-card:nth-child(5) { animation-delay: 0.5s; }
+.dashboard-card:nth-child(6) { animation-delay: 0.6s; } /* Add delay for the new card */
 
 @keyframes slideInUp {
     to {
@@ -240,7 +219,7 @@
     <h1 class="dashboard-title">
         {% if current_lang == 'en' %}Bitcoin Mining Intelligent Analysis Platform{% else %}Bitcoin挖矿智能分析平台{% endif %}
     </h1>
-    
+
     <!-- 功能卡片网格 -->
     <div class="dashboard-grid">
         <!-- 挖矿计算器 -->
@@ -255,7 +234,7 @@
                 </p>
             </div>
         </div>
-        
+
         <!-- 批量计算器 -->
         <div class="dashboard-card card-batch" onclick="location.href='{{ url_for('batch_calculator.batch_calculator') }}'">
             <div class="card-content">
@@ -268,7 +247,7 @@
                 </p>
             </div>
         </div>
-        
+
         <!-- 客户管理 -->
         {% if user_has_crm_access() %}
         <div class="dashboard-card card-crm" onclick="location.href='{{ url_for('crm.dashboard') }}'">
@@ -283,7 +262,7 @@
             </div>
         </div>
         {% endif %}
-        
+
         <!-- 分析平台 -->
         {% if user_has_analytics_access() %}
         <div class="dashboard-card card-analytics" onclick="location.href='{{ url_for('analytics_dashboard') }}'">
@@ -298,7 +277,7 @@
             </div>
         </div>
         {% endif %}
-        
+
         <!-- 用户管理 (管理员功能) -->
         {% if session.role in ['owner', 'admin'] %}
         <div class="dashboard-card card-crm" onclick="location.href='{{ url_for('user_access') }}'">
@@ -313,6 +292,21 @@
             </div>
         </div>
         {% endif %}
+        
+        <!-- 性能监控 -->
+        {% if session.role in ['owner', 'admin'] %}
+        <div class="dashboard-card card-performance" onclick="location.href='{{ url_for('performance_monitoring') }}'">
+            <div class="card-content">
+                <i class="bi bi-speedometer2 card-icon"></i>
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}Performance Monitoring{% else %}性能监控{% endif %}
+                </h3>
+                <p class="card-description">
+                    {% if current_lang == 'en' %}Monitor system performance and resource usage{% else %}监控系统性能和资源使用情况{% endif %}
+                </p>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 
@@ -320,21 +314,21 @@
 // 卡片点击效果和描述文字逐渐显现
 document.addEventListener('DOMContentLoaded', function() {
     const cards = document.querySelectorAll('.dashboard-card');
-    
+
     cards.forEach((card, index) => {
         // 卡片点击效果
         card.addEventListener('mousedown', function() {
             this.style.transform = 'translateY(-3px) scale(0.98)';
         });
-        
+
         card.addEventListener('mouseup', function() {
             this.style.transform = 'translateY(-5px) scale(1)';
         });
-        
+
         card.addEventListener('mouseleave', function() {
             this.style.transform = 'translateY(0) scale(1)';
         });
-        
+
         // 延迟显示描述文字
         setTimeout(() => {
             card.classList.add('show-description');
