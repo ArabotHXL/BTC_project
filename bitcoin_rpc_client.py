@@ -135,8 +135,24 @@ class BitcoinRPCClient:
         return self.make_rpc_call("getblockchaininfo")
 
     def get_mining_info(self) -> Optional[Dict]:
-        """获取挖矿相关信息"""
-        return self.make_rpc_call("getmininginfo")
+        """获取挖矿相关信息 - 使用受限制的API时返回基本信息"""
+        try:
+            result = self.make_rpc_call("getmininginfo")
+            if result and 'result' in result:
+                mining_info = result['result']
+                logger.info(f"✅ 挖矿信息获取成功: 难度={mining_info.get('difficulty', 'N/A')}")
+                return mining_info
+            else:
+                # API受限时返回None，让系统使用其他数据源
+                logger.info("RPC挖矿信息API受限，将使用备用数据源")
+                return None
+        except Exception as e:
+            # 记录错误但不影响系统运行
+            if "restricted by blockchain schema" in str(e):
+                logger.info("RPC方法被限制，使用备用数据源")
+            else:
+                logger.error(f"RPC错误: {e}")
+            return None
 
     def get_network_hashps(self, blocks: int = 120) -> Optional[float]:
         """
@@ -155,11 +171,11 @@ class BitcoinRPCClient:
             if result is None and self.use_ankr:
                 logger.debug("Ankr服务不支持网络算力查询，这是正常的限制")
                 return None
-            # Explicitly handle the restricted method error
+            # Explicitly handle the restricted method error  
             if isinstance(result, dict) and 'error' in result and result['error']:
                 error_msg = str(result['error'])
                 if "Method disabled" in error_msg or "restricted by blockchain schema" in error_msg:
-                    logger.error(f"RPC method restricted: {result['error']['message']}")
+                    logger.info(f"RPC方法被限制，使用备用数据源: {result['error']['message']}")
                     return None
             
             return float(result) if result is not None else None
