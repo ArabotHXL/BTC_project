@@ -127,35 +127,92 @@ body {
     justify-content: center;
 }
 
-/* 不同功能区域的图标颜色 */
-.dashboard-item:nth-child(1) .bi, 
-.dashboard-item:nth-child(1) i {
-    color: #ffc107; /* 计算器 - 金黄色 */
+/* 不同功能区域的图标颜色 - 使用更具体的选择器 */
+.dashboard-grid .dashboard-item:nth-child(1) .bi, 
+.dashboard-grid .dashboard-item:nth-child(1) i {
+    color: #ffc107 !important; /* 挖矿计算器 - 金黄色 */
 }
 
-.dashboard-item:nth-child(2) .bi,
-.dashboard-item:nth-child(2) i {
-    color: #28a745; /* 批量计算 - 绿色 */
+.dashboard-grid .dashboard-item:nth-child(2) .bi,
+.dashboard-grid .dashboard-item:nth-child(2) i {
+    color: #28a745 !important; /* 批量计算器 - 绿色 */
 }
 
-.dashboard-item:nth-child(3) .bi,
-.dashboard-item:nth-child(3) i {
-    color: #17a2b8; /* 客户管理 - 青色 */
+.dashboard-grid .dashboard-item:nth-child(3) .bi,
+.dashboard-grid .dashboard-item:nth-child(3) i {
+    color: #17a2b8 !important; /* 客户管理 - 青色 */
 }
 
-.dashboard-item:nth-child(4) .bi,
-.dashboard-item:nth-child(4) i {
-    color: #dc3545; /* 分析平台 - 红色 */
+.dashboard-grid .dashboard-item:nth-child(4) .bi,
+.dashboard-grid .dashboard-item:nth-child(4) i {
+    color: #dc3545 !important; /* 分析平台 - 红色 */
 }
 
-.dashboard-item:nth-child(5) .bi,
-.dashboard-item:nth-child(5) i {
-    color: #6f42c1; /* 挖矿经纪 - 紫色 */
+.dashboard-grid .dashboard-item:nth-child(5) .bi,
+.dashboard-grid .dashboard-item:nth-child(5) i {
+    color: #6f42c1 !important; /* 用户管理 - 紫色 */
 }
 
-.dashboard-item:nth-child(6) .bi,
-.dashboard-item:nth-child(6) i {
-    color: #fd7e14; /* 性能监控 - 橙色 */
+.dashboard-grid .dashboard-item:nth-child(6) .bi,
+.dashboard-grid .dashboard-item:nth-child(6) i {
+    color: #fd7e14 !important; /* 性能监控 - 橙色 */
+}
+
+/* 基于CSS类名的图标颜色选择器 - 更可靠的方法 */
+.dashboard-item.calculator-item .bi,
+.dashboard-item.calculator-item i {
+    color: #ffc107 !important; /* 挖矿计算器 - 金黄色 */
+}
+
+.dashboard-item.batch-item .bi,
+.dashboard-item.batch-item i {
+    color: #28a745 !important; /* 批量计算器 - 绿色 */
+}
+
+.dashboard-item.customer-item .bi,
+.dashboard-item.customer-item i {
+    color: #17a2b8 !important; /* 客户管理 - 青色 */
+}
+
+.dashboard-item.analytics-item .bi,
+.dashboard-item.analytics-item i {
+    color: #dc3545 !important; /* 分析平台 - 红色 */
+}
+
+.dashboard-item.user-item .bi,
+.dashboard-item.user-item i {
+    color: #6f42c1 !important; /* 用户管理 - 紫色 */
+}
+
+.dashboard-item.performance-item .bi,
+.dashboard-item.performance-item i {
+    color: #fd7e14 !important; /* 性能监控 - 橙色 */
+}
+
+/* 备用选择器 - 基于特定功能的href属性 */
+.dashboard-item[href*="calculator"] .bi,
+.dashboard-item[href*="calculator"] i {
+    color: #ffc107 !important; /* 挖矿计算器 - 金黄色 */
+}
+
+.dashboard-item[href*="batch"] .bi,
+.dashboard-item[href*="batch"] i {
+    color: #28a745 !important; /* 批量计算器 - 绿色 */
+}
+
+.dashboard-item[href*="customer"] .bi,
+.dashboard-item[href*="customer"] i {
+    color: #17a2b8 !important; /* 客户管理 - 青色 */
+}
+
+.dashboard-item[href*="analytics"] .bi,
+.dashboard-item[href*="analytics"] i {
+    color: #dc3545 !important; /* 分析平台 - 红色 */
+}
+
+.dashboard-item[href*="broker"] .bi,
+.dashboard-item[href*="broker"] i {
+    color: #6f42c1 !important; /* 用户管理 - 紫色 */
 }
 
 .dashboard-item:hover {

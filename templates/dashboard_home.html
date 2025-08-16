@@ -210,6 +210,15 @@
         max-height: 100px;
     }
 }
+
+/* 为特定卡片添加图标颜色 */
+.calculator-item .card-icon { color: #28a745; } /* 绿色 */
+.batch-item .card-icon { color: #17a2b8; } /* 青色 */
+.customer-item .card-icon { color: #dc3545; } /* 红色 */
+.analytics-item .card-icon { color: #dc3545; } /* 红色 */
+.user-item .card-icon { color: #6f42c1; } /* 紫色 */
+.performance-item .card-icon { color: #007bff; } /* 蓝色，之前是橙色，现在统一为蓝色 */
+
 </style>
 {% endblock %}
 
@@ -223,7 +232,7 @@
     <!-- 功能卡片网格 -->
     <div class="dashboard-grid">
         <!-- 挖矿计算器 -->
-        <div class="dashboard-card card-calculator" onclick="location.href='{{ url_for('calculator') }}'">
+        <div class="dashboard-card calculator-item" onclick="location.href='{{ url_for('calculator') }}'">
             <div class="card-content">
                 <i class="bi bi-calculator card-icon"></i>
                 <h3 class="card-title">
@@ -236,7 +245,7 @@
         </div>
 
         <!-- 批量计算器 -->
-        <div class="dashboard-card card-batch" onclick="location.href='{{ url_for('batch_calculator.batch_calculator') }}'">
+        <div class="dashboard-card batch-item" onclick="location.href='{{ url_for('batch_calculator.batch_calculator') }}'">
             <div class="card-content">
                 <i class="bi bi-table card-icon"></i>
                 <h3 class="card-title">
@@ -250,7 +259,7 @@
 
         <!-- 客户管理 -->
         {% if user_has_crm_access() %}
-        <div class="dashboard-card card-crm" onclick="location.href='{{ url_for('crm.dashboard') }}'">
+        <div class="dashboard-card customer-item" onclick="location.href='{{ url_for('crm.dashboard') }}'">
             <div class="card-content">
                 <i class="bi bi-people card-icon"></i>
                 <h3 class="card-title">
@@ -265,7 +274,7 @@
 
         <!-- 分析平台 -->
         {% if user_has_analytics_access() %}
-        <div class="dashboard-card card-analytics" onclick="location.href='{{ url_for('analytics_dashboard') }}'">
+        <div class="dashboard-card analytics-item" onclick="location.href='{{ url_for('analytics_dashboard') }}'">
             <div class="card-content">
                 <i class="bi bi-graph-up-arrow card-icon"></i>
                 <h3 class="card-title">
@@ -280,7 +289,7 @@
 
         <!-- 用户管理 (管理员功能) -->
         {% if session.role in ['owner', 'admin'] %}
-        <div class="dashboard-card card-crm" onclick="location.href='{{ url_for('user_access') }}'">
+        <div class="dashboard-card user-item" onclick="location.href='{{ url_for('user_access') }}'">
             <div class="card-content">
                 <i class="bi bi-person-gear card-icon"></i>
                 <h3 class="card-title">
@@ -292,10 +301,10 @@
             </div>
         </div>
         {% endif %}
-        
+
         <!-- 性能监控 -->
         {% if session.role in ['owner', 'admin'] %}
-        <div class="dashboard-card card-performance" onclick="location.href='{{ url_for('performance_monitor_page') }}'">
+        <div class="dashboard-card performance-item" onclick="location.href='{{ url_for('performance_monitor_page') }}'">
             <div class="card-content">
                 <i class="bi bi-speedometer2 card-icon"></i>
                 <h3 class="card-title">
