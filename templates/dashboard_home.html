@@ -295,7 +295,7 @@
         
         <!-- 性能监控 -->
         {% if session.role in ['owner', 'admin'] %}
-        <div class="dashboard-card card-performance" onclick="location.href='{{ url_for('performance_monitoring') }}'">
+        <div class="dashboard-card card-performance" onclick="location.href='{{ url_for('performance_monitor_page') }}'">
             <div class="card-content">
                 <i class="bi bi-speedometer2 card-icon"></i>
                 <h3 class="card-title">
