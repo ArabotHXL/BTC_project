@@ -80,6 +80,48 @@
     min-width: 0; /* 允许shrink */
 }
 
+/* 卡片头部布局优化 */
+.card-header h5 {
+    font-weight: 600;
+    color: #fff;
+}
+
+.card-header .badge {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
+}
+
+/* 统计信息区域 */
+.card-header .progress {
+    border-radius: 4px;
+    background-color: rgba(255,255,255,0.1);
+}
+
+/* 改进卡片头部按钮间距 */
+.card-header .btn {
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.card-header .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* 响应式布局改进 */
+@media (max-width: 991px) {
+    .card-header .d-flex.gap-3 {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+    
+    .card-header .d-flex.gap-2 {
+        justify-content: center;
+        margin-top: 0.5rem;
+    }
+}
+
 .miner-card {
     background: #1a1a1a;
     border: 2px solid #333;
@@ -240,32 +282,12 @@
                         </p>
                     </div>
                     
-                    <!-- Plan Quota Display -->
+                    <!-- Plan Display -->
                     <div class="text-end">
                         <div class="small text-muted">{% if current_lang == 'en' %}Current Plan{% else %}当前套餐{% endif %}</div>
                         <div class="fw-bold text-primary">{{ user_plan.name.title() }}</div>
-                        <div class="quota-display mt-2" style="min-width: 120px; max-width: 160px;">
-                            <div class="text-center">
-                                <div class="small text-muted mb-1">{% if current_lang == 'en' %}Quota{% else %}配额{% endif %}</div>
-                                
-                                <!-- Compact quota counter -->
-                                <div class="d-flex justify-content-center align-items-baseline mb-1">
-                                    <span id="currentCount" class="fw-bold text-warning" style="font-size: 1.3rem; line-height: 1;">0</span>
-                                    <span class="text-muted mx-1" style="font-size: 0.9rem;">/</span>
-                                    <span class="fw-bold text-light" style="font-size: 1.3rem; line-height: 1;">{{ user_plan.max_miners }}</span>
-                                </div>
-                                
-                                <!-- Progress bar -->
-                                <div class="progress mb-1" style="height: 3px;">
-                                    <div class="progress-bar bg-warning" role="progressbar" 
-                                         style="width: 0%" id="quotaProgress"></div>
-                                </div>
-                                
-                                <div class="small text-muted" style="font-size: 0.7rem;">
-                                    <span id="remainingCount">{{ user_plan.max_miners }}</span>
-                                    {% if current_lang == 'en' %}left{% else %}剩余{% endif %}
-                                </div>
-                            </div>
+                        <div class="small text-muted mt-1">
+                            {% if current_lang == 'en' %}Max {{ user_plan.max_miners }} miners{% else %}最大{{ user_plan.max_miners }}台矿机{% endif %}
                         </div>
                     </div>
                 </div>
@@ -397,22 +419,38 @@
         <div class="row">
             <div class="col-xl-8 col-lg-7">
                 <div class="card">
-                    <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
-                        <h5 class="mb-2 mb-md-0">
-                            <i class="bi bi-table me-2"></i>
-                            {% if current_lang == 'en' %}Miners Configuration{% else %}矿机配置{% endif %}
-                        </h5>
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="addMinerRow()">
-                                <i class="bi bi-plus-circle me-1"></i>
-                                <span class="d-none d-sm-inline">{% if current_lang == 'en' %}Add Miner{% else %}添加矿机{% endif %}</span>
-                                <span class="d-sm-none">{% if current_lang == 'en' %}Add{% else %}添加{% endif %}</span>
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllMiners()">
-                                <i class="bi bi-trash me-1"></i>
-                                <span class="d-none d-sm-inline">{% if current_lang == 'en' %}Clear All{% else %}清空所有{% endif %}</span>
-                                <span class="d-sm-none">{% if current_lang == 'en' %}Clear{% else %}清空{% endif %}</span>
-                            </button>
+                    <div class="card-header">
+                        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start gap-3">
+                            <!-- 标题和按钮组 -->
+                            <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3 w-100">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-table me-2 text-warning"></i>
+                                    {% if current_lang == 'en' %}Miners Configuration{% else %}矿机配置{% endif %}
+                                </h5>
+                                
+                                <!-- 操作按钮组 -->
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="addMinerRow()">
+                                        <i class="bi bi-plus-circle me-1"></i>
+                                        {% if current_lang == 'en' %}Add Miner{% else %}添加矿机{% endif %}
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllMiners()">
+                                        <i class="bi bi-trash me-1"></i>
+                                        {% if current_lang == 'en' %}Clear All{% else %}清空所有{% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- 统计信息 -->
+                            <div class="d-flex align-items-center gap-3 text-nowrap">
+                                <div class="badge bg-primary">
+                                    {% if current_lang == 'en' %}Miners: {% else %}矿机数: {% endif %}
+                                    <span id="currentCount">0</span>/<span>{{ user_plan.max_miners }}</span>
+                                </div>
+                                <div class="progress" style="width: 100px; height: 8px;">
+                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 0%" id="quotaProgress"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="card-body">
@@ -761,12 +799,10 @@
             
             // Update quota display
             const currentCountSpan = document.getElementById('currentCount');
-            const remainingCountSpan = document.getElementById('remainingCount');
             const progressBar = document.getElementById('quotaProgress');
             
-            if (currentCountSpan && remainingCountSpan && progressBar) {
+            if (currentCountSpan && progressBar) {
                 currentCountSpan.textContent = totalMiners.toLocaleString();
-                remainingCountSpan.textContent = Math.max(0, maxMiners - totalMiners).toLocaleString();
                 
                 const progressPercent = Math.min((totalMiners / maxMiners) * 100, 100);
                 progressBar.style.width = progressPercent + '%';
