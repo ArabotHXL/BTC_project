@@ -757,15 +757,18 @@ def login_dashboard():
             flash('您没有权限访问此页面，需要拥有者权限', 'danger')
         return redirect(url_for('index'))
     
-    # Check subscription plan for advanced analytics
-    from decorators import get_user_plan
-    user_plan = get_user_plan()
-    
-    if not getattr(user_plan, 'allow_advanced_analytics', False):
-        return render_template('upgrade_required.html',
-                             feature='Advanced Analytics Dashboard',
-                             required_plan='pro',
-                             current_plan=getattr(user_plan, 'id', 'free')), 402
+    # Owner账户不受订阅计划限制
+    current_role = session.get('role', 'guest')
+    if current_role != 'owner':
+        # Check subscription plan for advanced analytics (non-owner users)
+        from decorators import get_user_plan
+        user_plan = get_user_plan()
+        
+        if not getattr(user_plan, 'allow_advanced_analytics', False):
+            return render_template('upgrade_required.html',
+                                 feature='Advanced Analytics Dashboard',
+                                 required_plan='pro',
+                                 current_plan=getattr(user_plan, 'id', 'free')), 402
     
     # 从数据库获取登录记录
     all_records = LoginRecord.query.order_by(LoginRecord.login_time.desc()).all()

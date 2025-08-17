@@ -442,7 +442,7 @@
                 <span class="ms-3 text-muted d-none d-lg-inline" id="lastUpdate">
                     {% if current_lang == 'en' %}Last update: --{% else %}更新: --{% endif %}
                 </span>
-                <a href="{{ url_for('main') }}" class="btn btn-outline-warning btn-sm ms-2">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-warning btn-sm ms-2">
                     <i class="bi bi-house-door"></i> <span class="d-none d-md-inline">{% if current_lang == 'en' %}Home{% else %}主页{% endif %}</span>
                 </a>
             </div>
@@ -457,7 +457,7 @@
             <!-- Sidebar -->
             <div class="col-md-2 sidebar p-3" id="sidebar">
                 <nav class="nav nav-pills flex-column">
-                    <a href="{{ url_for('main') }}" class="nav-link">
+                    <a href="{{ url_for('index') }}" class="nav-link">
                         <i class="bi bi-house-door"></i> {% if current_lang == 'en' %}Home{% else %}主页{% endif %}
                     </a>
                     <a class="nav-link active" href="#dashboard" data-tab="dashboard">
