@@ -942,18 +942,43 @@
             const hasMeaningfulDomData = domRows.length > 1 && !domRows[0].querySelector('.text-center i.bi-hourglass-split');
             
             if (window.allMinersData && window.allMinersData.length > 0 && !hasMeaningfulDomData) {
-                const miners = window.allMinersData.map((data, index) => ({
-                    miner_number: (index + 1).toString(),
-                    model: data.model,
-                    quantity: data.quantity,
-                    power_consumption: data.power,
-                    machine_price: data.price,
-                    electricity_cost: data.electricity,
-                    decay_rate: data.decayRate || 0,
-                    hashrate: data.hashrate
-                }));
-                console.log('使用完整CSV数据:', miners.length, '台矿机');
-                return miners;
+                // 应用配额限制：将矿机数据展开成单个矿机，然后限制数量
+                const expandedMiners = [];
+                for (const data of window.allMinersData) {
+                    const quantity = parseInt(data.quantity) || 1;
+                    for (let i = 0; i < quantity; i++) {
+                        expandedMiners.push({
+                            miner_number: (expandedMiners.length + 1).toString(),
+                            model: data.model,
+                            quantity: 1, // 每台矿机数量为1
+                            power_consumption: data.power,
+                            machine_price: data.price,
+                            electricity_cost: data.electricity,
+                            decay_rate: data.decayRate || 0,
+                            hashrate: data.hashrate
+                        });
+                        
+                        // 达到配额限制时停止
+                        if (expandedMiners.length >= maxMiners && !bypassUsed) {
+                            break;
+                        }
+                    }
+                    if (expandedMiners.length >= maxMiners && !bypassUsed) {
+                        break;
+                    }
+                }
+                
+                console.log('使用CSV数据，应用配额限制:', expandedMiners.length, '台矿机（最大:', maxMiners, '）');
+                
+                // 如果触发了配额限制，显示提示
+                if (expandedMiners.length >= maxMiners && !bypassUsed) {
+                    const totalMinersInCsv = window.allMinersData.reduce((sum, data) => sum + (parseInt(data.quantity) || 1), 0);
+                    if (totalMinersInCsv > maxMiners) {
+                        showQuotaLimitWarning(expandedMiners.length, totalMinersInCsv);
+                    }
+                }
+                
+                return expandedMiners;
             }
             
             // 否则从当前表格DOM收集数据
@@ -1191,6 +1216,32 @@
                 </div>
             `;
             document.getElementById('exportCard').style.display = 'none';
+        }
+
+        function showQuotaLimitWarning(calculatedMiners, totalMiners) {
+            const resultsSection = document.getElementById('resultsSection');
+            resultsSection.innerHTML = `
+                <div class="alert alert-warning mb-3">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    {% if current_lang == "en" %}
+                    Your CSV contains ${totalMiners} miners, but your Free plan allows only ${calculatedMiners}. 
+                    Only the first ${calculatedMiners} miners will be calculated.
+                    {% else %}
+                    您的CSV包含${totalMiners}台矿机，但免费计划只允许${calculatedMiners}台。
+                    仅计算前${calculatedMiners}台矿机。
+                    {% endif %}
+                    <br>
+                    <a href="#" onclick="showUpgradeModal(${totalMiners})" class="btn btn-sm btn-primary mt-2">
+                        {% if current_lang == "en" %}Upgrade to Calculate All{% else %}升级以计算全部{% endif %}
+                    </a>
+                </div>
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-calculator" style="font-size: 2rem;"></i>
+                    <p class="mt-2">
+                        {% if current_lang == "en" %}Click calculate to process the first ${calculatedMiners} miners{% else %}点击计算处理前${calculatedMiners}台矿机{% endif %}
+                    </p>
+                </div>
+            `;
         }
 
         function showExportOptions() {
