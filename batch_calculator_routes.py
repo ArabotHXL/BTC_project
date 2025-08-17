@@ -412,9 +412,9 @@ def export_batch_excel():
                     round(result.get('daily_profit', 0), 3),
                     round(result.get('monthly_profit', 0), 3),
                     round(result.get('annual_roi', 0), 3),
-                    round(result.get('payback_days', 0), 3),
-                    round(result.get('hashrate', 0), 3),
-                    round(result.get('power', 0), 3),
+                    round(result.get('roi_days', 0), 1),      # ROI天数1位小数
+                    round(result.get('hash_rate', 0), 1),   # 算力1位小数
+                    round(result.get('power_consumption', 0), 0),  # 功耗整数
                     round(result.get('daily_btc', 0), 8),
                     round(result.get('monthly_btc', 0), 8)
                 ]
@@ -422,8 +422,16 @@ def export_batch_excel():
                 for col, value in enumerate(data_row, 1):
                     cell = worksheet.cell(row=row, column=col, value=value)
                     cell.border = border
+                    # 设置不同列的数字格式
                     if isinstance(value, (int, float)) and col > 2:
-                        cell.number_format = '0.000'  # 3 decimal places
+                        if col in [11, 12]:  # Daily BTC, Monthly BTC
+                            cell.number_format = '0.00000000'  # 8位小数
+                        elif col in [9, 10]:  # Hash Rate, Power
+                            cell.number_format = '0.0'  # 1位小数
+                        elif col == 8:  # Payback Days
+                            cell.number_format = '0.0'  # 1位小数
+                        else:  # 其他金额字段
+                            cell.number_format = '0.000'  # 3位小数
         
         # Auto-adjust column widths
         if worksheet is not None:

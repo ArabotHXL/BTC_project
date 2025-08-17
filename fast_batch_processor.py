@@ -134,18 +134,28 @@ class FastBatchProcessor:
                 electricity_cost, decay_rate, network_data
             )
             
+            # 计算BTC收益（高精度）
+            daily_btc = daily_revenue / network_data['btc_price'] if network_data['btc_price'] > 0 else 0
+            monthly_btc = daily_btc * 30
+            
             return {
                 'model': model,
                 'quantity': quantity,
                 'hash_rate': single_hashrate,
                 'power_consumption': single_power,
                 'electricity_cost': electricity_cost,
-                'daily_revenue': round(daily_revenue, 2),
-                'daily_cost': round(daily_cost, 2),
-                'daily_profit': round(daily_profit, 2),
-                'monthly_profit': round(daily_profit * 30, 2),
-                'roi_days': round(roi_days) if roi_days < 999999 else 0,
-                'decay_rate': decay_rate
+                'daily_revenue': round(daily_revenue, 3),  # 提升到3位小数
+                'daily_cost': round(daily_cost, 3),        # 提升到3位小数
+                'daily_profit': round(daily_profit, 3),    # 提升到3位小数
+                'monthly_profit': round(daily_profit * 30, 3),  # 提升到3位小数
+                'roi_days': round(roi_days, 1) if roi_days < 999999 else 0,  # 1位小数精度
+                'decay_rate': decay_rate,
+                'daily_btc': round(daily_btc, 8),    # BTC高精度
+                'monthly_btc': round(monthly_btc, 8), # BTC高精度
+                'annual_roi': round((daily_profit * 365 / (machine_price * quantity)) * 100, 3) if machine_price > 0 else 0,  # ROI百分比
+                'payback_days': round(roi_days, 1) if roi_days < 999999 else 0,  # 回本天数
+                'hashrate': single_hashrate,  # 算力
+                'power': single_power         # 功耗
             }
             
         except Exception as e:
@@ -244,12 +254,12 @@ class FastBatchProcessor:
             
             summary = {
                 'total_miners': total_miners,
-                'total_daily_profit': round(total_daily_profit, 2),
-                'total_daily_revenue': round(total_daily_revenue, 2),
-                'total_daily_cost': round(total_daily_cost, 2),
-                'total_monthly_profit': round(total_daily_profit * 30, 2),
+                'total_daily_profit': round(total_daily_profit, 3),    # 提升到3位小数
+                'total_daily_revenue': round(total_daily_revenue, 3),  # 提升到3位小数
+                'total_daily_cost': round(total_daily_cost, 3),        # 提升到3位小数
+                'total_monthly_profit': round(total_daily_profit * 30, 3),  # 提升到3位小数
                 'unique_groups': len(results),
-                'average_roi_days': average_roi
+                'average_roi_days': round(average_roi, 1)  # ROI天数1位小数
             }
             
             processing_time = time.time() - start_time
