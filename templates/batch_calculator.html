@@ -1274,12 +1274,22 @@
             const tbody = document.getElementById('minersTableBody');
             const hasExistingData = tbody && tbody.children.length > 0 && !tbody.querySelector('.text-center i.bi-hourglass-split');
             const hasExistingCsvData = window.allMinersData && window.allMinersData.length > 0;
+            const hasCalculationResults = document.getElementById('resultsSection') && document.getElementById('resultsSection').style.display !== 'none';
             
-            if (hasExistingData || hasExistingCsvData) {
-                const confirmMessage = '{% if current_lang == "en" %}You have existing miner data. Do you want to replace it with the new CSV file?{% else %}您已有现有矿机数据。是否要用新的CSV文件替换？{% endif %}';
+            console.log('检查现有数据:', {
+                hasExistingData: hasExistingData,
+                tbodyChildrenCount: tbody ? tbody.children.length : 0,
+                hasExistingCsvData: hasExistingCsvData,
+                csvDataLength: window.allMinersData ? window.allMinersData.length : 0,
+                hasCalculationResults: hasCalculationResults
+            });
+            
+            if (hasExistingData || hasExistingCsvData || hasCalculationResults) {
+                const confirmMessage = '{% if current_lang == "en" %}You have existing data. Do you want to replace it with the new CSV file?{% else %}您已有现有数据。是否要用新的CSV文件替换？{% endif %}';
                 if (!confirm(confirmMessage)) {
                     // 用户选择不替换，清空文件输入
                     event.target.value = '';
+                    console.log('用户取消文件替换');
                     return;
                 }
                 
@@ -1289,6 +1299,16 @@
                 window.allMinersData = [];
                 minerRowCount = 0;
                 hideResults();
+                
+                // 清除计算结果
+                const resultsSection = document.getElementById('resultsSection');
+                if (resultsSection) {
+                    resultsSection.style.display = 'none';
+                    resultsSection.innerHTML = '';
+                }
+                
+                // 重置计数器
+                updateTotalCount();
             }
 
             console.log('开始处理CSV文件:', file.name, '大小:', file.size);
