@@ -22,8 +22,8 @@ class OptimizedBatchProcessor:
         import time
         current_time = time.time()
         
-        # 缓存2分钟以提升性能
-        if self.cached_network_data and (current_time - self.cache_timestamp) < 120:
+        # 缓存5分钟以提升性能（减少API调用）
+        if self.cached_network_data and (current_time - self.cache_timestamp) < 300:
             return self.cached_network_data
             
         try:
@@ -59,7 +59,7 @@ class OptimizedBatchProcessor:
             }
     
     def calculate_single_miner_group(self, model, quantity, power_consumption, electricity_cost, machine_price, network_data, decay_rate=0, custom_hashrate=None):
-        """计算单个矿机组的收益（内存优化版本）"""
+        """计算单个矿机组的收益（高性能版本）"""
         try:
             # 获取矿机规格
             if custom_hashrate is not None:
@@ -184,8 +184,8 @@ class OptimizedBatchProcessor:
         total_profit = 0
         daily_decay_rate = decay_rate_monthly / 100 / 30  # 每日衰减率
         
-        # 按30天为一块进行粗略计算，最后1000天内精确计算
-        rough_days = min(max_days - 1000, max_days)
+        # 按30天为一块进行粗略计算，最后600天内精确计算（提升性能）
+        rough_days = min(max_days - 600, max_days)
         
         # 粗略计算（月度块）
         for month in range(rough_days // 30):
@@ -241,7 +241,7 @@ class OptimizedBatchProcessor:
         
         total_profit = initial_profit
         
-        for day in range(start_day, min(start_day + 1000, 1825)):  # 最多精确计算1000天
+        for day in range(start_day, min(start_day + 600, 1825)):  # 最多精确计算600天
             eff_th = hashrate_th * (1 - daily_decay_rate) ** day
             
             if network_hashrate_th > 0:
@@ -337,8 +337,8 @@ class OptimizedBatchProcessor:
                     total_daily_revenue += result['daily_revenue']
                     total_daily_cost += result['daily_cost']
                 
-                # 清理内存
-                if len(results) % 100 == 0:
+                # 清理内存（减少频率）
+                if len(results) % 200 == 0:
                     gc.collect()
             
             # 创建摘要

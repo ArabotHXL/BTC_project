@@ -5,6 +5,7 @@ from flask import Blueprint, request, jsonify, render_template, session, render_
 from decorators import check_miner_limit, get_user_plan, UpgradeRequired, require_feature
 from mining_calculator import calculate_mining_profitability, MINER_DATA
 from optimized_batch_processor import batch_processor
+from fast_batch_processor import fast_batch_processor
 import logging
 import io
 import os
@@ -129,7 +130,15 @@ def batch_calculate():
         # Calculate total miner count
         total_miners = sum(miner.get('quantity', 1) for miner in miners)
         
-        # Enhanced memory management for large datasets
+        # Use ultra-fast processor for all batch calculations
+        logger.info(f"Processing batch with ultra-fast processor: {total_miners} miners")
+        result = fast_batch_processor.process_fast_batch(miners, use_real_time_data=settings.get('use_realtime', True))
+        
+        if result['success']:
+            logger.info(f"Ultra-fast processor completed in {result['optimization_info'].get('processing_time', 0):.2f}s")
+            return jsonify(result)
+        
+        # Fallback to optimized processor for large datasets
         if total_miners > 1000:
             logger.info(f"Processing large batch: {total_miners} miners - Using optimized processor")
             
