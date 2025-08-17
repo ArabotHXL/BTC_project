@@ -162,7 +162,7 @@ class FastBatchProcessor:
             logger.error(f"计算失败: {e}")
             return None
     
-    def process_fast_batch(self, miners_data, use_real_time_data=True):
+    def process_fast_batch(self, miners_data, use_real_time_data=True, group_miners=False):
         """超高速批量处理"""
         try:
             start_time = time.time()
@@ -171,53 +171,100 @@ class FastBatchProcessor:
             # 获取网络数据
             network_data = self.get_network_data_fast(use_real_time_data)
             
-            # 分组相同配置
-            miner_groups = {}
-            total_miners = 0
-            
-            for miner in miners_data:
-                key = (
-                    miner.get('model', 'Antminer S19 Pro'),
-                    float(miner.get('power_consumption', 3250)),
-                    float(miner.get('electricity_cost', 0.08)),
-                    float(miner.get('machine_price', 2500)),
-                    float(miner.get('decay_rate', 0)),
-                    float(miner.get('hashrate', 0)) if miner.get('hashrate') else None
-                )
-                quantity = int(miner.get('quantity', 1))
-                miner_number = miner.get('miner_number', 'undefined')
+            # 决定是否分组处理
+            if group_miners:
+                # 分组相同配置（用于性能优化）
+                miner_groups = {}
+                total_miners = 0
                 
-                if key not in miner_groups:
-                    miner_groups[key] = {'quantity': 0, 'miner_numbers': []}
-                miner_groups[key]['quantity'] += quantity
-                miner_groups[key]['miner_numbers'].append(miner_number)
-                total_miners += quantity
+                for miner in miners_data:
+                    key = (
+                        miner.get('model', 'Antminer S19 Pro'),
+                        float(miner.get('power_consumption', 3250)),
+                        float(miner.get('electricity_cost', 0.08)),
+                        float(miner.get('machine_price', 2500)),
+                        float(miner.get('decay_rate', 0)),
+                        float(miner.get('hashrate', 0)) if miner.get('hashrate') else None
+                    )
+                    quantity = int(miner.get('quantity', 1))
+                    miner_number = miner.get('miner_number', 'undefined')
+                    
+                    if key not in miner_groups:
+                        miner_groups[key] = {'quantity': 0, 'miner_numbers': []}
+                    miner_groups[key]['quantity'] += quantity
+                    miner_groups[key]['miner_numbers'].append(miner_number)
+                    total_miners += quantity
+                
+                logger.info(f"分组优化: {len(miners_data)} → {len(miner_groups)} 组")
+            else:
+                # 不分组，每台矿机单独处理
+                miner_groups = {}
+                total_miners = 0
+                
+                for miner in miners_data:
+                    # 每台矿机单独作为一组
+                    unique_key = f"miner_{miner.get('miner_number', 'undefined')}"
+                    quantity = int(miner.get('quantity', 1))
+                    
+                    miner_groups[unique_key] = {
+                        'model': miner.get('model', 'Antminer S19 Pro'),
+                        'power_consumption': float(miner.get('power_consumption', 3250)),
+                        'electricity_cost': float(miner.get('electricity_cost', 0.08)),
+                        'machine_price': float(miner.get('machine_price', 2500)),
+                        'decay_rate': float(miner.get('decay_rate', 0)),
+                        'custom_hashrate': float(miner.get('hashrate', 0)) if miner.get('hashrate') else None,
+                        'quantity': quantity,
+                        'miner_numbers': [miner.get('miner_number', 'undefined')]
+                    }
+                    total_miners += quantity
+                
+                logger.info(f"个体处理: {len(miners_data)} 台矿机分别计算")
             
-            logger.info(f"分组优化: {len(miners_data)} → {len(miner_groups)} 组")
-            
-            # 并行处理（如果组数较多）
+            # 处理矿机数据
             results = []
             total_daily_profit = 0
             total_daily_revenue = 0
             total_daily_cost = 0
             
-            if len(miner_groups) > 10:
-                # 并行处理大批量
-                with concurrent.futures.ThreadPoolExecutor(max_workers=min(4, cpu_count())) as executor:
-                    futures = []
+            if group_miners:
+                # 分组处理模式
+                if len(miner_groups) > 10:
+                    # 并行处理大批量
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=min(4, cpu_count())) as executor:
+                        futures = []
+                        for (model, power_consumption, electricity_cost, machine_price, decay_rate, custom_hashrate), group_info in miner_groups.items():
+                            future = executor.submit(
+                                self.calculate_single_group_fast,
+                                model, group_info['quantity'], power_consumption,
+                                electricity_cost, machine_price, network_data,
+                                decay_rate, custom_hashrate
+                            )
+                            futures.append((future, group_info['miner_numbers']))
+                        
+                        for future, miner_numbers in futures:
+                            result = future.result()
+                            if result:
+                                # 添加编号信息
+                                if len(miner_numbers) == 1:
+                                    result['miner_number'] = miner_numbers[0]
+                                else:
+                                    result['miner_number'] = f"{miner_numbers[0]}-{miner_numbers[-1]}"
+                                
+                                results.append(result)
+                                total_daily_profit += result['daily_profit']
+                                total_daily_revenue += result['daily_revenue']
+                                total_daily_cost += result['daily_cost']
+                else:
+                    # 串行处理小批量
                     for (model, power_consumption, electricity_cost, machine_price, decay_rate, custom_hashrate), group_info in miner_groups.items():
-                        future = executor.submit(
-                            self.calculate_single_group_fast,
+                        result = self.calculate_single_group_fast(
                             model, group_info['quantity'], power_consumption,
                             electricity_cost, machine_price, network_data,
                             decay_rate, custom_hashrate
                         )
-                        futures.append((future, group_info['miner_numbers']))
-                    
-                    for future, miner_numbers in futures:
-                        result = future.result()
+                        
                         if result:
-                            # 添加编号信息
+                            miner_numbers = group_info['miner_numbers']
                             if len(miner_numbers) == 1:
                                 result['miner_number'] = miner_numbers[0]
                             else:
@@ -228,20 +275,22 @@ class FastBatchProcessor:
                             total_daily_revenue += result['daily_revenue']
                             total_daily_cost += result['daily_cost']
             else:
-                # 串行处理小批量
-                for (model, power_consumption, electricity_cost, machine_price, decay_rate, custom_hashrate), group_info in miner_groups.items():
+                # 个体处理模式 - 每台矿机单独计算
+                for unique_key, group_info in miner_groups.items():
                     result = self.calculate_single_group_fast(
-                        model, group_info['quantity'], power_consumption,
-                        electricity_cost, machine_price, network_data,
-                        decay_rate, custom_hashrate
+                        group_info['model'], 
+                        group_info['quantity'], 
+                        group_info['power_consumption'],
+                        group_info['electricity_cost'], 
+                        group_info['machine_price'], 
+                        network_data,
+                        group_info['decay_rate'], 
+                        group_info['custom_hashrate']
                     )
                     
                     if result:
-                        miner_numbers = group_info['miner_numbers']
-                        if len(miner_numbers) == 1:
-                            result['miner_number'] = miner_numbers[0]
-                        else:
-                            result['miner_number'] = f"{miner_numbers[0]}-{miner_numbers[-1]}"
+                        # 单台矿机使用原始编号
+                        result['miner_number'] = group_info['miner_numbers'][0]
                         
                         results.append(result)
                         total_daily_profit += result['daily_profit']
