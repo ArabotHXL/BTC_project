@@ -391,54 +391,37 @@
                             <table class="table table-dark table-striped" id="minersTable">
                                 <thead>
                                     <tr>
-                                        <th class="text-center" style="width: 4%">
+                                        <th class="text-center" style="width: 5%">
                                             {% if current_lang == 'en' %}#{% else %}编号{% endif %}
                                         </th>
-                                        <th style="width: 15%">
+                                        <th style="width: 25%">
                                             {% if current_lang == 'en' %}Model{% else %}型号{% endif %}
                                         </th>
-                                        <th class="text-center" style="width: 6%">
+                                        <th class="text-center" style="width: 8%">
                                             <span class="d-none d-md-inline">{% if current_lang == 'en' %}Qty{% else %}数量{% endif %}</span>
                                             <span class="d-md-none">{% if current_lang == 'en' %}Q{% else %}数{% endif %}</span>
                                         </th>
-                                        <th class="text-center" style="width: 8%">
-                                            <span class="d-none d-lg-inline">{% if current_lang == 'en' %}Power{% else %}功耗{% endif %}</span>
-                                            <span class="d-lg-none">{% if current_lang == 'en' %}W{% else %}W{% endif %}</span>
+                                        <th class="text-center" style="width: 12%">
+                                            <span class="d-none d-lg-inline">{% if current_lang == 'en' %}Power (W){% else %}功耗(W){% endif %}</span>
+                                            <span class="d-lg-none">{% if current_lang == 'en' %}W{% else %}功耗{% endif %}</span>
                                         </th>
-                                        <th class="text-center" style="width: 8%">
-                                            <span class="d-none d-lg-inline">{% if current_lang == 'en' %}Price{% else %}价格{% endif %}</span>
-                                            <span class="d-lg-none">{% if current_lang == 'en' %}${% else %}价{% endif %}</span>
+                                        <th class="text-center" style="width: 12%">
+                                            <span class="d-none d-lg-inline">{% if current_lang == 'en' %}Price ($){% else %}价格($){% endif %}</span>
+                                            <span class="d-lg-none">{% if current_lang == 'en' %}${% else %}价格{% endif %}</span>
                                         </th>
-                                        <th class="text-center" style="width: 6%">
-                                            <span class="d-none d-xl-inline">{% if current_lang == 'en' %}Elec{% else %}电费{% endif %}</span>
+                                        <th class="text-center" style="width: 10%">
+                                            <span class="d-none d-xl-inline">{% if current_lang == 'en' %}Electric{% else %}电费{% endif %}</span>
                                             <span class="d-xl-none">{% if current_lang == 'en' %}E{% else %}电{% endif %}</span>
                                         </th>
-                                        <th class="text-center" style="width: 6%">
-                                            <span class="d-none d-xl-inline">{% if current_lang == 'en' %}Hash{% else %}算力{% endif %}</span>
-                                            <span class="d-xl-none">{% if current_lang == 'en' %}TH{% else %}算{% endif %}</span>
+                                        <th class="text-center" style="width: 10%">
+                                            <span class="d-none d-xl-inline">{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</span>
+                                            <span class="d-xl-none">{% if current_lang == 'en' %}TH/s{% else %}算力{% endif %}</span>
                                         </th>
-                                        <th class="text-center" style="width: 6%">
+                                        <th class="text-center" style="width: 10%">
                                             <span class="d-none d-xl-inline">{% if current_lang == 'en' %}Decay{% else %}衰减{% endif %}</span>
                                             <span class="d-xl-none">{% if current_lang == 'en' %}%{% else %}衰{% endif %}</span>
                                         </th>
-                                        <!-- 计算结果列 -->
-                                        <th class="text-center bg-primary bg-opacity-25" style="width: 10%">
-                                            <span class="d-none d-lg-inline">{% if current_lang == 'en' %}Daily Revenue{% else %}日收益{% endif %}</span>
-                                            <span class="d-lg-none">{% if current_lang == 'en' %}Rev{% else %}收益{% endif %}</span>
-                                        </th>
-                                        <th class="text-center bg-danger bg-opacity-25" style="width: 8%">
-                                            <span class="d-none d-lg-inline">{% if current_lang == 'en' %}Daily Cost{% else %}日成本{% endif %}</span>
-                                            <span class="d-lg-none">{% if current_lang == 'en' %}Cost{% else %}成本{% endif %}</span>
-                                        </th>
-                                        <th class="text-center bg-success bg-opacity-25" style="width: 10%">
-                                            <span class="d-none d-lg-inline">{% if current_lang == 'en' %}Daily Profit{% else %}日利润{% endif %}</span>
-                                            <span class="d-lg-none">{% if current_lang == 'en' %}Profit{% else %}利润{% endif %}</span>
-                                        </th>
-                                        <th class="text-center bg-warning bg-opacity-25" style="width: 8%">
-                                            <span class="d-none d-lg-inline">{% if current_lang == 'en' %}ROI Days{% else %}回本天数{% endif %}</span>
-                                            <span class="d-lg-none">{% if current_lang == 'en' %}ROI{% else %}回本{% endif %}</span>
-                                        </th>
-                                        <th class="text-center" style="width: 5%">
+                                        <th class="text-center" style="width: 8%">
                                             <i class="bi bi-gear"></i>
                                         </th>
                                     </tr>
@@ -642,19 +625,6 @@
                 <td>
                     <input type="number" class="form-control form-control-sm" 
                            min="0" max="5" value="0" step="0.1" placeholder="0.5">
-                </td>
-                <!-- 计算结果列 -->
-                <td class="text-center bg-primary bg-opacity-10 result-revenue">
-                    <span class="text-muted small">-</span>
-                </td>
-                <td class="text-center bg-danger bg-opacity-10 result-cost">
-                    <span class="text-muted small">-</span>
-                </td>
-                <td class="text-center bg-success bg-opacity-10 result-profit">
-                    <span class="text-muted small">-</span>
-                </td>
-                <td class="text-center bg-warning bg-opacity-10 result-roi">
-                    <span class="text-muted small">-</span>
                 </td>
                 <td>
                     <button class="btn btn-outline-danger btn-sm" onclick="removeMinerRow('${rowId}')">
@@ -1093,57 +1063,7 @@
                 </div>
             `;
 
-            // 更新表格中的计算结果
-            updateTableResults(results);
-
             resultsSection.innerHTML = html;
-        }
-        
-        function updateTableResults(results) {
-            // 创建矿机编号到结果的映射
-            const resultMap = {};
-            results.forEach(result => {
-                resultMap[result.miner_number] = result;
-            });
-            
-            // 更新表格行中的计算结果
-            const rows = document.querySelectorAll('#minersTableBody tr');
-            rows.forEach(row => {
-                const numberBadge = row.querySelector('.auto-number');
-                if (!numberBadge) return;
-                
-                const minerNumber = numberBadge.getAttribute('data-number');
-                const result = resultMap[minerNumber];
-                
-                if (result) {
-                    // 更新收益列
-                    const revenueCell = row.querySelector('.result-revenue');
-                    if (revenueCell) {
-                        revenueCell.innerHTML = `<small class="text-info fw-bold">$${(result.daily_revenue || 0).toFixed(2)}</small>`;
-                    }
-                    
-                    // 更新成本列
-                    const costCell = row.querySelector('.result-cost');
-                    if (costCell) {
-                        costCell.innerHTML = `<small class="text-danger fw-bold">$${(result.daily_cost || 0).toFixed(2)}</small>`;
-                    }
-                    
-                    // 更新利润列
-                    const profitCell = row.querySelector('.result-profit');
-                    if (profitCell) {
-                        const profitClass = result.daily_profit > 0 ? 'text-success' : 'text-danger';
-                        profitCell.innerHTML = `<small class="${profitClass} fw-bold">$${(result.daily_profit || 0).toFixed(2)}</small>`;
-                    }
-                    
-                    // 更新ROI列
-                    const roiCell = row.querySelector('.result-roi');
-                    if (roiCell) {
-                        const roiText = result.roi_days && result.roi_days < 999999 ? `${result.roi_days}d` : 'N/A';
-                        const roiClass = result.roi_days < 365 ? 'text-success' : result.roi_days < 730 ? 'text-warning' : 'text-danger';
-                        roiCell.innerHTML = `<small class="${roiClass} fw-bold">${roiText}</small>`;
-                    }
-                }
-            });
         }
 
         function showErrorResults(message) {
@@ -1185,7 +1105,7 @@
             
             // 显示加载提示
             const tbody = document.getElementById('minersTableBody');
-            tbody.innerHTML = '<tr><td colspan="13" class="text-center"><i class="bi bi-hourglass-split"></i> 正在加载CSV文件...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center"><i class="bi bi-hourglass-split"></i> 正在加载CSV文件...</td></tr>';
 
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -1290,19 +1210,6 @@
                                 <td><input type="number" class="form-control form-control-sm" value="${data.electricity}" min="0.01" max="1" step="0.001"></td>
                                 <td><input type="number" class="form-control form-control-sm" value="${finalHashrate}" min="1" max="500" step="1"></td>
                                 <td><input type="number" class="form-control form-control-sm" value="${data.decayRate}" min="0" max="5" step="0.1"></td>
-                                <!-- 计算结果列 -->
-                                <td class="text-center bg-primary bg-opacity-10 result-revenue">
-                                    <span class="text-muted small">-</span>
-                                </td>
-                                <td class="text-center bg-danger bg-opacity-10 result-cost">
-                                    <span class="text-muted small">-</span>
-                                </td>
-                                <td class="text-center bg-success bg-opacity-10 result-profit">
-                                    <span class="text-muted small">-</span>
-                                </td>
-                                <td class="text-center bg-warning bg-opacity-10 result-roi">
-                                    <span class="text-muted small">-</span>
-                                </td>
                                 <td>
                                     <button class="btn btn-outline-danger btn-sm" onclick="removeMinerRow('miner-row-${minerRowCount}')">
                                         <i class="bi bi-trash"></i>
@@ -1406,19 +1313,6 @@
                 <td><input type="number" class="form-control form-control-sm" value="${electricity}" min="0.01" max="1" step="0.001"></td>
                 <td><input type="number" class="form-control form-control-sm" value="${finalHashrate}" min="1" max="500" step="1"></td>
                 <td><input type="number" class="form-control form-control-sm" value="${decayRate}" min="0" max="5" step="0.1"></td>
-                <!-- 计算结果列 -->
-                <td class="text-center bg-primary bg-opacity-10 result-revenue">
-                    <span class="text-muted small">-</span>
-                </td>
-                <td class="text-center bg-danger bg-opacity-10 result-cost">
-                    <span class="text-muted small">-</span>
-                </td>
-                <td class="text-center bg-success bg-opacity-10 result-profit">
-                    <span class="text-muted small">-</span>
-                </td>
-                <td class="text-center bg-warning bg-opacity-10 result-roi">
-                    <span class="text-muted small">-</span>
-                </td>
                 <td>
                     <button class="btn btn-outline-danger btn-sm" onclick="removeMinerRow('minerRow${minerRowCount}')">
                         <i class="bi bi-trash"></i>
