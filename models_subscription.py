@@ -109,7 +109,7 @@ def initialize_default_plans():
         free_plan.id = 'free'
         free_plan.name = 'Free'
         free_plan.price = 0
-        free_plan.max_miners = 1
+        free_plan.max_miners = 10
         free_plan.max_historical_days = 7
         free_plan.allow_batch_calculator = True  # Free现在允许基础批量计算
         free_plan.allow_crm_system = False
