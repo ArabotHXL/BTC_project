@@ -128,7 +128,7 @@
     <!-- 加载指示器 -->
     <div id="loading-spinner" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999;">
         <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">加载中...</span>
+            <span class="visually-hidden">{% if current_lang == 'en' %}Loading...{% else %}加载中...{% endif %}</span>
         </div>
     </div>
     
@@ -429,32 +429,32 @@
                                             if (minerCount > 0 && powerWatt > 0) {
                                                 var requiredPowerMw = (minerCount * powerWatt) / 1000000;
                                                 document.getElementById('site-power-mw').value = requiredPowerMw.toFixed(3);
-                                                console.log("[直接更新] 矿机数量: " + minerCount + ", 单机功率: " + powerWatt + ", 计算得到矿场功率: " + requiredPowerMw.toFixed(3) + "MW");
+                                                console.log("{% if current_lang == 'en' %}[Direct Update] Miner count: " + minerCount + ", Single miner power: " + powerWatt + ", Calculated site power: " + requiredPowerMw.toFixed(3) + "MW"{% else %}[直接更新] 矿机数量: " + minerCount + ", 单机功率: " + powerWatt + ", 计算得到矿场功率: " + requiredPowerMw.toFixed(3) + "MW"{% endif %});
                                             }
                                         } catch (error) {
-                                            console.error("直接更新矿场功率时出错:", error);
+                                            console.error("{% if current_lang == 'en' %}Error updating site power: {% else %}直接更新矿场功率时出错: {% endif %}", error);
                                         }
                                     }
                                     </script>
                                 </div>
 
-                                <!-- 单矿机算力和功耗字段（隐藏）-->
+                                <!-- {% if current_lang == 'en' %}Single miner hashrate and power consumption fields (hidden){% else %}单矿机算力和功耗字段（隐藏）{% endif %} -->
                                 <input type="hidden" class="form-control" id="hashrate" name="hashrate" value="100">
                                 <input type="hidden" class="form-select" id="hashrate-unit" name="hashrate_unit" value="TH/s">
                                 <input type="hidden" class="form-control" id="power-consumption" name="power_consumption" value="3000">
 
-                                <!-- Total Hashrate - 隐藏但仍然发送到后端 -->
+                                <!-- {% if current_lang == 'en' %}Total Hashrate - hidden but still sent to backend{% else %}Total Hashrate - 隐藏但仍然发送到后端{% endif %} -->
                                 <input type="hidden" id="total-hashrate" name="total_hashrate" value="0">
-                                <!-- 仅用于显示的总算力 -->
+                                <!-- {% if current_lang == 'en' %}Total hashrate display only{% else %}仅用于显示的总算力{% endif %} -->
                                 <div class="mb-3">
                                     <label for="total-hashrate-display" class="form-label">{% if current_lang == 'en' %}Total Hashrate (TH/s){% else %}总算力 (TH/s){% endif %}</label>
                                     <input type="number" class="form-control" id="total-hashrate-display" readonly>
                                     <div class="form-text">{% if current_lang == 'en' %}Total hashrate = Single miner hashrate × Miner count{% else %}总算力 = 单台算力 × 矿机数量{% endif %}</div>
                                 </div>
                                 
-                                <!-- Total Power Consumption - 隐藏但仍然发送到后端 -->
+                                <!-- {% if current_lang == 'en' %}Total Power Consumption - hidden but still sent to backend{% else %}Total Power Consumption - 隐藏但仍然发送到后端{% endif %} -->
                                 <input type="hidden" id="total-power" name="total_power" value="0">
-                                <!-- 仅用于显示的总功耗 -->
+                                <!-- {% if current_lang == 'en' %}Total power consumption display only{% else %}仅用于显示的总功耗{% endif %} -->
                                 <div class="mb-3">
                                     <label for="total-power-display" class="form-label">{% if current_lang == 'en' %}Total Power (W){% else %}总功耗 (W){% endif %}</label>
                                     <input type="number" class="form-control" id="total-power-display" readonly>
@@ -469,7 +469,7 @@
                                     <div class="form-text">{% if current_lang == 'en' %}Actual electricity cost for the mining site{% else %}矿场实际电费成本{% endif %}</div>
                                 </div>
                                 {% else %}
-                                <!-- 为普通用户隐藏字段，但提供默认值 -->
+                                <!-- {% if current_lang == 'en' %}Hide field for regular users but provide default value{% else %}为普通用户隐藏字段，但提供默认值{% endif %} -->
                                 <input type="hidden" id="electricity-cost" name="electricity_cost" value="0.05">
                                 {% endif %}
 
@@ -480,7 +480,7 @@
                                     <div class="form-text">{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Electricity cost charged to customers{% else %}收取客户的电费{% endif %}{% else %}{% if current_lang == 'en' %}Electricity cost you are paying{% else %}您支付的电费{% endif %}{% endif %}</div>
                                 </div>
                                 
-                                <!-- Maintenance Fee - 仅对矿场管理员显示 -->
+                                <!-- {% if current_lang == 'en' %}Maintenance Fee - only shown to mining site administrators{% else %}Maintenance Fee - 仅对矿场管理员显示{% endif %} -->
                                 {% if session.role in ['owner', 'admin', 'mining_site'] %}
                                 <div class="mb-3">
                                     <label for="maintenance-fee" class="form-label">{% if current_lang == 'en' %}Maintenance Fee{% else %}矿场维护费{% endif %}</label>
@@ -491,7 +491,7 @@
                                     <div class="form-text">{% if current_lang == 'en' %}Monthly maintenance cost for the mining facility{% else %}每月矿场维护费用{% endif %}</div>
                                 </div>
                                 
-                                <!-- 电力削减功能已移除，简化用户体验 -->
+                                <!-- {% if current_lang == 'en' %}Power curtailment function removed to simplify user experience{% else %}电力削减功能已移除，简化用户体验{% endif %} -->
                                 
                                 <!-- Host Investment Amount -->
                                 <div class="mb-3">
@@ -503,10 +503,10 @@
                                     <div class="form-text">{% if current_lang == 'en' %}Total investment by mining site owner, for ROI calculation{% else %}矿场主的总投资金额，用于计算ROI{% endif %}</div>
                                 </div>
                                 {% else %}
-                                <!-- 为普通用户隐藏字段，但提供默认值 -->
+                                <!-- {% if current_lang == 'en' %}Hide fields for regular users but provide default values{% else %}为普通用户隐藏字段，但提供默认值{% endif %} -->
                                 <input type="hidden" id="maintenance-fee" name="maintenance_fee" value="5000">
                                 <input type="hidden" id="host-investment" name="host_investment" value="800000">
-                                <!-- 电力削减参数已移除 -->
+                                <!-- {% if current_lang == 'en' %}Power curtailment parameters removed{% else %}电力削减参数已移除{% endif %} -->
                                 {% endif %}
                                 
                                 <!-- Client Investment Amount -->
