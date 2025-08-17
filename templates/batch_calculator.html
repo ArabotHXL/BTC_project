@@ -841,12 +841,26 @@
         }
 
         function clearAllMiners() {
-            if (confirm('{% if current_lang == "en" %}Are you sure you want to clear all miners?{% else %}确定要清空所有矿机吗？{% endif %}')) {
+            if (confirm('{% if current_lang == "en" %}Are you sure you want to clear all miners and uploaded files?{% else %}确定要清空所有矿机和已上传文件吗？{% endif %}')) {
+                // 清空表格数据
                 document.getElementById('minersTableBody').innerHTML = '';
                 minerRowCount = 0;
+                
+                // 清空CSV文件输入
+                const csvFileInput = document.getElementById('csvFile');
+                if (csvFileInput) {
+                    csvFileInput.value = '';
+                }
+                
+                // 清空CSV数据缓存
+                window.allMinersData = [];
+                
+                // 更新界面状态
                 updateEmptyState();
                 updateTotalCount();
                 hideResults();
+                
+                console.log('已清空所有矿机数据和上传文件');
             }
         }
 
@@ -1254,6 +1268,27 @@
             if (!file) {
                 console.log('未选择文件');
                 return;
+            }
+
+            // 检查是否有现有数据，如果有则询问用户是否替换
+            const tbody = document.getElementById('minersTableBody');
+            const hasExistingData = tbody && tbody.children.length > 0 && !tbody.querySelector('.text-center i.bi-hourglass-split');
+            const hasExistingCsvData = window.allMinersData && window.allMinersData.length > 0;
+            
+            if (hasExistingData || hasExistingCsvData) {
+                const confirmMessage = '{% if current_lang == "en" %}You have existing miner data. Do you want to replace it with the new CSV file?{% else %}您已有现有矿机数据。是否要用新的CSV文件替换？{% endif %}';
+                if (!confirm(confirmMessage)) {
+                    // 用户选择不替换，清空文件输入
+                    event.target.value = '';
+                    return;
+                }
+                
+                // 用户确认替换，清空现有数据
+                console.log('用户确认替换现有数据');
+                tbody.innerHTML = '';
+                window.allMinersData = [];
+                minerRowCount = 0;
+                hideResults();
             }
 
             console.log('开始处理CSV文件:', file.name, '大小:', file.size);
