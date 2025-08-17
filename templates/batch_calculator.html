@@ -1235,8 +1235,16 @@
             resultsSection.style.display = 'block';
             resultsSection.parentElement.style.display = 'block';
             
+            // 确保整个结果卡片可见
+            const resultsCard = resultsSection.closest('.card');
+            if (resultsCard) {
+                resultsCard.style.display = 'block';
+            }
+            
             // 滚动到结果区域
-            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            setTimeout(() => {
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
         }
 
         function showErrorResults(message) {
@@ -1304,17 +1312,24 @@
             const tbody = document.getElementById('minersTableBody');
             const hasExistingData = tbody && tbody.children.length > 0 && !tbody.querySelector('.text-center i.bi-hourglass-split');
             const hasExistingCsvData = window.allMinersData && window.allMinersData.length > 0;
-            const hasCalculationResults = document.getElementById('resultsSection') && document.getElementById('resultsSection').style.display !== 'none';
+            
+            // 检查是否有实际的表格数据（超过1行且不是加载状态）
+            const hasRealTableData = tbody && tbody.children.length > 1;
+            
+            // 检查是否有实际输入的数据（不是默认空状态）
+            const hasUserInputData = hasExistingData && tbody.children.length > 0;
             
             console.log('检查现有数据:', {
                 hasExistingData: hasExistingData,
                 tbodyChildrenCount: tbody ? tbody.children.length : 0,
                 hasExistingCsvData: hasExistingCsvData,
                 csvDataLength: window.allMinersData ? window.allMinersData.length : 0,
-                hasCalculationResults: hasCalculationResults
+                hasRealTableData: hasRealTableData,
+                hasUserInputData: hasUserInputData
             });
             
-            if (hasExistingData || hasExistingCsvData || hasCalculationResults) {
+            // 只有在真正有用户数据时才显示确认对话框
+            if (hasRealTableData || (hasExistingCsvData && hasUserInputData)) {
                 const confirmMessage = '{% if current_lang == "en" %}You have existing data. Do you want to replace it with the new CSV file?{% else %}您已有现有数据。是否要用新的CSV文件替换？{% endif %}';
                 if (!confirm(confirmMessage)) {
                     // 用户选择不替换，清空文件输入
@@ -1325,21 +1340,23 @@
                 
                 // 用户确认替换，清空现有数据
                 console.log('用户确认替换现有数据');
-                tbody.innerHTML = '';
-                window.allMinersData = [];
-                minerRowCount = 0;
-                hideResults();
-                
-                // 清除计算结果
-                const resultsSection = document.getElementById('resultsSection');
-                if (resultsSection) {
-                    resultsSection.style.display = 'none';
-                    resultsSection.innerHTML = '';
-                }
-                
-                // 重置计数器
-                updateTotalCount();
             }
+            
+            // 清空现有数据（无论是否显示确认对话框）
+            tbody.innerHTML = '';
+            window.allMinersData = [];
+            minerRowCount = 0;
+            hideResults();
+            
+            // 清除计算结果
+            const resultsSection = document.getElementById('resultsSection');
+            if (resultsSection) {
+                resultsSection.style.display = 'none';
+                resultsSection.innerHTML = '';
+            }
+            
+            // 重置计数器
+            updateTotalCount();
 
             console.log('开始处理CSV文件:', file.name, '大小:', file.size);
             
