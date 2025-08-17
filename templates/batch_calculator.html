@@ -1374,11 +1374,23 @@
                         
                         console.log('CSV处理完成，共处理:', validLines.length, '行，显示:', Math.min(validLines.length, MAX_DISPLAY_ROWS), '行');
                         
-                        // 延迟更新计数，确保DOM完全构建
+                        // 强制刷新显示状态，确保DOM完全构建
                         setTimeout(() => {
+                            // 清除之前的结果显示
+                            hideResults();
+                            
+                            // 确保表格显示
+                            const table = document.querySelector('#minersTableBody').closest('table');
+                            const emptyState = document.getElementById('emptyMinersState');
+                            if (emptyState) emptyState.style.display = 'none';
+                            if (table) table.style.display = 'table';
+                            
+                            // 更新计数和状态
                             updateTotalCount();
                             updateEmptyState();
-                        }, 100);
+                            
+                            console.log('CSV处理后DOM状态更新完成');
+                        }, 200);
                     }
                 }
                 
