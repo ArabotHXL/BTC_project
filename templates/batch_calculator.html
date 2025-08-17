@@ -927,21 +927,7 @@
         }
 
         function collectMinerData() {
-            // 优先使用全部数据（如果有CSV上传的完整数据）
-            if (window.allMinersData && window.allMinersData.length > 0) {
-                const miners = window.allMinersData.map((data, index) => ({
-                    miner_number: (index + 1).toString(),
-                    model: data.model,
-                    quantity: data.quantity,
-                    power_consumption: data.power,
-                    machine_price: data.price,
-                    electricity_cost: data.electricity,
-                    decay_rate: data.decayRate || 0,
-                    hashrate: data.hashrate
-                }));
-                console.log('使用完整CSV数据:', miners.length, '台矿机');
-                return miners;
-            }
+            // 只从当前表格DOM收集数据，不使用CSV完整数据
             
             // 否则从DOM收集数据
             const miners = [];
