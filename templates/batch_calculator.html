@@ -858,11 +858,21 @@
                 return;
             }
 
-            const totalMiners = miners.reduce((sum, m) => sum + m.quantity, 0);
+            // 使用与显示计数器相同的逻辑来计算总矿机数
+            let totalMinersForQuota = 0;
+            const domRows = document.querySelectorAll('#minersTableBody tr');
+            domRows.forEach(row => {
+                const quantityInput = row.querySelector('td:nth-child(3) input');
+                if (quantityInput && quantityInput.value) {
+                    totalMinersForQuota += parseInt(quantityInput.value) || 0;
+                }
+            });
+            
+            console.log('配额检查使用的矿机数:', totalMinersForQuota);
             
             // Check quota limits
-            if (totalMiners > maxMiners && !bypassUsed) {
-                showUpgradeModal(totalMiners);
+            if (totalMinersForQuota > maxMiners && !bypassUsed) {
+                showUpgradeModal(totalMinersForQuota);
                 return;
             }
 
