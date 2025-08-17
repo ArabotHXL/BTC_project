@@ -927,7 +927,26 @@
         }
 
         function collectMinerData() {
-            // 只从当前表格DOM收集数据，不使用CSV完整数据
+            // 如果有CSV完整数据且表格为空或很少行，优先使用CSV数据
+            const domRows = document.querySelectorAll('#minersTableBody tr');
+            const hasMeaningfulDomData = domRows.length > 1 && !domRows[0].querySelector('.text-center i.bi-hourglass-split');
+            
+            if (window.allMinersData && window.allMinersData.length > 0 && !hasMeaningfulDomData) {
+                const miners = window.allMinersData.map((data, index) => ({
+                    miner_number: (index + 1).toString(),
+                    model: data.model,
+                    quantity: data.quantity,
+                    power_consumption: data.power,
+                    machine_price: data.price,
+                    electricity_cost: data.electricity,
+                    decay_rate: data.decayRate || 0,
+                    hashrate: data.hashrate
+                }));
+                console.log('使用完整CSV数据:', miners.length, '台矿机');
+                return miners;
+            }
+            
+            // 否则从当前表格DOM收集数据
             
             // 否则从DOM收集数据
             const miners = [];
@@ -1344,8 +1363,12 @@
                         window.allMinersData = validLines;
                         
                         console.log('CSV处理完成，共处理:', validLines.length, '行，显示:', Math.min(validLines.length, MAX_DISPLAY_ROWS), '行');
-                        updateTotalCount();
-                        updateEmptyState();
+                        
+                        // 延迟更新计数，确保DOM完全构建
+                        setTimeout(() => {
+                            updateTotalCount();
+                            updateEmptyState();
+                        }, 100);
                     }
                 }
                 
