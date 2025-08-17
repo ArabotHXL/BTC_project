@@ -965,10 +965,23 @@
         }
 
         function collectMinerData() {
-            // 如果有CSV完整数据且表格为空或很少行，优先使用CSV数据
+            // 总是优先使用当前DOM表格中的数据，因为这是用户看到和修改的数据
             const domRows = document.querySelectorAll('#minersTableBody tr');
-            const hasMeaningfulDomData = domRows.length > 1 && !domRows[0].querySelector('.text-center i.bi-hourglass-split');
+            const hasMeaningfulDomData = domRows.length > 0 && !domRows[0].querySelector('.text-center i.bi-hourglass-split');
             
+            console.log('数据收集检查:', {
+                domRowsLength: domRows.length,
+                hasMeaningfulDomData: hasMeaningfulDomData,
+                csvDataLength: window.allMinersData ? window.allMinersData.length : 0
+            });
+            
+            // 优先使用DOM表格数据（用户当前看到的数据）
+            if (hasMeaningfulDomData) {
+                console.log('使用DOM表格数据进行计算');
+                return collectFromDomTable();
+            }
+            
+            // 只有在DOM表格为空且有CSV数据时才使用CSV数据
             if (window.allMinersData && window.allMinersData.length > 0 && !hasMeaningfulDomData) {
                 // 应用配额限制：将矿机数据展开成单个矿机，然后限制数量
                 const expandedMiners = [];
@@ -1009,11 +1022,16 @@
                 return expandedMiners;
             }
             
-            // 否则从当前表格DOM收集数据
-            
-            // 否则从DOM收集数据
+            // 如果没有任何数据源，返回空数组
+            console.log('没有找到有效数据源');
+            return [];
+        }
+        
+        function collectFromDomTable() {
+            // 从DOM表格收集数据
             const miners = [];
             const rows = document.querySelectorAll('#minersTableBody tr');
+            console.log('从DOM表格收集数据，行数:', rows.length);
             
             rows.forEach((row, index) => {
                 const cells = row.querySelectorAll('td');
