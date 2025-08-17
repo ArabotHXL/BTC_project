@@ -592,7 +592,9 @@
             row.id = rowId;
             row.innerHTML = `
                 <td class="text-center">
-                    <span class="badge bg-secondary auto-number" data-number="${minerRowCount}">${minerRowCount}</span>
+                    <input type="text" class="form-control form-control-sm text-center auto-number" 
+                           value="${minerRowCount}" readonly data-number="${minerRowCount}"
+                           style="max-width: 60px; background-color: var(--bs-secondary); color: white; border: none;">
                 </td>
                 <td>
                     <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, '${rowId}')">
@@ -648,11 +650,11 @@
         function reorderMinerNumbers() {
             const rows = document.querySelectorAll('#minersTableBody tr');
             rows.forEach((row, index) => {
-                const numberBadge = row.querySelector('.auto-number');
-                if (numberBadge) {
+                const numberInput = row.querySelector('.auto-number');
+                if (numberInput) {
                     const newNumber = index + 1;
-                    numberBadge.textContent = newNumber;
-                    numberBadge.setAttribute('data-number', newNumber);
+                    numberInput.value = newNumber;
+                    numberInput.setAttribute('data-number', newNumber);
                 }
             });
         }
@@ -860,7 +862,7 @@
             
             rows.forEach((row, index) => {
                 const cells = row.querySelectorAll('td');
-                const minerNumber = cells[0].querySelector('.auto-number')?.getAttribute('data-number') || (index + 1).toString();  // 获取自动编号
+                const minerNumber = cells[0].querySelector('.auto-number')?.value || (index + 1).toString();  // 获取自动编号
                 const model = cells[1].querySelector('select').value;  // 第2列（编号后）
                 const quantity = parseInt(cells[2].querySelector('input').value) || 0;
                 const power = parseFloat(cells[3].querySelector('input').value) || 0;
@@ -1195,7 +1197,9 @@
                         batchHTML += `
                             <tr id="miner-row-${minerRowCount}">
                                 <td class="text-center">
-                                    <span class="badge bg-secondary auto-number" data-number="${minerRowCount}">${minerRowCount}</span>
+                                    <input type="text" class="form-control form-control-sm text-center auto-number" 
+                                           value="${minerRowCount}" readonly data-number="${minerRowCount}"
+                                           style="max-width: 60px; background-color: var(--bs-secondary); color: white; border: none;">
                                 </td>
                                 <td>
                                     <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, 'miner-row-${minerRowCount}')">
@@ -1298,7 +1302,9 @@
             // 直接构建完整的HTML字符串
             tr.innerHTML = `
                 <td class="text-center">
-                    <span class="badge bg-secondary auto-number" data-number="${minerRowCount}">${minerRowCount}</span>
+                    <input type="text" class="form-control form-control-sm text-center auto-number" 
+                           value="${minerRowCount}" readonly data-number="${minerRowCount}"
+                           style="max-width: 60px; background-color: var(--bs-secondary); color: white; border: none;">
                 </td>
                 <td>
                     <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, 'minerRow${minerRowCount}')">
