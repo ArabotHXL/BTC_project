@@ -930,11 +930,25 @@
             })
             .then(data => {
                 console.log('Received data:', data);
+                
+                // 先检查 results section 是否存在
+                const resultsSection = document.getElementById('resultsSection');
+                console.log('Results section found:', !!resultsSection);
+                
                 if (data.success) {
                     calculationResults = data.results;
                     calculationSummary = data.summary;
+                    console.log('开始显示结果:', data.results.length, '个结果组');
+                    
+                    // 确保 results section 可见
+                    if (resultsSection) {
+                        resultsSection.style.display = 'block';
+                    }
+                    
                     displayBatchResults(data.results, data.summary);
                     showExportOptions();
+                    
+                    console.log('结果显示完成');
                 } else {
                     if (data.error === 'upgrade_required') {
                         showUpgradeModal(totalMiners);
@@ -1084,6 +1098,13 @@
 
         function displayBatchResults(results, summary) {
             const resultsSection = document.getElementById('resultsSection');
+            console.log('displayBatchResults called with:', results.length, 'results');
+            console.log('Results section element:', resultsSection);
+            
+            if (!resultsSection) {
+                console.error('Results section not found!');
+                return;
+            }
             
             let html = `
                 <!-- Summary -->
@@ -1206,7 +1227,16 @@
                 </div>
             `;
 
+            console.log('Setting results HTML, length:', html.length);
             resultsSection.innerHTML = html;
+            console.log('Results HTML set successfully');
+            
+            // 强制确保可见性
+            resultsSection.style.display = 'block';
+            resultsSection.parentElement.style.display = 'block';
+            
+            // 滚动到结果区域
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         function showErrorResults(message) {
