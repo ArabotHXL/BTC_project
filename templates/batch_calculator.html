@@ -828,7 +828,7 @@
 
         function updateEmptyState() {
             const tbody = document.getElementById('minersTableBody');
-            const emptyState = document.getElementById('emptyState');
+            const emptyState = document.getElementById('emptyMinersState');
             const table = document.getElementById('minersTable');
             
             if (tbody.children.length === 0) {
@@ -1385,9 +1385,23 @@
                             if (emptyState) emptyState.style.display = 'none';
                             if (table) table.style.display = 'table';
                             
-                            // 更新计数和状态
+                            // 更新计数和状态，但先确保DOM有足够时间更新
                             updateTotalCount();
-                            updateEmptyState();
+                            
+                            // 检查是否真的有数据
+                            const actualRows = document.querySelectorAll('#minersTableBody tr');
+                            console.log('DOM更新后实际行数:', actualRows.length);
+                            
+                            if (actualRows.length > 0) {
+                                // 有数据，确保表格显示
+                                const emptyState = document.getElementById('emptyMinersState');
+                                const table = document.getElementById('minersTable');
+                                if (emptyState) emptyState.style.display = 'none';
+                                if (table) table.style.display = 'table';
+                            } else {
+                                // 没有数据，调用updateEmptyState
+                                updateEmptyState();
+                            }
                             
                             console.log('CSV处理后DOM状态更新完成');
                         }, 200);
