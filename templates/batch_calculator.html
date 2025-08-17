@@ -942,43 +942,62 @@
             const hasMeaningfulDomData = domRows.length > 1 && !domRows[0].querySelector('.text-center i.bi-hourglass-split');
             
             if (window.allMinersData && window.allMinersData.length > 0 && !hasMeaningfulDomData) {
-                // 应用配额限制：将矿机数据展开成单个矿机，然后限制数量
-                const expandedMiners = [];
+                // 应用配额限制：智能分配尽可能多的矿机型号
+                const miners = [];
+                let remainingQuota = maxMiners;
+                
+                // 第一轮：每种矿机型号至少分配1台（如果配额允许）
+                const firstRoundMiners = [];
                 for (const data of window.allMinersData) {
-                    const quantity = parseInt(data.quantity) || 1;
-                    for (let i = 0; i < quantity; i++) {
-                        expandedMiners.push({
-                            miner_number: (expandedMiners.length + 1).toString(),
-                            model: data.model,
-                            quantity: 1, // 每台矿机数量为1
-                            power_consumption: data.power,
-                            machine_price: data.price,
-                            electricity_cost: data.electricity,
-                            decay_rate: data.decayRate || 0,
-                            hashrate: data.hashrate
+                    if (remainingQuota <= 0) break;
+                    
+                    const originalQuantity = parseInt(data.quantity) || 1;
+                    if (originalQuantity > 0) {
+                        firstRoundMiners.push({
+                            data: data,
+                            allocated: 1,
+                            remaining: originalQuantity - 1
                         });
-                        
-                        // 达到配额限制时停止
-                        if (expandedMiners.length >= maxMiners && !bypassUsed) {
-                            break;
-                        }
-                    }
-                    if (expandedMiners.length >= maxMiners && !bypassUsed) {
-                        break;
+                        remainingQuota--;
                     }
                 }
                 
-                console.log('使用CSV数据，应用配额限制:', expandedMiners.length, '台矿机（最大:', maxMiners, '）');
+                // 第二轮：为有剩余数量的矿机分配更多
+                for (const minerInfo of firstRoundMiners) {
+                    if (remainingQuota <= 0) break;
+                    
+                    const additionalAllocation = Math.min(minerInfo.remaining, remainingQuota);
+                    if (additionalAllocation > 0) {
+                        minerInfo.allocated += additionalAllocation;
+                        remainingQuota -= additionalAllocation;
+                    }
+                }
+                
+                // 生成最终的矿机列表
+                for (const minerInfo of firstRoundMiners) {
+                    miners.push({
+                        miner_number: (miners.length + 1).toString(),
+                        model: minerInfo.data.model,
+                        quantity: minerInfo.allocated,
+                        power_consumption: minerInfo.data.power,
+                        machine_price: minerInfo.data.price,
+                        electricity_cost: minerInfo.data.electricity,
+                        decay_rate: minerInfo.data.decayRate || 0,
+                        hashrate: minerInfo.data.hashrate
+                    });
+                }
+                
+                const totalMinersCalculated = miners.reduce((sum, miner) => sum + miner.quantity, 0);
+                const totalMinersInCsv = window.allMinersData.reduce((sum, data) => sum + (parseInt(data.quantity) || 1), 0);
+                
+                console.log('使用CSV数据，智能配额分配:', totalMinersCalculated, '台矿机（最大:', maxMiners, '），涵盖', miners.length, '种型号');
                 
                 // 如果触发了配额限制，显示提示
-                if (expandedMiners.length >= maxMiners && !bypassUsed) {
-                    const totalMinersInCsv = window.allMinersData.reduce((sum, data) => sum + (parseInt(data.quantity) || 1), 0);
-                    if (totalMinersInCsv > maxMiners) {
-                        showQuotaLimitWarning(expandedMiners.length, totalMinersInCsv);
-                    }
+                if (totalMinersCalculated >= maxMiners && !bypassUsed && totalMinersInCsv > maxMiners) {
+                    showQuotaLimitWarning(totalMinersCalculated, totalMinersInCsv);
                 }
                 
-                return expandedMiners;
+                return miners;
             }
             
             // 否则从当前表格DOM收集数据
