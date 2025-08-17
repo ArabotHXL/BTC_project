@@ -1,35 +1,7 @@
 # BTC Mining Calculator System
 
 ## Overview
-The BTC Mining Calculator is a web application designed for Bitcoin mining profitability analysis, targeting mining site owners and their clients. It offers tools for mining operations, customer relationship management (CRM), and power management. Key features include real-time data integration, highly accurate dual-algorithm validation for calculations, multilingual support (Chinese/English), and robust role-based access control. The project aims to be a reliable, enterprise-grade system for optimizing Bitcoin mining investments, providing a technical analysis platform and professional reporting.
-
-**MILESTONE ACHIEVED (August 14, 2025)**: Successfully reached 99.17% accuracy target through comprehensive regression testing and optimization. System demonstrates exceptional performance with 100% API availability, sub-200ms response times, and 98.3% cache effectiveness.
-
-**COMPREHENSIVE APP OPTIMIZATION COMPLETE (August 15, 2025)**: Successfully achieved 100% accuracy through comprehensive regression testing and system optimization. Completed major code cleanup by removing redundant files (29 duplicate analysis files, old logs, temporary files, and unused databases). Created and executed 8-component regression test suite covering mining calculations, batch processing, API endpoints, database operations, hashrate decay, multi-language support, export functionality, and memory performance. Fixed critical issues including translation system gaps, database connectivity problems, import errors, and API validation logic. System now demonstrates enterprise-grade reliability with perfect test coverage (8/8 tests passing) and optimal performance (1.15s total execution time).
-
-**EMAIL SERVICE STATUS (August 14, 2025)**: Gmail SMTP service successfully configured with application-specific password authentication. System sends professional verification emails via Gmail SMTP with fallback to console display. **BILINGUAL EMAIL SUPPORT**: Email verification templates now automatically adapt to user's interface language - English templates for English interface users, Chinese templates for Chinese interface users. All hardcoded email addresses have been removed from the codebase.
-
-**DERIBIT TRADING DATA POC (August 14, 2025)**: Successfully implemented Deribit Public API integration POC for trading data analysis. System can collect real-time trading data from BTC-PERPETUAL and other instruments, analyze price range distribution, and generate comprehensive reports. Features include automated data collection every 15 minutes, SQLite storage, price range analysis with 10 configurable segments, and bilingual reporting. POC successfully collected 500 trades from BTC-PERPETUAL showing $118,610 average price with detailed volume distribution analysis.
-
-**MULTI-EXCHANGE FULL INTEGRATION COMPLETE (August 15, 2025)**: Successfully integrated all three exchanges (Deribit + OKX + Binance) across the entire `/deribit-analysis` interface. All features now use multi-exchange data including API status checks, analysis data aggregation, manual analysis triggers, and data collection. Enhanced multi-exchange data collection with robust error handling for network connectivity issues. Fixed OKX API "fillPx" field validation errors and SSL connection timeouts. Added comprehensive data validation, network exception handling, and graceful fallback mechanisms. System now properly handles API failures without crashing, with improved request throttling and detailed error classification. Price range formatting updated to "$High - $Low" format with proper high-to-low sorting across all displays.
-
-**TIMEZONE AND DOWNLOAD FEATURES COMPLETE (August 15, 2025)**: Successfully implemented EST timezone display throughout the `/deribit-analysis` interface. All timestamp displays now show proper EST format (e.g., "2025-08-14 21:02:10 EST") with automatic UTC to EST conversion. Created comprehensive download system for the entire Deribit analysis package including Flask routes, download page (`/deribit-download`), and 106KB complete package with all core files. Download package includes 9 essential files: routes, collectors, templates, databases, documentation, and installation guides. Package successfully tested and verified working at full 106KB size.
-
-**THREE-EXCHANGE TRADING DATA INTEGRATION COMPLETE (August 15, 2025)**: Successfully implemented comprehensive trading data collection from three major exchanges (Deribit + OKX + Binance) with real-time statistics display in `/deribit-analysis` dashboard tiles. Features include aggregated trading statistics (total trades, volume, average price), individual exchange data retrieval, real-time options contract information, and EST timezone display. Frontend provides dedicated statistics cards showing combined data from all three exchanges with automatic loading and refresh capabilities. System includes robust error handling and graceful fallback for network issues. **COMPARISON PANEL REMOVED**: Removed three-exchange comparison panel per user request, focusing solely on statistics tiles. **BINANCE API FIXES**: Enhanced Binance API integration with spot API fallback mechanism, improved error handling for failed JSON parsing. API endpoints: `/api/deribit/multi-exchange-trades` for aggregated statistics with 30-second auto-refresh.
-
-**DATABASE FULL RESTORATION (August 15, 2025)**: Upon user request, restored complete historical dataset in Market_analytics table. Regenerated comprehensive historical data from January 2024 to July 2025 with realistic BTC price trends, network statistics, and market metrics. Database now contains full 18-month historical dataset supporting advanced analytics, backtesting, and trend analysis. All performance indexes maintained for optimal query speed.
-
-**BATCH CALCULATOR PERFORMANCE OPTIMIZATION (August 15, 2025)**: Successfully resolved critical performance issues when processing 5000+ miners causing Worker SIGKILL due to memory limitations. Implemented comprehensive optimizations: 1) Created optimized batch processor with intelligent miner grouping, 2) Added memory-efficient calculations with network data caching, 3) Implemented chunked processing for large datasets, 4) Added automatic API endpoint selection (standard for <1000 miners, optimized for 1000+ miners), 5) Enhanced Pro user limits to support up to 999,999 miners. System now handles large-scale batch calculations without memory exhaustion.
-
-**CSV UPLOAD & CALCULATION SPEED OPTIMIZATION (August 15, 2025)**: Successfully implemented comprehensive performance improvements solving all UI freezing issues: 1) **CSV Upload Speed**: Advanced batch DOM processing with 200-row chunks, ultra-fast HTML string concatenation, single innerHTML injection to eliminate DOM manipulation overhead, progress bar with visual feedback, and eliminated redundant DOM queries. 2) **Display Optimization**: Implemented smart display limiting showing only first 100 rows while preserving all 5000+ rows for calculations, completely eliminating browser DOM overload. 3) **Data Management**: Enhanced quota counting system to use complete dataset rather than visible DOM elements, ensuring accurate miner totals (52,449 miners) with proper thousand-separator formatting. 4) **Calculation Speed**: Reduced network data cache time, optimized decay calculation algorithms, and implemented memory-efficient batch processing. System now processes large CSV files instantly with zero UI freezing and maintains full calculation accuracy across all data.
-
-**HASHRATE DECAY FEATURE IMPLEMENTATION (August 15, 2025)**: Successfully implemented comprehensive hashrate decay functionality for realistic long-term ROI projections. Features include: 1) Added decay rate column to batch calculator table with 0-5% monthly range, 2) Enhanced CSV import to support both old format (5 fields) and new format with decay rate (6-7 fields), 3) Implemented advanced decay calculation algorithm using compound decay formula: effective_hashrate = initial_hashrate * (1 - decay_rate/100/30)^days, 4) Created specialized payback calculation function that simulates day-by-day mining with declining hashrate, 5) Added comprehensive debug logging for decay calculations. System now provides accurate ROI estimates accounting for equipment degradation over time.
-
-**DATABASE DEPLOYMENT FIXES (August 14, 2025)**: Applied comprehensive database connection fixes for production deployment. Added database health monitoring, connection retry logic, and Neon-specific error handling. Enhanced configuration includes optimized connection pooling, graceful startup procedures, and robust health check endpoints. Application now handles database connection issues gracefully during deployment with detailed error reporting and recovery guidance.
-
-**LOGIN SYSTEM FIX (August 14, 2025)**: Resolved critical NameError in login system where database models (UserAccess, LoginRecord) were not available in function scope. Fixed by ensuring models are imported at module level after database initialization, preventing login failures and 500 errors.
-
-**ANALYTICS PLATFORM ACCESS EXPANDED (August 14, 2025)**: Successfully granted analytics platform access to Pro subscription users. Updated user_has_analytics_access() function to check for Pro subscription with allow_advanced_analytics permission. Analytics dashboard and API endpoints now support both Owner privileges and Pro subscription access. Test Pro subscription created and verified functional.
+The BTC Mining Calculator is a web application for Bitcoin mining profitability analysis, designed for mining site owners and their clients. It provides tools for mining operations, customer relationship management (CRM), and power management. Key capabilities include real-time data integration, highly accurate dual-algorithm validation for calculations, multilingual support (Chinese/English), and robust role-based access control. The project aims to be a reliable, enterprise-grade system for optimizing Bitcoin mining investments, offering a technical analysis platform and professional reporting.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -47,21 +19,23 @@ The application is a modular Flask web application with a mobile-first design.
 
 ### Backend Architecture
 - **Web Framework**: Flask, using Blueprint-based modular routing.
-- **Authentication**: Custom email-based system with role management (Owner, Manager, Mining_site, Guest) and secure password hashing.
+- **Authentication**: Custom email-based system with role management and secure password hashing.
 - **API Integration**: Aggregates data from multiple sources with intelligent fallback mechanisms.
 - **Background Services**: Scheduler for automated data collection.
-- **Calculation Engine**: Dual-algorithm system (99%+ accuracy) for mining profitability analysis, supporting 17+ ASIC miner models, real-time data, ROI analysis, and power curtailment analysis.
+- **Calculation Engine**: Dual-algorithm system for mining profitability analysis, supporting 17+ ASIC miner models, real-time data, ROI analysis, and power curtailment analysis.
 - **Technical Analysis Platform**: Server-side calculation of indicators (RSI, MACD, SMA20/50, EMA12/26, Bollinger Bands, 30-day volatility) using historical BTC price, with signal interpretation and real-time market integration.
 - **Permission Control System**: Advanced decorators and a comprehensive permission matrix for fine-grained, role-based access control.
 - **User Management**: Admin interface for user creation, role assignment, and management.
 - **Professional Report Generation**: Capabilities for generating reports, including ARIMA predictions and Monte Carlo simulations.
 - **Data Consolidation**: Network snapshot data is consolidated into a unified market_analytics table for consistency and performance.
-- **Caching System**: Comprehensive intelligent caching implemented for major API endpoints, reducing response times and server load.
+- **Caching System**: Comprehensive intelligent caching implemented for major API endpoints.
+- **Batch Processing**: Optimized for large datasets (5000+ miners) with intelligent grouping, memory-efficient calculations, chunked processing, and automatic API endpoint selection.
+- **Hashrate Decay**: Comprehensive functionality for realistic long-term ROI projections, including decay rate input and advanced calculation algorithms.
 
 ### Database Architecture
 - **Primary Database**: PostgreSQL.
 - **ORM**: SQLAlchemy with declarative base.
-- **Connection Management**: Connection pooling with automatic reconnection.
+- **Connection Management**: Connection pooling with automatic reconnection, health monitoring, and retry logic.
 - **Data Models**: Comprehensive models for users, customers, mining data, and network snapshots.
 
 ### Key Features
@@ -80,7 +54,10 @@ The application is a modular Flask web application with a mobile-first design.
 - **Blockchain.info API**: Bitcoin network statistics.
 - **IP-API**: Geographic location services for login tracking.
 - **Ankr RPC**: Free Bitcoin RPC service for real-time blockchain data.
-- **Gmail SMTP**: Email service for user verification and notifications via application-specific password.
+- **Gmail SMTP**: Email service for user verification and notifications.
+- **Deribit API**: Trading data integration.
+- **OKX API**: Trading data integration.
+- **Binance API**: Trading data integration.
 
 ### Third-party Libraries
 - **Flask**: Web application framework.

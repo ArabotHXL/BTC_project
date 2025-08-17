@@ -21,9 +21,11 @@ def create_app():
         if not os.environ.get("SESSION_SECRET"):
             os.environ["SESSION_SECRET"] = "bitcoin_mining_calculator_secret"
 
-    # Database health check before app initialization
+    # 快速启动模式 - 可选择跳过数据库健康检查
+    skip_db_check = os.environ.get("SKIP_DATABASE_HEALTH_CHECK", "0").lower() in ("1", "true", "yes")
     database_url = os.environ.get('DATABASE_URL')
-    if database_url:
+    
+    if database_url and not skip_db_check:
         from database_health import db_health_manager
         
         logging.info("Performing database health check...")
@@ -52,6 +54,8 @@ def create_app():
                 logging.info("Database connection established successfully")
         else:
             logging.info(f"Database connection successful: {db_status.get('database_version', 'Unknown version')}")
+    elif skip_db_check:
+        logging.info("Database health check skipped for fast startup")
 
     from app import app
     # db已在app模块中初始化
@@ -63,30 +67,50 @@ def create_app():
     # 数据库已在app模块中初始化
     logging.info("Database initialized successfully")
 
-    # 启动统一数据管道 - 在后台线程中进行（本地开发默认禁用）
-    # 默认启用后台服务，除非明确禁用
-    enable_bg = os.environ.get("ENABLE_BACKGROUND_SERVICES",
-                               "1").lower() in ("1", "true", "yes")
-    if enable_bg:
-
-        def start_background_services():
-            try:
-                from analytics_engine import AnalyticsEngine
-                engine = AnalyticsEngine()
-                engine.start_scheduler()
-                logging.info("Background services started successfully")
-            except Exception as e:
-                logging.error(f"Background services failed to start: {e}")
-
-        # 在单独线程中启动后台服务，避免阻塞应用启动
+    # 分阶段启动优化 - 延迟加载非关键组件
+    fast_startup = os.environ.get("FAST_STARTUP", "1").lower() in ("1", "true", "yes")
+    
+    if fast_startup:
+        logging.info("Fast startup mode enabled - deferring background services")
+        
+        def delayed_initialization():
+            """延迟3秒启动后台服务，避免阻塞主应用启动"""
+            import time
+            time.sleep(3)  # 等待主应用完成启动
+            
+            # 启动后台服务
+            enable_bg = os.environ.get("ENABLE_BACKGROUND_SERVICES", "1").lower() in ("1", "true", "yes")
+            if enable_bg:
+                try:
+                    from analytics_engine import AnalyticsEngine
+                    engine = AnalyticsEngine()
+                    engine.start_scheduler()
+                    logging.info("Background services started successfully (delayed)")
+                except Exception as e:
+                    logging.error(f"Background services failed to start: {e}")
+            
+        # 在单独线程中延迟启动后台服务
         import threading
-        background_thread = threading.Thread(target=start_background_services,
-                                             daemon=True)
-        background_thread.start()
+        delayed_thread = threading.Thread(target=delayed_initialization, daemon=True)
+        delayed_thread.start()
     else:
-        logging.info(
-            "Background services are disabled. Set ENABLE_BACKGROUND_SERVICES=1 to enable."
-        )
+        # 传统启动方式（完整初始化）
+        enable_bg = os.environ.get("ENABLE_BACKGROUND_SERVICES", "1").lower() in ("1", "true", "yes")
+        if enable_bg:
+            def start_background_services():
+                try:
+                    from analytics_engine import AnalyticsEngine
+                    engine = AnalyticsEngine()
+                    engine.start_scheduler()
+                    logging.info("Background services started successfully")
+                except Exception as e:
+                    logging.error(f"Background services failed to start: {e}")
+
+            import threading
+            background_thread = threading.Thread(target=start_background_services, daemon=True)
+            background_thread.start()
+        else:
+            logging.info("Background services are disabled. Set ENABLE_BACKGROUND_SERVICES=1 to enable.")
 
     return app
 

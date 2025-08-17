@@ -14,26 +14,60 @@ import numpy as np
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, g
 from sqlalchemy import text
 
-# 本地模块导入
+# 本地模块导入 - 优化为延迟导入模式
 from db import db
 from auth import verify_email, login_required
-from cache_manager import cache as cache_manager
-try:
-    from decorators import (requires_role, requires_owner_only, requires_admin_or_owner, 
-                           requires_crm_access, requires_network_analysis_access, 
-                           requires_batch_calculator_access, log_access_attempt)
-except ImportError:
-    logging.warning("Decorators module not available, using basic login_required only")
-    # 如果导入失败，使用基本装饰器
-    requires_role = lambda roles: login_required
-    requires_owner_only = login_required
-    requires_admin_or_owner = login_required
-    requires_crm_access = login_required
-    requires_network_analysis_access = login_required 
-    requires_batch_calculator_access = login_required
-    log_access_attempt = lambda name: lambda f: f
-# Models将在数据库初始化时导入
 from translations import get_translation
+
+# 延迟导入模式 - 减少启动时间
+_cache_manager = None
+_decorators_loaded = False
+
+def get_cache_manager():
+    """延迟加载缓存管理器"""
+    global _cache_manager
+    if _cache_manager is None:
+        try:
+            from cache_manager import cache as cache_manager
+            _cache_manager = cache_manager
+            logging.info("Cache manager loaded")
+        except ImportError:
+            logging.warning("Cache manager not available")
+            _cache_manager = None
+    return _cache_manager
+
+def load_decorators():
+    """延迟加载装饰器"""
+    global _decorators_loaded, requires_role, requires_owner_only, requires_admin_or_owner
+    global requires_crm_access, requires_network_analysis_access, requires_batch_calculator_access, log_access_attempt
+    
+    if not _decorators_loaded:
+        try:
+            from decorators import (requires_role, requires_owner_only, requires_admin_or_owner, 
+                                   requires_crm_access, requires_network_analysis_access, 
+                                   requires_batch_calculator_access, log_access_attempt)
+            _decorators_loaded = True
+            logging.info("Decorators loaded successfully")
+        except ImportError:
+            logging.warning("Decorators module not available, using basic login_required only")
+            # 如果导入失败，使用基本装饰器
+            requires_role = lambda roles: login_required
+            requires_owner_only = login_required
+            requires_admin_or_owner = login_required
+            requires_crm_access = login_required
+            requires_network_analysis_access = login_required 
+            requires_batch_calculator_access = login_required
+            log_access_attempt = lambda name: lambda f: f
+            _decorators_loaded = True
+
+# 初始化基本装饰器（防止未定义错误）
+requires_role = lambda roles: login_required
+requires_owner_only = login_required
+requires_admin_or_owner = login_required
+requires_crm_access = login_required
+requires_network_analysis_access = login_required 
+requires_batch_calculator_access = login_required
+log_access_attempt = lambda name: lambda f: f
 
 def send_verification_email(email, token, language='zh'):
     """发送邮箱验证邮件
