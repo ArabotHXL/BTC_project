@@ -207,8 +207,12 @@
                 {% if current_lang == 'en' %}BTC Mining Calculator{% else %}BTC 挖矿计算器{% endif %}
             </a>
             <div>
+                <a href="{{ url_for('main') }}" class="btn btn-outline-warning btn-sm me-2">
+                    <i class="bi bi-house-door me-1"></i>
+                    {% if current_lang == 'en' %}Home{% else %}主页{% endif %}
+                </a>
                 <a href="/calculator" class="btn btn-outline-light btn-sm">
-                    {% if current_lang == 'en' %}Back to Calculator{% else %}返回计算器{% endif %}
+                    {% if current_lang == 'en' %}Calculator{% else %}计算器{% endif %}
                 </a>
             </div>
         </div>
