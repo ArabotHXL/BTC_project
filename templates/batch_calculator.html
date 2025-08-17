@@ -779,23 +779,15 @@
         function updateTotalCount() {
             let totalMiners = 0;
             
-            // 优先使用完整CSV数据来计算总数
-            if (window.allMinersData && window.allMinersData.length > 0) {
-                totalMiners = window.allMinersData.reduce((sum, miner) => {
-                    return sum + (miner.quantity || 0);
-                }, 0);
-                console.log('使用完整数据计算总矿机数:', totalMiners);
-            } else {
-                // 从DOM计算
-                const rows = document.querySelectorAll('#minersTableBody tr');
-                rows.forEach(row => {
-                    const quantityInput = row.querySelector('td:nth-child(3) input');
-                    if (quantityInput && quantityInput.value) {
-                        totalMiners += parseInt(quantityInput.value) || 0;
-                    }
-                });
-                console.log('从DOM计算总矿机数:', totalMiners);
-            }
+            // 只从当前表格DOM计算实际显示的矿机数
+            const rows = document.querySelectorAll('#minersTableBody tr');
+            rows.forEach(row => {
+                const quantityInput = row.querySelector('td:nth-child(3) input');
+                if (quantityInput && quantityInput.value) {
+                    totalMiners += parseInt(quantityInput.value) || 0;
+                }
+            });
+            console.log('从DOM计算当前表格总矿机数:', totalMiners);
             
             // Update quota display
             const currentCountSpan = document.getElementById('currentCount');
