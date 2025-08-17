@@ -1402,12 +1402,12 @@
                         const finalHashrate = data.hashrate || (minerModels[data.model]?.hashrate || 110);
                         
                         batchHTML += `
-                            <tr id="miner-row-${minerRowCount}">
+                            <tr id="minerRow${minerRowCount}">
                                 <td class="text-center">
                                     <span class="badge bg-secondary auto-number" data-number="${minerRowCount}">${minerRowCount}</span>
                                 </td>
                                 <td>
-                                    <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, 'miner-row-${minerRowCount}')">
+                                    <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, 'minerRow${minerRowCount}')">
                                         ${Object.keys(minerModels).map(m => 
                                             `<option value="${m}" ${m === data.model ? 'selected' : ''}>${m}</option>`
                                         ).join('')}
@@ -1420,7 +1420,7 @@
                                 <td><input type="number" class="form-control form-control-sm" value="${finalHashrate}" min="1" max="500" step="1"></td>
                                 <td><input type="number" class="form-control form-control-sm" value="${data.decayRate}" min="0" max="5" step="0.1"></td>
                                 <td>
-                                    <button class="btn btn-outline-danger btn-sm" onclick="removeMinerRow('miner-row-${minerRowCount}')">
+                                    <button class="btn btn-outline-danger btn-sm" onclick="removeMinerRow('minerRow${minerRowCount}')">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </td>
@@ -1442,36 +1442,52 @@
                     if (processedCount < validLines.length) {
                         setTimeout(processBatch, 1); // 最小延迟
                     } else {
-                        // 性能优化：只显示前100行，存储全部数据
-                        const MAX_DISPLAY_ROWS = 100;
+                        // 直接显示所有行，去掉限制逻辑简化处理
                         const allRowsHTML = htmlChunks.join('');
+                        console.log('生成的HTML长度:', allRowsHTML.length, '字符');
+                        console.log('HTML前100字符:', allRowsHTML.substring(0, 100));
                         
-                        if (validLines.length > MAX_DISPLAY_ROWS) {
-                            // 只显示前100行
-                            const parser = new DOMParser();
-                            const tempDoc = parser.parseFromString(`<table><tbody>${allRowsHTML}</tbody></table>`, 'text/html');
-                            const allRows = tempDoc.querySelectorAll('tr');
-                            const limitedHTML = Array.from(allRows).slice(0, MAX_DISPLAY_ROWS).map(row => row.outerHTML).join('');
-                            
-                            tbody.innerHTML = limitedHTML;
-                            
-                            // 显示性能提示
-                            const notice = document.getElementById('performanceNotice') || document.createElement('div');
-                            notice.id = 'performanceNotice';
-                            notice.className = 'alert alert-info mb-3';
-                            notice.innerHTML = `<i class="bi bi-info-circle me-2"></i>
-                                {% if current_lang == 'en' %}
-                                Showing first ${MAX_DISPLAY_ROWS} of ${validLines.length} rows for optimal performance. All data is included in calculations.
-                                {% else %}
-                                为保持最佳性能，显示${validLines.length}行中的前${MAX_DISPLAY_ROWS}行。所有数据都会参与计算。
-                                {% endif %}`;
-                            
-                            const tableContainer = tbody.closest('.table-responsive').parentElement;
-                            if (!document.getElementById('performanceNotice')) {
-                                tableContainer.insertBefore(notice, tbody.closest('.table-responsive'));
-                            }
-                        } else {
-                            tbody.innerHTML = allRowsHTML;
+                        // 直接设置HTML内容
+                        tbody.innerHTML = allRowsHTML;
+                        
+                        // 验证DOM是否正确更新
+                        const insertedRows = tbody.querySelectorAll('tr');
+                        console.log('插入后的行数:', insertedRows.length);
+                        
+                        if (insertedRows.length !== validLines.length) {
+                            console.error('DOM插入失败: 期望', validLines.length, '行，实际', insertedRows.length, '行');
+                            // 尝试逐行插入作为后备方案
+                            tbody.innerHTML = '';
+                            validLines.forEach((data, index) => {
+                                const finalHashrate = data.hashrate || (minerModels[data.model]?.hashrate || 110);
+                                const rowHTML = `
+                                    <tr id="minerRow${index + 1}">
+                                        <td class="text-center">
+                                            <span class="badge bg-secondary auto-number" data-number="${index + 1}">${index + 1}</span>
+                                        </td>
+                                        <td>
+                                            <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, 'minerRow${index + 1}')">
+                                                ${Object.keys(minerModels).map(m => 
+                                                    `<option value="${m}" ${m === data.model ? 'selected' : ''}>${m}</option>`
+                                                ).join('')}
+                                            </select>
+                                        </td>
+                                        <td><input type="number" class="form-control form-control-sm" value="${data.quantity}" min="1" max="1000" onchange="updateTotalCount()"></td>
+                                        <td><input type="number" class="form-control form-control-sm" value="${data.power}" min="100" max="10000" step="10"></td>
+                                        <td><input type="number" class="form-control form-control-sm" value="${data.price}" min="100" max="20000" step="100"></td>
+                                        <td><input type="number" class="form-control form-control-sm" value="${data.electricity}" min="0.01" max="1" step="0.001"></td>
+                                        <td><input type="number" class="form-control form-control-sm" value="${finalHashrate}" min="1" max="500" step="1"></td>
+                                        <td><input type="number" class="form-control form-control-sm" value="${data.decayRate}" min="0" max="5" step="0.1"></td>
+                                        <td>
+                                            <button class="btn btn-outline-danger btn-sm" onclick="removeMinerRow('minerRow${index + 1}')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `;
+                                tbody.insertAdjacentHTML('beforeend', rowHTML);
+                            });
+                            console.log('后备方案完成，最终行数:', tbody.querySelectorAll('tr').length);
                         }
                         
                         // 存储所有数据到全局变量供计算使用
