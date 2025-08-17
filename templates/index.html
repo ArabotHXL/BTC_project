@@ -158,7 +158,7 @@
                     
                     <!-- 主页按钮 / Home Button -->
                     <div class="me-3">
-                        <a href="/" class="btn btn-outline-light btn-sm">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">
                             <i class="bi bi-house-door me-1"></i>
                             {% if current_lang == 'en' %}Home{% else %}主页{% endif %}
                         </a>
@@ -167,8 +167,8 @@
                     <!-- 语言切换 / Language Switcher -->
                     <div class="d-flex align-items-center">
                         <div class="btn-group btn-group-sm me-3" role="group" aria-label="{{ t('language') }}">
-                            <a href="{{ url_for('index', lang='zh') }}" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
-                            <a href="{{ url_for('index', lang='en') }}" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}">English</a>
+                            <a href="{{ url_for('calculator', lang='zh') }}" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
+                            <a href="{{ url_for('calculator', lang='en') }}" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}">English</a>
                         </div>
                     </div>
                     
