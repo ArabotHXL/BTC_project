@@ -10,10 +10,31 @@
 
 {% block extra_css %}
 <style>
-/* Batch Calculator Styles */
+/* Batch Calculator Styles - 响应式自适应 */
 .batch-calculator-container {
-    max-width: 1400px;
+    max-width: 100%;
     margin: 0 auto;
+    padding: 0.5rem;
+}
+
+/* 响应式布局优化 */
+@media (min-width: 1200px) {
+    .batch-calculator-container {
+        max-width: 1400px;
+    }
+}
+
+@media (min-width: 992px) and (max-width: 1199px) {
+    .batch-calculator-container {
+        max-width: 100%;
+        padding: 1rem;
+    }
+}
+
+/* 表格响应式优化 */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .miner-card {
@@ -82,13 +103,56 @@
     opacity: 0.8;
 }
 
+/* 移动端响应式优化 */
 @media (max-width: 768px) {
     .batch-calculator-container {
-        padding: 1rem;
+        padding: 0.5rem;
     }
     
     .miner-card {
         padding: 1rem;
+    }
+    
+    /* 移动端布局调整 */
+    .row > .col-md-8,
+    .row > .col-md-4 {
+        margin-bottom: 1rem;
+    }
+    
+    /* 表格在移动端的优化 */
+    .table th, .table td {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    /* 移动端按钮组优化 */
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        margin-bottom: 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    /* 超小屏幕优化 */
+    .batch-calculator-container {
+        padding: 0.25rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.8rem;
+    }
+    
+    .btn {
+        font-size: 0.85rem;
+        padding: 0.375rem 0.75rem;
     }
 }
 </style>
@@ -264,21 +328,23 @@
         </div>
 
         <div class="row">
-            <div class="col-md-8">
+            <div class="col-xl-8 col-lg-7">
                 <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
+                    <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                        <h5 class="mb-2 mb-md-0">
                             <i class="bi bi-table me-2"></i>
                             {% if current_lang == 'en' %}Miners Configuration{% else %}矿机配置{% endif %}
                         </h5>
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-outline-primary btn-sm" onclick="addMinerRow()">
                                 <i class="bi bi-plus-circle me-1"></i>
-                                {% if current_lang == 'en' %}Add Miner{% else %}添加矿机{% endif %}
+                                <span class="d-none d-sm-inline">{% if current_lang == 'en' %}Add Miner{% else %}添加矿机{% endif %}</span>
+                                <span class="d-sm-none">{% if current_lang == 'en' %}Add{% else %}添加{% endif %}</span>
                             </button>
                             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllMiners()">
                                 <i class="bi bi-trash me-1"></i>
-                                {% if current_lang == 'en' %}Clear All{% else %}清空所有{% endif %}
+                                <span class="d-none d-sm-inline">{% if current_lang == 'en' %}Clear All{% else %}清空所有{% endif %}</span>
+                                <span class="d-sm-none">{% if current_lang == 'en' %}Clear{% else %}清空{% endif %}</span>
                             </button>
                         </div>
                     </div>
@@ -325,32 +391,38 @@
                             <table class="table table-dark table-striped" id="minersTable">
                                 <thead>
                                     <tr>
-                                        <th style="width: 4%">
+                                        <th class="text-center" style="width: 5%">
                                             {% if current_lang == 'en' %}#{% else %}编号{% endif %}
                                         </th>
                                         <th style="width: 25%">
-                                            {% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %}
+                                            {% if current_lang == 'en' %}Model{% else %}型号{% endif %}
                                         </th>
-                                        <th style="width: 7%">
-                                            {% if current_lang == 'en' %}Qty{% else %}数量{% endif %}
+                                        <th class="text-center" style="width: 8%">
+                                            <span class="d-none d-md-inline">{% if current_lang == 'en' %}Qty{% else %}数量{% endif %}</span>
+                                            <span class="d-md-none">{% if current_lang == 'en' %}Q{% else %}数{% endif %}</span>
                                         </th>
-                                        <th style="width: 12%">
-                                            {% if current_lang == 'en' %}Power (W){% else %}功耗(W){% endif %}
+                                        <th class="text-center" style="width: 12%">
+                                            <span class="d-none d-lg-inline">{% if current_lang == 'en' %}Power (W){% else %}功耗(W){% endif %}</span>
+                                            <span class="d-lg-none">{% if current_lang == 'en' %}W{% else %}功耗{% endif %}</span>
                                         </th>
-                                        <th style="width: 12%">
-                                            {% if current_lang == 'en' %}Price ($){% else %}价格($){% endif %}
+                                        <th class="text-center" style="width: 12%">
+                                            <span class="d-none d-lg-inline">{% if current_lang == 'en' %}Price ($){% else %}价格($){% endif %}</span>
+                                            <span class="d-lg-none">{% if current_lang == 'en' %}${% else %}价格{% endif %}</span>
                                         </th>
-                                        <th style="width: 10%">
-                                            {% if current_lang == 'en' %}Electricity ($/kWh){% else %}电费($/kWh){% endif %}
+                                        <th class="text-center" style="width: 10%">
+                                            <span class="d-none d-xl-inline">{% if current_lang == 'en' %}Electric{% else %}电费{% endif %}</span>
+                                            <span class="d-xl-none">{% if current_lang == 'en' %}E{% else %}电{% endif %}</span>
                                         </th>
-                                        <th style="width: 10%">
-                                            {% if current_lang == 'en' %}Hashrate (TH/s){% else %}算力(TH/s){% endif %}
+                                        <th class="text-center" style="width: 10%">
+                                            <span class="d-none d-xl-inline">{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</span>
+                                            <span class="d-xl-none">{% if current_lang == 'en' %}TH/s{% else %}算力{% endif %}</span>
                                         </th>
-                                        <th style="width: 12%">
-                                            {% if current_lang == 'en' %}Decay Rate (%/month){% else %}衰减率(%/月){% endif %}
+                                        <th class="text-center" style="width: 10%">
+                                            <span class="d-none d-xl-inline">{% if current_lang == 'en' %}Decay{% else %}衰减{% endif %}</span>
+                                            <span class="d-xl-none">{% if current_lang == 'en' %}%{% else %}衰{% endif %}</span>
                                         </th>
-                                        <th style="width: 8%">
-                                            {% if current_lang == 'en' %}Action{% else %}操作{% endif %}
+                                        <th class="text-center" style="width: 8%">
+                                            <i class="bi bi-gear"></i>
                                         </th>
                                     </tr>
                                 </thead>
@@ -376,8 +448,8 @@
             </div>
 
             <!-- Results Section -->
-            <div class="col-md-4">
-                <div class="card">
+            <div class="col-xl-4 col-lg-5">
+                <div class="card h-100">
                     <div class="card-header">
                         <h6 class="mb-0">
                             <i class="bi bi-bar-chart me-2"></i>
@@ -520,7 +592,7 @@
             row.id = rowId;
             row.innerHTML = `
                 <td class="text-center">
-                    <span class="badge bg-secondary">${minerRowCount}</span>
+                    <span class="badge bg-secondary auto-number" data-number="${minerRowCount}">${minerRowCount}</span>
                 </td>
                 <td>
                     <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, '${rowId}')">
@@ -568,8 +640,21 @@
 
         function removeMinerRow(rowId) {
             document.getElementById(rowId).remove();
+            reorderMinerNumbers();
             updateEmptyState();
             updateTotalCount();
+        }
+        
+        function reorderMinerNumbers() {
+            const rows = document.querySelectorAll('#minersTableBody tr');
+            rows.forEach((row, index) => {
+                const numberBadge = row.querySelector('.auto-number');
+                if (numberBadge) {
+                    const newNumber = index + 1;
+                    numberBadge.textContent = newNumber;
+                    numberBadge.setAttribute('data-number', newNumber);
+                }
+            });
         }
 
         function updateMinerSpecs(selectElement, rowId) {
@@ -669,6 +754,7 @@
         function clearAllMiners() {
             if (confirm('{% if current_lang == "en" %}Are you sure you want to clear all miners?{% else %}确定要清空所有矿机吗？{% endif %}')) {
                 document.getElementById('minersTableBody').innerHTML = '';
+                minerRowCount = 0;
                 updateEmptyState();
                 updateTotalCount();
                 hideResults();
@@ -774,7 +860,7 @@
             
             rows.forEach((row, index) => {
                 const cells = row.querySelectorAll('td');
-                const minerNumber = cells[0].querySelector('input')?.value || 'N/A';  // 获取编号
+                const minerNumber = cells[0].querySelector('.auto-number')?.getAttribute('data-number') || (index + 1).toString();  // 获取自动编号
                 const model = cells[1].querySelector('select').value;  // 第2列（编号后）
                 const quantity = parseInt(cells[2].querySelector('input').value) || 0;
                 const power = parseFloat(cells[3].querySelector('input').value) || 0;
@@ -1107,23 +1193,25 @@
                         const finalHashrate = data.hashrate || (minerModels[data.model]?.hashrate || 110);
                         
                         batchHTML += `
-                            <tr id="minerRow${minerRowCount}">
-                                <td><input type="text" class="form-control" value="${minerRowCount}" readonly style="max-width: 80px;"></td>
+                            <tr id="miner-row-${minerRowCount}">
+                                <td class="text-center">
+                                    <span class="badge bg-secondary auto-number" data-number="${minerRowCount}">${minerRowCount}</span>
+                                </td>
                                 <td>
-                                    <select class="form-select" onchange="updateMinerDefaults('minerRow${minerRowCount}')">
+                                    <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, 'miner-row-${minerRowCount}')">
                                         ${Object.keys(minerModels).map(m => 
                                             `<option value="${m}" ${m === data.model ? 'selected' : ''}>${m}</option>`
                                         ).join('')}
                                     </select>
                                 </td>
-                                <td><input type="number" class="form-control" value="${data.quantity}" min="1" onchange="updateTotalCount()"></td>
-                                <td><input type="number" class="form-control" value="${data.power}" min="1"></td>
-                                <td><input type="number" class="form-control" value="${data.price}" min="0" step="0.01"></td>
-                                <td><input type="number" class="form-control" value="${data.electricity}" min="0" step="0.001"></td>
-                                <td><input type="number" class="form-control" value="${finalHashrate}" min="1" step="0.1"></td>
-                                <td><input type="number" class="form-control" value="${data.decayRate}" min="0" max="5" step="0.01"></td>
+                                <td><input type="number" class="form-control form-control-sm" value="${data.quantity}" min="1" max="1000" onchange="updateTotalCount()"></td>
+                                <td><input type="number" class="form-control form-control-sm" value="${data.power}" min="100" max="10000" step="10"></td>
+                                <td><input type="number" class="form-control form-control-sm" value="${data.price}" min="100" max="20000" step="100"></td>
+                                <td><input type="number" class="form-control form-control-sm" value="${data.electricity}" min="0.01" max="1" step="0.001"></td>
+                                <td><input type="number" class="form-control form-control-sm" value="${finalHashrate}" min="1" max="500" step="1"></td>
+                                <td><input type="number" class="form-control form-control-sm" value="${data.decayRate}" min="0" max="5" step="0.1"></td>
                                 <td>
-                                    <button class="btn btn-outline-danger btn-sm" onclick="removeMinerRow(this)">
+                                    <button class="btn btn-outline-danger btn-sm" onclick="removeMinerRow('miner-row-${minerRowCount}')">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </td>
@@ -1209,24 +1297,24 @@
             
             // 直接构建完整的HTML字符串
             tr.innerHTML = `
-                <td>
-                    <input type="text" class="form-control" value="${minerRowCount}" readonly style="max-width: 80px;">
+                <td class="text-center">
+                    <span class="badge bg-secondary auto-number" data-number="${minerRowCount}">${minerRowCount}</span>
                 </td>
                 <td>
-                    <select class="form-select" onchange="updateMinerDefaults('minerRow${minerRowCount}')">
+                    <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, 'minerRow${minerRowCount}')">
                         ${Object.keys(minerModels).map(m => 
                             `<option value="${m}" ${m === model ? 'selected' : ''}>${m}</option>`
                         ).join('')}
                     </select>
                 </td>
-                <td><input type="number" class="form-control" value="${quantity}" min="1" onchange="updateTotalCount()"></td>
-                <td><input type="number" class="form-control" value="${power}" min="1"></td>
-                <td><input type="number" class="form-control" value="${price}" min="0" step="0.01"></td>
-                <td><input type="number" class="form-control" value="${electricity}" min="0" step="0.001"></td>
-                <td><input type="number" class="form-control" value="${finalHashrate}" min="1" step="0.1"></td>
-                <td><input type="number" class="form-control" value="${decayRate}" min="0" max="5" step="0.01"></td>
+                <td><input type="number" class="form-control form-control-sm" value="${quantity}" min="1" max="1000" onchange="updateTotalCount()"></td>
+                <td><input type="number" class="form-control form-control-sm" value="${power}" min="100" max="10000" step="10"></td>
+                <td><input type="number" class="form-control form-control-sm" value="${price}" min="100" max="20000" step="100"></td>
+                <td><input type="number" class="form-control form-control-sm" value="${electricity}" min="0.01" max="1" step="0.001"></td>
+                <td><input type="number" class="form-control form-control-sm" value="${finalHashrate}" min="1" max="500" step="1"></td>
+                <td><input type="number" class="form-control form-control-sm" value="${decayRate}" min="0" max="5" step="0.1"></td>
                 <td>
-                    <button class="btn btn-outline-danger btn-sm" onclick="removeMinerRow(this)">
+                    <button class="btn btn-outline-danger btn-sm" onclick="removeMinerRow('minerRow${minerRowCount}')">
                         <i class="bi bi-trash"></i>
                     </button>
                 </td>
