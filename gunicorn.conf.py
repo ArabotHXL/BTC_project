@@ -9,13 +9,16 @@ import multiprocessing
 
 # Basic configuration
 bind = f"0.0.0.0:{os.environ.get('PORT', 5000)}"
-workers = min(multiprocessing.cpu_count() * 2 + 1, 4)  # Limit workers for Replit
+workers = min(multiprocessing.cpu_count() + 1, 3)  # Optimized for faster deployment startup
 worker_class = "sync"
 worker_connections = 1000
 max_requests = 1000
 max_requests_jitter = 50
-timeout = 120
+timeout = 180  # Increased timeout for deployment compatibility
 keepalive = 2
+
+# Deployment-specific optimizations
+worker_timeout = 60  # Worker timeout for faster startup detection
 
 # Logging
 loglevel = os.environ.get('LOG_LEVEL', 'info').lower()
@@ -32,7 +35,7 @@ max_requests_jitter = 100
 preload_app = True  # Preload for better memory usage
 
 # Graceful shutdown
-graceful_timeout = 30
+graceful_timeout = 45  # Optimized for deployments
 
 # Security
 limit_request_line = 4096
@@ -42,6 +45,13 @@ limit_request_field_size = 8190
 def when_ready(server):
     """Called when the server is ready to serve requests"""
     server.log.info("BTC Mining Calculator server is ready. Worker pid: %s", os.getpid())
+    # Signal deployment readiness
+    try:
+        with open('/tmp/app_ready', 'w') as f:
+            f.write('ready')
+        server.log.info("Deployment readiness signal created")
+    except Exception as e:
+        server.log.warning("Could not create readiness signal: %s", e)
 
 def worker_int(worker):
     """Called when a worker receives the SIGINT or SIGQUIT signal"""

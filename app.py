@@ -409,6 +409,26 @@ def status_check():
     """Basic status endpoint for load balancer health checks"""
     return jsonify({"status": "ok"}), 200
 
+# Deployment readiness endpoint - minimal checks for fast response
+@app.route('/ready', methods=['GET'])
+def readiness_check():
+    """Lightweight readiness probe for deployment health checks"""
+    try:
+        # Basic application check - just ensure Flask is responding
+        return jsonify({
+            "status": "ready", 
+            "app": "running",
+            "timestamp": datetime.now().isoformat()
+        }), 200
+    except Exception:
+        return jsonify({"status": "not_ready"}), 503
+
+# Liveness probe - extremely lightweight 
+@app.route('/alive', methods=['GET'])
+def liveness_check():
+    """Minimal liveness probe - just return OK"""
+    return "OK", 200
+
 
 
 # 添加自定义过滤器

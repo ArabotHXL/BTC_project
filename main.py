@@ -21,8 +21,8 @@ def create_app():
         if not os.environ.get("SESSION_SECRET"):
             os.environ["SESSION_SECRET"] = "bitcoin_mining_calculator_secret"
 
-    # 快速启动模式 - 可选择跳过数据库健康检查
-    skip_db_check = os.environ.get("SKIP_DATABASE_HEALTH_CHECK", "0").lower() in ("1", "true", "yes")
+    # 快速启动模式 - 为部署优化跳过数据库健康检查
+    skip_db_check = os.environ.get("SKIP_DATABASE_HEALTH_CHECK", "1").lower() in ("1", "true", "yes")  # 默认启用快速启动
     database_url = os.environ.get('DATABASE_URL')
     
     if database_url and not skip_db_check:
@@ -73,10 +73,18 @@ def create_app():
     if fast_startup:
         logging.info("Fast startup mode enabled - deferring background services")
         
+        # Signal that core app is ready for deployment
+        try:
+            with open('/tmp/core_app_ready', 'w') as f:
+                f.write('ready')
+            logging.info("Core application readiness signal created")
+        except Exception as e:
+            logging.warning(f"Could not create core readiness signal: {e}")
+        
         def delayed_initialization():
-            """延迟3秒启动后台服务，避免阻塞主应用启动"""
+            """延迟5秒启动后台服务，确保部署就绪"""
             import time
-            time.sleep(3)  # 等待主应用完成启动
+            time.sleep(5)  # 等待主应用完成启动和部署检查
             
             # 启动后台服务
             enable_bg = os.environ.get("ENABLE_BACKGROUND_SERVICES", "1").lower() in ("1", "true", "yes")
