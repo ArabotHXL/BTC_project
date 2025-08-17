@@ -1,0 +1,108 @@
+{
+  "timestamp": "2025-08-17T01:17:26.925608",
+  "summary": {
+    "total_tests": 12,
+    "passed_tests": 12,
+    "failed_tests": 0,
+    "overall_accuracy": 100.0,
+    "total_duration": 5.389984369277954
+  },
+  "detailed_results": [
+    {
+      "name": "认证系统测试",
+      "status": "PASS",
+      "accuracy": 100.0,
+      "duration": 0.24870777130126953,
+      "details": "Token: True, Email verified: True, Tests passed: 5/5",
+      "error": ""
+    },
+    {
+      "name": "挖矿计算引擎测试",
+      "status": "PASS",
+      "accuracy": 100.0,
+      "duration": 0.00335693359375,
+      "details": "Passed 3/3 mining calculations",
+      "error": ""
+    },
+    {
+      "name": "批量处理系统测试",
+      "status": "PASS",
+      "accuracy": 100.0,
+      "duration": 2.4557113647460938e-05,
+      "details": "Processed 450 miners",
+      "error": ""
+    },
+    {
+      "name": "数据库操作测试",
+      "status": "PASS",
+      "accuracy": 100.0,
+      "duration": 0.25643301010131836,
+      "details": "DB connection OK, Users: 23, Customers: 9",
+      "error": ""
+    },
+    {
+      "name": "API端点测试",
+      "status": "PASS",
+      "accuracy": 100.0,
+      "duration": 0.44245028495788574,
+      "details": "API endpoints 4/4 working",
+      "error": ""
+    },
+    {
+      "name": "多语言支持测试",
+      "status": "PASS",
+      "accuracy": 100.0,
+      "duration": 0.00030875205993652344,
+      "details": "Translations 10/10 working",
+      "error": ""
+    },
+    {
+      "name": "订阅系统测试",
+      "status": "PASS",
+      "accuracy": 100.0,
+      "duration": 0.08441853523254395,
+      "details": "Plans exist: True, Free valid: True, Pro valid: True",
+      "error": ""
+    },
+    {
+      "name": "邮件系统测试",
+      "status": "PASS",
+      "accuracy": 100.0,
+      "duration": 0.9524006843566895,
+      "details": "Email function callable: True",
+      "error": ""
+    },
+    {
+      "name": "安全权限测试",
+      "status": "PASS",
+      "accuracy": 100.0,
+      "duration": 2.288818359375e-05,
+      "details": "Security functions exist: True",
+      "error": ""
+    },
+    {
+      "name": "分析引擎测试",
+      "status": "PASS",
+      "accuracy": 100.0,
+      "duration": 0.34068751335144043,
+      "details": "Analytics engine tests passed: 5/5",
+      "error": ""
+    },
+    {
+      "name": "性能内存测试",
+      "status": "PASS",
+      "accuracy": 100.0,
+      "duration": 0.06155037879943848,
+      "details": "Memory increase: 0.00MB",
+      "error": ""
+    },
+    {
+      "name": "CRM系统测试",
+      "status": "PASS",
+      "accuracy": 100.0,
+      "duration": 0.11370086669921875,
+      "details": "CRM models functional, Customers: 9, Leads: 6",
+      "error": ""
+    }
+  ]
+}

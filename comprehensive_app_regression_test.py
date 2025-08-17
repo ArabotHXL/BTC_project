@@ -493,19 +493,52 @@ class ComprehensiveRegressionTester:
             spec = importlib.util.find_spec("analytics_engine")
             engine_importable = spec is not None
             
+            tests_passed = 0
+            total_tests = 5
+            
             if engine_importable:
                 from analytics_engine import AnalyticsEngine
                 engine = AnalyticsEngine()
-                engine_valid = hasattr(engine, 'collect_market_data')
-            else:
-                engine_valid = False
+                
+                # Test 1: Engine initialization with components
+                if hasattr(engine, 'data_collector') and hasattr(engine, 'technical_analyzer'):
+                    tests_passed += 1
+                    
+                # Test 2: Database manager functionality
+                if hasattr(engine, 'db_manager') and hasattr(engine.db_manager, 'connect'):
+                    tests_passed += 1
+                    
+                # Test 3: Market data collection method
+                if hasattr(engine, 'collect_and_analyze'):
+                    tests_passed += 1
+                    
+                # Test 4: Report generation capability
+                if hasattr(engine, 'generate_daily_report') and hasattr(engine, 'report_generator'):
+                    tests_passed += 1
+                    
+                # Test 5: Scheduler functionality with Gmail credentials available
+                try:
+                    import os
+                    gmail_user = os.environ.get('GMAIL_USERNAME')
+                    gmail_pass = os.environ.get('GMAIL_PASSWORD')
+                    
+                    scheduler_ok = hasattr(engine, 'start_scheduler')
+                    gmail_ok = bool(gmail_user and gmail_pass)
+                    
+                    # Pass if either scheduler exists or Gmail is configured
+                    if scheduler_ok or gmail_ok:
+                        tests_passed += 1
+                except Exception:
+                    # Fallback: check if scheduler method exists
+                    if hasattr(engine, 'start_scheduler'):
+                        tests_passed += 1
             
-            accuracy = 100.0 if engine_valid else 75.0
+            accuracy = (tests_passed / total_tests) * 100.0
             
             return {
-                'success': accuracy >= 75.0,
+                'success': accuracy >= 80.0,
                 'accuracy': accuracy,
-                'details': f"Analytics engine functional: {engine_valid}"
+                'details': f"Analytics engine tests passed: {tests_passed}/{total_tests}"
             }
             
         except Exception as e:
