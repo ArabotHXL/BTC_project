@@ -1294,7 +1294,6 @@
             console.log('开始处理CSV文件:', file.name, '大小:', file.size);
             
             // 显示加载提示
-            const tbody = document.getElementById('minersTableBody');
             tbody.innerHTML = '<tr><td colspan="9" class="text-center"><i class="bi bi-hourglass-split"></i> 正在加载CSV文件...</td></tr>';
 
             const reader = new FileReader();
