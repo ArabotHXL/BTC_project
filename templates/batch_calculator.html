@@ -282,8 +282,8 @@
                         </p>
                     </div>
                     
-                    <!-- Plan Display -->
-                    <div class="text-end">
+                    <!-- Plan Display - Hidden for all users -->
+                    <div class="text-end d-none">
                         <div class="small text-muted">{% if current_lang == 'en' %}Current Plan{% else %}当前套餐{% endif %}</div>
                         <div class="fw-bold text-primary">{{ user_plan.name.title() }}</div>
                         <div class="small text-muted mt-1">
