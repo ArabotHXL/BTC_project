@@ -1493,7 +1493,7 @@
                         // 存储所有数据到全局变量供计算使用
                         window.allMinersData = validLines;
                         
-                        console.log('CSV处理完成，共处理:', validLines.length, '行，显示:', Math.min(validLines.length, MAX_DISPLAY_ROWS), '行');
+                        console.log('CSV处理完成，共处理:', validLines.length, '行，显示:', validLines.length, '行');
                         
                         // 强制刷新显示状态，确保DOM完全构建
                         setTimeout(() => {
