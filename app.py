@@ -36,6 +36,13 @@ def get_cache_manager():
             _cache_manager = None
     return _cache_manager
 
+# 全局缓存管理器变量（临时修复）
+cache_manager = None
+try:
+    from cache_manager import cache as cache_manager
+except ImportError:
+    logging.warning("Cache manager not available, using None")
+
 def load_decorators():
     """延迟加载装饰器"""
     global _decorators_loaded, requires_role, requires_owner_only, requires_admin_or_owner

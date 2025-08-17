@@ -95,6 +95,16 @@ def hash_email(email):
     # 返回十六进制哈希值
     return hasher.hexdigest()
 
+def create_verification_token(email):
+    """为邮箱创建验证令牌"""
+    # 使用邮箱哈希和时间戳创建令牌
+    import time
+    timestamp = str(int(time.time()))
+    email_hash = hash_email(email)
+    # 组合令牌
+    token = f"{email_hash[:16]}{timestamp}"
+    return token
+
 def verify_email(email):
     """验证邮箱是否有效且授权访问"""
     if not email:
