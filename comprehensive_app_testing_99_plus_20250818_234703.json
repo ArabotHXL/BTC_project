@@ -1,0 +1,102 @@
+{
+  "test_run_info": {
+    "timestamp": "2025-08-18T23:47:03.428063",
+    "duration_seconds": 12.68,
+    "target_accuracy": "99%+",
+    "actual_accuracy": "83.33%",
+    "test_accounts_used": 2,
+    "performance_thresholds": {
+      "page_load_max": 10.0,
+      "api_response_max": 5.0,
+      "calculation_max": 3.0,
+      "batch_processing_max": 30.0
+    }
+  },
+  "summary": {
+    "total_tests": 12,
+    "passed_tests": 10,
+    "failed_tests": 2,
+    "accuracy_percentage": 83.33,
+    "target_met": false,
+    "grade": "C+"
+  },
+  "performance_analysis": {
+    "average_test_duration": 1.056,
+    "slowest_test": "Authentication System (Real Accounts)",
+    "fastest_test": "User Interface Components"
+  },
+  "detailed_results": [
+    {
+      "test": "Authentication System (Real Accounts)",
+      "status": "PASSED",
+      "duration": 3.655,
+      "details": "Test completed successfully"
+    },
+    {
+      "test": "Mining Calculator Functionality",
+      "status": "PASSED",
+      "duration": 2.733,
+      "details": "Test completed successfully"
+    },
+    {
+      "test": "API Endpoints Comprehensive",
+      "status": "PASSED",
+      "duration": 1.131,
+      "details": "Test completed successfully"
+    },
+    {
+      "test": "Database Operations",
+      "status": "PASSED",
+      "duration": 0.509,
+      "details": "Test completed successfully"
+    },
+    {
+      "test": "Multilingual Interface",
+      "status": "PASSED",
+      "duration": 0.113,
+      "details": "Test completed successfully"
+    },
+    {
+      "test": "User Interface Components",
+      "status": "PASSED",
+      "duration": 0.01,
+      "details": "Test completed successfully"
+    },
+    {
+      "test": "Session Management & UX",
+      "status": "PASSED",
+      "duration": 0.531,
+      "details": "Test completed successfully"
+    },
+    {
+      "test": "Batch Processing System",
+      "status": "FAILED",
+      "duration": 0.691,
+      "details": "Test returned False"
+    },
+    {
+      "test": "Real-time Data Integration",
+      "status": "FAILED",
+      "duration": 2.385,
+      "details": "Test returned False"
+    },
+    {
+      "test": "Data Validation & Error Handling",
+      "status": "PASSED",
+      "duration": 0.648,
+      "details": "Test completed successfully"
+    },
+    {
+      "test": "Security & Permissions",
+      "status": "PASSED",
+      "duration": 0.03,
+      "details": "Test completed successfully"
+    },
+    {
+      "test": "Performance Metrics",
+      "status": "PASSED",
+      "duration": 0.241,
+      "details": "Test completed successfully"
+    }
+  ]
+}
