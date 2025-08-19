@@ -23,166 +23,7 @@
 </head>
 <body>
     <div class="container-fluid">
-        {% block header %}
-        <header class="py-3 mb-4 border-bottom">
-            <div class="container d-flex align-items-center justify-content-between">
-                <h1 class="fs-4">{% block header_title %}BTC Mining Calculator{% endblock %}</h1>
-                
-                <div class="d-flex gap-4 align-items-center">
-                    <!-- Home Link -->
-                    <div class="d-flex align-items-center">
-                        <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm me-3">
-                            <i class="bi bi-house-door me-1"></i>
-                            {% if current_lang == 'en' %}Home{% else %}主页{% endif %}
-                        </a>
-                    </div>
-                    
-                    <!-- Language Switcher -->
-                    <div class="d-flex align-items-center">
-                        <div class="btn-group btn-group-sm me-3" role="group" aria-label="{{ t('language') }}">
-                            <a href="{{ url_for(request.endpoint) }}?lang=zh" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
-                            <a href="{{ url_for(request.endpoint) }}?lang=en" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}">English</a>
-                        </div>
-                    </div>
-                    
-                    <!-- User Account Info -->
-                    <div class="dropdown">
-                        <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-person-circle me-1"></i>
-                            {% if session.email %}
-                                {{ session.email }}
-                            {% else %}
-                                {{ t('guest') }}
-                            {% endif %}
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><h6 class="dropdown-header">{% if current_lang == 'en' %}Account Info{% else %}账户信息{% endif %}</h6></li>
-                            {% if session.email %}
-                                <li><span class="dropdown-item-text">{{ session.email }}</span></li>
-                                
-                                <!-- Admin options based on role -->
-                                {% if session.role in ['owner', 'admin', 'mining_site'] %}
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><h6 class="dropdown-header">{% if current_lang == 'en' %}Admin Functions{% else %}管理功能{% endif %}</h6></li>
-                                    
-                                    <!-- Owner can view login records -->
-                                    {% if session.role == 'owner' %}
-                                    <li><a class="dropdown-item" href="{{ url_for('login_records') }}">
-                                        <i class="bi bi-file-text me-1"></i> 
-                                        {% if current_lang == 'en' %}View Login Records{% else %}查看登录记录{% endif %}
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('login_dashboard') }}">
-                                        <i class="bi bi-graph-up me-1"></i> 
-                                        {% if current_lang == 'en' %}Login Analytics Dashboard{% else %}登录分析仪表盘{% endif %}
-                                    </a></li>
-                                    {% endif %}
-                                    
-                                    <!-- Owner and admin can manage user access -->
-                                    {% if session.role in ['owner', 'admin'] %}
-                                    <li><a class="dropdown-item" href="{{ url_for('user_access') }}">
-                                        <i class="bi bi-people me-1"></i> 
-                                        {% if current_lang == 'en' %}User Access Management{% else %}用户访问管理{% endif %}
-                                    </a></li>
-                                    {% endif %}
-                                    
-                                    <!-- Mining site operators can manage their customers -->
-                                    {% if session.role == 'mining_site' %}
-                                    <li><a class="dropdown-item" href="{{ url_for('mine_customer_management') }}">
-                                        <i class="bi bi-people-fill me-1"></i> 
-                                        {% if current_lang == 'en' %}Customer Management{% else %}客户管理{% endif %}
-                                    </a></li>
-                                    {% endif %}
-                                    
-                                    <!-- CRM System Access -->
-                                    {% if user_has_crm_access() %}
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><h6 class="dropdown-header">{% if current_lang == 'en' %}CRM System{% else %}客户关系管理{% endif %}</h6></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('crm.dashboard') }}">
-                                        <i class="bi bi-speedometer2 me-1"></i> 
-                                        {% if current_lang == 'en' %}CRM Dashboard{% else %}CRM仪表盘{% endif %}
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('crm.customers') }}">
-                                        <i class="bi bi-people me-1"></i> 
-                                        {% if current_lang == 'en' %}Customers{% else %}客户管理{% endif %}
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('crm.leads') }}">
-                                        <i class="bi bi-funnel me-1"></i> 
-                                        {% if current_lang == 'en' %}Leads{% else %}商机管理{% endif %}
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('crm.deals') }}">
-                                        <i class="bi bi-handshake me-1"></i> 
-                                        {% if current_lang == 'en' %}Deals{% else %}交易管理{% endif %}
-                                    </a></li>
-                                    {% endif %}
-                                    
-                                    <!-- Mining Broker Business Access -->
-                                    {% if session.role == 'owner' %}
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><h6 class="dropdown-header">{% if current_lang == 'en' %}Broker Business{% else %}矿场中介业务{% endif %}</h6></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('crm.broker_dashboard') }}">
-                                        <i class="bi bi-graph-up-arrow me-1"></i> 
-                                        {% if current_lang == 'en' %}Broker Dashboard{% else %}中介仪表盘{% endif %}
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('crm.broker_deals') }}">
-                                        <i class="bi bi-building me-1"></i> 
-                                        {% if current_lang == 'en' %}Mining Farm Deals{% else %}矿场交易{% endif %}
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('crm.broker_commissions') }}">
-                                        <i class="bi bi-cash-coin me-1"></i> 
-                                        {% if current_lang == 'en' %}Commission Management{% else %}佣金管理{% endif %}
-                                    </a></li>
-                                    {% endif %}
-                                    
-                                    <!-- Display current user role -->
-                                    <li><span class="dropdown-item-text">
-                                        <i class="bi bi-person-badge me-1"></i> 
-                                        {% if current_lang == 'en' %}Role: {% else %}角色: {% endif %}
-                                        {% if session.role == 'owner' %}
-                                            <span class="badge bg-danger">{{ t('owner') }}</span>
-                                        {% elif session.role == 'admin' %}
-                                            <span class="badge bg-warning">{{ t('admin') }}</span>
-                                        {% elif session.role == 'mining_site' %}
-                                            <span class="badge bg-info">{{ t('mining_site') }}</span>
-                                        {% else %}
-                                            <span class="badge bg-primary">{{ t('customer') }}</span>
-                                        {% endif %}
-                                    </span></li>
-                                {% endif %}
-                                
-                                <li><hr class="dropdown-divider"></li>
-                                <li><h6 class="dropdown-header">{% if current_lang == 'en' %}Analytics Platform{% else %}数据分析平台{% endif %}</h6></li>
-                                
-                                <!-- Analytics for all users with analytics access -->
-                                {% if user_has_analytics_access() %}
-                                <li><a class="dropdown-item" href="{{ url_for('analytics_dashboard') }}">
-                                    <i class="bi bi-graph-up me-1"></i> 
-                                    {% if current_lang == 'en' %}Analytics Dashboard{% else %}数据分析平台{% endif %}
-                                </a></li>
-                                {% endif %}
-                                
-                                <!-- Technical Analysis for owner, manager, mining_site -->
-                                {% if session.role in ['owner', 'manager', 'mining_site'] %}
-                                <li><a class="dropdown-item" href="{{ url_for('technical_analysis') }}">
-                                    <i class="bi bi-bar-chart-line me-1"></i> 
-                                    {% if current_lang == 'en' %}Technical Analysis{% else %}技术分析{% endif %}
-                                </a></li>
-                                {% endif %}
-                                
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{{ url_for('index') }}">
-                                    <i class="bi bi-calculator me-1"></i>
-                                    {% if current_lang == 'en' %}Mining Calculator{% else %}挖矿计算器{% endif %}
-                                </a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('logout') }}">
-                                    {{ t('logout') }} <i class="bi bi-box-arrow-right ms-1"></i>
-                                </a></li>
-                            {% endif %}
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </header>
-        {% endblock %}
+        <!-- Header navigation removed -->
 
         <main class="container mb-5">
             <!-- Flash messages -->
@@ -204,7 +45,11 @@
             {% block content %}{% endblock %}
         </main>
 
-        <!-- Footer removed -->
+        <footer class="py-3 my-4 border-top">
+            <div class="container text-center">
+                <p class="text-muted">© 2025 BTC Mining Calculator</p>
+            </div>
+        </footer>
     </div>
 
     {% block scripts %}{% endblock %}
