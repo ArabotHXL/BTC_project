@@ -179,8 +179,21 @@ DEFAULT_BTC_PRICE = 80000  # 默认比特币价格，单位: USD
 DEFAULT_DIFFICULTY = 119.12  # 默认难度，单位: T
 DEFAULT_BLOCK_REWARD = 3.125  # 默认区块奖励，单位: BTC
 
-# Initialize Flask app
-app = Flask(__name__)
+# Initialize Flask app with explicit static folder
+app = Flask(__name__, static_folder='static', static_url_path='/static')
+
+# Add explicit route for calculator JS to fix serving issue
+@app.route('/static/js/calculator_clean.js')
+def serve_calculator_js():
+    """Explicit route to serve calculator JS file"""
+    try:
+        with open('static/js/calculator_clean.js', 'r', encoding='utf-8') as f:
+            content = f.read()
+        from flask import Response
+        return Response(content, mimetype='application/javascript')
+    except Exception as e:
+        logging.error(f"Error serving calculator JS: {e}")
+        return "", 404
 
 # 设置安全的会话密钥
 app.secret_key = os.environ.get("SESSION_SECRET", secrets.token_hex(32))

@@ -1515,12 +1515,6 @@
     </div>
 
     <!-- 引入计算器JS -->
-    <script>
-        // Force clear old script cache
-        var timestamp = new Date().getTime();
-        var script = document.createElement('script');
-        script.src = '/static/js/calculator_clean.js?v=' + timestamp;
-        document.body.appendChild(script);
-    </script>
+    <script src="{{ url_for('static', filename='js/calculator_clean.js') }}?v={{ range(100000, 999999) | random }}"></script>
 </body>
 </html>
