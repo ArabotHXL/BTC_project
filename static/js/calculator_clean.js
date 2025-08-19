@@ -16,8 +16,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Update display
-                    document.getElementById('btc-price').textContent = '$' + data.btc_price.toLocaleString();
+                    // Update display with proper formatting
+                    document.getElementById('btc-price').textContent = '$' + Math.round(data.btc_price).toLocaleString();
                     document.getElementById('network-difficulty').textContent = (data.network_difficulty / 1e12).toFixed(2) + 'T';
                     document.getElementById('network-hashrate').textContent = data.network_hashrate + ' EH/s';
                     document.getElementById('block-reward').textContent = data.block_reward + ' BTC';
