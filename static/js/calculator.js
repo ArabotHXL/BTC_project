@@ -18,14 +18,69 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                // 更新页面顶部显示数据
                 document.getElementById('btc-price').textContent = '$' + data.btc_price.toLocaleString();
                 document.getElementById('network-difficulty').textContent = (data.network_difficulty / 1e12).toFixed(2) + 'T';
                 document.getElementById('network-hashrate').textContent = data.network_hashrate + ' EH/s';
                 document.getElementById('block-reward').textContent = data.block_reward + ' BTC';
+                
+                // 重要：更新表单字段中的实时数据
+                updateFormWithRealTimeData(data);
+                
                 console.log('[CALCULATOR.JS] Network stats loaded');
             }
         })
         .catch(error => console.error('[CALCULATOR.JS] Error loading network stats:', error));
+    
+    // 存储实时数据
+    var latestNetworkData = null;
+    
+    // 更新表单字段的实时数据
+    function updateFormWithRealTimeData(networkData) {
+        try {
+            // 存储最新数据
+            latestNetworkData = networkData;
+            
+            // 检查是否启用实时数据
+            var useRealTimeData = document.getElementById('use-real-time');
+            if (useRealTimeData && useRealTimeData.checked) {
+                // 更新BTC价格字段
+                var btcPriceField = document.getElementById('btc-price-input');
+                if (btcPriceField && networkData.btc_price) {
+                    btcPriceField.value = Math.round(networkData.btc_price);
+                    console.log('[CALCULATOR.JS] Updated BTC price to:', networkData.btc_price);
+                }
+                
+                // 更新手动输入字段的默认值
+                var manualHashrateField = document.getElementById('manual-hashrate');
+                if (manualHashrateField && networkData.network_hashrate) {
+                    manualHashrateField.value = networkData.network_hashrate;
+                }
+                
+                var manualDifficultyField = document.getElementById('manual-difficulty');
+                if (manualDifficultyField && networkData.network_difficulty) {
+                    manualDifficultyField.value = networkData.network_difficulty;
+                }
+                
+                console.log('[CALCULATOR.JS] Real-time data updated in form fields');
+            }
+        } catch (error) {
+            console.error('[CALCULATOR.JS] Error updating form with real-time data:', error);
+        }
+    }
+    
+    // 监听"Use Real Time Data"开关变化
+    var useRealTimeSwitch = document.getElementById('use-real-time');
+    if (useRealTimeSwitch) {
+        useRealTimeSwitch.addEventListener('change', function() {
+            if (this.checked && latestNetworkData) {
+                console.log('[CALCULATOR.JS] Real-time data enabled, updating fields...');
+                updateFormWithRealTimeData(latestNetworkData);
+            } else {
+                console.log('[CALCULATOR.JS] Real-time data disabled');
+            }
+        });
+    }
     
     // Load miners list
     fetch('/miners')

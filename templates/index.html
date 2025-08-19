@@ -581,7 +581,7 @@
                                 <!-- Real-time data option -->
                                 <div class="form-check form-switch mb-3">
                                     <input class="form-check-input" type="checkbox" id="use-real-time" name="use_real_time" checked>
-                                    <label class="form-check-label" for="use-real-time">{{ t('use_real_time_data') }}</label>
+                                    <label class="form-check-label" for="use-real-time">{% if current_lang == 'en' %}Use Real Time Data{% else %}使用实时数据{% endif %}</label>
                                 </div>
 
                                 <button type="submit" class="btn btn-primary w-100">
