@@ -196,9 +196,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // 处理计算表单提交 (Handle calculation form submission)
     function handleCalculateSubmit(event) {
         event.preventDefault();
+        console.log('🚀 开始处理表单提交...');
         
         // 在提交表单前重新计算总算力和总功耗
-        console.log("表单提交前重新计算总算力和总功耗");
+        console.log("⚡ 表单提交前重新计算总算力和总功耗");
         calculateTotalHashrateAndPower();
         
         // 表单验证 (Form validation)
@@ -257,22 +258,27 @@ document.addEventListener('DOMContentLoaded', function() {
         xhr.open('POST', '/calculate', true);
         
         xhr.onload = function() {
+            console.log('✅ 收到服务器响应，状态码:', xhr.status);
+            console.log('📦 响应内容:', xhr.responseText);
             try {
                 if (xhr.status === 200) {
                     var data = JSON.parse(xhr.responseText);
+                    console.log('📊 解析后的计算结果:', data);
                     
                     if (data.success) {
+                        console.log('🎯 开始显示计算结果...');
                         // 显示结果 (Display results)
                         displayResults(data);
+                        console.log('✅ 结果显示完成');
                     } else {
+                        console.error('❌ 服务器返回失败结果:', data.error);
                         showError(data.error || '计算过程中发生错误。(An error occurred during calculation.)');
-                        console.error('服务器返回错误:', data.error);
                     }
                 } else {
                     throw new Error('服务器返回状态码: ' + xhr.status);
                 }
             } catch (error) {
-                console.error('计算错误:', error);
+                console.error('❌ 处理响应时出错:', error);
                 showError('计算过程中发生错误，请重试。(An error occurred during calculation, please try again.)');
             } finally {
                 // 隐藏加载状态 (Hide loading state)
@@ -441,17 +447,28 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 显示计算结果 (Display calculation results)
     function displayResults(data) {
+        console.log('🔍 检查接收到的数据结构:', data);
+        console.log('📋 resultsCard元素状态:', resultsCard);
+        
         if (!data || !data.btc_mined) {
+            console.error('❌ 数据验证失败 - data:', data, 'btc_mined:', data?.btc_mined);
             showError('服务器返回的数据无效。(Invalid data received from server.)');
-            console.error('数据结构无效:', data);
             return;
         }
         
         try {
-            console.log('收到计算结果数据:', data);
+            console.log('📊 开始处理计算结果数据:', data);
             
             // 显示结果卡片 (Show results card)
-            if (resultsCard) resultsCard.style.display = 'block';
+            console.log('🎯 准备显示结果卡片...');
+            if (resultsCard) {
+                console.log('📺 设置results-card为可见...');
+                resultsCard.style.display = 'block';
+                console.log('✅ results-card已设置为可见，当前样式:', resultsCard.style.display);
+            } else {
+                console.error('❌ 无法找到results-card元素!');
+                return;
+            }
             
             // ===== 1. 基本BTC挖矿产出 =====
             updateBtcOutputDisplay(data);
