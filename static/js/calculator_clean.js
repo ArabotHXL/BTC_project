@@ -158,6 +158,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         updateTotals(); // Ensure totals are current
         
+        // Show loading state
+        var submitBtn = form.querySelector('button[type="submit"]');
+        var originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Calculating...';
+        
         var formData = new FormData(form);
         var data = {};
         for (var pair of formData.entries()) {
@@ -185,6 +191,11 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('[CALCULATOR] Error:', error);
             alert('Network error: ' + error.message);
+        })
+        .finally(function() {
+            // Restore button state
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
         });
     });
     
