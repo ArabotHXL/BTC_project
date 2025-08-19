@@ -587,13 +587,21 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Network and Mining Details Table
         var networkDifficulty = document.getElementById('network-difficulty-value');
-        if (networkDifficulty && data.network_data && data.network_data.difficulty !== undefined && data.network_data.difficulty !== null) {
-            networkDifficulty.textContent = (data.network_data.difficulty / 1e12).toFixed(1) + ' T';
+        if (networkDifficulty && data.network_data) {
+            // Try multiple possible field names for difficulty
+            var difficulty = data.network_data.difficulty || data.network_data.network_difficulty;
+            if (difficulty !== undefined && difficulty !== null) {
+                networkDifficulty.textContent = (difficulty / 1e12).toFixed(1) + ' T';
+            }
         }
         
         var networkHashrate = document.getElementById('network-hashrate-value');
-        if (networkHashrate && data.network_data && data.network_data.hashrate !== undefined && data.network_data.hashrate !== null) {
-            networkHashrate.textContent = data.network_data.hashrate.toFixed(2) + ' EH/s';
+        if (networkHashrate && data.network_data) {
+            // Try multiple possible field names for hashrate
+            var hashrate = data.network_data.hashrate || data.network_data.network_hashrate;
+            if (hashrate !== undefined && hashrate !== null) {
+                networkHashrate.textContent = hashrate.toFixed(2) + ' EH/s';
+            }
         }
         
         var btcPriceResult = document.getElementById('current-btc-price-value');
@@ -616,6 +624,30 @@ document.addEventListener('DOMContentLoaded', function() {
         var btcPerTh = document.getElementById('btc-per-th-daily');
         if (btcPerTh && data.btc_mined) {
             btcPerTh.textContent = (data.btc_mined.per_th_daily || 0).toFixed(8);
+        }
+        
+        // Daily BTC Total
+        var dailyBtcValue = document.getElementById('daily-btc-value');
+        if (dailyBtcValue && data.btc_mined) {
+            dailyBtcValue.textContent = (data.btc_mined.daily || 0).toFixed(8);
+        }
+        
+        // Algorithm 1 - Method 1 Daily BTC
+        var btcMethod1Daily = document.getElementById('btc-method1-daily');
+        if (btcMethod1Daily && data.btc_mined && data.btc_mined.method1) {
+            btcMethod1Daily.textContent = (data.btc_mined.method1.daily || 0).toFixed(8);
+        }
+        
+        // Algorithm 2 - Method 2 Daily BTC
+        var btcMethod2Daily = document.getElementById('btc-method2-daily');
+        if (btcMethod2Daily && data.btc_mined && data.btc_mined.method2) {
+            btcMethod2Daily.textContent = (data.btc_mined.method2.daily || 0).toFixed(8);
+        }
+        
+        // Optimal Electricity Rate (Break-even electricity cost)
+        var optimalElectricityRate = document.getElementById('optimal-electricity-rate');
+        if (optimalElectricityRate && data.break_even) {
+            optimalElectricityRate.textContent = '$' + (data.break_even.electricity_cost || 0).toFixed(4) + '/kWh';
         }
         
         // Timestamp
