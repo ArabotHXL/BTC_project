@@ -363,8 +363,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         var clientPaybackYears = document.getElementById('client-payback-years');
         if (clientPaybackYears) {
-            if (data.roi && data.roi.client_payback_years !== null && data.roi.client_payback_years !== undefined && isFinite(data.roi.client_payback_years) && data.roi.client_payback_years > 0) {
-                var years = data.roi.client_payback_years;
+            // Check if ROI data exists and handle both structures
+            var clientROI = null;
+            if (data.roi && data.roi.client) {
+                clientROI = data.roi.client;
+            }
+            
+            if (clientROI && clientROI.payback_period_years !== null && clientROI.payback_period_years !== undefined && isFinite(clientROI.payback_period_years) && clientROI.payback_period_years > 0) {
+                var years = clientROI.payback_period_years;
                 console.log('[CALCULATOR] Client payback years:', years);
                 clientPaybackYears.textContent = years.toFixed(2) + ' years';
             } else if (data.inputs && data.inputs.client_investment > 0) {
