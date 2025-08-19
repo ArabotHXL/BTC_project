@@ -353,48 +353,145 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Create datasets
+        // Create datasets with enhanced styling
         const datasets = [{
             label: 'ROI %',
             data: roiPercentage,
             borderColor: 'rgb(40, 167, 69)',
-            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+            backgroundColor: 'rgba(40, 167, 69, 0.15)',
             borderWidth: 3,
             fill: true,
-            tension: 0.1,
-            pointBackgroundColor: roiPercentage.map((value, index) => 
-                index === breakEvenIndex ? '#ffc107' : 'rgb(40, 167, 69)'
-            ),
-            pointBorderColor: roiPercentage.map((value, index) => 
-                index === breakEvenIndex ? '#ffc107' : 'rgb(40, 167, 69)'
-            ),
-            pointRadius: roiPercentage.map((value, index) => 
-                index === breakEvenIndex ? 8 : 4
-            ),
-            pointHoverRadius: roiPercentage.map((value, index) => 
-                index === breakEvenIndex ? 10 : 6
-            )
+            tension: 0.4,
+            pointBackgroundColor: 'rgb(40, 167, 69)',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 8,
+            pointHoverBackgroundColor: 'rgb(40, 167, 69)',
+            pointHoverBorderColor: '#ffffff',
+            pointHoverBorderWidth: 3
         }];
 
-        // Add break-even line if break-even point exists
-        if (breakEvenPoint && breakEvenIndex >= 0) {
-            datasets.push({
-                label: 'Break-even Point',
-                data: roiPercentage.map((value, index) => 
-                    index === breakEvenIndex ? value : null
-                ),
-                borderColor: '#ffc107',
-                backgroundColor: '#ffc107',
-                borderWidth: 0,
-                fill: false,
-                pointBackgroundColor: '#ffc107',
-                pointBorderColor: '#ffc107',
-                pointRadius: 10,
-                pointHoverRadius: 12,
-                showLine: false,
-                pointStyle: 'star'
-            });
-        }
+        // Create chart options with vertical line plugin
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            scales: {
+                y: {
+                    title: {
+                        display: true,
+                        text: 'ROI (%)',
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        font: {
+                            size: 12
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.15)',
+                        lineWidth: 1
+                    },
+                    beginAtZero: true
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Months',
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        font: {
+                            size: 12
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.15)',
+                        lineWidth: 1
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Client ROI Progression',
+                    color: 'rgb(40, 167, 69)',
+                    font: {
+                        size: 18,
+                        weight: 'bold'
+                    },
+                    padding: {
+                        top: 10,
+                        bottom: 30
+                    }
+                },
+                legend: {
+                    display: true,
+                    labels: {
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        font: {
+                            size: 13
+                        },
+                        usePointStyle: true,
+                        padding: 20
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    borderColor: 'rgba(40, 167, 69, 0.8)',
+                    borderWidth: 2,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    callbacks: {
+                        title: function(context) {
+                            return `Month ${context[0].label.replace('M', '')}`;
+                        },
+                        label: function(context) {
+                            return `ROI: ${context.parsed.y.toFixed(2)}%`;
+                        },
+                        afterBody: function(context) {
+                            const dataIndex = context[0].dataIndex;
+                            if (dataIndex === breakEvenIndex && breakEvenPoint) {
+                                return [
+                                    '',
+                                    '🎯 BREAK-EVEN ACHIEVED!',
+                                    `Investment Recovered: $${breakEvenPoint.cumulative_profit.toLocaleString()}`,
+                                    `Total ROI: ${breakEvenPoint.roi_percent.toFixed(2)}%`
+                                ];
+                            }
+                            return '';
+                        }
+                    }
+                }
+            },
+            animation: {
+                duration: 2000,
+                easing: 'easeInOutQuart'
+            }
+        };
 
         try {
             clientRoiChart = new Chart(canvas, {
@@ -403,84 +500,52 @@ document.addEventListener('DOMContentLoaded', () => {
                 labels: months,
                 datasets: datasets
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                },
-                scales: {
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'ROI (%)',
-                            color: 'rgba(255, 255, 255, 0.8)'
-                        },
-                        ticks: {
-                            color: 'rgba(255, 255, 255, 0.8)'
-                        },
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Months',
-                            color: 'rgba(255, 255, 255, 0.8)'
-                        },
-                        ticks: {
-                            color: 'rgba(255, 255, 255, 0.8)'
-                        },
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        }
-                    }
-                },
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Client ROI Progression',
-                        color: 'rgb(40, 167, 69)',
-                        font: {
-                            size: 16
-                        }
-                    },
-                    legend: {
-                        display: true,
-                        labels: {
-                            color: 'rgba(255, 255, 255, 0.8)',
-                            filter: function(item, chart) {
-                                // Only show ROI % in legend, hide Break-even Point
-                                return item.text === 'ROI %';
-                            }
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleColor: 'rgba(255, 255, 255, 0.9)',
-                        bodyColor: 'rgba(255, 255, 255, 0.9)',
-                        borderColor: 'rgba(255, 255, 255, 0.2)',
-                        borderWidth: 1,
-                        callbacks: {
-                            afterBody: function(context) {
-                                const dataIndex = context[0].dataIndex;
-                                if (dataIndex === breakEvenIndex && breakEvenPoint) {
-                                    return [
-                                        '',
-                                        '🎯 BREAK-EVEN ACHIEVED!',
-                                        `✅ Investment Recovered: $${breakEvenPoint.cumulative_profit.toLocaleString()}`,
-                                        `📅 Month: ${breakEvenPoint.month}`,
-                                        `📈 ROI: ${breakEvenPoint.roi_percent.toFixed(2)}%`
-                                    ];
-                                }
-                                return '';
-                            }
-                        }
+            options: chartOptions,
+            plugins: [{
+                id: 'breakEvenLine',
+                afterDraw: function(chart) {
+                    if (breakEvenPoint && breakEvenIndex >= 0) {
+                        const ctx = chart.ctx;
+                        const xScale = chart.scales.x;
+                        const yScale = chart.scales.y;
+                        
+                        // Calculate x position for break-even line
+                        const xPos = xScale.getPixelForValue(breakEvenIndex);
+                        
+                        // Save context
+                        ctx.save();
+                        
+                        // Draw vertical line
+                        ctx.beginPath();
+                        ctx.strokeStyle = '#ffc107';
+                        ctx.lineWidth = 3;
+                        ctx.setLineDash([10, 5]);
+                        ctx.moveTo(xPos, yScale.top);
+                        ctx.lineTo(xPos, yScale.bottom);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        
+                        // Draw break-even label
+                        ctx.fillStyle = '#ffc107';
+                        ctx.font = 'bold 12px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('Break-even', xPos, yScale.top - 10);
+                        
+                        // Draw break-even marker circle
+                        const yPos = yScale.getPixelForValue(breakEvenPoint.roi_percent);
+                        ctx.beginPath();
+                        ctx.fillStyle = '#ffc107';
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 3;
+                        ctx.arc(xPos, yPos, 8, 0, 2 * Math.PI);
+                        ctx.fill();
+                        ctx.stroke();
+                        
+                        // Restore context
+                        ctx.restore();
                     }
                 }
-            }
+            }]
         });
         console.log("Client ROI chart created successfully with break-even point at month:", breakEvenPoint ? breakEvenPoint.month : 'N/A');
         } catch (error) {
