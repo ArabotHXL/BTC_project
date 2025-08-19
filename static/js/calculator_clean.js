@@ -170,6 +170,13 @@ document.addEventListener('DOMContentLoaded', function() {
             data[pair[0]] = pair[1];
         }
         
+        // 添加计算出的总值，确保正确传递
+        data['total-hashrate'] = document.getElementById('total-hashrate').value || '0';
+        data['total-power'] = document.getElementById('total-power').value || '0';
+        data['miner-count'] = document.getElementById('miner-count').value || '1';
+        
+        console.log('[CALCULATOR] Final form data being sent:', data);
+        
         console.log('[CALCULATOR] Sending data:', data);
         
         fetch('/calculate', {
@@ -201,19 +208,21 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Display results
     function displayResults(data) {
+        console.log('[CALCULATOR] Displaying results, received data:', data);
+        
         var fields = {
-            'daily-btc-mined': data.btc_mined || data.daily_btc_mined,
-            'monthly-btc-mined': data.monthly_btc_mined,
-            'yearly-btc-mined': data.yearly_btc_mined,
-            'daily-revenue': data.daily_revenue_usd,
-            'monthly-revenue': data.monthly_revenue_usd,
-            'yearly-revenue': data.yearly_revenue_usd,
-            'daily-electricity-cost': data.daily_electricity_cost_usd,
-            'monthly-electricity-cost': data.monthly_electricity_cost_usd,
-            'yearly-electricity-cost': data.yearly_electricity_cost_usd,
-            'daily-profit': data.daily_profit_usd,
-            'monthly-profit': data.monthly_profit_usd,
-            'yearly-profit': data.yearly_profit_usd,
+            'daily-btc-mined': data.btc_mined || data.daily_btc_mined || data.daily_btc,
+            'monthly-btc-mined': data.monthly_btc_mined || (data.daily_btc * 30),
+            'yearly-btc-mined': data.yearly_btc_mined || (data.daily_btc * 365),
+            'daily-revenue': data.daily_revenue_usd || data.daily_revenue,
+            'monthly-revenue': data.monthly_revenue_usd || data.monthly_revenue,
+            'yearly-revenue': data.yearly_revenue_usd || data.yearly_revenue,
+            'daily-electricity-cost': data.daily_electricity_cost_usd || data.daily_electricity_cost,
+            'monthly-electricity-cost': data.monthly_electricity_cost_usd || data.monthly_electricity_cost,
+            'yearly-electricity-cost': data.yearly_electricity_cost_usd || data.yearly_electricity_cost,
+            'daily-profit': data.daily_profit_usd || data.daily_profit,
+            'monthly-profit': data.monthly_profit_usd || data.monthly_profit,
+            'yearly-profit': data.yearly_profit_usd || data.yearly_profit,
             'roi-days': data.roi_days,
             'monthly-roi': data.monthly_roi_percentage,
             'breakeven-btc-price': data.breakeven_btc_price

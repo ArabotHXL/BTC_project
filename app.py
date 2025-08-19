@@ -958,6 +958,7 @@ def calculate_internal(request_obj):
             # Additional check for NaN/inf after conversion
             if not (hashrate == hashrate and abs(hashrate) != float('inf')):
                 raise ValueError("NaN or infinite value detected")
+            logging.info(f"解析单机算力: {hashrate} TH/s")
         except (ValueError, TypeError) as e:
             error_msg = f"无效的算力值: {data.get('hashrate')}"
             logging.error(f"{error_msg} - {str(e)}")
@@ -967,7 +968,8 @@ def calculate_internal(request_obj):
         hashrate_unit = data.get('hashrate_unit', 'TH/s')
         
         try:
-            power_consumption_raw = data.get('power_consumption', 0)
+            # 修复字段名映射，前端发送的是 power-consumption
+            power_consumption_raw = data.get('power-consumption', data.get('power_consumption', 0))
             # Guard against NaN injection
             if isinstance(power_consumption_raw, str) and power_consumption_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
                 raise ValueError(f"Invalid numeric value: {power_consumption_raw}")
@@ -975,14 +977,16 @@ def calculate_internal(request_obj):
             # Additional check for NaN/inf after conversion
             if not (power_consumption == power_consumption and abs(power_consumption) != float('inf')):
                 raise ValueError("NaN or infinite value detected")
+            logging.info(f"解析单机功耗: {power_consumption} W")
         except (ValueError, TypeError) as e:
-            error_msg = f"无效的功耗值: {data.get('power_consumption')}"
+            error_msg = f"无效的功耗值: {data.get('power-consumption', data.get('power_consumption'))}"
             logging.error(f"{error_msg} - {str(e)}")
             input_errors.append(error_msg)
             power_consumption = 0
             
         try:
-            electricity_cost_raw = data.get('electricity_cost', 0)
+            # 修复字段名映射，前端发送的是 electricity-cost
+            electricity_cost_raw = data.get('electricity-cost', data.get('electricity_cost', 0))
             # Guard against NaN injection
             if isinstance(electricity_cost_raw, str) and electricity_cost_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
                 raise ValueError(f"Invalid numeric value: {electricity_cost_raw}")
@@ -991,7 +995,7 @@ def calculate_internal(request_obj):
             if not (electricity_cost == electricity_cost and abs(electricity_cost) != float('inf')):
                 raise ValueError("NaN or infinite value detected")
         except (ValueError, TypeError) as e:
-            error_msg = f"无效的电费值: {data.get('electricity_cost')}"
+            error_msg = f"无效的电费值: {data.get('electricity-cost', data.get('electricity_cost'))}"
             logging.error(f"{error_msg} - {str(e)}")
             input_errors.append(error_msg)
             electricity_cost = 0.05  # Default value
@@ -1015,7 +1019,8 @@ def calculate_internal(request_obj):
             client_electricity_cost = 0.08
             
         try:
-            btc_price_raw = data.get('btc_price', 0)
+            # 修复字段名映射，前端发送的是 btc-price-input
+            btc_price_raw = data.get('btc-price-input', data.get('btc_price', 0))
             # Guard against NaN injection
             if isinstance(btc_price_raw, str) and btc_price_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
                 raise ValueError(f"Invalid numeric value: {btc_price_raw}")
@@ -1024,18 +1029,29 @@ def calculate_internal(request_obj):
             if not (btc_price == btc_price and abs(btc_price) != float('inf')):
                 raise ValueError("NaN or infinite value detected")
         except (ValueError, TypeError) as e:
-            error_msg = f"无效的BTC价格值: {data.get('btc_price')}"
+            error_msg = f"无效的BTC价格值: {data.get('btc-price-input', data.get('btc_price'))}"
             logging.error(f"{error_msg} - {str(e)}")
             input_errors.append(error_msg)
             btc_price = 0
             
         use_real_time = data.get('use_real_time_data', data.get('use_real_time')) in ['on', True, 'true', '1']
-        miner_model = data.get('miner_model')
+        # 修复字段名映射，前端发送的是 miner-model
+        miner_model_raw = data.get('miner-model', data.get('miner_model'))
+        
+        # 去掉矿机型号中的规格信息，例如 "Antminer S19j Pro (100 TH/s, 3068W)" -> "Antminer S19j Pro"
+        if miner_model_raw and '(' in miner_model_raw:
+            miner_model = miner_model_raw.split('(')[0].strip()
+        else:
+            miner_model = miner_model_raw
+            
+        logging.info(f"解析矿机型号: 原始='{miner_model_raw}' -> 处理后='{miner_model}'")
         
         try:
-            miner_count = int(data.get('count', data.get('miner_count', 1)))
+            # 修复字段名映射，前端发送的是 miner-count
+            miner_count = int(data.get('miner-count', data.get('count', data.get('miner_count', 1))))
+            logging.info(f"成功解析矿机数量: {miner_count}")
         except (ValueError, TypeError) as e:
-            error_msg = f"无效的矿机数量: {data.get('count', data.get('miner_count'))}"
+            error_msg = f"无效的矿机数量: {data.get('miner-count', data.get('count', data.get('miner_count')))}"
             logging.error(f"{error_msg} - {str(e)}")
             input_errors.append(error_msg)
             miner_count = 1
@@ -1055,9 +1071,12 @@ def calculate_internal(request_obj):
             input_errors.append(error_msg)
             site_power_mw = 1.0
             
-        # 从表单或JSON数据获取总算力和总功耗值
+        # 从表单或JSON数据获取总算力和总功耗值 - 修复字段名称
+        logging.info(f"调试: 检查传入数据中的total字段: total-hashrate={data.get('total-hashrate')}, total-power={data.get('total-power')}")
+        
         try:
-            total_hashrate_raw = data.get('total_hashrate') or request.form.get('total_hashrate') or 0
+            # 优先使用带连字符的字段名，这是前端发送的实际字段名
+            total_hashrate_raw = data.get('total-hashrate') or data.get('total_hashrate') or 0
             # Guard against NaN injection
             if isinstance(total_hashrate_raw, str) and total_hashrate_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
                 raise ValueError(f"Invalid numeric value: {total_hashrate_raw}")
@@ -1065,12 +1084,14 @@ def calculate_internal(request_obj):
             # Additional check for NaN/inf after conversion
             if not (total_hashrate == total_hashrate and abs(total_hashrate) != float('inf')):
                 raise ValueError("NaN or infinite value detected")
+            logging.info(f"✅ 成功获取总算力: {total_hashrate} TH/s (原始值: {total_hashrate_raw})")
         except (ValueError, TypeError) as e:
-            logging.info(f"总算力格式无效或未提供: {data.get('total_hashrate')} - {str(e)}")
+            logging.info(f"❌ 总算力格式无效或未提供: {data.get('total-hashrate')} / {data.get('total_hashrate')} - {str(e)}")
             total_hashrate = 0
             
         try:
-            total_power_raw = data.get('total_power') or request.form.get('total_power') or 0
+            # 优先使用带连字符的字段名，这是前端发送的实际字段名
+            total_power_raw = data.get('total-power') or data.get('total_power') or 0
             # Guard against NaN injection
             if isinstance(total_power_raw, str) and total_power_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
                 raise ValueError(f"Invalid numeric value: {total_power_raw}")
@@ -1078,8 +1099,9 @@ def calculate_internal(request_obj):
             # Additional check for NaN/inf after conversion
             if not (total_power == total_power and abs(total_power) != float('inf')):
                 raise ValueError("NaN or infinite value detected")
+            logging.info(f"✅ 成功获取总功耗: {total_power} W (原始值: {total_power_raw})")
         except (ValueError, TypeError) as e:
-            logging.info(f"总功耗格式无效或未提供: {data.get('total_power')} - {str(e)}")
+            logging.info(f"❌ 总功耗格式无效或未提供: {data.get('total-power')} / {data.get('total_power')} - {str(e)}")
             total_power = 0
             
         # 如果没有提供或无效，根据矿机型号和数量计算总算力和总功耗
