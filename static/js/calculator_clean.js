@@ -212,16 +212,24 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // BTC Mining Cards - 算法1和算法2
         if (data.btc_mined) {
+            console.log('[CALCULATOR] btc_mined data found:', data.btc_mined);
+            
             // 算法1 (Method 1)
             var method1Card = document.getElementById('btc-method1-daily-card');
+            console.log('[CALCULATOR] method1Card element:', method1Card);
             if (method1Card && data.btc_mined.method1) {
+                console.log('[CALCULATOR] Updating method1 with:', data.btc_mined.method1.daily);
                 method1Card.textContent = data.btc_mined.method1.daily.toFixed(8);
+                console.log('[CALCULATOR] method1Card after update:', method1Card.textContent);
             }
             
             // 算法2 (Method 2)
             var method2Card = document.getElementById('btc-method2-daily-card');
+            console.log('[CALCULATOR] method2Card element:', method2Card);
             if (method2Card && data.btc_mined.method2) {
+                console.log('[CALCULATOR] Updating method2 with:', data.btc_mined.method2.daily);
                 method2Card.textContent = data.btc_mined.method2.daily.toFixed(8);
+                console.log('[CALCULATOR] method2Card after update:', method2Card.textContent);
             }
             
             // 算法对比
@@ -246,8 +254,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Client Profit Card (客户月度收益)
         var clientProfitCard = document.getElementById('client-profit-card');
+        console.log('[CALCULATOR] clientProfitCard element:', clientProfitCard);
         if (clientProfitCard && data.client_profit && data.client_profit.monthly) {
+            console.log('[CALCULATOR] Updating client profit with:', data.client_profit.monthly);
             clientProfitCard.textContent = '$' + data.client_profit.monthly.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            console.log('[CALCULATOR] clientProfitCard after update:', clientProfitCard.textContent);
         }
         
         // Your Profit Information Table - 客户信息表格
