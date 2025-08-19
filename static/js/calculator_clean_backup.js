@@ -445,4 +445,4 @@ document.addEventListener('DOMContentLoaded', function() {
         updateTotals();
         console.log('[CALCULATOR] Initialization complete');
     }, 500);
-});// Cache bust: 1755576778
+});
