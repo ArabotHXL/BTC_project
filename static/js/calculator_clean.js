@@ -210,37 +210,151 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayResults(data) {
         console.log('[CALCULATOR] Displaying results, received data:', data);
         
-        var fields = {
-            'daily-btc-mined': data.btc_mined || data.daily_btc_mined || data.daily_btc,
-            'monthly-btc-mined': data.monthly_btc_mined || (data.daily_btc * 30),
-            'yearly-btc-mined': data.yearly_btc_mined || (data.daily_btc * 365),
-            'daily-revenue': data.daily_revenue_usd || data.daily_revenue,
-            'monthly-revenue': data.monthly_revenue_usd || data.monthly_revenue,
-            'yearly-revenue': data.yearly_revenue_usd || data.yearly_revenue,
-            'daily-electricity-cost': data.daily_electricity_cost_usd || data.daily_electricity_cost,
-            'monthly-electricity-cost': data.monthly_electricity_cost_usd || data.monthly_electricity_cost,
-            'yearly-electricity-cost': data.yearly_electricity_cost_usd || data.yearly_electricity_cost,
-            'daily-profit': data.daily_profit_usd || data.daily_profit,
-            'monthly-profit': data.monthly_profit_usd || data.monthly_profit,
-            'yearly-profit': data.yearly_profit_usd || data.yearly_profit,
-            'roi-days': data.roi_days,
-            'monthly-roi': data.monthly_roi_percentage,
-            'breakeven-btc-price': data.breakeven_btc_price
-        };
-        
-        for (var id in fields) {
-            var element = document.getElementById(id);
-            if (element && fields[id] !== undefined) {
-                if (id.includes('btc')) {
-                    element.textContent = fields[id].toFixed(8) + ' BTC';
-                } else if (id.includes('revenue') || id.includes('cost') || id.includes('profit') || id.includes('breakeven')) {
-                    element.textContent = '$' + fields[id].toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                } else if (id === 'roi-days') {
-                    element.textContent = fields[id] > 0 ? fields[id].toFixed(0) + ' days' : 'Never';
-                } else if (id === 'monthly-roi') {
-                    element.textContent = fields[id].toFixed(2) + '%';
+        // BTC Mining Cards - 算法1和算法2
+        if (data.btc_mined) {
+            // 算法1 (Method 1)
+            var method1Card = document.getElementById('btc-method1-daily-card');
+            if (method1Card && data.btc_mined.method1) {
+                method1Card.textContent = data.btc_mined.method1.daily.toFixed(8);
+            }
+            
+            // 算法2 (Method 2)
+            var method2Card = document.getElementById('btc-method2-daily-card');
+            if (method2Card && data.btc_mined.method2) {
+                method2Card.textContent = data.btc_mined.method2.daily.toFixed(8);
+            }
+            
+            // 算法对比
+            var diffElement = document.getElementById('algorithm-difference');
+            if (diffElement && data.btc_mined.method1 && data.btc_mined.method2) {
+                var diff = Math.abs(data.btc_mined.method1.daily - data.btc_mined.method2.daily);
+                var percent = (diff / data.btc_mined.method1.daily * 100).toFixed(2);
+                if (currentLang === 'en') {
+                    diffElement.textContent = 'Difference: ' + percent + '%';
+                } else {
+                    diffElement.textContent = '差异: ' + percent + '%';
                 }
             }
+        }
+        
+        // Top Cards - 顶部卡片
+        // Host Profit Card (矿场主月度收益)
+        var hostProfitCard = document.getElementById('host-profit-card');
+        if (hostProfitCard && data.profit && data.profit.host_monthly) {
+            hostProfitCard.textContent = '$' + data.profit.host_monthly.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        
+        // Client Profit Card (客户月度收益)
+        var clientProfitCard = document.getElementById('client-profit-card');
+        if (clientProfitCard && data.client_profit && data.client_profit.monthly) {
+            clientProfitCard.textContent = '$' + data.client_profit.monthly.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        
+        // Your Profit Information Table - 客户信息表格
+        // Monthly BTC Output
+        var monthlyBtc = document.getElementById('monthly-btc');
+        if (monthlyBtc && data.btc_mined) {
+            monthlyBtc.textContent = data.btc_mined.monthly.toFixed(8);
+        }
+        
+        // Monthly Revenue
+        var monthlyRevenue = document.getElementById('monthly-revenue');
+        if (monthlyRevenue && data.revenue) {
+            monthlyRevenue.textContent = '$' + data.revenue.monthly.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        
+        // Client Total Income
+        var clientTotalIncome = document.getElementById('client-total-income');
+        if (clientTotalIncome && data.revenue) {
+            clientTotalIncome.textContent = '$' + data.revenue.monthly.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        
+        // Client Monthly Electricity
+        var clientMonthlyElec = document.getElementById('client-monthly-electricity');
+        if (clientMonthlyElec && data.client_electricity_cost) {
+            clientMonthlyElec.textContent = '$' + data.client_electricity_cost.monthly.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        
+        // Client Total Expenses
+        var clientTotalExpenses = document.getElementById('client-total-expenses');
+        if (clientTotalExpenses && data.client_electricity_cost) {
+            clientTotalExpenses.textContent = '$' + data.client_electricity_cost.monthly.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        
+        // Client Monthly/Yearly Profit
+        var clientMonthlyProfit = document.getElementById('client-monthly-profit');
+        if (clientMonthlyProfit && data.client_profit) {
+            clientMonthlyProfit.textContent = '$' + data.client_profit.monthly.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        
+        var clientYearlyProfit = document.getElementById('client-yearly-profit');
+        if (clientYearlyProfit && data.client_profit) {
+            clientYearlyProfit.textContent = '$' + data.client_profit.yearly.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        
+        // ROI Information
+        var clientInvestmentAmount = document.getElementById('client-investment-amount');
+        if (clientInvestmentAmount && data.inputs) {
+            clientInvestmentAmount.textContent = '$' + (data.inputs.client_investment || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        
+        var clientAnnualRoi = document.getElementById('client-annual-roi');
+        if (clientAnnualRoi && data.roi && data.roi.client_annual_roi !== undefined) {
+            clientAnnualRoi.textContent = (data.roi.client_annual_roi || 0).toFixed(2) + '%';
+        }
+        
+        var clientPaybackMonths = document.getElementById('client-payback-months');
+        if (clientPaybackMonths && data.roi && data.roi.client_payback_months !== undefined) {
+            var months = data.roi.client_payback_months;
+            clientPaybackMonths.textContent = months > 0 ? months.toFixed(0) + ' months' : '0 months';
+        }
+        
+        var clientPaybackYears = document.getElementById('client-payback-years');
+        if (clientPaybackYears && data.roi && data.roi.client_payback_years !== undefined) {
+            clientPaybackYears.textContent = (data.roi.client_payback_years || 0).toFixed(2) + ' years';
+        }
+        
+        // Mining Details
+        var minerCountResult = document.getElementById('miner-count-result');
+        if (minerCountResult && data.inputs) {
+            minerCountResult.textContent = data.inputs.miner_count || 0;
+        }
+        
+        var breakEvenElec = document.getElementById('break-even-electricity');
+        if (breakEvenElec && data.break_even) {
+            breakEvenElec.textContent = '$' + (data.break_even.electricity_cost || 0).toFixed(4) + '/kWh';
+        }
+        
+        var breakEvenBtc = document.getElementById('break-even-btc');
+        if (breakEvenBtc && data.break_even) {
+            breakEvenBtc.textContent = '$' + (data.break_even.btc_price || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        
+        // Network and Mining Details Table
+        var networkDifficulty = document.getElementById('network-difficulty-result');
+        if (networkDifficulty && data.network_data) {
+            networkDifficulty.textContent = (data.network_data.difficulty / 1e12).toFixed(1) + ' T';
+        }
+        
+        var networkHashrate = document.getElementById('network-hashrate-result');
+        if (networkHashrate && data.network_data) {
+            networkHashrate.textContent = data.network_data.hashrate.toFixed(2) + ' EH/s';
+        }
+        
+        var btcPriceResult = document.getElementById('btc-price-result');
+        if (btcPriceResult && data.btc_price) {
+            btcPriceResult.textContent = '$' + data.btc_price.toLocaleString('en-US');
+        }
+        
+        var blockReward = document.getElementById('block-reward-result');
+        if (blockReward && data.network_data) {
+            blockReward.textContent = (data.network_data.block_reward || 3.125).toFixed(3) + ' BTC';
+        }
+        
+        // Timestamp
+        var timestamp = document.getElementById('results-timestamp');
+        if (timestamp && data.timestamp) {
+            timestamp.textContent = new Date(data.timestamp).toLocaleString();
         }
         
         console.log('[CALCULATOR] Results displayed');
