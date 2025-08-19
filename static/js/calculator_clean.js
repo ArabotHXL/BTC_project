@@ -312,35 +312,59 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         var clientAnnualRoi = document.getElementById('client-annual-roi');
-        if (clientAnnualRoi && data.roi) {
-            var roi = data.roi.client_annual_roi;
-            console.log('[CALCULATOR] Client annual ROI:', roi);
-            if (roi !== undefined && roi !== null && isFinite(roi)) {
+        if (clientAnnualRoi) {
+            if (data.roi && data.roi.client_annual_roi !== null && data.roi.client_annual_roi !== undefined && isFinite(data.roi.client_annual_roi)) {
+                var roi = data.roi.client_annual_roi;
+                console.log('[CALCULATOR] Client annual ROI:', roi);
                 clientAnnualRoi.textContent = roi.toFixed(2) + '%';
+            } else if (data.inputs && data.inputs.client_investment > 0) {
+                // Calculate ROI manually if not provided
+                if (data.client_profit && data.client_profit.yearly) {
+                    var manualRoi = (data.client_profit.yearly / data.inputs.client_investment) * 100;
+                    clientAnnualRoi.textContent = manualRoi.toFixed(2) + '%';
+                } else {
+                    clientAnnualRoi.textContent = '0.00%';
+                }
             } else {
-                clientAnnualRoi.textContent = '0.00%';
+                clientAnnualRoi.textContent = 'N/A (No Investment)';
             }
         }
         
         var clientPaybackMonths = document.getElementById('client-payback-months');
-        if (clientPaybackMonths && data.roi) {
-            var months = data.roi.client_payback_months;
-            console.log('[CALCULATOR] Client payback months:', months);
-            if (months !== undefined && months !== null && isFinite(months) && months > 0) {
+        if (clientPaybackMonths) {
+            if (data.roi && data.roi.client_payback_months !== null && data.roi.client_payback_months !== undefined && isFinite(data.roi.client_payback_months) && data.roi.client_payback_months > 0) {
+                var months = data.roi.client_payback_months;
+                console.log('[CALCULATOR] Client payback months:', months);
                 clientPaybackMonths.textContent = months.toFixed(0) + ' months';
+            } else if (data.inputs && data.inputs.client_investment > 0) {
+                // Calculate payback manually if not provided
+                if (data.client_profit && data.client_profit.monthly && data.client_profit.monthly > 0) {
+                    var manualMonths = data.inputs.client_investment / data.client_profit.monthly;
+                    clientPaybackMonths.textContent = manualMonths.toFixed(0) + ' months';
+                } else {
+                    clientPaybackMonths.textContent = 'N/A';
+                }
             } else {
-                clientPaybackMonths.textContent = '0 months';
+                clientPaybackMonths.textContent = 'N/A (No Investment)';
             }
         }
         
         var clientPaybackYears = document.getElementById('client-payback-years');
-        if (clientPaybackYears && data.roi) {
-            var years = data.roi.client_payback_years;
-            console.log('[CALCULATOR] Client payback years:', years);
-            if (years !== undefined && years !== null && isFinite(years) && years > 0) {
+        if (clientPaybackYears) {
+            if (data.roi && data.roi.client_payback_years !== null && data.roi.client_payback_years !== undefined && isFinite(data.roi.client_payback_years) && data.roi.client_payback_years > 0) {
+                var years = data.roi.client_payback_years;
+                console.log('[CALCULATOR] Client payback years:', years);
                 clientPaybackYears.textContent = years.toFixed(2) + ' years';
+            } else if (data.inputs && data.inputs.client_investment > 0) {
+                // Calculate payback manually if not provided
+                if (data.client_profit && data.client_profit.yearly && data.client_profit.yearly > 0) {
+                    var manualYears = data.inputs.client_investment / data.client_profit.yearly;
+                    clientPaybackYears.textContent = manualYears.toFixed(2) + ' years';
+                } else {
+                    clientPaybackYears.textContent = 'N/A';
+                }
             } else {
-                clientPaybackYears.textContent = '0.00 years';
+                clientPaybackYears.textContent = 'N/A (No Investment)';
             }
         }
         
