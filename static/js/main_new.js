@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var btcPriceInput = document.getElementById('btc-price-input');
     var useRealTimeCheckbox = document.getElementById('use-real-time');
     var calculatorForm = document.getElementById('mining-calculator-form');
+    console.log('🔍 初始化时查找表单元素:', calculatorForm);
     
     // 隐藏字段（用于提交）
     var totalHashrateInput = document.getElementById('total-hashrate');
@@ -38,6 +39,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 初始化 (Initialization)
     function init() {
+        console.log('🔍 初始化开始 - 检查关键元素...');
+        console.log('📋 calculatorForm元素:', calculatorForm);
+        console.log('📋 表单ID查找结果:', document.getElementById('mining-calculator-form'));
+        
         // 加载网络数据 (Load network data)
         fetchNetworkStats();
         
@@ -46,7 +51,36 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 事件绑定 (Event bindings)
         if (calculatorForm) {
+            console.log('✅ 绑定表单提交事件...');
             calculatorForm.addEventListener('submit', handleCalculateSubmit);
+            console.log('✅ 表单提交事件已绑定');
+            
+            // 备用方案：直接绑定按钮点击事件
+            var submitButton = calculatorForm.querySelector('button[type="submit"]');
+            if (submitButton) {
+                console.log('✅ 找到提交按钮，添加备用点击事件...');
+                submitButton.addEventListener('click', function(event) {
+                    console.log('🔵 提交按钮被点击! (备用事件)');
+                    if (event.target.form) {
+                        event.preventDefault();
+                        handleCalculateSubmit(event);
+                    }
+                });
+            }
+        } else {
+            console.error('❌ 无法找到计算器表单元素! ID: mining-calculator-form');
+            
+            // 尝试延迟查找表单元素
+            setTimeout(function() {
+                console.log('🔄 延迟重试查找表单元素...');
+                var delayedForm = document.getElementById('mining-calculator-form');
+                if (delayedForm) {
+                    console.log('✅ 延迟查找成功! 绑定事件...');
+                    delayedForm.addEventListener('submit', handleCalculateSubmit);
+                } else {
+                    console.error('❌ 延迟查找仍然失败');
+                }
+            }, 1000);
         }
         
         if (minerModelSelect) {
