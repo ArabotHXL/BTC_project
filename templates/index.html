@@ -1483,19 +1483,7 @@
         }
     </script>
 
-    <!-- Footer with Legal Link -->
-    <footer class="bg-dark text-center py-3 mt-5">
-        <div class="container">
-            <div class="text-muted">
-                <a href="{{ url_for('legal_terms') }}" class="text-light text-decoration-none">
-                    <i class="bi bi-shield-check me-1"></i>
-                    {% if current_lang == 'zh' %}法律条款{% else %}Legal Terms{% endif %}
-                </a>
-                <span class="mx-2">|</span>
-                <small>© 2025 BTC Mining Calculator. {% if current_lang == 'zh' %}最后更新{% else %}Last Updated{% endif %}: 2025-07-04</small>
-            </div>
-        </div>
-    </footer>
+
 </div>
 {% endblock %}
 
