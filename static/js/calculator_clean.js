@@ -450,12 +450,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Network and Mining Details Table
         var networkDifficulty = document.getElementById('network-difficulty-value');
-        if (networkDifficulty && data.network_data) {
+        if (networkDifficulty && data.network_data && data.network_data.difficulty !== undefined && data.network_data.difficulty !== null) {
             networkDifficulty.textContent = (data.network_data.difficulty / 1e12).toFixed(1) + ' T';
         }
         
         var networkHashrate = document.getElementById('network-hashrate-value');
-        if (networkHashrate && data.network_data) {
+        if (networkHashrate && data.network_data && data.network_data.hashrate !== undefined && data.network_data.hashrate !== null) {
             networkHashrate.textContent = data.network_data.hashrate.toFixed(2) + ' EH/s';
         }
         
