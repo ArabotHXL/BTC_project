@@ -1110,27 +1110,27 @@
                                                 <div class="card-body p-4">
                                                     <div class="row g-4">
                                                         <div class="col-md-3">
-                                                            <div class="text-center p-3 rounded bg-success bg-opacity-10">
-                                                                <small class="text-muted d-block mb-2">{% if current_lang == 'en' %}Break-even Month{% else %}盈亏平衡月份{% endif %}</small>
-                                                                <div id="breakeven-month-display" class="h5 text-success mb-0 fw-bold">Month 0</div>
+                                                            <div class="text-center p-3 rounded bg-success bg-opacity-20 border border-success border-opacity-30">
+                                                                <small class="text-light d-block mb-2">{% if current_lang == 'en' %}Break-even Month{% else %}盈亏平衡月份{% endif %}</small>
+                                                                <div id="breakeven-month-display" class="h5 text-white mb-0 fw-bold">Month 0</div>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-3">
-                                                            <div class="text-center p-3 rounded bg-success bg-opacity-10">
-                                                                <small class="text-muted d-block mb-2">{% if current_lang == 'en' %}Investment Recovery{% else %}投资回收金额{% endif %}</small>
-                                                                <div id="breakeven-recovery-amount" class="h5 text-success mb-0 fw-bold">$0.00</div>
+                                                            <div class="text-center p-3 rounded bg-success bg-opacity-20 border border-success border-opacity-30">
+                                                                <small class="text-light d-block mb-2">{% if current_lang == 'en' %}Investment Recovery{% else %}投资回收金额{% endif %}</small>
+                                                                <div id="breakeven-recovery-amount" class="h5 text-white mb-0 fw-bold">$0.00</div>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-3">
-                                                            <div class="text-center p-3 rounded bg-success bg-opacity-10">
-                                                                <small class="text-muted d-block mb-2">{% if current_lang == 'en' %}Break-even ROI%{% else %}盈亏平衡时ROI%{% endif %}</small>
-                                                                <div id="breakeven-roi-percent" class="h5 text-success mb-0 fw-bold">0.00%</div>
+                                                            <div class="text-center p-3 rounded bg-success bg-opacity-20 border border-success border-opacity-30">
+                                                                <small class="text-light d-block mb-2">{% if current_lang == 'en' %}Break-even ROI%{% else %}盈亏平衡时ROI%{% endif %}</small>
+                                                                <div id="breakeven-roi-percent" class="h5 text-white mb-0 fw-bold">0.00%</div>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-3">
-                                                            <div class="text-center p-3 rounded bg-success bg-opacity-10">
-                                                                <small class="text-muted d-block mb-2">{% if current_lang == 'en' %}Time to Break-even{% else %}盈亏平衡时间{% endif %}</small>
-                                                                <div id="breakeven-time-display" class="h5 text-success mb-0 fw-bold">0.0 years</div>
+                                                            <div class="text-center p-3 rounded bg-success bg-opacity-20 border border-success border-opacity-30">
+                                                                <small class="text-light d-block mb-2">{% if current_lang == 'en' %}Time to Break-even{% else %}盈亏平衡时间{% endif %}</small>
+                                                                <div id="breakeven-time-display" class="h5 text-white mb-0 fw-bold">0.0 years</div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1181,8 +1181,8 @@
                             
                             <!-- 网络和挖矿详情 (Network and Mining Details) -->
                             <div class="card shadow-lg mt-4 mb-4">
-                                <div class="card-header bg-secondary bg-opacity-20 border-0">
-                                    <h6 class="card-title mb-0 fw-bold text-light">
+                                <div class="card-header bg-secondary bg-opacity-30 border-0">
+                                    <h6 class="card-title mb-0 fw-bold text-white">
                                         <i class="bi bi-globe2 me-2"></i>
                                         {% if current_lang == 'en' %}Network and Mining Details{% else %}网络和挖矿详情{% endif %}
                                     </h6>
@@ -1192,8 +1192,8 @@
                                         <!-- 比特币网络信息 -->
                                         <div class="col-md-4">
                                             <div class="card bg-primary bg-opacity-10 border-primary border-opacity-25 h-100">
-                                                <div class="card-header bg-primary bg-opacity-20 border-0">
-                                                    <h6 class="text-primary mb-0 fw-bold">
+                                                <div class="card-header bg-primary bg-opacity-30 border-0">
+                                                    <h6 class="text-white mb-0 fw-bold">
                                                         <i class="bi bi-diagram-3 me-2"></i>
                                                         {% if current_lang == 'en' %}Bitcoin Network{% else %}比特币网络{% endif %}
                                                     </h6>
@@ -1202,20 +1202,20 @@
                                                     <table class="table table-sm table-borderless">
                                                         <tbody>
                                                             <tr>
-                                                                <td class="text-muted">{% if current_lang == 'en' %}Network Difficulty{% else %}网络难度{% endif %}</td>
-                                                                <td id="network-difficulty-value" class="text-end fw-semibold">0 T</td>
+                                                                <td class="text-light">{% if current_lang == 'en' %}Network Difficulty{% else %}网络难度{% endif %}</td>
+                                                                <td id="network-difficulty-value" class="text-end fw-semibold text-white">0 T</td>
                                                             </tr>
                                                             <tr>
-                                                                <td class="text-muted">{% if current_lang == 'en' %}Network Hashrate{% else %}网络算力{% endif %}</td>
-                                                                <td id="network-hashrate-value" class="text-end fw-semibold">0 EH/s</td>
+                                                                <td class="text-light">{% if current_lang == 'en' %}Network Hashrate{% else %}网络算力{% endif %}</td>
+                                                                <td id="network-hashrate-value" class="text-end fw-semibold text-white">0 EH/s</td>
                                                             </tr>
                                                             <tr>
-                                                                <td class="text-muted">{% if current_lang == 'en' %}BTC Price{% else %}BTC当前价格{% endif %}</td>
-                                                                <td id="current-btc-price-value" class="text-end fw-semibold">$0.00</td>
+                                                                <td class="text-light">{% if current_lang == 'en' %}BTC Price{% else %}BTC当前价格{% endif %}</td>
+                                                                <td id="current-btc-price-value" class="text-end fw-semibold text-white">$0.00</td>
                                                             </tr>
                                                             <tr>
-                                                                <td class="text-muted">{% if current_lang == 'en' %}Block Reward{% else %}区块奖励{% endif %}</td>
-                                                                <td id="block-reward-value" class="text-end fw-semibold">0 BTC</td>
+                                                                <td class="text-light">{% if current_lang == 'en' %}Block Reward{% else %}区块奖励{% endif %}</td>
+                                                                <td id="block-reward-value" class="text-end fw-semibold text-white">0 BTC</td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
@@ -1226,8 +1226,8 @@
                                         <!-- 挖矿场信息 -->
                                         <div class="col-md-4">
                                             <div class="card bg-warning bg-opacity-10 border-warning border-opacity-25 h-100">
-                                                <div class="card-header bg-warning bg-opacity-20 border-0">
-                                                    <h6 class="text-warning mb-0 fw-bold">
+                                                <div class="card-header bg-warning bg-opacity-40 border-0">
+                                                    <h6 class="text-dark mb-0 fw-bold">
                                                         <i class="bi bi-building me-2"></i>
                                                         {% if current_lang == 'en' %}Mining Site{% else %}挖矿场信息{% endif %}
                                                     </h6>
@@ -1236,16 +1236,16 @@
                                                     <table class="table table-sm table-borderless">
                                                         <tbody>
                                                             <tr>
-                                                                <td class="text-muted">{% if current_lang == 'en' %}Total Site Hashrate{% else %}场地总算力{% endif %}</td>
-                                                                <td id="total-hashrate-result" class="text-end fw-semibold">0 TH/s</td>
+                                                                <td class="text-dark">{% if current_lang == 'en' %}Total Site Hashrate{% else %}场地总算力{% endif %}</td>
+                                                                <td id="total-hashrate-result" class="text-end fw-semibold text-dark">0 TH/s</td>
                                                             </tr>
                                                             <tr>
-                                                                <td class="text-muted">{% if current_lang == 'en' %}BTC per TH Daily{% else %}每TH日产BTC{% endif %}</td>
-                                                                <td id="btc-per-th-daily" class="text-end fw-semibold">0.00000000</td>
+                                                                <td class="text-dark">{% if current_lang == 'en' %}BTC per TH Daily{% else %}每TH日产BTC{% endif %}</td>
+                                                                <td id="btc-per-th-daily" class="text-end fw-semibold text-dark">0.00000000</td>
                                                             </tr>
                                                             <tr>
-                                                                <td class="text-muted">{% if current_lang == 'en' %}Optimal Electricity Rate{% else %}最优电费{% endif %}</td>
-                                                                <td id="optimal-electricity-rate" class="text-end fw-semibold">$0.00/kWh</td>
+                                                                <td class="text-dark">{% if current_lang == 'en' %}Optimal Electricity Rate{% else %}最优电费{% endif %}</td>
+                                                                <td id="optimal-electricity-rate" class="text-end fw-semibold text-dark">$0.00/kWh</td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
@@ -1256,8 +1256,8 @@
                                         <!-- BTC产出算法 -->
                                         <div class="col-md-4">
                                             <div class="card bg-success bg-opacity-10 border-success border-opacity-25 h-100">
-                                                <div class="card-header bg-success bg-opacity-20 border-0">
-                                                    <h6 class="text-success mb-0 fw-bold">
+                                                <div class="card-header bg-success bg-opacity-30 border-0">
+                                                    <h6 class="text-white mb-0 fw-bold">
                                                         <i class="bi bi-calculator me-2"></i>
                                                         {% if current_lang == 'en' %}BTC Output Algorithms{% else %}BTC产出算法{% endif %}
                                                     </h6>
@@ -1265,23 +1265,23 @@
                                                 <div class="card-body p-3">
                                                     <table class="table table-sm table-borderless">
                                                         <tbody>
-                                                            <tr class="bg-success bg-opacity-10 rounded">
-                                                                <td class="text-muted fw-bold">{% if current_lang == 'en' %}Daily BTC Total{% else %}日产BTC总量{% endif %}</td>
-                                                                <td id="daily-btc-value" class="text-end fw-bold text-success">0.00000000</td>
+                                                            <tr class="bg-success bg-opacity-20 rounded">
+                                                                <td class="text-light fw-bold">{% if current_lang == 'en' %}Daily BTC Total{% else %}日产BTC总量{% endif %}</td>
+                                                                <td id="daily-btc-value" class="text-end fw-bold text-white">0.00000000</td>
                                                             </tr>
                                                             <tr>
                                                                 <td>
                                                                     <span class="badge bg-secondary me-1">{% if current_lang == 'en' %}Alg 1{% else %}算法1{% endif %}</span>
-                                                                    <small class="text-muted">{% if current_lang == 'en' %}By Hashrate{% else %}按算力占比{% endif %}</small>
+                                                                    <small class="text-light">{% if current_lang == 'en' %}By Hashrate{% else %}按算力占比{% endif %}</small>
                                                                 </td>
-                                                                <td id="btc-method1-daily" class="text-end fw-semibold">0.00000000</td>
+                                                                <td id="btc-method1-daily" class="text-end fw-semibold text-white">0.00000000</td>
                                                             </tr>
                                                             <tr>
                                                                 <td>
                                                                     <span class="badge bg-primary me-1">{% if current_lang == 'en' %}Alg 2{% else %}算法2{% endif %}</span>
-                                                                    <small class="text-muted">{% if current_lang == 'en' %}By Difficulty{% else %}按难度公式{% endif %}</small>
+                                                                    <small class="text-light">{% if current_lang == 'en' %}By Difficulty{% else %}按难度公式{% endif %}</small>
                                                                 </td>
-                                                                <td id="btc-method2-daily" class="text-end fw-semibold">0.00000000</td>
+                                                                <td id="btc-method2-daily" class="text-end fw-semibold text-white">0.00000000</td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
