@@ -27,6 +27,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 重要：更新表单字段中的实时数据
                 updateFormWithRealTimeData(data);
                 
+                // 强制立即更新BTC价格字段，无论开关状态
+                var btcPriceField = document.getElementById('btc-price-input');
+                if (btcPriceField && data.btc_price) {
+                    btcPriceField.value = Math.round(data.btc_price);
+                    console.log('[CALCULATOR.JS] Force updated BTC price to:', data.btc_price);
+                }
+                
                 console.log('[CALCULATOR.JS] Network stats loaded');
             }
         })
@@ -43,12 +50,19 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 检查是否启用实时数据
             var useRealTimeData = document.getElementById('use-real-time');
+            console.log('[CALCULATOR.JS] Use real-time checkbox state:', useRealTimeData ? useRealTimeData.checked : 'not found');
+            
             if (useRealTimeData && useRealTimeData.checked) {
                 // 更新BTC价格字段
                 var btcPriceField = document.getElementById('btc-price-input');
+                console.log('[CALCULATOR.JS] BTC price field found:', btcPriceField ? 'yes' : 'no');
+                console.log('[CALCULATOR.JS] Network data BTC price:', networkData.btc_price);
+                
                 if (btcPriceField && networkData.btc_price) {
                     btcPriceField.value = Math.round(networkData.btc_price);
                     console.log('[CALCULATOR.JS] Updated BTC price to:', networkData.btc_price);
+                } else {
+                    console.log('[CALCULATOR.JS] Failed to update BTC price - field or data missing');
                 }
                 
                 // 更新手动输入字段的默认值
@@ -76,11 +90,30 @@ document.addEventListener('DOMContentLoaded', function() {
             if (this.checked && latestNetworkData) {
                 console.log('[CALCULATOR.JS] Real-time data enabled, updating fields...');
                 updateFormWithRealTimeData(latestNetworkData);
+                
+                // 强制更新BTC价格
+                var btcPriceField = document.getElementById('btc-price-input');
+                if (btcPriceField && latestNetworkData.btc_price) {
+                    btcPriceField.value = Math.round(latestNetworkData.btc_price);
+                    console.log('[CALCULATOR.JS] Switch: Force updated BTC price to:', latestNetworkData.btc_price);
+                }
             } else {
                 console.log('[CALCULATOR.JS] Real-time data disabled');
             }
         });
     }
+    
+    // 立即检查实时数据开关状态并更新
+    setTimeout(function() {
+        var useRealTimeSwitch = document.getElementById('use-real-time');
+        if (useRealTimeSwitch && useRealTimeSwitch.checked && latestNetworkData) {
+            var btcPriceField = document.getElementById('btc-price-input');
+            if (btcPriceField && latestNetworkData.btc_price) {
+                btcPriceField.value = Math.round(latestNetworkData.btc_price);
+                console.log('[CALCULATOR.JS] Delayed: Force updated BTC price to:', latestNetworkData.btc_price);
+            }
+        }
+    }, 2000);
     
     // Load miners list
     fetch('/miners')
@@ -147,12 +180,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 更新Site Power (MW) 基于矿机数量和单台功耗
         var sitePowerField = document.getElementById('site-power-mw');
-        if (sitePowerField && power > 0) {
+        if (sitePowerField && power > 0 && !sitePowerField.dataset.userModified) {
             var sitePowerMW = (totalPower / 1000000).toFixed(3); // 转换为MW
             sitePowerField.value = sitePowerMW;
+            console.log('[CALCULATOR.JS] Auto-updated Site Power to:', sitePowerMW, 'MW');
         }
         
-        console.log('[CALCULATOR.JS] Totals updated:', totalHashrate.toFixed(2), 'TH/s,', totalPower, 'W,', (totalPower/1000000).toFixed(2), 'MW');
+        console.log('[CALCULATOR.JS] Totals updated:', totalHashrate.toFixed(2), 'TH/s,', totalPower, 'W,', (totalPower/1000000).toFixed(3), 'MW');
+        console.log('[CALCULATOR.JS] Fields updated - Display hashrate:', totalHashrateDisplay ? totalHashrateDisplay.value : 'N/A', 'Display power:', totalPowerDisplay ? totalPowerDisplay.value : 'N/A');
     }
     
     // 根据Site Power (MW) 自动计算矿机数量
@@ -184,16 +219,35 @@ document.addEventListener('DOMContentLoaded', function() {
     // Watch for Site Power (MW) changes
     var sitePowerField = document.getElementById('site-power-mw');
     if (sitePowerField) {
-        sitePowerField.addEventListener('input', updateMinerCountFromSitePower);
+        sitePowerField.addEventListener('input', function() {
+            this.dataset.userModified = 'true'; // 标记为用户手动修改
+            console.log('[CALCULATOR.JS] Site Power changed by user to:', this.value, 'MW');
+            updateMinerCountFromSitePower();
+        });
     }
     
     // 初始化时调用一次updateTotals
     setTimeout(function() {
-        if (document.getElementById('miner-count').value && document.getElementById('power-consumption').value) {
-            updateTotals();
-            console.log('[CALCULATOR.JS] Initial totals calculation completed');
+        console.log('[CALCULATOR.JS] Initializing calculations...');
+        
+        // 确保有默认值
+        var minerCountField = document.getElementById('miner-count');
+        var powerField = document.getElementById('power-consumption');
+        var hashrateField = document.getElementById('hashrate');
+        
+        if (minerCountField && !minerCountField.value) minerCountField.value = '1';
+        if (powerField && !powerField.value) powerField.value = '3068';
+        if (hashrateField && !hashrateField.value) hashrateField.value = '100';
+        
+        updateTotals();
+        console.log('[CALCULATOR.JS] Initial totals calculation completed');
+        
+        // 强制更新实时数据
+        if (latestNetworkData) {
+            updateFormWithRealTimeData(latestNetworkData);
+            console.log('[CALCULATOR.JS] Force updated real-time data');
         }
-    }, 500);
+    }, 1000);
     
     // Handle form submission
     form.addEventListener('submit', function(e) {
