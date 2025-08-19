@@ -174,19 +174,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     console.log('[CALCULATOR.JS] Initialization complete');
-    
-    // 显示页面内容，隐藏加载指示器
-    var loadingSpinner = document.getElementById('loading-spinner');
-    var mainContainer = document.querySelector('.container-fluid[style*="visibility: hidden"]');
-    
-    if (loadingSpinner) {
-        loadingSpinner.style.display = 'none';
-    }
-    
-    if (mainContainer) {
-        mainContainer.style.visibility = 'visible';
-        mainContainer.style.opacity = '1';
-    }
-    
-    console.log('[CALCULATOR.JS] Page content displayed');
 });

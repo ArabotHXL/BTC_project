@@ -125,14 +125,7 @@
     </style>
 </head>
 <body>
-    <!-- 加载指示器 -->
-    <div id="loading-spinner" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999;">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">{% if current_lang == 'en' %}Loading...{% else %}加载中...{% endif %}</span>
-        </div>
-    </div>
-    
-    <div class="container-fluid" style="visibility: hidden; opacity: 0; transition: opacity 0.3s ease-in-out;">
+    <div class="container-fluid">
         <header class="py-3 mb-4 border-bottom">
             <div class="container d-flex align-items-center justify-content-between">
                 <h1 class="fs-4">{% if current_lang == 'en' %}Bitcoin Mining Calculator{% else %}比特币挖矿计算器{% endif %}</h1>
@@ -395,29 +388,29 @@
                 <div class="col-lg-5">
                     <div class="card shadow">
                         <div class="card-header bg-primary bg-opacity-10">
-                            <h5 class="mb-0"><i class="bi bi-gear me-1"></i>{{ t('miner_settings') }}</h5>
+                            <h5 class="mb-0"><i class="bi bi-gear me-1"></i>{% if current_lang == 'en' %}Miner Settings{% else %}矿机设置{% endif %}</h5>
                         </div>
                         <div class="card-body">
                             <form id="mining-calculator-form">
                                 <!-- Mining hardware selection -->
                                 <div class="mb-3">
-                                    <label for="miner-model" class="form-label">{{ t('miner_model') }}</label>
+                                    <label for="miner-model" class="form-label">{% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %}</label>
                                     <select class="form-select" id="miner-model" name="miner_model">
-                                        <option value="">{{ t('select_miner') }}</option>
+                                        <option value="">{% if current_lang == 'en' %}Select Miner{% else %}选择矿机{% endif %}</option>
                                         <!-- Miner options will be loaded dynamically -->
                                     </select>
                                 </div>
 
                                 <!-- Site Power Consumption (MW) -->
                                 <div class="mb-3">
-                                    <label for="site-power-mw" class="form-label">{{ t('site_power_mw') }}</label>
+                                    <label for="site-power-mw" class="form-label">{% if current_lang == 'en' %}Site Power (MW){% else %}矿场功率 (MW){% endif %}</label>
                                     <input type="number" class="form-control" id="site-power-mw" name="site_power_mw" value="1" min="0" step="0.01">
                                     <div class="form-text">{% if current_lang == 'en' %}Total site power capacity in megawatts (MW). Adjusting this will recalculate the number of miners.{% else %}矿场总功率，单位为兆瓦特(MW)。调整此值会重新计算矿机数量。{% endif %}</div>
                                 </div>
                                 
                                 <!-- Miner count (can be manually adjusted) -->
                                 <div class="mb-3">
-                                    <label for="miner-count" class="form-label">{{ t('miner_count') }}</label>
+                                    <label for="miner-count" class="form-label">{% if current_lang == 'en' %}Miner Count{% else %}矿机数量{% endif %}</label>
                                     <input type="number" class="form-control" id="miner-count" name="miner_count" value="1" min="1" oninput="updateSitePowerDirectly()">
                                     <div class="form-text">{% if current_lang == 'en' %}Number of miners. Adjusting this will recalculate the site power.{% else %}矿机数量。调整此值会重新计算矿场功率。{% endif %}</div>
                                     <script>
