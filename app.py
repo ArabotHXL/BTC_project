@@ -1167,13 +1167,13 @@ def calculate_internal(request_obj):
         # 获取关机策略（如果有限电）
         shutdown_strategy = "efficiency"  # 默认按效率关机
         if curtailment > 0:
-            strategy = request.form.get('shutdown_strategy')
+            strategy = data.get('shutdown_strategy')
             if strategy in ['efficiency', 'proportional', 'random']:
                 shutdown_strategy = strategy
             logging.info(f"电力削减关机策略: {shutdown_strategy}")
             
         try:
-            maintenance_fee_raw = request.form.get('maintenance_fee', 0)
+            maintenance_fee_raw = data.get('maintenance_fee', 0)
             # Guard against NaN injection
             if isinstance(maintenance_fee_raw, str) and maintenance_fee_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
                 raise ValueError(f"Invalid numeric value: {maintenance_fee_raw}")
@@ -1182,34 +1182,46 @@ def calculate_internal(request_obj):
             if not (maintenance_fee == maintenance_fee and abs(maintenance_fee) != float('inf')):
                 raise ValueError("NaN or infinite value detected")
         except ValueError as e:
-            logging.error(f"Invalid maintenance fee value: {request.form.get('maintenance_fee')} - {str(e)}")
+            logging.error(f"Invalid maintenance fee value: {data.get('maintenance_fee')} - {str(e)}")
             maintenance_fee = 0
             
-        # 获取投资金额参数
+        # 获取投资金额参数 - 使用data变量而不是request.form
         try:
-            host_investment_raw = request.form.get('host_investment', 0)
-            # Guard against NaN injection
-            if isinstance(host_investment_raw, str) and host_investment_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
-                raise ValueError(f"Invalid numeric value: {host_investment_raw}")
-            host_investment = float(host_investment_raw)
-            # Additional check for NaN/inf after conversion
-            if not (host_investment == host_investment and abs(host_investment) != float('inf')):
-                raise ValueError("NaN or infinite value detected")
+            host_investment_raw = data.get('host_investment', '0')
+            logging.info(f"Parsing host_investment_raw: {host_investment_raw}")
+            # If empty string, treat as 0
+            if not host_investment_raw or host_investment_raw == '':
+                host_investment = 0
+            else:
+                # Guard against NaN injection
+                if isinstance(host_investment_raw, str) and host_investment_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
+                    raise ValueError(f"Invalid numeric value: {host_investment_raw}")
+                host_investment = float(host_investment_raw)
+                # Additional check for NaN/inf after conversion
+                if not (host_investment == host_investment and abs(host_investment) != float('inf')):
+                    raise ValueError("NaN or infinite value detected")
+            logging.info(f"Parsed host_investment: {host_investment}")
         except ValueError as e:
-            logging.error(f"Invalid host investment value: {request.form.get('host_investment')} - {str(e)}")
+            logging.error(f"Invalid host investment value: {data.get('host_investment')} - {str(e)}")
             host_investment = 0
             
         try:
-            client_investment_raw = request.form.get('client_investment', 0)
-            # Guard against NaN injection
-            if isinstance(client_investment_raw, str) and client_investment_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
-                raise ValueError(f"Invalid numeric value: {client_investment_raw}")
-            client_investment = float(client_investment_raw)
-            # Additional check for NaN/inf after conversion
-            if not (client_investment == client_investment and abs(client_investment) != float('inf')):
-                raise ValueError("NaN or infinite value detected")
+            client_investment_raw = data.get('client_investment', '0')
+            logging.info(f"Parsing client_investment_raw: {client_investment_raw}")
+            # If empty string, treat as 0
+            if not client_investment_raw or client_investment_raw == '':
+                client_investment = 0
+            else:
+                # Guard against NaN injection
+                if isinstance(client_investment_raw, str) and client_investment_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
+                    raise ValueError(f"Invalid numeric value: {client_investment_raw}")
+                client_investment = float(client_investment_raw)
+                # Additional check for NaN/inf after conversion
+                if not (client_investment == client_investment and abs(client_investment) != float('inf')):
+                    raise ValueError("NaN or infinite value detected")
+            logging.info(f"Parsed client_investment: {client_investment}")
         except ValueError as e:
-            logging.error(f"Invalid client investment value: {request.form.get('client_investment')} - {str(e)}")
+            logging.error(f"Invalid client investment value: {data.get('client_investment')} - {str(e)}")
             client_investment = 0
         
         logging.info(f"Calculate request: model={miner_model}, count={miner_count}, real_time={use_real_time}, "
@@ -1223,12 +1235,12 @@ def calculate_internal(request_obj):
             hashrate = hashrate * 1000000
                 
         # 处理全网算力来源选择
-        hashrate_source = request.form.get('hashrate_source', 'api')
+        hashrate_source = data.get('hashrate_source', 'api')
         manual_hashrate = None
         
         if hashrate_source == 'manual':
             try:
-                manual_hashrate_raw = request.form.get('manual_hashrate', 997.31)
+                manual_hashrate_raw = data.get('manual_hashrate', 997.31)
                 # Guard against NaN injection
                 if isinstance(manual_hashrate_raw, str) and manual_hashrate_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
                     raise ValueError(f"Invalid numeric value: {manual_hashrate_raw}")
@@ -1238,18 +1250,18 @@ def calculate_internal(request_obj):
                     raise ValueError("NaN or infinite value detected")
                 logging.info(f"使用手动输入的全网算力: {manual_hashrate} EH/s")
             except ValueError as e:
-                logging.error(f"Invalid manual hashrate value: {request.form.get('manual_hashrate')} - {str(e)}")
+                logging.error(f"Invalid manual hashrate value: {data.get('manual_hashrate')} - {str(e)}")
                 logging.warning("手动全网算力输入无效，回退到API获取")
                 hashrate_source = 'api'
                 manual_hashrate = None
         
         # 处理网络难度来源选择
-        difficulty_source = request.form.get('difficulty_source', 'api')
+        difficulty_source = data.get('difficulty_source', 'api')
         manual_difficulty = None
         
         if difficulty_source == 'manual':
             try:
-                manual_difficulty_raw = request.form.get('manual_difficulty', 129435235580344)
+                manual_difficulty_raw = data.get('manual_difficulty', 129435235580344)
                 # Guard against NaN injection
                 if isinstance(manual_difficulty_raw, str) and manual_difficulty_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
                     raise ValueError(f"Invalid numeric value: {manual_difficulty_raw}")
@@ -1259,7 +1271,7 @@ def calculate_internal(request_obj):
                     raise ValueError("NaN or infinite value detected")
                 logging.info(f"使用手动输入的网络难度: {manual_difficulty:,.0f}")
             except ValueError as e:
-                logging.error(f"Invalid manual difficulty value: {request.form.get('manual_difficulty')} - {str(e)}")
+                logging.error(f"Invalid manual difficulty value: {data.get('manual_difficulty')} - {str(e)}")
                 logging.warning("手动网络难度输入无效，回退到API获取")
                 difficulty_source = 'api'
                 manual_difficulty = None

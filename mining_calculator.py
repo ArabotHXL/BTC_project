@@ -625,7 +625,21 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
                 logging.info(f"矿场主ROI计算结果 - 年化回报率: {host_roi_data.get('roi_percent_annual', 0)}%, 回收期: {host_roi_data.get('payback_period_months', 'inf')}月")
             except Exception as e:
                 logging.error(f"矿场主ROI计算失败: {e}")
-                host_roi_data = None
+                # Return default values instead of None to prevent JavaScript errors
+                host_roi_data = {
+                    "roi_percent_annual": 0,
+                    "payback_period_months": 0,
+                    "payback_period_years": 0,
+                    "forecast": []
+                }
+        else:
+            # When investment is 0, return default values instead of None
+            host_roi_data = {
+                "roi_percent_annual": 0,
+                "payback_period_months": 0,
+                "payback_period_years": 0,
+                "forecast": []
+            }
             
         if client_investment > 0:
             try:
@@ -633,7 +647,21 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
                 logging.info(f"客户ROI计算结果 - 年化回报率: {client_roi_data.get('roi_percent_annual', 0)}%, 回收期: {client_roi_data.get('payback_period_months', 'inf')}月")
             except Exception as e:
                 logging.error(f"客户ROI计算失败: {e}")
-                client_roi_data = None
+                # Return default values instead of None to prevent JavaScript errors
+                client_roi_data = {
+                    "roi_percent_annual": 0,
+                    "payback_period_months": 0,
+                    "payback_period_years": 0,
+                    "forecast": []
+                }
+        else:
+            # When investment is 0, return default values instead of None
+            client_roi_data = {
+                "roi_percent_annual": 0,
+                "payback_period_months": 0,
+                "payback_period_years": 0,
+                "forecast": []
+            }
             
         # 准备削减详情（仅当使用了高级削减计算时）
         curtailment_details = {}

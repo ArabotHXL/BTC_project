@@ -313,8 +313,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         var clientAnnualRoi = document.getElementById('client-annual-roi');
         if (clientAnnualRoi) {
-            if (data.roi && data.roi.client_annual_roi !== null && data.roi.client_annual_roi !== undefined && isFinite(data.roi.client_annual_roi)) {
-                var roi = data.roi.client_annual_roi;
+            // Check if ROI data exists and handle both structures
+            var clientROI = null;
+            if (data.roi && data.roi.client) {
+                clientROI = data.roi.client;
+            }
+            
+            if (clientROI && clientROI.roi_percent_annual !== null && clientROI.roi_percent_annual !== undefined && isFinite(clientROI.roi_percent_annual)) {
+                var roi = clientROI.roi_percent_annual;
                 console.log('[CALCULATOR] Client annual ROI:', roi);
                 clientAnnualRoi.textContent = roi.toFixed(2) + '%';
             } else if (data.inputs && data.inputs.client_investment > 0) {
@@ -332,8 +338,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         var clientPaybackMonths = document.getElementById('client-payback-months');
         if (clientPaybackMonths) {
-            if (data.roi && data.roi.client_payback_months !== null && data.roi.client_payback_months !== undefined && isFinite(data.roi.client_payback_months) && data.roi.client_payback_months > 0) {
-                var months = data.roi.client_payback_months;
+            // Check if ROI data exists and handle both structures
+            var clientROI = null;
+            if (data.roi && data.roi.client) {
+                clientROI = data.roi.client;
+            }
+            
+            if (clientROI && clientROI.payback_period_months !== null && clientROI.payback_period_months !== undefined && isFinite(clientROI.payback_period_months) && clientROI.payback_period_months > 0) {
+                var months = clientROI.payback_period_months;
                 console.log('[CALCULATOR] Client payback months:', months);
                 clientPaybackMonths.textContent = months.toFixed(0) + ' months';
             } else if (data.inputs && data.inputs.client_investment > 0) {
