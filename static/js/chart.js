@@ -179,26 +179,40 @@ document.addEventListener('DOMContentLoaded', () => {
     window.generateRoiCharts = function(data) {
         console.log("generateRoiCharts called");
         
-        // Check if Chart.js is loaded
-        if (typeof Chart === 'undefined') {
-            console.error("Chart.js is not loaded!");
-            return;
-        }
-        
-        if (!data || !data.roi) {
-            console.log("No ROI data available for charts");
-            return;
-        }
+        // Add small delay to ensure DOM is fully rendered
+        setTimeout(function() {
+            console.log("Chart generation starting after DOM delay...");
+            
+            // Check if Chart.js is loaded
+            if (typeof Chart === 'undefined') {
+                console.error("Chart.js is not loaded!");
+                return;
+            }
+            
+            if (!data || !data.roi) {
+                console.log("No ROI data available for charts");
+                return;
+            }
 
-        const roi = data.roi;
-        console.log("Chart generation - ROI data:", roi);
+            const roi = data.roi;
+            console.log("Chart generation - ROI data:", roi);
         
         // Generate Host ROI Chart
-        if (roi.host && document.getElementById('host-roi-chart')) {
+        const hostContainer = document.getElementById('host-roi-chart');
+        console.log("Host ROI chart search - Container element:", hostContainer);
+        console.log("Host ROI chart search - Has ROI data:", !!roi.host);
+        
+        if (roi.host && hostContainer) {
             console.log("Generating Host ROI chart...");
             generateHostRoiChart(roi.host, data.inputs);
         } else {
-            console.log("Host ROI chart not generated - roi.host:", !!roi.host, "container:", !!document.getElementById('host-roi-chart'));
+            console.log("Host ROI chart not generated - roi.host:", !!roi.host, "container:", !!hostContainer);
+            if (!hostContainer) {
+                console.error("Host ROI chart container 'host-roi-chart' not found in DOM");
+                // Try to find all elements with similar IDs to debug
+                const allElements = document.querySelectorAll('[id*="host"]');
+                console.log("Elements with 'host' in ID:", Array.from(allElements).map(el => el.id));
+            }
         }
         
         // Generate Client ROI Chart
@@ -208,6 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             console.log("Client ROI chart not generated - roi.client:", !!roi.client, "container:", !!document.getElementById('client-roi-chart'));
         }
+        }, 100); // 100ms delay to ensure DOM is ready
     };
 
     function generateHostRoiChart(hostRoi, inputs) {
