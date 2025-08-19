@@ -1,51 +1,51 @@
 // Bitcoin Mining Calculator - Main JavaScript
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀🚀🚀 DOMContentLoaded 事件触发!');
-    console.log('📍📍📍 开始执行main_new.js...');
+    console.log('[MAIN_NEW.JS] DOMContentLoaded event fired!');
+    console.log('[MAIN_NEW.JS] Starting execution...');
     
     try {
         // 元素引用 (Element references)
         var btcPriceEl = document.getElementById('btc-price');
-    var networkDifficultyEl = document.getElementById('network-difficulty');
-    var networkHashrateEl = document.getElementById('network-hashrate');
-    var blockRewardEl = document.getElementById('block-reward');
+        var networkDifficultyEl = document.getElementById('network-difficulty');
+        var networkHashrateEl = document.getElementById('network-hashrate');
+        var blockRewardEl = document.getElementById('block-reward');
     
-    var minerModelSelect = document.getElementById('miner-model');
-    var sitePowerMwInput = document.getElementById('site-power-mw');
-    var minerCountInput = document.getElementById('miner-count');
-    var hashrateInput = document.getElementById('hashrate');
-    var hashrateUnitSelect = document.getElementById('hashrate-unit');
-    var powerConsumptionInput = document.getElementById('power-consumption');
-    var electricityCostInput = document.getElementById('electricity-cost');
-    var clientElectricityCostInput = document.getElementById('client-electricity-cost');
-    var btcPriceInput = document.getElementById('btc-price-input');
-    var useRealTimeCheckbox = document.getElementById('use-real-time');
-    var calculatorForm = document.getElementById('mining-calculator-form');
-    console.log('🔍 初始化时查找表单元素:', calculatorForm);
-    
-    // 隐藏字段（用于提交）
-    var totalHashrateInput = document.getElementById('total-hashrate');
-    var totalPowerInput = document.getElementById('total-power');
-    
-    // 显示字段（用于UI显示）
-    var totalHashrateDisplay = document.getElementById('total-hashrate-display');
-    var totalPowerDisplay = document.getElementById('total-power-display');
-    
-    // 在控制台输出所有dom元素，用于调试
-    console.log("DOM元素获取结果:");
-    console.log("总算力隐藏输入框:", totalHashrateInput ? "找到" : "未找到");
-    console.log("总功耗隐藏输入框:", totalPowerInput ? "找到" : "未找到");
-    console.log("总算力显示输入框:", totalHashrateDisplay ? "找到" : "未找到");
-    console.log("总功耗显示输入框:", totalPowerDisplay ? "找到" : "未找到");
-    
-    var resultsCard = document.getElementById('results-card');
-    var chartCard = document.getElementById('chart-card');
+        var minerModelSelect = document.getElementById('miner-model');
+        var sitePowerMwInput = document.getElementById('site-power-mw');
+        var minerCountInput = document.getElementById('miner-count');
+        var hashrateInput = document.getElementById('hashrate');
+        var hashrateUnitSelect = document.getElementById('hashrate-unit');
+        var powerConsumptionInput = document.getElementById('power-consumption');
+        var electricityCostInput = document.getElementById('electricity-cost');
+        var clientElectricityCostInput = document.getElementById('client-electricity-cost');
+        var btcPriceInput = document.getElementById('btc-price-input');
+        var useRealTimeCheckbox = document.getElementById('use-real-time');
+        var calculatorForm = document.getElementById('mining-calculator-form');
+        console.log('[MAIN_NEW.JS] Form element found:', calculatorForm);
+        
+        // 隐藏字段（用于提交）
+        var totalHashrateInput = document.getElementById('total-hashrate');
+        var totalPowerInput = document.getElementById('total-power');
+        
+        // 显示字段（用于UI显示）
+        var totalHashrateDisplay = document.getElementById('total-hashrate-display');
+        var totalPowerDisplay = document.getElementById('total-power-display');
+        
+        // 在控制台输出所有dom元素，用于调试
+        console.log("DOM元素获取结果:");
+        console.log("总算力隐藏输入框:", totalHashrateInput ? "找到" : "未找到");
+        console.log("总功耗隐藏输入框:", totalPowerInput ? "找到" : "未找到");
+        console.log("总算力显示输入框:", totalHashrateDisplay ? "找到" : "未找到");
+        console.log("总功耗显示输入框:", totalPowerDisplay ? "找到" : "未找到");
+        
+        var resultsCard = document.getElementById('results-card');
+        var chartCard = document.getElementById('chart-card');
     
     // 初始化 (Initialization)
     function init() {
-        console.log('🔍 初始化开始 - 检查关键元素...');
-        console.log('📋 calculatorForm元素:', calculatorForm);
-        console.log('📋 表单ID查找结果:', document.getElementById('mining-calculator-form'));
+        console.log('[INIT] Starting initialization...');
+        console.log('[INIT] calculatorForm element:', calculatorForm);
+        console.log('[INIT] Form lookup result:', document.getElementById('mining-calculator-form'));
         
         // 加载网络数据 (Load network data)
         fetchNetworkStats();
@@ -55,16 +55,16 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 事件绑定 (Event bindings)
         if (calculatorForm) {
-            console.log('✅ 绑定表单提交事件...');
+            console.log('[INIT] Binding form submit event...');
             calculatorForm.addEventListener('submit', handleCalculateSubmit);
-            console.log('✅ 表单提交事件已绑定');
+            console.log('[INIT] Form submit event bound successfully');
             
             // 备用方案：直接绑定按钮点击事件
             var submitButton = calculatorForm.querySelector('button[type="submit"]');
             if (submitButton) {
-                console.log('✅ 找到提交按钮，添加备用点击事件...');
+                console.log('[INIT] Submit button found, adding backup click handler...');
                 submitButton.addEventListener('click', function(event) {
-                    console.log('🔵 提交按钮被点击! (备用事件)');
+                    console.log('[CLICK] Submit button clicked! (backup event)');
                     if (event.target.form) {
                         event.preventDefault();
                         handleCalculateSubmit(event);
@@ -72,17 +72,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
         } else {
-            console.error('❌ 无法找到计算器表单元素! ID: mining-calculator-form');
+            console.error('[ERROR] Cannot find calculator form element! ID: mining-calculator-form');
             
             // 尝试延迟查找表单元素
             setTimeout(function() {
                 console.log('🔄 延迟重试查找表单元素...');
                 var delayedForm = document.getElementById('mining-calculator-form');
                 if (delayedForm) {
-                    console.log('✅ 延迟查找成功! 绑定事件...');
+                    console.log(' 延迟查找成功! 绑定事件...');
                     delayedForm.addEventListener('submit', handleCalculateSubmit);
                 } else {
-                    console.error('❌ 延迟查找仍然失败');
+                    console.error(' 延迟查找仍然失败');
                 }
             }, 1000);
         }
@@ -234,10 +234,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // 处理计算表单提交 (Handle calculation form submission)
     function handleCalculateSubmit(event) {
         event.preventDefault();
-        console.log('🚀 开始处理表单提交...');
+        console.log(' 开始处理表单提交...');
         
         // 在提交表单前重新计算总算力和总功耗
-        console.log("⚡ 表单提交前重新计算总算力和总功耗");
+        console.log(" 表单提交前重新计算总算力和总功耗");
         calculateTotalHashrateAndPower();
         
         // 表单验证 (Form validation)
@@ -296,27 +296,27 @@ document.addEventListener('DOMContentLoaded', function() {
         xhr.open('POST', '/calculate', true);
         
         xhr.onload = function() {
-            console.log('✅ 收到服务器响应，状态码:', xhr.status);
+            console.log(' 收到服务器响应，状态码:', xhr.status);
             console.log('📦 响应内容:', xhr.responseText);
             try {
                 if (xhr.status === 200) {
                     var data = JSON.parse(xhr.responseText);
-                    console.log('📊 解析后的计算结果:', data);
+                    console.log(' 解析后的计算结果:', data);
                     
                     if (data.success) {
                         console.log('🎯 开始显示计算结果...');
                         // 显示结果 (Display results)
                         displayResults(data);
-                        console.log('✅ 结果显示完成');
+                        console.log(' 结果显示完成');
                     } else {
-                        console.error('❌ 服务器返回失败结果:', data.error);
+                        console.error(' 服务器返回失败结果:', data.error);
                         showError(data.error || '计算过程中发生错误。(An error occurred during calculation.)');
                     }
                 } else {
                     throw new Error('服务器返回状态码: ' + xhr.status);
                 }
             } catch (error) {
-                console.error('❌ 处理响应时出错:', error);
+                console.error(' 处理响应时出错:', error);
                 showError('计算过程中发生错误，请重试。(An error occurred during calculation, please try again.)');
             } finally {
                 // 隐藏加载状态 (Hide loading state)
@@ -485,26 +485,26 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 显示计算结果 (Display calculation results)
     function displayResults(data) {
-        console.log('🔍 检查接收到的数据结构:', data);
-        console.log('📋 resultsCard元素状态:', resultsCard);
+        console.log(' 检查接收到的数据结构:', data);
+        console.log(' resultsCard元素状态:', resultsCard);
         
         if (!data || !data.btc_mined) {
-            console.error('❌ 数据验证失败 - data:', data, 'btc_mined:', data?.btc_mined);
+            console.error(' 数据验证失败 - data:', data, 'btc_mined:', data?.btc_mined);
             showError('服务器返回的数据无效。(Invalid data received from server.)');
             return;
         }
         
         try {
-            console.log('📊 开始处理计算结果数据:', data);
+            console.log(' 开始处理计算结果数据:', data);
             
             // 显示结果卡片 (Show results card)
             console.log('🎯 准备显示结果卡片...');
             if (resultsCard) {
                 console.log('📺 设置results-card为可见...');
                 resultsCard.style.display = 'block';
-                console.log('✅ results-card已设置为可见，当前样式:', resultsCard.style.display);
+                console.log(' results-card已设置为可见，当前样式:', resultsCard.style.display);
             } else {
-                console.error('❌ 无法找到results-card元素!');
+                console.error(' 无法找到results-card元素!');
                 return;
             }
             
@@ -636,7 +636,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     diffClass += ' text-success';
                     tooltipText = '当前API网络算力与基于难度计算的算力一致，两算法产生相同结果';
                 } else if (percentageDiff < 1) {
-                    diffText = '⚠ 微小差异 (' + formatNumber(percentageDiff, 3) + '%)';
+                    diffText = ' 微小差异 (' + formatNumber(percentageDiff, 3) + '%)';
                     diffClass += ' text-warning';
                     tooltipText = 'API数据与难度计算存在微小差异，系统使用平均值';
                 } else if (percentageDiff < 5) {
@@ -1378,7 +1378,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                     return lines;
                                                 } else {
                                                     // 添加标记表示亏损
-                                                    return ['⚠️ 亏损运营 / Loss Operation'].concat(lines);
+                                                    return [' 亏损运营 / Loss Operation'].concat(lines);
                                                 }
                                             },
                                             title: function() {
@@ -1734,10 +1734,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // 调用初始化函数 (Call init function)
         console.log('🔧🔧🔧 准备调用init()函数...');
         init();
-        console.log('✅✅✅ init()函数调用完成!');
+        console.log(' init()函数调用完成!');
         
     } catch (error) {
-        console.error('❌❌❌ JavaScript执行错误:', error);
+        console.error(' JavaScript执行错误:', error);
         console.error('错误堆栈:', error.stack);
     }
 });
