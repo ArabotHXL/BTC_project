@@ -425,31 +425,63 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Break Even Point详细信息
-        if (data.roi && data.roi.client && data.roi.client.forecast) {
-            var breakeven = data.roi.client.forecast.find(point => point.break_even === true);
+        if (data.roi && data.roi.client) {
+            var forecast = data.roi.client.forecast || [];
+            var breakeven = forecast.find(point => point.break_even === true);
+            var paybackMonths = data.roi.client.payback_period_months || 0;
+            var paybackYears = data.roi.client.payback_period_years || 0;
+            
+            console.log('[BREAK-EVEN] Analysis data:', {
+                hasBreakeven: !!breakeven,
+                paybackMonths: paybackMonths,
+                paybackYears: paybackYears,
+                forecastLength: forecast.length
+            });
             
             // Break-even Month Display
             var breakevenMonthDisplay = document.getElementById('breakeven-month-display');
-            if (breakevenMonthDisplay && breakeven) {
-                breakevenMonthDisplay.textContent = 'Month ' + breakeven.month;
+            if (breakevenMonthDisplay) {
+                if (breakeven) {
+                    breakevenMonthDisplay.textContent = 'Month ' + breakeven.month;
+                } else if (paybackMonths && paybackMonths !== Infinity) {
+                    breakevenMonthDisplay.textContent = 'Month ' + Math.ceil(paybackMonths);
+                } else {
+                    breakevenMonthDisplay.textContent = 'N/A';
+                }
             }
             
             // Cumulative Investment Recovery
             var breakevenRecoveryAmount = document.getElementById('breakeven-recovery-amount');
-            if (breakevenRecoveryAmount && breakeven) {
-                breakevenRecoveryAmount.textContent = '$' + breakeven.cumulative_profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            if (breakevenRecoveryAmount) {
+                if (breakeven) {
+                    breakevenRecoveryAmount.textContent = '$' + breakeven.cumulative_profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                } else {
+                    var clientInvestment = parseFloat(document.getElementById('client_investment').value) || 0;
+                    breakevenRecoveryAmount.textContent = '$' + clientInvestment.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                }
             }
             
             // Break-even ROI Percentage
             var breakevenRoiPercent = document.getElementById('breakeven-roi-percent');
-            if (breakevenRoiPercent && breakeven) {
-                breakevenRoiPercent.textContent = breakeven.roi_percent.toFixed(2) + '%';
+            if (breakevenRoiPercent) {
+                if (breakeven) {
+                    breakevenRoiPercent.textContent = breakeven.roi_percent.toFixed(2) + '%';
+                } else if (paybackMonths && paybackMonths !== Infinity) {
+                    // 计算盈亏平衡时的ROI%: 100% (完全回收投资)
+                    breakevenRoiPercent.textContent = '100.00%';
+                } else {
+                    breakevenRoiPercent.textContent = 'N/A';
+                }
             }
             
             // Time to Break-even
             var breakevenTimeDisplay = document.getElementById('breakeven-time-display');
-            if (breakevenTimeDisplay && data.roi.client.payback_period_years) {
-                breakevenTimeDisplay.textContent = data.roi.client.payback_period_years.toFixed(1) + ' years';
+            if (breakevenTimeDisplay) {
+                if (paybackYears && paybackYears !== Infinity) {
+                    breakevenTimeDisplay.textContent = paybackYears.toFixed(1) + ' years';
+                } else {
+                    breakevenTimeDisplay.textContent = 'N/A';
+                }
             }
         }
 
