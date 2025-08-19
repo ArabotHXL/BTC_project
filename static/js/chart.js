@@ -332,14 +332,68 @@ document.addEventListener('DOMContentLoaded', () => {
         const months = [];
         const roiPercentage = [];
         
+        // Find break-even point
+        let breakEvenPoint = null;
+        let breakEvenIndex = -1;
+        
         if (clientRoi.forecast && Array.isArray(clientRoi.forecast)) {
-            clientRoi.forecast.forEach(point => {
+            clientRoi.forecast.forEach((point, index) => {
                 months.push(point.month + 'M');
                 roiPercentage.push(point.roi_percent);
+                
+                // Find the break-even point (when cumulative profit >= investment)
+                if (point.break_even === true && !breakEvenPoint) {
+                    breakEvenPoint = point;
+                    breakEvenIndex = index;
+                    console.log("Break-even point found:", point);
+                }
             });
         } else {
             console.error("Client ROI forecast data is not available");
             return;
+        }
+
+        // Create datasets
+        const datasets = [{
+            label: 'ROI %',
+            data: roiPercentage,
+            borderColor: 'rgb(40, 167, 69)',
+            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.1,
+            pointBackgroundColor: roiPercentage.map((value, index) => 
+                index === breakEvenIndex ? '#ffc107' : 'rgb(40, 167, 69)'
+            ),
+            pointBorderColor: roiPercentage.map((value, index) => 
+                index === breakEvenIndex ? '#ffc107' : 'rgb(40, 167, 69)'
+            ),
+            pointRadius: roiPercentage.map((value, index) => 
+                index === breakEvenIndex ? 8 : 4
+            ),
+            pointHoverRadius: roiPercentage.map((value, index) => 
+                index === breakEvenIndex ? 10 : 6
+            )
+        }];
+
+        // Add break-even line if break-even point exists
+        if (breakEvenPoint && breakEvenIndex >= 0) {
+            datasets.push({
+                label: 'Break-even Point',
+                data: roiPercentage.map((value, index) => 
+                    index === breakEvenIndex ? value : null
+                ),
+                borderColor: '#ffc107',
+                backgroundColor: '#ffc107',
+                borderWidth: 0,
+                fill: false,
+                pointBackgroundColor: '#ffc107',
+                pointBorderColor: '#ffc107',
+                pointRadius: 10,
+                pointHoverRadius: 12,
+                showLine: false,
+                pointStyle: 'star'
+            });
         }
 
         try {
@@ -347,24 +401,24 @@ document.addEventListener('DOMContentLoaded', () => {
             type: 'line',
             data: {
                 labels: months,
-                datasets: [{
-                    label: 'ROI %',
-                    data: roiPercentage,
-                    borderColor: 'rgb(40, 167, 69)',
-                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.1
-                }]
+                datasets: datasets
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
                 scales: {
                     y: {
                         title: {
                             display: true,
-                            text: 'ROI (%)'
+                            text: 'ROI (%)',
+                            color: 'rgba(255, 255, 255, 0.8)'
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.8)'
                         },
                         grid: {
                             color: 'rgba(255, 255, 255, 0.1)'
@@ -373,7 +427,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     x: {
                         title: {
                             display: true,
-                            text: 'Months'
+                            text: 'Months',
+                            color: 'rgba(255, 255, 255, 0.8)'
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.8)'
                         },
                         grid: {
                             color: 'rgba(255, 255, 255, 0.1)'
@@ -384,17 +442,47 @@ document.addEventListener('DOMContentLoaded', () => {
                     title: {
                         display: true,
                         text: 'Client ROI Progression',
-                        color: 'rgb(40, 167, 69)'
+                        color: 'rgb(40, 167, 69)',
+                        font: {
+                            size: 16
+                        }
                     },
                     legend: {
+                        display: true,
                         labels: {
-                            color: 'rgba(255, 255, 255, 0.8)'
+                            color: 'rgba(255, 255, 255, 0.8)',
+                            filter: function(item, chart) {
+                                // Only show ROI % in legend, hide Break-even Point
+                                return item.text === 'ROI %';
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: 'rgba(255, 255, 255, 0.9)',
+                        bodyColor: 'rgba(255, 255, 255, 0.9)',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderWidth: 1,
+                        callbacks: {
+                            afterBody: function(context) {
+                                const dataIndex = context[0].dataIndex;
+                                if (dataIndex === breakEvenIndex && breakEvenPoint) {
+                                    return [
+                                        '',
+                                        '🎯 BREAK-EVEN ACHIEVED!',
+                                        `✅ Investment Recovered: $${breakEvenPoint.cumulative_profit.toLocaleString()}`,
+                                        `📅 Month: ${breakEvenPoint.month}`,
+                                        `📈 ROI: ${breakEvenPoint.roi_percent.toFixed(2)}%`
+                                    ];
+                                }
+                                return '';
+                            }
                         }
                     }
                 }
             }
         });
-        console.log("Client ROI chart created successfully");
+        console.log("Client ROI chart created successfully with break-even point at month:", breakEvenPoint ? breakEvenPoint.month : 'N/A');
         } catch (error) {
             console.error("Error creating client ROI chart:", error);
         }
