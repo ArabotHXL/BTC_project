@@ -200,9 +200,7 @@
                 <a class="nav-link" href="#features" style="color: #adb5bd;">
                     {% if current_lang == 'zh' %}功能{% else %}Features{% endif %}
                 </a>
-                <a class="nav-link" href="{{ url_for('pricing') }}" style="color: #adb5bd;">
-                    {% if current_lang == 'zh' %}定价{% else %}Pricing{% endif %}
-                </a>
+                <!-- Pricing link hidden -->
                 <a href="?lang={{ 'en' if current_lang == 'zh' else 'zh' }}" class="nav-link" style="color: #f8d000;">
                     <i class="fas fa-globe"></i> {{ '中文' if current_lang == 'en' else 'English' }}
                 </a>
@@ -234,9 +232,9 @@
                     <i class="fas fa-sign-in-alt"></i> 
                     {% if current_lang == 'zh' %}立即登录{% else %}Login Now{% endif %}
                 </a>
-                <a href="{{ url_for('pricing') }}" class="cta-button cta-button-outline">
-                    <i class="fas fa-tags"></i> 
-                    {% if current_lang == 'zh' %}查看定价{% else %}Pricing{% endif %}
+                <a href="#features" class="cta-button cta-button-outline">
+                    <i class="fas fa-info-circle"></i> 
+                    {% if current_lang == 'zh' %}了解更多{% else %}Learn More{% endif %}
                 </a>
             </div>
         </div>
@@ -300,7 +298,7 @@
                 </div>
             </div>
             
-            <div class="row">
+            <div class="row justify-content-center">
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="feature-card">
                         <div class="feature-icon">
@@ -336,14 +334,58 @@
                         </p>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Under Development Section -->
+    <section class="features-section" style="background-color: rgba(248, 208, 0, 0.03); border-top: 1px solid rgba(248, 208, 0, 0.1);">
+        <div class="container">
+            <div class="row text-center mb-5">
+                <div class="col-12">
+                    <h2 class="display-4 mb-3" style="color: #f8d000;">
+                        {% if current_lang == 'zh' %}开发中功能{% else %}Under Development{% endif %}
+                    </h2>
+                    <p class="lead" style="color: #adb5bd;">
+                        {% if current_lang == 'zh' %}
+                            即将推出的高级功能
+                        {% else %}
+                            Coming Soon - Advanced Features
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="row justify-content-center">
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="feature-card" style="opacity: 0.7; border-style: dashed; border-color: rgba(248, 208, 0, 0.4);">
+                        <div class="feature-icon" style="opacity: 0.6;">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="feature-title">
+                            {% if current_lang == 'zh' %}数据分析平台{% else %}Analytics Platform{% endif %}
+                        </h3>
+                        <p class="feature-desc">
+                            {% if current_lang == 'zh' %}
+                                高级数据分析平台，历史趋势分析，投资风险评估，专业报告生成
+                            {% else %}
+                                Advanced analytics platform with historical trend analysis, investment risk assessment, and professional reporting
+                            {% endif %}
+                        </p>
+                        <small style="color: #f8d000; font-weight: 600;">
+                            <i class="fas fa-tools"></i> 
+                            {% if current_lang == 'zh' %}开发中{% else %}In Development{% endif %}
+                        </small>
+                    </div>
+                </div>
                 
                 <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
+                    <div class="feature-card" style="opacity: 0.7; border-style: dashed; border-color: rgba(248, 208, 0, 0.4);">
+                        <div class="feature-icon" style="opacity: 0.6;">
                             <i class="fas fa-users"></i>
                         </div>
                         <h3 class="feature-title">
-                            {% if current_lang == 'zh' %}客户管理{% else %}CRM System{% endif %}
+                            {% if current_lang == 'zh' %}客户管理{% else %}CRM{% endif %}
                         </h3>
                         <p class="feature-desc">
                             {% if current_lang == 'zh' %}
@@ -352,30 +394,16 @@
                                 Complete CRM system for managing customer information, lead tracking and deal records
                             {% endif %}
                         </p>
+                        <small style="color: #f8d000; font-weight: 600;">
+                            <i class="fas fa-tools"></i> 
+                            {% if current_lang == 'zh' %}开发中{% else %}In Development{% endif %}
+                        </small>
                     </div>
                 </div>
                 
                 <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <h3 class="feature-title">
-                            {% if current_lang == 'zh' %}数据分析{% else %}Analytics Platform{% endif %}
-                        </h3>
-                        <p class="feature-desc">
-                            {% if current_lang == 'zh' %}
-                                高级数据分析平台，历史趋势分析，投资风险评估
-                            {% else %}
-                                Advanced analytics platform with historical trend analysis and investment risk assessment
-                            {% endif %}
-                        </p>
-                    </div>
-                </div>
-                
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
+                    <div class="feature-card" style="opacity: 0.7; border-style: dashed; border-color: rgba(248, 208, 0, 0.4);">
+                        <div class="feature-icon" style="opacity: 0.6;">
                             <i class="fas fa-bolt"></i>
                         </div>
                         <h3 class="feature-title">
@@ -383,29 +411,15 @@
                         </h3>
                         <p class="feature-desc">
                             {% if current_lang == 'zh' %}
-                                电力削减计算器，优化电力使用策略，降低运营成本
+                                智能限电管理、负载优化、电网监控、节能策略
                             {% else %}
-                                Power curtailment calculator to optimize electricity usage strategies and reduce operational costs
+                                Smart power curtailment management, load optimization, grid monitoring, energy-saving strategies
                             {% endif %}
                         </p>
-                    </div>
-                </div>
-                
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-network-wired"></i>
-                        </div>
-                        <h3 class="feature-title">
-                            {% if current_lang == 'zh' %}网络分析{% else %}Network Analysis{% endif %}
-                        </h3>
-                        <p class="feature-desc">
-                            {% if current_lang == 'zh' %}
-                                比特币网络历史数据分析，难度变化趋势，算力分布统计
-                            {% else %}
-                                Bitcoin network historical data analysis, difficulty trend analysis, and hashrate distribution statistics
-                            {% endif %}
-                        </p>
+                        <small style="color: #f8d000; font-weight: 600;">
+                            <i class="fas fa-tools"></i> 
+                            {% if current_lang == 'zh' %}开发中{% else %}In Development{% endif %}
+                        </small>
                     </div>
                 </div>
             </div>
