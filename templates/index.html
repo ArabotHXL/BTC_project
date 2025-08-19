@@ -1014,6 +1014,20 @@
         // Global language variable for JavaScript use
         var currentLang = '{{ current_lang }}';
         
+        // 初始化时禁用隐藏的输入字段
+        document.addEventListener('DOMContentLoaded', function() {
+            var manualHashrateInput = document.getElementById('manual-hashrate');
+            var manualDifficultyInput = document.getElementById('manual-difficulty');
+            
+            // 默认禁用手动输入字段（因为默认选择API）
+            if (manualHashrateInput) {
+                manualHashrateInput.disabled = true;
+            }
+            if (manualDifficultyInput) {
+                manualDifficultyInput.disabled = true;
+            }
+        });
+        
         // 电力削减相关JavaScript已移除
 
         // 全网算力输入切换功能
@@ -1021,13 +1035,16 @@
             var hashrateApiRadio = document.getElementById('hashrate-api');
             var hashrateManualRadio = document.getElementById('hashrate-manual');
             var manualHashrateContainer = document.getElementById('manual-hashrate-container');
+            var manualHashrateInput = document.getElementById('manual-hashrate');
             
             // 检查元素是否存在
-            if (hashrateManualRadio && manualHashrateContainer) {
+            if (hashrateManualRadio && manualHashrateContainer && manualHashrateInput) {
                 if (hashrateManualRadio.checked) {
                     manualHashrateContainer.style.display = 'block';
+                    manualHashrateInput.disabled = false;  // 启用输入
                 } else {
                     manualHashrateContainer.style.display = 'none';
+                    manualHashrateInput.disabled = true;   // 禁用输入，避免验证错误
                 }
             }
         }
@@ -1037,13 +1054,16 @@
             var difficultyApiRadio = document.getElementById('difficulty-api');
             var difficultyManualRadio = document.getElementById('difficulty-manual');
             var manualDifficultyContainer = document.getElementById('manual-difficulty-container');
+            var manualDifficultyInput = document.getElementById('manual-difficulty');
             
             // 检查元素是否存在
-            if (difficultyManualRadio && manualDifficultyContainer) {
+            if (difficultyManualRadio && manualDifficultyContainer && manualDifficultyInput) {
                 if (difficultyManualRadio.checked) {
                     manualDifficultyContainer.style.display = 'block';
+                    manualDifficultyInput.disabled = false;  // 启用输入
                 } else {
                     manualDifficultyContainer.style.display = 'none';
+                    manualDifficultyInput.disabled = true;   // 禁用输入，避免验证错误
                 }
             }
         }
