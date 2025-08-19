@@ -977,12 +977,140 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            
+                                            <!-- 计算方法说明 -->
+                                            <div class="row mt-4">
+                                                <div class="col-md-12">
+                                                    <h6 class="text-secondary mb-3">{% if current_lang == 'en' %}Risk Analysis Calculation Methods{% else %}风险分析计算方法{% endif %}</h6>
+                                                    <div class="accordion" id="calculationAccordion">
+                                                        <!-- Electricity Sensitivity -->
+                                                        <div class="accordion-item bg-dark border-secondary">
+                                                            <h2 class="accordion-header" id="electricityHeading">
+                                                                <button class="accordion-button collapsed bg-dark text-light border-0" type="button" data-bs-toggle="collapse" data-bs-target="#electricityCollapse">
+                                                                    {% if current_lang == 'en' %}Electricity Sensitivity Calculation{% else %}电价敏感性计算方法{% endif %}
+                                                                </button>
+                                                            </h2>
+                                                            <div id="electricityCollapse" class="accordion-collapse collapse" data-bs-parent="#calculationAccordion">
+                                                                <div class="accordion-body bg-dark text-light">
+                                                                    <strong>{% if current_lang == 'en' %}Formula{% else %}计算公式{% endif %}:</strong><br>
+                                                                    {% if current_lang == 'en' %}
+                                                                    Annual Impact = (New Electricity Cost - Current Cost) × Annual Power Consumption<br><br>
+                                                                    <strong>Steps:</strong><br>
+                                                                    1. Current Electricity Cost: $0.045/kWh<br>
+                                                                    2. Increase by 10%: $0.045 × 1.1 = $0.0495/kWh<br>
+                                                                    3. Cost Increase: $0.0495 - $0.045 = $0.0045/kWh<br>
+                                                                    4. Annual Power: 3,997,500W ÷ 1000 × 24h × 365d = 35,017,770 kWh<br>
+                                                                    5. Annual Impact: $0.0045 × 35,017,770 = $157,580
+                                                                    {% else %}
+                                                                    年度影响 = (新电价 - 当前电价) × 年度用电量<br><br>
+                                                                    <strong>计算步骤:</strong><br>
+                                                                    1. 当前电价: $0.045/kWh<br>
+                                                                    2. 上涨10%: $0.045 × 1.1 = $0.0495/kWh<br>
+                                                                    3. 电价增幅: $0.0495 - $0.045 = $0.0045/kWh<br>
+                                                                    4. 年度用电: 3,997,500W ÷ 1000 × 24h × 365d = 35,017,770 kWh<br>
+                                                                    5. 年度影响: $0.0045 × 35,017,770 = $157,580
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <!-- BTC Price Sensitivity -->
+                                                        <div class="accordion-item bg-dark border-secondary">
+                                                            <h2 class="accordion-header" id="btcHeading">
+                                                                <button class="accordion-button collapsed bg-dark text-light border-0" type="button" data-bs-toggle="collapse" data-bs-target="#btcCollapse">
+                                                                    {% if current_lang == 'en' %}BTC Price Sensitivity Calculation{% else %}BTC价格敏感性计算方法{% endif %}
+                                                                </button>
+                                                            </h2>
+                                                            <div id="btcCollapse" class="accordion-collapse collapse" data-bs-parent="#calculationAccordion">
+                                                                <div class="accordion-body bg-dark text-light">
+                                                                    <strong>{% if current_lang == 'en' %}Formula{% else %}计算公式{% endif %}:</strong><br>
+                                                                    {% if current_lang == 'en' %}
+                                                                    Annual Impact = (Current BTC Price - New Price) × Annual BTC Output<br><br>
+                                                                    <strong>Steps:</strong><br>
+                                                                    1. Current BTC Price: $115,333<br>
+                                                                    2. Decrease by 20%: $115,333 × 0.8 = $92,266<br>
+                                                                    3. Price Decrease: $115,333 - $92,266 = $23,067<br>
+                                                                    4. Annual BTC Output: 24.017 BTC<br>
+                                                                    5. Annual Impact: $23,067 × 24.017 = $553,988
+                                                                    {% else %}
+                                                                    年度影响 = (当前BTC价格 - 新价格) × 年度BTC产出<br><br>
+                                                                    <strong>计算步骤:</strong><br>
+                                                                    1. 当前BTC价格: $115,333<br>
+                                                                    2. 下跌20%: $115,333 × 0.8 = $92,266<br>
+                                                                    3. 价格跌幅: $115,333 - $92,266 = $23,067<br>
+                                                                    4. 年度BTC产出: 24.017 BTC<br>
+                                                                    5. 年度影响: $23,067 × 24.017 = $553,988
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <!-- Safety Margin -->
+                                                        <div class="accordion-item bg-dark border-secondary">
+                                                            <h2 class="accordion-header" id="safetyHeading">
+                                                                <button class="accordion-button collapsed bg-dark text-light border-0" type="button" data-bs-toggle="collapse" data-bs-target="#safetyCollapse">
+                                                                    {% if current_lang == 'en' %}Safety Margin Calculation{% else %}安全边际计算方法{% endif %}
+                                                                </button>
+                                                            </h2>
+                                                            <div id="safetyCollapse" class="accordion-collapse collapse" data-bs-parent="#calculationAccordion">
+                                                                <div class="accordion-body bg-dark text-light">
+                                                                    <strong>{% if current_lang == 'en' %}Formula{% else %}计算公式{% endif %}:</strong><br>
+                                                                    {% if current_lang == 'en' %}
+                                                                    Safety Margin = ((Break-even Electricity Cost - Current Cost) ÷ Current Cost) × 100%<br><br>
+                                                                    <strong>Steps:</strong><br>
+                                                                    1. Current Electricity Cost: $0.045/kWh<br>
+                                                                    2. Break-even Electricity Cost: $0.0786/kWh<br>
+                                                                    3. Margin: ($0.0786 - $0.045) ÷ $0.045 = 74.7%<br><br>
+                                                                    <strong>Interpretation:</strong> Electricity cost can increase by 74.7% before reaching break-even point.
+                                                                    {% else %}
+                                                                    安全边际 = ((盈亏平衡电价 - 当前电价) ÷ 当前电价) × 100%<br><br>
+                                                                    <strong>计算步骤:</strong><br>
+                                                                    1. 当前电价: $0.045/kWh<br>
+                                                                    2. 盈亏平衡电价: $0.0786/kWh<br>
+                                                                    3. 边际: ($0.0786 - $0.045) ÷ $0.045 = 74.7%<br><br>
+                                                                    <strong>含义:</strong> 电价可上涨74.7%才会达到盈亏平衡点。
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     
                                     <!-- 客户ROI图表容器 -->
-                                    <div class="mt-3 mb-5">
+                                    <div class="mt-3 mb-4">
                                         <div id="client-roi-chart" class="chart-container" style="height: 300px; position: relative;"></div>
+                                    </div>
+                                    
+                                    <!-- Break Even Point信息 -->
+                                    <div class="row mt-3 mb-4">
+                                        <div class="col-md-12">
+                                            <div class="card bg-success bg-opacity-10 border-success border-opacity-25">
+                                                <div class="card-body p-3">
+                                                    <h6 class="card-title text-success mb-3">{% if current_lang == 'en' %}Break Even Analysis{% else %}盈亏平衡分析{% endif %}</h6>
+                                                    <div class="row">
+                                                        <div class="col-md-3">
+                                                            <small class="text-muted">{% if current_lang == 'en' %}Break-even Month{% else %}盈亏平衡月份{% endif %}</small>
+                                                            <div id="breakeven-month-display" class="h6 text-success mb-0">Month 0</div>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <small class="text-muted">{% if current_lang == 'en' %}Cumulative Investment Recovery{% else %}累计投资回收{% endif %}</small>
+                                                            <div id="breakeven-recovery-amount" class="h6 text-success mb-0">$0.00</div>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <small class="text-muted">{% if current_lang == 'en' %}Break-even ROI%{% else %}盈亏平衡时ROI%{% endif %}</small>
+                                                            <div id="breakeven-roi-percent" class="h6 text-success mb-0">0.00%</div>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <small class="text-muted">{% if current_lang == 'en' %}Time to Break-even{% else %}盈亏平衡时间{% endif %}</small>
+                                                            <div id="breakeven-time-display" class="h6 text-success mb-0">0.0 years</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

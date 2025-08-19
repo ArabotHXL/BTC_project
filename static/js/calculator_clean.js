@@ -424,6 +424,35 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
+        // Break Even Point详细信息
+        if (data.roi && data.roi.client && data.roi.client.forecast) {
+            var breakeven = data.roi.client.forecast.find(point => point.break_even === true);
+            
+            // Break-even Month Display
+            var breakevenMonthDisplay = document.getElementById('breakeven-month-display');
+            if (breakevenMonthDisplay && breakeven) {
+                breakevenMonthDisplay.textContent = 'Month ' + breakeven.month;
+            }
+            
+            // Cumulative Investment Recovery
+            var breakevenRecoveryAmount = document.getElementById('breakeven-recovery-amount');
+            if (breakevenRecoveryAmount && breakeven) {
+                breakevenRecoveryAmount.textContent = '$' + breakeven.cumulative_profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+            
+            // Break-even ROI Percentage
+            var breakevenRoiPercent = document.getElementById('breakeven-roi-percent');
+            if (breakevenRoiPercent && breakeven) {
+                breakevenRoiPercent.textContent = breakeven.roi_percent.toFixed(2) + '%';
+            }
+            
+            // Time to Break-even
+            var breakevenTimeDisplay = document.getElementById('breakeven-time-display');
+            if (breakevenTimeDisplay && data.roi.client.payback_period_years) {
+                breakevenTimeDisplay.textContent = data.roi.client.payback_period_years.toFixed(1) + ' years';
+            }
+        }
+
         // 6个月、12个月、24个月、36个月的利润和ROI
         if (data.roi && data.roi.client && data.roi.client.forecast) {
             var forecast = data.roi.client.forecast;
