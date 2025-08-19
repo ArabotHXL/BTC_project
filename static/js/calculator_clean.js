@@ -483,9 +483,18 @@ document.addEventListener('DOMContentLoaded', function() {
             if (btcImpact && data.btc_mined && data.btc_price) {
                 var currentBtcPrice = data.btc_price;
                 var newBtcPrice = currentBtcPrice * 0.8; // 下跌20%
-                var priceDecrease = currentBtcPrice - newBtcPrice;
-                var annualBtcOutput = data.btc_mined.yearly || 0;
-                var annualImpact = priceDecrease * annualBtcOutput;
+                var priceDecrease = currentBtcPrice - newBtcPrice; // 价格差
+                var annualBtcOutput = data.btc_mined.yearly || 0; // 年度BTC产出
+                var annualImpact = priceDecrease * annualBtcOutput; // 年度损失 = 价格差 × 年产量
+                
+                // 显示详细计算信息
+                console.log('[SENSITIVITY] BTC Price Sensitivity Calculation:');
+                console.log('[SENSITIVITY] Current BTC Price: $' + currentBtcPrice.toLocaleString());
+                console.log('[SENSITIVITY] New BTC Price (-20%): $' + newBtcPrice.toLocaleString());
+                console.log('[SENSITIVITY] Price Decrease: $' + priceDecrease.toLocaleString());
+                console.log('[SENSITIVITY] Annual BTC Output: ' + annualBtcOutput.toFixed(3) + ' BTC');
+                console.log('[SENSITIVITY] Annual Impact: -$' + annualImpact.toLocaleString());
+                
                 btcImpact.textContent = '-$' + annualImpact.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
             }
 
