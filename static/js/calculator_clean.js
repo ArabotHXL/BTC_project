@@ -405,6 +405,65 @@ document.addEventListener('DOMContentLoaded', function() {
                 clientPaybackYears.textContent = 'N/A (No Investment)';
             }
         }
+
+        // 月度ROI百分比
+        var clientMonthlyRoi = document.getElementById('client-monthly-roi');
+        if (clientMonthlyRoi && data.client_profit && data.inputs) {
+            var monthlyReturn = (data.client_profit.monthly / data.inputs.client_investment) * 100;
+            clientMonthlyRoi.textContent = monthlyReturn.toFixed(2) + '%';
+        }
+
+        // 盈亏平衡月份
+        var clientBreakevenMonth = document.getElementById('client-breakeven-month');
+        if (clientBreakevenMonth && data.roi && data.roi.client && data.roi.client.forecast) {
+            var breakeven = data.roi.client.forecast.find(point => point.break_even === true);
+            if (breakeven) {
+                clientBreakevenMonth.textContent = 'Month ' + breakeven.month;
+            } else {
+                clientBreakevenMonth.textContent = 'Month ' + Math.ceil(data.roi.client.payback_period_months || 0);
+            }
+        }
+
+        // 6个月、12个月、24个月、36个月的利润和ROI
+        if (data.roi && data.roi.client && data.roi.client.forecast) {
+            var forecast = data.roi.client.forecast;
+            
+            // 6个月
+            var month6 = forecast.find(p => p.month === 6);
+            if (month6) {
+                var elem6Profit = document.getElementById('client-6month-profit');
+                var elem6Roi = document.getElementById('client-6month-roi');
+                if (elem6Profit) elem6Profit.textContent = '$' + month6.cumulative_profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                if (elem6Roi) elem6Roi.textContent = month6.roi_percent.toFixed(2) + '%';
+            }
+            
+            // 12个月
+            var month12 = forecast.find(p => p.month === 12);
+            if (month12) {
+                var elem12Profit = document.getElementById('client-12month-profit');
+                var elem12Roi = document.getElementById('client-12month-roi');
+                if (elem12Profit) elem12Profit.textContent = '$' + month12.cumulative_profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                if (elem12Roi) elem12Roi.textContent = month12.roi_percent.toFixed(2) + '%';
+            }
+            
+            // 24个月
+            var month24 = forecast.find(p => p.month === 24);
+            if (month24) {
+                var elem24Profit = document.getElementById('client-24month-profit');
+                var elem24Roi = document.getElementById('client-24month-roi');
+                if (elem24Profit) elem24Profit.textContent = '$' + month24.cumulative_profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                if (elem24Roi) elem24Roi.textContent = month24.roi_percent.toFixed(2) + '%';
+            }
+            
+            // 36个月
+            var month36 = forecast.find(p => p.month === 36);
+            if (month36) {
+                var elem36Profit = document.getElementById('client-36month-profit');
+                var elem36Roi = document.getElementById('client-36month-roi');
+                if (elem36Profit) elem36Profit.textContent = '$' + month36.cumulative_profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                if (elem36Roi) elem36Roi.textContent = month36.roi_percent.toFixed(2) + '%';
+            }
+        }
         
         // Additional Client Info
         var clientMinerCount = document.getElementById('client-miner-count');

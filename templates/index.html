@@ -812,22 +812,111 @@
                             <div class="row mt-4">
                                 <div class="col-md-12">
                                     <h6 class="mb-3 bg-info bg-opacity-10 p-2 rounded">{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Client ROI Analysis{% else %}客户投资回报{% endif %}{% else %}{% if current_lang == 'en' %}ROI Analysis{% else %}投资回报分析{% endif %}{% endif %}</h6>
-                                    <table class="table table-sm table-bordered">
-                                        <tbody>
-                                            <tr>
-                                                <td>{% if current_lang == 'en' %}Investment Amount{% else %}投资金额{% endif %}</td>
-                                                <td id="client-investment-amount" class="text-end">$0.00</td>
-                                                <td>{% if current_lang == 'en' %}Annual ROI{% else %}年化投资回报率{% endif %}</td>
-                                                <td id="client-annual-roi" class="text-end">0.00%</td>
-                                            </tr>
-                                            <tr>
-                                                <td>{% if current_lang == 'en' %}Payback Period{% else %}投资回收期{% endif %}</td>
-                                                <td id="client-payback-months" class="text-end">0 months</td>
-                                                <td>{% if current_lang == 'en' %}Years{% else %}回收期{% endif %}</td>
-                                                <td id="client-payback-years" class="text-end">0.00 years</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                    
+                                    <!-- 基础ROI信息 -->
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <table class="table table-sm table-bordered">
+                                                <tbody>
+                                                    <tr>
+                                                        <td>{% if current_lang == 'en' %}Investment Amount{% else %}投资金额{% endif %}</td>
+                                                        <td id="client-investment-amount" class="text-end">$0.00</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>{% if current_lang == 'en' %}Annual ROI{% else %}年化投资回报率{% endif %}</td>
+                                                        <td id="client-annual-roi" class="text-end">0.00%</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>{% if current_lang == 'en' %}Monthly ROI{% else %}月度回报率{% endif %}</td>
+                                                        <td id="client-monthly-roi" class="text-end">0.00%</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <table class="table table-sm table-bordered">
+                                                <tbody>
+                                                    <tr>
+                                                        <td>{% if current_lang == 'en' %}Payback Period{% else %}投资回收期{% endif %}</td>
+                                                        <td id="client-payback-months" class="text-end">0 months</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>{% if current_lang == 'en' %}Years{% else %}年份{% endif %}</td>
+                                                        <td id="client-payback-years" class="text-end">0.00 years</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>{% if current_lang == 'en' %}Break-even Month{% else %}盈亏平衡月份{% endif %}</td>
+                                                        <td id="client-breakeven-month" class="text-end">Month 0</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 详细财务分析 -->
+                                    <div class="row mt-3">
+                                        <div class="col-md-12">
+                                            <h6 class="text-info mb-2">{% if current_lang == 'en' %}Financial Projections{% else %}财务预测{% endif %}</h6>
+                                            <div class="row">
+                                                <div class="col-md-3">
+                                                    <table class="table table-sm table-bordered">
+                                                        <tbody>
+                                                            <tr class="table-success bg-opacity-25">
+                                                                <td><strong>{% if current_lang == 'en' %}6 Month Profit{% else %}6个月利润{% endif %}</strong></td>
+                                                                <td id="client-6month-profit" class="text-end fw-bold">$0.00</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>{% if current_lang == 'en' %}6M ROI%{% else %}6个月回报率{% endif %}</td>
+                                                                <td id="client-6month-roi" class="text-end">0.00%</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <table class="table table-sm table-bordered">
+                                                        <tbody>
+                                                            <tr class="table-warning bg-opacity-25">
+                                                                <td><strong>{% if current_lang == 'en' %}12 Month Profit{% else %}12个月利润{% endif %}</strong></td>
+                                                                <td id="client-12month-profit" class="text-end fw-bold">$0.00</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>{% if current_lang == 'en' %}12M ROI%{% else %}12个月回报率{% endif %}</td>
+                                                                <td id="client-12month-roi" class="text-end">0.00%</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <table class="table table-sm table-bordered">
+                                                        <tbody>
+                                                            <tr class="table-info bg-opacity-25">
+                                                                <td><strong>{% if current_lang == 'en' %}24 Month Profit{% else %}24个月利润{% endif %}</strong></td>
+                                                                <td id="client-24month-profit" class="text-end fw-bold">$0.00</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>{% if current_lang == 'en' %}24M ROI%{% else %}24个月回报率{% endif %}</td>
+                                                                <td id="client-24month-roi" class="text-end">0.00%</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <table class="table table-sm table-bordered">
+                                                        <tbody>
+                                                            <tr class="table-primary bg-opacity-25">
+                                                                <td><strong>{% if current_lang == 'en' %}36 Month Profit{% else %}36个月利润{% endif %}</strong></td>
+                                                                <td id="client-36month-profit" class="text-end fw-bold">$0.00</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>{% if current_lang == 'en' %}36M ROI%{% else %}36个月回报率{% endif %}</td>
+                                                                <td id="client-36month-roi" class="text-end">0.00%</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                     
                                     <!-- 客户ROI图表容器 -->
                                     <div class="mt-3 mb-5">
