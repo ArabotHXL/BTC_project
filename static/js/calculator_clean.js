@@ -464,6 +464,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (elem36Roi) elem36Roi.textContent = month36.roi_percent.toFixed(2) + '%';
             }
         }
+
+        // 风险分析和敏感性分析
+        if (data.inputs && data.client_profit) {
+            // 电价敏感性分析 - 电价上涨10%对年度利润的影响
+            var electricityImpact = document.getElementById('electricity-impact-profit');
+            if (electricityImpact && data.inputs.client_electricity_cost) {
+                var currentElectricityCost = data.inputs.client_electricity_cost;
+                var newElectricityCost = currentElectricityCost * 1.1; // 上涨10%
+                var costIncrease = newElectricityCost - currentElectricityCost;
+                var annualPowerConsumption = (data.inputs.total_power || 0) / 1000 * 24 * 365; // kWh per year
+                var annualImpact = costIncrease * annualPowerConsumption;
+                electricityImpact.textContent = '-$' + annualImpact.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+            }
+
+            // BTC价格敏感性分析 - BTC价格下跌20%对年度利润的影响
+            var btcImpact = document.getElementById('btc-impact-profit');
+            if (btcImpact && data.btc_mined && data.btc_price) {
+                var currentBtcPrice = data.btc_price;
+                var newBtcPrice = currentBtcPrice * 0.8; // 下跌20%
+                var priceDecrease = currentBtcPrice - newBtcPrice;
+                var annualBtcOutput = data.btc_mined.yearly || 0;
+                var annualImpact = priceDecrease * annualBtcOutput;
+                btcImpact.textContent = '-$' + annualImpact.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+            }
+
+            // 安全边际计算
+            var safetyMargin = document.getElementById('safety-margin');
+            if (safetyMargin && data.client_profit && data.break_even) {
+                var currentProfit = data.client_profit.monthly || 0;
+                var breakEvenElectricity = data.break_even.electricity_cost || 0;
+                var currentElectricity = data.inputs.client_electricity_cost || 0;
+                
+                if (currentElectricity > 0 && breakEvenElectricity > 0) {
+                    var margin = ((breakEvenElectricity - currentElectricity) / currentElectricity) * 100;
+                    safetyMargin.textContent = margin.toFixed(1) + '%';
+                } else {
+                    safetyMargin.textContent = 'N/A';
+                }
+            }
+        }
         
         // Additional Client Info
         var clientMinerCount = document.getElementById('client-miner-count');
