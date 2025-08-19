@@ -306,23 +306,68 @@ document.addEventListener('DOMContentLoaded', function() {
         // ROI Information
         var clientInvestmentAmount = document.getElementById('client-investment-amount');
         if (clientInvestmentAmount && data.inputs) {
-            clientInvestmentAmount.textContent = '$' + (data.inputs.client_investment || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            var investment = data.inputs.client_investment || 0;
+            console.log('[CALCULATOR] Client investment:', investment);
+            clientInvestmentAmount.textContent = '$' + investment.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
         
         var clientAnnualRoi = document.getElementById('client-annual-roi');
-        if (clientAnnualRoi && data.roi && data.roi.client_annual_roi !== undefined) {
-            clientAnnualRoi.textContent = (data.roi.client_annual_roi || 0).toFixed(2) + '%';
+        if (clientAnnualRoi && data.roi) {
+            var roi = data.roi.client_annual_roi;
+            console.log('[CALCULATOR] Client annual ROI:', roi);
+            if (roi !== undefined && roi !== null && isFinite(roi)) {
+                clientAnnualRoi.textContent = roi.toFixed(2) + '%';
+            } else {
+                clientAnnualRoi.textContent = '0.00%';
+            }
         }
         
         var clientPaybackMonths = document.getElementById('client-payback-months');
-        if (clientPaybackMonths && data.roi && data.roi.client_payback_months !== undefined) {
+        if (clientPaybackMonths && data.roi) {
             var months = data.roi.client_payback_months;
-            clientPaybackMonths.textContent = months > 0 ? months.toFixed(0) + ' months' : '0 months';
+            console.log('[CALCULATOR] Client payback months:', months);
+            if (months !== undefined && months !== null && isFinite(months) && months > 0) {
+                clientPaybackMonths.textContent = months.toFixed(0) + ' months';
+            } else {
+                clientPaybackMonths.textContent = '0 months';
+            }
         }
         
         var clientPaybackYears = document.getElementById('client-payback-years');
-        if (clientPaybackYears && data.roi && data.roi.client_payback_years !== undefined) {
-            clientPaybackYears.textContent = (data.roi.client_payback_years || 0).toFixed(2) + ' years';
+        if (clientPaybackYears && data.roi) {
+            var years = data.roi.client_payback_years;
+            console.log('[CALCULATOR] Client payback years:', years);
+            if (years !== undefined && years !== null && isFinite(years) && years > 0) {
+                clientPaybackYears.textContent = years.toFixed(2) + ' years';
+            } else {
+                clientPaybackYears.textContent = '0.00 years';
+            }
+        }
+        
+        // Additional Client Info
+        var clientMinerCount = document.getElementById('client-miner-count');
+        if (clientMinerCount && data.inputs) {
+            clientMinerCount.textContent = data.inputs.miner_count || 0;
+        }
+        
+        var clientRunningMiners = document.getElementById('client-running-miners');
+        if (clientRunningMiners && data.curtailment_details) {
+            clientRunningMiners.textContent = data.curtailment_details.running_miners || data.inputs.miner_count || 0;
+        }
+        
+        var clientShutdownMiners = document.getElementById('client-shutdown-miners');
+        if (clientShutdownMiners && data.curtailment_details) {
+            clientShutdownMiners.textContent = data.curtailment_details.shutdown_miners || 0;
+        }
+        
+        var clientBreakEvenElec = document.getElementById('client-break-even-electricity');
+        if (clientBreakEvenElec && data.break_even) {
+            clientBreakEvenElec.textContent = '$' + (data.break_even.electricity_cost || 0).toFixed(4) + '/kWh';
+        }
+        
+        var clientBreakEvenBtc = document.getElementById('client-break-even-btc');
+        if (clientBreakEvenBtc && data.break_even) {
+            clientBreakEvenBtc.textContent = '$' + (data.break_even.btc_price || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
         
         // Mining Details
@@ -342,24 +387,36 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Network and Mining Details Table
-        var networkDifficulty = document.getElementById('network-difficulty-result');
+        var networkDifficulty = document.getElementById('network-difficulty-value');
         if (networkDifficulty && data.network_data) {
             networkDifficulty.textContent = (data.network_data.difficulty / 1e12).toFixed(1) + ' T';
         }
         
-        var networkHashrate = document.getElementById('network-hashrate-result');
+        var networkHashrate = document.getElementById('network-hashrate-value');
         if (networkHashrate && data.network_data) {
             networkHashrate.textContent = data.network_data.hashrate.toFixed(2) + ' EH/s';
         }
         
-        var btcPriceResult = document.getElementById('btc-price-result');
+        var btcPriceResult = document.getElementById('current-btc-price-value');
         if (btcPriceResult && data.btc_price) {
             btcPriceResult.textContent = '$' + data.btc_price.toLocaleString('en-US');
         }
         
-        var blockReward = document.getElementById('block-reward-result');
+        var blockReward = document.getElementById('block-reward-value');
         if (blockReward && data.network_data) {
             blockReward.textContent = (data.network_data.block_reward || 3.125).toFixed(3) + ' BTC';
+        }
+        
+        // Total Site Hashrate  
+        var totalHashrate = document.getElementById('total-hashrate-result');
+        if (totalHashrate && data.inputs) {
+            totalHashrate.textContent = (data.inputs.effective_hashrate || 0).toLocaleString('en-US') + ' TH/s';
+        }
+        
+        // BTC per TH daily
+        var btcPerTh = document.getElementById('btc-per-th-daily');
+        if (btcPerTh && data.btc_mined) {
+            btcPerTh.textContent = (data.btc_mined.per_th_daily || 0).toFixed(8);
         }
         
         // Timestamp
