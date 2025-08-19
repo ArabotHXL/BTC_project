@@ -1,7 +1,11 @@
 // Bitcoin Mining Calculator - Main JavaScript
 document.addEventListener('DOMContentLoaded', function() {
-    // 元素引用 (Element references)
-    var btcPriceEl = document.getElementById('btc-price');
+    console.log('🚀🚀🚀 DOMContentLoaded 事件触发!');
+    console.log('📍📍📍 开始执行main_new.js...');
+    
+    try {
+        // 元素引用 (Element references)
+        var btcPriceEl = document.getElementById('btc-price');
     var networkDifficultyEl = document.getElementById('network-difficulty');
     var networkHashrateEl = document.getElementById('network-hashrate');
     var blockRewardEl = document.getElementById('block-reward');
@@ -1727,6 +1731,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // 调用初始化函数 (Call init function)
-    init();
+        // 调用初始化函数 (Call init function)
+        console.log('🔧🔧🔧 准备调用init()函数...');
+        init();
+        console.log('✅✅✅ init()函数调用完成!');
+        
+    } catch (error) {
+        console.error('❌❌❌ JavaScript执行错误:', error);
+        console.error('错误堆栈:', error.stack);
+    }
 });
