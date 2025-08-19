@@ -456,7 +456,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (breakeven) {
                     breakevenRecoveryAmount.textContent = '$' + breakeven.cumulative_profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 } else {
-                    var clientInvestment = parseFloat(document.getElementById('client_investment').value) || 0;
+                    // 从data中获取客户投资金额，而不是DOM元素
+                    var clientInvestment = (data.inputs && data.inputs.client_investment) || 0;
                     breakevenRecoveryAmount.textContent = '$' + clientInvestment.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 }
             }
