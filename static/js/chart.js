@@ -183,15 +183,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const roi = data.roi;
+        console.log("Chart generation - ROI data:", roi);
         
         // Generate Host ROI Chart
         if (roi.host && document.getElementById('host-roi-chart')) {
+            console.log("Generating Host ROI chart...");
             generateHostRoiChart(roi.host, data.inputs);
+        } else {
+            console.log("Host ROI chart not generated - roi.host:", !!roi.host, "container:", !!document.getElementById('host-roi-chart'));
         }
         
         // Generate Client ROI Chart
         if (roi.client && document.getElementById('client-roi-chart')) {
+            console.log("Generating Client ROI chart...");
             generateClientRoiChart(roi.client, data.inputs);
+        } else {
+            console.log("Client ROI chart not generated - roi.client:", !!roi.client, "container:", !!document.getElementById('client-roi-chart'));
         }
     };
 
