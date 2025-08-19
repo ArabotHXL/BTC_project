@@ -115,13 +115,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (hashrate && power) {
                     document.getElementById('hashrate').value = hashrate[1];
                     document.getElementById('power-consumption').value = power[1];
+                    console.log('[CALCULATOR.JS] Miner selected:', selectedOption.textContent, 'Hashrate:', hashrate[1], 'Power:', power[1]);
                     updateTotals();
                 }
             }
         });
     }
     
-    // Update totals
+    // Update totals and sync power calculations
     function updateTotals() {
         var hashrate = parseFloat(document.getElementById('hashrate').value) || 0;
         var power = parseFloat(document.getElementById('power-consumption').value) || 0;
@@ -130,21 +131,69 @@ document.addEventListener('DOMContentLoaded', function() {
         var totalHashrate = hashrate * minerCount;
         var totalPower = power * minerCount;
         
-        document.getElementById('total-hashrate').value = totalHashrate;
-        document.getElementById('total-power').value = totalPower;
-        document.getElementById('total-hashrate-display').value = totalHashrate.toFixed(2) + ' TH/s';
-        document.getElementById('total-power-display').value = (totalPower / 1000).toFixed(2) + ' kW';
+        // 更新总算力和总功耗显示
+        var totalHashrateField = document.getElementById('total-hashrate');
+        var totalPowerField = document.getElementById('total-power');
         
-        console.log('[CALCULATOR.JS] Totals updated:', totalHashrate, 'TH/s,', totalPower, 'W');
+        if (totalHashrateField) totalHashrateField.value = totalHashrate.toFixed(2);
+        if (totalPowerField) totalPowerField.value = totalPower.toFixed(0);
+        
+        // 更新显示字段
+        var totalHashrateDisplay = document.getElementById('total-hashrate-display');
+        var totalPowerDisplay = document.getElementById('total-power-display');
+        
+        if (totalHashrateDisplay) totalHashrateDisplay.value = totalHashrate.toFixed(2);
+        if (totalPowerDisplay) totalPowerDisplay.value = totalPower.toFixed(0);
+        
+        // 更新Site Power (MW) 基于矿机数量和单台功耗
+        var sitePowerField = document.getElementById('site-power-mw');
+        if (sitePowerField && power > 0) {
+            var sitePowerMW = (totalPower / 1000000).toFixed(3); // 转换为MW
+            sitePowerField.value = sitePowerMW;
+        }
+        
+        console.log('[CALCULATOR.JS] Totals updated:', totalHashrate.toFixed(2), 'TH/s,', totalPower, 'W,', (totalPower/1000000).toFixed(2), 'MW');
     }
     
-    // Watch for changes
+    // 根据Site Power (MW) 自动计算矿机数量
+    function updateMinerCountFromSitePower() {
+        var sitePowerMW = parseFloat(document.getElementById('site-power-mw').value) || 0;
+        var power = parseFloat(document.getElementById('power-consumption').value) || 3250; // 默认功耗
+        
+        if (sitePowerMW > 0 && power > 0) {
+            var sitePowerWatts = sitePowerMW * 1000000; // MW转换为W
+            var calculatedMinerCount = Math.floor(sitePowerWatts / power);
+            
+            var minerCountField = document.getElementById('miner-count');
+            if (minerCountField) {
+                minerCountField.value = calculatedMinerCount;
+                console.log('[CALCULATOR.JS] Updated miner count from site power:', calculatedMinerCount, 'miners for', sitePowerMW, 'MW');
+                updateTotals(); // 更新其他字段
+            }
+        }
+    }
+    
+    // Watch for changes in miner-related fields
     ['hashrate', 'power-consumption', 'miner-count'].forEach(function(id) {
         var element = document.getElementById(id);
         if (element) {
             element.addEventListener('input', updateTotals);
         }
     });
+    
+    // Watch for Site Power (MW) changes
+    var sitePowerField = document.getElementById('site-power-mw');
+    if (sitePowerField) {
+        sitePowerField.addEventListener('input', updateMinerCountFromSitePower);
+    }
+    
+    // 初始化时调用一次updateTotals
+    setTimeout(function() {
+        if (document.getElementById('miner-count').value && document.getElementById('power-consumption').value) {
+            updateTotals();
+            console.log('[CALCULATOR.JS] Initial totals calculation completed');
+        }
+    }, 500);
     
     // Handle form submission
     form.addEventListener('submit', function(e) {
