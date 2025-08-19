@@ -188,9 +188,18 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(result => {
             console.log('[CALCULATOR] Result:', result);
             if (result.success !== false) {
-                displayResults(result);
-                var resultsCard = document.getElementById('results-card');
-                if (resultsCard) resultsCard.style.display = 'block';
+                try {
+                    displayResults(result);
+                    var resultsCard = document.getElementById('results-card');
+                    if (resultsCard) resultsCard.style.display = 'block';
+                } catch (displayError) {
+                    console.error('[CALCULATOR] Display error details:', {
+                        message: displayError.message,
+                        stack: displayError.stack,
+                        name: displayError.name
+                    });
+                    alert('Display error: ' + displayError.message);
+                }
             } else {
                 alert('Calculation error: ' + (result.error || 'Unknown error'));
             }
@@ -236,7 +245,18 @@ document.addEventListener('DOMContentLoaded', function() {
             var diffElement = document.getElementById('algorithm-difference');
             if (diffElement && data.btc_mined.method1 && data.btc_mined.method2) {
                 var diff = Math.abs(data.btc_mined.method1.daily - data.btc_mined.method2.daily);
-                var percent = (diff / data.btc_mined.method1.daily * 100).toFixed(2);
+                // Add defensive programming to prevent toFixed() error on NaN/Infinity
+                var percent = 0;
+                if (data.btc_mined.method1.daily > 0 && isFinite(diff) && isFinite(data.btc_mined.method1.daily)) {
+                    percent = (diff / data.btc_mined.method1.daily * 100);
+                    if (isFinite(percent)) {
+                        percent = percent.toFixed(2);
+                    } else {
+                        percent = '0.00';
+                    }
+                } else {
+                    percent = '0.00';
+                }
                 if (currentLang === 'en') {
                     diffElement.textContent = 'Difference: ' + percent + '%';
                 } else {
