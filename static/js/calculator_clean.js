@@ -488,6 +488,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         console.log('[CALCULATOR] Results displayed');
+        
+        // Generate ROI Charts if chart functionality is available
+        if (typeof generateRoiCharts === 'function') {
+            console.log('[CALCULATOR] Generating ROI charts...');
+            generateRoiCharts(data);
+        }
     }
     
     // Initialize

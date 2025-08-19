@@ -170,4 +170,188 @@ document.addEventListener('DOMContentLoaded', () => {
             chartContainer.appendChild(errorDiv);
         }
     }
+
+    // ROI Chart Generation Functions
+    let hostRoiChart = null;
+    let clientRoiChart = null;
+
+    // Function to generate ROI charts from calculation results
+    window.generateRoiCharts = function(data) {
+        if (!data || !data.roi) {
+            console.log("No ROI data available for charts");
+            return;
+        }
+
+        const roi = data.roi;
+        
+        // Generate Host ROI Chart
+        if (roi.host && document.getElementById('host-roi-chart')) {
+            generateHostRoiChart(roi.host, data.inputs);
+        }
+        
+        // Generate Client ROI Chart
+        if (roi.client && document.getElementById('client-roi-chart')) {
+            generateClientRoiChart(roi.client, data.inputs);
+        }
+    };
+
+    function generateHostRoiChart(hostRoi, inputs) {
+        const container = document.getElementById('host-roi-chart');
+        if (!container || !hostRoi) return;
+
+        // Clear previous chart
+        if (hostRoiChart) {
+            hostRoiChart.destroy();
+        }
+
+        container.innerHTML = '<canvas id="host-roi-canvas"></canvas>';
+        const canvas = document.getElementById('host-roi-canvas');
+
+        // Generate data points for ROI progression
+        const months = [];
+        const cumulativeProfit = [];
+        const roiPercentage = [];
+        
+        const monthlyProfit = hostRoi.annual_profit / 12;
+        const investment = inputs.host_investment;
+        
+        for (let i = 1; i <= 24; i++) { // 2 years projection
+            months.push(i);
+            const totalProfit = monthlyProfit * i;
+            cumulativeProfit.push(totalProfit);
+            roiPercentage.push((totalProfit / investment) * 100);
+        }
+
+        hostRoiChart = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: months.map(m => m + 'M'),
+                datasets: [{
+                    label: 'ROI %',
+                    data: roiPercentage,
+                    borderColor: 'rgb(255, 193, 7)',
+                    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'ROI (%)'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Months'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Host ROI Progression',
+                        color: 'rgb(255, 193, 7)'
+                    },
+                    legend: {
+                        labels: {
+                            color: 'rgba(255, 255, 255, 0.8)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function generateClientRoiChart(clientRoi, inputs) {
+        const container = document.getElementById('client-roi-chart');
+        if (!container || !clientRoi) return;
+
+        // Clear previous chart
+        if (clientRoiChart) {
+            clientRoiChart.destroy();
+        }
+
+        container.innerHTML = '<canvas id="client-roi-canvas"></canvas>';
+        const canvas = document.getElementById('client-roi-canvas');
+
+        // Generate data points for ROI progression
+        const months = [];
+        const cumulativeProfit = [];
+        const roiPercentage = [];
+        
+        const monthlyProfit = clientRoi.annual_profit / 12;
+        const investment = inputs.client_investment;
+        
+        for (let i = 1; i <= Math.min(60, Math.ceil(clientRoi.payback_period_months * 1.5)); i++) { // Project beyond payback
+            months.push(i);
+            const totalProfit = monthlyProfit * i;
+            cumulativeProfit.push(totalProfit);
+            roiPercentage.push((totalProfit / investment) * 100);
+        }
+
+        clientRoiChart = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: months.map(m => m + 'M'),
+                datasets: [{
+                    label: 'ROI %',
+                    data: roiPercentage,
+                    borderColor: 'rgb(40, 167, 69)',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'ROI (%)'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Months'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Client ROI Progression',
+                        color: 'rgb(40, 167, 69)'
+                    },
+                    legend: {
+                        labels: {
+                            color: 'rgba(255, 255, 255, 0.8)'
+                        }
+                    }
+                }
+            }
+        });
+    }
 });
