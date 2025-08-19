@@ -177,6 +177,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to generate ROI charts from calculation results
     window.generateRoiCharts = function(data) {
+        console.log("generateRoiCharts called");
+        
+        // Check if Chart.js is loaded
+        if (typeof Chart === 'undefined') {
+            console.error("Chart.js is not loaded!");
+            return;
+        }
+        
         if (!data || !data.roi) {
             console.log("No ROI data available for charts");
             return;
@@ -203,16 +211,27 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function generateHostRoiChart(hostRoi, inputs) {
+        console.log("generateHostRoiChart called with:", hostRoi, inputs);
         const container = document.getElementById('host-roi-chart');
-        if (!container || !hostRoi) return;
+        console.log("Host chart container found:", !!container);
+        if (!container) {
+            console.error("Host ROI chart container not found in DOM");
+            return;
+        }
+        if (!hostRoi) {
+            console.error("Host ROI data is missing");
+            return;
+        }
 
         // Clear previous chart
         if (hostRoiChart) {
+            console.log("Destroying previous host chart");
             hostRoiChart.destroy();
         }
 
         container.innerHTML = '<canvas id="host-roi-canvas"></canvas>';
         const canvas = document.getElementById('host-roi-canvas');
+        console.log("Host canvas created:", !!canvas);
 
         // Generate data points for ROI progression
         const months = [];
@@ -229,7 +248,8 @@ document.addEventListener('DOMContentLoaded', () => {
             roiPercentage.push((totalProfit / investment) * 100);
         }
 
-        hostRoiChart = new Chart(canvas, {
+        try {
+            hostRoiChart = new Chart(canvas, {
             type: 'line',
             data: {
                 labels: months.map(m => m + 'M'),
@@ -280,19 +300,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+        console.log("Host ROI chart created successfully");
+        } catch (error) {
+            console.error("Error creating host ROI chart:", error);
+        }
     }
 
     function generateClientRoiChart(clientRoi, inputs) {
+        console.log("generateClientRoiChart called with:", clientRoi, inputs);
         const container = document.getElementById('client-roi-chart');
-        if (!container || !clientRoi) return;
+        console.log("Client chart container found:", !!container);
+        if (!container) {
+            console.error("Client ROI chart container not found in DOM");
+            return;
+        }
+        if (!clientRoi) {
+            console.error("Client ROI data is missing");
+            return;
+        }
 
         // Clear previous chart
         if (clientRoiChart) {
+            console.log("Destroying previous client chart");
             clientRoiChart.destroy();
         }
 
         container.innerHTML = '<canvas id="client-roi-canvas"></canvas>';
         const canvas = document.getElementById('client-roi-canvas');
+        console.log("Client canvas created:", !!canvas);
 
         // Generate data points for ROI progression
         const months = [];
@@ -309,7 +344,8 @@ document.addEventListener('DOMContentLoaded', () => {
             roiPercentage.push((totalProfit / investment) * 100);
         }
 
-        clientRoiChart = new Chart(canvas, {
+        try {
+            clientRoiChart = new Chart(canvas, {
             type: 'line',
             data: {
                 labels: months.map(m => m + 'M'),
@@ -360,5 +396,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+        console.log("Client ROI chart created successfully");
+        } catch (error) {
+            console.error("Error creating client ROI chart:", error);
+        }
     }
 });
