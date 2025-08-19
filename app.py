@@ -1253,10 +1253,10 @@ def calculate_internal(request_obj):
         
         # 添加错误处理来确保即使API调用失败计算仍能继续
         try:
-            # 计算挖矿盈利能力 - 使用计算得到的总算力和总功耗
+            # 计算挖矿盈利能力 - 传递正确的参数
             result = calculate_mining_profitability(
-                hashrate=0,  # 不传递hashrate，让mining_calculator.py从miner_model计算
-                power_consumption=0,  # 不传递power_consumption，让mining_calculator.py从miner_model计算
+                hashrate=total_hashrate,  # 传递计算得到的总算力
+                power_consumption=total_power,  # 传递计算得到的总功耗
                 electricity_cost=electricity_cost,
                 client_electricity_cost=client_electricity_cost,
                 btc_price=btc_price if not use_real_time else None,
