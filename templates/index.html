@@ -52,6 +52,12 @@
         #network-stats-container {
             flex: 1;
             justify-content: center;
+            align-items: center;
+        }
+        
+        .stats-item {
+            white-space: nowrap;
+            margin: 0 0.5rem;
         }
         
         .dropdown.ms-auto {
@@ -65,11 +71,12 @@
             }
             header .container {
                 flex-direction: column;
-                gap: 1rem;
+                gap: 0.5rem;
             }
             header h1 {
                 font-size: 1.2rem;
                 text-align: center;
+                margin-bottom: 0.5rem;
             }
             .d-flex.gap-2 {
                 flex-direction: column;
@@ -85,6 +92,17 @@
             #network-stats-container {
                 justify-content: center;
                 order: -1; /* 移动端时网络统计在上面 */
+                flex-wrap: wrap;
+                gap: 0.5rem !important;
+            }
+            
+            .stats-item {
+                font-size: 0.875rem;
+                margin: 0 0.25rem;
+            }
+            
+            .stats-item .badge {
+                font-size: 0.7rem;
             }
             
             .btn-group {
@@ -133,58 +151,53 @@
             <div class="container d-flex align-items-center justify-content-between">
                 <h1 class="fs-4">{% if current_lang == 'en' %}Bitcoin Mining Calculator{% else %}比特币挖矿计算器{% endif %}</h1>
                 
-                <div class="d-flex gap-2 gap-md-4 align-items-center flex-wrap">
-                    <!-- 批量计算器按钮 -->
-                    <div class="btn-group btn-group-sm me-3">
-                        <a href="{{ url_for('batch_calculator.batch_calculator') }}" class="btn btn-outline-primary">
-                            <i class="bi bi-calculator-fill me-1"></i>
-                            {% if current_lang == 'en' %}Batch Calculator{% else %}批量计算器{% endif %}
-                        </a>
-                    </div>
-                    
-                    <!-- CRM系统按钮 (对特定角色显示) -->
-                    {% if session.role in ['owner', 'admin'] %}
-                    <div class="btn-group btn-group-sm me-3">
-                        <a href="/crm" class="btn btn-outline-info">
-                            <i class="bi bi-people-fill me-1"></i>
-                            {% if current_lang == 'en' %}CRM System{% else %}客户管理系统{% endif %}
-                        </a>
-                    </div>
-                    {% endif %}
-                    
-                    <!-- 主页按钮 / Home Button -->
-                    <div class="me-3">
+                <div class="d-flex gap-2 gap-md-3 align-items-center flex-wrap justify-content-between w-100">
+                    <!-- Left side navigation -->
+                    <div class="d-flex gap-2 align-items-center flex-wrap">
+                        <!-- 主页按钮 / Home Button -->
                         <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">
                             <i class="bi bi-house-door me-1"></i>
                             {% if current_lang == 'en' %}Home{% else %}主页{% endif %}
                         </a>
-                    </div>
-                    
-                    <!-- 语言切换 / Language Switcher -->
-                    <div class="d-flex align-items-center">
-                        <div class="btn-group btn-group-sm me-3" role="group">
+                        
+                        <!-- 批量计算器按钮 -->
+                        <a href="{{ url_for('batch_calculator.batch_calculator') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-calculator-fill me-1"></i>
+                            {% if current_lang == 'en' %}Batch Calculator{% else %}批量计算器{% endif %}
+                        </a>
+                        
+                        <!-- CRM系统按钮 (对特定角色显示) -->
+                        {% if session.role in ['owner', 'admin'] %}
+                        <a href="/crm" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-people-fill me-1"></i>
+                            {% if current_lang == 'en' %}CRM System{% else %}客户管理系统{% endif %}
+                        </a>
+                        {% endif %}
+                        
+                        <!-- 语言切换 / Language Switcher -->
+                        <div class="btn-group btn-group-sm" role="group">
                             <a href="/mining-calculator?lang=zh" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
                             <a href="/mining-calculator?lang=en" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}">English</a>
                         </div>
                     </div>
                     
-                    <!-- Network Stats -->
-                    <div id="network-stats-container" class="d-flex gap-3 text-center me-auto">
-                        <div class="stats-item">
-                            <span class="badge bg-warning text-dark fw-bold">{% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}</span>
-                            <span id="btc-price" class="stats-value fw-bold text-white">$115,598</span>
+                    <!-- Network Stats - Improved Layout -->
+                    <div id="network-stats-container" class="d-flex gap-2 text-center flex-wrap justify-content-center">
+                        <div class="stats-item d-flex align-items-center">
+                            <span class="badge bg-warning text-dark me-1">{% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}</span>
+                            <strong id="btc-price" class="text-warning fs-6">$112,834</strong>
                         </div>
-                        <div class="stats-item">
-                            <span class="badge bg-info text-dark fw-bold">{% if current_lang == 'en' %}Difficulty{% else %}难度{% endif %}</span>
-                            <span id="network-difficulty" class="stats-value fw-bold text-white">129.44T</span>
+                        <div class="stats-item d-flex align-items-center">
+                            <span class="badge bg-info text-dark me-1">{% if current_lang == 'en' %}Difficulty{% else %}难度{% endif %}</span>
+                            <strong id="network-difficulty" class="text-info fs-6">129.44T</strong>
                         </div>
-                        <div class="stats-item">
-                            <span class="badge bg-danger text-white fw-bold">{% if current_lang == 'en' %}Network Hashrate{% else %}网络算力{% endif %}</span>
-                            <span id="network-hashrate" class="stats-value fw-bold text-white">932.97 EH/s</span>
+                        <div class="stats-item d-flex align-items-center">
+                            <span class="badge bg-danger text-white me-1">{% if current_lang == 'en' %}Network Hashrate{% else %}网络算力{% endif %}</span>
+                            <strong id="network-hashrate" class="text-danger fs-6">868.63 EH/s</strong>
                         </div>
-                        <div class="stats-item">
-                            <span class="badge bg-success text-white fw-bold">{% if current_lang == 'en' %}Block Reward{% else %}区块奖励{% endif %}</span>
-                            <span id="block-reward" class="stats-value fw-bold text-white">3.14243755 BTC</span>
+                        <div class="stats-item d-flex align-items-center">
+                            <span class="badge bg-success text-white me-1">{% if current_lang == 'en' %}Block Reward{% else %}区块奖励{% endif %}</span>
+                            <strong id="block-reward" class="text-success fs-6">3.15445019 BTC</strong>
                         </div>
                     </div>
                     
