@@ -323,7 +323,74 @@ document.addEventListener('DOMContentLoaded', function() {
             clientYearlyProfit.textContent = '$' + data.client_profit.yearly.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
         
-        // ROI Information
+        // Host ROI Information - 矿场主投资回报信息
+        var hostInvestmentAmount = document.getElementById('host-investment-amount');
+        if (hostInvestmentAmount && data.inputs) {
+            var hostInvestment = data.inputs.host_investment || 0;
+            console.log('[CALCULATOR] Host investment:', hostInvestment);
+            hostInvestmentAmount.textContent = '$' + hostInvestment.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        
+        var hostAnnualRoi = document.getElementById('host-annual-roi');
+        if (hostAnnualRoi) {
+            var hostROI = null;
+            if (data.roi && data.roi.host) {
+                hostROI = data.roi.host;
+            }
+            
+            if (hostROI && hostROI.roi_percent_annual !== null && hostROI.roi_percent_annual !== undefined && isFinite(hostROI.roi_percent_annual)) {
+                var roi = hostROI.roi_percent_annual;
+                console.log('[CALCULATOR] Host annual ROI:', roi);
+                hostAnnualRoi.textContent = roi.toFixed(2) + '%';
+            } else if (data.inputs && data.inputs.host_investment > 0 && data.profit && data.profit.host_monthly) {
+                var annualProfit = data.profit.host_monthly * 12;
+                var manualRoi = (annualProfit / data.inputs.host_investment) * 100;
+                console.log('[CALCULATOR] Host manual ROI calculation:', manualRoi);
+                hostAnnualRoi.textContent = manualRoi.toFixed(2) + '%';
+            } else {
+                hostAnnualRoi.textContent = '0.00%';
+            }
+        }
+        
+        var hostPaybackMonths = document.getElementById('host-payback-months');
+        if (hostPaybackMonths) {
+            var hostROI = null;
+            if (data.roi && data.roi.host) {
+                hostROI = data.roi.host;
+            }
+            
+            if (hostROI && hostROI.payback_period_months !== null && hostROI.payback_period_months !== undefined && isFinite(hostROI.payback_period_months) && hostROI.payback_period_months > 0) {
+                var months = hostROI.payback_period_months;
+                console.log('[CALCULATOR] Host payback months:', months);
+                hostPaybackMonths.textContent = months.toFixed(1) + ' months';
+            } else if (data.inputs && data.inputs.host_investment > 0 && data.profit && data.profit.host_monthly && data.profit.host_monthly > 0) {
+                var manualMonths = data.inputs.host_investment / data.profit.host_monthly;
+                hostPaybackMonths.textContent = manualMonths.toFixed(0) + ' months';
+            } else {
+                hostPaybackMonths.textContent = 'N/A';
+            }
+        }
+        
+        var hostPaybackYears = document.getElementById('host-payback-years');
+        if (hostPaybackYears) {
+            var hostROI = null;
+            if (data.roi && data.roi.host) {
+                hostROI = data.roi.host;
+            }
+            
+            if (hostROI && hostROI.payback_period_years !== null && hostROI.payback_period_years !== undefined && isFinite(hostROI.payback_period_years) && hostROI.payback_period_years > 0) {
+                var years = hostROI.payback_period_years;
+                console.log('[CALCULATOR] Host payback years:', years);
+                hostPaybackYears.textContent = years.toFixed(2) + ' years';
+            } else if (data.inputs && data.inputs.host_investment > 0 && data.profit && data.profit.host_monthly && data.profit.host_monthly > 0) {
+                var manualYears = data.inputs.host_investment / (data.profit.host_monthly * 12);
+                hostPaybackYears.textContent = manualYears.toFixed(2) + ' years';
+            } else {
+                hostPaybackYears.textContent = 'N/A';
+            }
+        }
+
+        // Client ROI Information - 客户投资回报信息  
         var clientInvestmentAmount = document.getElementById('client-investment-amount');
         if (clientInvestmentAmount && data.inputs) {
             var investment = data.inputs.client_investment || 0;
