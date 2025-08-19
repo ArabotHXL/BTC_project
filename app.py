@@ -707,7 +707,14 @@ def calculator():
         if not os.environ.get("DATABASE_URL"):
             logging.error("DATABASE_URL environment variable not set")
         
-        return render_template('index.html')
+        # 获取当前语言设置
+        current_lang = session.get('language', 'en')
+        
+        # 传递所有必需的变量
+        return render_template('index.html',
+                             current_lang=current_lang,
+                             session=session,
+                             g=g)
     except Exception as e:
         logging.error(f"Calculator route error: {e}")
         # 对于健康检查，返回简单状态而不是错误页面
