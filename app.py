@@ -710,7 +710,7 @@ def calculator():
         # 获取当前语言设置
         current_lang = session.get('language', 'en')
         
-        # 传递所有必需的变量
+        # 简化模板变量，移除有问题的函数调用
         return render_template('index.html',
                              current_lang=current_lang,
                              session=session,

@@ -147,9 +147,9 @@
                     </div>
                     
                     <!-- CRM系统按钮 (对特定角色显示) -->
-                    {% if user_has_crm_access() %}
+                    {% if session.role in ['owner', 'admin'] %}
                     <div class="btn-group btn-group-sm me-3">
-                        <a href="{{ url_for('crm.dashboard') }}" class="btn btn-outline-info">
+                        <a href="/crm" class="btn btn-outline-info">
                             <i class="bi bi-people-fill me-1"></i>
                             {% if current_lang == 'en' %}CRM System{% else %}客户管理系统{% endif %}
                         </a>
@@ -166,28 +166,28 @@
                     
                     <!-- 语言切换 / Language Switcher -->
                     <div class="d-flex align-items-center">
-                        <div class="btn-group btn-group-sm me-3" role="group" aria-label="{{ t('language') }}">
-                            <a href="{{ url_for('calculator', lang='zh') }}" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
-                            <a href="{{ url_for('calculator', lang='en') }}" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}">English</a>
+                        <div class="btn-group btn-group-sm me-3" role="group">
+                            <a href="/mining-calculator?lang=zh" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
+                            <a href="/mining-calculator?lang=en" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}">English</a>
                         </div>
                     </div>
                     
                     <!-- Network Stats -->
                     <div id="network-stats-container" class="d-flex gap-3 text-center me-auto">
                         <div class="stats-item">
-                            <span class="badge bg-warning">{{ t('btc_price') }}</span>
+                            <span class="badge bg-warning">{% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}</span>
                             <span id="btc-price" class="stats-value">$0</span>
                         </div>
                         <div class="stats-item">
-                            <span class="badge bg-info">{{ t('difficulty') }}</span>
+                            <span class="badge bg-info">{% if current_lang == 'en' %}Difficulty{% else %}难度{% endif %}</span>
                             <span id="network-difficulty" class="stats-value">0T</span>
                         </div>
                         <div class="stats-item">
-                            <span class="badge bg-danger">{{ t('network_hashrate') }}</span>
+                            <span class="badge bg-danger">{% if current_lang == 'en' %}Network Hashrate{% else %}网络算力{% endif %}</span>
                             <span id="network-hashrate" class="stats-value">0 EH/s</span>
                         </div>
                         <div class="stats-item">
-                            <span class="badge bg-success">{{ t('block_reward') }}</span>
+                            <span class="badge bg-success">{% if current_lang == 'en' %}Block Reward{% else %}区块奖励{% endif %}</span>
                             <span id="block-reward" class="stats-value">0 BTC</span>
                         </div>
                     </div>
@@ -199,7 +199,7 @@
                             {% if session.email %}
                                 {{ session.email }}
                             {% else %}
-                                {{ t('guest') }}
+                                {% if current_lang == 'en' %}Guest{% else %}访客{% endif %}
                             {% endif %}
                         </button>
                         <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="userDropdown">
