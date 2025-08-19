@@ -88,18 +88,23 @@ class OptimizedBatchProcessor:
             network_hashrate_eh = network_data['hashrate']  # EH/s
             block_reward = network_data['block_reward']
             
-            # 核心计算（简化版，避免复杂的限电逻辑）
+            # 核心计算（简化版，避免复杂的限电逻辑）- ENHANCED with pool fee correction
             network_hashrate_th = network_hashrate_eh * 1e6  # 转换为TH/s
             blocks_per_day = 144
             
-            # 每日收益计算
-            if network_hashrate_th > 0:
-                miner_share = total_hashrate / network_hashrate_th
-                daily_btc = miner_share * block_reward * blocks_per_day
-                daily_revenue = daily_btc * btc_price
-            else:
-                daily_btc = 0
-                daily_revenue = 0
+            # Apply default pool fee correction (2.5%) as per expert recommendations
+            pool_fee_rate = 0.025  # Default pool fee
+            
+            # 每日收益计算 - Method 2 (Difficulty Based) prioritized per expert recommendation
+            # Use difficulty-based calculation as primary method
+            hashrate_hs = total_hashrate * 1e12  # TH/s to H/s
+            difficulty_factor = 2 ** 32
+            daily_btc_raw = (hashrate_hs * block_reward * 86400) / (difficulty * difficulty_factor)
+            daily_btc = daily_btc_raw * (1 - pool_fee_rate)  # Apply pool fee correction
+            daily_revenue = daily_btc * btc_price
+            
+            # Log algorithm choice for debugging
+            logger.debug(f"Using difficulty-based algorithm with pool fee correction: {pool_fee_rate*100:.1f}%")
             
             # 每日成本
             daily_power_kwh = (total_power * 24) / 1000  # kWh

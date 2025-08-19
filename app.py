@@ -1184,6 +1184,28 @@ def calculate_internal(request_obj):
         except ValueError as e:
             logging.error(f"Invalid maintenance fee value: {data.get('maintenance_fee')} - {str(e)}")
             maintenance_fee = 0
+        
+        # ENHANCED: Pool fee parameter per expert recommendations
+        pool_fee = None
+        try:
+            pool_fee_raw = data.get('pool_fee')
+            if pool_fee_raw is not None:
+                # Convert percentage to decimal if needed
+                pool_fee_val = float(pool_fee_raw)
+                if pool_fee_val > 1:  # Assume percentage if > 1
+                    pool_fee = pool_fee_val / 100
+                else:
+                    pool_fee = pool_fee_val
+                
+                # Validate pool fee range
+                if pool_fee < 0 or pool_fee >= 1:
+                    logging.warning(f"Invalid pool fee {pool_fee}, using default")
+                    pool_fee = None
+                else:
+                    logging.info(f"Using pool fee: {pool_fee*100:.1f}%")
+        except (ValueError, TypeError) as e:
+            logging.error(f"Invalid pool fee value: {data.get('pool_fee')} - {str(e)}")
+            pool_fee = None
             
         # 获取投资金额参数 - 使用data变量而不是request.form
         try:
@@ -1295,7 +1317,9 @@ def calculate_internal(request_obj):
                 client_investment=client_investment,
                 maintenance_fee=maintenance_fee,
                 manual_network_hashrate=manual_hashrate,  # 新增参数：手动全网算力
-                manual_network_difficulty=manual_difficulty  # 新增参数：手动网络难度
+                manual_network_difficulty=manual_difficulty,  # 新增参数：手动网络难度
+                pool_fee=pool_fee,  # ENHANCED: Pool fee parameter per expert recommendations
+                consider_difficulty_adjustment=True  # Enable enhanced ROI calculation
             )
             
             # 确保返回完整的计算结果格式

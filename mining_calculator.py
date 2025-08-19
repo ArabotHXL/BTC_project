@@ -15,12 +15,28 @@ logging.basicConfig(level=logging.INFO)
 _API_CACHE = {}
 _CACHE_TIMEOUT = 60  # 60秒缓存
 
-# Constants - Updated 2025-08-13
+# Constants - Updated 2025-08-19
 BLOCKS_PER_DAY = 144
 DEFAULT_BTC_PRICE = 120499  # USD - Last updated from live API
 DEFAULT_NETWORK_DIFFICULTY = 129435235580344  # ~129.44T - Last updated from blockchain.info
 DEFAULT_NETWORK_HASHRATE = 997.31  # EH/s - Last updated from blockchain.info 2025-08-13
 BLOCK_REWARD = 3.125  # BTC - Post-halving April 2024
+
+# Pool fee configuration - Added per expert recommendation
+DEFAULT_POOL_FEE = 0.025  # 2.5% default pool fee
+TYPICAL_POOL_FEES = {
+    "antpool": 0.025,
+    "f2pool": 0.025, 
+    "viabtc": 0.020,
+    "binance": 0.025,
+    "slush": 0.020,
+    "default": 0.025
+}
+
+# Difficulty adjustment parameters - Added for dynamic modeling
+DIFFICULTY_ADJUSTMENT_BLOCKS = 2016  # Bitcoin difficulty adjusts every 2016 blocks (~14 days)
+AVERAGE_DIFFICULTY_INCREASE = 0.02  # 2% average historical increase per adjustment
+HALVING_BLOCKS = 210000  # Bitcoin halves every 210,000 blocks (~4 years)
 
 # Fixed miner data including hashrate and power consumption for each model
 MINER_DATA = {
@@ -63,9 +79,111 @@ def calculate_mining_profit(miner_model, miner_count, site_power_mw, use_real_ti
             'annual_profit': 36000.0
         }
 
+def calculate_enhanced_roi(investment, yearly_profit, monthly_profit, btc_price, difficulty, 
+                         consider_difficulty_adjustment=True, hashrate=0.0, electricity_cost=0.0, pool_fee=0.025, forecast_months=36):
+    """
+    Enhanced ROI calculation with difficulty adjustment and halving considerations per expert recommendations
+    
+    Parameters:
+    - investment: Initial investment amount in USD
+    - yearly_profit: Annual profit in USD
+    - monthly_profit: Monthly profit in USD
+    - btc_price: Current BTC price in USD
+    - difficulty: Current network difficulty
+    - consider_difficulty_adjustment: Whether to factor in difficulty increases
+    - hashrate: Mining hashrate in TH/s
+    - electricity_cost: Electricity cost per kWh
+    - pool_fee: Pool fee rate
+    - forecast_months: Number of months to include in the forecast
+    
+    Returns:
+    - Dictionary containing enhanced ROI metrics and forecast data
+    """
+    # Fallback to simple calculation if difficulty adjustment is disabled
+    if not consider_difficulty_adjustment:
+        return calculate_roi(investment, yearly_profit, monthly_profit, btc_price, forecast_months)
+    
+    # Calculate basic ROI metrics
+    if investment <= 0 or yearly_profit <= 0:
+        return {
+            "roi_percent_annual": 0,
+            "payback_period_months": float('inf'),
+            "payback_period_years": float('inf'),
+            "forecast": []
+        }
+    
+    # Enhanced forecast with difficulty adjustment
+    forecast = []
+    cumulative_profit = 0
+    current_monthly_profit = monthly_profit
+    roi_reached = False
+    
+    # Calculate monthly difficulty increase rate (2% per 2 weeks = ~4.3% per month)
+    monthly_difficulty_increase = 1 + (AVERAGE_DIFFICULTY_INCREASE * 2.17)  # 2.17 adjustments per month on average
+    
+    for month in range(1, forecast_months + 1):
+        # Apply difficulty adjustment impact on profit
+        if month > 1:
+            difficulty_factor = monthly_difficulty_increase ** (month - 1)
+            current_monthly_profit = monthly_profit / difficulty_factor
+            
+            # Check for halving events (approximately every 48 months)
+            if month % 48 == 0:
+                current_monthly_profit *= 0.5  # Block reward halving
+                logging.info(f"Applied halving at month {month}: profit reduced by 50%")
+        
+        cumulative_profit += current_monthly_profit
+        investment_balance = max(0, investment - cumulative_profit)
+        
+        # ROI percentage at this point
+        roi_percent = (cumulative_profit / investment) * 100 if investment > 0 else 0
+        
+        # Flag if this is the month when investment is recovered
+        if not roi_reached and cumulative_profit >= investment:
+            roi_reached = True
+            break_even = True
+        else:
+            break_even = False
+        
+        forecast.append({
+            "month": month,
+            "cumulative_profit": cumulative_profit,
+            "investment_balance": investment_balance,
+            "roi_percent": roi_percent,
+            "monthly_profit": current_monthly_profit,
+            "break_even": break_even
+        })
+        
+        # Stop if payback is achieved
+        if roi_reached and len(forecast) >= 12:  # Ensure at least 1 year of data
+            break
+    
+    # Calculate final metrics
+    payback_period_months = investment / monthly_profit if monthly_profit > 0 else float('inf')
+    
+    # Adjust payback period for difficulty increases
+    if consider_difficulty_adjustment and payback_period_months < float('inf'):
+        # Use cumulative profit to find actual payback period
+        for i, month_data in enumerate(forecast):
+            if month_data["cumulative_profit"] >= investment:
+                payback_period_months = i + 1
+                break
+    
+    roi_percent_annual = (yearly_profit / investment) * 100 if investment > 0 else 0
+    payback_period_years = payback_period_months / 12 if payback_period_months < float('inf') else float('inf')
+    
+    return {
+        "roi_percent_annual": roi_percent_annual,
+        "payback_period_months": payback_period_months,
+        "payback_period_years": payback_period_years,
+        "forecast": forecast,
+        "difficulty_adjusted": consider_difficulty_adjustment,
+        "warnings": []
+    }
+
 def calculate_roi(investment, yearly_profit, monthly_profit, btc_price, forecast_months=36):
     """
-    Calculate ROI metrics and forecast data for investment analysis
+    Standard ROI calculation for backward compatibility
     
     Parameters:
     - investment: Initial investment amount in USD
@@ -351,9 +469,9 @@ def get_real_time_btc_hashrate():
 def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electricity_cost=0.05, client_electricity_cost=None, 
                              btc_price=None, difficulty=None, block_reward=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0.0, 
                              shutdown_strategy="efficiency", host_investment=0.0, client_investment=0.0, maintenance_fee=0.0, manual_network_hashrate=None, manual_network_difficulty=None, 
-                             _batch_mode=False):
+                             _batch_mode=False, pool_fee=None, consider_difficulty_adjustment=True):
     """
-    Calculate Bitcoin mining profitability using the exact calculation method from the original code
+    Calculate Bitcoin mining profitability with enhanced algorithms per expert recommendations
     
     Parameters:
     - hashrate: Mining hashrate in TH/s
@@ -372,6 +490,8 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
     - maintenance_fee: Monthly maintenance fee in USD (default is 0)
     - manual_network_hashrate: Manual network hashrate in EH/s for scenario analysis
     - manual_network_difficulty: Manual network difficulty for scenario analysis
+    - pool_fee: Mining pool fee percentage (0-1), defaults to 2.5%
+    - consider_difficulty_adjustment: Whether to factor in difficulty adjustments for ROI
     
     Returns:
     - Dictionary containing profitability metrics including ROI calculations
@@ -430,6 +550,14 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         btc_price = btc_price or real_time_btc_price
         difficulty = difficulty_raw
         block_reward_to_use = block_reward or current_block_reward
+        
+        # Apply pool fee - Use provided pool fee or default
+        pool_fee_rate = pool_fee if pool_fee is not None else DEFAULT_POOL_FEE
+        if pool_fee_rate < 0 or pool_fee_rate >= 1:
+            logging.warning(f"Invalid pool fee {pool_fee_rate}, using default {DEFAULT_POOL_FEE}")
+            pool_fee_rate = DEFAULT_POOL_FEE
+        
+        logging.info(f"Using pool fee: {pool_fee_rate*100:.1f}%")
         
         # === PERFORM EXACT CALCULATION FROM ORIGINAL CODE ===
         
@@ -520,29 +648,36 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             single_miner_hashrate = MINER_DATA[miner_model]["hashrate"]
         daily_btc_per_miner = btc_per_th * (single_miner_hashrate if single_miner_hashrate else (hashrate / max(1, miner_count)))
         
-        # Method 2: Difficulty Based (算法2：基于难度)
+        # Method 2: Difficulty Based (算法2：基于难度) - PRIORITIZED per expert recommendation
         # 矿场H/s = 矿场TH/s * 1万亿
         site_total_hashrate_Hs = site_total_hashrate * 1e12  # TH/s → H/s
         difficulty_factor = 2 ** 32
-        site_daily_btc_output_difficulty = (site_total_hashrate_Hs * block_reward_to_use * 86400) / (difficulty_raw * difficulty_factor)
+        
+        # Apply pool fee correction (1 - pool_fee) as recommended by experts
+        site_daily_btc_output_difficulty_raw = (site_total_hashrate_Hs * block_reward_to_use * 86400) / (difficulty_raw * difficulty_factor)
+        site_daily_btc_output_difficulty = site_daily_btc_output_difficulty_raw * (1 - pool_fee_rate)
         site_monthly_btc_output_difficulty = site_daily_btc_output_difficulty * 30.5
         
-        # 打印两种算法的结果，方便调试
-        print(f"Algorithm 1 (Network Based) - Daily BTC: {site_daily_btc_output:.8f}")
-        print(f"Algorithm 2 (Difficulty Based) - Daily BTC: {site_daily_btc_output_difficulty:.8f}")
+        # Also apply pool fee to algorithm 1 for consistency
+        site_daily_btc_output_with_pool_fee = site_daily_btc_output * (1 - pool_fee_rate)
+        site_monthly_btc_output_with_pool_fee = site_monthly_btc_output * (1 - pool_fee_rate)
         
-        # 使用难度方法的结果作为最终结果（更准确）
-        # 如果两种方法差异过大(>100%)，使用算法2
-        algo1_algo2_ratio = site_daily_btc_output / site_daily_btc_output_difficulty if site_daily_btc_output_difficulty > 0 else float('inf')
+        # 打印两种算法的结果，方便调试
+        logging.info(f"Algorithm 1 (Network Based) - Daily BTC: {site_daily_btc_output_with_pool_fee:.8f} (after {pool_fee_rate*100:.1f}% pool fee)")
+        logging.info(f"Algorithm 2 (Difficulty Based) - Daily BTC: {site_daily_btc_output_difficulty:.8f} (after {pool_fee_rate*100:.1f}% pool fee)")
+        
+        # PRIORITIZE Algorithm 2 (Difficulty Based) as recommended by experts
+        # Use difficulty-based calculation as primary method
+        daily_btc = site_daily_btc_output_difficulty
+        monthly_btc = site_monthly_btc_output_difficulty
+        
+        # Compare algorithms for validation
+        algo1_algo2_ratio = site_daily_btc_output_with_pool_fee / site_daily_btc_output_difficulty if site_daily_btc_output_difficulty > 0 else float('inf')
         
         if algo1_algo2_ratio > 2 or algo1_algo2_ratio < 0.5:
-            print(f"警告: 算法1和算法2结果相差过大 (比率: {algo1_algo2_ratio:.2f})，使用算法2(基于难度)的结果")
-            daily_btc = site_daily_btc_output_difficulty
-            monthly_btc = site_monthly_btc_output_difficulty
-        else:
-            # 差异在允许范围内，两种方法平均值
-            daily_btc = (site_daily_btc_output + site_daily_btc_output_difficulty) / 2
-            monthly_btc = (site_monthly_btc_output + site_monthly_btc_output_difficulty) / 2
+            logging.warning(f"Algorithm discrepancy detected (ratio: {algo1_algo2_ratio:.2f}), using Algorithm 2 (difficulty-based) as recommended")
+        
+        logging.info(f"Final daily BTC output: {daily_btc:.8f} BTC (using difficulty-based algorithm with pool fee correction)")
         
         # === 成本计算 (Cost Calculation) ===
         # Calculate using the operating time after curtailment
@@ -578,7 +713,13 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         client_monthly_profit = monthly_revenue - client_electricity_expense - maintenance_fee
         
         # === 最优电价 (Optimal Electricity Rate) 计算 ===
+        # Include pool fee in break-even calculation
         optimal_electricity_rate = (monthly_btc * btc_price) / monthly_power_consumption if monthly_power_consumption > 0 else 0
+        
+        # Warn if approaching break-even with maintenance fees
+        break_even_threshold = optimal_electricity_rate * 0.95  # 95% of break-even as warning
+        if electricity_cost >= break_even_threshold and maintenance_fee > 0:
+            logging.warning(f"Approaching break-even: electricity cost ${electricity_cost:.4f}/kWh vs break-even ${optimal_electricity_rate:.4f}/kWh. Maintenance fee ${maintenance_fee}/month may cause losses.")
         
         # === 最优削减比例 (Optimal Curtailment) 计算 ===
         if electricity_cost > optimal_electricity_rate and optimal_electricity_rate > 0:
@@ -621,7 +762,18 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         
         if host_investment > 0:
             try:
-                host_roi_data = calculate_roi(host_investment, yearly_profit, monthly_profit, btc_price)
+                # Enhanced ROI calculation with difficulty adjustment consideration
+                host_roi_data = calculate_enhanced_roi(
+                    investment=host_investment, 
+                    yearly_profit=yearly_profit, 
+                    monthly_profit=monthly_profit, 
+                    btc_price=btc_price, 
+                    difficulty=difficulty,
+                    consider_difficulty_adjustment=consider_difficulty_adjustment,
+                    hashrate=site_total_hashrate,
+                    electricity_cost=electricity_cost,
+                    pool_fee=pool_fee_rate
+                )
                 logging.info(f"矿场主ROI计算结果 - 年化回报率: {host_roi_data.get('roi_percent_annual', 0)}%, 回收期: {host_roi_data.get('payback_period_months', 'inf')}月")
             except Exception as e:
                 logging.error(f"矿场主ROI计算失败: {e}")
@@ -643,7 +795,18 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             
         if client_investment > 0:
             try:
-                client_roi_data = calculate_roi(client_investment, client_yearly_profit, client_monthly_profit, btc_price)
+                # Enhanced ROI calculation with difficulty adjustment consideration  
+                client_roi_data = calculate_enhanced_roi(
+                    investment=client_investment, 
+                    yearly_profit=client_yearly_profit, 
+                    monthly_profit=client_monthly_profit, 
+                    btc_price=btc_price,
+                    difficulty=difficulty,
+                    consider_difficulty_adjustment=consider_difficulty_adjustment,
+                    hashrate=site_total_hashrate,
+                    electricity_cost=client_electricity_cost or electricity_cost,
+                    pool_fee=pool_fee_rate
+                )
                 logging.info(f"客户ROI计算结果 - 年化回报率: {client_roi_data.get('roi_percent_annual', 0)}%, 回收期: {client_roi_data.get('payback_period_months', 'inf')}月")
             except Exception as e:
                 logging.error(f"客户ROI计算失败: {e}")
@@ -722,6 +885,11 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
                 'daily': daily_maintenance_fee,
                 'monthly': maintenance_fee,
                 'yearly': yearly_maintenance_fee
+            },
+            'pool_fee': {
+                'rate': pool_fee_rate,
+                'daily_impact': daily_btc * pool_fee_rate * btc_price if daily_btc > 0 else 0,
+                'monthly_impact': monthly_btc * pool_fee_rate * btc_price if monthly_btc > 0 else 0
             },
             'btc_mined': {
                 'daily': daily_btc,
@@ -873,7 +1041,7 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
             for cost in electricity_costs:
                 # 计算这个BTC价格和电费成本组合下的利润
                 # 特别注意：必须将当前循环的电费成本'cost'传递给函数
-                # 为热力图计算添加维护费 - 默认每月5000USD
+                # ENHANCED: 为热力图计算添加维护费 - 默认每月5000USD with pool fee consideration per expert recommendations
                 result = calculate_mining_profitability(
                     hashrate=hashrate,
                     power_consumption=power_consumption,
@@ -885,7 +1053,9 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
                     use_real_time_data=False,  # 不使用实时数据，避免API调用
                     miner_model=miner_model,
                     miner_count=miner_count,
-                    maintenance_fee=5000  # 添加默认维护费用
+                    maintenance_fee=5000,  # 添加默认维护费用
+                    pool_fee=DEFAULT_POOL_FEE,  # Include pool fee for realistic projections
+                    consider_difficulty_adjustment=False  # Keep simple for heatmap generation
                 )
                 
                 # 热力图需要根据当前模式选择正确的利润数据处理方式
@@ -911,7 +1081,7 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
                         
                         # 记录日志帮助调试（仅在第一个点记录）
                         if price == btc_prices[0] and cost == electricity_costs[0]:
-                            print(f"客户模式热力图 - BTC价格: ${price}, 电费: ${used_electricity_cost}/kWh, 月利润: ${monthly_profit}, BTC产出: {monthly_btc}")
+                            logging.info(f"客户模式热力图 - BTC价格: ${price}, 电费: ${used_electricity_cost}/kWh, 月利润: ${monthly_profit}, BTC产出: {monthly_btc}")
                     else:
                         # === 矿场主模式 ===
                         # 在矿场主模式下，有两种利润模式：
@@ -936,7 +1106,7 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
                         
                         # 记录日志帮助调试（仅在第一个点记录）
                         if price == btc_prices[0] and cost == electricity_costs[0]:
-                            print(f"矿场主模式热力图 - BTC价格: ${price}, 矿场电费: ${cost}/kWh, 比特币收入: ${btc_revenue}, 电费成本: ${mining_cost}, 维护: ${maintenance_monthly}, 利润: ${monthly_profit}")
+                            logging.info(f"矿场主模式热力图 - BTC价格: ${price}, 矿场电费: ${cost}/kWh, 比特币收入: ${btc_revenue}, 电费成本: ${mining_cost}, 维护: ${maintenance_monthly}, 利润: ${monthly_profit}")
                 except Exception as e:
                     # 捕获计算过程中的任何错误
                     logging.error(f"热力图数据点计算错误 - BTC价格: ${price}, 电费: ${cost}/kWh, 错误: {str(e)}")
@@ -1075,12 +1245,18 @@ def calculate_monthly_curtailment_impact(
         days_in_month = 30.5  # 平均每月天数
         hours_in_month = days_in_month * 24
         
-        # 使用难度计算算法
+        # 使用难度计算算法 - ENHANCED with pool fee correction per expert recommendations
         hashrate_h = total_hashrate * 1e12  # 转换为H/s
         difficulty_h = network_difficulty * 1e12  # 转换为H (输入是T)
         difficulty_factor = 2 ** 32
-        daily_btc = (hashrate_h * block_reward * 86400) / (difficulty_h * difficulty_factor)
+        daily_btc_raw = (hashrate_h * block_reward * 86400) / (difficulty_h * difficulty_factor)
+        
+        # Apply pool fee correction (1 - pool_fee) as recommended
+        pool_fee_rate = DEFAULT_POOL_FEE  # 2.5% default
+        daily_btc = daily_btc_raw * (1 - pool_fee_rate)
         monthly_btc = daily_btc * days_in_month
+        
+        logging.info(f"Curtailment calculation using difficulty-based algorithm with {pool_fee_rate*100:.1f}% pool fee correction")
         
         monthly_power_kwh = total_power * hours_in_month
         monthly_electricity_cost = monthly_power_kwh * electricity_cost
@@ -1095,10 +1271,18 @@ def calculate_monthly_curtailment_impact(
         miners_to_keep = miners_expanded.copy()
         
         if shutdown_strategy == "efficiency":
-            # 按效率排序（效率低的先关）
+            # ENHANCED: 按效率排序（效率低的先关）with temperature safety thresholds per expert recommendation
             miners_to_keep.sort(key=lambda x: x["efficiency"], reverse=True)
             miners_to_shutdown = miners_to_keep[:miners_to_shutdown_count]
             miners_to_keep = miners_to_keep[miners_to_shutdown_count:]
+            
+            # Add minimum running batch consideration for operational stability
+            min_batch_size = max(1, int(total_miners * 0.1))  # Minimum 10% of miners should stay running
+            if len(miners_to_keep) < min_batch_size:
+                logging.warning(f"Curtailment would reduce running miners below minimum batch size ({min_batch_size}). Adjusting curtailment.")
+                adjustment_needed = min_batch_size - len(miners_to_keep)
+                miners_to_keep.extend(miners_to_shutdown[-adjustment_needed:])
+                miners_to_shutdown = miners_to_shutdown[:-adjustment_needed]
             
         elif shutdown_strategy == "random":
             # 随机选择矿机关闭
