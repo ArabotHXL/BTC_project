@@ -328,26 +328,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const canvas = document.getElementById('client-roi-canvas');
         console.log("Client canvas created:", !!canvas);
 
-        // Generate data points for ROI progression
+        // Use the forecast data directly
         const months = [];
-        const cumulativeProfit = [];
         const roiPercentage = [];
         
-        const monthlyProfit = clientRoi.annual_profit / 12;
-        const investment = inputs.client_investment;
-        
-        for (let i = 1; i <= Math.min(60, Math.ceil(clientRoi.payback_period_months * 1.5)); i++) { // Project beyond payback
-            months.push(i);
-            const totalProfit = monthlyProfit * i;
-            cumulativeProfit.push(totalProfit);
-            roiPercentage.push((totalProfit / investment) * 100);
+        if (clientRoi.forecast && Array.isArray(clientRoi.forecast)) {
+            clientRoi.forecast.forEach(point => {
+                months.push(point.month + 'M');
+                roiPercentage.push(point.roi_percent);
+            });
+        } else {
+            console.error("Client ROI forecast data is not available");
+            return;
         }
 
         try {
             clientRoiChart = new Chart(canvas, {
             type: 'line',
             data: {
-                labels: months.map(m => m + 'M'),
+                labels: months,
                 datasets: [{
                     label: 'ROI %',
                     data: roiPercentage,
