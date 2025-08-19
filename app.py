@@ -1701,12 +1701,12 @@ def api_get_miners_data():
 @app.route('/miners', methods=['GET'])
 def get_miners():
     """Get the list of available miner models and their specifications"""
-    # Check authentication for API endpoints
-    if not session.get('email'):
-        return jsonify({
-            'success': False,
-            'error': 'Authentication required'
-        }), 401
+    # Remove authentication requirement for public calculator
+    # if not session.get('email'):
+    #     return jsonify({
+    #         'success': False,
+    #         'error': 'Authentication required'
+    #     }), 401
         
     try:
         # 确保使用的是从mining_calculator导入的MINER_DATA
