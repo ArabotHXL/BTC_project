@@ -45,12 +45,14 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
     heatmapGrid.className = 'heatmap-grid';
     heatmapGrid.style.cssText = `
         display: grid;
-        grid-template-columns: 80px repeat(auto-fit, minmax(100px, 1fr));
-        grid-gap: 3px;
+        grid-template-columns: 80px repeat(${electricityCosts.length}, 1fr);
+        grid-gap: 2px;
         background: rgba(255,255,255,0.1);
         border-radius: 10px;
         padding: 15px;
         backdrop-filter: blur(10px);
+        max-width: 100%;
+        overflow-x: auto;
     `;
     
     // Prepare data structure
@@ -87,8 +89,10 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
             return (amount / 1000000).toFixed(1) + 'M';
         } else if (Math.abs(amount) >= 1000) {
             return (amount / 1000).toFixed(0) + 'k';
-        } else {
+        } else if (Math.abs(amount) >= 100) {
             return amount.toFixed(0);
+        } else {
+            return amount.toFixed(1);
         }
     }
     
@@ -129,13 +133,12 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
             padding: 8px 4px;
             text-align: center;
             font-weight: 600;
-            font-size: 12px;
+            font-size: 11px;
             color: #ffffff;
-            writing-mode: vertical-rl;
-            text-orientation: mixed;
             display: flex;
             align-items: center;
             justify-content: center;
+            min-height: 50px;
         `;
         heatmapGrid.appendChild(rowLabel);
         
@@ -152,26 +155,36 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
             dataCell.style.cssText = `
                 background: ${backgroundColor};
                 border: 1px solid rgba(255,255,255,0.2);
-                border-radius: 8px;
-                padding: 8px 4px;
+                border-radius: 6px;
+                padding: 6px 3px;
                 text-align: center;
-                font-size: 11px;
-                font-weight: 500;
-                color: ${Math.abs(profit) > maxAbsProfit * 0.3 ? '#ffffff' : '#000000'};
+                font-size: 10px;
+                font-weight: 600;
+                color: ${profit >= 0 ? '#ffffff' : '#ffffff'};
                 cursor: pointer;
                 transition: all 0.3s ease;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
-                min-height: 60px;
-                text-shadow: ${Math.abs(profit) > maxAbsProfit * 0.3 ? '0 1px 2px rgba(0,0,0,0.5)' : 'none'};
+                min-height: 55px;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+                box-shadow: inset 0 1px 2px rgba(255,255,255,0.1);
             `;
             
             // Add profit text
             const profitText = document.createElement('div');
-            profitText.textContent = profit >= 0 ? `+$${formatCurrency(profit)}` : `-$${formatCurrency(Math.abs(profit))}`;
-            profitText.style.fontWeight = '600';
+            if (profit >= 0) {
+                profitText.textContent = `+$${formatCurrency(profit)}`;
+            } else {
+                profitText.textContent = `-$${formatCurrency(Math.abs(profit))}`;
+            }
+            profitText.style.cssText = `
+                font-weight: 700;
+                font-size: 9px;
+                line-height: 1.1;
+                letter-spacing: -0.2px;
+            `;
             dataCell.appendChild(profitText);
             
             // Add hover effects
