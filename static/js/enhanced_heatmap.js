@@ -12,8 +12,8 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
         
         const {
             title = '挖矿收益热力图',
-            width = 800,
-            height = 500,
+            width = 900,
+            height = 550,
             language = 'zh'
         } = options;
         
@@ -108,8 +108,8 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
         const headerRow = document.createElement('div');
         headerRow.style.cssText = `
             display: flex;
-            gap: 3px;
-            margin-left: 120px;
+            gap: 5px;
+            margin-left: 130px;
             align-items: center;
         `;
         
@@ -130,9 +130,9 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
             const header = document.createElement('div');
             header.textContent = cost.toFixed(2);
             header.style.cssText = `
-                width: 70px;
+                width: 85px;
                 text-align: center;
-                font-size: 11px;
+                font-size: 12px;
                 font-weight: 600;
                 color: #e0e0e0;
                 padding: 5px;
@@ -147,10 +147,10 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
         heatmapGrid.style.cssText = `
             display: flex;
             flex-direction: column;
-            gap: 3px;
+            gap: 5px;
             background: rgba(255,255,255,0.05);
             border-radius: 12px;
-            padding: 20px;
+            padding: 25px;
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255,255,255,0.1);
         `;
@@ -168,16 +168,16 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
             row.style.cssText = `
                 display: flex;
                 align-items: center;
-                gap: 3px;
+                gap: 5px;
             `;
 
             // BTC price label (Y-axis)
             const rowLabel = document.createElement('div');
             rowLabel.textContent = `$${formatCurrency(btcPrice)}`;
             rowLabel.style.cssText = `
-                width: 100px;
+                width: 110px;
                 text-align: right;
-                font-size: 12px;
+                font-size: 13px;
                 font-weight: 600;
                 color: #e0e0e0;
                 padding: 10px 15px 10px 5px;
@@ -196,11 +196,11 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
 
                 const square = document.createElement('div');
                 square.style.cssText = `
-                    width: 65px;
-                    height: 65px;
+                    width: 80px;
+                    height: 80px;
                     background: ${backgroundColor};
                     border: 2px solid rgba(255,255,255,0.2);
-                    border-radius: 8px;
+                    border-radius: 10px;
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
@@ -220,7 +220,7 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
                 }
                 profitText.style.cssText = `
                     font-weight: 700;
-                    font-size: 9px;
+                    font-size: 11px;
                     line-height: 1.1;
                     letter-spacing: -0.2px;
                     color: #ffffff;
