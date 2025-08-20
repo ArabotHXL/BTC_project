@@ -1,11 +1,11 @@
 /**
- * Enhanced Heatmap Visualization for Mining Profitability
- * Creates a beautiful grid-based heatmap instead of scatter plot
+ * Enhanced Grid-based Heatmap Visualization for Mining Profitability
+ * Creates beautiful square-based heatmap with proper grid layout
  */
 
 function createEnhancedHeatmap(containerElement, profitData, options = {}) {
     try {
-        console.log('开始创建增强热力图，数据点数量:', profitData.length);
+        console.log('开始创建方块热力图，数据点数量:', profitData.length);
         
         // Clear container
         containerElement.innerHTML = '';
@@ -34,272 +34,327 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
         const minProfit = Math.min(...profits);
         const maxProfit = Math.max(...profits);
         const maxAbsProfit = Math.max(Math.abs(minProfit), Math.abs(maxProfit));
-    
-    // Create main container with styling
-    const heatmapContainer = document.createElement('div');
-    heatmapContainer.className = 'enhanced-heatmap-container';
-    heatmapContainer.style.cssText = `
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        border-radius: 15px;
-        padding: 25px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        color: white;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        margin: 20px 0;
-    `;
-    
-    // Add title
-    const titleElement = document.createElement('h3');
-    titleElement.textContent = title;
-    titleElement.style.cssText = `
-        margin: 0 0 20px 0;
-        text-align: center;
-        font-size: 24px;
-        font-weight: 600;
-        color: #ffffff;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    `;
-    heatmapContainer.appendChild(titleElement);
-    
-    // Create heatmap grid
-    const heatmapGrid = document.createElement('div');
-    heatmapGrid.className = 'heatmap-grid';
-    heatmapGrid.style.cssText = `
-        display: grid;
-        grid-template-columns: 80px repeat(${electricityCosts.length}, 1fr);
-        grid-gap: 2px;
-        background: rgba(255,255,255,0.1);
-        border-radius: 10px;
-        padding: 15px;
-        backdrop-filter: blur(10px);
-        max-width: 100%;
-        overflow-x: auto;
-    `;
-    
-    // Prepare data structure
-    const btcPrices = [...new Set(profitData.map(item => item.btc_price))].sort((a, b) => b - a);
-    const electricityCosts = [...new Set(profitData.map(item => item.electricity_cost))].sort((a, b) => a - b);
-    
-    // Find min/max profits for color scaling
-    const profits = profitData.map(item => item.monthly_profit);
-    const minProfit = Math.min(...profits);
-    const maxProfit = Math.max(...profits);
-    const maxAbsProfit = Math.max(Math.abs(minProfit), Math.abs(maxProfit));
-    
-    // Helper function to get profit color
-    function getProfitColor(profit) {
-        if (profit === 0) return '#6c757d'; // Neutral gray
-        
-        const intensity = Math.abs(profit) / maxAbsProfit;
-        const alpha = Math.max(0.3, Math.min(1, intensity * 0.8 + 0.2));
-        
-        if (profit > 0) {
-            // Green gradient for profits
-            const greenIntensity = Math.floor(intensity * 100);
-            return `rgba(34, 197, 94, ${alpha})`;
-        } else {
-            // Red gradient for losses
-            const redIntensity = Math.floor(intensity * 100);
-            return `rgba(239, 68, 68, ${alpha})`;
-        }
-    }
-    
-    // Helper function to format currency
-    function formatCurrency(amount) {
-        if (Math.abs(amount) >= 1000000) {
-            return (amount / 1000000).toFixed(1) + 'M';
-        } else if (Math.abs(amount) >= 1000) {
-            return (amount / 1000).toFixed(0) + 'k';
-        } else if (Math.abs(amount) >= 100) {
-            return amount.toFixed(0);
-        } else {
-            return amount.toFixed(1);
-        }
-    }
-    
-    // Create empty top-left cell
-    const emptyCell = document.createElement('div');
-    emptyCell.style.cssText = `
-        background: transparent;
-        border: none;
-    `;
-    heatmapGrid.appendChild(emptyCell);
-    
-    // Create electricity cost headers
-    electricityCosts.forEach(cost => {
-        const headerCell = document.createElement('div');
-        headerCell.textContent = `$${cost.toFixed(3)}`;
-        headerCell.style.cssText = `
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 8px;
-            padding: 8px 4px;
-            text-align: center;
-            font-weight: 600;
-            font-size: 12px;
-            color: #ffffff;
+
+        // Create main container with styling
+        const heatmapContainer = document.createElement('div');
+        heatmapContainer.className = 'square-heatmap-container';
+        heatmapContainer.style.cssText = `
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px 0;
+            overflow: hidden;
         `;
-        heatmapGrid.appendChild(headerCell);
-    });
-    
-    // Create rows with BTC price labels and data cells
-    btcPrices.forEach(btcPrice => {
-        // BTC price label
-        const rowLabel = document.createElement('div');
-        rowLabel.textContent = `$${formatCurrency(btcPrice)}`;
-        rowLabel.style.cssText = `
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 8px;
-            padding: 8px 4px;
-            text-align: center;
-            font-weight: 600;
-            font-size: 11px;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 50px;
-        `;
-        heatmapGrid.appendChild(rowLabel);
         
-        // Data cells for this BTC price
-        electricityCosts.forEach(electricityCost => {
-            const dataPoint = profitData.find(item => 
-                item.btc_price === btcPrice && item.electricity_cost === electricityCost
-            );
+        // Add title
+        const titleElement = document.createElement('h3');
+        titleElement.textContent = title;
+        titleElement.style.cssText = `
+            margin: 0 0 25px 0;
+            text-align: center;
+            font-size: 26px;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 3px 6px rgba(0,0,0,0.5);
+            letter-spacing: 1px;
+        `;
+        heatmapContainer.appendChild(titleElement);
+        
+        // Helper function to get profit color for squares
+        function getSquareColor(profit) {
+            if (profit === 0) return '#4a5568'; // Neutral gray
             
-            const profit = dataPoint ? dataPoint.monthly_profit : 0;
-            const backgroundColor = getProfitColor(profit);
+            const intensity = Math.min(1, Math.abs(profit) / maxAbsProfit);
             
-            const dataCell = document.createElement('div');
-            dataCell.style.cssText = `
-                background: ${backgroundColor};
-                border: 1px solid rgba(255,255,255,0.2);
-                border-radius: 6px;
-                padding: 6px 3px;
-                text-align: center;
-                font-size: 10px;
-                font-weight: 600;
-                color: ${profit >= 0 ? '#ffffff' : '#ffffff'};
-                cursor: pointer;
-                transition: all 0.3s ease;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                min-height: 55px;
-                text-shadow: 0 1px 2px rgba(0,0,0,0.7);
-                box-shadow: inset 0 1px 2px rgba(255,255,255,0.1);
-            `;
-            
-            // Add profit text
-            const profitText = document.createElement('div');
-            if (profit >= 0) {
-                profitText.textContent = `+$${formatCurrency(profit)}`;
+            if (profit > 0) {
+                // Green gradient for profit
+                const greenBase = [34, 197, 94]; // rgb(34, 197, 94)
+                const alpha = 0.3 + (intensity * 0.7); // 0.3 to 1.0
+                return `rgba(${greenBase[0]}, ${greenBase[1]}, ${greenBase[2]}, ${alpha})`;
             } else {
-                profitText.textContent = `-$${formatCurrency(Math.abs(profit))}`;
+                // Red gradient for loss
+                const redBase = [239, 68, 68]; // rgb(239, 68, 68)
+                const alpha = 0.3 + (intensity * 0.7); // 0.3 to 1.0
+                return `rgba(${redBase[0]}, ${redBase[1]}, ${redBase[2]}, ${alpha})`;
             }
-            profitText.style.cssText = `
-                font-weight: 700;
-                font-size: 9px;
-                line-height: 1.1;
-                letter-spacing: -0.2px;
-            `;
-            dataCell.appendChild(profitText);
-            
-            // Add hover effects
-            dataCell.addEventListener('mouseenter', function() {
-                this.style.transform = 'scale(1.05)';
-                this.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
-                this.style.zIndex = '10';
-            });
-            
-            dataCell.addEventListener('mouseleave', function() {
-                this.style.transform = 'scale(1)';
-                this.style.boxShadow = 'none';
-                this.style.zIndex = '1';
-            });
-            
-            // Add tooltip
-            dataCell.title = `BTC价格: $${btcPrice.toLocaleString()}\n电费: $${electricityCost}/kWh\n月利润: $${profit.toLocaleString()}`;
-            
-            heatmapGrid.appendChild(dataCell);
-        });
-    });
-    
-    heatmapContainer.appendChild(heatmapGrid);
-    
-    // Add legend
-    const legend = document.createElement('div');
-    legend.style.cssText = `
-        margin-top: 20px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 20px;
-        flex-wrap: wrap;
-    `;
-    
-    // Create legend items
-    const legendItems = [
-        { color: 'rgba(239, 68, 68, 0.8)', label: language === 'zh' ? '高亏损' : 'High Loss' },
-        { color: 'rgba(239, 68, 68, 0.4)', label: language === 'zh' ? '低亏损' : 'Low Loss' },
-        { color: '#6c757d', label: language === 'zh' ? '盈亏平衡' : 'Break-even' },
-        { color: 'rgba(34, 197, 94, 0.4)', label: language === 'zh' ? '低盈利' : 'Low Profit' },
-        { color: 'rgba(34, 197, 94, 0.8)', label: language === 'zh' ? '高盈利' : 'High Profit' }
-    ];
-    
-    legendItems.forEach(item => {
-        const legendItem = document.createElement('div');
-        legendItem.style.cssText = `
+        }
+        
+        // Helper function to format currency
+        function formatCurrency(amount) {
+            if (Math.abs(amount) >= 1000000) {
+                return (amount / 1000000).toFixed(1) + 'M';
+            } else if (Math.abs(amount) >= 1000) {
+                return (amount / 1000).toFixed(0) + 'k';
+            } else if (Math.abs(amount) >= 100) {
+                return amount.toFixed(0);
+            } else {
+                return amount.toFixed(1);
+            }
+        }
+        
+        // Create grid wrapper
+        const gridWrapper = document.createElement('div');
+        gridWrapper.style.cssText = `
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 8px;
+            gap: 15px;
+        `;
+        
+        // Create column headers for electricity costs
+        const headerRow = document.createElement('div');
+        headerRow.style.cssText = `
+            display: flex;
+            gap: 3px;
+            margin-left: 120px;
+            align-items: center;
+        `;
+        
+        const headerLabel = document.createElement('div');
+        headerLabel.textContent = '电费价格 ($/kWh)';
+        headerLabel.style.cssText = `
+            position: absolute;
+            left: 30px;
+            top: -25px;
             font-size: 12px;
-            color: #ffffff;
+            color: #a0a0a0;
+            font-weight: 600;
+        `;
+        headerRow.style.position = 'relative';
+        headerRow.appendChild(headerLabel);
+        
+        electricityCosts.forEach(cost => {
+            const header = document.createElement('div');
+            header.textContent = cost.toFixed(2);
+            header.style.cssText = `
+                width: 70px;
+                text-align: center;
+                font-size: 11px;
+                font-weight: 600;
+                color: #e0e0e0;
+                padding: 5px;
+            `;
+            headerRow.appendChild(header);
+        });
+        gridWrapper.appendChild(headerRow);
+        
+        // Create heatmap grid
+        const heatmapGrid = document.createElement('div');
+        heatmapGrid.className = 'square-heatmap-grid';
+        heatmapGrid.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.1);
+        `;
+
+        // Create data lookup for quick access
+        const dataLookup = {};
+        profitData.forEach(item => {
+            const key = `${item.btc_price}_${item.electricity_cost}`;
+            dataLookup[key] = item;
+        });
+
+        // Create rows with BTC price labels and data squares
+        btcPrices.forEach(btcPrice => {
+            const row = document.createElement('div');
+            row.style.cssText = `
+                display: flex;
+                align-items: center;
+                gap: 3px;
+            `;
+
+            // BTC price label (Y-axis)
+            const rowLabel = document.createElement('div');
+            rowLabel.textContent = `$${formatCurrency(btcPrice)}`;
+            rowLabel.style.cssText = `
+                width: 100px;
+                text-align: right;
+                font-size: 12px;
+                font-weight: 600;
+                color: #e0e0e0;
+                padding: 10px 15px 10px 5px;
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+            `;
+            row.appendChild(rowLabel);
+
+            // Create squares for each electricity cost
+            electricityCosts.forEach(electricityCost => {
+                const key = `${btcPrice}_${electricityCost}`;
+                const dataPoint = dataLookup[key];
+                const profit = dataPoint ? dataPoint.monthly_profit : 0;
+                const backgroundColor = getSquareColor(profit);
+
+                const square = document.createElement('div');
+                square.style.cssText = `
+                    width: 65px;
+                    height: 65px;
+                    background: ${backgroundColor};
+                    border: 2px solid rgba(255,255,255,0.2);
+                    border-radius: 8px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    position: relative;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                `;
+
+                // Add profit text
+                const profitText = document.createElement('div');
+                if (profit >= 0) {
+                    profitText.textContent = `+$${formatCurrency(profit)}`;
+                } else {
+                    profitText.textContent = `-$${formatCurrency(Math.abs(profit))}`;
+                }
+                profitText.style.cssText = `
+                    font-weight: 700;
+                    font-size: 9px;
+                    line-height: 1.1;
+                    letter-spacing: -0.2px;
+                    color: #ffffff;
+                    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+                    text-align: center;
+                `;
+                square.appendChild(profitText);
+
+                // Add hover effects
+                square.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scale(1.1)';
+                    this.style.zIndex = '10';
+                    this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.4)';
+                    
+                    // Show detailed tooltip
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'heatmap-tooltip';
+                    tooltip.innerHTML = `
+                        <strong>BTC价格:</strong> $${btcPrice.toLocaleString()}<br>
+                        <strong>电费:</strong> $${electricityCost}/kWh<br>
+                        <strong>月利润:</strong> $${profit.toLocaleString()}
+                    `;
+                    tooltip.style.cssText = `
+                        position: absolute;
+                        bottom: 110%;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background: rgba(0,0,0,0.9);
+                        color: white;
+                        padding: 8px 12px;
+                        border-radius: 6px;
+                        font-size: 11px;
+                        white-space: nowrap;
+                        z-index: 20;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                        border: 1px solid rgba(255,255,255,0.2);
+                    `;
+                    this.appendChild(tooltip);
+                });
+
+                square.addEventListener('mouseleave', function() {
+                    this.style.transform = 'scale(1)';
+                    this.style.zIndex = '1';
+                    this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+                    
+                    // Remove tooltip
+                    const tooltip = this.querySelector('.heatmap-tooltip');
+                    if (tooltip) {
+                        tooltip.remove();
+                    }
+                });
+
+                row.appendChild(square);
+            });
+
+            heatmapGrid.appendChild(row);
+        });
+
+        gridWrapper.appendChild(heatmapGrid);
+
+        // Add Y-axis label
+        const yAxisLabel = document.createElement('div');
+        yAxisLabel.textContent = '比特币价格 ($)';
+        yAxisLabel.style.cssText = `
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%) rotate(-90deg);
+            font-size: 12px;
+            color: #a0a0a0;
+            font-weight: 600;
+            white-space: nowrap;
         `;
         
-        const colorBox = document.createElement('div');
-        colorBox.style.cssText = `
-            width: 20px;
-            height: 15px;
-            background: ${item.color};
-            border-radius: 3px;
-            border: 1px solid rgba(255,255,255,0.3);
+        const gridContainer = document.createElement('div');
+        gridContainer.style.position = 'relative';
+        gridContainer.appendChild(yAxisLabel);
+        gridContainer.appendChild(gridWrapper);
+
+        // Add color legend
+        const legend = document.createElement('div');
+        legend.style.cssText = `
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            font-size: 11px;
         `;
         
-        const label = document.createElement('span');
-        label.textContent = item.label;
+        const legendItems = [
+            { color: 'rgba(239, 68, 68, 0.8)', label: '高亏损' },
+            { color: 'rgba(239, 68, 68, 0.4)', label: '低亏损' },
+            { color: '#4a5568', label: '盈亏平衡' },
+            { color: 'rgba(34, 197, 94, 0.4)', label: '低盈利' },
+            { color: 'rgba(34, 197, 94, 0.8)', label: '高盈利' }
+        ];
         
-        legendItem.appendChild(colorBox);
-        legendItem.appendChild(label);
-        legend.appendChild(legendItem);
-    });
-    
-    heatmapContainer.appendChild(legend);
-    
-    // Add axis labels
-    const axisLabels = document.createElement('div');
-    axisLabels.style.cssText = `
-        margin-top: 15px;
-        text-align: center;
-        font-size: 14px;
-        color: rgba(255,255,255,0.8);
-    `;
-    axisLabels.innerHTML = `
-        <div style="margin-bottom: 5px;">
-            <strong>${language === 'zh' ? '横轴：电费价格 ($/kWh)' : 'X-Axis: Electricity Cost ($/kWh)'}</strong>
-        </div>
-        <div>
-            <strong>${language === 'zh' ? '纵轴：比特币价格 ($)' : 'Y-Axis: Bitcoin Price ($)'}</strong>
-        </div>
-    `;
-    heatmapContainer.appendChild(axisLabels);
-    
-    containerElement.appendChild(heatmapContainer);
-    
+        legendItems.forEach(item => {
+            const legendItem = document.createElement('div');
+            legendItem.style.cssText = `
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            `;
+            
+            const colorBox = document.createElement('div');
+            colorBox.style.cssText = `
+                width: 16px;
+                height: 16px;
+                background: ${item.color};
+                border-radius: 3px;
+                border: 1px solid rgba(255,255,255,0.3);
+            `;
+            
+            const label = document.createElement('span');
+            label.textContent = item.label;
+            label.style.color = '#e0e0e0';
+            
+            legendItem.appendChild(colorBox);
+            legendItem.appendChild(label);
+            legend.appendChild(legendItem);
+        });
+
+        heatmapContainer.appendChild(gridContainer);
+        heatmapContainer.appendChild(legend);
+        containerElement.appendChild(heatmapContainer);
+
+        console.log('方块热力图创建成功');
         return heatmapContainer;
+        
     } catch (error) {
         console.error('Enhanced heatmap generation error:', error);
         containerElement.innerHTML = '<div class="alert alert-danger text-center">热力图生成失败: ' + error.message + '</div>';
