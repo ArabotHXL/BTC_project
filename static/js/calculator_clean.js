@@ -2,6 +2,13 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('[CALCULATOR] Loading...');
     
+    // Load enhanced heatmap script
+    if (!window.createEnhancedHeatmap) {
+        const script = document.createElement('script');
+        script.src = '/static/js/enhanced_heatmap.js';
+        document.head.appendChild(script);
+    }
+    
     var form = document.getElementById('mining-calculator-form');
     if (!form) {
         console.error('[CALCULATOR] Form not found');

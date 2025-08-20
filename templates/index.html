@@ -1876,6 +1876,8 @@
     </div>
 
     <!-- 引入计算器JS -->
+    <!-- 引入增强热力图JS -->
+    <script src="{{ url_for('static', filename='js/enhanced_heatmap.js') }}?v={{ range(100000, 999999) | random }}"></script>
     <script src="{{ url_for('static', filename='js/calculator_clean.js') }}?v={{ range(100000, 999999) | random }}"></script>
     <!-- 引入图表JS - 热力图和ROI可视化 -->
     <script src="{{ url_for('static', filename='js/chart.js') }}?v={{ range(100000, 999999) | random }}"></script>

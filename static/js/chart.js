@@ -111,53 +111,103 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             
-            // 创建热力图
-            profitHeatmapChart = new Chart(canvas, {
-                type: 'scatter',
-                data: {
-                    datasets: [{
-                        label: '月度利润',
-                        data: chartData,
-                        backgroundColor: function(context) {
-                            const value = context.raw ? context.raw.profit : 0;
-                            return value >= 0 ? 'rgba(0, 255, 0, 0.5)' : 'rgba(255, 0, 0, 0.5)';
-                        },
-                        pointRadius: 10,
-                        pointHoverRadius: 15
-                    }]
-                },
-                options: {
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: '电费价格 ($/kWh)'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: '比特币价格 ($)'
-                            }
-                        }
+            // 使用增强热力图或备用散点图
+            if (window.createEnhancedHeatmap) {
+                // 使用新的网格式热力图
+                chartContainer.innerHTML = '';  // 清空容器
+                var title = clientElectricityCost > 0 ? '客户收益热力图' : '矿场主收益热力图';
+                window.createEnhancedHeatmap(chartContainer, data.profit_data, {
+                    title: title,
+                    language: 'zh'
+                });
+            } else {
+                // 备用：改进的散点图
+                profitHeatmapChart = new Chart(canvas, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: '月度利润',
+                            data: chartData,
+                            backgroundColor: function(context) {
+                                const value = context.raw ? context.raw.profit : 0;
+                                return value >= 0 ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)';
+                            },
+                            borderColor: function(context) {
+                                const value = context.raw ? context.raw.profit : 0;
+                                return value >= 0 ? 'rgba(34, 197, 94, 1)' : 'rgba(239, 68, 68, 1)';
+                            },
+                            pointRadius: 12,
+                            pointHoverRadius: 18,
+                            borderWidth: 2
+                        }]
                     },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const profit = context.raw.profit;
-                                    return `月利润: $${profit.toFixed(2)}`;
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#fff' }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0,0,0,0.9)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: '#fff',
+                                borderWidth: 1,
+                                callbacks: {
+                                    label: function(context) {
+                                        const profit = context.raw.profit;
+                                        return `月利润: $${profit.toLocaleString()}`;
+                                    }
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: clientElectricityCost > 0 ? 
+                                    '客户收益热力图' : '矿场主收益热力图',
+                                color: '#fff',
+                                font: { size: 16, weight: 'bold' }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: '电费价格 ($/kWh)',
+                                    color: '#fff',
+                                    font: { size: 14, weight: 'bold' }
+                                },
+                                ticks: { 
+                                    color: '#fff',
+                                    font: { size: 12 }
+                                },
+                                grid: { 
+                                    color: 'rgba(255,255,255,0.1)',
+                                    lineWidth: 1
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: '比特币价格 ($)',
+                                    color: '#fff',
+                                    font: { size: 14, weight: 'bold' }
+                                },
+                                ticks: { 
+                                    color: '#fff',
+                                    font: { size: 12 },
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                },
+                                grid: { 
+                                    color: 'rgba(255,255,255,0.1)',
+                                    lineWidth: 1
                                 }
                             }
-                        },
-                        title: {
-                            display: true,
-                            text: clientElectricityCost > 0 ? 
-                                '客户收益热力图' : '矿场主收益热力图'
                         }
                     }
-                }
-            });
+                });
+            }
             
             console.log("热力图生成完成");
             
