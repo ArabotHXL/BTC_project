@@ -4,15 +4,36 @@
  */
 
 function createEnhancedHeatmap(containerElement, profitData, options = {}) {
-    // Clear container
-    containerElement.innerHTML = '';
-    
-    const {
-        title = '挖矿收益热力图',
-        width = 800,
-        height = 500,
-        language = 'zh'
-    } = options;
+    try {
+        console.log('开始创建增强热力图，数据点数量:', profitData.length);
+        
+        // Clear container
+        containerElement.innerHTML = '';
+        
+        const {
+            title = '挖矿收益热力图',
+            width = 800,
+            height = 500,
+            language = 'zh'
+        } = options;
+        
+        // Validate input data
+        if (!profitData || !Array.isArray(profitData) || profitData.length === 0) {
+            throw new Error('无效的利润数据');
+        }
+        
+        // Prepare data structure first
+        const btcPrices = [...new Set(profitData.map(item => item.btc_price))].sort((a, b) => b - a);
+        const electricityCosts = [...new Set(profitData.map(item => item.electricity_cost))].sort((a, b) => a - b);
+        
+        console.log('BTC价格范围:', btcPrices);
+        console.log('电费范围:', electricityCosts);
+        
+        // Find min/max profits for color scaling
+        const profits = profitData.map(item => item.monthly_profit);
+        const minProfit = Math.min(...profits);
+        const maxProfit = Math.max(...profits);
+        const maxAbsProfit = Math.max(Math.abs(minProfit), Math.abs(maxProfit));
     
     // Create main container with styling
     const heatmapContainer = document.createElement('div');
@@ -278,7 +299,12 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
     
     containerElement.appendChild(heatmapContainer);
     
-    return heatmapContainer;
+        return heatmapContainer;
+    } catch (error) {
+        console.error('Enhanced heatmap generation error:', error);
+        containerElement.innerHTML = '<div class="alert alert-danger text-center">热力图生成失败: ' + error.message + '</div>';
+        throw error;
+    }
 }
 
 // Export for use in other scripts

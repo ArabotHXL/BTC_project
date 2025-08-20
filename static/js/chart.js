@@ -112,14 +112,76 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             // 使用增强热力图或备用散点图
-            if (window.createEnhancedHeatmap) {
-                // 使用新的网格式热力图
-                chartContainer.innerHTML = '';  // 清空容器
-                var title = clientElectricityCost > 0 ? '客户收益热力图' : '矿场主收益热力图';
-                window.createEnhancedHeatmap(chartContainer, data.profit_data, {
-                    title: title,
-                    language: 'zh'
-                });
+            if (window.createEnhancedHeatmap && typeof window.createEnhancedHeatmap === 'function') {
+                try {
+                    // 使用新的网格式热力图
+                    chartContainer.innerHTML = '';  // 清空容器
+                    var title = clientElectricityCost > 0 ? '客户收益热力图' : '矿场主收益热力图';
+                    window.createEnhancedHeatmap(chartContainer, data.profit_data, {
+                        title: title,
+                        language: 'zh'
+                    });
+                    console.log('增强热力图生成成功');
+                } catch (error) {
+                    console.error('增强热力图生成失败，使用备用散点图:', error);
+                    // 使用备用散点图
+                    chartContainer.innerHTML = '';
+                    const canvas = document.createElement('canvas');
+                    canvas.id = 'heatmap-canvas';
+                    canvas.width = 800;
+                    canvas.height = 400;
+                    chartContainer.appendChild(canvas);
+                    
+                    const chartData = data.profit_data.map(item => ({
+                        x: item.electricity_cost,
+                        y: item.btc_price,
+                        profit: item.monthly_profit
+                    }));
+                    
+                    profitHeatmapChart = new Chart(canvas, {
+                        type: 'scatter',
+                        data: {
+                            datasets: [{
+                                label: '月度利润',
+                                data: chartData,
+                                backgroundColor: function(context) {
+                                    const value = context.raw ? context.raw.profit : 0;
+                                    return value >= 0 ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)';
+                                },
+                                pointRadius: 12,
+                                pointHoverRadius: 18
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: clientElectricityCost > 0 ? 
+                                        '客户收益热力图' : '矿场主收益热力图',
+                                    color: '#fff'
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return `月利润: $${context.raw.profit.toLocaleString()}`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    title: { display: true, text: '电费价格 ($/kWh)', color: '#fff' },
+                                    ticks: { color: '#fff' }
+                                },
+                                y: {
+                                    title: { display: true, text: '比特币价格 ($)', color: '#fff' },
+                                    ticks: { color: '#fff' }
+                                }
+                            }
+                        }
+                    });
+                }
             } else {
                 // 备用：改进的散点图
                 profitHeatmapChart = new Chart(canvas, {
