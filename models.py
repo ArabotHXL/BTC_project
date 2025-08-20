@@ -24,6 +24,95 @@ class DealStatus(enum.Enum):
     COMPLETED = "已完成"
     CANCELED = "已取消"
 
+class MinerModel(db.Model):
+    """矿机型号信息数据库模型"""
+    __tablename__ = 'miner_models'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    model_name = db.Column(db.String(100), unique=True, nullable=False, index=True)
+    manufacturer = db.Column(db.String(50), nullable=False)  # 制造商 (Antminer, WhatsMiner, etc.)
+    hashrate = db.Column(db.Float, nullable=False)  # 算力 (TH/s)
+    power_consumption = db.Column(db.Integer, nullable=False)  # 功耗 (W)
+    efficiency = db.Column(db.Float, nullable=True)  # 能效比 (W/TH)
+    release_date = db.Column(db.Date, nullable=True)  # 发布日期
+    price_usd = db.Column(db.Float, nullable=True)  # 美金价格
+    is_active = db.Column(db.Boolean, default=True)  # 是否可用
+    is_liquid_cooled = db.Column(db.Boolean, default=False)  # 是否水冷
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 技术规格
+    chip_type = db.Column(db.String(50), nullable=True)  # 芯片类型
+    fan_count = db.Column(db.Integer, nullable=True)  # 风扇数量
+    operating_temp_min = db.Column(db.Integer, nullable=True)  # 最低工作温度
+    operating_temp_max = db.Column(db.Integer, nullable=True)  # 最高工作温度
+    noise_level = db.Column(db.Integer, nullable=True)  # 噪音等级 (dB)
+    
+    # 尺寸信息
+    length_mm = db.Column(db.Float, nullable=True)  # 长度(mm)
+    width_mm = db.Column(db.Float, nullable=True)   # 宽度(mm) 
+    height_mm = db.Column(db.Float, nullable=True)  # 高度(mm)
+    weight_kg = db.Column(db.Float, nullable=True)  # 重量(kg)
+    
+    def __init__(self, model_name, manufacturer, hashrate, power_consumption, **kwargs):
+        self.model_name = model_name
+        self.manufacturer = manufacturer
+        self.hashrate = hashrate
+        self.power_consumption = power_consumption
+        
+        # 自动计算能效比
+        if hashrate > 0:
+            self.efficiency = round(power_consumption / hashrate, 2)
+        
+        # 处理其他可选参数
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def __repr__(self):
+        return f"<MinerModel {self.model_name}: {self.hashrate}TH/s, {self.power_consumption}W>"
+    
+    def to_dict(self):
+        """转换为字典格式，便于JSON序列化"""
+        return {
+            'id': self.id,
+            'model_name': self.model_name,
+            'manufacturer': self.manufacturer,
+            'hashrate': self.hashrate,
+            'power_consumption': self.power_consumption,
+            'efficiency': self.efficiency,
+            'price_usd': self.price_usd,
+            'is_active': self.is_active,
+            'is_liquid_cooled': self.is_liquid_cooled,
+            'release_date': self.release_date.isoformat() if self.release_date else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'chip_type': self.chip_type,
+            'fan_count': self.fan_count,
+            'operating_temp_min': self.operating_temp_min,
+            'operating_temp_max': self.operating_temp_max,
+            'noise_level': self.noise_level,
+            'length_mm': self.length_mm,
+            'width_mm': self.width_mm,
+            'height_mm': self.height_mm,
+            'weight_kg': self.weight_kg
+        }
+    
+    @classmethod
+    def get_active_miners(cls):
+        """获取所有启用的矿机型号"""
+        return cls.query.filter_by(is_active=True).order_by(cls.manufacturer, cls.model_name).all()
+    
+    @classmethod
+    def get_by_name(cls, model_name):
+        """根据型号名称获取矿机"""
+        return cls.query.filter_by(model_name=model_name, is_active=True).first()
+    
+    @classmethod
+    def get_by_manufacturer(cls, manufacturer):
+        """根据制造商获取矿机列表"""
+        return cls.query.filter_by(manufacturer=manufacturer, is_active=True).order_by(cls.model_name).all()
+
 class NetworkSnapshot(db.Model):
     """网络状态快照记录"""
     __tablename__ = 'network_snapshots'

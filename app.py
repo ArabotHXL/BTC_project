@@ -247,7 +247,7 @@ initialize_database_result = initialize_database()
 # Import models at module level immediately after database initialization
 # This ensures models are available for all functions defined below
 try:
-    from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot
+    from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot, MinerModel
     import models_subscription  # noqa: F401
     logging.info("Models imported successfully at module level")
 except ImportError as e:
@@ -1778,30 +1778,42 @@ def api_get_miners_data():
 
 @app.route('/miners', methods=['GET'])
 def get_miners():
-    """Get the list of available miner models and their specifications"""
-    # Remove authentication requirement for public calculator
-    # if not session.get('email'):
-    #     return jsonify({
-    #         'success': False,
-    #         'error': 'Authentication required'
-    #     }), 401
-        
+    """Get the list of available miner models and their specifications from database"""
     try:
-        # 确保使用的是从mining_calculator导入的MINER_DATA
+        # 从数据库获取活跃的矿机型号
+        miners_from_db = MinerModel.get_active_miners()
         miners_list = []
-        # 计算效率时使用正确的公式：W/TH（能效比）
-        for name, specs in MINER_DATA.items():
+        
+        # 转换为前端需要的格式
+        for miner in miners_from_db:
             miners_list.append({
-                'name': name,
-                'hashrate': specs['hashrate'],  # TH/s
-                'power_consumption': specs['power_watt'],  # W (renamed for consistency)
-                'power_watt': specs['power_watt'],  # W (keep for backward compatibility)
-                'efficiency': round(specs['power_watt'] / specs['hashrate'], 2)  # W/TH
+                'name': miner.model_name,
+                'hashrate': miner.hashrate,  # TH/s
+                'power_consumption': miner.power_consumption,  # W
+                'power_watt': miner.power_consumption,  # W (keep for backward compatibility)
+                'efficiency': miner.efficiency,  # W/TH
+                'manufacturer': miner.manufacturer,
+                'is_liquid_cooled': miner.is_liquid_cooled,
+                'price_usd': miner.price_usd
             })
+        
+        # 如果数据库为空，回退到硬编码数据
+        if not miners_list:
+            logging.warning("数据库中没有矿机数据，使用备用硬编码数据")
+            # 备用的基本矿机数据
+            fallback_miners = [
+                {'name': 'Antminer S19', 'hashrate': 95, 'power_consumption': 3250, 'power_watt': 3250, 'efficiency': 34.21, 'manufacturer': 'Bitmain'},
+                {'name': 'Antminer S19 Pro', 'hashrate': 110, 'power_consumption': 3250, 'power_watt': 3250, 'efficiency': 29.55, 'manufacturer': 'Bitmain'},
+                {'name': 'Antminer S21', 'hashrate': 200, 'power_consumption': 3550, 'power_watt': 3550, 'efficiency': 17.75, 'manufacturer': 'Bitmain'},
+                {'name': 'WhatsMiner M50', 'hashrate': 114, 'power_consumption': 3306, 'power_watt': 3306, 'efficiency': 29.0, 'manufacturer': 'MicroBT'}
+            ]
+            miners_list = fallback_miners
         
         return jsonify({
             'success': True,
-            'miners': miners_list
+            'miners': miners_list,
+            'count': len(miners_list),
+            'source': 'database' if miners_from_db else 'fallback'
         })
     except Exception as e:
         logging.error(f"Error fetching miners data: {str(e)}")
@@ -4360,6 +4372,14 @@ try:
         logging.info("Batch calculator routes registered successfully")
 except Exception as e:
     logging.warning(f"Batch calculator routes not available: {e}")
+
+# Register miner management blueprint
+try:
+    from miner_management_routes import miner_bp
+    app.register_blueprint(miner_bp)
+    logging.info("Miner management routes registered successfully")
+except Exception as e:
+    logging.warning(f"Miner management routes not available: {e}")
 
 # Register Deribit analysis blueprint
 try:
