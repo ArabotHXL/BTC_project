@@ -278,9 +278,9 @@
             </a>
             
             <!-- 语言切换按钮 -->
-            <div class="btn-group" role="group" style="font-size: 0.75rem;">
-                <a href="/batch-calculator?lang=zh" class="btn btn-outline-light btn-sm {{ 'active' if current_lang == 'zh' else '' }}" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; line-height: 1.2;">中文</a>
-                <a href="/batch-calculator?lang=en" class="btn btn-outline-light btn-sm {{ 'active' if current_lang == 'en' else '' }}" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; line-height: 1.2;">EN</a>
+            <div style="display: inline-flex;">
+                <a href="/batch-calculator?lang=zh" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}" style="padding: 0.15rem 0.4rem; font-size: 0.7rem; border-radius: 0.15rem 0 0 0.15rem; border-right: none; min-width: 35px;">中文</a>
+                <a href="/batch-calculator?lang=en" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}" style="padding: 0.15rem 0.4rem; font-size: 0.7rem; border-radius: 0 0.15rem 0.15rem 0; min-width: 35px;">EN</a>
             </div>
         </div>
     </div>
