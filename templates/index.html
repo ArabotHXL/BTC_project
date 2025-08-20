@@ -1337,12 +1337,13 @@
                             <h5 class="mb-0"><i class="bi bi-grid-3x3 me-1"></i>{{ t('profitability_heatmap') }}</h5>
                         </div>
                         <div class="card-body">
-                            <button id="generate-chart-btn" class="btn btn-primary mb-3">
+                            <!-- Auto-generating heatmap - button hidden -->
+                            <button id="generate-chart-btn" class="btn btn-primary mb-3" style="display: none;">
                                 <i class="bi bi-graph-up"></i> {% if current_lang == 'en' %}Generate Chart{% else %}生成热力图{% endif %}
                             </button>
                             <div id="chart-container" style="height: 400px; position: relative;">
                                 <div class="text-center text-muted p-5">
-                                    {% if current_lang == 'en' %}Click the button above to generate the profitability chart{% else %}点击上方按钮生成热力图{% endif %}
+                                    {% if current_lang == 'en' %}Heatmap will auto-generate after calculation{% else %}热力图将在计算完成后自动生成{% endif %}
                                 </div>
                             </div>
                             <div class="mt-3 small text-muted">

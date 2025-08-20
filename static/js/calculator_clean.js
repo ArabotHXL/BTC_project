@@ -703,6 +703,57 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('[CALCULATOR] Generating ROI charts...');
             generateRoiCharts(data);
         }
+        
+        // Auto-generate heatmap after results are displayed
+        setTimeout(function() {
+            console.log('[CALCULATOR] Auto-generating heatmap...');
+            autoGenerateHeatmap(data);
+        }, 1000); // Wait 1 second for ROI charts to complete
+    }
+    
+    // Auto-generate heatmap function
+    function autoGenerateHeatmap(data) {
+        try {
+            // Get required form values
+            var minerModelSelect = document.getElementById('miner-model');
+            var minerCountInput = document.getElementById('miner-count');
+            var clientElectricityCostInput = document.getElementById('client-electricity-cost');
+            
+            if (!minerModelSelect || !minerCountInput) {
+                console.log('[CALCULATOR] Missing form elements for heatmap generation');
+                return;
+            }
+            
+            var minerModel = minerModelSelect.value;
+            var minerCount = minerCountInput.value || 1;
+            var clientElectricityCost = clientElectricityCostInput ? clientElectricityCostInput.value || 0 : 0;
+            
+            if (!minerModel) {
+                console.log('[CALCULATOR] No miner model selected, skipping heatmap');
+                return;
+            }
+            
+            console.log('[CALCULATOR] Auto-generating heatmap with:', {
+                minerModel: minerModel,
+                minerCount: minerCount,
+                clientElectricityCost: clientElectricityCost
+            });
+            
+            // Use the existing chart generation function from chart.js
+            if (typeof generateChart === 'function') {
+                generateChart(minerModel, minerCount, clientElectricityCost);
+            } else {
+                console.log('[CALCULATOR] generateChart function not available, trying alternative');
+                // Try alternative function names that might exist
+                if (typeof generateProfitChart === 'function') {
+                    generateProfitChart(minerModel, minerCount, clientElectricityCost);
+                } else {
+                    console.log('[CALCULATOR] No heatmap generation function available');
+                }
+            }
+        } catch (error) {
+            console.error('[CALCULATOR] Error auto-generating heatmap:', error);
+        }
     }
     
     // Initialize
