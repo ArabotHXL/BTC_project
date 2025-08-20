@@ -175,9 +175,9 @@
                         {% endif %}
                         
                         <!-- 语言切换 / Language Switcher -->
-                        <div class="btn-group btn-group-sm" role="group">
-                            <a href="/mining-calculator?lang=zh" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
-                            <a href="/mining-calculator?lang=en" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}">English</a>
+                        <div style="display: inline-flex;">
+                            <a href="/mining-calculator?lang=zh" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}" style="padding: 0.15rem 0.4rem; font-size: 0.7rem; border-radius: 0.15rem 0 0 0.15rem; border-right: none; min-width: 35px;">中文</a>
+                            <a href="/mining-calculator?lang=en" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}" style="padding: 0.15rem 0.4rem; font-size: 0.7rem; border-radius: 0 0.15rem 0.15rem 0; min-width: 35px;">EN</a>
                         </div>
                     </div>
                     
