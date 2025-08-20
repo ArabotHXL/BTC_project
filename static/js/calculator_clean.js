@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('btc-price').textContent = '$' + Math.round(data.btc_price).toLocaleString();
                     document.getElementById('network-difficulty').textContent = (data.network_difficulty / 1e12).toFixed(2) + 'T';
                     document.getElementById('network-hashrate').textContent = data.network_hashrate + ' EH/s';
-                    document.getElementById('block-reward').textContent = data.block_reward + ' BTC';
+                    document.getElementById('block-reward').textContent = parseFloat(data.block_reward).toFixed(3) + ' BTC';
                     
                     // Update BTC price in form
                     var btcField = document.getElementById('btc-price-input');
