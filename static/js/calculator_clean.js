@@ -742,17 +742,76 @@ document.addEventListener('DOMContentLoaded', function() {
             // Use the existing chart generation function from chart.js
             if (typeof generateChart === 'function') {
                 generateChart(minerModel, minerCount, clientElectricityCost);
+            } else if (typeof window.generateChart === 'function') {
+                window.generateChart(minerModel, minerCount, clientElectricityCost);
             } else {
-                console.log('[CALCULATOR] generateChart function not available, trying alternative');
-                // Try alternative function names that might exist
-                if (typeof generateProfitChart === 'function') {
-                    generateProfitChart(minerModel, minerCount, clientElectricityCost);
-                } else {
-                    console.log('[CALCULATOR] No heatmap generation function available');
-                }
+                console.log('[CALCULATOR] generateChart function not available, calling heatmap directly');
+                // Call the heatmap generation directly
+                autoGenerateHeatmapDirect(minerModel, minerCount, clientElectricityCost);
             }
         } catch (error) {
             console.error('[CALCULATOR] Error auto-generating heatmap:', error);
+        }
+    }
+    
+    // Direct heatmap generation function
+    async function autoGenerateHeatmapDirect(minerModel, minerCount, clientElectricityCost) {
+        console.log('[CALCULATOR] Starting direct heatmap generation...');
+        const chartContainer = document.getElementById('chart-container');
+        
+        if (!chartContainer) {
+            console.error('[CALCULATOR] Chart container not found');
+            return;
+        }
+        
+        try {
+            // Show loading state
+            chartContainer.innerHTML = '<div class="d-flex justify-content-center my-5"><div class="spinner-border text-primary" role="status"></div><span class="ms-3">正在生成热力图...</span></div>';
+            
+            // Get chart data
+            const params = new URLSearchParams({
+                miner_model: minerModel,
+                miner_count: minerCount,
+                client_electricity_cost: clientElectricityCost
+            });
+            
+            const response = await fetch('/profit_chart_data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: params
+            });
+            
+            if (!response.ok) {
+                throw new Error(`服务器返回错误: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.success || !data.profit_data || !Array.isArray(data.profit_data) || data.profit_data.length === 0) {
+                throw new Error("服务器返回的数据格式不正确");
+            }
+            
+            console.log('[CALCULATOR] 热力图数据获取成功:', data);
+            
+            // Use enhanced heatmap if available
+            if (window.createEnhancedHeatmap && typeof window.createEnhancedHeatmap === 'function') {
+                chartContainer.innerHTML = '';
+                var title = clientElectricityCost > 0 ? '客户收益热力图' : '矿场主收益热力图';
+                window.createEnhancedHeatmap(chartContainer, data.profit_data, {
+                    title: title,
+                    language: 'zh'
+                });
+                console.log('[CALCULATOR] 增强热力图生成成功');
+            } else {
+                console.log('[CALCULATOR] Enhanced heatmap not available, using fallback');
+                chartContainer.innerHTML = '<div class="alert alert-warning">热力图组件未加载</div>';
+            }
+            
+        } catch (error) {
+            console.error('[CALCULATOR] Direct heatmap generation error:', error);
+            chartContainer.innerHTML = '<div class="alert alert-danger">热力图生成失败: ' + error.message + '</div>';
         }
     }
     
