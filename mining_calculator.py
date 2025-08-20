@@ -107,8 +107,8 @@ def calculate_enhanced_roi(investment, yearly_profit, monthly_profit, btc_price,
     if investment <= 0 or yearly_profit <= 0:
         return {
             "roi_percent_annual": 0,
-            "payback_period_months": float('inf'),
-            "payback_period_years": float('inf'),
+            "payback_period_months": None,
+            "payback_period_years": None,
             "forecast": []
         }
     
@@ -159,10 +159,10 @@ def calculate_enhanced_roi(investment, yearly_profit, monthly_profit, btc_price,
             break
     
     # Calculate final metrics
-    payback_period_months = investment / monthly_profit if monthly_profit > 0 else float('inf')
+    payback_period_months = investment / monthly_profit if monthly_profit > 0 else None
     
     # Adjust payback period for difficulty increases
-    if consider_difficulty_adjustment and payback_period_months < float('inf'):
+    if consider_difficulty_adjustment and payback_period_months is not None:
         # Use cumulative profit to find actual payback period
         for i, month_data in enumerate(forecast):
             if month_data["cumulative_profit"] >= investment:
@@ -170,7 +170,7 @@ def calculate_enhanced_roi(investment, yearly_profit, monthly_profit, btc_price,
                 break
     
     roi_percent_annual = (yearly_profit / investment) * 100 if investment > 0 else 0
-    payback_period_years = payback_period_months / 12 if payback_period_months < float('inf') else float('inf')
+    payback_period_years = (payback_period_months / 12) if (payback_period_months is not None) else None
     
     return {
         "roi_percent_annual": roi_percent_annual,
@@ -199,8 +199,8 @@ def calculate_roi(investment, yearly_profit, monthly_profit, btc_price, forecast
     if investment <= 0 or yearly_profit <= 0:
         return {
             "roi_percent_annual": 0,
-            "payback_period_months": float('inf'),
-            "payback_period_years": float('inf'),
+            "payback_period_months": None,
+            "payback_period_years": None,
             "forecast": []
         }
     
@@ -208,8 +208,8 @@ def calculate_roi(investment, yearly_profit, monthly_profit, btc_price, forecast
     roi_percent_annual = (yearly_profit / investment) * 100
     
     # Payback period (in months and years)
-    payback_period_months = investment / monthly_profit if monthly_profit > 0 else float('inf')
-    payback_period_years = payback_period_months / 12 if monthly_profit > 0 else float('inf')
+    payback_period_months = investment / monthly_profit if monthly_profit > 0 else None
+    payback_period_years = (payback_period_months / 12) if (payback_period_months is not None) else None
     
     # Generate forecast data for ROI chart
     forecast = []
