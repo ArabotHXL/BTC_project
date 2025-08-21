@@ -485,24 +485,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // Investment Recovery Amount - should show cumulative profit at break-even point
+            // Investment Recovery Amount - should show the investment amount that needs to be recovered
             var breakevenRecoveryAmount = document.getElementById('breakeven-recovery-amount');
             if (breakevenRecoveryAmount) {
                 if (breakeven) {
                     // Show the cumulative profit at break-even point (total amount recovered)
                     breakevenRecoveryAmount.textContent = '$' + breakeven.cumulative_profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                } else if (paybackMonths && paybackMonths !== Infinity && forecast.length > 0) {
-                    // Find the closest month to payback period and show cumulative profit at that point
-                    var targetMonth = Math.ceil(paybackMonths);
-                    var closestMonth = forecast.find(point => point.month >= targetMonth) || forecast[forecast.length - 1];
-                    if (closestMonth) {
-                        // Estimate the cumulative profit at break-even point based on monthly average
-                        var avgMonthlyProfit = closestMonth.cumulative_profit / closestMonth.month;
-                        var estimatedRecovery = avgMonthlyProfit * paybackMonths;
-                        breakevenRecoveryAmount.textContent = '$' + estimatedRecovery.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                    } else {
-                        breakevenRecoveryAmount.textContent = '$0.00';
-                    }
+                } else if (paybackMonths && paybackMonths !== Infinity) {
+                    // Show the initial investment amount that needs to be recovered
+                    var clientInvestment = (data.inputs && data.inputs.client_investment) || 5000; // Default fallback
+                    breakevenRecoveryAmount.textContent = '$' + clientInvestment.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 } else {
                     // If no break-even point found, show 0
                     breakevenRecoveryAmount.textContent = '$0.00';
