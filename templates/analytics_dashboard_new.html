@@ -507,6 +507,25 @@
             font-size: 1rem !important;
             filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2)) !important;
         }
+
+        /* Dropdown menu styling */
+        .dropdown-menu {
+            background: var(--bg-secondary) !important;
+            border: 1px solid rgba(116, 75, 162, 0.3) !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .dropdown-item {
+            color: white !important;
+            transition: all 0.3s ease !important;
+            padding: 0.7rem 1rem !important;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(243, 156, 18, 0.2) !important;
+            color: #f39c12 !important;
+        }
     </style>
 </head>
 <body>
@@ -540,9 +559,17 @@
                             <i class="bi bi-globe me-1"></i>
                             {{ 'CN' if current_lang == 'zh' else 'EN' }}
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="?lang=zh">中文</a></li>
-                            <li><a class="dropdown-item" href="?lang=en">English</a></li>
+                        <ul class="dropdown-menu dropdown-menu-end" style="background: var(--bg-secondary); border: 1px solid rgba(116, 75, 162, 0.3);">
+                            <li>
+                                <a class="dropdown-item" href="/set_language?lang=zh&return_url={{ request.url }}" style="color: white !important;">
+                                    <i class="bi bi-translate me-2"></i>中文
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/set_language?lang=en&return_url={{ request.url }}" style="color: white !important;">
+                                    <i class="bi bi-translate me-2"></i>English
+                                </a>
+                            </li>
                         </ul>
                     </div>
                     
@@ -1930,12 +1957,12 @@
                             <small class="text-muted">2 {{ '分钟前' if current_lang == 'zh' else 'minutes ago' }}</small>
                         </div>
                     </div>
-                    <div class="alert alert-info d-flex align-items-center mb-3" role="alert">
-                        <i class="bi bi-graph-up me-3 fs-4"></i>
+                    <div class="alert alert-info d-flex align-items-center mb-3" role="alert" style="background: rgba(66, 153, 225, 0.15) !important; border: 1px solid rgba(66, 153, 225, 0.3) !important;">
+                        <i class="bi bi-graph-up me-3 fs-4" style="color: #4299e1 !important;"></i>
                         <div>
-                            <strong>{{ '技术指标' if current_lang == 'zh' else 'Technical Signal' }}</strong>
-                            <p class="mb-0">RSI {{ '接近超买区域' if current_lang == 'zh' else 'approaching overbought territory' }} (68.5)</p>
-                            <small class="text-muted">15 {{ '分钟前' if current_lang == 'zh' else 'minutes ago' }}</small>
+                            <strong style="color: #ffffff !important;">Technical Signal</strong>
+                            <p class="mb-0" style="color: #e2e8f0 !important;">RSI approaching overbought territory (68.5)</p>
+                            <small style="color: #a0aec0 !important;">15 minutes ago</small>
                         </div>
                     </div>
                     <div class="alert alert-success d-flex align-items-center mb-3" role="alert">

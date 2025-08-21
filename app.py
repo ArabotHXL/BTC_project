@@ -819,6 +819,23 @@ def welcome():
     
     return render_template('homepage.html', lang=lang, t=get_translation)
 
+@app.route('/set_language')
+def set_language():
+    """设置界面语言"""
+    lang = request.args.get('lang', 'zh')
+    if lang not in ['zh', 'en']:
+        lang = 'zh'
+    
+    # 保存语言设置到session
+    session['language'] = lang
+    
+    # 获取返回页面，默认回到来源页
+    return_url = request.args.get('return_url', request.referrer)
+    if not return_url or not return_url.startswith(request.host_url):
+        return_url = url_for('index')  # 默认回到首页
+    
+    return redirect(return_url)
+
 @app.route('/admin/login_records')
 @app.route('/login-records')
 @login_required
