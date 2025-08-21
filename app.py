@@ -244,96 +244,23 @@ def initialize_database():
 # Initialize database
 initialize_database_result = initialize_database()
 
-# Import models at module level immediately after database initialization
-# This ensures models are available for all functions defined below
-if initialize_database_result:
+# Import models at module level for global access
+try:
+    import models
+    import models_subscription  # noqa: F401
+    logging.info("Models imported successfully at module level")
+    
+    # 初始化投资组合管理系统
     try:
-        import models
-        import models_subscription  # noqa: F401
+        from user_portfolio_management import portfolio_manager
+        portfolio_manager.create_portfolio_table()
+        logging.info("用户投资组合管理系统初始化完成")
+    except Exception as e:
+        logging.error(f"投资组合管理系统初始化失败: {e}")
         
-        # Import models directly to avoid type conflicts
-        LoginRecord = models.LoginRecord
-        UserAccess = models.UserAccess  
-        Customer = models.Customer
-        Contact = models.Contact
-        Lead = models.Lead
-        Activity = models.Activity
-        LeadStatus = models.LeadStatus
-        DealStatus = models.DealStatus
-        NetworkSnapshot = models.NetworkSnapshot
-        MinerModel = models.MinerModel
-        
-        logging.info("Models imported successfully at module level")
-        
-        # 初始化投资组合管理系统
-        try:
-            from user_portfolio_management import portfolio_manager
-            portfolio_manager.create_portfolio_table()
-            logging.info("用户投资组合管理系统初始化完成")
-        except Exception as e:
-            logging.error(f"投资组合管理系统初始化失败: {e}")
-        
-    except ImportError as e:
-        logging.error(f"Failed to import models: {e}")
-        initialize_database_result = False
-
-# Create placeholder classes if database initialization failed
-if not initialize_database_result:
-    logging.warning("Using placeholder models due to database initialization failure")
-    
-    class LoginRecord:
-        def __init__(self, **kwargs):
-            pass
-        @classmethod
-        def query(cls):
-            class MockQuery:
-                def filter_by(self, **kwargs):
-                    return self
-                def first(self):
-                    return None
-                def order_by(self, *args):
-                    return self
-                def all(self):
-                    return []
-            return MockQuery()
-    
-    class UserAccess:
-        def __init__(self, **kwargs):
-            pass
-        @classmethod
-        def query(cls):
-            class MockQuery:
-                def filter_by(self, **kwargs):
-                    return self
-                def first(self):
-                    return None
-                def get_or_404(self, id):
-                    return None
-                def order_by(self, *args):
-                    return self
-                def all(self):
-                    return []
-            return MockQuery()
-        def set_password(self, password):
-            pass
-        def generate_email_verification_token(self):
-            return "mock_token"
-    
-    # Create other placeholder classes
-    Customer = UserAccess
-    Contact = UserAccess  
-    Lead = UserAccess
-    Activity = UserAccess
-    NetworkSnapshot = UserAccess
-    MinerModel = UserAccess
-    
-    class LeadStatus:
-        NEW = "NEW"
-        CONTACTED = "CONTACTED"
-    
-    class DealStatus:
-        DRAFT = "DRAFT"
-        PENDING = "PENDING"
+except ImportError as e:
+    logging.error(f"Failed to import models: {e}")
+    initialize_database_result = False
 
 if not initialize_database_result:
     logging.warning("Database initialization failed - some features may not work correctly")
