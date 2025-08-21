@@ -1876,12 +1876,19 @@
         
         // Alerts/Notifications functionality
         function initAlertsSystem() {
+            console.log('Initializing alerts system...');
+            
             const alertsBtn = document.getElementById('alertsBtn');
             if (alertsBtn) {
+                console.log('Alerts button found, adding click listener');
                 alertsBtn.addEventListener('click', function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Alerts button clicked - showing panel');
                     showAlertsPanel();
                 });
+            } else {
+                console.error('Alerts button not found');
             }
             
             // Check for alerts on page load
@@ -1889,19 +1896,40 @@
         }
         
         function showAlertsPanel() {
+            console.log('Showing alerts panel...');
+            
             // Create alerts modal if it doesn't exist
             let alertsModal = document.getElementById('alertsModal');
             if (!alertsModal) {
+                console.log('Creating new alerts modal');
                 alertsModal = createAlertsModal();
                 document.body.appendChild(alertsModal);
             }
             
-            // Show the modal
-            const modal = new bootstrap.Modal(alertsModal);
-            modal.show();
-            
-            // Load latest alerts
-            loadAlerts();
+            try {
+                // Show the modal using Bootstrap
+                const modal = new bootstrap.Modal(alertsModal);
+                console.log('Modal created, showing...');
+                modal.show();
+                
+                // Load latest alerts
+                loadAlerts();
+            } catch (error) {
+                console.error('Error showing modal:', error);
+                
+                // Fallback: show modal manually
+                alertsModal.style.display = 'block';
+                alertsModal.classList.add('show');
+                document.body.classList.add('modal-open');
+                
+                // Create backdrop
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                backdrop.id = 'alertsBackdrop';
+                document.body.appendChild(backdrop);
+                
+                loadAlerts();
+            }
         }
         
         function createAlertsModal() {
