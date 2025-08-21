@@ -629,15 +629,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (!context || context.length === 0) return [];
                             const dataIndex = context[0].dataIndex;
                             
-                            // Get financial data for this month
+                            // Get monthly profit for this month
                             let monthlyProfit = 0;
-                            let cumulativeProfit = 0;
-                            let investmentBalance = 0;
-                            
                             if (clientRoi.forecast && clientRoi.forecast[dataIndex]) {
                                 monthlyProfit = clientRoi.forecast[dataIndex].monthly_profit || 0;
-                                cumulativeProfit = clientRoi.forecast[dataIndex].cumulative_profit || 0;
-                                investmentBalance = clientRoi.forecast[dataIndex].investment_balance || 0;
                             }
                             
                             // Show both algorithm values for comparison
@@ -647,8 +642,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             
                             let comparisonInfo = [
                                 `当月利润: $${monthlyProfit.toLocaleString()}`,
-                                `累计收益: $${cumulativeProfit.toLocaleString()}`,
-                                `剩余投资: $${investmentBalance.toLocaleString()}`,
                                 '',
                                 '📊 双算法对比:',
                                 `动态算法: ${dynamicRoi.toFixed(2)}%`,
