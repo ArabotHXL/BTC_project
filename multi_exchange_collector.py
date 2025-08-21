@@ -1,572 +1,451 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Multi-Exchange BTC Options Trading Data Collector
-Integrates Deribit, OKX, and Binance options data collection
+多交易所数据收集器 - 提升成交量数据完整性
+集成衍生品和资金费率数据
 """
-import argparse
-import math
-import time
-import requests
-import logging
-import sqlite3
-import json
-from datetime import datetime, timezone, timedelta
-from collections import defaultdict
-from typing import List, Dict, Tuple, Any
 
+import os
+import time
+import json
+import logging
+import requests
+import psycopg2
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional
+import concurrent.futures
+
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class MultiExchangeCollector:
-    """多交易所BTC期权数据收集器"""
     
-    def __init__(self, db_path="deribit_trades.db"):
-        self.db_path = db_path
-        self.setup_database()
-    
-    def setup_database(self):
-        """设置数据库表结构"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+    def __init__(self):
+        self.db_url = os.environ.get('DATABASE_URL')
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'BTC-Mining-Calculator/1.0'
+        })
         
-        # 创建多交易所交易表
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS multi_exchange_trades (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                exchange TEXT NOT NULL,
-                timestamp INTEGER NOT NULL,
-                instrument TEXT NOT NULL,
-                price REAL NOT NULL,
-                amount REAL NOT NULL,
-                side TEXT,
-                expiry TEXT,
-                strike REAL,
-                option_type TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # 创建索引
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_exchange ON multi_exchange_trades(exchange)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_timestamp ON multi_exchange_trades(timestamp)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_instrument ON multi_exchange_trades(instrument)')
-        
-        # 创建聚合分析表
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS bucket_analysis (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                bucket_range TEXT NOT NULL,
-                bucket_type TEXT NOT NULL, -- 'price' or 'strike'
-                bucket_width REAL NOT NULL,
-                trades_count INTEGER NOT NULL,
-                total_amount REAL NOT NULL,
-                call_trades INTEGER DEFAULT 0,
-                call_amount REAL DEFAULT 0,
-                put_trades INTEGER DEFAULT 0,
-                put_amount REAL DEFAULT 0,
-                analysis_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                time_window_minutes INTEGER NOT NULL
-            )
-        ''')
-        
-        conn.commit()
-        conn.close()
-        logger.info("多交易所数据库表创建完成")
+        # 交易所API配置
+        self.exchanges = {
+            'binance': {
+                'spot_url': 'https://api.binance.com/api/v3',
+                'futures_url': 'https://fapi.binance.com/fapi/v1',
+                'symbol': 'BTCUSDT'
+            },
+            'okx': {
+                'spot_url': 'https://www.okx.com/api/v5',
+                'futures_url': 'https://www.okx.com/api/v5',
+                'symbol': 'BTC-USDT'
+            },
+            'deribit': {
+                'url': 'https://www.deribit.com/api/v2/public',
+                'symbol': 'BTC-PERPETUAL'
+            },
+            'bybit': {
+                'spot_url': 'https://api.bybit.com/v5',
+                'futures_url': 'https://api.bybit.com/v5',
+                'symbol': 'BTCUSDT'
+            }
+        }
     
-    @staticmethod
-    def now_ms():
-        """获取当前时间戳（毫秒）"""
-        return int(datetime.now(timezone.utc).timestamp() * 1000)
+    def get_connection(self):
+        """获取数据库连接"""
+        return psycopg2.connect(self.db_url)
     
-    @staticmethod
-    def bucket_label(value, step):
-        """生成分桶标签 - 高价在前，低价在后，带美元符号"""
-        lo = math.floor(value / step) * step
-        hi = lo + step
-        return f"${int(hi)} - ${int(lo)}"
-    
-    @staticmethod
-    def parse_generic(name):
-        """解析期权合约名称，提取到期日、行权价、类型"""
-        # BTC-30AUG24-60000-C / BTC-240829-60000-C
-        parts = name.split("-")
-        if len(parts) >= 4:
-            strike = float(parts[2])
-            typ = "CALL" if parts[3].upper().startswith("C") else "PUT"
-            expiry = parts[1]
-            return expiry, strike, typ
-        return "", float("nan"), ""
-    
-    def fetch_deribit(self, minutes=15):
-        """获取Deribit交易数据"""
-        logger.info("开始获取Deribit数据...")
-        url = "https://www.deribit.com/api/v2/public/get_last_trades_by_currency_and_time"
-        end = self.now_ms()
-        start = end - minutes * 60 * 1000
-        
+    def collect_binance_data(self) -> Dict:
+        """收集币安现货和合约数据"""
         try:
-            response = requests.get(url, params={
-                "currency": "BTC",
-                "start_timestamp": start,
-                "end_timestamp": end,
-                "kind": "option"
-            }, timeout=30)
-            response.raise_for_status()
+            data = {}
             
-            trades = []
-            for trade in response.json().get("result", {}).get("trades", []):
-                expiry, strike, typ = self.parse_generic(trade["instrument_name"])
-                trades.append({
-                    "exchange": "Deribit",
-                    "timestamp": trade["timestamp"],
-                    "instrument": trade["instrument_name"],
-                    "price": float(trade["price"]),
-                    "amount": float(trade["amount"]),
-                    "side": trade.get("direction", ""),
-                    "expiry": expiry,
-                    "strike": strike,
-                    "option_type": typ
-                })
+            # 现货数据
+            spot_url = f"{self.exchanges['binance']['spot_url']}/ticker/24hr"
+            params = {'symbol': self.exchanges['binance']['symbol']}
             
-            logger.info(f"Deribit获取到 {len(trades)} 笔交易")
-            return trades
+            response = self.session.get(spot_url, params=params, timeout=10)
+            if response.status_code == 200:
+                spot_data = response.json()
+                data['spot'] = {
+                    'price': float(spot_data['lastPrice']),
+                    'volume_24h': float(spot_data['quoteVolume']),
+                    'price_change_24h': float(spot_data['priceChangePercent']),
+                    'high_24h': float(spot_data['highPrice']),
+                    'low_24h': float(spot_data['lowPrice'])
+                }
+            
+            # 合约数据
+            futures_url = f"{self.exchanges['binance']['futures_url']}/ticker/24hr"
+            params = {'symbol': self.exchanges['binance']['symbol']}
+            
+            response = self.session.get(futures_url, params=params, timeout=10)
+            if response.status_code == 200:
+                futures_data = response.json()
+                data['futures'] = {
+                    'price': float(futures_data['lastPrice']),
+                    'volume_24h': float(futures_data['quoteVolume']),
+                    'open_interest': 0  # 需要额外API调用
+                }
+            
+            # 资金费率
+            funding_url = f"{self.exchanges['binance']['futures_url']}/premiumIndex"
+            params = {'symbol': self.exchanges['binance']['symbol']}
+            
+            response = self.session.get(funding_url, params=params, timeout=10)
+            if response.status_code == 200:
+                funding_data = response.json()
+                data['funding_rate'] = float(funding_data['lastFundingRate'])
+                data['mark_price'] = float(funding_data['markPrice'])
+            
+            data['exchange'] = 'binance'
+            data['timestamp'] = datetime.now()
+            logger.info(f"币安数据收集成功: 现货量={data.get('spot', {}).get('volume_24h', 0):,.0f}")
+            
+            return data
             
         except Exception as e:
-            logger.error(f"Deribit数据获取失败: {e}")
-            return []
+            logger.error(f"币安数据收集失败: {e}")
+            return {'exchange': 'binance', 'error': str(e)}
     
-    def fetch_okx(self, minutes=15, max_instruments=400):
-        """获取OKX交易数据"""
-        logger.info("开始获取OKX数据...")
+    def collect_okx_data(self) -> Dict:
+        """收集OKX数据"""
         try:
-            # 获取期权合约列表
-            instruments_response = requests.get(
-                "https://www.okx.com/api/v5/public/instruments",
-                params={"instType": "OPTION", "uly": "BTC-USD"},
-                timeout=30
-            )
-            instruments_response.raise_for_status()
-            instruments = instruments_response.json().get("data", [])
+            data = {}
             
-            trades = []
-            cutoff = datetime.now(timezone.utc) - timedelta(minutes=minutes)
+            # 现货行情
+            spot_url = f"{self.exchanges['okx']['spot_url']}/market/ticker"
+            params = {'instId': self.exchanges['okx']['symbol']}
             
-            # 限制处理的合约数量
-            for inst in instruments[:max_instruments]:
-                inst_id = inst["instId"]
-                
+            response = self.session.get(spot_url, params=params, timeout=10)
+            if response.status_code == 200:
+                okx_data = response.json()
+                if okx_data['code'] == '0' and okx_data['data']:
+                    spot_data = okx_data['data'][0]
+                    data['spot'] = {
+                        'price': float(spot_data['last']),
+                        'volume_24h': float(spot_data['volCcy24h']),
+                        'price_change_24h': float(spot_data['chg24h']) * 100,
+                        'high_24h': float(spot_data['high24h']),
+                        'low_24h': float(spot_data['low24h'])
+                    }
+            
+            # 永续合约数据
+            futures_params = {'instId': 'BTC-USDT-SWAP'}
+            response = self.session.get(spot_url, params=futures_params, timeout=10)
+            if response.status_code == 200:
+                okx_data = response.json()
+                if okx_data['code'] == '0' and okx_data['data']:
+                    futures_data = okx_data['data'][0]
+                    data['futures'] = {
+                        'price': float(futures_data['last']),
+                        'volume_24h': float(futures_data['volCcy24h'])
+                    }
+            
+            # 资金费率
+            funding_url = f"{self.exchanges['okx']['futures_url']}/public/funding-rate"
+            params = {'instId': 'BTC-USDT-SWAP'}
+            
+            response = self.session.get(funding_url, params=params, timeout=10)
+            if response.status_code == 200:
+                funding_data = response.json()
+                if funding_data['code'] == '0' and funding_data['data']:
+                    data['funding_rate'] = float(funding_data['data'][0]['fundingRate'])
+            
+            data['exchange'] = 'okx'
+            data['timestamp'] = datetime.now()
+            logger.info(f"OKX数据收集成功: 现货量={data.get('spot', {}).get('volume_24h', 0):,.0f}")
+            
+            return data
+            
+        except Exception as e:
+            logger.error(f"OKX数据收集失败: {e}")
+            return {'exchange': 'okx', 'error': str(e)}
+    
+    def collect_deribit_data(self) -> Dict:
+        """收集Deribit衍生品数据"""
+        try:
+            data = {}
+            
+            # 永续合约数据
+            url = f"{self.exchanges['deribit']['url']}/get_ticker"
+            params = {'instrument_name': self.exchanges['deribit']['symbol']}
+            
+            response = self.session.get(url, params=params, timeout=10)
+            if response.status_code == 200:
+                result = response.json()
+                if 'result' in result:
+                    ticker = result['result']
+                    data['futures'] = {
+                        'price': float(ticker['last_price']),
+                        'volume_24h': float(ticker['stats']['volume_usd']),
+                        'open_interest': float(ticker['open_interest']),
+                        'mark_price': float(ticker['mark_price'])
+                    }
+                    data['funding_rate'] = float(ticker.get('funding_8h', 0))
+            
+            # 期权数据
+            options_url = f"{self.exchanges['deribit']['url']}/get_book_summary_by_currency"
+            params = {'currency': 'BTC', 'kind': 'option'}
+            
+            response = self.session.get(options_url, params=params, timeout=10)
+            if response.status_code == 200:
+                options_data = response.json()
+                if 'result' in options_data:
+                    options = options_data['result']
+                    total_options_volume = sum(float(opt.get('volume_usd', 0)) for opt in options[:10])  # 前10个期权
+                    data['options_volume'] = total_options_volume
+            
+            data['exchange'] = 'deribit'
+            data['timestamp'] = datetime.now()
+            logger.info(f"Deribit数据收集成功: 合约量={data.get('futures', {}).get('volume_24h', 0):,.0f}")
+            
+            return data
+            
+        except Exception as e:
+            logger.error(f"Deribit数据收集失败: {e}")
+            return {'exchange': 'deribit', 'error': str(e)}
+    
+    def collect_bybit_data(self) -> Dict:
+        """收集Bybit数据"""
+        try:
+            data = {}
+            
+            # 现货数据
+            spot_url = f"{self.exchanges['bybit']['spot_url']}/market/tickers"
+            params = {'category': 'spot', 'symbol': self.exchanges['bybit']['symbol']}
+            
+            response = self.session.get(spot_url, params=params, timeout=10)
+            if response.status_code == 200:
+                bybit_data = response.json()
+                if bybit_data['retCode'] == 0 and bybit_data['result']['list']:
+                    spot_data = bybit_data['result']['list'][0]
+                    data['spot'] = {
+                        'price': float(spot_data['lastPrice']),
+                        'volume_24h': float(spot_data['turnover24h']),
+                        'price_change_24h': float(spot_data['price24hPcnt']) * 100
+                    }
+            
+            # 合约数据
+            futures_params = {'category': 'linear', 'symbol': self.exchanges['bybit']['symbol']}
+            response = self.session.get(spot_url, params=futures_params, timeout=10)
+            if response.status_code == 200:
+                bybit_data = response.json()
+                if bybit_data['retCode'] == 0 and bybit_data['result']['list']:
+                    futures_data = bybit_data['result']['list'][0]
+                    data['futures'] = {
+                        'price': float(futures_data['lastPrice']),
+                        'volume_24h': float(futures_data['turnover24h'])
+                    }
+            
+            data['exchange'] = 'bybit'
+            data['timestamp'] = datetime.now()
+            logger.info(f"Bybit数据收集成功: 现货量={data.get('spot', {}).get('volume_24h', 0):,.0f}")
+            
+            return data
+            
+        except Exception as e:
+            logger.error(f"Bybit数据收集失败: {e}")
+            return {'exchange': 'bybit', 'error': str(e)}
+    
+    def collect_all_exchanges(self) -> List[Dict]:
+        """并行收集所有交易所数据"""
+        results = []
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            # 提交所有任务
+            futures = {
+                executor.submit(self.collect_binance_data): 'binance',
+                executor.submit(self.collect_okx_data): 'okx', 
+                executor.submit(self.collect_deribit_data): 'deribit',
+                executor.submit(self.collect_bybit_data): 'bybit'
+            }
+            
+            # 收集结果
+            for future in concurrent.futures.as_completed(futures):
+                exchange = futures[future]
                 try:
-                    trades_response = requests.get(
-                        "https://www.okx.com/api/v5/market/history-trades",
-                        params={"instId": inst_id, "limit": "100"},
-                        timeout=10  # 减少超时时间
-                    )
-                    trades_response.raise_for_status()
-                    
-                    trade_data = trades_response.json().get("data", [])
-                    if not trade_data:
-                        continue
-                    
-                    for trade in trade_data:
-                        # 检查必需字段是否存在
-                        if not all(key in trade for key in ["ts", "fillPx", "sz"]):
-                            continue
-                            
-                        try:
-                            ts = datetime.fromtimestamp(float(trade["ts"]) / 1000, tz=timezone.utc)
-                            if ts < cutoff:
-                                continue
-                            
-                            price = float(trade["fillPx"])
-                            amount = float(trade["sz"])
-                            
-                            # 过滤无效价格数据
-                            if price <= 0 or amount <= 0:
-                                continue
-                            
-                            expiry, strike, typ = self.parse_generic(inst_id)
-                            trades.append({
-                                "exchange": "OKX",
-                                "timestamp": int(float(trade["ts"])),
-                                "instrument": inst_id,
-                                "price": price,
-                                "amount": amount,
-                                "side": trade.get("side", ""),
-                                "expiry": expiry,
-                                "strike": strike,
-                                "option_type": typ
-                            })
-                        except (ValueError, KeyError) as ve:
-                            continue  # 跳过无效的交易数据
-                    
-                    time.sleep(0.1)  # 增加节流延迟
-                    
-                except (requests.exceptions.RequestException, requests.exceptions.Timeout) as e:
-                    logger.warning(f"OKX合约 {inst_id} 网络请求失败: {e}")
-                    continue
+                    result = future.result(timeout=15)
+                    results.append(result)
                 except Exception as e:
-                    logger.warning(f"OKX合约 {inst_id} 获取失败: {e}")
-                    continue
-            
-            logger.info(f"OKX获取到 {len(trades)} 笔交易")
-            return trades
-            
-        except Exception as e:
-            logger.error(f"OKX数据获取失败: {e}")
-            return []
+                    logger.error(f"{exchange}数据收集超时或失败: {e}")
+                    results.append({'exchange': exchange, 'error': str(e)})
+        
+        return results
     
-    def fetch_binance(self, minutes=15, max_symbols=400):
-        """获取Binance期权交易数据"""
-        logger.info("开始获取Binance数据...")
-        try:
-            # 获取期权交易对信息
-            info_response = requests.get("https://eapi.binance.com/eapi/v1/exchangeInfo", timeout=30)
-            info_response.raise_for_status()
-            info = info_response.json()
-            symbols = info.get("optionSymbols", [])
-            
-            trades = []
-            cutoff = datetime.now(timezone.utc) - timedelta(minutes=minutes)
-            
-            # 只处理BTC相关的期权
-            btc_symbols = [s for s in symbols[:max_symbols] if s.get("underlying", "").startswith("BTC")]
-            
-            for symbol_info in btc_symbols:
-                symbol = symbol_info["symbol"]
-                
-                try:
-                    trades_response = requests.get(
-                        "https://eapi.binance.com/eapi/v1/trades",
-                        params={"symbol": symbol},
-                        timeout=10
-                    )
-                    trades_response.raise_for_status()
-                    
-                    trade_data = trades_response.json()
-                    if not isinstance(trade_data, list):
-                        continue
-                    
-                    for trade in trade_data:
-                        # 检查必需字段
-                        if not all(key in trade for key in ["time", "price", "qty"]):
-                            continue
-                            
-                        try:
-                            ts = datetime.fromtimestamp(trade["time"] / 1000, tz=timezone.utc)
-                            if ts < cutoff:
-                                continue
-                            
-                            price = float(trade["price"])
-                            amount = float(trade["qty"])
-                            
-                            # 过滤无效数据
-                            if price <= 0 or amount <= 0:
-                                continue
-                            
-                            expiry, strike, typ = self.parse_generic(symbol)
-                            trades.append({
-                                "exchange": "Binance",
-                                "timestamp": trade["time"],
-                                "instrument": symbol,
-                                "price": price,
-                                "amount": amount,
-                                "side": "",  # Binance公共API不提供方向信息
-                                "expiry": expiry,
-                                "strike": strike,
-                                "option_type": typ
-                            })
-                        except (ValueError, KeyError):
-                            continue
-                    
-                    time.sleep(0.1)  # 增加节流延迟
-                    
-                except (requests.exceptions.RequestException, requests.exceptions.Timeout) as e:
-                    logger.warning(f"Binance合约 {symbol} 网络请求失败: {e}")
-                    continue
-                except Exception as e:
-                    logger.warning(f"Binance合约 {symbol} 获取失败: {e}")
-                    continue
-            
-            logger.info(f"Binance获取到 {len(trades)} 笔交易")
-            return trades
-            
-        except Exception as e:
-            logger.error(f"Binance数据获取失败: {e}")
-            return []
-    
-    def collect_all_exchanges(self, minutes=15, max_okx=400, max_binance=400):
-        """收集所有交易所数据"""
-        logger.info(f"开始收集最近 {minutes} 分钟的多交易所数据...")
+    def aggregate_volume_data(self, exchange_data: List[Dict]) -> Dict:
+        """聚合成交量数据提升完整性"""
+        aggregated = {
+            'total_spot_volume': 0,
+            'total_futures_volume': 0,
+            'total_options_volume': 0,
+            'weighted_avg_price': 0,
+            'funding_rates': [],
+            'exchange_count': 0,
+            'data_completeness': 0
+        }
         
-        all_trades = []
+        valid_exchanges = 0
+        total_volume = 0
+        price_sum = 0
         
-        # 收集各交易所数据
-        all_trades.extend(self.fetch_deribit(minutes))
-        all_trades.extend(self.fetch_okx(minutes, max_okx))
-        all_trades.extend(self.fetch_binance(minutes, max_binance))
-        
-        logger.info(f"总共收集到 {len(all_trades)} 笔交易")
-        
-        # 保存到数据库
-        if all_trades:
-            self.save_trades(all_trades)
-        
-        return all_trades
-    
-    def save_trades(self, trades):
-        """保存交易数据到数据库"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        for trade in trades:
-            cursor.execute('''
-                INSERT INTO multi_exchange_trades 
-                (exchange, timestamp, instrument, price, amount, side, expiry, strike, option_type)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                trade["exchange"],
-                trade["timestamp"],
-                trade["instrument"],
-                trade["price"],
-                trade["amount"],
-                trade["side"],
-                trade["expiry"],
-                trade["strike"],
-                trade["option_type"]
-            ))
-        
-        conn.commit()
-        conn.close()
-        logger.info(f"已保存 {len(trades)} 笔交易到数据库")
-    
-    def aggregate_analysis(self, trades, bucket_width, by="price", by_type=False):
-        """聚合分析交易数据"""
-        agg = defaultdict(lambda: {"trades": 0, "amount": 0.0})
-        cp = defaultdict(lambda: {"CALL": {"trades": 0, "amount": 0.0}, "PUT": {"trades": 0, "amount": 0.0}})
-        
-        for trade in trades:
-            key_val = trade[by] if by in trade else trade.get("strike" if by == "strike" else "price", 0)
-            if math.isnan(key_val):
+        for data in exchange_data:
+            if 'error' in data:
                 continue
+                
+            valid_exchanges += 1
             
-            bucket = self.bucket_label(key_val, bucket_width)
-            agg[bucket]["trades"] += 1
-            agg[bucket]["amount"] += trade["amount"]
+            # 现货成交量
+            if 'spot' in data and 'volume_24h' in data['spot']:
+                spot_volume = data['spot']['volume_24h']
+                aggregated['total_spot_volume'] += spot_volume
+                total_volume += spot_volume
+                
+                # 价格加权平均
+                if 'price' in data['spot']:
+                    price_sum += data['spot']['price'] * spot_volume
             
-            if by_type and trade.get("option_type") in ("CALL", "PUT"):
-                cp[bucket][trade["option_type"]]["trades"] += 1
-                cp[bucket][trade["option_type"]]["amount"] += trade["amount"]
+            # 合约成交量
+            if 'futures' in data and 'volume_24h' in data['futures']:
+                futures_volume = data['futures']['volume_24h']
+                aggregated['total_futures_volume'] += futures_volume
+                total_volume += futures_volume
+            
+            # 期权成交量
+            if 'options_volume' in data:
+                aggregated['total_options_volume'] += data['options_volume']
+            
+            # 资金费率
+            if 'funding_rate' in data:
+                aggregated['funding_rates'].append({
+                    'exchange': data['exchange'],
+                    'rate': data['funding_rate']
+                })
         
-        # 排序 - 按高价排序（从高到低）
-        def sort_key(k):
-            try:
-                # 提取高价部分（$符号后的第一个数字）
-                high_price = k.split(" - ")[0].replace("$", "")
-                return float(high_price)
-            except:
-                return 0.0
+        # 计算加权平均价格
+        if total_volume > 0:
+            aggregated['weighted_avg_price'] = price_sum / total_volume
         
-        agg_sorted = sorted(agg.items(), key=lambda kv: sort_key(kv[0]), reverse=True)
-        cp_sorted = sorted(cp.items(), key=lambda kv: sort_key(kv[0]), reverse=True) if by_type else []
+        # 数据完整性评分
+        aggregated['exchange_count'] = valid_exchanges
+        aggregated['data_completeness'] = (valid_exchanges / len(self.exchanges)) * 100
         
-        return agg_sorted, cp_sorted
+        logger.info(f"数据聚合完成: {valid_exchanges}个交易所, 总量={total_volume:,.0f}, 完整性={aggregated['data_completeness']:.1f}%")
+        
+        return aggregated
     
-    def get_multi_exchange_stats(self):
-        """获取多交易所统计数据"""
+    def save_enhanced_data(self, aggregated_data: Dict):
+        """保存增强的数据到数据库"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self.get_connection()
             cursor = conn.cursor()
             
-            # 获取各交易所统计（最近24小时）
-            cutoff_time = self.now_ms() - 24 * 60 * 60 * 1000
-            cursor.execute('''
-                SELECT exchange, COUNT(*), SUM(amount), AVG(price)
-                FROM multi_exchange_trades
-                WHERE timestamp > ?
-                GROUP BY exchange
-            ''', (cutoff_time,))
+            # 更新或插入增强数据
+            insert_sql = """
+                INSERT INTO market_analytics_enhanced (
+                    recorded_at, total_spot_volume, total_futures_volume, 
+                    total_options_volume, weighted_avg_price, avg_funding_rate,
+                    data_completeness, exchange_count, source_detail
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (recorded_at) 
+                DO UPDATE SET 
+                    total_spot_volume = EXCLUDED.total_spot_volume,
+                    total_futures_volume = EXCLUDED.total_futures_volume,
+                    data_completeness = EXCLUDED.data_completeness,
+                    updated_at = NOW()
+            """
             
-            exchange_stats = {}
-            total_trades = 0
-            total_volume = 0
+            # 计算平均资金费率
+            avg_funding = 0
+            if aggregated_data['funding_rates']:
+                avg_funding = sum(fr['rate'] for fr in aggregated_data['funding_rates']) / len(aggregated_data['funding_rates'])
             
-            for row in cursor.fetchall():
-                exchange, trades, volume, avg_price = row
-                exchange_stats[exchange.lower() + '_stats'] = {
-                    'trades': trades,
-                    'volume': volume if volume else 0,
-                    'avg_price': avg_price if avg_price else 0
-                }
-                total_trades += trades
-                total_volume += volume if volume else 0
+            cursor.execute(insert_sql, (
+                datetime.now(),
+                aggregated_data['total_spot_volume'],
+                aggregated_data['total_futures_volume'], 
+                aggregated_data['total_options_volume'],
+                aggregated_data['weighted_avg_price'],
+                avg_funding,
+                aggregated_data['data_completeness'],
+                aggregated_data['exchange_count'],
+                json.dumps(aggregated_data['funding_rates'])
+            ))
             
-            # 计算总平均价格 - 确保使用合理的BTC价格范围
-            cursor.execute('''
-                SELECT AVG(price) FROM multi_exchange_trades
-                WHERE timestamp > ? AND price > 50000 AND price < 200000
-            ''', (cutoff_time,))
-            
-            avg_price_result = cursor.fetchone()
-            avg_price = avg_price_result[0] if avg_price_result and avg_price_result[0] and avg_price_result[0] > 50000 else 0
-            
+            conn.commit()
+            cursor.close()
             conn.close()
             
-            return {
-                'total_trades': total_trades,
-                'total_volume': total_volume,
-                'avg_price': avg_price,
-                **exchange_stats
-            }
+            logger.info("增强数据已保存到数据库")
             
         except Exception as e:
-            logger.error(f"获取多交易所统计失败: {e}")
-            return {
-                'total_trades': 0,
-                'total_volume': 0,
-                'avg_price': 0,
-                'okx_stats': {},
-                'binance_stats': {}
-            }
+            logger.error(f"数据保存失败: {e}")
     
-    def save_bucket_analysis(self, agg_data, cp_data, bucket_width, bucket_type, time_window_minutes):
-        """保存分桶分析结果到数据库"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        # 清除旧的分析数据
-        cursor.execute('DELETE FROM bucket_analysis WHERE bucket_type = ? AND bucket_width = ?', 
-                      (bucket_type, bucket_width))
-        
-        # 保存聚合数据
-        for bucket_range, data in agg_data:
-            call_data = cp_data.get(bucket_range, {}).get("CALL", {"trades": 0, "amount": 0.0}) if cp_data else {"trades": 0, "amount": 0.0}
-            put_data = cp_data.get(bucket_range, {}).get("PUT", {"trades": 0, "amount": 0.0}) if cp_data else {"trades": 0, "amount": 0.0}
+    def create_enhanced_table(self):
+        """创建增强数据表"""
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
             
-            cursor.execute('''
-                INSERT INTO bucket_analysis 
-                (bucket_range, bucket_type, bucket_width, trades_count, total_amount, 
-                 call_trades, call_amount, put_trades, put_amount, time_window_minutes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                bucket_range,
-                bucket_type,
-                bucket_width,
-                data["trades"],
-                data["amount"],
-                call_data["trades"],
-                call_data["amount"],
-                put_data["trades"],
-                put_data["amount"],
-                time_window_minutes
-            ))
-        
-        conn.commit()
-        conn.close()
-        logger.info(f"已保存分桶分析结果: {len(agg_data)} 个分桶")
-    
-    def get_latest_analysis(self, limit=20):
-        """获取最新的分析结果"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            SELECT bucket_range, trades_count, total_amount, call_trades, call_amount, 
-                   put_trades, put_amount, analysis_time
-            FROM bucket_analysis 
-            ORDER BY analysis_time DESC, 
-                     CAST(REPLACE(SUBSTR(bucket_range, 2, INSTR(bucket_range, ' - ')-2), '$', '') AS REAL) DESC
-            LIMIT ?
-        ''', (limit,))
-        
-        results = cursor.fetchall()
-        conn.close()
-        
-        return [{
-            "bucket_range": row[0],
-            "trades_count": row[1],
-            "total_amount": row[2],
-            "call_trades": row[3],
-            "call_amount": row[4],
-            "put_trades": row[5],
-            "put_amount": row[6],
-            "analysis_time": row[7]
-        } for row in results]
-    
-    def get_exchange_summary(self, minutes=15):
-        """获取各交易所数据摘要"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cutoff_time = self.now_ms() - minutes * 60 * 1000
-        
-        cursor.execute('''
-            SELECT exchange, COUNT(*) as trades_count, SUM(amount) as total_amount,
-                   AVG(price) as avg_price, MIN(price) as min_price, MAX(price) as max_price
-            FROM multi_exchange_trades 
-            WHERE timestamp > ?
-            GROUP BY exchange
-            ORDER BY trades_count DESC
-        ''', (cutoff_time,))
-        
-        results = cursor.fetchall()
-        conn.close()
-        
-        return [{
-            "exchange": row[0],
-            "trades_count": row[1],
-            "total_amount": row[2],
-            "avg_price": row[3],
-            "min_price": row[4],
-            "max_price": row[5]
-        } for row in results]
+            create_table_sql = """
+                CREATE TABLE IF NOT EXISTS market_analytics_enhanced (
+                    id SERIAL PRIMARY KEY,
+                    recorded_at TIMESTAMP NOT NULL,
+                    total_spot_volume BIGINT,
+                    total_futures_volume BIGINT,
+                    total_options_volume BIGINT,
+                    weighted_avg_price DECIMAL(12,2),
+                    avg_funding_rate DECIMAL(8,6),
+                    data_completeness DECIMAL(5,2),
+                    exchange_count INTEGER,
+                    source_detail JSONB,
+                    created_at TIMESTAMP DEFAULT NOW(),
+                    updated_at TIMESTAMP DEFAULT NOW()
+                );
+                
+                CREATE INDEX IF NOT EXISTS idx_enhanced_recorded_at 
+                ON market_analytics_enhanced(recorded_at);
+            """
+            
+            cursor.execute(create_table_sql)
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            logger.info("增强数据表创建完成")
+            
+        except Exception as e:
+            logger.error(f"创建增强数据表失败: {e}")
 
 def main():
-    """命令行接口"""
-    parser = argparse.ArgumentParser(description="Multi-exchange BTC options aggregator")
-    parser.add_argument("--minutes", type=int, default=15, help="Time window in minutes")
-    parser.add_argument("--bucket", type=float, default=5.0, help="Bucket width")
-    parser.add_argument("--by", choices=["price", "strike"], default="price", help="Bucket by price or strike")
-    parser.add_argument("--by-type", action="store_true", help="Separate CALL/PUT analysis")
-    parser.add_argument("--max-okx", type=int, default=400, help="Max OKX instruments")
-    parser.add_argument("--max-binance", type=int, default=400, help="Max Binance symbols")
-    args = parser.parse_args()
-    
-    # 设置日志
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-    
+    """运行多交易所数据收集"""
     collector = MultiExchangeCollector()
     
+    logger.info("=== 启动多交易所数据收集器 ===")
+    
+    # 创建表
+    collector.create_enhanced_table()
+    
     # 收集数据
-    all_trades = collector.collect_all_exchanges(args.minutes, args.max_okx, args.max_binance)
+    exchange_data = collector.collect_all_exchanges()
     
-    if not all_trades:
-        logger.warning("未收集到任何交易数据")
-        return
+    # 聚合数据
+    aggregated = collector.aggregate_volume_data(exchange_data)
     
-    # 进行聚合分析
-    agg_all, agg_cp = collector.aggregate_analysis(all_trades, args.bucket, by=args.by, by_type=args.by_type)
+    # 保存数据
+    collector.save_enhanced_data(aggregated)
     
-    # 保存分析结果
-    cp_dict = dict(agg_cp) if agg_cp else {}
-    collector.save_bucket_analysis(agg_all, cp_dict, args.bucket, args.by, args.minutes)
+    # 输出结果
+    print(f"\n✅ 多交易所数据收集完成！")
+    print(f"📊 数据统计：")
+    print(f"   有效交易所: {aggregated['exchange_count']}/4")
+    print(f"   数据完整性: {aggregated['data_completeness']:.1f}%")
+    print(f"   现货总量: ${aggregated['total_spot_volume']:,.0f}")
+    print(f"   合约总量: ${aggregated['total_futures_volume']:,.0f}")
+    print(f"   期权总量: ${aggregated['total_options_volume']:,.0f}")
+    print(f"   加权价格: ${aggregated['weighted_avg_price']:,.2f}")
     
-    # 显示结果
-    print(f"\n总交易数: {len(all_trades)}")
-    
-    print("\n=== 分桶聚合分析 ===")
-    print(f"{'分桶区间':>14} | {'交易数':>8} | {'总金额':>12}")
-    print("-" * 40)
-    for bucket, data in agg_all:
-        print(f"{bucket:>14} | {data['trades']:>8} | {data['amount']:>12.4f}")
-    
-    if args.by_type and agg_cp:
-        print("\n--- CALL/PUT 细分 ---")
-        print(f"{'分桶区间':>14} | {'C_交易':>6} | {'C_金额':>8} | {'P_交易':>6} | {'P_金额':>8}")
-        print("-" * 50)
-        for bucket, data in agg_cp:
-            c = data['CALL']
-            p = data['PUT']
-            print(f"{bucket:>14} | {c['trades']:>6} | {c['amount']:>8.4f} | {p['trades']:>6} | {p['amount']:>8.4f}")
+    if aggregated['funding_rates']:
+        print(f"   资金费率:")
+        for fr in aggregated['funding_rates']:
+            print(f"     {fr['exchange']}: {fr['rate']:.4f}%")
 
 if __name__ == "__main__":
     main()

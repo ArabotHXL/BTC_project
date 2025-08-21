@@ -1,391 +1,390 @@
 """
-优化的批量挖矿计算处理器
-专门用于处理大规模矿机数据（5000+）的内存优化计算
+优化的批量数据处理器
+提升数据收集频率和质量
 """
 
+import os
+import time
+import json
 import logging
-import gc
-from mining_calculator import MINER_DATA, DEFAULT_BTC_PRICE, DEFAULT_NETWORK_DIFFICULTY, DEFAULT_NETWORK_HASHRATE, BLOCK_REWARD
-from mining_calculator import get_real_time_btc_price, get_real_time_difficulty, get_real_time_btc_hashrate, get_real_time_block_reward
+import requests
+import psycopg2
+import threading
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional
+import schedule
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class OptimizedBatchProcessor:
-    """内存优化的批量处理器"""
     
     def __init__(self):
-        self.cached_network_data = None
-        self.cache_timestamp = 0
+        self.db_url = os.environ.get('DATABASE_URL')
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'BTC-Mining-Calculator/2.0'
+        })
         
-    def get_network_data(self, use_real_time=True):
-        """缓存网络数据以避免重复API调用"""
-        import time
-        current_time = time.time()
+        # 数据源配置
+        self.data_sources = {
+            'coingecko': {
+                'url': 'https://api.coingecko.com/api/v3/simple/price',
+                'params': {
+                    'ids': 'bitcoin',
+                    'vs_currencies': 'usd',
+                    'include_24hr_vol': 'true',
+                    'include_24hr_change': 'true',
+                    'include_market_cap': 'true'
+                },
+                'priority': 1
+            },
+            'coinbase': {
+                'url': 'https://api.coinbase.com/v2/exchange-rates',
+                'params': {'currency': 'BTC'},
+                'priority': 2
+            },
+            'blockchain_info': {
+                'url': 'https://blockchain.info/ticker',
+                'priority': 3
+            }
+        }
         
-        # 缓存5分钟以提升性能（减少API调用）
-        if self.cached_network_data and (current_time - self.cache_timestamp) < 300:
-            return self.cached_network_data
-            
-        try:
-            if use_real_time:
-                btc_price = get_real_time_btc_price()
-                difficulty = get_real_time_difficulty()
-                hashrate = get_real_time_btc_hashrate()
-                block_reward = get_real_time_block_reward()
-            else:
-                btc_price = DEFAULT_BTC_PRICE
-                difficulty = DEFAULT_NETWORK_DIFFICULTY
-                hashrate = DEFAULT_NETWORK_HASHRATE
-                block_reward = BLOCK_REWARD
-                
-            self.cached_network_data = {
-                'btc_price': btc_price,
-                'difficulty': difficulty,
-                'hashrate': hashrate,
-                'block_reward': block_reward
-            }
-            self.cache_timestamp = current_time
-            
-            logger.info(f"网络数据已缓存: BTC=${btc_price:,.0f}, 难度={difficulty/1e12:.2f}T")
-            return self.cached_network_data
-            
-        except Exception as e:
-            logger.error(f"获取网络数据失败: {e}")
-            return {
-                'btc_price': DEFAULT_BTC_PRICE,
-                'difficulty': DEFAULT_NETWORK_DIFFICULTY,
-                'hashrate': DEFAULT_NETWORK_HASHRATE,
-                'block_reward': BLOCK_REWARD
-            }
+        self.collection_stats = {
+            'total_collections': 0,
+            'successful_collections': 0,
+            'failed_collections': 0,
+            'last_collection': None
+        }
     
-    def calculate_single_miner_group(self, model, quantity, power_consumption, electricity_cost, machine_price, network_data, decay_rate=0, custom_hashrate=None):
-        """计算单个矿机组的收益（高性能版本）"""
-        try:
-            # 获取矿机规格
-            if custom_hashrate is not None:
-                # 使用CSV中提供的算力数据
-                single_hashrate = custom_hashrate
-                single_power = power_consumption / quantity if quantity > 0 else power_consumption
-                logger.debug(f"使用自定义算力: {model} = {single_hashrate}TH/s")
-            elif model in MINER_DATA:
-                single_hashrate = MINER_DATA[model]["hashrate"]
-                single_power = MINER_DATA[model]["power_watt"]
-            else:
-                # 使用默认值
-                single_hashrate = 110  # 默认算力
-                single_power = power_consumption / quantity if quantity > 0 else power_consumption
+    def get_connection(self):
+        """获取数据库连接"""
+        return psycopg2.connect(self.db_url)
+    
+    def collect_enhanced_price_data(self) -> Optional[Dict]:
+        """增强的价格数据收集，多源验证"""
+        collected_data = {}
+        
+        # 并行收集多个数据源
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {}
             
-            # 计算总算力和功耗
-            total_hashrate = single_hashrate * quantity  # TH/s
-            total_power = single_power * quantity  # Watts
-            total_machine_cost = machine_price * quantity  # Total cost
+            # CoinGecko主要数据源
+            try:
+                params = self.data_sources['coingecko']['params']
+                futures[executor.submit(self.session.get, 
+                                      self.data_sources['coingecko']['url'], 
+                                      params=params, timeout=10)] = 'coingecko'
+            except Exception as e:
+                logger.debug(f"CoinGecko请求提交失败: {e}")
             
-            logger.debug(f"矿机计算详情: {model}, 数量={quantity}, 单机算力={single_hashrate}TH/s, 总算力={total_hashrate}TH/s")
+            # Blockchain.info备用源
+            try:
+                futures[executor.submit(self.session.get, 
+                                      self.data_sources['blockchain_info']['url'], 
+                                      timeout=10)] = 'blockchain_info'
+            except Exception as e:
+                logger.debug(f"Blockchain.info请求提交失败: {e}")
             
-            # 网络数据
-            btc_price = network_data['btc_price']
-            difficulty = network_data['difficulty']
-            network_hashrate_eh = network_data['hashrate']  # EH/s
-            block_reward = network_data['block_reward']
-            
-            # 核心计算（简化版，避免复杂的限电逻辑）- ENHANCED with pool fee correction
-            network_hashrate_th = network_hashrate_eh * 1e6  # 转换为TH/s
-            blocks_per_day = 144
-            
-            # Apply default pool fee correction (2.5%) as per expert recommendations
-            pool_fee_rate = 0.025  # Default pool fee
-            
-            # 每日收益计算 - Method 2 (Difficulty Based) prioritized per expert recommendation
-            # Use difficulty-based calculation as primary method
-            hashrate_hs = total_hashrate * 1e12  # TH/s to H/s
-            difficulty_factor = 2 ** 32
-            daily_btc_raw = (hashrate_hs * block_reward * 86400) / (difficulty * difficulty_factor)
-            daily_btc = daily_btc_raw * (1 - pool_fee_rate)  # Apply pool fee correction
-            daily_revenue = daily_btc * btc_price
-            
-            # Log algorithm choice for debugging
-            logger.debug(f"Using difficulty-based algorithm with pool fee correction: {pool_fee_rate*100:.1f}%")
-            
-            # 每日成本
-            daily_power_kwh = (total_power * 24) / 1000  # kWh
-            daily_cost = daily_power_kwh * electricity_cost
-            
-            # 净利润
-            daily_profit = daily_revenue - daily_cost
-            monthly_profit = daily_profit * 30
-            
-            # ROI计算 - 根据是否有衰减率选择计算方法
-            if decay_rate > 0:
-                # 考虑算力衰减的回本计算
-                logger.debug(f"计算衰减ROI: 模型={model}, 算力={total_hashrate}TH/s, 衰减率={decay_rate}%/月, 成本=${total_machine_cost}")
-                roi_days = self.calculate_payback_days_with_decay(
-                    total_hashrate, total_power, total_machine_cost, 
-                    electricity_cost, decay_rate, network_data
-                )
-                logger.debug(f"衰减ROI结果: {roi_days}天")
-            else:
-                # 传统回本计算（无衰减）
-                logger.debug(f"传统ROI计算: 日利润=${daily_profit}, 总成本=${total_machine_cost}")
-                if daily_profit > 0 and total_machine_cost > 0:
-                    roi_days = total_machine_cost / daily_profit  # 总成本 ÷ 日净利润
-                    # 限制在合理范围内，避免极大值
-                    roi_days = min(roi_days, 999999)
-                    logger.debug(f"传统ROI结果: {roi_days}天")
-                else:
-                    roi_days = 999999  # 无法回本或亏损
-                    logger.debug("无法回本或亏损，ROI设为999999天")
-            
-            return {
-                'model': model,
-                'quantity': quantity,
-                'power_consumption': single_power,
-                'electricity_cost': electricity_cost,
-                'machine_price': machine_price,
-                'total_machine_cost': total_machine_cost,
-                'daily_profit': round(daily_profit, 2),
-                'daily_revenue': round(daily_revenue, 2),
-                'daily_cost': round(daily_cost, 2),
-                'monthly_profit': round(monthly_profit, 2),
-                'roi_days': round(roi_days, 0),
-                'hash_rate': total_hashrate,
-                'daily_btc': daily_btc,
-                'monthly_btc': daily_btc * 30,
-                'decay_rate': decay_rate
-            }
-            
-        except Exception as e:
-            logger.error(f"计算矿机组 {model} 时出错: {e}")
+            # 收集结果
+            for future in as_completed(futures, timeout=15):
+                source = futures[future]
+                try:
+                    response = future.result()
+                    if response.status_code == 200:
+                        if source == 'coingecko':
+                            data = response.json()
+                            if 'bitcoin' in data:
+                                btc_data = data['bitcoin']
+                                collected_data['coingecko'] = {
+                                    'price': btc_data.get('usd', 0),
+                                    'volume_24h': btc_data.get('usd_24h_vol', 0),
+                                    'price_change_24h': btc_data.get('usd_24h_change', 0),
+                                    'market_cap': btc_data.get('usd_market_cap', 0)
+                                }
+                        
+                        elif source == 'blockchain_info':
+                            data = response.json()
+                            if 'USD' in data:
+                                usd_data = data['USD']
+                                collected_data['blockchain_info'] = {
+                                    'price': usd_data.get('last', 0),
+                                    'high': usd_data.get('high', 0),
+                                    'low': usd_data.get('low', 0)
+                                }
+                except Exception as e:
+                    logger.debug(f"{source}数据解析失败: {e}")
+        
+        # 数据验证和聚合
+        if collected_data:
+            return self.aggregate_price_data(collected_data)
+        else:
+            logger.warning("所有价格数据源均失败")
             return None
     
-    def get_effective_hashrate(self, initial_th, decay_rate_monthly, day_index):
-        """
-        根据初始算力和衰减率，返回指定天数后的有效算力
-        @param initial_th: 初始算力 (TH/s)
-        @param decay_rate_monthly: 月衰减率 (百分比，如0.5表示0.5%/月)
-        @param day_index: 第几天
-        """
-        if not decay_rate_monthly or decay_rate_monthly <= 0:
-            return initial_th
+    def aggregate_price_data(self, collected_data: Dict) -> Dict:
+        """聚合和验证价格数据"""
+        aggregated = {
+            'sources_count': len(collected_data),
+            'data_quality_score': 0,
+            'consensus_price': 0,
+            'volume_24h': 0,
+            'price_change_24h': 0,
+            'market_cap': 0
+        }
         
-        daily_rate = decay_rate_monthly / 100 / 30  # 转成每天的比例
-        return initial_th * (1 - daily_rate) ** day_index
-    
-    def calculate_payback_days_with_decay(self, hashrate_th, power_w, price_usd, 
-                                         electricity_usd, decay_rate_monthly, 
-                                         network_data, max_days=1825):  # 减少到5年
-        """
-        优化的算力衰减回本计算 - 使用块计算和数值逼近
-        """
-        btc_price = network_data['btc_price']
-        network_hashrate_th = network_data['hashrate'] * 1e6  # EH/s to TH/s
-        block_reward = network_data['block_reward']
-        blocks_per_day = 144
+        prices = []
+        volumes = []
         
-        # 预计算固定成本
-        kwh_per_day = (power_w / 1000) * 24
-        daily_elec_cost = kwh_per_day * electricity_usd
+        # 提取价格数据
+        if 'coingecko' in collected_data:
+            cg_data = collected_data['coingecko']
+            if cg_data['price'] > 0:
+                prices.append(cg_data['price'])
+                aggregated['volume_24h'] = cg_data.get('volume_24h', 0)
+                aggregated['price_change_24h'] = cg_data.get('price_change_24h', 0)
+                aggregated['market_cap'] = cg_data.get('market_cap', 0)
         
-        # 使用月度块计算，然后精确到天
-        total_profit = 0
-        daily_decay_rate = decay_rate_monthly / 100 / 30  # 每日衰减率
+        if 'blockchain_info' in collected_data:
+            bi_data = collected_data['blockchain_info']
+            if bi_data['price'] > 0:
+                prices.append(bi_data['price'])
         
-        # 按30天为一块进行粗略计算，最后600天内精确计算（提升性能）
-        rough_days = min(max_days - 600, max_days)
-        
-        # 粗略计算（月度块）
-        for month in range(rough_days // 30):
-            days_start = month * 30
-            days_end = min((month + 1) * 30, rough_days)
+        # 计算共识价格（多源平均）
+        if prices:
+            aggregated['consensus_price'] = sum(prices) / len(prices)
             
-            # 该月平均算力
-            avg_day = days_start + 15  # 月中位置
-            avg_hashrate = hashrate_th * (1 - daily_decay_rate) ** avg_day
-            
-            # 该月每日收益
-            if network_hashrate_th > 0:
-                miner_share = avg_hashrate / network_hashrate_th
-                daily_btc = miner_share * block_reward * blocks_per_day
-                daily_revenue = daily_btc * btc_price
+            # 价格一致性检查
+            if len(prices) > 1:
+                price_variance = max(prices) - min(prices)
+                price_consistency = 1 - (price_variance / aggregated['consensus_price'])
+                aggregated['data_quality_score'] = price_consistency * 100
             else:
-                daily_revenue = 0
-            
-            daily_net = daily_revenue - daily_elec_cost
-            month_net = daily_net * (days_end - days_start)
-            total_profit += month_net
-            
-            if total_profit >= price_usd:
-                # 在这个月内回本，精确计算这个月的天数
-                return self._precise_payback_calculation(
-                    hashrate_th, power_w, price_usd, electricity_usd, 
-                    decay_rate_monthly, network_data, 
-                    days_start, total_profit - month_net
-                )
+                aggregated['data_quality_score'] = 85  # 单一数据源
         
-        # 如果粗略计算没回本，精确计算剩余天数
-        if total_profit < price_usd and rough_days < max_days:
-            return self._precise_payback_calculation(
-                hashrate_th, power_w, price_usd, electricity_usd, 
-                decay_rate_monthly, network_data, 
-                rough_days, total_profit
-            )
-        
-        return 999999
+        logger.info(f"价格数据聚合: ${aggregated['consensus_price']:,.2f} (质量分:{aggregated['data_quality_score']:.1f}%)")
+        return aggregated
     
-    def _precise_payback_calculation(self, hashrate_th, power_w, price_usd, 
-                                   electricity_usd, decay_rate_monthly, network_data,
-                                   start_day, initial_profit):
-        """精确的逐日回本计算"""
-        btc_price = network_data['btc_price']
-        network_hashrate_th = network_data['hashrate'] * 1e6
-        block_reward = network_data['block_reward']
-        blocks_per_day = 144
-        
-        kwh_per_day = (power_w / 1000) * 24
-        daily_elec_cost = kwh_per_day * electricity_usd
-        daily_decay_rate = decay_rate_monthly / 100 / 30
-        
-        total_profit = initial_profit
-        
-        for day in range(start_day, min(start_day + 600, 1825)):  # 最多精确计算600天
-            eff_th = hashrate_th * (1 - daily_decay_rate) ** day
-            
-            if network_hashrate_th > 0:
-                miner_share = eff_th / network_hashrate_th
-                btc_per_day = miner_share * block_reward * blocks_per_day
-                daily_revenue = btc_per_day * btc_price
-            else:
-                daily_revenue = 0
-            
-            net_profit = daily_revenue - daily_elec_cost
-            total_profit += net_profit
-            
-            if total_profit >= price_usd:
-                return day
-        
-        return 999999
-    
-    def process_batch(self, miners_data, site_power_mw=10.0, curtailment_percentage=0.0):
-        """处理批量矿机数据（用于回归测试的兼容方法）"""
+    def collect_network_stats(self) -> Optional[Dict]:
+        """收集网络统计数据"""
         try:
-            total_miners = sum(miner.get('count', 1) for miner in miners_data)
-            total_profit = total_miners * 100.0  # 简化计算
+            # 从多个API获取网络数据
+            network_data = {}
             
-            return {
-                'total_miners': total_miners,
-                'total_profit': total_profit,
-                'success': True
-            }
+            # Blockchain.info stats
+            try:
+                response = self.session.get('https://blockchain.info/stats?format=json', timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    network_data['blockchain_info'] = {
+                        'difficulty': data.get('difficulty', 0),
+                        'hashrate': data.get('hash_rate', 0),
+                        'total_btc': data.get('totalbc', 0) / 100000000,  # satoshi to BTC
+                        'blocks_count': data.get('n_blocks_total', 0)
+                    }
+            except Exception as e:
+                logger.debug(f"Blockchain.info stats失败: {e}")
+            
+            # Mempool.space difficulty
+            try:
+                response = self.session.get('https://mempool.space/api/v1/difficulty-adjustment', timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    network_data['mempool'] = {
+                        'current_difficulty': data.get('difficultyChange', 0),
+                        'estimated_hashrate': data.get('currentHashrate', 0) / 1e18,  # H/s to EH/s
+                        'blocks_until_adjustment': data.get('blocksUntilRetarget', 0)
+                    }
+            except Exception as e:
+                logger.debug(f"Mempool.space difficulty失败: {e}")
+            
+            if network_data:
+                return self.process_network_data(network_data)
+            else:
+                return None
+                
         except Exception as e:
-            return {
-                'total_miners': 0,
-                'total_profit': 0.0,
-                'success': False,
-                'error': str(e)
-            }
-
-    def process_large_batch(self, miners_data, use_real_time_data=True):
-        """处理大批量矿机数据（内存优化）"""
+            logger.error(f"网络数据收集失败: {e}")
+            return None
+    
+    def process_network_data(self, network_data: Dict) -> Dict:
+        """处理网络数据"""
+        processed = {
+            'network_hashrate': 0,
+            'network_difficulty': 0,
+            'total_supply': 19700000,  # 默认当前供应量
+            'data_sources': list(network_data.keys())
+        }
+        
+        # 优先使用Blockchain.info数据
+        if 'blockchain_info' in network_data:
+            bi_data = network_data['blockchain_info']
+            processed['network_difficulty'] = bi_data.get('difficulty', 0)
+            
+            # 算力处理
+            hashrate_raw = bi_data.get('hashrate', 0)
+            if hashrate_raw > 1e15:  # 如果是H/s
+                processed['network_hashrate'] = hashrate_raw / 1e18
+            elif hashrate_raw > 1e6:  # 如果是GH/s  
+                processed['network_hashrate'] = hashrate_raw / 1e9
+            else:  # 假设是EH/s或其他
+                processed['network_hashrate'] = hashrate_raw
+                
+            processed['total_supply'] = bi_data.get('total_btc', 19700000)
+        
+        # 使用Mempool.space作为验证
+        if 'mempool' in network_data:
+            mp_data = network_data['mempool']
+            mempool_hashrate = mp_data.get('estimated_hashrate', 0)
+            
+            if mempool_hashrate > 0 and processed['network_hashrate'] == 0:
+                processed['network_hashrate'] = mempool_hashrate
+            elif mempool_hashrate > 0:
+                # 取平均值提高准确性
+                processed['network_hashrate'] = (processed['network_hashrate'] + mempool_hashrate) / 2
+        
+        # 合理性检查
+        if processed['network_hashrate'] < 500 or processed['network_hashrate'] > 1500:
+            logger.warning(f"异常算力值: {processed['network_hashrate']:.2f} EH/s")
+            processed['network_hashrate'] = 900  # 使用合理默认值
+        
+        if processed['network_difficulty'] <= 0:
+            # 基于算力估算难度
+            processed['network_difficulty'] = processed['network_hashrate'] * 1.4e14
+        
+        logger.info(f"网络数据处理: 算力={processed['network_hashrate']:.2f}EH/s, 难度={processed['network_difficulty']:.2e}")
+        return processed
+    
+    def save_optimized_data(self, price_data: Dict, network_data: Dict):
+        """保存优化后的数据"""
         try:
-            logger.info(f"开始处理大批量数据: {len(miners_data)} 个条目")
+            conn = self.get_connection()
+            cursor = conn.cursor()
             
-            # 获取网络数据（缓存）
-            network_data = self.get_network_data(use_real_time_data)
+            # 插入主数据表
+            insert_sql = """
+                INSERT INTO market_analytics (
+                    recorded_at, btc_price, btc_market_cap, btc_volume_24h,
+                    network_hashrate, network_difficulty, 
+                    price_change_24h, source, created_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
             
-            # 分组相同的矿机配置，并记录矿机编号
-            miner_groups = {}
-            total_miners = 0
+            cursor.execute(insert_sql, (
+                datetime.now(),
+                price_data['consensus_price'],
+                price_data.get('market_cap', 0),
+                price_data.get('volume_24h', 0),
+                network_data['network_hashrate'],
+                network_data['network_difficulty'],
+                price_data.get('price_change_24h', 0),
+                f"optimized_v2_{len(price_data.get('sources', []))}sources",
+                datetime.now()
+            ))
             
-            for miner in miners_data:
-                key = (
-                    miner.get('model', 'Antminer S19 Pro'),
-                    float(miner.get('power_consumption', 3250)),
-                    float(miner.get('electricity_cost', 0.08)),
-                    float(miner.get('machine_price', 2500)),
-                    float(miner.get('decay_rate', 0)),
-                    float(miner.get('hashrate', 0)) if miner.get('hashrate') else None  # 自定义算力
-                )
-                quantity = int(miner.get('quantity', 1))
-                miner_number = miner.get('miner_number', 'undefined')
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            # 更新统计
+            self.collection_stats['successful_collections'] += 1
+            self.collection_stats['last_collection'] = datetime.now()
+            
+            logger.info(f"优化数据已保存: ${price_data['consensus_price']:,.2f}, 质量分:{price_data.get('data_quality_score', 0):.1f}%")
+            
+        except Exception as e:
+            self.collection_stats['failed_collections'] += 1
+            logger.error(f"优化数据保存失败: {e}")
+    
+    def run_optimized_collection(self):
+        """运行优化的数据收集"""
+        logger.info("开始优化数据收集...")
+        self.collection_stats['total_collections'] += 1
+        
+        # 并行收集价格和网络数据
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            price_future = executor.submit(self.collect_enhanced_price_data)
+            network_future = executor.submit(self.collect_network_stats)
+            
+            try:
+                price_data = price_future.result(timeout=20)
+                network_data = network_future.result(timeout=20)
                 
-                if key not in miner_groups:
-                    miner_groups[key] = {'quantity': 0, 'miner_numbers': []}
-                miner_groups[key]['quantity'] += quantity
-                miner_groups[key]['miner_numbers'].append(miner_number)
-                total_miners += quantity
-            
-            logger.info(f"优化: {len(miners_data)} 条目 → {len(miner_groups)} 组, 总矿机: {total_miners}")
-            
-            # 处理每个组
-            results = []
-            total_daily_profit = 0
-            total_daily_revenue = 0
-            total_daily_cost = 0
-            
-            for (model, power_consumption, electricity_cost, machine_price, decay_rate, custom_hashrate), group_info in miner_groups.items():
-                quantity = group_info['quantity']
-                miner_numbers = group_info['miner_numbers']
-                
-                result = self.calculate_single_miner_group(
-                    model, quantity, power_consumption, electricity_cost, machine_price, network_data, decay_rate, custom_hashrate
-                )
-                
-                if result:
-                    # 添加矿机编号信息（显示第一个编号或编号范围）
-                    if len(miner_numbers) == 1:
-                        result['miner_number'] = miner_numbers[0]
-                    else:
-                        # 如果有多个矿机编号，显示范围或第一个
-                        result['miner_number'] = f"{miner_numbers[0]}-{miner_numbers[-1]}" if len(miner_numbers) > 1 else miner_numbers[0]
+                if price_data and network_data:
+                    self.save_optimized_data(price_data, network_data)
+                    return True
+                else:
+                    logger.warning("价格或网络数据收集失败")
+                    return False
                     
-                    results.append(result)
-                    total_daily_profit += result['daily_profit']
-                    total_daily_revenue += result['daily_revenue']
-                    total_daily_cost += result['daily_cost']
-                
-                # 清理内存（减少频率）
-                if len(results) % 200 == 0:
-                    gc.collect()
-            
-            # 创建摘要
-            # 计算平均ROI（排除无效值）
-            valid_roi_results = [r for r in results if r.get('roi_days', 0) < 999999 and r.get('roi_days', 0) > 0]
-            average_roi = round(sum(r.get('roi_days', 0) for r in valid_roi_results) / max(1, len(valid_roi_results)), 1) if valid_roi_results else 999999
-            
-            summary = {
-                'total_miners': total_miners,
-                'total_daily_profit': round(total_daily_profit, 2),
-                'total_daily_revenue': round(total_daily_revenue, 2),
-                'total_daily_cost': round(total_daily_cost, 2),
-                'total_monthly_profit': round(total_daily_profit * 30, 2),
-                'unique_groups': len(results),
-                'average_roi_days': average_roi
-            }
-            
-            logger.info(f"批量处理完成: {len(results)} 组, 总矿机: {total_miners}, 日收益: ${total_daily_profit:,.2f}")
-            
-            return {
-                'success': True,
-                'results': results,
-                'summary': summary,
-                'optimization_info': {
-                    'original_entries': len(miners_data),
-                    'optimized_groups': len(results),
-                    'total_miners': total_miners,
-                    'memory_optimized': True,
-                    'network_data_cached': True
-                }
-            }
-            
-        except Exception as e:
-            logger.error(f"批量处理失败: {e}", exc_info=True)
-            return {
-                'success': False,
-                'error': str(e),
-                'message': '批量计算处理失败'
-            }
-        finally:
-            # 强制垃圾回收
-            gc.collect()
+            except Exception as e:
+                logger.error(f"优化数据收集失败: {e}")
+                return False
+    
+    def get_collection_statistics(self) -> Dict:
+        """获取收集统计信息"""
+        success_rate = 0
+        if self.collection_stats['total_collections'] > 0:
+            success_rate = (self.collection_stats['successful_collections'] / 
+                          self.collection_stats['total_collections']) * 100
+        
+        return {
+            'total_collections': self.collection_stats['total_collections'],
+            'successful_collections': self.collection_stats['successful_collections'],
+            'failed_collections': self.collection_stats['failed_collections'],
+            'success_rate': success_rate,
+            'last_collection': self.collection_stats['last_collection']
+        }
+    
+    def start_optimized_scheduler(self):
+        """启动优化的调度器"""
+        logger.info("启动优化数据收集调度器...")
+        
+        # 每10分钟收集一次 (提升到144条/天)
+        schedule.every(10).minutes.do(self.run_optimized_collection)
+        
+        # 运行调度器
+        while True:
+            try:
+                schedule.run_pending()
+                time.sleep(60)  # 每分钟检查一次
+            except KeyboardInterrupt:
+                logger.info("调度器停止")
+                break
+            except Exception as e:
+                logger.error(f"调度器错误: {e}")
+                time.sleep(60)
 
-# 全局处理器实例
-batch_processor = OptimizedBatchProcessor()
+def main():
+    """主函数"""
+    processor = OptimizedBatchProcessor()
+    
+    logger.info("=== 优化批量数据处理器 ===")
+    
+    # 运行单次收集测试
+    logger.info("运行优化数据收集测试...")
+    success = processor.run_optimized_collection()
+    
+    if success:
+        print("✅ 优化数据收集测试成功！")
+        
+        # 显示统计信息
+        stats = processor.get_collection_statistics()
+        print(f"📊 收集统计：")
+        print(f"   成功率: {stats['success_rate']:.1f}%")
+        print(f"   总收集: {stats['total_collections']}")
+        print(f"   最后收集: {stats['last_collection']}")
+        
+        # 询问是否启动持续调度
+        try:
+            start_scheduler = input("是否启动持续数据收集? (y/n): ").strip().lower()
+            if start_scheduler == 'y':
+                processor.start_optimized_scheduler()
+        except KeyboardInterrupt:
+            logger.info("用户取消")
+    else:
+        print("❌ 优化数据收集测试失败")
+
+if __name__ == "__main__":
+    main()
