@@ -246,6 +246,7 @@ initialize_database_result = initialize_database()
 
 # Import models at module level for global access
 try:
+    from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot, MinerModel, User
     import models
     import models_subscription  # noqa: F401
     logging.info("Models imported successfully at module level")
