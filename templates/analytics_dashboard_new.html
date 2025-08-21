@@ -2431,12 +2431,18 @@ Generate this order?
             return window.currentLang || document.documentElement.lang || 'en';
         }
 
-        // Initialize Next Sell Indicator when page loads
+        // Initialize and update Next Sell Indicator
         document.addEventListener('DOMContentLoaded', function() {
-            fetchNextSellIndicator();
+            // Initial calls
+            fetchTreasuryData();
+            fetchNextSellIndicator(); 
+            setupEventListeners();
             
-            // Update Next Sell Indicator every 30 seconds
-            setInterval(fetchNextSellIndicator, 30000);
+            // Update data every 30 seconds
+            setInterval(() => {
+                fetchTreasuryData();
+                fetchNextSellIndicator();
+            }, 30000);
         });
 
     </script>
