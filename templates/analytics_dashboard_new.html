@@ -642,7 +642,7 @@
                         <div class="row mt-3">
                             <div class="col-12">
                                 <div class="next-sell-reasons" id="nextSellReasons">
-                                    <small class="text-info">• Ladder 1.52× → adj 1.58×</small>
+                                    <!-- Dynamic content loaded by JavaScript -->
                                 </div>
                             </div>
                         </div>
@@ -1454,6 +1454,9 @@
             initializeDashboard();
             loadTreasuryData();
             setupStrategyCards();
+            
+            // Update Next Sell Price dynamic content for language change
+            updateNextSellPriceDynamicContent(lang);
             setupExecutionPanel();
             initializeCharts();
             initTooltips();
@@ -2366,7 +2369,9 @@
             
             // Update confidence
             const badge = document.getElementById('confidenceBadge');
-            badge.textContent = data.confidence.charAt(0).toUpperCase() + data.confidence.slice(1);
+            const lang = getCurrentLanguage();
+            const confidenceText = getConfidenceText(data.confidence, lang);
+            badge.textContent = confidenceText;
             badge.className = `badge bg-${getConfidenceColor(data.confidence)}`;
             
             // Update confidence reason
@@ -2392,6 +2397,28 @@
                 case 'medium': return 'warning';
                 case 'low': return 'danger';
                 default: return 'secondary';
+            }
+        }
+
+        function getConfidenceText(confidence, lang) {
+            const confidenceMap = {
+                'high': { 'zh': '高', 'en': 'High' },
+                'medium': { 'zh': '中', 'en': 'Medium' },
+                'low': { 'zh': '低', 'en': 'Low' }
+            };
+            
+            return confidenceMap[confidence]?.[lang] || confidence.charAt(0).toUpperCase() + confidence.slice(1);
+        }
+
+        function updateNextSellPriceDynamicContent(lang) {
+            // Update confidence badge text if it exists
+            const confidenceBadge = document.getElementById('confidenceBadge');
+            if (confidenceBadge) {
+                const currentConfidence = confidenceBadge.textContent.toLowerCase();
+                const confidenceKey = currentConfidence === 'high' || currentConfidence === '高' ? 'high' :
+                                    currentConfidence === 'medium' || currentConfidence === '中' ? 'medium' :
+                                    currentConfidence === 'low' || currentConfidence === '低' ? 'low' : 'high';
+                confidenceBadge.textContent = getConfidenceText(confidenceKey, lang);
             }
         }
 
