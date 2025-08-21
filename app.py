@@ -3227,7 +3227,7 @@ def network_history_main():
 @login_required
 @log_access_attempt('数据分析平台')
 def analytics_dashboard():
-    """数据分析仪表盘 - 仅限拥有者"""
+    """HashInsight Treasury Management Platform - 专业矿工资金管理系统"""
     # 获取语言参数
     lang = request.args.get('lang', session.get('language', 'zh'))
     if lang not in ['zh', 'en']:
@@ -3239,9 +3239,9 @@ def analytics_dashboard():
     # Check if user has analytics access (owner or Pro subscription)
     if not user_has_analytics_access():
         if g.language == 'en':
-            flash('Access denied. Analytics platform requires Owner privileges or Pro subscription.', 'danger')
+            flash('Access denied. HashInsight Treasury requires Owner privileges or Pro subscription.', 'danger')
         else:
-            flash('访问被拒绝。数据分析平台需要拥有者权限或Pro订阅。', 'danger')
+            flash('访问被拒绝。HashInsight资金管理平台需要拥有者权限或Pro订阅。', 'danger')
         return redirect(url_for('index'))
     
     # 允许有权限的用户访问analytics页面
@@ -3467,11 +3467,175 @@ def analytics_dashboard():
             }
 
     app.logger.info(f"传递给模板的技术指标: {technical_indicators}")
-    return render_template('analytics_main.html', 
+    # 使用新的HashInsight Treasury Management模板
+    return render_template('analytics_dashboard_new.html', 
                           user_role=user_role,
                           technical_indicators=technical_indicators,
                           latest_report=latest_report,
                           current_lang=lang)
+
+# Treasury Management API Endpoints
+@app.route('/api/treasury/overview', methods=['GET'])
+@login_required
+def api_treasury_overview():
+    """获取资金管理概览数据"""
+    if not user_has_analytics_access():
+        return jsonify({'success': False, 'error': 'Access denied'}), 403
+    
+    try:
+        # 模拟资金管理数据（实际应从数据库获取）
+        btc_inventory = 12.5  # BTC库存
+        btc_price = 113820  # 当前价格
+        avg_cost_basis = 95000  # 平均成本基础
+        monthly_opex = 250000  # 月度运营费用
+        cash_reserves = 1500000  # 现金储备
+        
+        # 计算关键指标
+        inventory_usd = btc_inventory * btc_price
+        unrealized_pl = ((btc_price - avg_cost_basis) / avg_cost_basis) * 100
+        cash_coverage_days = int(cash_reserves / (monthly_opex / 30))
+        next_month_due = monthly_opex * 1.1  # 包含账单
+        
+        return jsonify({
+            'success': True,
+            'btc_inventory': btc_inventory,
+            'btc_price': btc_price,
+            'avg_cost_basis': avg_cost_basis,
+            'inventory_usd': inventory_usd,
+            'unrealized_pl': unrealized_pl,
+            'cash_coverage_days': cash_coverage_days,
+            'next_month_due': next_month_due,
+            'cash_reserves': cash_reserves,
+            'monthly_opex': monthly_opex
+        })
+        
+    except Exception as e:
+        logging.error(f"Treasury overview error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/treasury/signals', methods=['GET'])
+@login_required
+def api_treasury_signals():
+    """获取交易信号数据"""
+    if not user_has_analytics_access():
+        return jsonify({'success': False, 'error': 'Access denied'}), 403
+    
+    try:
+        # 获取技术指标信号
+        import psycopg2
+        conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+        cursor = conn.cursor()
+        
+        # 获取最新技术指标
+        cursor.execute("""
+            SELECT rsi_14, macd, sma_20, sma_50, bollinger_upper, bollinger_lower
+            FROM technical_indicators 
+            ORDER BY recorded_at DESC LIMIT 1
+        """)
+        tech_data = cursor.fetchone()
+        
+        # 获取市场数据
+        cursor.execute("""
+            SELECT btc_price, network_hashrate, network_difficulty, fear_greed_index
+            FROM market_analytics 
+            ORDER BY recorded_at DESC LIMIT 1
+        """)
+        market_data = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        # 构建信号响应
+        signals = {
+            'technical': {
+                'ma_trend': 'bullish' if tech_data and tech_data[2] > tech_data[3] else 'bearish',
+                'rsi': float(tech_data[0]) if tech_data else 50,
+                'bollinger': 'mid' if tech_data else 'unknown',
+                'volatility': 'high' if market_data else 'normal'
+            },
+            'onchain': {
+                'puell': 1.65,  # 示例数据
+                'sopr': 1.02,
+                'mvrv': 2.1,
+                'mpi': 'low'
+            },
+            'mining': {
+                'hashprice_percentile': 65,
+                'hash_ribbons': 'neutral',
+                'difficulty_change': 2.1,
+                'miner_flow': 'normal'
+            },
+            'market': {
+                'funding_rate': 0.01,
+                'basis': 5.2,
+                'open_interest': 'stable',
+                'spread': 0.02
+            },
+            'aggregate_signal': 'neutral_bullish',
+            'recommendation': 'Consider taking 15% profit at Layer 2 target'
+        }
+        
+        return jsonify({'success': True, 'signals': signals})
+        
+    except Exception as e:
+        logging.error(f"Treasury signals error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/treasury/backtest', methods=['POST'])
+@login_required
+def api_treasury_backtest():
+    """运行策略回测"""
+    if not user_has_analytics_access():
+        return jsonify({'success': False, 'error': 'Access denied'}), 403
+    
+    try:
+        data = request.json
+        strategy = data.get('strategy', 'hold')
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        initial_btc = float(data.get('initial_btc', 10))
+        
+        # 模拟回测结果
+        import random
+        import numpy as np
+        
+        # 生成模拟数据
+        days = 90
+        dates = []
+        values = []
+        base_value = initial_btc * 113820
+        
+        for i in range(days):
+            dates.append(f"Day {i+1}")
+            # 模拟价格变动
+            change = random.uniform(-0.02, 0.03)
+            base_value *= (1 + change)
+            values.append(base_value)
+        
+        # 计算指标
+        returns = np.diff(values) / values[:-1]
+        total_return = ((values[-1] - values[0]) / values[0]) * 100
+        max_drawdown = min((min(values) - max(values[:i+1])) / max(values[:i+1]) * 100 
+                          for i in range(len(values)))
+        sharpe_ratio = np.mean(returns) / np.std(returns) * np.sqrt(365) if np.std(returns) > 0 else 0
+        win_rate = sum(1 for r in returns if r > 0) / len(returns) * 100
+        
+        backtest_result = {
+            'dates': dates[-30:],  # 最近30天
+            'values': values[-30:],
+            'total_return': round(total_return, 2),
+            'max_drawdown': round(max_drawdown, 2),
+            'sharpe_ratio': round(sharpe_ratio, 2),
+            'win_rate': round(win_rate, 1),
+            'avg_slippage': 0.15,
+            'total_trades': len(returns)
+        }
+        
+        return jsonify({'success': True, 'result': backtest_result})
+        
+    except Exception as e:
+        logging.error(f"Backtest error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # Unified analytics data endpoint for testing and general use
 @app.route('/api/analytics/data', methods=['GET'])

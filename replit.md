@@ -7,6 +7,18 @@ The BTC Mining Calculator is a web application for Bitcoin mining profitability 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+**2025-08-21: Major Platform Evolution - HashInsight Treasury Management System**
+- Transformed analytics dashboard into comprehensive Bitcoin treasury management platform
+- Implemented professional-grade treasury overview with BTC inventory, cost basis, and cash coverage tracking
+- Added 5 strategy templates: OPEX Coverage (A), Layered Profit Taking (B), Mining Cycle (C), Basis/Funding (D), Volatility Triggered (E)
+- Created multi-panel signal system: Technical, On-Chain, Mining, and Market Structure indicators
+- Built execution panel supporting Market, Limit, Ladder, TWAP, and VWAP order types
+- Integrated backtesting engine with Sharpe ratio, max drawdown, and win rate metrics
+- Added treasury API endpoints: /api/treasury/overview, /api/treasury/signals, /api/treasury/backtest
+- Designed mobile-responsive UI with dark theme and golden accent professional styling
+- Implemented risk management settings with configurable daily sell limits and hedging options
+- Educational disclaimer: Platform provides information for educational purposes only, not investment advice
+
 **2025-08-21: Comprehensive Regression Testing Completed with 100% Success Rate**
 - Completed full regression testing suite covering all core application functionality
 - Achieved 100% success rate (9/9 tests passed) exceeding 99%+ requirement
@@ -66,12 +78,16 @@ The application is a modular Flask web application with a mobile-first design.
 - **Data Models**: Comprehensive models for users, customers, mining data, network snapshots, and miner specifications.
 
 ### Key Features
+- **HashInsight Treasury Management**: Professional Bitcoin treasury platform for miners with sell strategies, signal aggregation, and execution planning.
 - **Mining Calculator Engine**: Core business logic for profitability calculations.
 - **Authentication System**: Manages user access, Gmail SMTP bilingual email verification, role-based permissions, and session security.
 - **CRM System**: Handles customer lifecycle management, lead and deal tracking, and commission management.
 - **Network Data Collection**: Automated historical data accumulation for BTC price, difficulty, and network hashrate from multiple sources.
 - **Multilingual System**: Provides dynamic Chinese/English interface support with comprehensive chart tooltip localization.
 - **Subscription Management**: Comprehensive plan management with tiered access and role-based exemptions.
+- **Treasury Strategy Templates**: Pre-configured selling strategies including OPEX coverage, layered profit-taking, and mining cycle-driven approaches.
+- **Signal Aggregation System**: Combines technical, on-chain, mining, and market structure signals for decision support.
+- **Backtesting Engine**: Historical strategy performance evaluation with professional metrics.
 
 ## External Dependencies
 

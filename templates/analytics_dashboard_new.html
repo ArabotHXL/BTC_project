@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HashInsight Treasury Management Platform</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+    
+    <!-- Custom Styles -->
+    <style>
+        :root {
+            --bg-primary: #0d1421;
+            --bg-secondary: #1a2332;
+            --bg-tertiary: #2d3748;
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --accent-gold: #f39c12;
+            --accent-purple: #764ba2;
+            --accent-blue: #667eea;
+            --success: #48bb78;
+            --warning: #ed8936;
+            --danger: #f56565;
+            --info: #4299e1;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+            padding: 1rem 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white !important;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--bg-tertiary);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .card-header {
+            background: var(--bg-tertiary);
+            border-bottom: 2px solid var(--accent-gold);
+            font-weight: 600;
+            padding: 1rem 1.25rem;
+        }
+
+        /* Treasury Overview Cards */
+        .treasury-card {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .treasury-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-gold), var(--accent-purple), var(--accent-blue));
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--accent-gold);
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Signal Indicators */
+        .signal-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .signal-green { background: var(--success); }
+        .signal-yellow { background: var(--warning); }
+        .signal-red { background: var(--danger); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Strategy Cards */
+        .strategy-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .strategy-card:hover {
+            border-color: var(--accent-gold);
+            transform: scale(1.02);
+        }
+
+        .strategy-card.selected {
+            border-color: var(--accent-blue);
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        /* Execution Panel */
+        .execution-panel {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .execution-btn {
+            background: linear-gradient(135deg, var(--accent-gold) 0%, var(--warning) 100%);
+            border: none;
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .execution-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(243, 156, 18, 0.4);
+        }
+
+        /* Alert Badge */
+        .alert-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        /* Tabs */
+        .nav-tabs {
+            border-bottom: 2px solid var(--bg-tertiary);
+        }
+
+        .nav-tabs .nav-link {
+            color: var(--text-secondary);
+            border: none;
+            padding: 1rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--accent-gold);
+            background: var(--bg-secondary);
+            border-bottom: 3px solid var(--accent-gold);
+        }
+
+        /* Loading Animation */
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--bg-tertiary);
+            border-top-color: var(--accent-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive Grid */
+        @media (max-width: 768px) {
+            .metric-value { font-size: 1.5rem; }
+            .card { margin-bottom: 1rem; }
+        }
+
+        /* Risk Level Indicators */
+        .risk-low { color: var(--success); }
+        .risk-medium { color: var(--warning); }
+        .risk-high { color: var(--danger); }
+        
+        /* Progress Bars */
+        .progress {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, var(--accent-gold), var(--accent-purple));
+            transition: width 0.5s ease;
+        }
+
+        /* Tooltips */
+        .info-tooltip {
+            cursor: help;
+            color: var(--info);
+            margin-left: 5px;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-gold);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <div class="container-fluid px-4">
+        <nav class="navbar navbar-expand-lg">
+            <div class="container-fluid">
+                <div class="navbar-brand d-flex align-items-center">
+                    <i class="bi bi-bank2 me-2"></i>
+                    HashInsight Treasury
+                </div>
+                
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Alert Indicator -->
+                    <div class="position-relative">
+                        <button class="btn btn-light btn-sm" id="alertsBtn">
+                            <i class="bi bi-bell"></i>
+                            <span class="alert-badge" id="alertCount" style="display: none;">0</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Language Switcher -->
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-light btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="bi bi-globe me-1"></i>
+                            {{ 'CN' if current_lang == 'zh' else 'EN' }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="?lang=zh">中文</a></li>
+                            <li><a class="dropdown-item" href="?lang=en">English</a></li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Back to Main -->
+                    <a href="/main" class="btn btn-light btn-sm">
+                        <i class="bi bi-house-door me-1"></i>
+                        {{ '主页' if current_lang == 'zh' else 'Home' }}
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Treasury Overview Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h3 class="mb-3">
+                    <i class="bi bi-wallet2 me-2 text-warning"></i>
+                    Treasury Overview
+                </h3>
+            </div>
+            
+            <!-- Key Metrics -->
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card treasury-card">
+                    <div class="card-body">
+                        <div class="metric-label">BTC Inventory</div>
+                        <div class="metric-value" id="btcInventory">0.0000</div>
+                        <small class="text-muted">≈ $<span id="btcInventoryUSD">0</span></small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card treasury-card">
+                    <div class="card-body">
+                        <div class="metric-label">Avg Cost Basis</div>
+                        <div class="metric-value" id="avgCostBasis">$0</div>
+                        <small class="text-success" id="unrealizedPL">+0.00%</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card treasury-card">
+                    <div class="card-body">
+                        <div class="metric-label">Cash Coverage</div>
+                        <div class="metric-value" id="cashCoverage">0</div>
+                        <small class="text-muted">Days of OPEX</small>
+                        <div class="progress mt-2">
+                            <div class="progress-bar" id="cashCoverageBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card treasury-card">
+                    <div class="card-body">
+                        <div class="metric-label">Next Month Due</div>
+                        <div class="metric-value text-warning" id="nextMonthDue">$0</div>
+                        <small class="text-muted">OPEX + Bills</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Tabs -->
+        <ul class="nav nav-tabs mb-4" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="strategy-tab" data-bs-toggle="tab" data-bs-target="#strategy" type="button">
+                    <i class="bi bi-diagram-3 me-1"></i> Sell Strategies
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="signals-tab" data-bs-toggle="tab" data-bs-target="#signals" type="button">
+                    <i class="bi bi-speedometer2 me-1"></i> Signal Panel
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="execution-tab" data-bs-toggle="tab" data-bs-target="#execution" type="button">
+                    <i class="bi bi-play-circle me-1"></i> Execution
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="backtest-tab" data-bs-toggle="tab" data-bs-target="#backtest" type="button">
+                    <i class="bi bi-graph-up me-1"></i> Backtest
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button">
+                    <i class="bi bi-gear me-1"></i> Settings
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="mainTabContent">
+            <!-- Strategy Tab -->
+            <div class="tab-pane fade show active" id="strategy" role="tabpanel">
+                <div class="row">
+                    <div class="col-12 mb-3">
+                        <h4>Select Your Selling Strategy</h4>
+                        <p class="text-muted">Choose a strategy template that matches your treasury management goals</p>
+                    </div>
+                    
+                    <!-- Strategy A: OPEX Coverage -->
+                    <div class="col-md-4 mb-3">
+                        <div class="card strategy-card" data-strategy="opex">
+                            <div class="card-header">
+                                <i class="bi bi-shield-check me-2 text-success"></i>
+                                Strategy A: OPEX Coverage
+                            </div>
+                            <div class="card-body">
+                                <h6 class="text-warning">Cash Flow Priority</h6>
+                                <p class="small">Ensures 30-60 days of operational expenses</p>
+                                <ul class="small">
+                                    <li>Auto-sells when cash < OPEX needs</li>
+                                    <li>Conservative approach</li>
+                                    <li>Survival-focused</li>
+                                </ul>
+                                <div class="mt-3">
+                                    <span class="badge bg-success">Low Risk</span>
+                                    <span class="badge bg-info">Automated</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Strategy B: Layered Profit Taking -->
+                    <div class="col-md-4 mb-3">
+                        <div class="card strategy-card" data-strategy="layered">
+                            <div class="card-header">
+                                <i class="bi bi-layers me-2 text-info"></i>
+                                Strategy B: Layered Profit
+                            </div>
+                            <div class="card-body">
+                                <h6 class="text-warning">Most Popular</h6>
+                                <p class="small">3-5 price targets with trailing stop</p>
+                                <ul class="small">
+                                    <li>Sells at 1.2x, 1.5x, 1.8x, 2.2x cost</li>
+                                    <li>20-40% reserve with trailing stop</li>
+                                    <li>RSI>70 filter option</li>
+                                </ul>
+                                <div class="mt-3">
+                                    <span class="badge bg-warning">Medium Risk</span>
+                                    <span class="badge bg-primary">Balanced</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Strategy C: Mining Cycle -->
+                    <div class="col-md-4 mb-3">
+                        <div class="card strategy-card" data-strategy="mining">
+                            <div class="card-header">
+                                <i class="bi bi-cpu me-2 text-warning"></i>
+                                Strategy C: Mining Cycle
+                            </div>
+                            <div class="card-body">
+                                <h6 class="text-warning">Miner-Focused</h6>
+                                <p class="small">Based on Hashprice & Puell Multiple</p>
+                                <ul class="small">
+                                    <li>Hashprice >70% percentile → Sell 15%</li>
+                                    <li>Puell Multiple >1.8 → Sell signal</li>
+                                    <li>Hash Ribbons recovery tracking</li>
+                                </ul>
+                                <div class="mt-3">
+                                    <span class="badge bg-info">Data-Driven</span>
+                                    <span class="badge bg-secondary">Advanced</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Strategy Configuration -->
+                <div class="row mt-4" id="strategyConfig" style="display: none;">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Configure Strategy Parameters</h5>
+                            </div>
+                            <div class="card-body" id="strategyConfigContent">
+                                <!-- Dynamic content based on selected strategy -->
+                            </div>
+                            <div class="card-footer">
+                                <button class="btn execution-btn" onclick="saveStrategy()">
+                                    <i class="bi bi-save me-2"></i>Save Strategy
+                                </button>
+                                <button class="btn btn-secondary ms-2" onclick="previewStrategy()">
+                                    <i class="bi bi-eye me-2"></i>Preview
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signals Tab -->
+            <div class="tab-pane fade" id="signals" role="tabpanel">
+                <div class="row">
+                    <!-- Technical Signals -->
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-graph-up me-2"></i>Technical
+                            </div>
+                            <div class="card-body">
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-green"></span>
+                                    <span>MA(50/200): Bullish</span>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-yellow"></span>
+                                    <span>RSI(14): 68.5</span>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-green"></span>
+                                    <span>Bollinger: Mid-Band</span>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-red"></span>
+                                    <span>ATR: High Volatility</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- On-Chain Signals -->
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-link-45deg me-2"></i>On-Chain
+                            </div>
+                            <div class="card-body">
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-yellow"></span>
+                                    <span>Puell: 1.65</span>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-green"></span>
+                                    <span>SOPR: 1.02</span>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-green"></span>
+                                    <span>MVRV: 2.1</span>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-green"></span>
+                                    <span>MPI: Low</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mining Signals -->
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-cpu me-2"></i>Mining
+                            </div>
+                            <div class="card-body">
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-yellow"></span>
+                                    <span>Hashprice: 65%ile</span>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-green"></span>
+                                    <span>Hash Ribbons: Neutral</span>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-green"></span>
+                                    <span>Difficulty: +2.1%</span>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-yellow"></span>
+                                    <span>Miner→Exchange: Normal</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Market Structure -->
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-bar-chart me-2"></i>Market
+                            </div>
+                            <div class="card-body">
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-green"></span>
+                                    <span>Funding: 0.01%</span>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-yellow"></span>
+                                    <span>Basis: 5.2%</span>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-green"></span>
+                                    <span>OI: Stable</span>
+                                </div>
+                                <div class="signal-item mb-2">
+                                    <span class="signal-indicator signal-green"></span>
+                                    <span>Spread: 0.02%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Combined Signal -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Aggregated Signal & Recommendation</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>Current Signal: <span class="text-warning">NEUTRAL-BULLISH</span></h6>
+                                        <div class="progress mb-3" style="height: 20px;">
+                                            <div class="progress-bar bg-danger" style="width: 20%">Sell</div>
+                                            <div class="progress-bar bg-warning" style="width: 40%">Hold</div>
+                                            <div class="progress-bar bg-success" style="width: 40%">Buy</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Recommended Action:</h6>
+                                        <p class="mb-1"><i class="bi bi-info-circle text-info me-2"></i>
+                                            Price above 52W median with RSI approaching overbought. Consider taking 15% profit at Layer 2 target.
+                                        </p>
+                                        <button class="btn btn-sm btn-outline-warning mt-2">
+                                            Execute Recommended Trade
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Execution Tab -->
+            <div class="tab-pane fade" id="execution" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Order Execution Panel</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Execution Type -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Execution Type</label>
+                                        <select class="form-select" id="executionType">
+                                            <option value="market">Market Order</option>
+                                            <option value="limit">Limit Order</option>
+                                            <option value="ladder">Ladder Limit (3-6 levels)</option>
+                                            <option value="twap">TWAP (Time-Weighted)</option>
+                                            <option value="vwap">VWAP (Volume-Weighted)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Amount (BTC)</label>
+                                        <input type="number" class="form-control" id="executionAmount" step="0.0001" value="0.0">
+                                    </div>
+                                </div>
+                                
+                                <!-- Dynamic Parameters based on execution type -->
+                                <div id="executionParams" class="mb-3">
+                                    <!-- Filled dynamically -->
+                                </div>
+                                
+                                <!-- Exchange Selection -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Exchange</label>
+                                        <select class="form-select" id="exchangeSelect">
+                                            <option value="spot">Spot Exchange</option>
+                                            <option value="otc">OTC Desk (>10 BTC)</option>
+                                            <option value="block">Block Trade</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Slippage Tolerance</label>
+                                        <input type="number" class="form-control" id="slippageTolerance" value="0.5" step="0.1">
+                                        <small class="text-muted">Maximum acceptable slippage %</small>
+                                    </div>
+                                </div>
+                                
+                                <!-- Preview -->
+                                <div class="execution-panel mb-3">
+                                    <h6>Execution Preview</h6>
+                                    <div id="executionPreview">
+                                        <p class="text-muted">Configure parameters to see execution preview</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Action Buttons -->
+                                <div class="d-flex gap-2">
+                                    <button class="btn execution-btn" onclick="generateOrders()">
+                                        <i class="bi bi-list-ol me-2"></i>Generate Order List
+                                    </button>
+                                    <button class="btn btn-outline-info" onclick="simulateExecution()">
+                                        <i class="bi bi-play-circle me-2"></i>Simulate
+                                    </button>
+                                    <button class="btn btn-outline-danger" onclick="clearExecution()">
+                                        <i class="bi bi-x-circle me-2"></i>Clear
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Execution Log -->
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Recent Executions</h5>
+                            </div>
+                            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                                <div id="executionLog">
+                                    <div class="mb-2 p-2 bg-dark rounded">
+                                        <small class="text-muted">2025-08-21 10:30</small><br>
+                                        <span class="text-success">Sold 0.5 BTC @ $113,820</span><br>
+                                        <small>TWAP execution over 30 min</small>
+                                    </div>
+                                    <div class="mb-2 p-2 bg-dark rounded">
+                                        <small class="text-muted">2025-08-20 15:45</small><br>
+                                        <span class="text-success">Sold 0.25 BTC @ $114,200</span><br>
+                                        <small>Layer 2 target reached</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backtest Tab -->
+            <div class="tab-pane fade" id="backtest" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Strategy Backtesting</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Backtest Parameters -->
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Start Date</label>
+                                        <input type="date" class="form-control" id="backtestStart">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">End Date</label>
+                                        <input type="date" class="form-control" id="backtestEnd">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Initial BTC</label>
+                                        <input type="number" class="form-control" id="backtestInitialBTC" value="10" step="0.1">
+                                    </div>
+                                </div>
+                                
+                                <!-- Strategy Selection for Backtest -->
+                                <div class="mb-3">
+                                    <label class="form-label">Strategy to Test</label>
+                                    <select class="form-select" id="backtestStrategy">
+                                        <option value="hold">Buy & Hold (Baseline)</option>
+                                        <option value="dca">DCA Selling</option>
+                                        <option value="opex">OPEX Coverage</option>
+                                        <option value="layered">Layered Profit Taking</option>
+                                        <option value="mining">Mining Cycle Driven</option>
+                                    </select>
+                                </div>
+                                
+                                <button class="btn execution-btn" onclick="runBacktest()">
+                                    <i class="bi bi-play-fill me-2"></i>Run Backtest
+                                </button>
+                                
+                                <!-- Results Chart -->
+                                <div class="mt-4">
+                                    <canvas id="backtestChart" height="100"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Backtest Metrics -->
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Performance Metrics</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="metric-label">Total Return</div>
+                                    <div class="metric-value text-success" id="backtestReturn">+0.00%</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="metric-label">Max Drawdown</div>
+                                    <div class="metric-value text-danger" id="backtestDrawdown">-0.00%</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="metric-label">Sharpe Ratio</div>
+                                    <div class="metric-value" id="backtestSharpe">0.00</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="metric-label">Win Rate</div>
+                                    <div class="metric-value" id="backtestWinRate">0%</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="metric-label">Avg Slippage</div>
+                                    <div class="metric-value" id="backtestSlippage">0.00%</div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="metric-label">Total Trades</div>
+                                    <div class="metric-value" id="backtestTrades">0</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-pane fade" id="settings" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Core Inputs</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Current BTC Inventory</label>
+                                    <input type="number" class="form-control" id="settingsBTCInventory" step="0.0001">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Average Cost Basis ($)</label>
+                                    <input type="number" class="form-control" id="settingsCostBasis" step="100">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Monthly OPEX ($)</label>
+                                    <input type="number" class="form-control" id="settingsMonthlyOPEX" step="1000">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Minimum Cash Reserve ($)</label>
+                                    <input type="number" class="form-control" id="settingsMinCash" step="1000">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Cost Method</label>
+                                    <select class="form-select" id="settingsCostMethod">
+                                        <option value="fifo">FIFO</option>
+                                        <option value="lifo">LIFO</option>
+                                        <option value="specific">Specific ID</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Risk & Execution Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Risk Profile</label>
+                                    <select class="form-select" id="settingsRiskProfile">
+                                        <option value="conservative">Conservative</option>
+                                        <option value="moderate">Moderate</option>
+                                        <option value="aggressive">Aggressive</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Max Daily Sell %</label>
+                                    <input type="number" class="form-control" id="settingsMaxDailySell" value="10" min="1" max="100">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Allow Derivatives Hedging</label>
+                                    <select class="form-select" id="settingsAllowHedging">
+                                        <option value="no">No</option>
+                                        <option value="yes">Yes</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Preferred Exchange</label>
+                                    <select class="form-select" id="settingsExchange">
+                                        <option value="auto">Auto-select</option>
+                                        <option value="coinbase">Coinbase</option>
+                                        <option value="binance">Binance</option>
+                                        <option value="kraken">Kraken</option>
+                                        <option value="otc">OTC Desk</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Alert Channels</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="alertEmail">
+                                        <label class="form-check-label" for="alertEmail">Email</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="alertTelegram">
+                                        <label class="form-check-label" for="alertTelegram">Telegram</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="alertDiscord">
+                                        <label class="form-check-label" for="alertDiscord">Discord Webhook</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12 text-center">
+                        <button class="btn execution-btn" onclick="saveSettings()">
+                            <i class="bi bi-save me-2"></i>Save All Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="alert alert-warning">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Educational Purpose Only:</strong> This platform provides information and tools for educational purposes. 
+                    It does not constitute investment advice. All trading decisions are your own responsibility.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+            loadTreasuryData();
+            setupStrategyCards();
+            setupExecutionPanel();
+            initializeCharts();
+        });
+
+        function initializeDashboard() {
+            // Load saved settings
+            const settings = JSON.parse(localStorage.getItem('hashinsight_settings') || '{}');
+            
+            // Apply settings to UI
+            if (settings.btcInventory) {
+                document.getElementById('btcInventory').textContent = settings.btcInventory.toFixed(4);
+            }
+            
+            // Start real-time updates
+            setInterval(updateMarketData, 30000); // Update every 30 seconds
+        }
+
+        function loadTreasuryData() {
+            // Fetch treasury data from backend
+            fetch('/api/treasury/overview')
+                .then(response => response.json())
+                .then(data => {
+                    updateTreasuryOverview(data);
+                })
+                .catch(error => console.error('Error loading treasury data:', error));
+        }
+
+        function updateTreasuryOverview(data) {
+            // Update BTC inventory
+            const btcInventory = data.btc_inventory || 0;
+            const btcPrice = data.btc_price || 113820;
+            const inventoryUSD = btcInventory * btcPrice;
+            
+            document.getElementById('btcInventory').textContent = btcInventory.toFixed(4);
+            document.getElementById('btcInventoryUSD').textContent = inventoryUSD.toLocaleString();
+            
+            // Update cost basis and unrealized P/L
+            const costBasis = data.avg_cost_basis || 95000;
+            const unrealizedPL = ((btcPrice - costBasis) / costBasis * 100).toFixed(2);
+            
+            document.getElementById('avgCostBasis').textContent = '$' + costBasis.toLocaleString();
+            document.getElementById('unrealizedPL').textContent = (unrealizedPL > 0 ? '+' : '') + unrealizedPL + '%';
+            document.getElementById('unrealizedPL').className = unrealizedPL > 0 ? 'text-success' : 'text-danger';
+            
+            // Update cash coverage
+            const cashCoverage = data.cash_coverage_days || 45;
+            document.getElementById('cashCoverage').textContent = cashCoverage;
+            document.getElementById('cashCoverageBar').style.width = Math.min(cashCoverage / 90 * 100, 100) + '%';
+            
+            // Update next month due
+            const nextMonthDue = data.next_month_due || 250000;
+            document.getElementById('nextMonthDue').textContent = '$' + nextMonthDue.toLocaleString();
+        }
+
+        function setupStrategyCards() {
+            const strategyCards = document.querySelectorAll('.strategy-card');
+            
+            strategyCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remove selected class from all cards
+                    strategyCards.forEach(c => c.classList.remove('selected'));
+                    
+                    // Add selected class to clicked card
+                    this.classList.add('selected');
+                    
+                    // Show configuration panel
+                    const strategy = this.dataset.strategy;
+                    showStrategyConfig(strategy);
+                });
+            });
+        }
+
+        function showStrategyConfig(strategy) {
+            const configDiv = document.getElementById('strategyConfig');
+            const contentDiv = document.getElementById('strategyConfigContent');
+            
+            // Generate configuration content based on strategy
+            let configHTML = '';
+            
+            switch(strategy) {
+                case 'opex':
+                    configHTML = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">Coverage Days</label>
+                                <input type="number" class="form-control" value="30" min="7" max="90">
+                                <small class="text-muted">Days of OPEX to maintain</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Max Daily Sell</label>
+                                <input type="number" class="form-control" value="5" min="1" max="20">
+                                <small class="text-muted">Maximum % of inventory per day</small>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'layered':
+                    configHTML = `
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Price Layers (multiplier of cost basis)</label>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text">Layer 1</span>
+                                    <input type="number" class="form-control" value="1.2" step="0.1">
+                                    <span class="input-group-text">Sell %</span>
+                                    <input type="number" class="form-control" value="15" min="5" max="50">
+                                </div>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text">Layer 2</span>
+                                    <input type="number" class="form-control" value="1.5" step="0.1">
+                                    <span class="input-group-text">Sell %</span>
+                                    <input type="number" class="form-control" value="15" min="5" max="50">
+                                </div>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text">Layer 3</span>
+                                    <input type="number" class="form-control" value="1.8" step="0.1">
+                                    <span class="input-group-text">Sell %</span>
+                                    <input type="number" class="form-control" value="20" min="5" max="50">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Trailing Stop %</label>
+                                <input type="number" class="form-control" value="8" min="3" max="20">
+                                <small class="text-muted">For reserve position</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">RSI Filter</label>
+                                <select class="form-select">
+                                    <option value="enabled">Enabled (RSI > 70)</option>
+                                    <option value="disabled">Disabled</option>
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'mining':
+                    configHTML = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">Hashprice Trigger Percentile</label>
+                                <input type="number" class="form-control" value="70" min="50" max="95">
+                                <small class="text-muted">Sell when above this percentile</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Puell Multiple Trigger</label>
+                                <input type="number" class="form-control" value="1.8" step="0.1" min="1.0" max="3.0">
+                                <small class="text-muted">Sell signal threshold</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Hash Ribbons</label>
+                                <select class="form-select">
+                                    <option value="enabled">Track Recovery</option>
+                                    <option value="disabled">Ignore</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Sell Amount per Signal</label>
+                                <input type="number" class="form-control" value="15" min="5" max="30">
+                                <small class="text-muted">% of inventory</small>
+                            </div>
+                        </div>
+                    `;
+                    break;
+            }
+            
+            contentDiv.innerHTML = configHTML;
+            configDiv.style.display = 'block';
+        }
+
+        function setupExecutionPanel() {
+            const executionType = document.getElementById('executionType');
+            
+            executionType.addEventListener('change', function() {
+                updateExecutionParams(this.value);
+            });
+        }
+
+        function updateExecutionParams(type) {
+            const paramsDiv = document.getElementById('executionParams');
+            let paramsHTML = '';
+            
+            switch(type) {
+                case 'limit':
+                    paramsHTML = `
+                        <label class="form-label">Limit Price ($)</label>
+                        <input type="number" class="form-control" id="limitPrice" step="100">
+                    `;
+                    break;
+                    
+                case 'ladder':
+                    paramsHTML = `
+                        <label class="form-label">Number of Levels</label>
+                        <input type="number" class="form-control" id="ladderLevels" value="3" min="2" max="6">
+                        <label class="form-label mt-2">Price Range ($)</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="ladderMin" placeholder="Min">
+                            <span class="input-group-text">to</span>
+                            <input type="number" class="form-control" id="ladderMax" placeholder="Max">
+                        </div>
+                    `;
+                    break;
+                    
+                case 'twap':
+                case 'vwap':
+                    paramsHTML = `
+                        <label class="form-label">Duration (minutes)</label>
+                        <input type="number" class="form-control" id="twapDuration" value="30" min="5" max="240">
+                    `;
+                    break;
+            }
+            
+            paramsDiv.innerHTML = paramsHTML;
+        }
+
+        function initializeCharts() {
+            // Initialize backtest chart
+            const ctx = document.getElementById('backtestChart').getContext('2d');
+            window.backtestChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Portfolio Value',
+                        data: [],
+                        borderColor: '#f39c12',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { color: '#ffffff' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#a0aec0' },
+                            grid: { color: '#2d3748' }
+                        },
+                        y: {
+                            ticks: { color: '#a0aec0' },
+                            grid: { color: '#2d3748' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateMarketData() {
+            // Fetch and update real-time market data
+            fetch('/api/analytics/market-data')
+                .then(response => response.json())
+                .then(data => {
+                    // Update relevant UI elements
+                    console.log('Market data updated:', data);
+                })
+                .catch(error => console.error('Error updating market data:', error));
+        }
+
+        // Strategy functions
+        function saveStrategy() {
+            // Save configured strategy
+            console.log('Saving strategy configuration...');
+            // Implementation here
+        }
+
+        function previewStrategy() {
+            // Preview strategy execution
+            console.log('Previewing strategy...');
+            // Implementation here
+        }
+
+        // Execution functions
+        function generateOrders() {
+            // Generate order list based on execution parameters
+            console.log('Generating orders...');
+            // Implementation here
+        }
+
+        function simulateExecution() {
+            // Simulate order execution
+            console.log('Simulating execution...');
+            // Implementation here
+        }
+
+        function clearExecution() {
+            // Clear execution panel
+            document.getElementById('executionAmount').value = '0';
+            document.getElementById('executionPreview').innerHTML = '<p class="text-muted">Configure parameters to see execution preview</p>';
+        }
+
+        // Backtest functions
+        function runBacktest() {
+            // Run strategy backtest
+            console.log('Running backtest...');
+            // Implementation here
+        }
+
+        // Settings functions
+        function saveSettings() {
+            const settings = {
+                btcInventory: parseFloat(document.getElementById('settingsBTCInventory').value) || 0,
+                costBasis: parseFloat(document.getElementById('settingsCostBasis').value) || 0,
+                monthlyOPEX: parseFloat(document.getElementById('settingsMonthlyOPEX').value) || 0,
+                minCash: parseFloat(document.getElementById('settingsMinCash').value) || 0,
+                costMethod: document.getElementById('settingsCostMethod').value,
+                riskProfile: document.getElementById('settingsRiskProfile').value,
+                maxDailySell: parseFloat(document.getElementById('settingsMaxDailySell').value) || 10,
+                allowHedging: document.getElementById('settingsAllowHedging').value === 'yes',
+                exchange: document.getElementById('settingsExchange').value,
+                alerts: {
+                    email: document.getElementById('alertEmail').checked,
+                    telegram: document.getElementById('alertTelegram').checked,
+                    discord: document.getElementById('alertDiscord').checked
+                }
+            };
+            
+            // Save to localStorage
+            localStorage.setItem('hashinsight_settings', JSON.stringify(settings));
+            
+            // Show success message
+            alert('Settings saved successfully!');
+            
+            // Reload dashboard with new settings
+            loadTreasuryData();
+        }
+    </script>
+</body>
+</html>
