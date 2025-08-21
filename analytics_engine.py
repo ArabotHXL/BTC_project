@@ -566,8 +566,8 @@ class DataCollector:
             block_reward = mempool_data.get('block_reward', 3.125)
             logger.info(f"使用Mempool数据: 难度={difficulty:.0f}, 奖励={block_reward}")
         else:
-            difficulty = blockchain_data.get('network_difficulty', 0)
-            block_reward = blockchain_data.get('block_reward', 3.125)
+            difficulty = blockchain_data.get('network_difficulty', 0) if blockchain_data else 0
+            block_reward = blockchain_data.get('block_reward', 3.125) if blockchain_data else 3.125
             logger.info(f"使用Blockchain.info数据: 难度={difficulty:.0f}, 奖励={block_reward}")
         
         # 算力数据优先级: Minerstat > CoinWarz > RPC > Blockchain.info  

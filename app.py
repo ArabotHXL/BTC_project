@@ -248,8 +248,21 @@ initialize_database_result = initialize_database()
 # This ensures models are available for all functions defined below
 if initialize_database_result:
     try:
-        from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot, MinerModel
+        import models
         import models_subscription  # noqa: F401
+        
+        # Import models directly to avoid type conflicts
+        LoginRecord = models.LoginRecord
+        UserAccess = models.UserAccess  
+        Customer = models.Customer
+        Contact = models.Contact
+        Lead = models.Lead
+        Activity = models.Activity
+        LeadStatus = models.LeadStatus
+        DealStatus = models.DealStatus
+        NetworkSnapshot = models.NetworkSnapshot
+        MinerModel = models.MinerModel
+        
         logging.info("Models imported successfully at module level")
     except ImportError as e:
         logging.error(f"Failed to import models: {e}")
@@ -1655,7 +1668,7 @@ def get_network_stats():
     try:
         # 检查缓存
         cache_key = 'network_stats_api'
-        cached_data = cache_manager.get(cache_key)
+        cached_data = cache_manager.get(cache_key) if cache_manager else None
         
         if cached_data:
             return jsonify(cached_data)
@@ -1721,7 +1734,8 @@ def get_network_stats():
         }
         
         # 缓存数据40秒
-        cache_manager.set(cache_key, response_data, 40)
+        if cache_manager:
+            cache_manager.set(cache_key, response_data, 40)
         
         logging.info(f"网络统计数据从market_analytics表获取: BTC=${btc_price}, 算力={network_hashrate}EH/s")
         return jsonify(response_data)
@@ -1801,7 +1815,7 @@ def api_get_miners_data():
     try:
         # 检查缓存
         cache_key = 'miners_data_api'
-        cached_data = cache_manager.get(cache_key)
+        cached_data = cache_manager.get(cache_key) if cache_manager else None
         
         if cached_data:
             return jsonify(cached_data)
@@ -1823,7 +1837,8 @@ def api_get_miners_data():
         }
         
         # 矿机数据相对稳定，缓存300秒（5分钟）
-        cache_manager.set(cache_key, response_data, 300)
+        if cache_manager:
+            cache_manager.set(cache_key, response_data, 300)
         return jsonify(response_data)
     except Exception as e:
         logging.error(f"Error fetching miners data: {str(e)}")
@@ -5108,7 +5123,7 @@ def api_network_data():
     try:
         # 检查缓存
         cache_key = 'network_data_api'
-        cached_data = cache_manager.get(cache_key)
+        cached_data = cache_manager.get(cache_key) if cache_manager else None
         
         if cached_data:
             return jsonify(cached_data)
@@ -5173,7 +5188,8 @@ def api_network_data():
             }
         
         # 缓存数据30秒
-        cache_manager.set(cache_key, response_data, 30)
+        if cache_manager:
+            cache_manager.set(cache_key, response_data, 30)
         return jsonify(response_data)
         
     except Exception as e:
@@ -5190,7 +5206,7 @@ def api_get_btc_price():
     try:
         # 检查缓存
         cache_key = 'btc_price_api'
-        cached_data = cache_manager.get(cache_key)
+        cached_data = cache_manager.get(cache_key) if cache_manager else None
         
         if cached_data:
             return jsonify(cached_data)
@@ -5231,7 +5247,8 @@ def api_get_btc_price():
             }
         
         # 缓存数据20秒
-        cache_manager.set(cache_key, response_data, 20)
+        if cache_manager:
+            cache_manager.set(cache_key, response_data, 20)
         return jsonify(response_data)
     except Exception as e:
         return jsonify({
