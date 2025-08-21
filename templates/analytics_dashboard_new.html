@@ -105,6 +105,15 @@
             font-weight: 600;
         }
         
+        /* Override alert-warning global styles for disclaimer specifically */
+        .alert-warning.disclaimer-text * {
+            color: #2c3e50 !important;
+        }
+        
+        .alert-warning.disclaimer-text .bi-info-circle {
+            color: #d35400 !important;
+        }
+        
 
 
         /* Navigation Bar */
@@ -1206,10 +1215,11 @@
         <!-- Disclaimer -->
         <div class="row mt-5">
             <div class="col-12">
-                <div class="alert alert-warning disclaimer-text">
-                    <i class="bi bi-info-circle me-2"></i>
-                    <strong>Educational Purpose Only:</strong> This platform provides information and tools for educational purposes. 
-                    It does not constitute investment advice. All trading decisions are your own responsibility.
+                <div class="alert alert-warning disclaimer-text" style="background-color: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3);">
+                    <i class="bi bi-info-circle me-2" style="color: #2c3e50 !important; font-size: 1.1em;"></i>
+                    <strong style="color: #2c3e50 !important;">Educational Purpose Only:</strong> 
+                    <span style="color: #2c3e50 !important;">This platform provides information and tools for educational purposes. 
+                    It does not constitute investment advice. All trading decisions are your own responsibility.</span>
                 </div>
             </div>
         </div>
