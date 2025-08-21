@@ -7,14 +7,15 @@ The BTC Mining Calculator is a web application for Bitcoin mining profitability 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
-**2025-08-21: Enhanced ROI Chart Tooltips with Multilingual Support**
-- Implemented comprehensive multilingual tooltip system for ROI charts
+**2025-08-21: Completed ROI Chart Tooltips with Full Multilingual Support**
+- Successfully implemented comprehensive multilingual tooltip system for ROI charts
 - Added algorithm income comparison showing both Static and Dynamic method revenues in dollars
-- Enhanced chart.js with built-in translation functionality supporting Chinese/English switching
+- Enhanced chart.js with robust translation functionality supporting Chinese/English switching
 - Added chart-specific translations to translations.py for consistent language experience
-- Optimized tooltip content to show concise algorithm comparison and break-even point information
-- Fixed JavaScript errors in tooltip callback functions with proper error handling
-- User confirmed tooltip functionality working correctly with proper language switching
+- Optimized tooltip content structure to avoid duplicate data display
+- Fixed JavaScript language detection to work with global currentLang variable and multiple fallback methods
+- Resolved tooltip callback function errors and information hierarchy issues
+- User confirmed final implementation working correctly with proper language switching and clean data display
 
 **2025-08-21: Fixed Network Difficulty Display Issue**
 - Resolved critical bug where network difficulty displayed as 0.00T instead of correct value (129.43T)
