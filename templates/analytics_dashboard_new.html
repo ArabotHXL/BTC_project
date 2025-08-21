@@ -594,7 +594,7 @@
                             <div class="col-md-3">
                                 <div class="next-sell-main-info">
                                     <h5 class="mb-1" style="color: #ffc107; font-weight: 600;">
-                                        <i class="bi bi-bullseye me-2"></i><span data-translate="next_sell_price">Next Sell Price</span>
+                                        <i class="bi bi-bullseye me-2"></i><span data-translate="next_sell_price">{{ tr('next_sell_price') }}</span>
                                     </h5>
                                     <div class="h2 text-warning mb-0" id="nextSellPrice">$114,000</div>
                                     <small class="text-muted" id="nextSellLayer">(L2)</small>
@@ -602,17 +602,17 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="next-sell-zone">
-                                    <label class="form-label small" style="color: #ffc107;" data-translate="target_zone">Target Zone</label>
+                                    <label class="form-label small" style="color: #ffc107;" data-translate="target_zone">{{ tr('target_zone') }}</label>
                                     <div class="text-light" id="nextSellZone">$113,600 - $114,400</div>
                                     <div class="progress mt-2" style="height: 6px;">
                                         <div class="progress-bar bg-warning" role="progressbar" id="proximityBar" style="width: 92%"></div>
                                     </div>
-                                    <small class="text-muted"><span id="proximityText">92%</span> <span data-translate="proximity">proximity</span></small>
+                                    <small class="text-muted"><span id="proximityText">92%</span> <span data-translate="proximity">{{ tr('proximity') }}</span></small>
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="next-sell-qty">
-                                    <label class="form-label small" style="color: #ffc107;" data-translate="quantity">Quantity</label>
+                                    <label class="form-label small" style="color: #ffc107;" data-translate="quantity">{{ tr('quantity') }}</label>
                                     <div class="text-light">
                                         <span id="nextSellQty">0.75</span> BTC
                                     </div>
@@ -621,7 +621,7 @@
                             </div>
                             <div class="col-md-2">
                                 <div class="next-sell-confidence">
-                                    <label class="form-label small" style="color: #ffc107;" data-translate="confidence">Confidence</label>
+                                    <label class="form-label small" style="color: #ffc107;" data-translate="confidence">{{ tr('confidence') }}</label>
                                     <div>
                                         <span class="badge bg-success" id="confidenceBadge">High</span>
                                     </div>
@@ -630,10 +630,10 @@
                             </div>
                             <div class="col-md-2 text-end">
                                 <button class="btn btn-warning btn-sm mb-2" onclick="generateNextSellOrder()" style="width: 100%;">
-                                    <i class="bi bi-list-ol me-1"></i><span data-translate="generate_order">Generate Order</span>
+                                    <i class="bi bi-list-ol me-1"></i><span data-translate="generate_order">{{ tr('generate_order') }}</span>
                                 </button>
                                 <div class="small text-muted">
-                                    <i class="bi bi-shield-check me-1"></i><span data-translate="fallback_stop">Stop</span>: $<span id="fallbackStop">104,120</span>
+                                    <i class="bi bi-shield-check me-1"></i><span data-translate="stop">{{ tr('stop') }}</span>: $<span id="fallbackStop">104,120</span>
                                 </div>
                             </div>
                         </div>
