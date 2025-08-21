@@ -826,14 +826,21 @@ def set_language():
     if lang not in ['zh', 'en']:
         lang = 'zh'
     
-    # 保存语言设置到session
+    # 强制清空并重新设置语言
+    session.pop('language', None)  # 清空旧设置
     session['language'] = lang
-    g.language = lang  # 确保全局变量也设置了
+    g.language = lang
     
     # 获取返回页面，默认回到来源页
     return_url = request.args.get('return_url', request.referrer)
     if not return_url or not return_url.startswith(request.host_url):
-        return_url = url_for('analytics_dashboard')  # 默认回到分析仪表盘
+        return_url = url_for('analytics_dashboard')
+    
+    # 确保URL中包含语言参数
+    if '?' in return_url:
+        return_url = f"{return_url}&lang={lang}"
+    else:
+        return_url = f"{return_url}?lang={lang}"
     
     return redirect(return_url)
 
@@ -3270,12 +3277,17 @@ def network_history_main():
 @log_access_attempt('数据分析平台')
 def analytics_dashboard():
     """HashInsight Treasury Management Platform - 专业矿工资金管理系统"""
-    # 获取语言参数
-    lang = request.args.get('lang', session.get('language', 'zh'))
+    # 获取语言参数 - 优先级：URL参数 > session > 默认中文
+    lang = request.args.get('lang')
+    if not lang:
+        lang = session.get('language', 'zh')  # 默认中文
+    
     if lang not in ['zh', 'en']:
-        lang = 'zh'
+        lang = 'zh'  # 确保默认中文
+    
+    # 保存语言设置
     session['language'] = lang
-    g.language = lang  # 确保全局变量也设置了
+    g.language = lang
     
     user_role = get_user_role(session.get('email'))
     

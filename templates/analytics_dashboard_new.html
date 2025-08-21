@@ -561,12 +561,12 @@
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end" style="background: var(--bg-secondary); border: 1px solid rgba(116, 75, 162, 0.3);">
                             <li>
-                                <a class="dropdown-item" href="/set_language?lang=zh&return_url={{ request.url }}" style="color: white !important;">
+                                <a class="dropdown-item" href="/set_language?lang=zh&return_url={{ request.url | urlencode }}" style="color: white !important; padding: 10px 15px;">
                                     <i class="bi bi-translate me-2"></i>中文
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item" href="/set_language?lang=en&return_url={{ request.url }}" style="color: white !important;">
+                                <a class="dropdown-item" href="/set_language?lang=en&return_url={{ request.url | urlencode }}" style="color: white !important; padding: 10px 15px;">
                                     <i class="bi bi-translate me-2"></i>English
                                 </a>
                             </li>
