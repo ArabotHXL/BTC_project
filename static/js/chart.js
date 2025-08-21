@@ -650,18 +650,38 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             options: chartOptions,
             plugins: [{
-                id: 'breakEvenLine',
+                id: 'breakEvenLines',
                 afterDraw: function(chart) {
+                    const ctx = chart.ctx;
+                    const xScale = chart.scales.x;
+                    const yScale = chart.scales.y;
+                    
+                    // Save context
+                    ctx.save();
+                    
+                    // Draw horizontal line at 100% ROI (break-even threshold)
+                    const breakEvenROI = 100;
+                    const horizontalY = yScale.getPixelForValue(breakEvenROI);
+                    
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#dc3545'; // Red color for break-even threshold
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([8, 8]);
+                    ctx.moveTo(xScale.left, horizontalY);
+                    ctx.lineTo(xScale.right, horizontalY);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    
+                    // Draw horizontal line label
+                    ctx.fillStyle = '#dc3545';
+                    ctx.font = 'bold 11px Arial';
+                    ctx.textAlign = 'left';
+                    ctx.fillText('Break-even Line (100% ROI)', xScale.left + 10, horizontalY - 8);
+                    
+                    // Draw vertical line and marker if break-even point exists
                     if (breakEvenPoint && breakEvenIndex >= 0) {
-                        const ctx = chart.ctx;
-                        const xScale = chart.scales.x;
-                        const yScale = chart.scales.y;
-                        
                         // Calculate x position for break-even line
                         const xPos = xScale.getPixelForValue(breakEvenIndex);
-                        
-                        // Save context
-                        ctx.save();
                         
                         // Draw vertical line
                         ctx.beginPath();
@@ -677,7 +697,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ctx.fillStyle = '#ffc107';
                         ctx.font = 'bold 12px Arial';
                         ctx.textAlign = 'center';
-                        ctx.fillText('Break-even', xPos, yScale.top - 10);
+                        ctx.fillText(`Break-even Month ${breakEvenPoint.month}`, xPos, yScale.top - 10);
                         
                         // Draw break-even marker circle
                         const yPos = yScale.getPixelForValue(breakEvenPoint.roi_percent);
@@ -688,10 +708,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         ctx.arc(xPos, yPos, 8, 0, 2 * Math.PI);
                         ctx.fill();
                         ctx.stroke();
-                        
-                        // Restore context
-                        ctx.restore();
                     }
+                    
+                    // Restore context
+                    ctx.restore();
                 }
             }]
         });
