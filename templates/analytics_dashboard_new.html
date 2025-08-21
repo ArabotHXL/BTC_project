@@ -675,7 +675,7 @@
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button">
-                    <i class="bi bi-gear me-1"></i> {{ tr('risk_management') }}
+                    <i class="bi bi-gear me-1"></i> 风险管理
                 </button>
             </li>
         </ul>
@@ -685,8 +685,8 @@
             <div class="tab-pane fade show active" id="strategy" role="tabpanel">
                 <div class="row">
                     <div class="col-12 mb-3">
-                        <h4>{{ tr('select_selling_strategy') }}</h4>
-                        <p class="text-muted">{{ tr('strategy_template_description') }}</p>
+                        <h4>选择您的卖出策略</h4>
+                        <p class="text-muted">选择符合您资金库管理目标的策略模板</p>
                     </div>
                     
                     <!-- Strategy A: OPEX Coverage -->
@@ -694,19 +694,19 @@
                         <div class="card strategy-card" data-strategy="opex">
                             <div class="card-header">
                                 <i class="bi bi-shield-check me-2 text-success"></i>
-                                {{ tr('strategy_a_opex') }}
+                                策略A: 运营费用
                             </div>
                             <div class="card-body">
-                                <h6 class="text-warning">{{ tr('cash_flow_priority') }}</h6>
-                                <p class="small">{{ tr('ensures_opex_days') }}</p>
+                                <h6 class="text-warning">现金流优先</h6>
+                                <p class="small">确保30-60天运营费用</p>
                                 <ul class="small">
-                                    <li>{{ tr('auto_sells_cash') }}</li>
-                                    <li>{{ tr('conservative_approach') }}</li>
-                                    <li>{{ tr('survival_focused') }}</li>
+                                    <li>现金≤运营费用时自动卖出</li>
+                                    <li>保守策略</li>
+                                    <li>生存导向</li>
                                 </ul>
                                 <div class="mt-3">
-                                    <span class="badge bg-success">{{ tr('low_risk') }}</span>
-                                    <span class="badge bg-info">{{ tr('automated') }}</span>
+                                    <span class="badge bg-success">低风险</span>
+                                    <span class="badge bg-info">自动化</span>
                                 </div>
                             </div>
                         </div>
@@ -717,19 +717,19 @@
                         <div class="card strategy-card" data-strategy="layered">
                             <div class="card-header">
                                 <i class="bi bi-layers me-2 text-info"></i>
-                                {{ tr('strategy_b_layered') }}
+                                策略B: 分层获利
                             </div>
                             <div class="card-body">
-                                <h6 class="text-warning">{{ tr('most_popular') }}</h6>
-                                <p class="small">{{ tr('price_targets_trailing') }}</p>
+                                <h6 class="text-warning">最受欢迎</h6>
+                                <p class="small">3-5个价格目标+移动止损</p>
                                 <ul class="small">
-                                    <li>{{ tr('sells_at_multiples') }}</li>
-                                    <li>{{ tr('reserve_trailing_stop') }}</li>
-                                    <li>{{ tr('rsi_filter_option') }}</li>
+                                    <li>在1.2x, 1.5x, 1.8x, 2.2x成本卖出</li>
+                                    <li>20-40%储备+移动止损</li>
+                                    <li>RSI>70激活选项</li>
                                 </ul>
                                 <div class="mt-3">
-                                    <span class="badge bg-warning">{{ tr('medium_risk') }}</span>
-                                    <span class="badge bg-primary">{{ tr('balanced') }}</span>
+                                    <span class="badge bg-warning">中等风险</span>
+                                    <span class="badge bg-primary">平衡型</span>
                                 </div>
                             </div>
                         </div>
@@ -740,19 +740,19 @@
                         <div class="card strategy-card" data-strategy="mining">
                             <div class="card-header">
                                 <i class="bi bi-cpu me-2 text-warning"></i>
-                                {{ tr('strategy_c_mining') }}
+                                策略C: 挖矿周期
                             </div>
                             <div class="card-body">
-                                <h6 class="text-warning">{{ tr('miner_focused') }}</h6>
-                                <p class="small">{{ tr('hashprice_puell') }}</p>
+                                <h6 class="text-warning">矿工导向</h6>
+                                <p class="small">基于算力价格&Puell倍数</p>
                                 <ul class="small">
-                                    <li>{{ tr('hashprice_sell') }}</li>
-                                    <li>{{ tr('puell_sell_signal') }}</li>
-                                    <li>{{ tr('hash_ribbons_recovery') }}</li>
+                                    <li>算力价格>70%分位时卖出15%</li>
+                                    <li>Puell倍数>1.8时卖出信号</li>
+                                    <li>算力彩带复苏验证</li>
                                 </ul>
                                 <div class="mt-3">
-                                    <span class="badge bg-info">{{ tr('data_driven') }}</span>
-                                    <span class="badge bg-secondary">{{ tr('advanced') }}</span>
+                                    <span class="badge bg-info">数据驱动</span>
+                                    <span class="badge bg-secondary">高级</span>
                                 </div>
                             </div>
                         </div>
@@ -764,17 +764,17 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <h5>{{ tr('configure_strategy') }}</h5>
+                                <h5>配置策略参数</h5>
                             </div>
                             <div class="card-body" id="strategyConfigContent">
                                 <!-- Dynamic content based on selected strategy -->
                             </div>
                             <div class="card-footer">
                                 <button class="btn execution-btn" onclick="saveStrategy()">
-                                    <i class="bi bi-save me-2"></i>{{ tr('save_strategy') }}
+                                    <i class="bi bi-save me-2"></i>保存策略
                                 </button>
                                 <button class="btn btn-secondary ms-2" onclick="previewStrategy()">
-                                    <i class="bi bi-eye me-2"></i>{{ tr('preview') }}
+                                    <i class="bi bi-eye me-2"></i>预览
                                 </button>
                             </div>
                         </div>
