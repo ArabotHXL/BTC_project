@@ -5702,5 +5702,96 @@ def internal_error(error):
                          current_lang=current_lang,
                          title="服务器错误" if current_lang == 'zh' else "Server Error"), 500
 
+# Next Sell Indicator API
+@app.route('/api/treasury/next-sell-indicator', methods=['GET'])
+@login_required
+def next_sell_indicator_api():
+    """获取智能卖出建议指标"""
+    try:
+        from models import TechnicalIndicator, MarketAnalytics
+        import math
+        
+        # 获取当前用户
+        user = get_current_user()
+        if not user:
+            return jsonify({'success': False, 'error': 'User not found'}), 401
+            
+        # 获取最新技术指标和市场数据
+        latest_tech = TechnicalIndicator.query.order_by(TechnicalIndicator.timestamp.desc()).first()
+        latest_market = MarketAnalytics.query.order_by(MarketAnalytics.timestamp.desc()).first()
+        
+        if not latest_tech or not latest_market:
+            return jsonify({'success': False, 'error': 'Market data not available'}), 500
+            
+        # 简化的用户投资组合数据（演示用）
+        portfolio = {
+            'btc_inventory': 5.0,
+            'blended_cost': 75000,
+            'max_daily_sell_pct': 0.15,
+            'monthly_opex': 50000,
+            'cash_reserves': 100000
+        }
+        
+        # 计算指标
+        spot_price = latest_market.btc_price
+        rsi = latest_tech.rsi or 50
+        
+        # 计算下一层级目标价格
+        next_multiple = 1.52  # L2层级
+        atr_pct = 0.025  # 简化的ATR百分比
+        atr_factor = min(max(1 + 3.5 * max(0, atr_pct - 0.022), 0.9), 1.4)
+        adj_multiple = next_multiple * atr_factor
+        target_price = portfolio['blended_cost'] * adj_multiple
+        
+        # 目标区间 (±0.2%)
+        slip_pct = 0.002
+        zone_low = int(target_price * (1 - slip_pct))
+        zone_high = int(target_price * (1 + slip_pct))
+        
+        # 计算建议数量
+        layer_quota = 0.15  # 15%配额
+        daily_cap = portfolio['btc_inventory'] * portfolio['max_daily_sell_pct']
+        opex_gap = max(0, portfolio['monthly_opex'] - portfolio['cash_reserves'])
+        opex_qty = opex_gap / spot_price if opex_gap > 0 else 0
+        
+        qty = min(daily_cap, max(0, portfolio['btc_inventory'] * layer_quota - opex_qty))
+        if qty < 1e-4:
+            qty = max(0, min(daily_cap, portfolio['btc_inventory'] * layer_quota))
+            
+        # 置信度评估
+        confidence = 'high' if rsi >= 65 else 'medium' if rsi >= 55 else 'low'
+        
+        # 接近度计算
+        proximity_pct = round((spot_price / target_price) * 100, 1) if target_price > 0 else 0
+        
+        # 构建响应
+        result = {
+            'success': True,
+            'data': {
+                'next_price': int(target_price),
+                'zone_low': zone_low,
+                'zone_high': zone_high,
+                'qty_btc': round(qty, 4),
+                'confidence': confidence,
+                'proximity_pct': proximity_pct,
+                'fallback_stop': int(spot_price * 0.85),  # 15%止损
+                'layer': 'L2',
+                'opex_reserved_btc': round(opex_qty, 4),
+                'reasons': [
+                    f"Ladder {next_multiple:.2f}× → adj {adj_multiple:.2f}×",
+                    f"RSI {rsi:.1f} {'≥' if rsi >= 65 else '<'} 65"
+                ],
+                'timestamp': datetime.now().isoformat(),
+                'spot_price': spot_price,
+                'status': 'active'
+            }
+        }
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logging.error(f"Next sell indicator error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
