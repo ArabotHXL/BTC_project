@@ -6,6 +6,15 @@ The BTC Mining Calculator is a web application for Bitcoin mining profitability 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+**2025-08-21: Fixed Network Difficulty Display Issue**
+- Resolved critical bug where network difficulty displayed as 0.00T instead of correct value (129.43T)
+- Root cause: calculator_clean.js incorrectly divided API-returned difficulty by 1e12
+- API was returning correct pre-formatted values, but frontend was applying unnecessary conversion
+- Fixed conversion logic in both main.js and calculator_clean.js
+- Removed duplicate network statistics card that was causing UI confusion
+- User confirmed fix is working correctly
+
 ## System Architecture
 The application is a modular Flask web application with a mobile-first design.
 
