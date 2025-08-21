@@ -527,13 +527,21 @@ DEFAULT_LANGUAGE = 'zh'
 # 在请求前处理设置语言
 @app.before_request
 def before_request():
-    # 优先从会话中获取语言设置，如果没有则从 URL 参数获取，如果都没有则使用默认值
-    g.language = session.get('language', request.args.get('lang', DEFAULT_LANGUAGE))
+    # 如果没有session中的语言，强制设置为中文
+    if 'language' not in session:
+        session['language'] = 'zh'
     
-    # 如果有语言切换请求，保存到会话
+    # 优先从URL参数获取语言设置
     if request.args.get('lang'):
         session['language'] = request.args.get('lang')
-        g.language = session['language']
+    
+    # 设置全局语言变量
+    g.language = session.get('language', 'zh')
+    
+    # 确保语言值有效
+    if g.language not in ['zh', 'en']:
+        g.language = 'zh'
+        session['language'] = 'zh'
 
 # 添加翻译函数到模板上下文
 @app.context_processor

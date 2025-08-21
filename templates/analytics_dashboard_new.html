@@ -559,14 +559,16 @@
                             <i class="bi bi-globe me-1"></i>
                             <span id="currentLangDisplay">{{ 'CN' if current_lang == 'zh' else 'EN' }}</span>
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end" style="background: var(--bg-secondary); border: 1px solid rgba(116, 75, 162, 0.3);">
+                        <ul class="dropdown-menu dropdown-menu-end" style="background: var(--bg-secondary) !important; border: 1px solid rgba(116, 75, 162, 0.3) !important;">
                             <li>
-                                <a class="dropdown-item" href="/set_language?lang=zh&return_url={{ request.url | urlencode }}" style="color: white !important; padding: 10px 15px;">
+                                <a class="dropdown-item" href="/set_language?lang=zh" onclick="switchLanguage('zh'); return false;" 
+                                   style="color: white !important; padding: 12px 20px !important; display: block !important;">
                                     <i class="bi bi-translate me-2"></i>中文
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item" href="/set_language?lang=en&return_url={{ request.url | urlencode }}" style="color: white !important; padding: 10px 15px;">
+                                <a class="dropdown-item" href="/set_language?lang=en" onclick="switchLanguage('en'); return false;" 
+                                   style="color: white !important; padding: 12px 20px !important; display: block !important;">
                                     <i class="bi bi-translate me-2"></i>English
                                 </a>
                             </li>
@@ -1282,6 +1284,20 @@
             // Update timestamp every minute
             setInterval(updateTimestamp, 60000);
         });
+
+        // Language switching function
+        function switchLanguage(lang) {
+            console.log('Switching language to:', lang);
+            
+            // Update display immediately
+            const langDisplay = document.getElementById('currentLangDisplay');
+            if (langDisplay) {
+                langDisplay.textContent = lang === 'zh' ? 'CN' : 'EN';
+            }
+            
+            // Navigate to set language
+            window.location.href = '/set_language?lang=' + lang + '&return_url=' + encodeURIComponent(window.location.href);
+        }
 
         function initializeDashboard() {
             // Load saved settings
