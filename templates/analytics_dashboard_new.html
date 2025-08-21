@@ -250,24 +250,33 @@
         /* Tabs */
         .nav-tabs {
             border-bottom: 2px solid var(--bg-tertiary);
+            background: linear-gradient(135deg, rgba(116, 75, 162, 0.1), rgba(102, 126, 234, 0.05));
+            border-radius: 12px 12px 0 0;
+            padding: 0.5rem;
         }
 
         .nav-tabs .nav-link {
-            color: black !important;
+            color: #ffffff !important;
             border: none;
             padding: 1rem 1.5rem;
             transition: all 0.3s ease;
+            border-radius: 8px;
+            font-weight: 500;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
 
         .nav-tabs .nav-link:hover {
-            color: black !important;
-            background: rgba(255,255,255,0.05);
+            color: #ffffff !important;
+            background: rgba(243, 156, 18, 0.2);
+            transform: translateY(-1px);
         }
 
         .nav-tabs .nav-link.active {
-            color: black !important;
-            background: var(--bg-secondary);
-            border-bottom: 3px solid var(--accent-gold);
+            color: #ffffff !important;
+            background: linear-gradient(135deg, var(--accent-gold), #e67e22);
+            border-bottom: none;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+            font-weight: 600;
         }
 
         /* Loading Animation */
@@ -427,6 +436,18 @@
             border-color: var(--accent-gold) !important;
             box-shadow: 0 0 0 0.2rem rgba(243, 156, 18, 0.25) !important;
             background: rgba(26, 35, 50, 0.9) !important;
+        }
+
+        /* Tab Icons Enhancement */
+        .nav-tabs .nav-link i {
+            font-size: 1.1rem;
+            margin-right: 0.5rem;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+        }
+
+        .nav-tabs .nav-link.active i {
+            color: #ffffff;
+            text-shadow: 0 0 8px rgba(255,255,255,0.3);
         }
     </style>
 </head>
