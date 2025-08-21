@@ -600,7 +600,7 @@
                     <div class="card-body">
                         <div class="metric-label">
                             {{ tr('btc_inventory') }}
-                            <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="Total BTC holdings in treasury"></i>
+                            <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="{{ tr('total_btc_holdings') }}"></i>
                         </div>
                         <div class="metric-value" id="btcInventory">0.0000</div>
                         <small class="text-muted">≈ $<span id="btcInventoryUSD">0</span></small>
@@ -613,7 +613,7 @@
                     <div class="card-body">
                         <div class="metric-label">
                             {{ tr('cost_basis') }}
-                            <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="FIFO method: (Total BTC Purchase Cost) / (Total BTC Purchased)"></i>
+                            <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="{{ tr('fifo_method_tooltip') }}"></i>
                         </div>
                         <div class="metric-value" id="avgCostBasis">$0</div>
                         <small class="text-success" id="unrealizedPL">+0.00%</small>
@@ -626,10 +626,10 @@
                     <div class="card-body">
                         <div class="metric-label">
                             {{ tr('cash_coverage_days') }}
-                            <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="Formula: (Cash + Stablecoins) / Monthly OPEX (in days)"></i>
+                            <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="{{ tr('cash_coverage_tooltip') }}"></i>
                         </div>
                         <div class="metric-value" id="cashCoverage">0</div>
-                        <small class="text-muted">Days of OPEX</small>
+                        <small class="text-muted">{{ tr('days_of_opex') }}</small>
                         <div class="progress mt-2">
                             <div class="progress-bar" id="cashCoverageBar" style="width: 0%"></div>
                         </div>
@@ -641,11 +641,11 @@
                 <div class="card treasury-card">
                     <div class="card-body">
                         <div class="metric-label">
-                            Next Month Due
-                            <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="Monthly OPEX + Projected Bills"></i>
+                            {{ tr('next_month_due') }}
+                            <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="{{ tr('monthly_opex_tooltip') }}"></i>
                         </div>
                         <div class="metric-value text-warning" id="nextMonthDue">$0</div>
-                        <small class="text-muted">OPEX + Bills</small>
+                        <small class="text-muted">{{ tr('opex_bills') }}</small>
                     </div>
                 </div>
             </div>
@@ -685,8 +685,8 @@
             <div class="tab-pane fade show active" id="strategy" role="tabpanel">
                 <div class="row">
                     <div class="col-12 mb-3">
-                        <h4>Select Your Selling Strategy</h4>
-                        <p class="text-muted">Choose a strategy template that matches your treasury management goals</p>
+                        <h4>{{ tr('select_selling_strategy') }}</h4>
+                        <p class="text-muted">{{ tr('strategy_template_description') }}</p>
                     </div>
                     
                     <!-- Strategy A: OPEX Coverage -->
@@ -694,19 +694,19 @@
                         <div class="card strategy-card" data-strategy="opex">
                             <div class="card-header">
                                 <i class="bi bi-shield-check me-2 text-success"></i>
-                                Strategy A: OPEX Coverage
+                                {{ tr('strategy_a_opex') }}
                             </div>
                             <div class="card-body">
-                                <h6 class="text-warning">Cash Flow Priority</h6>
-                                <p class="small">Ensures 30-60 days of operational expenses</p>
+                                <h6 class="text-warning">{{ tr('cash_flow_priority') }}</h6>
+                                <p class="small">{{ tr('ensures_opex_days') }}</p>
                                 <ul class="small">
-                                    <li>Auto-sells when cash < OPEX needs</li>
-                                    <li>Conservative approach</li>
-                                    <li>Survival-focused</li>
+                                    <li>{{ tr('auto_sells_cash') }}</li>
+                                    <li>{{ tr('conservative_approach') }}</li>
+                                    <li>{{ tr('survival_focused') }}</li>
                                 </ul>
                                 <div class="mt-3">
-                                    <span class="badge bg-success">Low Risk</span>
-                                    <span class="badge bg-info">Automated</span>
+                                    <span class="badge bg-success">{{ tr('low_risk') }}</span>
+                                    <span class="badge bg-info">{{ tr('automated') }}</span>
                                 </div>
                             </div>
                         </div>
@@ -717,19 +717,19 @@
                         <div class="card strategy-card" data-strategy="layered">
                             <div class="card-header">
                                 <i class="bi bi-layers me-2 text-info"></i>
-                                Strategy B: Layered Profit
+                                {{ tr('strategy_b_layered') }}
                             </div>
                             <div class="card-body">
-                                <h6 class="text-warning">Most Popular</h6>
-                                <p class="small">3-5 price targets with trailing stop</p>
+                                <h6 class="text-warning">{{ tr('most_popular') }}</h6>
+                                <p class="small">{{ tr('price_targets_trailing') }}</p>
                                 <ul class="small">
-                                    <li>Sells at 1.2x, 1.5x, 1.8x, 2.2x cost</li>
-                                    <li>20-40% reserve with trailing stop</li>
-                                    <li>RSI>70 filter option</li>
+                                    <li>{{ tr('sells_at_multiples') }}</li>
+                                    <li>{{ tr('reserve_trailing_stop') }}</li>
+                                    <li>{{ tr('rsi_filter_option') }}</li>
                                 </ul>
                                 <div class="mt-3">
-                                    <span class="badge bg-warning">Medium Risk</span>
-                                    <span class="badge bg-primary">Balanced</span>
+                                    <span class="badge bg-warning">{{ tr('medium_risk') }}</span>
+                                    <span class="badge bg-primary">{{ tr('balanced') }}</span>
                                 </div>
                             </div>
                         </div>
@@ -740,19 +740,19 @@
                         <div class="card strategy-card" data-strategy="mining">
                             <div class="card-header">
                                 <i class="bi bi-cpu me-2 text-warning"></i>
-                                Strategy C: Mining Cycle
+                                {{ tr('strategy_c_mining') }}
                             </div>
                             <div class="card-body">
-                                <h6 class="text-warning">Miner-Focused</h6>
-                                <p class="small">Based on Hashprice & Puell Multiple</p>
+                                <h6 class="text-warning">{{ tr('miner_focused') }}</h6>
+                                <p class="small">{{ tr('hashprice_puell') }}</p>
                                 <ul class="small">
-                                    <li>Hashprice >70% percentile → Sell 15%</li>
-                                    <li>Puell Multiple >1.8 → Sell signal</li>
-                                    <li>Hash Ribbons recovery tracking</li>
+                                    <li>{{ tr('hashprice_sell') }}</li>
+                                    <li>{{ tr('puell_sell_signal') }}</li>
+                                    <li>{{ tr('hash_ribbons_recovery') }}</li>
                                 </ul>
                                 <div class="mt-3">
-                                    <span class="badge bg-info">Data-Driven</span>
-                                    <span class="badge bg-secondary">Advanced</span>
+                                    <span class="badge bg-info">{{ tr('data_driven') }}</span>
+                                    <span class="badge bg-secondary">{{ tr('advanced') }}</span>
                                 </div>
                             </div>
                         </div>
@@ -764,17 +764,17 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <h5>Configure Strategy Parameters</h5>
+                                <h5>{{ tr('configure_strategy') }}</h5>
                             </div>
                             <div class="card-body" id="strategyConfigContent">
                                 <!-- Dynamic content based on selected strategy -->
                             </div>
                             <div class="card-footer">
                                 <button class="btn execution-btn" onclick="saveStrategy()">
-                                    <i class="bi bi-save me-2"></i>Save Strategy
+                                    <i class="bi bi-save me-2"></i>{{ tr('save_strategy') }}
                                 </button>
                                 <button class="btn btn-secondary ms-2" onclick="previewStrategy()">
-                                    <i class="bi bi-eye me-2"></i>Preview
+                                    <i class="bi bi-eye me-2"></i>{{ tr('preview') }}
                                 </button>
                             </div>
                         </div>
@@ -789,7 +789,7 @@
                     <div class="col-md-3">
                         <div class="card">
                             <div class="card-header">
-                                <i class="bi bi-graph-up me-2"></i>Technical
+                                <i class="bi bi-graph-up me-2"></i>{{ tr('technical') }}
                             </div>
                             <div class="card-body">
                                 <div class="signal-item mb-2">
@@ -818,7 +818,7 @@
                     <div class="col-md-3">
                         <div class="card">
                             <div class="card-header">
-                                <i class="bi bi-link-45deg me-2"></i>On-Chain
+                                <i class="bi bi-link-45deg me-2"></i>{{ tr('onchain') }}
                             </div>
                             <div class="card-body">
                                 <div class="signal-item mb-2">
@@ -848,7 +848,7 @@
                     <div class="col-md-3">
                         <div class="card">
                             <div class="card-header">
-                                <i class="bi bi-cpu me-2"></i>Mining
+                                <i class="bi bi-cpu me-2"></i>{{ tr('mining') }}
                             </div>
                             <div class="card-body">
                                 <div class="signal-item mb-2">
@@ -878,7 +878,7 @@
                     <div class="col-md-3">
                         <div class="card">
                             <div class="card-header">
-                                <i class="bi bi-bar-chart me-2"></i>Market
+                                <i class="bi bi-bar-chart me-2"></i>{{ tr('market') }}
                             </div>
                             <div class="card-body">
                                 <div class="signal-item mb-2">
