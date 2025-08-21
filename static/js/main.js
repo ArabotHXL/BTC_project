@@ -37,10 +37,26 @@ document.addEventListener('DOMContentLoaded', function() {
     var isUpdatingMinerCount = false;
     var isUpdatingSitePower = false;
     
+    // 清除旧的网络统计缓存 (Clear old network stats cache)
+    function clearNetworkStatsCache() {
+        localStorage.removeItem('last_btc_price');
+        localStorage.removeItem('last_network_difficulty');
+        localStorage.removeItem('last_network_hashrate');
+        localStorage.removeItem('last_block_reward');
+        console.log('已清除网络统计数据缓存');
+    }
+    
     // 优化的初始化 (Optimized Initialization)
     function init() {
         console.log("页面加载优化器启动");
         const startTime = performance.now();
+        
+        // 检查并清除无效的网络统计缓存
+        var cachedDifficulty = localStorage.getItem('last_network_difficulty');
+        if (cachedDifficulty && parseFloat(cachedDifficulty) < 10) {
+            console.log('页面加载时检测到无效的难度缓存，清除所有网络统计缓存');
+            clearNetworkStatsCache();
+        }
         
         // 获取当前语言设置 (Get current language setting)
         const currentLang = document.querySelector('meta[name="language"]')?.content || 'zh';
@@ -78,6 +94,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 立即绑定关键事件
         bindCriticalEvents();
+        
+        // 启动网络统计数据自动刷新
+        setTimeout(function() {
+            console.log('启动网络统计数据自动刷新');
+            startNetworkStatsAutoRefresh();
+            
+            // 强制刷新网络统计数据（清除缓存）
+            setTimeout(function() {
+                console.log('页面加载后强制刷新网络统计数据');
+                fetchNetworkStats(false); // 不显示loading状态
+            }, 1000);
+        }, 500);
     }
     
     // 优化的网络数据获取
@@ -649,6 +677,17 @@ document.addEventListener('DOMContentLoaded', function() {
         var lastDifficulty = localStorage.getItem('last_network_difficulty');
         var lastHashrate = localStorage.getItem('last_network_hashrate');
         var lastBlockReward = localStorage.getItem('last_block_reward');
+        
+        // 如果difficulty缓存值为0或很小，清除所有缓存并重试
+        if (lastDifficulty && parseFloat(lastDifficulty) < 10) {
+            console.log('检测到无效的难度缓存值:', lastDifficulty, '，清除缓存并重试');
+            clearNetworkStatsCache();
+            // 延迟2秒后重新获取
+            setTimeout(function() {
+                fetchNetworkStats(false);
+            }, 2000);
+            return;
+        }
         
         if (lastBtcPrice && btcPriceEl) {
             btcPriceEl.textContent = formatCurrency(parseFloat(lastBtcPrice), 2);
