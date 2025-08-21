@@ -401,55 +401,136 @@
         padding: 0.375rem 0.75rem;
     }
 }
+
+/* 新导航栏样式增强 */
+.navbar .btn-light:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    background: rgba(255,255,255,1) !important;
+}
+
+.navbar .dropdown-toggle:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.navbar .dropdown-menu {
+    animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-item:hover {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+    color: white !important;
+    transform: translateX(5px);
+    transition: all 0.2s ease;
+}
+
+.dropdown-item.active {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+}
+
+/* 响应式导航优化 */
+@media (max-width: 991px) {
+    .navbar .container-fluid {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .navbar-brand, .navbar-nav {
+        justify-content: center;
+    }
+    
+    .navbar h4 {
+        font-size: 1.2rem;
+        text-align: center;
+    }
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="batch-calculator-container">
-    <!-- 返回主页按钮和语言切换 -->
-    <div class="row mb-3">
-        <div class="col-12 d-flex justify-content-between align-items-stretch">
-            <a href="{{ url_for('index') }}" class="btn btn-outline-light d-flex align-items-center" style="padding: 0.5rem 1rem; height: 38px;">
-                <i class="bi bi-house-door me-2"></i>
-                {% if current_lang == 'en' %}Back to Home{% else %}返回主页{% endif %}
-            </a>
-            
-            <!-- 语言切换按钮 -->
-            <div class="btn-group language-switcher" role="group" style="height: 38px;">
-                <a href="/batch-calculator?lang=zh" class="btn language-btn {{ 'active' if current_lang == 'zh' else '' }}" style="padding: 0.5rem 1rem; height: 38px; min-width: 60px;">
-                    <i class="bi bi-translate me-1"></i>中文
-                </a>
-                <a href="/batch-calculator?lang=en" class="btn language-btn {{ 'active' if current_lang == 'en' else '' }}" style="padding: 0.5rem 1rem; height: 38px; min-width: 60px;">
-                    <i class="bi bi-globe me-1"></i>EN
+    <!-- 新版本导航栏 -->
+    <nav class="navbar navbar-expand-lg mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; padding: 1rem 1.5rem;">
+        <div class="container-fluid">
+            <!-- 左侧：返回主页按钮 -->
+            <div class="navbar-brand mb-0">
+                <a href="{{ url_for('index') }}" class="btn btn-light btn-lg shadow-sm d-flex align-items-center text-decoration-none" 
+                   style="border-radius: 12px; padding: 0.75rem 1.5rem; transition: all 0.3s ease; background: rgba(255,255,255,0.95);">
+                    <i class="bi bi-house-door-fill me-2 text-primary" style="font-size: 1.2rem;"></i>
+                    <span class="fw-bold text-dark">{{ t('home') }}</span>
                 </a>
             </div>
+            
+            <!-- 中间：页面标题 -->
+            <div class="navbar-nav mx-auto">
+                <h4 class="mb-0 text-white fw-bold d-flex align-items-center">
+                    <i class="bi bi-calculator me-2"></i>
+                    {{ t('batch_mining_calculator') }}
+                </h4>
+            </div>
+            
+            <!-- 右侧：语言切换系统 -->
+            <div class="navbar-nav">
+                <div class="btn-group shadow-sm" role="group">
+                    <button type="button" class="btn btn-light dropdown-toggle d-flex align-items-center" 
+                            data-bs-toggle="dropdown" aria-expanded="false"
+                            style="border-radius: 12px; padding: 0.75rem 1.25rem; background: rgba(255,255,255,0.95); border: none;">
+                        <i class="bi bi-globe me-2 text-primary"></i>
+                        <span class="fw-semibold text-dark">{{ t('language') }}</span>
+                        <span class="ms-2 badge bg-primary">{{ 'CN' if current_lang == 'zh' else 'EN' }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg" style="border-radius: 12px; border: none; min-width: 180px;">
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center py-2 {{ 'active bg-primary text-white' if current_lang == 'zh' else '' }}" 
+                               href="/batch-calculator?lang=zh" style="border-radius: 8px; margin: 4px;">
+                                <i class="bi bi-translate me-3"></i>
+                                <span class="fw-semibold">中文 (简体)</span>
+                                {% if current_lang == 'zh' %}<i class="bi bi-check-lg ms-auto"></i>{% endif %}
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center py-2 {{ 'active bg-primary text-white' if current_lang == 'en' else '' }}" 
+                               href="/batch-calculator?lang=en" style="border-radius: 8px; margin: 4px;">
+                                <i class="bi bi-globe-americas me-3"></i>
+                                <span class="fw-semibold">English</span>
+                                {% if current_lang == 'en' %}<i class="bi bi-check-lg ms-auto"></i>{% endif %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
-    </div>
+    </nav>
     
-    <!-- Header Section -->
+    <!-- 描述和说明区域 -->
     <div class="row mb-4">
-            <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="col-12">
+            <div class="alert alert-info border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(13, 202, 240, 0.1) 100%); border-radius: 12px;">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-info-circle text-info me-3" style="font-size: 1.5rem;"></i>
                     <div>
-                        <h2 class="mb-1">
-                            {% if current_lang == 'en' %}Batch Mining Calculator{% else %}批量挖矿计算器{% endif %}
-                        </h2>
-                        <p class="text-muted mb-0">
-                            {% if current_lang == 'en' %}Calculate profitability for multiple miners at once{% else %}一次性计算多台矿机的收益率{% endif %}
+                        <h6 class="alert-heading mb-1 text-info fw-bold">{{ t('batch_calculation') }}</h6>
+                        <p class="mb-0 text-muted">
+                            {% if current_lang == 'en' %}Calculate profitability for multiple miners at once with real-time network data{% else %}使用实时网络数据一次性计算多台矿机的盈利能力{% endif %}
                         </p>
-                    </div>
-                    
-                    <!-- Plan Display - Hidden for all users -->
-                    <div class="text-end d-none">
-                        <div class="small text-muted">{% if current_lang == 'en' %}Current Plan{% else %}当前套餐{% endif %}</div>
-                        <div class="fw-bold text-primary">{{ user_plan.name.title() }}</div>
-                        <div class="small text-muted mt-1">
-                            {% if current_lang == 'en' %}Max {{ user_plan.max_miners }} miners{% else %}最大{{ user_plan.max_miners }}台矿机{% endif %}
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
         <!-- Batch Input Section -->
         <!-- Global Settings and Network Status -->
