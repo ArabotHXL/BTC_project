@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 元素引用 (Element references)
     var btcPriceEl = document.getElementById('btc-price');
     var networkDifficultyEl = document.getElementById('network-difficulty');
-    var networkDifficultyValueEl = document.getElementById('network-difficulty-value'); // 第二个difficulty元素
+    // 第二个difficulty元素已移除（重复卡片）
     var networkHashrateEl = document.getElementById('network-hashrate');
     var networkHashrateValueEl = document.getElementById('network-hashrate-value'); // 第二个hashrate元素
     var blockRewardEl = document.getElementById('block-reward');
@@ -701,14 +701,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             // 强制标记元素已更新
                             networkDifficultyEl.setAttribute('data-updated', 'fetchNetworkStats');
                         }
-                        if (networkDifficultyValueEl) {
-                            console.log('设置第二个difficulty显示为:', formattedDifficulty);
-                            console.log('第二个元素当前内容:', networkDifficultyValueEl.textContent);
-                            networkDifficultyValueEl.textContent = formattedDifficulty;
-                            console.log('第二个difficulty元素更新后内容:', networkDifficultyValueEl.textContent);
-                            // 强制标记元素已更新
-                            networkDifficultyValueEl.setAttribute('data-updated', 'fetchNetworkStats');
-                        }
+                        // 第二个difficulty元素已被移除（重复卡片）
                         
                         // 更新两个hashrate元素
                         var formattedHashrate = formatNumber(data.hashrate) + ' EH/s';
@@ -1035,10 +1028,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (networkDifficultyEl) {
                 // 检查元素是否已被fetchNetworkStats更新过
                 var lastUpdated = networkDifficultyEl.getAttribute('data-updated');
-                console.log('updateNetworkAndMiningInfo - 第一个difficulty元素上次更新者:', lastUpdated);
+                console.log('updateNetworkAndMiningInfo - difficulty元素上次更新者:', lastUpdated);
                 
                 if (lastUpdated === 'fetchNetworkStats') {
-                    console.log('跳过第一个difficulty元素更新，已被fetchNetworkStats更新');
+                    console.log('跳过difficulty元素更新，已被fetchNetworkStats更新');
                 } else {
                     var difficultyValue = data.network_data.network_difficulty;
                     console.log('updateNetworkAndMiningInfo difficulty原始值:', difficultyValue);
