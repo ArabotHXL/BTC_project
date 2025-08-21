@@ -6,6 +6,9 @@ The BTC Mining Calculator is a web application for Bitcoin mining profitability 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+- **2025-08-21**: Removed Difficulty display from network stats bar due to persistent display issues showing 0.0 T instead of correct values. Simplified interface to show only BTC Price, Hashrate, and Block Reward.
+
 ## System Architecture
 The application is a modular Flask web application with a mobile-first design.
 
