@@ -82,7 +82,22 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.removeItem('last_network_difficulty');
         localStorage.removeItem('last_network_hashrate');
         localStorage.removeItem('last_block_reward');
+        localStorage.removeItem('lastNetworkStatsUpdate');
+        localStorage.removeItem('lastBtcPrice');
+        localStorage.removeItem('lastDifficulty');
+        localStorage.removeItem('lastHashrate');
+        localStorage.removeItem('lastBlockReward');
         console.log('已清除网络统计数据缓存');
+        
+        // 同时清除元素的更新标记
+        var elements = ['network-difficulty', 'network-difficulty-value'];
+        elements.forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) {
+                el.removeAttribute('data-updated');
+                console.log('清除元素', id, '的更新标记');
+            }
+        });
     }
     
     // 优化的初始化 (Optimized Initialization)
@@ -676,15 +691,23 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         // 更新两个difficulty元素
                         var formattedDifficulty = formatNumber(data.difficulty) + 'T';
+                        console.log('格式化后的difficulty值:', formattedDifficulty);
+                        
                         if (networkDifficultyEl) {
                             console.log('设置第一个difficulty显示为:', formattedDifficulty);
+                            console.log('第一个元素当前内容:', networkDifficultyEl.textContent);
                             networkDifficultyEl.textContent = formattedDifficulty;
                             console.log('第一个difficulty元素更新后内容:', networkDifficultyEl.textContent);
+                            // 强制标记元素已更新
+                            networkDifficultyEl.setAttribute('data-updated', 'fetchNetworkStats');
                         }
                         if (networkDifficultyValueEl) {
                             console.log('设置第二个difficulty显示为:', formattedDifficulty);
+                            console.log('第二个元素当前内容:', networkDifficultyValueEl.textContent);
                             networkDifficultyValueEl.textContent = formattedDifficulty;
                             console.log('第二个difficulty元素更新后内容:', networkDifficultyValueEl.textContent);
+                            // 强制标记元素已更新
+                            networkDifficultyValueEl.setAttribute('data-updated', 'fetchNetworkStats');
                         }
                         
                         // 更新两个hashrate元素
@@ -1010,16 +1033,24 @@ document.addEventListener('DOMContentLoaded', function() {
         // 更新比特币网络信息
         if (data.network_data) {
             if (networkDifficultyEl) {
-                // 检查difficulty是否已经转换为T单位
-                var difficultyValue = data.network_data.network_difficulty;
-                console.log('updateNetworkAndMiningInfo difficulty原始值:', difficultyValue);
+                // 检查元素是否已被fetchNetworkStats更新过
+                var lastUpdated = networkDifficultyEl.getAttribute('data-updated');
+                console.log('updateNetworkAndMiningInfo - 第一个difficulty元素上次更新者:', lastUpdated);
                 
-                // 如果difficulty大于1000，说明是原始值，需要转换
-                if (difficultyValue > 1000) {
-                    difficultyValue = difficultyValue / 1e12; // 转换为T单位
+                if (lastUpdated === 'fetchNetworkStats') {
+                    console.log('跳过第一个difficulty元素更新，已被fetchNetworkStats更新');
+                } else {
+                    var difficultyValue = data.network_data.network_difficulty;
+                    console.log('updateNetworkAndMiningInfo difficulty原始值:', difficultyValue);
+                    
+                    // 如果difficulty大于1000，说明是原始值，需要转换
+                    if (difficultyValue > 1000) {
+                        difficultyValue = difficultyValue / 1e12; // 转换为T单位
+                    }
+                    console.log('updateNetworkAndMiningInfo difficulty转换后:', difficultyValue);
+                    networkDifficultyEl.textContent = formatNumber(difficultyValue, 2) + ' T';
+                    networkDifficultyEl.setAttribute('data-updated', 'updateNetworkAndMiningInfo');
                 }
-                console.log('updateNetworkAndMiningInfo difficulty转换后:', difficultyValue);
-                networkDifficultyEl.textContent = formatNumber(difficultyValue, 2) + ' T';
             }
             if (networkHashrateEl) {
                 networkHashrateEl.textContent = formatNumber(data.network_data.network_hashrate, 2) + ' EH/s';
