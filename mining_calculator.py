@@ -1041,8 +1041,8 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
                 # 计算这个BTC价格和电费成本组合下的利润
                 # 特别注意：必须将当前循环的电费成本'cost'传递给函数
                 # ENHANCED: 为热力图计算添加维护费 - 基于矿机数量的合理维护费
-                # 维护费应该与矿机数量成正比，单个矿机约$10-20/月
-                maintenance_fee_per_miner = 15  # $15 per miner per month
+                # 维护费应该与矿机数量成正比，单个矿机约$5-10/月
+                maintenance_fee_per_miner = 5  # $5 per miner per month (reduced for single miners)
                 total_maintenance_fee = maintenance_fee_per_miner * miner_count
                 
                 result = calculate_mining_profitability(

@@ -1181,14 +1181,14 @@ def calculate_internal(request_obj):
             
             # 如果没有设置维护费，根据矿机数量自动计算合理的维护费
             if maintenance_fee == 0:
-                maintenance_fee = miner_count * 15  # $15 per miner per month
+                maintenance_fee = miner_count * 5  # $5 per miner per month (reduced for single miners)
                 
             # Additional check for NaN/inf after conversion
             if not (maintenance_fee == maintenance_fee and abs(maintenance_fee) != float('inf')):
                 raise ValueError("NaN or infinite value detected")
         except ValueError as e:
             logging.error(f"Invalid maintenance fee value: {data.get('maintenance_fee')} - {str(e)}")
-            maintenance_fee = miner_count * 15  # Default maintenance fee based on miner count
+            maintenance_fee = miner_count * 5  # Default maintenance fee based on miner count (reduced)
         
         # ENHANCED: Pool fee parameter per expert recommendations
         pool_fee = None
