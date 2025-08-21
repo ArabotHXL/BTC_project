@@ -828,11 +828,12 @@ def set_language():
     
     # 保存语言设置到session
     session['language'] = lang
+    g.language = lang  # 确保全局变量也设置了
     
     # 获取返回页面，默认回到来源页
     return_url = request.args.get('return_url', request.referrer)
     if not return_url or not return_url.startswith(request.host_url):
-        return_url = url_for('index')  # 默认回到首页
+        return_url = url_for('analytics_dashboard')  # 默认回到分析仪表盘
     
     return redirect(return_url)
 
@@ -3274,6 +3275,7 @@ def analytics_dashboard():
     if lang not in ['zh', 'en']:
         lang = 'zh'
     session['language'] = lang
+    g.language = lang  # 确保全局变量也设置了
     
     user_role = get_user_role(session.get('email'))
     
