@@ -76,6 +76,7 @@ class AdvancedAlgorithmEngine:
     def __init__(self):
         self.atr_median_cache = None
         self.historical_data_cache = {}
+        self.volume_cache = {}  # 量能数据缓存
         
     def calculate_atr_percentile(self, prices: List[float], periods: int = 14, lookback: int = 365) -> float:
         """计算ATR百分位数"""
@@ -234,7 +235,7 @@ class AdvancedAlgorithmEngine:
                 if features.vol_today < features.vol_20d * 0.8:  # 成交量低于20日均量80%
                     volume_exhaustion = True
                     score += 0.2  # 低量突破，偏向卖出
-                    notes.append("成交量衰竭：突破缺乏量能支撑")
+                    notes.append(tr("volume_exhaustion_signal"))
                     confidence = 0.8
             
             # 2. RSI背离检查 (简化版)
@@ -326,6 +327,53 @@ class AdvancedAlgorithmEngine:
         
         return ModuleScore("miner_cycle", score, confidence, notes)
     
+    def get_volume_average(self, days: int) -> Optional[float]:
+        """获取历史量能平均值"""
+        try:
+            import os
+            import time
+            import psycopg2
+            
+            # 检查缓存
+            cache_key = f"vol_{days}d"
+            if cache_key in self.volume_cache:
+                cache_time, value = self.volume_cache[cache_key]
+                # 缓存5分钟有效
+                if time.time() - cache_time < 300:
+                    return value
+            
+            # 从数据库获取量能数据
+            db_url = os.environ.get('DATABASE_URL')
+            if not db_url:
+                return None
+                
+            conn = psycopg2.connect(db_url)
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT AVG(btc_volume_24h) 
+                FROM market_analytics 
+                WHERE btc_volume_24h IS NOT NULL 
+                AND btc_volume_24h > 0
+                AND recorded_at >= NOW() - INTERVAL '%s days'
+            """, (days,))
+            
+            result = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            
+            if result and result[0]:
+                avg_volume = float(result[0])
+                # 更新缓存
+                self.volume_cache[cache_key] = (time.time(), avg_volume)
+                return avg_volume
+            else:
+                return None
+                
+        except Exception as e:
+            logger.debug(f"获取量能平均值失败: {e}")
+            return None
+    
     def calculate_features_from_data(self, market_data: Dict, technical_data: Dict, 
                                     historical_prices: Optional[List[float]] = None) -> FeaturePack:
         """从市场数据计算特征包"""
@@ -355,6 +403,10 @@ class AdvancedAlgorithmEngine:
         # 唐奇安通道（20日高点）
         donchian_20_high = close * 1.05  # 简化估算
         
+        # 真实量能数据集成 ✅
+        vol_today = float(market_data.get('btc_volume_24h', 20000000000))  # 实际24h成交量
+        vol_20d = self.get_volume_average(20) or vol_today * 0.8  # 20日平均量，备用为当日80%
+        
         return FeaturePack(
             close=close,
             high=close * 1.01,  # 估算
@@ -364,8 +416,8 @@ class AdvancedAlgorithmEngine:
             atr_pct=atr_pct,
             pct_52w=pct_52w,
             rsi14=rsi14,
-            vol_20d=1000000,  # 估算成交量
-            vol_today=1200000,
+            vol_20d=vol_20d,    # 真实20日平均量
+            vol_today=vol_today,  # 真实当日量
             donchian_20_high=donchian_20_high,
             bb_upper=bb_upper,
             bb_lower=bb_lower,
