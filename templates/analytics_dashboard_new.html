@@ -1238,6 +1238,7 @@
             setupExecutionPanel();
             initializeCharts();
             initTooltips();
+            initAlertsSystem(); // Initialize alerts functionality
             updateTimestamp();
             
             // Update timestamp every minute
@@ -1844,6 +1845,153 @@
             document.body.appendChild(exportLink);
             exportLink.click();
             document.body.removeChild(exportLink);
+        }
+        
+        // Alerts/Notifications functionality
+        function initAlertsSystem() {
+            const alertsBtn = document.getElementById('alertsBtn');
+            if (alertsBtn) {
+                alertsBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showAlertsPanel();
+                });
+            }
+            
+            // Check for alerts on page load
+            checkAlerts();
+        }
+        
+        function showAlertsPanel() {
+            // Create alerts modal if it doesn't exist
+            let alertsModal = document.getElementById('alertsModal');
+            if (!alertsModal) {
+                alertsModal = createAlertsModal();
+                document.body.appendChild(alertsModal);
+            }
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(alertsModal);
+            modal.show();
+            
+            // Load latest alerts
+            loadAlerts();
+        }
+        
+        function createAlertsModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal fade';
+            modal.id = 'alertsModal';
+            modal.tabIndex = -1;
+            modal.innerHTML = `
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content" style="background: var(--bg-secondary); color: white;">
+                        <div class="modal-header" style="border-color: rgba(116, 75, 162, 0.2);">
+                            <h5 class="modal-title">
+                                <i class="bi bi-bell me-2 text-warning"></i>
+                                {{ '系统提醒' if current_lang == 'zh' else 'System Alerts' }}
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" id="alertsContent">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-warning" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">{{ '加载中...' if current_lang == 'zh' else 'Loading alerts...' }}</p>
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="border-color: rgba(116, 75, 162, 0.2);">
+                            <button type="button" class="btn btn-outline-warning" onclick="markAllRead()">
+                                <i class="bi bi-check-all me-1"></i>
+                                {{ '全部已读' if current_lang == 'zh' else 'Mark All Read' }}
+                            </button>
+                            <button type="button" class="btn nav-btn" data-bs-dismiss="modal">
+                                {{ '关闭' if current_lang == 'zh' else 'Close' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return modal;
+        }
+        
+        function loadAlerts() {
+            const alertsContent = document.getElementById('alertsContent');
+            if (!alertsContent) return;
+            
+            // Simulate loading alerts
+            setTimeout(() => {
+                const alertsHTML = `
+                    <div class="alert alert-warning d-flex align-items-center mb-3" role="alert">
+                        <i class="bi bi-exclamation-triangle me-3 fs-4"></i>
+                        <div>
+                            <strong>{{ '价格提醒' if current_lang == 'zh' else 'Price Alert' }}</strong>
+                            <p class="mb-0">BTC {{ '突破' if current_lang == 'zh' else 'broke above' }} $113,500 - {{ '第2层获利目标' if current_lang == 'zh' else 'Layer 2 profit target' }}</p>
+                            <small class="text-muted">2 {{ '分钟前' if current_lang == 'zh' else 'minutes ago' }}</small>
+                        </div>
+                    </div>
+                    <div class="alert alert-info d-flex align-items-center mb-3" role="alert">
+                        <i class="bi bi-graph-up me-3 fs-4"></i>
+                        <div>
+                            <strong>{{ '技术指标' if current_lang == 'zh' else 'Technical Signal' }}</strong>
+                            <p class="mb-0">RSI {{ '接近超买区域' if current_lang == 'zh' else 'approaching overbought territory' }} (68.5)</p>
+                            <small class="text-muted">15 {{ '分钟前' if current_lang == 'zh' else 'minutes ago' }}</small>
+                        </div>
+                    </div>
+                    <div class="alert alert-success d-flex align-items-center mb-3" role="alert">
+                        <i class="bi bi-check-circle me-3 fs-4"></i>
+                        <div>
+                            <strong>{{ '系统状态' if current_lang == 'zh' else 'System Status' }}</strong>
+                            <p class="mb-0">{{ '所有数据源正常运行' if current_lang == 'zh' else 'All data sources operational' }}</p>
+                            <small class="text-muted">1 {{ '小时前' if current_lang == 'zh' else 'hour ago' }}</small>
+                        </div>
+                    </div>
+                    <div class="text-muted text-center">
+                        <small>{{ '显示最近的3个提醒' if current_lang == 'zh' else 'Showing 3 most recent alerts' }}</small>
+                    </div>
+                `;
+                
+                alertsContent.innerHTML = alertsHTML;
+                
+                // Update alert count
+                updateAlertCount(2); // 2 unread alerts
+            }, 500);
+        }
+        
+        function checkAlerts() {
+            // Simulate checking for new alerts
+            setTimeout(() => {
+                updateAlertCount(2); // Show 2 unread alerts
+            }, 1000);
+        }
+        
+        function updateAlertCount(count) {
+            const alertBadge = document.getElementById('alertCount');
+            if (alertBadge) {
+                if (count > 0) {
+                    alertBadge.textContent = count;
+                    alertBadge.style.display = 'inline-block';
+                    alertBadge.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger';
+                    alertBadge.style.fontSize = '0.75rem';
+                } else {
+                    alertBadge.style.display = 'none';
+                }
+            }
+        }
+        
+        function markAllRead() {
+            updateAlertCount(0);
+            // Show confirmation
+            const alertsContent = document.getElementById('alertsContent');
+            if (alertsContent) {
+                alertsContent.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="bi bi-check-circle text-success fs-1"></i>
+                        <h5 class="mt-3">{{ '所有提醒已标记为已读' if current_lang == 'zh' else 'All alerts marked as read' }}</h5>
+                        <p class="text-muted">{{ '没有新的提醒' if current_lang == 'zh' else 'No new alerts to show' }}</p>
+                    </div>
+                `;
+            }
         }
 
     </script>
