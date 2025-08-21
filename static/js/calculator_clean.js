@@ -25,11 +25,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     // Update top cards display with proper formatting
                     var networkDifficultyCard = document.getElementById('network-difficulty-value');
-                    if (networkDifficultyCard) {
-                        var difficultyValue = data.difficulty || data.network_difficulty;
-                        if (difficultyValue) {
-                            networkDifficultyCard.textContent = (difficultyValue / 1e12).toFixed(1) + ' T';
-                        }
+                    if (networkDifficultyCard && data.network_difficulty) {
+                        networkDifficultyCard.textContent = (data.network_difficulty / 1e12).toFixed(1) + ' T';
                     }
                     
                     var networkHashrateCard = document.getElementById('network-hashrate-value');
@@ -52,12 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (btcPrice) btcPrice.textContent = '$' + Math.round(data.btc_price).toLocaleString();
                     
                     var networkDifficulty = document.getElementById('network-difficulty');
-                    if (networkDifficulty) {
-                        var difficultyValue = data.difficulty || data.network_difficulty;
-                        if (difficultyValue) {
-                            networkDifficulty.textContent = (difficultyValue / 1e12).toFixed(2) + ' T';
-                        }
-                    }
+                    if (networkDifficulty) networkDifficulty.textContent = (data.network_difficulty / 1e12).toFixed(2) + 'T';
                     
                     var networkHashrate = document.getElementById('network-hashrate');
                     if (networkHashrate) networkHashrate.textContent = data.network_hashrate + ' EH/s';

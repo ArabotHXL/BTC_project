@@ -138,10 +138,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 次要功能初始化
     function initializeSecondaryFeatures() {
-        // 立即获取网络统计数据
-        console.log("获取完整网络统计数据");
-        fetchNetworkStats(true);
-        
         // 开始初始化图表
         console.log("开始初始化图表");
         initializeChart();
@@ -567,14 +563,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function fetchNetworkStats(showLoading = true) {
-        console.log('🔥 fetchNetworkStats CALLED! showLoading:', showLoading);
-        console.log('🔥 Element references:', {
-            btcPriceEl: !!btcPriceEl,
-            networkDifficultyEl: !!networkDifficultyEl,
-            networkHashrateEl: !!networkHashrateEl,
-            blockRewardEl: !!blockRewardEl
-        });
-        
         // 显示加载状态 (Show loading state) - 只在首次加载或手动刷新时显示
         if (showLoading) {
             var networkStatsElements = [btcPriceEl, networkDifficultyEl, networkHashrateEl, blockRewardEl];
@@ -602,14 +590,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data && data.success) {
                         // 更新UI (Update UI)
                         if (btcPriceEl) btcPriceEl.textContent = formatCurrency(data.price, 2);
-                        if (networkDifficultyEl) {
-                            // Convert difficulty from raw value to T (Tera) unit
-                            console.log('fetchNetworkStats - difficulty raw value:', data.difficulty);
-                            var difficultyInT = data.difficulty / 1000000000000; // Divide by 1T
-                            console.log('fetchNetworkStats - difficulty converted value:', difficultyInT);
-                            networkDifficultyEl.textContent = formatNumber(difficultyInT, 2) + ' T';
-                            console.log('fetchNetworkStats - final text:', networkDifficultyEl.textContent);
-                        }
+                        if (networkDifficultyEl) networkDifficultyEl.textContent = formatNumber(data.difficulty) + 'T';
                         if (networkHashrateEl) networkHashrateEl.textContent = formatNumber(data.hashrate) + ' EH/s';
                         if (blockRewardEl) {
                             console.log('区块奖励调试 - 原始值:', data.block_reward);
@@ -1487,12 +1468,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         var blockRewardEl = document.getElementById('block-reward-value');
                         
                         if (networkDifficultyEl) {
-                            // Convert difficulty from raw value to T (Tera) unit
-                            console.log('Difficulty debug - raw value:', data.difficulty);
-                            var difficultyInT = data.difficulty / 1000000000000; // Divide by 1T
-                            console.log('Difficulty debug - converted value:', difficultyInT);
-                            networkDifficultyEl.textContent = formatNumber(difficultyInT, 2) + ' T';
-                            console.log('Difficulty debug - final text:', networkDifficultyEl.textContent);
+                            networkDifficultyEl.textContent = formatNumber(data.difficulty, 2) + ' T';
                         }
                         if (networkHashrateEl) {
                             networkHashrateEl.textContent = formatNumber(data.hashrate, 2) + ' EH/s';
@@ -1520,14 +1496,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (btcPriceEl && data.btc_price) {
                 btcPriceEl.textContent = formatCurrency(data.btc_price, 2);
             }
-            if (networkDifficultyEl && (data.network_difficulty || data.difficulty)) {
-                // Convert difficulty from raw value to T (Tera) unit
-                var difficultyValue = data.network_difficulty || data.difficulty;
-                console.log('Top network stats - difficulty raw value:', difficultyValue);
-                var difficultyInT = difficultyValue / 1000000000000; // Divide by 1T
-                console.log('Top network stats - difficulty converted value:', difficultyInT);
-                networkDifficultyEl.textContent = formatNumber(difficultyInT, 2) + ' T';
-                console.log('Top network stats - final text:', networkDifficultyEl.textContent);
+            if (networkDifficultyEl && data.network_difficulty) {
+                networkDifficultyEl.textContent = formatNumber(data.network_difficulty) + 'T';
             }
             if (networkHashrateEl && data.network_hashrate) {
                 networkHashrateEl.textContent = formatNumber(data.network_hashrate) + ' EH/s';
