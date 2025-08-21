@@ -37,8 +37,23 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 获取当前语言
     function getCurrentLanguage() {
-        const langSelect = document.getElementById('language-select');
-        return langSelect ? langSelect.value : 'zh';
+        // 从全局变量获取语言
+        if (typeof currentLang !== 'undefined') {
+            return currentLang;
+        }
+        // 从meta标签获取语言
+        const langMeta = document.querySelector('meta[name="language"]');
+        if (langMeta) {
+            return langMeta.getAttribute('content');
+        }
+        // 从URL参数获取语言
+        const urlParams = new URLSearchParams(window.location.search);
+        const langParam = urlParams.get('lang');
+        if (langParam) {
+            return langParam;
+        }
+        // 默认中文
+        return 'zh';
     }
     
     // 翻译函数
