@@ -117,7 +117,7 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
         `;
         
         const headerLabel = document.createElement('div');
-        headerLabel.textContent = '电费价格 ($/kWh)';
+        headerLabel.textContent = language === 'en' ? 'Electricity Cost ($/kWh)' : '电费价格 ($/kWh)';
         headerLabel.style.cssText = `
             position: absolute;
             left: 30px;
@@ -241,7 +241,11 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
                     // Show detailed tooltip
                     const tooltip = document.createElement('div');
                     tooltip.className = 'heatmap-tooltip';
-                    tooltip.innerHTML = `
+                    tooltip.innerHTML = language === 'en' ? `
+                        <strong>BTC Price:</strong> $${btcPrice.toLocaleString()}<br>
+                        <strong>Electricity:</strong> $${electricityCost}/kWh<br>
+                        <strong>Monthly Profit:</strong> $${profit.toLocaleString()}
+                    ` : `
                         <strong>BTC价格:</strong> $${btcPrice.toLocaleString()}<br>
                         <strong>电费:</strong> $${electricityCost}/kWh<br>
                         <strong>月利润:</strong> $${profit.toLocaleString()}
@@ -286,7 +290,7 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
 
         // Add Y-axis label
         const yAxisLabel = document.createElement('div');
-        yAxisLabel.textContent = '比特币价格 ($)';
+        yAxisLabel.textContent = language === 'en' ? 'BTC Price ($)' : '比特币价格 ($)';
         yAxisLabel.style.cssText = `
             position: absolute;
             left: 20px;
@@ -317,7 +321,13 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
             font-size: 11px;
         `;
         
-        const legendItems = [
+        const legendItems = language === 'en' ? [
+            { color: 'rgba(239, 68, 68, 0.8)', label: 'High Loss' },
+            { color: 'rgba(239, 68, 68, 0.4)', label: 'Low Loss' },
+            { color: '#4a5568', label: 'Break-even' },
+            { color: 'rgba(34, 197, 94, 0.4)', label: 'Low Profit' },
+            { color: 'rgba(34, 197, 94, 0.8)', label: 'High Profit' }
+        ] : [
             { color: 'rgba(239, 68, 68, 0.8)', label: '高亏损' },
             { color: 'rgba(239, 68, 68, 0.4)', label: '低亏损' },
             { color: '#4a5568', label: '盈亏平衡' },
