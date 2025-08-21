@@ -440,18 +440,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const canvas = document.getElementById('client-roi-canvas');
         console.log("Client canvas created:", !!canvas);
 
-        // Use the forecast data directly
+        // Use the forecast data directly for dynamic calculation
         const months = [];
-        const roiPercentage = [];
+        const dynamicRoiPercentage = [];
+        const staticRoiPercentage = [];
         
         // Find break-even point
         let breakEvenPoint = null;
         let breakEvenIndex = -1;
         
+        // Calculate static ROI (simple method) 
+        const investment = inputs ? inputs.client_investment : 0;
+        const monthlyProfit = clientRoi.forecast && clientRoi.forecast.length > 0 ? 
+            clientRoi.forecast[0].monthly_profit : 0;
+        
         if (clientRoi.forecast && Array.isArray(clientRoi.forecast)) {
             clientRoi.forecast.forEach((point, index) => {
                 months.push(point.month + 'M');
-                roiPercentage.push(point.roi_percent);
+                dynamicRoiPercentage.push(point.roi_percent);
+                
+                // Calculate static ROI (assumes constant monthly profit)
+                const staticCumulativeProfit = monthlyProfit * point.month;
+                const staticRoi = investment > 0 ? (staticCumulativeProfit / investment) * 100 : 0;
+                staticRoiPercentage.push(staticRoi);
                 
                 // Find the break-even point (when cumulative profit >= investment)
                 if (point.break_even === true && !breakEvenPoint) {
@@ -465,24 +476,45 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Create datasets with enhanced styling
-        const datasets = [{
-            label: 'ROI %',
-            data: roiPercentage,
-            borderColor: 'rgb(40, 167, 69)',
-            backgroundColor: 'rgba(40, 167, 69, 0.15)',
-            borderWidth: 3,
-            fill: true,
-            tension: 0.4,
-            pointBackgroundColor: 'rgb(40, 167, 69)',
-            pointBorderColor: '#ffffff',
-            pointBorderWidth: 2,
-            pointRadius: 5,
-            pointHoverRadius: 8,
-            pointHoverBackgroundColor: 'rgb(40, 167, 69)',
-            pointHoverBorderColor: '#ffffff',
-            pointHoverBorderWidth: 3
-        }];
+        // Create datasets with enhanced styling - both dynamic and static lines
+        const datasets = [
+            {
+                label: 'Dynamic ROI % (考虑难度调整)',
+                data: dynamicRoiPercentage,
+                borderColor: 'rgb(40, 167, 69)',
+                backgroundColor: 'rgba(40, 167, 69, 0.15)',
+                borderWidth: 3,
+                fill: false,
+                tension: 0.4,
+                pointBackgroundColor: 'rgb(40, 167, 69)',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 8,
+                pointHoverBackgroundColor: 'rgb(40, 167, 69)',
+                pointHoverBorderColor: '#ffffff',
+                pointHoverBorderWidth: 3,
+                borderDash: [] // Solid line for dynamic
+            },
+            {
+                label: 'Static ROI % (静态假设)',
+                data: staticRoiPercentage,
+                borderColor: 'rgb(255, 193, 7)',
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.1,
+                pointBackgroundColor: 'rgb(255, 193, 7)',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 1,
+                pointRadius: 3,
+                pointHoverRadius: 6,
+                pointHoverBackgroundColor: 'rgb(255, 193, 7)',
+                pointHoverBorderColor: '#ffffff',
+                pointHoverBorderWidth: 2,
+                borderDash: [5, 5] // Dashed line for static
+            }
+        ];
 
         // Create chart options with vertical line plugin
         const chartOptions = {
@@ -540,7 +572,7 @@ document.addEventListener('DOMContentLoaded', () => {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Client ROI Progression',
+                    text: 'Client ROI Progression: Static vs Dynamic',
                     color: 'rgb(40, 167, 69)',
                     font: {
                         size: 18,
