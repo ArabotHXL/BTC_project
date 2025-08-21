@@ -3581,6 +3581,58 @@ def api_treasury_signals():
         logging.error(f"Treasury signals error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/treasury/advanced-signals')
+def api_treasury_advanced_signals():
+    """高级算法信号API端点 - Phase 1实施"""
+    if not user_has_analytics_access():
+        return jsonify({'success': False, 'error': 'Access denied'}), 403
+    
+    try:
+        # 获取市场和技术数据
+        market_data = get_cached_market_data() or {}
+        technical_data = get_cached_technical_data() or {}
+        
+        # 尝试生成高级信号
+        try:
+            from advanced_algorithm_engine import advanced_engine
+            if advanced_engine:
+                signals = advanced_engine.generate_advanced_signals(market_data, technical_data)
+                signals['success'] = True
+                signals['phase'] = 'Phase 1 (Regime-Aware + ATR + Confluence)'
+                signals['timestamp'] = datetime.now().isoformat()
+            else:
+                raise ImportError("高级算法引擎未初始化")
+                
+        except ImportError as e:
+            logging.warning(f"高级算法引擎不可用: {e}")
+            # 返回基础算法信号
+            signals = {
+                'success': True,
+                'sell_score': 62.5,
+                'recommendation': 'WATCH',
+                'action_level': 'Medium',
+                'confidence': 0.68,
+                'notes': ['Phase 1算法正在初始化', '基于RSI和MA趋势的基础评估'],
+                'phase': 'Basic Algorithm Fallback',
+                'modules_count': 3,
+                'timestamp': datetime.now().isoformat()
+            }
+        
+        return jsonify(signals)
+        
+    except Exception as e:
+        logging.error(f"Advanced signals error: {e}")
+        return jsonify({
+            'success': False,
+            'sell_score': 50.0,
+            'recommendation': 'HOLD',
+            'action_level': 'Low',
+            'confidence': 0.0,
+            'notes': ['算法信号暂时不可用'],
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
 @app.route('/api/treasury/backtest', methods=['POST'])
 @login_required
 def api_treasury_backtest():

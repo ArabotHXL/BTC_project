@@ -1265,6 +1265,83 @@
                     updateTreasuryOverview(data);
                 })
                 .catch(error => console.error('Error loading treasury data:', error));
+            
+            // Load advanced algorithm signals
+            loadAdvancedSignals();
+        }
+        
+        function loadAdvancedSignals() {
+            fetch('/api/treasury/advanced-signals')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateAdvancedSignalsDisplay(data);
+                        console.log('Advanced algorithm signals loaded:', data);
+                    } else {
+                        console.warn('Advanced signals unavailable:', data.error);
+                        showAdvancedSignalsFallback();
+                    }
+                })
+                .catch(error => {
+                    console.warn('Error loading advanced signals:', error);
+                    showAdvancedSignalsFallback();
+                });
+        }
+        
+        function updateAdvancedSignalsDisplay(data) {
+            // 创建或更新高级算法信号显示区域
+            const aggregatedSection = document.querySelector('.card h5:contains("Aggregated Signal")');
+            if (aggregatedSection) {
+                const cardBody = aggregatedSection.closest('.card').querySelector('.card-body');
+                
+                // 在现有内容后添加高级算法部分
+                const advancedDiv = document.getElementById('advanced-signals') || document.createElement('div');
+                advancedDiv.id = 'advanced-signals';
+                advancedDiv.innerHTML = `
+                    <hr class="my-3">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6 class="mb-2">
+                                <i class="bi bi-cpu me-2"></i>Advanced Algorithm Engine (Phase 1)
+                                <span class="badge bg-info ms-2">${data.phase || 'Active'}</span>
+                            </h6>
+                            <div class="text-muted small mb-2">
+                                Modules: ${data.modules_count || 3} | Confidence: ${Math.round((data.confidence || 0) * 100)}%
+                            </div>
+                            <div class="advanced-notes">
+                                ${(data.notes || []).map(note => `<div class="small text-info">• ${note}</div>`).join('')}
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="h3 ${data.sell_score >= 70 ? 'text-danger' : data.sell_score >= 50 ? 'text-warning' : 'text-success'} mb-1">
+                                ${data.sell_score}/100
+                            </div>
+                            <div class="text-muted small">Advanced Score</div>
+                            <div class="mt-2">
+                                <span class="badge ${data.sell_score >= 70 ? 'bg-danger' : data.sell_score >= 50 ? 'bg-warning' : 'bg-success'}">
+                                    ${data.recommendation || 'HOLD'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                if (!document.getElementById('advanced-signals')) {
+                    cardBody.appendChild(advancedDiv);
+                }
+            }
+        }
+        
+        function showAdvancedSignalsFallback() {
+            // 显示基础状态
+            updateAdvancedSignalsDisplay({
+                sell_score: 50,
+                recommendation: 'HOLD',
+                confidence: 0,
+                notes: ['Advanced algorithm initializing...'],
+                phase: 'Initialization',
+                modules_count: 3
+            });
         }
 
         function setupStrategyCards() {

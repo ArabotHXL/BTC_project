@@ -19,6 +19,14 @@ from dataclasses import dataclass
 import schedule
 import pytz
 
+# 延迟导入高级算法引擎，避免循环依赖
+advanced_engine = None
+try:
+    from advanced_algorithm_engine import advanced_engine
+except ImportError as e:
+    logging.warning(f"高级算法引擎暂不可用: {e}")
+    advanced_engine = None
+
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
