@@ -521,6 +521,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     breakevenTimeDisplay.textContent = 'N/A';
                 }
             }
+            
+            // Algorithm prices
+            var algorithm1Price = document.getElementById('algorithm1-price');
+            var algorithm2Price = document.getElementById('algorithm2-price');
+            
+            if (algorithm1Price && data.calculation_details && data.calculation_details.btc_algorithm1_value) {
+                algorithm1Price.textContent = '$' + data.calculation_details.btc_algorithm1_value.toFixed(2);
+            } else if (algorithm1Price) {
+                algorithm1Price.textContent = '$0.00';
+            }
+            
+            if (algorithm2Price && data.calculation_details && data.calculation_details.btc_algorithm2_value) {
+                algorithm2Price.textContent = '$' + data.calculation_details.btc_algorithm2_value.toFixed(2);
+            } else if (algorithm2Price) {
+                algorithm2Price.textContent = '$0.00';
+            }
         }
 
         // 6个月、12个月、24个月、36个月的利润和ROI

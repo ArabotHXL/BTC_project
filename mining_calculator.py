@@ -945,6 +945,12 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             'roi': {
                 'host': host_roi_data,
                 'client': client_roi_data
+            },
+            'calculation_details': {
+                'btc_algorithm1_value': site_daily_btc_output * btc_price,
+                'btc_algorithm2_value': site_daily_btc_output_difficulty * btc_price,
+                'btc_algorithm1_daily': site_daily_btc_output,
+                'btc_algorithm2_daily': site_daily_btc_output_difficulty
             }
         }
         
