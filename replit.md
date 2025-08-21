@@ -7,6 +7,14 @@ The BTC Mining Calculator is a web application for Bitcoin mining profitability 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+**2025-08-21: Enhanced Language Engine v2.0 重构完成**
+- 构建了全新的Enhanced Language Engine v2.0，支持上下文感知翻译和变量插值
+- 实现了智能数字、货币、日期、百分比格式化功能，支持多语言显示习惯
+- 集成了高级缓存系统，提升翻译性能和用户体验
+- 添加了复数处理、模板辅助函数和错误恢复机制
+- 完全向下兼容原有翻译系统，支持平滑升级
+- 通过100%测试验证：基础翻译、格式化、模板集成、应用集成全部通过
+
 **2025-08-21: 语言切换系统和通知功能修复完成**
 - 完全修复了语言切换下拉菜单功能，支持中文/英文正常切换
 - 重构了Bootstrap dropdown结构，添加手动初始化和事件处理
@@ -130,7 +138,7 @@ The application is a modular Flask web application with a mobile-first design.
 - **Authentication System**: Manages user access, Gmail SMTP bilingual email verification, role-based permissions, and session security.
 - **CRM System**: Handles customer lifecycle management, lead and deal tracking, and commission management.
 - **Network Data Collection**: Automated historical data accumulation for BTC price, difficulty, and network hashrate from multiple sources.
-- **Multilingual System**: Provides dynamic Chinese/English interface support with comprehensive chart tooltip localization.
+- **Enhanced Language Engine v2.0**: Advanced multilingual system with context-aware translations, variable interpolation, smart formatting for numbers/currency/dates, caching system, and seamless Chinese/English interface support with comprehensive chart tooltip localization.
 - **Subscription Management**: Comprehensive plan management with tiered access and role-based exemptions.
 - **Treasury Strategy Templates**: Pre-configured selling strategies including OPEX coverage, layered profit-taking, and mining cycle-driven approaches.
 - **Signal Aggregation System**: Combines technical, on-chain, mining, and market structure signals for decision support.

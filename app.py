@@ -524,6 +524,16 @@ def nl2br_filter(s):
 # 默认语言 'zh' 中文, 'en' 英文
 DEFAULT_LANGUAGE = 'zh'
 
+# Import enhanced language engine
+try:
+    from language_engine import language_engine, create_template_helpers
+    ENHANCED_LANGUAGE = True
+except ImportError:
+    # Fallback to original translations
+    from translations import get_translation
+    ENHANCED_LANGUAGE = False
+    app.logger.warning("Enhanced language engine not available, using fallback")
+
 # 在请求前处理设置语言
 @app.before_request
 def before_request():
@@ -542,13 +552,30 @@ def before_request():
     if g.language not in ['zh', 'en']:
         g.language = 'zh'
         session['language'] = 'zh'
+    
+    # Update enhanced language engine if available
+    if ENHANCED_LANGUAGE:
+        language_engine.set_language(g.language)
 
 # 添加翻译函数到模板上下文
 @app.context_processor
 def inject_translator():
-    def translate(text):
-        return get_translation(text, to_lang=g.language)
-    return dict(t=translate, current_lang=g.language)
+    if ENHANCED_LANGUAGE:
+        # Use enhanced language engine
+        helpers = create_template_helpers()
+        helpers['current_lang'] = g.language
+        return helpers
+    else:
+        # Fallback to original system
+        try:
+            def translate(text):
+                return get_translation(text, to_lang=g.language)
+            return dict(t=translate, tr=translate, current_lang=g.language)
+        except NameError:
+            # If get_translation is not available, use basic fallback
+            def translate(text):
+                return text
+            return dict(t=translate, tr=translate, current_lang=g.language)
 
 # 登录页面
 @app.route('/login', methods=['GET', 'POST'])
