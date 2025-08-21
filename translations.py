@@ -245,7 +245,7 @@ TRANSLATIONS = {
         'telegram': 'Telegram',
         'discord_webhook': 'Discord Webhook',
         'save_all_settings': 'Save All Settings',
-        'educational_purpose_only': 'Educational Purpose Only',
+        'educational_purpose_only': 'Educational Purpose Only: This platform provides information and tools for educational purposes only. It does not constitute investment advice. All trading decisions are your own responsibility.',
         
         # Additional chart and backtest translations
         'total_return_label': 'Total Return',
