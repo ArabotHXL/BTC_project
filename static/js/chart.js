@@ -2,6 +2,50 @@
 document.addEventListener('DOMContentLoaded', () => {
     // 全局变量
     let profitHeatmapChart = null;
+    
+    // 语言系统
+    const translations = {
+        'en': {
+            'month': 'Month',
+            'dynamic_roi': 'Dynamic ROI (considers difficulty adjustment)',
+            'static_roi': 'Static ROI (static assumptions)',
+            'algorithm_comparison': 'Algorithm Comparison',
+            'dynamic_method': 'Dynamic Method',
+            'static_method': 'Static Method',
+            'algorithm_difference': 'Algorithm Difference',
+            'break_even_achieved': 'Break-even Achieved!',
+            'break_even_month': 'Break-even Month',
+            'monthly_profit': 'Monthly Profit',
+            'cumulative_profit': 'Cumulative Profit',
+            'remaining_investment': 'Remaining Investment'
+        },
+        'zh': {
+            'month': '月份',
+            'dynamic_roi': 'Dynamic ROI (考虑难度调整)',
+            'static_roi': 'Static ROI (静态假设)',
+            'algorithm_comparison': '双算法对比',
+            'dynamic_method': 'Dynamic Method',
+            'static_method': 'Static Method',
+            'algorithm_difference': '算法差异',
+            'break_even_achieved': '达成回本点!',
+            'break_even_month': '回本月份',
+            'monthly_profit': '当月利润',
+            'cumulative_profit': '累计收益',
+            'remaining_investment': '剩余投资'
+        }
+    };
+    
+    // 获取当前语言
+    function getCurrentLanguage() {
+        const langSelect = document.getElementById('language-select');
+        return langSelect ? langSelect.value : 'zh';
+    }
+    
+    // 翻译函数
+    function t(key) {
+        const lang = getCurrentLanguage();
+        return translations[lang] && translations[lang][key] ? translations[lang][key] : key;
+    }
 
     // 绑定生成热力图按钮
     const calculatorForm = document.getElementById('mining-calculator-form');
@@ -616,12 +660,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     callbacks: {
                         title: function(context) {
                             if (!context || context.length === 0) return '';
-                            return `Month ${context[0].label.replace('M', '')}`;
+                            return `${t('month')} ${context[0].label.replace('M', '')}`;
                         },
                         label: function(context) {
                             const dataIndex = context.dataIndex;
                             const isDynamic = context.datasetIndex === 0; // Dynamic is first dataset
-                            const algorithmType = isDynamic ? 'Dynamic ROI (考虑难度调整)' : 'Static ROI (静态假设)';
+                            const algorithmType = isDynamic ? t('dynamic_roi') : t('static_roi');
                             
                             return `${algorithmType}: ${context.parsed.y.toFixed(2)}%`;
                         },
@@ -660,18 +704,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             const roiDifference = dynamicRoi - staticRoi;
                             
                             let comparisonInfo = [
-                                '📊 双算法收入对比:',
-                                `Dynamic Method: $${monthlyProfit.toLocaleString()} (${dynamicRoi.toFixed(2)}%)`,
-                                `Static Method: $${staticMonthlyProfit.toLocaleString()} (${staticRoi.toFixed(2)}%)`,
-                                `算法差异: ${roiDifference >= 0 ? '+' : ''}${roiDifference.toFixed(2)}%`
+                                `📊 ${t('algorithm_comparison')}:`,
+                                `${t('dynamic_method')}: $${monthlyProfit.toLocaleString()} (${dynamicRoi.toFixed(2)}%)`,
+                                `${t('static_method')}: $${staticMonthlyProfit.toLocaleString()} (${staticRoi.toFixed(2)}%)`,
+                                `${t('algorithm_difference')}: ${roiDifference >= 0 ? '+' : ''}${roiDifference.toFixed(2)}%`
                             ];
                             
                             // Add break-even information if applicable
                             if (dataIndex === breakEvenIndex && breakEvenPoint) {
                                 comparisonInfo = comparisonInfo.concat([
                                     '',
-                                    '🎯 达成回本点!',
-                                    `回本月份: 第${breakEvenPoint.month}个月`
+                                    `🎯 ${t('break_even_achieved')}`,
+                                    `${t('break_even_month')}: ${getCurrentLanguage() === 'zh' ? '第' + breakEvenPoint.month + '个月' : 'Month ' + breakEvenPoint.month}`
                                 ]);
                             }
                             

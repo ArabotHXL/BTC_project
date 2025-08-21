@@ -137,6 +137,19 @@ TRANSLATIONS = {
         'total_power': 'Total Power',
         'total_daily_profit': 'Total Daily Profit',
         'daily_profit': 'Daily Profit',
+        # Chart and ROI translations
+        'month': 'Month',
+        'dynamic_roi': 'Dynamic ROI (considers difficulty adjustment)',
+        'static_roi': 'Static ROI (static assumptions)',
+        'algorithm_comparison': 'Algorithm Comparison',
+        'dynamic_method': 'Dynamic Method',
+        'static_method': 'Static Method',
+        'algorithm_difference': 'Algorithm Difference',
+        'break_even_achieved': 'Break-even Achieved!',
+        'break_even_month': 'Break-even Month',
+        'monthly_profit': 'Monthly Profit',
+        'cumulative_profit': 'Cumulative Profit',
+        'remaining_investment': 'Remaining Investment',
     },
     'zh': {
         'btc_mining_calculator': 'BTC挖矿计算器',
@@ -268,6 +281,19 @@ TRANSLATIONS = {
         'total_power': '总功耗',
         'total_daily_profit': '日收益总计',
         'daily_profit': '日收益',
+        # 图表和ROI翻译
+        'month': '月份',
+        'dynamic_roi': 'Dynamic ROI (考虑难度调整)',
+        'static_roi': 'Static ROI (静态假设)',
+        'algorithm_comparison': '双算法对比',
+        'dynamic_method': 'Dynamic Method',
+        'static_method': 'Static Method',
+        'algorithm_difference': '算法差异',
+        'break_even_achieved': '达成回本点!',
+        'break_even_month': '回本月份',
+        'monthly_profit': '当月利润',
+        'cumulative_profit': '累计收益',
+        'remaining_investment': '剩余投资',
     }
 }
 
