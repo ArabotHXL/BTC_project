@@ -149,8 +149,8 @@ class UserPortfolioManager:
         return {
             'btc_inventory': 12.5,
             'avg_cost_basis': 95000,
-            'cash_reserves': 1500000,
-            'monthly_opex': 250000,
+            'cash_reserves': 600000,        # $600K 现金储备 (修改以显示Cash Coverage计算差异)
+            'monthly_opex': 200000,         # $200K 月度运营支出 (修改以显示Cash Coverage计算差异)
             'electricity_cost_kwh': 0.055,
             'facility_capacity_mw': 25.0,
             'last_updated': datetime.now(),
