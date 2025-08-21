@@ -501,13 +501,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // Break-even ROI Percentage
+            // Break-even ROI Percentage - should always be 100% at break-even point
             var breakevenRoiPercent = document.getElementById('breakeven-roi-percent');
             if (breakevenRoiPercent) {
-                if (breakeven) {
-                    breakevenRoiPercent.textContent = breakeven.roi_percent.toFixed(2) + '%';
-                } else if (paybackMonths && paybackMonths !== Infinity) {
-                    // 计算盈亏平衡时的ROI%: 100% (完全回收投资)
+                if (paybackMonths && paybackMonths !== Infinity) {
+                    // Break-even means 100% ROI (full investment recovery)
                     breakevenRoiPercent.textContent = '100.00%';
                 } else {
                     breakevenRoiPercent.textContent = 'N/A';
