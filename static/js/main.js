@@ -1469,8 +1469,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         if (networkDifficultyEl) {
                             // Convert difficulty from raw value to T (Tera) unit
+                            console.log('Difficulty debug - raw value:', data.difficulty);
                             var difficultyInT = data.difficulty / 1000000000000; // Divide by 1T
+                            console.log('Difficulty debug - converted value:', difficultyInT);
                             networkDifficultyEl.textContent = formatNumber(difficultyInT, 2) + ' T';
+                            console.log('Difficulty debug - final text:', networkDifficultyEl.textContent);
                         }
                         if (networkHashrateEl) {
                             networkHashrateEl.textContent = formatNumber(data.hashrate, 2) + ' EH/s';
