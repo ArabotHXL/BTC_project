@@ -557,7 +557,7 @@
                     <div class="btn-group">
                         <button type="button" class="btn nav-btn dropdown-toggle" data-bs-toggle="dropdown">
                             <i class="bi bi-globe me-1"></i>
-                            {{ 'CN' if current_lang == 'zh' else 'EN' }}
+                            <span id="currentLangDisplay">{{ 'CN' if current_lang == 'zh' else 'EN' }}</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end" style="background: var(--bg-secondary); border: 1px solid rgba(116, 75, 162, 0.3);">
                             <li>
@@ -1259,6 +1259,17 @@
     <script>
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
+            // Debug: Check current language
+            const currentLang = '{{ current_lang }}';
+            console.log('Current language:', currentLang);
+            
+            // Update language display
+            const langDisplay = document.getElementById('currentLangDisplay');
+            if (langDisplay) {
+                langDisplay.textContent = currentLang === 'zh' ? 'CN' : 'EN';
+                console.log('Language display updated to:', langDisplay.textContent);
+            }
+            
             initializeDashboard();
             loadTreasuryData();
             setupStrategyCards();

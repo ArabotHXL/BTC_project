@@ -521,8 +521,8 @@ def nl2br_filter(s):
         return ""
     return str(s).replace('\n', '<br>')
 
-# 默认语言 'en' 英文, 'zh' 中文
-DEFAULT_LANGUAGE = 'en'
+# 默认语言 'zh' 中文, 'en' 英文
+DEFAULT_LANGUAGE = 'zh'
 
 # 在请求前处理设置语言
 @app.before_request
