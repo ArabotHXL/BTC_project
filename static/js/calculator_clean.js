@@ -521,34 +521,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     breakevenTimeDisplay.textContent = 'N/A';
                 }
             }
-            
-            // Algorithm prices - use BTC mined data with current BTC price
-            var algorithm1Price = document.getElementById('algorithm1-price');
-            var algorithm2Price = document.getElementById('algorithm2-price');
-            
-            console.log('[CALCULATOR] Checking algorithm data:', {
-                calculation_details: data.calculation_details,
-                btc_mined: data.btc_mined,
-                network_data: data.network_data
-            });
-            
-            if (algorithm1Price && data.btc_mined && data.btc_mined.method1 && data.network_data && data.network_data.btc_price) {
-                var dailyValue = data.btc_mined.method1.daily * data.network_data.btc_price;
-                algorithm1Price.textContent = '$' + dailyValue.toFixed(2);
-                console.log('[CALCULATOR] Algorithm 1 price updated:', dailyValue);
-            } else if (algorithm1Price) {
-                algorithm1Price.textContent = '$0.00';
-                console.log('[CALCULATOR] Algorithm 1 price set to $0.00 - missing data');
-            }
-            
-            if (algorithm2Price && data.btc_mined && data.btc_mined.method2 && data.network_data && data.network_data.btc_price) {
-                var dailyValue = data.btc_mined.method2.daily * data.network_data.btc_price;
-                algorithm2Price.textContent = '$' + dailyValue.toFixed(2);
-                console.log('[CALCULATOR] Algorithm 2 price updated:', dailyValue);
-            } else if (algorithm2Price) {
-                algorithm2Price.textContent = '$0.00';
-                console.log('[CALCULATOR] Algorithm 2 price set to $0.00 - missing data');
-            }
         }
 
         // 6个月、12个月、24个月、36个月的利润和ROI
