@@ -1,0 +1,75 @@
+{
+  "timestamp": "2025-08-21T03:06:09.400288",
+  "total_tests": 9,
+  "passed_tests": 9,
+  "failed_tests": 0,
+  "success_rate": 100.0,
+  "target_rate": 99.0,
+  "meets_requirement": true,
+  "detailed_results": [
+    {
+      "test_name": "首页访问测试",
+      "success": true,
+      "timestamp": "2025-08-21T03:05:57.357690",
+      "details": "状态码: 200, 内容检查: [True, True, True]",
+      "data": null
+    },
+    {
+      "test_name": "用户认证测试",
+      "success": true,
+      "timestamp": "2025-08-21T03:05:59.350823",
+      "details": "最终URL: https://c0c817cd-9663-4b96-9a33-086737bed5dc-00-3tjzms7flk2z6.janeway.replit.dev/main, 状态码: 200",
+      "data": null
+    },
+    {
+      "test_name": "挖矿计算器功能测试",
+      "success": true,
+      "timestamp": "2025-08-21T03:06:00.478886",
+      "details": "API状态码: 200, 页面元素检查: [True, True, True]",
+      "data": null
+    },
+    {
+      "test_name": "ROI图表生成测试",
+      "success": true,
+      "timestamp": "2025-08-21T03:06:02.287713",
+      "details": "数据结构验证: True, 响应长度: 2231",
+      "data": null
+    },
+    {
+      "test_name": "利润热力图生成测试",
+      "success": true,
+      "timestamp": "2025-08-21T03:06:04.093214",
+      "details": "数据结构验证: True, 数据点数量: 25",
+      "data": null
+    },
+    {
+      "test_name": "多语言切换测试",
+      "success": true,
+      "timestamp": "2025-08-21T03:06:05.151905",
+      "details": "中文: True, 英文: True",
+      "data": null
+    },
+    {
+      "test_name": "网络数据准确性测试",
+      "success": true,
+      "timestamp": "2025-08-21T03:06:06.160502",
+      "details": "BTC价格: $113,954.00 (✓), 难度: 129.44T (✓), 算力: 945.84 EH/s (✓)",
+      "data": null
+    },
+    {
+      "test_name": "批量计算器功能测试",
+      "success": true,
+      "timestamp": "2025-08-21T03:06:07.389735",
+      "details": "页面元素检查: [True, True, True]",
+      "data": null
+    },
+    {
+      "test_name": "性能基准测试",
+      "success": true,
+      "timestamp": "2025-08-21T03:06:08.399356",
+      "details": "响应时间: 0.01秒, 状态码: 200",
+      "data": null
+    }
+  ],
+  "failed_test_details": []
+}
