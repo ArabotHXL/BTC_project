@@ -485,11 +485,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // Cumulative Investment Recovery
+            // Investment Recovery Amount - should show remaining investment balance
             var breakevenRecoveryAmount = document.getElementById('breakeven-recovery-amount');
             if (breakevenRecoveryAmount) {
                 if (breakeven) {
-                    breakevenRecoveryAmount.textContent = '$' + breakeven.cumulative_profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    // Show the remaining investment balance at break-even point
+                    breakevenRecoveryAmount.textContent = '$' + breakeven.investment_balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 } else {
                     // 从data中获取客户投资金额，而不是DOM元素
                     var clientInvestment = (data.inputs && data.inputs.client_investment) || 0;
