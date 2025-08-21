@@ -590,7 +590,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     labels: {
                         color: 'rgba(255, 255, 255, 0.9)',
                         font: {
-                            size: 13
+                            size: 14
                         },
                         usePointStyle: true,
                         padding: 15,
