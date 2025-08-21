@@ -241,7 +241,7 @@ class AdvancedAlgorithmEngine:
             # 2. RSI背离检查 (简化版)
             if features.rsi14 > 75:  # 极度超买
                 score += 0.25
-                notes.append("RSI极度超买：>75，突破乏力风险高")
+                notes.append(tr("rsi_extremely_overbought"))
                 confidence = 0.85
             elif features.rsi14 > 65:  # 超买区域
                 score += 0.1
@@ -251,17 +251,17 @@ class AdvancedAlgorithmEngine:
             # 检查是否有长上影线（衰竭征象）
             if features.close < features.high * 0.98:  # 收盘价低于最高价2%
                 score += 0.15
-                notes.append("长上影线：卖压显现")
+                notes.append(tr("long_upper_shadow"))
             
             # 4. ATR扩张检查
             if features.atr_pct > 0.08:  # ATR超过8%（高波动）
                 score += 0.1
-                notes.append("波动率扩张：突破可能不持续")
+                notes.append(tr("volatility_expansion"))
         
         else:
             # 不在突破位置，降低衰竭模块权重
             score = 0.0
-            notes.append("未处于突破位置，模块不活跃")
+            notes.append(tr("module_inactive"))
             confidence = 0.3
         
         return ModuleScore("breakout_exhaustion", score, confidence, notes)

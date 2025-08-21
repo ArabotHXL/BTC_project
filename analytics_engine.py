@@ -498,8 +498,13 @@ class DataCollector:
         hashrate_data = self.collect_blockchain_hashrate_data()
         logger.info(f"算力数据收集结果: {hashrate_data}")
         
-        # 尝试简单CoinGecko API获取价格
-        price_data = self.collect_coingecko_simple_data()
+        # ✅ 优先使用完整CoinGecko API获取价格和量能数据
+        price_data = self.collect_coingecko_data()
+        
+        # 如果完整API失败，使用简单API（但会缺少量能数据）
+        if not price_data:
+            logger.info("完整CoinGecko API失败，尝试简单API（量能数据不可用）")
+            price_data = self.collect_coingecko_simple_data()
         
         # 收集恐惧贪婪指数
         fear_greed = self.collect_fear_greed_index()
@@ -510,11 +515,6 @@ class DataCollector:
             blockchain_data = self.collect_blockchain_info_data()
         else:
             blockchain_data = None
-        
-        # 如果简单价格API失败，尝试完整CoinGecko API
-        if not price_data:
-            logger.info("简单价格API失败，尝试完整CoinGecko API")
-            price_data = self.collect_coingecko_data()
         
         # 如果仍然没有价格数据，从数据库获取最新数据
         if not price_data:
@@ -609,7 +609,7 @@ class DataCollector:
             btc_price = price_data.get('btc_price', 0) or price_data.get('price', 0)
             market_cap = price_data.get('market_cap', 0)
             volume_24h = price_data.get('volume_24h', 0)
-            logger.info(f"使用价格数据: ${btc_price:,.2f}")
+            logger.info(f"使用价格数据: ${btc_price:,.2f}, 量能={volume_24h:,}")
         else:
             logger.error("无法获取任何价格数据")
             return None
