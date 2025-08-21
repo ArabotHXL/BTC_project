@@ -3468,11 +3468,13 @@ def analytics_dashboard():
 
     app.logger.info(f"传递给模板的技术指标: {technical_indicators}")
     # 使用新的HashInsight Treasury Management模板
+    from translations import get_translation
     return render_template('analytics_dashboard_new.html', 
                           user_role=user_role,
                           technical_indicators=technical_indicators,
                           latest_report=latest_report,
-                          current_lang=lang)
+                          current_lang=lang,
+                          tr=lambda key: get_translation(key, lang))
 
 # Treasury Management API Endpoints
 @app.route('/api/treasury/overview', methods=['GET'])
