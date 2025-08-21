@@ -1225,20 +1225,20 @@
                                         </div>
                                         <div class="card-body p-3">
                                             <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-primary border-opacity-20">
-                                                <span class="text-light fw-medium">{% if current_lang == 'en' %}Difficulty{% else %}难度{% endif %}</span>
+                                                <span class="text-white fw-medium">{% if current_lang == 'en' %}Difficulty{% else %}难度{% endif %}</span>
                                                 <span id="network-difficulty-value" class="text-white fw-bold">0.0 T</span>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-primary border-opacity-20">
-                                                <span class="text-light fw-medium">{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</span>
-                                                <span id="network-hashrate-value" class="text-white fw-bold">881.49 EH/s</span>
+                                                <span class="text-white fw-medium">{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</span>
+                                                <span id="network-hashrate-value" class="text-white fw-bold">0 EH/s</span>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-primary border-opacity-20">
-                                                <span class="text-light fw-medium">{% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}</span>
-                                                <span id="current-btc-price-value" class="text-warning fw-bold">$114,246</span>
+                                                <span class="text-white fw-medium">{% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}</span>
+                                                <span id="current-btc-price-value" class="text-warning fw-bold">$0</span>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center py-2">
-                                                <span class="text-light fw-medium">{% if current_lang == 'en' %}Block Reward{% else %}区块奖励{% endif %}</span>
-                                                <span id="block-reward-value" class="text-success fw-bold">3.160 BTC</span>
+                                                <span class="text-white fw-medium">{% if current_lang == 'en' %}Block Reward{% else %}区块奖励{% endif %}</span>
+                                                <span id="block-reward-value" class="text-success fw-bold">0 BTC</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1256,23 +1256,23 @@
                                         <div class="card-body p-3">
                                             <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-warning border-opacity-30">
                                                 <span class="text-dark fw-medium">{% if current_lang == 'en' %}Total{% else %}总算力{% endif %}</span>
-                                                <span class="text-dark fw-bold">135,300</span>
+                                                <span id="total-hashrate-result" class="text-dark fw-bold">0</span>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-warning border-opacity-30">
                                                 <span class="text-dark fw-medium">{% if current_lang == 'en' %}Hashrate TH/s{% else %}算力 TH/s{% endif %}</span>
-                                                <span id="total-hashrate-result" class="text-dark fw-bold">135,300</span>
+                                                <span class="text-dark fw-bold">TH/s</span>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-warning border-opacity-30">
                                                 <span class="text-dark fw-medium">{% if current_lang == 'en' %}BTC/TH{% else %}BTC/TH{% endif %}</span>
-                                                <span id="btc-per-th-daily" class="text-dark fw-bold">0.00000052</span>
+                                                <span id="btc-per-th-daily" class="text-dark fw-bold">0.00000000</span>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-warning border-opacity-30">
                                                 <span class="text-dark fw-medium">{% if current_lang == 'en' %}Daily{% else %}每日{% endif %}</span>
-                                                <span class="text-dark fw-bold">0.00000052</span>
+                                                <span class="text-dark fw-bold">0.00000000</span>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center py-2">
                                                 <span class="text-dark fw-medium">{% if current_lang == 'en' %}Optimal{% else %}最优电费{% endif %}</span>
-                                                <span class="text-danger fw-bold">$0.0772/kWh</span>
+                                                <span id="optimal-electricity-rate" class="text-danger fw-bold">$0.00/kWh</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1289,22 +1289,22 @@
                                         </div>
                                         <div class="card-body p-3">
                                             <div class="text-center p-3 bg-success bg-opacity-20 rounded mb-3">
-                                                <small class="text-light d-block mb-1">{% if current_lang == 'en' %}Daily Total{% else %}日产总量{% endif %}</small>
-                                                <div id="daily-btc-value" class="h5 text-white mb-0 fw-bold">0.06479057</div>
+                                                <small class="text-white d-block mb-1">{% if current_lang == 'en' %}Daily Total{% else %}日产总量{% endif %}</small>
+                                                <div id="daily-btc-value" class="h5 text-white mb-0 fw-bold">0.00000000</div>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-success border-opacity-20">
                                                 <span>
                                                     <span class="badge bg-secondary me-1">{% if current_lang == 'en' %}Alg 1{% else %}算法1{% endif %}</span>
-                                                    <small class="text-light">{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</small>
+                                                    <small class="text-white">{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</small>
                                                 </span>
-                                                <span id="btc-method1-daily" class="text-white fw-bold">0.06984750</span>
+                                                <span id="btc-method1-daily" class="text-white fw-bold">0.00000000</span>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center py-2">
                                                 <span>
                                                     <span class="badge bg-primary me-1">{% if current_lang == 'en' %}Alg 2{% else %}算法2{% endif %}</span>
-                                                    <small class="text-light">{% if current_lang == 'en' %}Difficulty{% else %}难度{% endif %}</small>
+                                                    <small class="text-white">{% if current_lang == 'en' %}Difficulty{% else %}难度{% endif %}</small>
                                                 </span>
-                                                <span id="btc-method2-daily" class="text-white fw-bold">0.06479057</span>
+                                                <span id="btc-method2-daily" class="text-white fw-bold">0.00000000</span>
                                             </div>
                                         </div>
                                     </div>
