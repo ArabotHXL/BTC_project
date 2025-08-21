@@ -36,6 +36,33 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         }
 
+        /* Force all text to be white */
+        *, *::before, *::after {
+            color: white !important;
+        }
+
+        /* Override specific elements that might have different colors */
+        h1, h2, h3, h4, h5, h6, p, span, div, a, label, li, td, th, 
+        .card-title, .card-text, .metric-label, .text-muted, 
+        .text-secondary, .text-primary, .small, .lead, .navbar-text,
+        .dropdown-item, .form-label, .form-control, .btn, .badge,
+        .alert, .progress-bar, .list-group-item, .nav-link, 
+        .breadcrumb-item, .card-header, .card-footer, .modal-header,
+        .modal-body, .modal-footer, .table, .form-text, .input-group-text,
+        .text-info, .text-success, .text-warning, .text-danger {
+            color: white !important;
+        }
+
+        /* Ensure input placeholders are also white */
+        ::placeholder {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+
+        /* Override Bootstrap text utility classes */
+        .text-dark, .text-black-50, .text-body {
+            color: white !important;
+        }
+
         /* Navigation Bar */
         .navbar {
             background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
