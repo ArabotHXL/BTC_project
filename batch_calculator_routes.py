@@ -26,6 +26,10 @@ logger = logging.getLogger(__name__)
 def batch_calculator():
     """Display the batch calculator interface."""
     try:
+        # Import flask's g and translation function here to ensure proper context
+        from flask import g
+        from translations import get_translation
+        
         user_id = session.get('user_id')
         user_plan_raw = get_user_plan(user_id)
         
@@ -44,18 +48,25 @@ def batch_calculator():
                 allow_scenarios = False
             user_plan = DefaultPlan()
         
-        # Get current language
-        current_lang = request.args.get('lang', session.get('language', 'zh'))
+        # Get current language from g (set by before_request) or session
+        current_lang = getattr(g, 'language', session.get('language', 'zh'))
+        
+        # Ensure language is saved to session
         session['language'] = current_lang
+        
+        # Set g.language if not already set
+        if not hasattr(g, 'language'):
+            g.language = current_lang
         
         plan_name = getattr(user_plan, 'name', user_plan) if user_plan else 'Free'
         logger.info(f"Rendering batch calculator with plan: {plan_name}, language: {current_lang}")
         
-        # Pass session data to template
+        # Pass session data to template with translation function
         template_data = {
             'user_plan': user_plan,
             'current_lang': current_lang,
-            'session': session
+            'session': session,
+            't': lambda text: get_translation(text, to_lang=current_lang)
         }
         
         return render_template('batch_calculator.html', **template_data)
