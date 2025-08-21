@@ -458,6 +458,32 @@
             color: #ffffff;
             text-shadow: 0 0 8px rgba(255,255,255,0.3);
         }
+
+        /* Navigation Buttons Enhancement */
+        .nav-btn {
+            background: linear-gradient(135deg, rgba(243, 156, 18, 0.9), rgba(230, 126, 34, 0.9)) !important;
+            border: 2px solid rgba(243, 156, 18, 0.6) !important;
+            color: #ffffff !important;
+            font-weight: 600 !important;
+            padding: 0.5rem 1rem !important;
+            border-radius: 8px !important;
+            transition: all 0.3s ease !important;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
+            box-shadow: 0 2px 8px rgba(243, 156, 18, 0.2) !important;
+        }
+
+        .nav-btn:hover {
+            background: linear-gradient(135deg, rgba(243, 156, 18, 1), rgba(230, 126, 34, 1)) !important;
+            border-color: rgba(243, 156, 18, 0.8) !important;
+            color: #ffffff !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3) !important;
+        }
+
+        .nav-btn i {
+            font-size: 1rem !important;
+            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2)) !important;
+        }
     </style>
 </head>
 <body>
@@ -473,7 +499,7 @@
                 <div class="d-flex align-items-center gap-3">
                     <!-- Alert Indicator -->
                     <div class="position-relative">
-                        <button class="btn btn-light btn-sm" id="alertsBtn">
+                        <button class="btn nav-btn" id="alertsBtn">
                             <i class="bi bi-bell"></i>
                             <span class="alert-badge" id="alertCount" style="display: none;">0</span>
                         </button>
@@ -481,7 +507,7 @@
                     
                     <!-- Language Switcher -->
                     <div class="btn-group">
-                        <button type="button" class="btn btn-light btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                        <button type="button" class="btn nav-btn dropdown-toggle" data-bs-toggle="dropdown">
                             <i class="bi bi-globe me-1"></i>
                             {{ 'CN' if current_lang == 'zh' else 'EN' }}
                         </button>
@@ -492,7 +518,7 @@
                     </div>
                     
                     <!-- Back to Main -->
-                    <a href="/main" class="btn btn-light btn-sm">
+                    <a href="/main" class="btn nav-btn">
                         <i class="bi bi-house-door me-1"></i>
                         {{ '主页' if current_lang == 'zh' else 'Home' }}
                     </a>
