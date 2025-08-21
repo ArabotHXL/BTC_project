@@ -3588,9 +3588,64 @@ def api_treasury_advanced_signals():
         return jsonify({'success': False, 'error': 'Access denied'}), 403
     
     try:
-        # 获取市场和技术数据
-        market_data = get_cached_market_data() or {}
-        technical_data = get_cached_technical_data() or {}
+        # 直接从数据库获取市场和技术数据
+        market_data = {}
+        technical_data = {}
+        
+        try:
+            import psycopg2
+            conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+            cursor = conn.cursor()
+            
+            # 获取市场数据
+            cursor.execute("""
+                SELECT btc_price, network_hashrate, network_difficulty, 
+                       price_change_1h, price_change_24h, price_change_7d, fear_greed_index
+                FROM market_analytics 
+                ORDER BY recorded_at DESC LIMIT 1
+            """)
+            market_row = cursor.fetchone()
+            
+            if market_row:
+                market_data = {
+                    'btc_price': float(market_row[0]) if market_row[0] else 113844,
+                    'network_hashrate': float(market_row[1]) if market_row[1] else 907.23,
+                    'network_difficulty': float(market_row[2]) if market_row[2] else 129435235580344,
+                    'price_change_1h': float(market_row[3]) if market_row[3] else 0,
+                    'price_change_24h': float(market_row[4]) if market_row[4] else 0,
+                    'price_change_7d': float(market_row[5]) if market_row[5] else 0,
+                    'fear_greed_index': int(market_row[6]) if market_row[6] else 50
+                }
+            
+            # 获取技术指标
+            cursor.execute("""
+                SELECT rsi_14, macd, sma_20, sma_50, ema_12, ema_26, volatility, 
+                       bollinger_upper, bollinger_lower
+                FROM technical_indicators 
+                ORDER BY recorded_at DESC LIMIT 1
+            """)
+            tech_row = cursor.fetchone()
+            
+            if tech_row:
+                technical_data = {
+                    'rsi': float(tech_row[0]) if tech_row[0] else 50,
+                    'macd': float(tech_row[1]) if tech_row[1] else 0,
+                    'sma_20': float(tech_row[2]) if tech_row[2] else market_data.get('btc_price', 113844),
+                    'sma_50': float(tech_row[3]) if tech_row[3] else market_data.get('btc_price', 113844),
+                    'ema_12': float(tech_row[4]) if tech_row[4] else market_data.get('btc_price', 113844),
+                    'ema_26': float(tech_row[5]) if tech_row[5] else market_data.get('btc_price', 113844),
+                    'volatility': float(tech_row[6]) if tech_row[6] else 0.05,
+                    'bollinger_upper': float(tech_row[7]) if tech_row[7] else market_data.get('btc_price', 113844) * 1.02,
+                    'bollinger_lower': float(tech_row[8]) if tech_row[8] else market_data.get('btc_price', 113844) * 0.98
+                }
+            
+            cursor.close()
+            conn.close()
+            
+        except Exception as db_error:
+            logging.warning(f"数据库查询失败，使用默认值: {db_error}")
+            market_data = {'btc_price': 113844, 'network_hashrate': 907.23}
+            technical_data = {'rsi': 67.75, 'sma_20': 113813, 'sma_50': 114022}
         
         # 尝试生成高级信号
         try:
