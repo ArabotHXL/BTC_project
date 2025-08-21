@@ -618,19 +618,60 @@ document.addEventListener('DOMContentLoaded', () => {
                             return `Month ${context[0].label.replace('M', '')}`;
                         },
                         label: function(context) {
-                            return `ROI: ${context.parsed.y.toFixed(2)}%`;
+                            const dataIndex = context[0].dataIndex;
+                            const isDynamic = context[0].datasetIndex === 0; // Dynamic is first dataset
+                            const algorithmType = isDynamic ? 'Dynamic ROI (考虑难度调整)' : 'Static ROI (静态假设)';
+                            
+                            // Get the corresponding data point
+                            let monthlyProfit = 0;
+                            let cumulativeProfit = 0;
+                            let investmentBalance = 0;
+                            
+                            if (clientRoi.forecast && clientRoi.forecast[dataIndex]) {
+                                monthlyProfit = clientRoi.forecast[dataIndex].monthly_profit || 0;
+                                cumulativeProfit = clientRoi.forecast[dataIndex].cumulative_profit || 0;
+                                investmentBalance = clientRoi.forecast[dataIndex].investment_balance || 0;
+                            }
+                            
+                            return [
+                                `${algorithmType}: ${context.parsed.y.toFixed(2)}%`,
+                                `当月利润: $${monthlyProfit.toLocaleString()}`,
+                                `累计收益: $${cumulativeProfit.toLocaleString()}`,
+                                `剩余投资: $${investmentBalance.toLocaleString()}`
+                            ];
                         },
                         afterBody: function(context) {
                             const dataIndex = context[0].dataIndex;
+                            
+                            // Show both algorithm values for comparison
+                            const dynamicRoi = dynamicRoiPercentage[dataIndex];
+                            const staticRoi = staticRoiPercentage[dataIndex];
+                            const roiDifference = dynamicRoi - staticRoi;
+                            
+                            let comparisonInfo = [
+                                '',
+                                '📊 双算法对比分析:',
+                                `动态算法 (难度调整): ${dynamicRoi.toFixed(2)}%`,
+                                `静态算法 (固定假设): ${staticRoi.toFixed(2)}%`,
+                                `算法差异: ${roiDifference >= 0 ? '+' : ''}${roiDifference.toFixed(2)}%`,
+                                '',
+                                '💡 算法说明:',
+                                '• 动态算法: 考虑网络难度增长',
+                                '• 静态算法: 假设难度保持不变'
+                            ];
+                            
+                            // Add break-even information if applicable
                             if (dataIndex === breakEvenIndex && breakEvenPoint) {
-                                return [
+                                comparisonInfo = comparisonInfo.concat([
                                     '',
-                                    '🎯 BREAK-EVEN ACHIEVED!',
-                                    `Investment Recovered: $${breakEvenPoint.cumulative_profit.toLocaleString()}`,
-                                    `Total ROI: ${breakEvenPoint.roi_percent.toFixed(2)}%`
-                                ];
+                                    '🎯 达成回本点!',
+                                    `投资回收: $${breakEvenPoint.cumulative_profit.toLocaleString()}`,
+                                    `总ROI: ${breakEvenPoint.roi_percent.toFixed(2)}%`,
+                                    `回本月份: 第${breakEvenPoint.month}个月`
+                                ]);
                             }
-                            return '';
+                            
+                            return comparisonInfo;
                         }
                     }
                 }
