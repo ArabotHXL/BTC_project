@@ -39,9 +39,16 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         }
 
-        /* Force all text to be white */
+        /* Force all text to be white except disclaimer icon */
         *, *::before, *::after {
             color: white !important;
+        }
+        
+        /* Exception for disclaimer icon - must come after global rule */
+        .disclaimer-icon, 
+        .disclaimer-icon::before, 
+        .disclaimer-icon::after {
+            color: #dc3545 !important;
         }
         
 
@@ -123,8 +130,17 @@
             color: #dc3545 !important;
         }
         
-        /* Force red color for disclaimer icon with maximum specificity */
-        .alert-warning.disclaimer-text .disclaimer-icon {
+        /* Force red color for disclaimer icon with maximum specificity - MUST override global white rule */
+        .alert-warning.disclaimer-text .disclaimer-icon,
+        .disclaimer-icon.bi-info-circle,
+        i.disclaimer-icon {
+            color: #dc3545 !important;
+        }
+        
+        /* Override global white color rule specifically for disclaimer icon */
+        .disclaimer-icon::before,
+        .disclaimer-icon::after,
+        .disclaimer-icon {
             color: #dc3545 !important;
         }
         
@@ -1472,6 +1488,13 @@
             // Update Next Sell Price dynamic content for language change
             updateNextSellPriceDynamicContent(currentLang);
             setupExecutionPanel();
+            
+            // Force disclaimer icon to be red (backup solution)
+            const disclaimerIcon = document.querySelector('.disclaimer-icon');
+            if (disclaimerIcon) {
+                disclaimerIcon.style.color = '#dc3545';
+                disclaimerIcon.style.setProperty('color', '#dc3545', 'important');
+            }
             initializeCharts();
             initTooltips();
             initAlertsSystem(); // Initialize alerts functionality
