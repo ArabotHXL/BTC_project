@@ -631,8 +631,27 @@ document.addEventListener('DOMContentLoaded', () => {
                             
                             // Get monthly profit for this month
                             let monthlyProfit = 0;
+                            let cumulativeProfit = 0;
                             if (clientRoi.forecast && clientRoi.forecast[dataIndex]) {
                                 monthlyProfit = clientRoi.forecast[dataIndex].monthly_profit || 0;
+                                cumulativeProfit = clientRoi.forecast[dataIndex].cumulative_profit || 0;
+                            }
+                            
+                            // Calculate static algorithm income based on ROI percentage
+                            let staticCumulativeProfit = 0;
+                            let staticMonthlyProfit = 0;
+                            if (clientRoi.forecast && clientRoi.forecast[dataIndex]) {
+                                const investmentAmount = 5000; // Default client investment
+                                const staticRoiDecimal = staticRoiPercentage[dataIndex] / 100;
+                                staticCumulativeProfit = investmentAmount * staticRoiDecimal;
+                                
+                                // Calculate static monthly profit (approximation)
+                                if (dataIndex === 0) {
+                                    staticMonthlyProfit = staticCumulativeProfit;
+                                } else if (dataIndex > 0 && staticRoiPercentage[dataIndex - 1]) {
+                                    const prevStaticCumulative = investmentAmount * (staticRoiPercentage[dataIndex - 1] / 100);
+                                    staticMonthlyProfit = staticCumulativeProfit - prevStaticCumulative;
+                                }
                             }
                             
                             // Show both algorithm values for comparison
@@ -641,11 +660,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             const roiDifference = dynamicRoi - staticRoi;
                             
                             let comparisonInfo = [
-                                `当月利润: $${monthlyProfit.toLocaleString()}`,
-                                '',
-                                '📊 双算法对比:',
-                                `动态算法: ${dynamicRoi.toFixed(2)}%`,
-                                `静态算法: ${staticRoi.toFixed(2)}%`,
+                                '📊 双算法收入对比:',
+                                `Dynamic Method: $${monthlyProfit.toLocaleString()} (${dynamicRoi.toFixed(2)}%)`,
+                                `Static Method: $${staticMonthlyProfit.toLocaleString()} (${staticRoi.toFixed(2)}%)`,
                                 `算法差异: ${roiDifference >= 0 ? '+' : ''}${roiDifference.toFixed(2)}%`
                             ];
                             
