@@ -862,15 +862,24 @@
                                             <table class="table table-sm table-bordered">
                                                 <tbody>
                                                     <tr>
-                                                        <td>{% if current_lang == 'en' %}Payback Period{% else %}投资回收期{% endif %}</td>
+                                                        <td>
+                                                            {% if current_lang == 'en' %}Payback Period{% else %}投资回收期{% endif %}
+                                                            <small class="text-warning d-block">{% if current_lang == 'en' %}(Simple Method){% else %}（简单方法）{% endif %}</small>
+                                                        </td>
                                                         <td id="client-payback-months" class="text-end">0 months</td>
                                                     </tr>
                                                     <tr>
-                                                        <td>{% if current_lang == 'en' %}Years{% else %}年份{% endif %}</td>
+                                                        <td>
+                                                            {% if current_lang == 'en' %}Years{% else %}年份{% endif %}
+                                                            <small class="text-warning d-block">{% if current_lang == 'en' %}(Static Calculation){% else %}（静态计算）{% endif %}</small>
+                                                        </td>
                                                         <td id="client-payback-years" class="text-end">0.00 years</td>
                                                     </tr>
                                                     <tr>
-                                                        <td>{% if current_lang == 'en' %}Break-even Month{% else %}盈亏平衡月份{% endif %}</td>
+                                                        <td>
+                                                            {% if current_lang == 'en' %}Break-even Month{% else %}盈亏平衡月份{% endif %}
+                                                            <small class="text-primary d-block">{% if current_lang == 'en' %}(Dynamic Method){% else %}（动态方法）{% endif %}</small>
+                                                        </td>
                                                         <td id="client-breakeven-month" class="text-end">Month 0</td>
                                                     </tr>
                                                 </tbody>
@@ -1113,6 +1122,97 @@
                                         </div>
                                     </div>
                                     
+                                    <!-- 计算假设说明 (Calculation Assumptions) -->
+                                    <div class="mt-4 mb-4">
+                                        <div class="card bg-info bg-opacity-15 border-info border-opacity-30 shadow-sm">
+                                            <div class="card-header bg-info bg-opacity-25 border-0">
+                                                <h6 class="text-white mb-0 fw-bold">
+                                                    <i class="bi bi-info-circle me-2"></i>
+                                                    {% if current_lang == 'en' %}Calculation Assumptions & Methodology{% else %}计算假设与方法说明{% endif %}
+                                                </h6>
+                                            </div>
+                                            <div class="card-body p-3">
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <div class="d-flex align-items-start">
+                                                            <div class="badge bg-warning text-dark me-2 mt-1">
+                                                                {% if current_lang == 'en' %}Static{% else %}静态{% endif %}
+                                                            </div>
+                                                            <div>
+                                                                <h6 class="text-white mb-2">{% if current_lang == 'en' %}Static Assumptions{% else %}静态假设{% endif %}</h6>
+                                                                <ul class="list-unstyled mb-0 text-white-75 small">
+                                                                    <li>• {% if current_lang == 'en' %}BTC Price: Fixed at current market rate{% else %}BTC价格: 固定为当前市场价格{% endif %}</li>
+                                                                    <li>• {% if current_lang == 'en' %}Electricity Cost: No inflation{% else %}电费成本: 无通胀影响{% endif %}</li>
+                                                                    <li>• {% if current_lang == 'en' %}Maintenance Fee: Fixed monthly{% else %}维护费用: 固定月费{% endif %}</li>
+                                                                    <li>• {% if current_lang == 'en' %}Pool Fee: 2.5% fixed{% else %}矿池费用: 固定2.5%{% endif %}</li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="d-flex align-items-start">
+                                                            <div class="badge bg-primary me-2 mt-1">
+                                                                {% if current_lang == 'en' %}Dynamic{% else %}动态{% endif %}
+                                                            </div>
+                                                            <div>
+                                                                <h6 class="text-white mb-2">{% if current_lang == 'en' %}Dynamic Adjustments{% else %}动态调整{% endif %}</h6>
+                                                                <ul class="list-unstyled mb-0 text-white-75 small">
+                                                                    <li>• {% if current_lang == 'en' %}Difficulty: 6% monthly increase{% else %}挖矿难度: 每月增长6%{% endif %}</li>
+                                                                    <li>• {% if current_lang == 'en' %}Hashrate Decay: 5% quarterly{% else %}算力衰减: 每季度5%{% endif %}</li>
+                                                                    <li>• {% if current_lang == 'en' %}Halving: 50% reward reduction (4-year cycle){% else %}减半效应: 奖励减半（4年周期）{% endif %}</li>
+                                                                    <li>• {% if current_lang == 'en' %}Downtime: 0% assumed (optimal conditions){% else %}停机率: 假设0%（理想条件）{% endif %}</li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- 回本计算方法说明 -->
+                                                <hr class="border-info border-opacity-30 my-3">
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <h6 class="text-white mb-2">
+                                                            <i class="bi bi-calculator me-2"></i>
+                                                            {% if current_lang == 'en' %}Payback Period Calculation Method{% else %}回本周期计算方法{% endif %}
+                                                        </h6>
+                                                        <div class="bg-dark bg-opacity-30 p-3 rounded">
+                                                            <div class="row g-3">
+                                                                <div class="col-md-6">
+                                                                    <div class="text-warning fw-bold small mb-1">
+                                                                        {% if current_lang == 'en' %}Simple Method (Static){% else %}简单方法（静态）{% endif %}
+                                                                    </div>
+                                                                    <div class="text-white-75 small">
+                                                                        {% if current_lang == 'en' %}
+                                                                        Formula: Investment ÷ Monthly Profit<br>
+                                                                        Usage: Quick estimation, assumes constant profit
+                                                                        {% else %}
+                                                                        公式: 投资金额 ÷ 月度利润<br>
+                                                                        用途: 快速估算，假设利润恒定
+                                                                        {% endif %}
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="text-primary fw-bold small mb-1">
+                                                                        {% if current_lang == 'en' %}Dynamic Method (ROI Chart){% else %}动态方法（ROI图表）{% endif %}
+                                                                    </div>
+                                                                    <div class="text-white-75 small">
+                                                                        {% if current_lang == 'en' %}
+                                                                        Formula: Cumulative Profit ≥ Initial Investment<br>
+                                                                        Usage: Precise calculation with difficulty adjustments
+                                                                        {% else %}
+                                                                        公式: 累计收益 ≥ 初始投资<br>
+                                                                        用途: 考虑难度调整的精确计算
+                                                                        {% endif %}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <!-- 客户ROI图表容器 -->
                                     <div class="mt-4 mb-4">
                                         <div class="card bg-dark bg-opacity-50 border-success border-opacity-25 shadow">
