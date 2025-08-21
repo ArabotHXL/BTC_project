@@ -2431,6 +2431,52 @@ Generate this order?
             return window.currentLang || document.documentElement.lang || 'en';
         }
 
+        // Fetch Treasury Overview Data
+        function fetchTreasuryData() {
+            fetch('/api/treasury/overview')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Treasury data loaded:', data);
+                    if (data.success) {
+                        updateTreasuryDisplay(data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Treasury data error:', error);
+                });
+        }
+        
+        // Update Treasury Display
+        function updateTreasuryDisplay(data) {
+            // Update BTC inventory
+            if (document.getElementById('btcInventory')) {
+                document.getElementById('btcInventory').textContent = data.btc_inventory?.toFixed(4) || '0.0000';
+            }
+            if (document.getElementById('btcInventoryUSD')) {
+                document.getElementById('btcInventoryUSD').textContent = 
+                    data.inventory_usd ? Math.round(data.inventory_usd).toLocaleString() : '0';
+            }
+            
+            // Update cash coverage
+            if (document.getElementById('cashCoverage')) {
+                document.getElementById('cashCoverage').textContent = data.cash_coverage_days || '0';
+            }
+            
+            // Update cash reserves
+            if (document.getElementById('cashReserves')) {
+                document.getElementById('cashReserves').textContent = 
+                    data.cash_reserves ? `$${Math.round(data.cash_reserves).toLocaleString()}` : '$0';
+            }
+            
+            // Update unrealized P&L
+            if (document.getElementById('unrealizedPL')) {
+                const pl = data.unrealized_pl || 0;
+                const element = document.getElementById('unrealizedPL');
+                element.textContent = `${pl >= 0 ? '+' : ''}${pl.toFixed(1)}%`;
+                element.className = pl >= 0 ? 'text-success' : 'text-danger';
+            }
+        }
+
         // Initialize and update Next Sell Indicator
         document.addEventListener('DOMContentLoaded', function() {
             // Initial calls
