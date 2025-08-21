@@ -1212,8 +1212,37 @@
                             
                             <hr>
                             
-                            <!-- 网络和挖矿详情 (Network and Mining Details) -->
-                            <div class="row g-3 mt-4 mb-4">
+                            <!-- 简化的实时数据条 (Simplified Real-time Data Bar) -->
+                            <div class="row g-2 mt-3 mb-3">
+                                <!-- 网络状态信息条 -->
+                                <div class="col-12">
+                                    <div class="card bg-dark bg-opacity-50 border-secondary border-opacity-30 shadow-sm">
+                                        <div class="card-body py-2 px-3">
+                                            <div class="row g-2 align-items-center text-center">
+                                                <div class="col-6 col-md-3">
+                                                    <small class="text-white-50 d-block">{% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}</small>
+                                                    <span id="current-btc-price-value" class="text-success fw-bold">$114,185</span>
+                                                </div>
+                                                <div class="col-6 col-md-3">
+                                                    <small class="text-white-50 d-block">{% if current_lang == 'en' %}Difficulty{% else %}难度{% endif %}</small>
+                                                    <span id="network-difficulty-value" class="text-white fw-bold">129.4 T</span>
+                                                </div>
+                                                <div class="col-6 col-md-3">
+                                                    <small class="text-white-50 d-block">{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</small>
+                                                    <span id="network-hashrate-value" class="text-info fw-bold">894 EH/s</span>
+                                                </div>
+                                                <div class="col-6 col-md-3">
+                                                    <small class="text-white-50 d-block">{% if current_lang == 'en' %}Block Reward{% else %}区块奖励{% endif %}</small>
+                                                    <span id="block-reward-value" class="text-warning fw-bold">3.14 BTC</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 隐藏原来复杂的三个卡片区域 -->
+                            <div class="row g-3 mt-4 mb-4" style="display: none;">
                                 <!-- 比特币网络信息 -->
                                 <div class="col-lg-4 col-md-6">
                                     <div class="card bg-primary bg-opacity-15 border-primary border-opacity-30 h-100 shadow-sm">
@@ -1226,19 +1255,19 @@
                                         <div class="card-body p-3">
                                             <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-primary border-opacity-20">
                                                 <span class="text-white fw-medium">{% if current_lang == 'en' %}Difficulty{% else %}难度{% endif %}</span>
-                                                <span id="network-difficulty-value" class="text-white fw-bold">0.0 T</span>
+                                                <span class="text-white fw-bold">0.0 T</span>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-primary border-opacity-20">
                                                 <span class="text-white fw-medium">{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</span>
-                                                <span id="network-hashrate-value" class="text-white fw-bold">0 EH/s</span>
+                                                <span class="text-white fw-bold">0 EH/s</span>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-primary border-opacity-20">
                                                 <span class="text-white fw-medium">{% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}</span>
-                                                <span id="current-btc-price-value" class="text-warning fw-bold">$0</span>
+                                                <span class="text-warning fw-bold">$0</span>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center py-2">
                                                 <span class="text-white fw-medium">{% if current_lang == 'en' %}Block Reward{% else %}区块奖励{% endif %}</span>
-                                                <span id="block-reward-value" class="text-success fw-bold">0 BTC</span>
+                                                <span class="text-success fw-bold">0 BTC</span>
                                             </div>
                                         </div>
                                     </div>
