@@ -677,16 +677,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (!context || context.length === 0) return '';
                             return `${t('month')} ${context[0].label.replace('M', '')}`;
                         },
-                        label: function(context) {
+                        afterLabel: function(context) {
                             const dataIndex = context.dataIndex;
-                            const isDynamic = context.datasetIndex === 0; // Dynamic is first dataset
-                            const algorithmType = isDynamic ? t('dynamic_roi') : t('static_roi');
-                            
-                            return `${algorithmType}: ${context.parsed.y.toFixed(1)}%`;
-                        },
-                        afterBody: function(context) {
-                            if (!context || context.length === 0) return [];
-                            const dataIndex = context[0].dataIndex;
                             
                             // Get monthly profit for this month
                             let monthlyProfit = 0;
@@ -735,6 +727,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                             
                             return comparisonInfo;
+                        },
+                        label: function(context) {
+                            const dataIndex = context.dataIndex;
+                            const isDynamic = context.datasetIndex === 0; // Dynamic is first dataset
+                            const algorithmType = isDynamic ? t('dynamic_roi') : t('static_roi');
+                            
+                            return `${algorithmType}: ${context.parsed.y.toFixed(1)}%`;
                         }
                     }
                 }
