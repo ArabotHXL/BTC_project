@@ -502,11 +502,15 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             single_hashrate = MINER_DATA[miner_model]["hashrate"]
             single_power_watt = MINER_DATA[miner_model]["power_watt"]
             
-            # Calculate miner count from site power if provided
-            if site_power_mw and site_power_mw > 0:
+            # Use user-specified miner count instead of calculating from site power
+            # Only recalculate if miner_count is 0 or explicitly requested
+            if site_power_mw and site_power_mw > 0 and miner_count == 0:
                 # Formula from original code: site_miner_count = int((site_power_mw * 1000) / (power_watt / 1000))
-                miner_count = int((site_power_mw * 1000) / (single_power_watt / 1000))
+                calculated_count = int((site_power_mw * 1000) / (single_power_watt / 1000))
+                miner_count = max(1, calculated_count)  # Ensure at least 1 miner
                 logging.info(f"Calculated {miner_count} miners for {site_power_mw} MW using {miner_model}")
+            else:
+                logging.info(f"Using user-specified miner count: {miner_count} for {miner_model}")
             
             # Apply miner count to get total specs
             hashrate = single_hashrate * miner_count
