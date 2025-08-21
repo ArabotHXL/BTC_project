@@ -362,3 +362,87 @@ body {
     margin-bottom: 30px !important;
     font-size: 0.8rem;
 }
+
+/* Execution Panel Styles - 修复文字对比度问题 */
+.execution-panel {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.execution-panel h6 {
+    color: var(--accent-secondary);
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+#executionPreview {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 0.75rem;
+    min-height: 120px;
+}
+
+#executionPreview p,
+#executionPreview div,
+#executionPreview span {
+    color: #ffffff !important;
+    margin-bottom: 0.5rem;
+}
+
+#executionPreview .text-muted {
+    color: #adb5bd !important;
+}
+
+#executionPreview .text-success {
+    color: #28a745 !important;
+}
+
+#executionPreview .text-warning {
+    color: #ffc107 !important;
+}
+
+#executionPreview .text-info {
+    color: #17a2b8 !important;
+}
+
+#executionPreview .text-danger {
+    color: #dc3545 !important;
+}
+
+/* 执行预览表格样式 */
+#executionPreview table {
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+#executionPreview th,
+#executionPreview td {
+    color: #ffffff !important;
+    padding: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#executionPreview th {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107 !important;
+    font-weight: 600;
+}
+
+/* 执行按钮样式优化 */
+.execution-btn {
+    background: var(--primary-gradient);
+    border: none;
+    color: #000;
+    font-weight: 600;
+    border-radius: var(--border-radius-button);
+    padding: 0.75rem 1.5rem;
+    transition: var(--transition-default);
+}
+
+.execution-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px var(--shadow-color);
+    color: #000;
+}
