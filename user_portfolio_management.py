@@ -243,10 +243,9 @@ class UserPortfolioManager:
         else:
             unrealized_pl = 0
         
-        # 现金覆盖天数
+        # 现金覆盖天数计算修正
         if monthly_opex > 0:
-            daily_opex = monthly_opex / 30
-            cash_coverage_days = int(cash_reserves / daily_opex) if daily_opex > 0 else 999
+            cash_coverage_days = int((cash_reserves / monthly_opex) * 30) if monthly_opex > 0 else 999
         else:
             cash_coverage_days = 999
         

@@ -7,6 +7,13 @@ The BTC Mining Calculator is a web application for Bitcoin mining profitability 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+**2025-08-21: Cash Coverage 计算公式修复完成**
+- 识别并修复Cash Coverage天数计算错误，原公式导致显示180天的错误结果
+- 修正user_portfolio_management.py中计算逻辑：从 cash_reserves / (monthly_opex / 30) 改为 (cash_reserves / monthly_opex) * 30
+- 确保Cash Coverage正确反映现金储备能维持月度运营支出的实际天数
+- 修复Next Sell Indicator API的技术指标导入错误，移除不存在的TechnicalIndicator引用
+- 完善智能卖出指标系统，确保L2层级目标价格和RSI置信度评估正常工作
+
 **2025-08-21: Enhanced Language Engine v2.0 重构完成**
 - 构建了全新的Enhanced Language Engine v2.0，支持上下文感知翻译和变量插值
 - 实现了智能数字、货币、日期、百分比格式化功能，支持多语言显示习惯
