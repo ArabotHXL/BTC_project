@@ -661,9 +661,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     backgroundColor: 'rgba(0, 0, 0, 0.9)',
                     titleColor: '#ffffff',
                     bodyColor: '#ffffff',
-                    borderColor: 'rgba(40, 167, 69, 0.8)',
+                    borderColor: 'rgba(139, 69, 255, 0.8)',
                     borderWidth: 2,
-                    cornerRadius: 8,
+                    cornerRadius: 12,
                     displayColors: false,
                     titleFont: {
                         size: 14,
@@ -682,7 +682,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             const isDynamic = context.datasetIndex === 0; // Dynamic is first dataset
                             const algorithmType = isDynamic ? t('dynamic_roi') : t('static_roi');
                             
-                            return `${algorithmType}: ${context.parsed.y.toFixed(2)}%`;
+                            return `${algorithmType}: ${context.parsed.y.toFixed(1)}%`;
                         },
                         afterBody: function(context) {
                             if (!context || context.length === 0) return [];
@@ -720,9 +720,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             
                             let comparisonInfo = [
                                 `📊 ${t('algorithm_comparison')}:`,
-                                `${t('dynamic_method')}: $${monthlyProfit.toLocaleString()} (${dynamicRoi.toFixed(2)}%)`,
-                                `${t('static_method')}: $${staticMonthlyProfit.toLocaleString()} (${staticRoi.toFixed(2)}%)`,
-                                `${t('algorithm_difference')}: ${roiDifference >= 0 ? '+' : ''}${roiDifference.toFixed(2)}%`
+                                `${t('dynamic_method')}: $${monthlyProfit.toLocaleString()} (${dynamicRoi.toFixed(1)}%)`,
+                                `${t('static_method')}: $${staticMonthlyProfit.toLocaleString()} (${staticRoi.toFixed(1)}%)`,
+                                `${t('algorithm_difference')}: ${roiDifference >= 0 ? '+' : ''}${roiDifference.toFixed(1)}%`
                             ];
                             
                             // Add break-even information if applicable
