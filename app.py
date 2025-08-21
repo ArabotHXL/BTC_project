@@ -1632,7 +1632,9 @@ def get_network_stats():
             if data:
                 btc_price = float(data[0]) if data[0] else 119876.0
                 network_hashrate = float(data[1]) if data[1] else 911.0
-                network_difficulty = float(data[2]) if data[2] else 129435235580345
+                # Convert difficulty from raw value to trillions for frontend display
+                raw_difficulty = float(data[2]) if data[2] else 129435235580345
+                network_difficulty = raw_difficulty / 1e12  # Convert to trillions
                 price_change_24h = float(data[3]) if data[3] else 0.01
                 fear_greed_index = int(data[4]) if data[4] else 68
                 block_reward = float(data[5]) if data[5] else 3.125
@@ -1640,7 +1642,8 @@ def get_network_stats():
                 # 默认值
                 btc_price = 119876.0
                 network_hashrate = 911.0
-                network_difficulty = 129435235580345
+                # Convert default difficulty to trillions
+                network_difficulty = 129435235580345 / 1e12  # ~129.43T
                 price_change_24h = 0.01
                 fear_greed_index = 68
                 block_reward = 3.125
@@ -1649,7 +1652,8 @@ def get_network_stats():
             # 默认值
             btc_price = 119876.0
             network_hashrate = 911.0
-            network_difficulty = 129435235580345
+            # Convert default difficulty to trillions
+            network_difficulty = 129435235580345 / 1e12  # ~129.43T
             price_change_24h = 0.01
             fear_greed_index = 68
             block_reward = 3.125
