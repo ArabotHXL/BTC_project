@@ -585,7 +585,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 legend: {
                     display: true,
-                    position: 'top',
+                    position: 'bottom',
                     align: 'center',
                     labels: {
                         color: 'rgba(255, 255, 255, 0.9)',
