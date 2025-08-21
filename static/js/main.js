@@ -1468,7 +1468,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         var blockRewardEl = document.getElementById('block-reward-value');
                         
                         if (networkDifficultyEl) {
-                            networkDifficultyEl.textContent = formatNumber(data.difficulty, 2) + ' T';
+                            // Convert difficulty from raw value to T (Tera) unit
+                            var difficultyInT = data.difficulty / 1000000000000; // Divide by 1T
+                            networkDifficultyEl.textContent = formatNumber(difficultyInT, 2) + ' T';
                         }
                         if (networkHashrateEl) {
                             networkHashrateEl.textContent = formatNumber(data.hashrate, 2) + ' EH/s';
@@ -1497,7 +1499,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 btcPriceEl.textContent = formatCurrency(data.btc_price, 2);
             }
             if (networkDifficultyEl && data.network_difficulty) {
-                networkDifficultyEl.textContent = formatNumber(data.network_difficulty) + 'T';
+                // Convert difficulty from raw value to T (Tera) unit
+                var difficultyInT = data.network_difficulty / 1000000000000; // Divide by 1T
+                networkDifficultyEl.textContent = formatNumber(difficultyInT, 2) + ' T';
             }
             if (networkHashrateEl && data.network_hashrate) {
                 networkHashrateEl.textContent = formatNumber(data.network_hashrate) + ' EH/s';
