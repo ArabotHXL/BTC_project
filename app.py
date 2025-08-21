@@ -5712,7 +5712,8 @@ def next_sell_indicator_api():
         from sqlalchemy import text
         
         # 获取当前用户
-        user = get_current_user()
+        email = session.get('email')
+        user = UserAccess.query.filter_by(email=email).first() if email else None
         if not user:
             return jsonify({'success': False, 'error': 'User not found'}), 401
             
