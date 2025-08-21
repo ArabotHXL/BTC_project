@@ -1004,9 +1004,25 @@
             setupStrategyCards();
             setupExecutionPanel();
             initializeCharts();
+            
+            // Force red icon after everything loads
+            setTimeout(function() {
+                const disclaimerIcon = document.querySelector('.disclaimer-text .bi-info-circle');
+                if (disclaimerIcon) {
+                    disclaimerIcon.style.color = 'red';
+                    disclaimerIcon.style.setProperty('color', 'red', 'important');
+                }
+            }, 100);
         });
 
         function initializeDashboard() {
+            // Force exclamation mark to be red
+            const disclaimerIcon = document.querySelector('.disclaimer-text .bi-info-circle');
+            if (disclaimerIcon) {
+                disclaimerIcon.style.color = 'red';
+                disclaimerIcon.style.setProperty('color', 'red', 'important');
+            }
+            
             // Load saved settings
             const settings = JSON.parse(localStorage.getItem('hashinsight_settings') || '{}');
             

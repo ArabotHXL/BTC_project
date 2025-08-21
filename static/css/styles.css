@@ -1,5 +1,12 @@
 /* Bitcoin Mining Calculator - Unified Design System */
 
+/* Force disclaimer icon to be red */
+.disclaimer-text .bi-info-circle,
+.alert-warning .bi-info-circle {
+    color: red !important;
+    fill: red !important;
+}
+
 /* Design System Variables */
 :root {
     --primary-gradient: linear-gradient(135deg, #f7931e 0%, #ffc107 100%);
