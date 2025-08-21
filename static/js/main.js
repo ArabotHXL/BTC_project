@@ -138,6 +138,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 次要功能初始化
     function initializeSecondaryFeatures() {
+        // 立即获取网络统计数据
+        console.log("获取完整网络统计数据");
+        fetchNetworkStats(true);
+        
         // 开始初始化图表
         console.log("开始初始化图表");
         initializeChart();
@@ -590,7 +594,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data && data.success) {
                         // 更新UI (Update UI)
                         if (btcPriceEl) btcPriceEl.textContent = formatCurrency(data.price, 2);
-                        if (networkDifficultyEl) networkDifficultyEl.textContent = formatNumber(data.difficulty) + 'T';
+                        if (networkDifficultyEl) {
+                            // Convert difficulty from raw value to T (Tera) unit
+                            console.log('fetchNetworkStats - difficulty raw value:', data.difficulty);
+                            var difficultyInT = data.difficulty / 1000000000000; // Divide by 1T
+                            console.log('fetchNetworkStats - difficulty converted value:', difficultyInT);
+                            networkDifficultyEl.textContent = formatNumber(difficultyInT, 2) + ' T';
+                            console.log('fetchNetworkStats - final text:', networkDifficultyEl.textContent);
+                        }
                         if (networkHashrateEl) networkHashrateEl.textContent = formatNumber(data.hashrate) + ' EH/s';
                         if (blockRewardEl) {
                             console.log('区块奖励调试 - 原始值:', data.block_reward);
@@ -1501,10 +1512,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (btcPriceEl && data.btc_price) {
                 btcPriceEl.textContent = formatCurrency(data.btc_price, 2);
             }
-            if (networkDifficultyEl && data.network_difficulty) {
+            if (networkDifficultyEl && (data.network_difficulty || data.difficulty)) {
                 // Convert difficulty from raw value to T (Tera) unit
-                var difficultyInT = data.network_difficulty / 1000000000000; // Divide by 1T
+                var difficultyValue = data.network_difficulty || data.difficulty;
+                console.log('Top network stats - difficulty raw value:', difficultyValue);
+                var difficultyInT = difficultyValue / 1000000000000; // Divide by 1T
+                console.log('Top network stats - difficulty converted value:', difficultyInT);
                 networkDifficultyEl.textContent = formatNumber(difficultyInT, 2) + ' T';
+                console.log('Top network stats - final text:', networkDifficultyEl.textContent);
             }
             if (networkHashrateEl && data.network_hashrate) {
                 networkHashrateEl.textContent = formatNumber(data.network_hashrate) + ' EH/s';
