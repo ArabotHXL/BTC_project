@@ -538,7 +538,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Create datasets with enhanced styling - both dynamic and static lines
         const datasets = [
             {
-                label: 'Dynamic ROI % (考虑难度调整)',
+                label: t('dynamic_roi'),
                 data: dynamicRoiPercentage,
                 borderColor: 'rgb(139, 69, 255)', // Purple for dynamic method to match table
                 backgroundColor: 'rgba(139, 69, 255, 0.15)',
@@ -556,7 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 borderDash: [] // Solid line for dynamic
             },
             {
-                label: 'Static ROI % (静态假设)',
+                label: t('static_roi'),
                 data: staticRoiPercentage,
                 borderColor: 'rgb(255, 193, 7)', // Yellow for static method to match table
                 backgroundColor: 'rgba(255, 193, 7, 0.1)',
@@ -609,7 +609,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 x: {
                     title: {
                         display: true,
-                        text: 'Months',
+                        text: t('month') + 's',
                         color: 'rgba(255, 255, 255, 0.9)',
                         font: {
                             size: 14,
@@ -631,7 +631,7 @@ document.addEventListener('DOMContentLoaded', () => {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Client ROI Progression: Static vs Dynamic',
+                    text: getCurrentLanguage() === 'zh' ? '客户ROI进展: Static vs Dynamic' : 'Client ROI Progression: Static vs Dynamic',
                     color: 'rgb(139, 69, 255)',
                     font: {
                         size: 18,
