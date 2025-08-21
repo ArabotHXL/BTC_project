@@ -1399,6 +1399,9 @@
             setInterval(updateTimestamp, 60000);
         });
 
+        // Global language variable
+        let currentLang = '{{ current_lang }}';
+
         // Language switching function
         function switchLanguage(lang) {
             console.log('Switching language to:', lang);
@@ -1414,6 +1417,9 @@
             if (langDisplay) {
                 langDisplay.textContent = lang === 'zh' ? 'CN' : 'EN';
             }
+            
+            // Update global language variable
+            currentLang = lang;
             
             // Navigate to set language
             window.location.href = '/set_language?lang=' + lang + '&return_url=' + encodeURIComponent(window.location.href);
@@ -1523,26 +1529,45 @@
                     cardBody.appendChild(advancedDiv);
                 }
                 
+                // 翻译notes内容
+                const translatedNotes = (data.notes || []).map(note => {
+                    if (currentLang === 'en') {
+                        // 简单的中译英映射
+                        return note
+                            .replace('动能不足：RSI<55', 'Momentum Weak: RSI<55')
+                            .replace('动能确认：RSI≥55', 'Momentum Confirmed: RSI≥55')
+                            .replace('接近阻力位：', 'Near Resistance: ')
+                            .replace('检测到拒绝形态：上影线', 'Rejection Pattern Detected: Upper Shadow')
+                            .replace('波动率扩张：突破可能不持续', 'Volatility Expansion: Breakout May Not Sustain')
+                            .replace('Puell Multiple偏低：', 'Puell Multiple Low: ')
+                            .replace('矿工卖压小', 'Low Miner Selling Pressure')
+                            .replace('Hash Price偏高：', 'Hash Price High: ')
+                            .replace('分位', 'th Percentile')
+                            .replace('震荡/下降+高波动：建议降低门槛', 'Range/Decline + High Vol: Suggest Lower Threshold');
+                    }
+                    return note;
+                });
+
                 advancedDiv.innerHTML = `
                     <hr class="my-3">
                     <div class="row">
                         <div class="col-md-8">
                             <h6 class="mb-2">
-                                <i class="bi bi-cpu me-2"></i>{{ tr('advanced_algorithm_engine') }}
+                                <i class="bi bi-cpu me-2"></i>${currentLang === 'zh' ? '高级算法引擎' : 'Advanced Algorithm Engine'}
                                 <span class="badge bg-success ms-2">${data.phase || 'Phase 2 (5 Modules: A-E)'}</span>
                             </h6>
                             <div class="text-muted small mb-2">
-                                ${data.modules_count || 5}/5 {{ tr('modules_active') }} | ${Math.round((data.confidence || 0) * 100)}% {{ tr('confidence') }}
+                                ${data.modules_count || 5}/5 ${currentLang === 'zh' ? '活跃模块' : 'Active Modules'} | ${Math.round((data.confidence || 0) * 100)}% ${currentLang === 'zh' ? '置信度' : 'Confidence'}
                             </div>
                             <div class="advanced-notes">
-                                ${(data.notes || []).map(note => `<div class="small text-info mb-1">• ${note}</div>`).join('')}
+                                ${translatedNotes.map(note => `<div class="small text-info mb-1">• ${note}</div>`).join('')}
                             </div>
                         </div>
                         <div class="col-md-4 text-center">
                             <div class="h3 ${data.sell_score >= 70 ? 'text-danger' : data.sell_score >= 50 ? 'text-warning' : 'text-success'} mb-1">
                                 ${data.sell_score}/100
                             </div>
-                            <div class="text-muted small">Advanced Score</div>
+                            <div class="text-muted small">${currentLang === 'zh' ? '高级评分' : 'Advanced Score'}</div>
                             <div class="mt-2">
                                 <span class="badge ${data.sell_score >= 70 ? 'bg-danger' : data.sell_score >= 50 ? 'bg-warning' : 'bg-success'}">
                                     ${data.recommendation || 'HOLD'}
