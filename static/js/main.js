@@ -689,22 +689,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         // 更新UI (Update UI)
                         if (btcPriceEl) btcPriceEl.textContent = formatCurrency(data.price, 2);
                         
-                        // 更新两个difficulty元素
-                        var formattedDifficulty = formatNumber(data.difficulty) + 'T';
-                        console.log('格式化后的difficulty值:', formattedDifficulty);
+                        // 更新difficulty元素 - 修复格式化参数
+                        console.log('[DIFFICULTY FIX] 原始difficulty值:', data.difficulty);
+                        var formattedDifficulty = formatNumber(data.difficulty, 2) + 'T';
+                        console.log('[DIFFICULTY FIX] 格式化后的difficulty值:', formattedDifficulty);
                         
                         if (networkDifficultyEl) {
-                            console.log('设置第一个difficulty显示为:', formattedDifficulty);
-                            console.log('第一个元素当前内容:', networkDifficultyEl.textContent);
+                            console.log('[DIFFICULTY FIX] 更新前元素内容:', networkDifficultyEl.textContent);
                             networkDifficultyEl.textContent = formattedDifficulty;
-                            console.log('第一个difficulty元素更新后内容:', networkDifficultyEl.textContent);
-                            // 强制标记元素已更新
+                            console.log('[DIFFICULTY FIX] 更新后元素内容:', networkDifficultyEl.textContent);
                             networkDifficultyEl.setAttribute('data-updated', 'fetchNetworkStats');
                         }
                         // 第二个difficulty元素已被移除（重复卡片）
                         
-                        // 更新两个hashrate元素
-                        var formattedHashrate = formatNumber(data.hashrate) + ' EH/s';
+                        // 更新hashrate元素 - 修复格式化参数
+                        var formattedHashrate = formatNumber(data.hashrate, 2) + ' EH/s';
                         if (networkHashrateEl) networkHashrateEl.textContent = formattedHashrate;
                         if (networkHashrateValueEl) networkHashrateValueEl.textContent = formattedHashrate;
                         if (blockRewardEl) {
