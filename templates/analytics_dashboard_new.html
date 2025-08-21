@@ -74,6 +74,17 @@
             color: white !important;
         }
 
+        /* Alert improvements for better visibility */
+        .alert-warning {
+            background-color: rgba(237, 137, 54, 0.15) !important;
+            border: 1px solid rgba(237, 137, 54, 0.5) !important;
+            color: #ffd700 !important;
+        }
+        
+        .alert-warning * {
+            color: #ffd700 !important;
+        }
+        
         /* Educational disclaimer - enhanced readability */
         .disclaimer-text {
             color: #2c3e50 !important;
@@ -890,9 +901,9 @@
                                         <p class="mb-1"><i class="bi bi-info-circle text-info me-2"></i>
                                             Price above 52W median with RSI approaching overbought. Consider taking 15% profit at Layer 2 target.
                                         </p>
-                                        <div class="alert alert-warning py-1 px-2 mt-2" style="font-size: 0.85rem;">
-                                            <i class="bi bi-exclamation-triangle me-1"></i>
-                                            Next trigger: L2 at $113,800 (sell 0.75 BTC)
+                                        <div class="alert alert-warning py-2 px-3 mt-2" style="font-size: 0.9rem; background-color: rgba(237, 137, 54, 0.15); border: 1px solid rgba(237, 137, 54, 0.5); color: #ffd700 !important;">
+                                            <i class="bi bi-exclamation-triangle me-2" style="color: #ffd700 !important;"></i>
+                                            <strong style="color: #ffd700 !important;">Next trigger: L2 at $113,800 (sell 0.75 BTC)</strong>
                                         </div>
                                         <button class="btn btn-sm btn-outline-warning mt-2" onclick="document.getElementById('execution-tab').click()">
                                             <i class="bi bi-arrow-right-circle me-1"></i>
