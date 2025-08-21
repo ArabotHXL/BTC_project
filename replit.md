@@ -7,6 +7,14 @@ The BTC Mining Calculator is a web application for Bitcoin mining profitability 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+**2025-08-21: Advanced Algorithm Strategy Framework Discussion**
+- 用户提出了高级10模块算法交易策略框架（A-J模块）
+- 包含自适应趋势识别、动态ATR分层、支撑阻力共振、突破衰竭检测等
+- 技术评估：完全可行，建议分三阶段实施
+- Phase 1优先：Regime-Aware + Adaptive-ATR + Confluence模块
+- 设计为与现有信号聚合系统集成，保持UI一致性
+- 用户询问实施可行性，已提供详细分析和建议路径
+
 **2025-08-21: UI可见性优化和数据来源文档化**
 - 完成导航标签文字可见性修复，使用白色文字配合金色渐变背景增强对比度
 - 改善免责声明文字可读性，采用深蓝色文字配合渐变背景和金色边框
