@@ -554,20 +554,21 @@
                     </div>
                     
                     <!-- Language Switcher -->
-                    <div class="btn-group">
-                        <button type="button" class="btn nav-btn dropdown-toggle" data-bs-toggle="dropdown">
+                    <div class="dropdown">
+                        <button type="button" class="btn nav-btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="languageDropdown">
                             <i class="bi bi-globe me-1"></i>
                             <span id="currentLangDisplay">{{ 'CN' if current_lang == 'zh' else 'EN' }}</span>
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end" style="background: var(--bg-secondary) !important; border: 1px solid rgba(116, 75, 162, 0.3) !important;">
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown" 
+                            style="background: var(--bg-secondary) !important; border: 1px solid rgba(116, 75, 162, 0.3) !important; z-index: 1050;">
                             <li>
-                                <a class="dropdown-item" href="/set_language?lang=zh" onclick="switchLanguage('zh'); return false;" 
+                                <a class="dropdown-item" href="#" onclick="switchLanguage('zh')" 
                                    style="color: white !important; padding: 12px 20px !important; display: block !important;">
                                     <i class="bi bi-translate me-2"></i>中文
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item" href="/set_language?lang=en" onclick="switchLanguage('en'); return false;" 
+                                <a class="dropdown-item" href="#" onclick="switchLanguage('en')" 
                                    style="color: white !important; padding: 12px 20px !important; display: block !important;">
                                     <i class="bi bi-translate me-2"></i>English
                                 </a>
@@ -1279,6 +1280,7 @@
             initializeCharts();
             initTooltips();
             initAlertsSystem(); // Initialize alerts functionality
+            initLanguageDropdown(); // Initialize language dropdown
             updateTimestamp();
             
             // Update timestamp every minute
@@ -1289,6 +1291,12 @@
         function switchLanguage(lang) {
             console.log('Switching language to:', lang);
             
+            // Close dropdown first
+            const dropdown = bootstrap.Dropdown.getInstance(document.getElementById('languageDropdown'));
+            if (dropdown) {
+                dropdown.hide();
+            }
+            
             // Update display immediately
             const langDisplay = document.getElementById('currentLangDisplay');
             if (langDisplay) {
@@ -1297,6 +1305,37 @@
             
             // Navigate to set language
             window.location.href = '/set_language?lang=' + lang + '&return_url=' + encodeURIComponent(window.location.href);
+        }
+        
+        // Initialize dropdown manually if Bootstrap doesn't work
+        function initLanguageDropdown() {
+            const dropdownBtn = document.getElementById('languageDropdown');
+            const dropdownMenu = dropdownBtn.nextElementSibling;
+            
+            if (dropdownBtn && dropdownMenu) {
+                dropdownBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Toggle dropdown visibility
+                    const isVisible = dropdownMenu.style.display === 'block';
+                    if (isVisible) {
+                        dropdownMenu.style.display = 'none';
+                        dropdownBtn.setAttribute('aria-expanded', 'false');
+                    } else {
+                        dropdownMenu.style.display = 'block';
+                        dropdownBtn.setAttribute('aria-expanded', 'true');
+                    }
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                        dropdownMenu.style.display = 'none';
+                        dropdownBtn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
         }
 
         function initializeDashboard() {
