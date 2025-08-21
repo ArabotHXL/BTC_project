@@ -1322,11 +1322,11 @@
                     <div class="row">
                         <div class="col-md-8">
                             <h6 class="mb-2">
-                                <i class="bi bi-cpu me-2"></i>Advanced Algorithm Engine (Phase 1)
-                                <span class="badge bg-info ms-2">${data.phase || 'Active'}</span>
+                                <i class="bi bi-cpu me-2"></i>Advanced Algorithm Engine (Phase 2)
+                                <span class="badge bg-success ms-2">${data.phase || 'Phase 2 (5 Modules)'}</span>
                             </h6>
                             <div class="text-muted small mb-2">
-                                Modules: ${data.modules_count || 3} | Confidence: ${Math.round((data.confidence || 0) * 100)}%
+                                Active Modules: ${data.modules_count || 5}/5 | Confidence: ${Math.round((data.confidence || 0) * 100)}%
                             </div>
                             <div class="advanced-notes">
                                 ${(data.notes || []).map(note => `<div class="small text-info">• ${note}</div>`).join('')}
@@ -1358,9 +1358,9 @@
                 sell_score: 50,
                 recommendation: 'HOLD',
                 confidence: 0,
-                notes: ['Advanced algorithm initializing...'],
-                phase: 'Initialization',
-                modules_count: 3
+                notes: ['Phase 2算法正在初始化...'],
+                phase: 'Phase 2 Loading',
+                modules_count: 5
             });
         }
 

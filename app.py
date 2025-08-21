@@ -3653,7 +3653,7 @@ def api_treasury_advanced_signals():
             if advanced_engine:
                 signals = advanced_engine.generate_advanced_signals(market_data, technical_data)
                 signals['success'] = True
-                signals['phase'] = 'Phase 1 (Regime-Aware + ATR + Confluence)'
+                signals['phase'] = 'Phase 2 (5 Modules: A-E)'
                 signals['timestamp'] = datetime.now().isoformat()
             else:
                 raise ImportError("高级算法引擎未初始化")
@@ -3667,9 +3667,9 @@ def api_treasury_advanced_signals():
                 'recommendation': 'WATCH',
                 'action_level': 'Medium',
                 'confidence': 0.68,
-                'notes': ['Phase 1算法正在初始化', '基于RSI和MA趋势的基础评估'],
-                'phase': 'Basic Algorithm Fallback',
-                'modules_count': 3,
+                'notes': ['Phase 2算法正在初始化', '基于RSI和MA趋势的基础评估'],
+                'phase': 'Phase 2 Fallback (5 Modules)',
+                'modules_count': 5,
                 'timestamp': datetime.now().isoformat()
             }
         

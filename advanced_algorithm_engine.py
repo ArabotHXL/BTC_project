@@ -195,6 +195,120 @@ class AdvancedAlgorithmEngine:
         
         return ModuleScore("confluence", score, confidence, notes)
     
+    def breakout_exhaustion_module(self, features: FeaturePack) -> ModuleScore:
+        """
+        D. 突破衰竭检测模块 (Phase 2)
+        识别虚假突破和衰竭信号，防止追高风险
+        """
+        notes = []
+        score = 0.0
+        confidence = 0.7
+        
+        # 检查是否处于潜在突破位置
+        near_resistance = features.close >= features.donchian_20_high * 0.995
+        near_bb_upper = features.close >= features.bb_upper * 0.995
+        
+        if near_resistance or near_bb_upper:
+            # 在阻力位附近，检查衰竭信号
+            
+            # 1. 成交量衰竭检查
+            volume_exhaustion = False
+            if hasattr(features, 'vol_today') and hasattr(features, 'vol_20d'):
+                if features.vol_today < features.vol_20d * 0.8:  # 成交量低于20日均量80%
+                    volume_exhaustion = True
+                    score += 0.2  # 低量突破，偏向卖出
+                    notes.append("成交量衰竭：突破缺乏量能支撑")
+                    confidence = 0.8
+            
+            # 2. RSI背离检查 (简化版)
+            if features.rsi14 > 75:  # 极度超买
+                score += 0.25
+                notes.append("RSI极度超买：>75，突破乏力风险高")
+                confidence = 0.85
+            elif features.rsi14 > 65:  # 超买区域
+                score += 0.1
+                notes.append("RSI超买区域，关注背离")
+            
+            # 3. 价格行为分析
+            # 检查是否有长上影线（衰竭征象）
+            if features.close < features.high * 0.98:  # 收盘价低于最高价2%
+                score += 0.15
+                notes.append("长上影线：卖压显现")
+            
+            # 4. ATR扩张检查
+            if features.atr_pct > 0.08:  # ATR超过8%（高波动）
+                score += 0.1
+                notes.append("波动率扩张：突破可能不持续")
+        
+        else:
+            # 不在突破位置，降低衰竭模块权重
+            score = 0.0
+            notes.append("未处于突破位置，模块不活跃")
+            confidence = 0.3
+        
+        return ModuleScore("breakout_exhaustion", score, confidence, notes)
+    
+    def miner_cycle_module(self, features: FeaturePack) -> ModuleScore:
+        """
+        E. 挖矿周期整合模块 (Phase 2)  
+        整合矿工行为和市场周期，提供宏观卖出时机
+        """
+        notes = []
+        score = 0.0
+        confidence = 0.6
+        
+        # 使用Puell Multiple评估矿工压力
+        if features.puell is not None:
+            if features.puell > 4.0:
+                # 极高Puell Multiple，强烈卖出信号
+                score += 0.4
+                notes.append(f"Puell Multiple极高：{features.puell:.2f} (>4.0)")
+                confidence = 0.9
+            elif features.puell > 2.5:
+                # 高Puell Multiple，卖出信号
+                score += 0.25
+                notes.append(f"Puell Multiple偏高：{features.puell:.2f} (>2.5)")
+                confidence = 0.8
+            elif features.puell > 1.5:
+                # 中性偏高区域
+                score += 0.1
+                notes.append(f"Puell Multiple中性：{features.puell:.2f}")
+            else:
+                # 低Puell Multiple，矿工卖压较小
+                score -= 0.1
+                notes.append(f"Puell Multiple偏低：{features.puell:.2f} (矿工卖压小)")
+        
+        # 使用Hash Price Percentile评估矿工盈利能力
+        if features.hashprice_pctile is not None:
+            if features.hashprice_pctile > 0.9:
+                # 矿工处于极高盈利状态，卖出压力大
+                score += 0.2
+                notes.append(f"Hash Price高位：{features.hashprice_pctile*100:.0f}%分位")
+                confidence = max(confidence, 0.8)
+            elif features.hashprice_pctile > 0.7:
+                # 矿工高盈利状态
+                score += 0.1
+                notes.append(f"Hash Price偏高：{features.hashprice_pctile*100:.0f}%分位")
+            elif features.hashprice_pctile < 0.3:
+                # 矿工盈利较低，卖压减小
+                score -= 0.1
+                notes.append(f"Hash Price偏低：{features.hashprice_pctile*100:.0f}%分位 (矿工惜售)")
+        
+        # 价格位置与挖矿成本的关系
+        if features.pct_52w > 0.8:
+            # 价格处于52周高位，结合矿工指标
+            if features.puell and features.puell > 2.0:
+                score += 0.15
+                notes.append("价格高位+矿工高收益：卖出时机成熟")
+                confidence = 0.85
+        
+        # 市场周期判断（基于移动平均线）
+        if features.close > features.ma50 * 1.2:  # 价格显著高于50日MA
+            score += 0.1
+            notes.append("价格过热：高于50日MA 20%+")
+        
+        return ModuleScore("miner_cycle", score, confidence, notes)
+    
     def calculate_features_from_data(self, market_data: Dict, technical_data: Dict, 
                                     historical_prices: Optional[List[float]] = None) -> FeaturePack:
         """从市场数据计算特征包"""
@@ -247,10 +361,13 @@ class AdvancedAlgorithmEngine:
         """聚合各模块评分"""
         
         if weights is None:
+            # Phase 2权重配置 - 5个模块均衡分布
             weights = {
-                'regime_aware': 0.8,
-                'adaptive_atr': 1.0,
-                'confluence': 1.2
+                'regime_aware': 0.25,           # 模块A - 趋势识别
+                'adaptive_atr': 0.20,           # 模块B - ATR自适应
+                'confluence': 0.25,             # 模块C - 支撑阻力共振
+                'breakout_exhaustion': 0.15,    # 模块D - 突破衰竭检测
+                'miner_cycle': 0.15             # 模块E - 挖矿周期整合
             }
         
         weighted_sum = 0.0
@@ -322,7 +439,16 @@ class AdvancedAlgorithmEngine:
             confluence_score = self.confluence_module(features)
             module_scores.append(confluence_score)
             
-            # 聚合评分
+            # Phase 2 新增模块
+            # D. 突破衰竭检测模块
+            breakout_score = self.breakout_exhaustion_module(features)
+            module_scores.append(breakout_score)
+            
+            # E. 挖矿周期整合模块
+            miner_cycle_score = self.miner_cycle_module(features)
+            module_scores.append(miner_cycle_score)
+            
+            # 聚合评分 - Phase 2权重配置
             result = self.aggregate_scores(module_scores)
             
             logger.info(f"高级算法信号生成完成：评分{result['sell_score']}, 建议{result['recommendation']}")
