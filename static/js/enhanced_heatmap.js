@@ -10,11 +10,14 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
         // Clear container
         containerElement.innerHTML = '';
         
+        // Get current language from page
+        const currentLang = document.documentElement.lang === 'en' || document.querySelector('meta[name="language"]')?.content === 'en' ? 'en' : 'zh';
+        
         const {
-            title = '挖矿收益热力图',
+            title = currentLang === 'en' ? 'Customer Profitability Heatmap' : '客户收益热力图',
             width = 900,
             height = 550,
-            language = 'zh'
+            language = currentLang
         } = options;
         
         // Validate input data

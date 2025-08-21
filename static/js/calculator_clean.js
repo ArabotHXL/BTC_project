@@ -849,10 +849,15 @@ document.addEventListener('DOMContentLoaded', function() {
             // Use enhanced heatmap if available
             if (window.createEnhancedHeatmap && typeof window.createEnhancedHeatmap === 'function') {
                 chartContainer.innerHTML = '';
-                var title = clientElectricityCost > 0 ? '客户收益热力图' : '矿场主收益热力图';
+                // Get current language from page
+                const currentLang = document.documentElement.lang === 'en' || document.querySelector('meta[name="language"]')?.content === 'en' ? 'en' : 'zh';
+                var title = currentLang === 'en' ? 
+                    (clientElectricityCost > 0 ? 'Customer Profitability Heatmap' : 'Mining Site Profitability Heatmap') :
+                    (clientElectricityCost > 0 ? '客户收益热力图' : '矿场主收益热力图');
+                
                 window.createEnhancedHeatmap(chartContainer, data.profit_data, {
                     title: title,
-                    language: 'zh'
+                    language: currentLang
                 });
                 console.log('[CALCULATOR] 增强热力图生成成功');
             } else {
