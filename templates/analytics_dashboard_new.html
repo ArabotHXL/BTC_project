@@ -497,6 +497,12 @@
                 </div>
                 
                 <div class="d-flex align-items-center gap-3">
+                    <!-- Last Update Timestamp -->
+                    <small class="text-muted">
+                        <i class="bi bi-clock-history me-1"></i>
+                        <span id="lastUpdateTime">Last update: --</span>
+                    </small>
+                    
                     <!-- Alert Indicator -->
                     <div class="position-relative">
                         <button class="btn nav-btn" id="alertsBtn">
@@ -539,7 +545,10 @@
             <div class="col-md-3 col-sm-6 mb-3">
                 <div class="card treasury-card">
                     <div class="card-body">
-                        <div class="metric-label">BTC Inventory</div>
+                        <div class="metric-label">
+                            BTC Inventory
+                            <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="Total BTC holdings in treasury"></i>
+                        </div>
                         <div class="metric-value" id="btcInventory">0.0000</div>
                         <small class="text-muted">≈ $<span id="btcInventoryUSD">0</span></small>
                     </div>
@@ -549,7 +558,10 @@
             <div class="col-md-3 col-sm-6 mb-3">
                 <div class="card treasury-card">
                     <div class="card-body">
-                        <div class="metric-label">Avg Cost Basis</div>
+                        <div class="metric-label">
+                            Avg Cost Basis
+                            <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="FIFO method: (Total BTC Purchase Cost) / (Total BTC Purchased)"></i>
+                        </div>
                         <div class="metric-value" id="avgCostBasis">$0</div>
                         <small class="text-success" id="unrealizedPL">+0.00%</small>
                     </div>
@@ -559,7 +571,10 @@
             <div class="col-md-3 col-sm-6 mb-3">
                 <div class="card treasury-card">
                     <div class="card-body">
-                        <div class="metric-label">Cash Coverage</div>
+                        <div class="metric-label">
+                            Cash Coverage
+                            <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="Formula: (Cash + Stablecoins) / Monthly OPEX (in days)"></i>
+                        </div>
                         <div class="metric-value" id="cashCoverage">0</div>
                         <small class="text-muted">Days of OPEX</small>
                         <div class="progress mt-2">
@@ -572,7 +587,10 @@
             <div class="col-md-3 col-sm-6 mb-3">
                 <div class="card treasury-card">
                     <div class="card-body">
-                        <div class="metric-label">Next Month Due</div>
+                        <div class="metric-label">
+                            Next Month Due
+                            <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="Monthly OPEX + Projected Bills"></i>
+                        </div>
                         <div class="metric-value text-warning" id="nextMonthDue">$0</div>
                         <small class="text-muted">OPEX + Bills</small>
                     </div>
@@ -728,6 +746,7 @@
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-yellow"></span>
                                     <span>RSI(14): 68.5</span>
+                                    <small class="text-muted d-block">Near 70 (hit)</small>
                                 </div>
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-green"></span>
@@ -736,6 +755,7 @@
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-red"></span>
                                     <span>ATR: High Volatility</span>
+                                    <small class="text-muted d-block">Above 1.5%</small>
                                 </div>
                             </div>
                         </div>
@@ -751,14 +771,17 @@
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-yellow"></span>
                                     <span>Puell: 1.65</span>
+                                    <small class="text-muted d-block">Trigger >1.8</small>
                                 </div>
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-green"></span>
                                     <span>SOPR: 1.02</span>
+                                    <small class="text-muted d-block">Profitable</small>
                                 </div>
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-green"></span>
                                     <span>MVRV: 2.1</span>
+                                    <small class="text-muted d-block">Fair value</small>
                                 </div>
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-green"></span>
@@ -778,6 +801,7 @@
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-yellow"></span>
                                     <span>Hashprice: 65%ile</span>
+                                    <small class="text-muted d-block">Trigger >70%ile</small>
                                 </div>
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-green"></span>
@@ -786,10 +810,12 @@
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-green"></span>
                                     <span>Difficulty: +2.1%</span>
+                                    <small class="text-muted d-block">Normal range</small>
                                 </div>
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-yellow"></span>
                                     <span>Miner→Exchange: Normal</span>
+                                    <small class="text-muted d-block">No stress</small>
                                 </div>
                             </div>
                         </div>
@@ -805,10 +831,12 @@
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-green"></span>
                                     <span>Funding: 0.01%</span>
+                                    <small class="text-muted d-block">Neutral zone</small>
                                 </div>
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-yellow"></span>
                                     <span>Basis: 5.2%</span>
+                                    <small class="text-muted d-block">Near 6% (alert)</small>
                                 </div>
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-green"></span>
@@ -817,6 +845,7 @@
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-green"></span>
                                     <span>Spread: 0.02%</span>
+                                    <small class="text-muted d-block">Low liquidity</small>
                                 </div>
                             </div>
                         </div>
@@ -827,17 +856,30 @@
                 <div class="row mt-4">
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header">
+                            <div class="card-header d-flex justify-content-between align-items-center">
                                 <h5>Aggregated Signal & Recommendation</h5>
+                                <button class="btn btn-sm btn-outline-light" onclick="exportSignal()">
+                                    <i class="bi bi-download me-1"></i>Export
+                                </button>
                             </div>
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-6">
                                         <h6>Current Signal: <span class="text-warning">NEUTRAL-BULLISH</span></h6>
-                                        <div class="progress mb-3" style="height: 20px;">
+                                        <div class="progress mb-2" style="height: 20px;">
                                             <div class="progress-bar bg-danger" style="width: 20%">Sell</div>
                                             <div class="progress-bar bg-warning" style="width: 40%">Hold</div>
                                             <div class="progress-bar bg-success" style="width: 40%">Buy</div>
+                                        </div>
+                                        <small class="text-muted">
+                                            <i class="bi bi-calculator me-1"></i>
+                                            Weighted Score: Trend +18 | On-Chain +6 | Mining +4 | Market -2 = +26
+                                        </small>
+                                        <div class="mt-2">
+                                            <small class="text-success">
+                                                <i class="bi bi-check-circle me-1"></i>
+                                                Confidence: High (3 signals aligned)
+                                            </small>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -845,7 +887,12 @@
                                         <p class="mb-1"><i class="bi bi-info-circle text-info me-2"></i>
                                             Price above 52W median with RSI approaching overbought. Consider taking 15% profit at Layer 2 target.
                                         </p>
-                                        <button class="btn btn-sm btn-outline-warning mt-2">
+                                        <div class="alert alert-warning py-1 px-2 mt-2" style="font-size: 0.85rem;">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>
+                                            Next trigger: L2 at $113,800 (sell 0.75 BTC)
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-warning mt-2" onclick="document.getElementById('execution-tab').click()">
+                                            <i class="bi bi-arrow-right-circle me-1"></i>
                                             Execute Recommended Trade
                                         </button>
                                     </div>
@@ -879,7 +926,7 @@
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Amount (BTC)</label>
-                                        <input type="number" class="form-control" id="executionAmount" step="0.0001" value="0.0">
+                                        <input type="number" class="form-control" id="executionAmount" step="0.0001" value="0.0" onchange="generateOrders()">
                                     </div>
                                 </div>
                                 
@@ -1443,21 +1490,110 @@
 
         // Execution functions
         function generateOrders() {
-            // Generate order list based on execution parameters
-            console.log('Generating orders...');
-            // Implementation here
+            const amount = parseFloat(document.getElementById('executionAmount').value) || 0;
+            const type = document.getElementById('executionType').value;
+            const exchange = document.getElementById('exchangeSelect').value;
+            const slippageTolerance = parseFloat(document.getElementById('slippageTolerance').value) || 0.5;
+            
+            if (amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+            
+            // Calculate estimated slippage based on amount and type
+            let estimatedSlippage = 0;
+            if (type === 'market') {
+                estimatedSlippage = amount > 1 ? 0.15 + (amount * 0.02) : 0.1;
+            } else if (type === 'ladder') {
+                estimatedSlippage = 0.05;
+            } else if (type === 'twap' || type === 'vwap') {
+                estimatedSlippage = 0.03;
+            }
+            
+            const btcPrice = 113820;
+            const totalValue = amount * btcPrice;
+            const slippageCost = totalValue * (estimatedSlippage / 100);
+            const netProceeds = totalValue - slippageCost;
+            
+            const preview = `
+                <div class="alert alert-info mb-3">
+                    <h6 class="mb-2"><i class="bi bi-calculator me-2"></i>Order Details</h6>
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">Type:</small><br>
+                            <strong>${type.toUpperCase()}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Amount:</small><br>
+                            <strong>${amount} BTC</strong>
+                        </div>
+                    </div>
+                    <hr class="my-2">
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">Est. Slippage:</small><br>
+                            <strong class="text-warning">${estimatedSlippage.toFixed(2)}%</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Slippage Cost:</small><br>
+                            <strong class="text-warning">$${slippageCost.toFixed(2)}</strong>
+                        </div>
+                    </div>
+                    <hr class="my-2">
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">Gross Value:</small><br>
+                            <strong>$${totalValue.toLocaleString()}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Net Proceeds:</small><br>
+                            <strong class="text-success">$${netProceeds.toLocaleString()}</strong>
+                        </div>
+                    </div>
+                    ${estimatedSlippage > slippageTolerance ? 
+                        '<div class="alert alert-warning mt-2 mb-0 py-1"><i class="bi bi-exclamation-triangle me-1"></i>Est. slippage exceeds tolerance!</div>' : 
+                        '<div class="alert alert-success mt-2 mb-0 py-1"><i class="bi bi-check-circle me-1"></i>Within slippage tolerance</div>'}
+                </div>
+            `;
+            
+            document.getElementById('executionPreview').innerHTML = preview;
         }
 
         function simulateExecution() {
-            // Simulate order execution
-            console.log('Simulating execution...');
-            // Implementation here
+            const amount = parseFloat(document.getElementById('executionAmount').value) || 0;
+            if (amount <= 0) {
+                alert('Please configure execution parameters first');
+                return;
+            }
+            
+            // Add to execution log
+            const now = new Date();
+            const timeStr = now.toLocaleString('en-US', {
+                timeZone: 'America/New_York',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            const logEntry = `
+                <div class="mb-2 p-2 bg-dark rounded">
+                    <small class="text-muted">${timeStr} (Simulated)</small><br>
+                    <span class="text-info">Simulated: ${amount} BTC @ $113,820</span><br>
+                    <small>${document.getElementById('executionType').value.toUpperCase()} execution</small>
+                </div>
+            `;
+            
+            const logDiv = document.getElementById('executionLog');
+            logDiv.insertAdjacentHTML('afterbegin', logEntry);
+            
+            alert('Simulation complete! Check the execution log for details.');
         }
 
         function clearExecution() {
-            // Clear execution panel
             document.getElementById('executionAmount').value = '0';
             document.getElementById('executionPreview').innerHTML = '<p class="text-muted">Configure parameters to see execution preview</p>';
+            document.getElementById('executionParams').innerHTML = '';
         }
 
         // Backtest functions
@@ -1495,6 +1631,89 @@
             // Reload dashboard with new settings
             loadTreasuryData();
         }
+        
+        // Initialize tooltips
+        function initTooltips() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
+        
+        // Update timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            const formattedTime = now.toLocaleString('en-US', {
+                timeZone: 'America/New_York',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            }) + ' ET';
+            const timestampElement = document.getElementById('lastUpdateTime');
+            if (timestampElement) {
+                timestampElement.textContent = `Last update: ${formattedTime}`;
+            }
+        }
+        
+        // Export signal data
+        function exportSignal() {
+            const signalData = {
+                timestamp: new Date().toISOString(),
+                signal: 'NEUTRAL-BULLISH',
+                weightedScore: 26,
+                components: {
+                    technical: 18,
+                    onChain: 6,
+                    mining: 4,
+                    market: -2
+                },
+                recommendation: 'Consider taking 15% profit at Layer 2 target',
+                nextTrigger: {
+                    price: 113800,
+                    action: 'sell',
+                    amount: 0.75,
+                    unit: 'BTC'
+                },
+                confidence: 'High',
+                indicators: {
+                    rsi: 68.5,
+                    puell: 1.65,
+                    hashprice: '65%ile',
+                    funding: 0.01
+                }
+            };
+            
+            const dataStr = JSON.stringify(signalData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportLink = document.createElement('a');
+            exportLink.setAttribute('href', dataUri);
+            exportLink.setAttribute('download', `signal_${new Date().toISOString()}.json`);
+            document.body.appendChild(exportLink);
+            exportLink.click();
+            document.body.removeChild(exportLink);
+        }
+        
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTreasuryData();
+            setupExecutionPanel();
+            initializeCharts();
+            initTooltips();
+            updateTimestamp();
+            
+            // Update timestamp every minute
+            setInterval(updateTimestamp, 60000);
+            
+            // Update data every 30 seconds
+            setInterval(function() {
+                updateMarketData();
+                updateTimestamp();
+            }, 30000);
+        });
     </script>
 </body>
 </html>
