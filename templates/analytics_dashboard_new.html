@@ -1523,30 +1523,32 @@
                     cardBody.appendChild(advancedDiv);
                 }
                 
-                // 更加紧凑的显示样式
                 advancedDiv.innerHTML = `
                     <hr class="my-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div>
-                            <h6 class="mb-1">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6 class="mb-2">
                                 <i class="bi bi-cpu me-2"></i>{{ tr('advanced_algorithm_engine') }}
-                                <span class="badge bg-success ms-2 small">${data.phase || 'Phase 2'}</span>
+                                <span class="badge bg-success ms-2">${data.phase || 'Phase 2 (5 Modules: A-E)'}</span>
                             </h6>
-                            <small class="text-muted">
+                            <div class="text-muted small mb-2">
                                 ${data.modules_count || 5}/5 {{ tr('modules_active') }} | ${Math.round((data.confidence || 0) * 100)}% {{ tr('confidence') }}
-                            </small>
+                            </div>
+                            <div class="advanced-notes">
+                                ${(data.notes || []).map(note => `<div class="small text-info mb-1">• ${note}</div>`).join('')}
+                            </div>
                         </div>
-                        <div class="text-end">
-                            <div class="h5 ${data.sell_score >= 70 ? 'text-danger' : data.sell_score >= 50 ? 'text-warning' : 'text-success'} mb-0">
+                        <div class="col-md-4 text-center">
+                            <div class="h3 ${data.sell_score >= 70 ? 'text-danger' : data.sell_score >= 50 ? 'text-warning' : 'text-success'} mb-1">
                                 ${data.sell_score}/100
                             </div>
-                            <span class="badge ${data.sell_score >= 70 ? 'bg-danger' : data.sell_score >= 50 ? 'bg-warning' : 'bg-success'} small">
-                                ${data.recommendation || 'HOLD'}
-                            </span>
+                            <div class="text-muted small">Advanced Score</div>
+                            <div class="mt-2">
+                                <span class="badge ${data.sell_score >= 70 ? 'bg-danger' : data.sell_score >= 50 ? 'bg-warning' : 'bg-success'}">
+                                    ${data.recommendation || 'HOLD'}
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="advanced-notes small text-muted">
-                        ${(data.notes || []).slice(0, 2).map(note => `<div>• ${note}</div>`).join('')}
                     </div>
                 `;
                 
