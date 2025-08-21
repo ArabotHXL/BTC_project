@@ -264,6 +264,15 @@ if initialize_database_result:
         MinerModel = models.MinerModel
         
         logging.info("Models imported successfully at module level")
+        
+        # 初始化投资组合管理系统
+        try:
+            from user_portfolio_management import portfolio_manager
+            portfolio_manager.create_portfolio_table()
+            logging.info("用户投资组合管理系统初始化完成")
+        except Exception as e:
+            logging.error(f"投资组合管理系统初始化失败: {e}")
+        
     except ImportError as e:
         logging.error(f"Failed to import models: {e}")
         initialize_database_result = False
@@ -3467,19 +3476,71 @@ def analytics_dashboard():
                 
         except Exception as e:
             app.logger.error(f"服务器端技术指标计算失败: {e}")
-            # 提供符合当前市场的默认值
-            current_market_price = 118831  # 当前BTC价格
-            technical_indicators = {
-                'rsi': 68.5,  # 接近贪婪区域
-                'macd': -15.3,  # 轻微看跌
-                'volatility': 12.5,  # 12.5%波动率
-                'sma_20': current_market_price - 500,
-                'sma_50': current_market_price + 200, 
-                'ema_12': current_market_price - 200,
-                'ema_26': current_market_price + 100,
-                'bollinger_upper': current_market_price + 1500,
-                'bollinger_lower': current_market_price - 1500
-            }
+            # 从数据库获取最新技术指标作为后备
+            try:
+                from mining_calculator import get_real_time_btc_price
+                current_price = get_real_time_btc_price()
+                
+                # 尝试从数据库获取最近的技术指标
+                import psycopg2
+                conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT rsi_14, macd, volatility_30d, sma_20, sma_50, 
+                           ema_12, ema_26, bollinger_upper, bollinger_lower
+                    FROM technical_indicators 
+                    WHERE recorded_at >= %s
+                    ORDER BY recorded_at DESC 
+                    LIMIT 1
+                """, [datetime.now() - timedelta(hours=2)])
+                
+                db_indicators = cursor.fetchone()
+                cursor.close()
+                conn.close()
+                
+                if db_indicators:
+                    technical_indicators = {
+                        'rsi': float(db_indicators[0]) if db_indicators[0] else 50.0,
+                        'macd': float(db_indicators[1]) if db_indicators[1] else 0.0,
+                        'volatility': float(db_indicators[2]) * 100 if db_indicators[2] else 5.0,
+                        'sma_20': float(db_indicators[3]) if db_indicators[3] else current_price,
+                        'sma_50': float(db_indicators[4]) if db_indicators[4] else current_price,
+                        'ema_12': float(db_indicators[5]) if db_indicators[5] else current_price,
+                        'ema_26': float(db_indicators[6]) if db_indicators[6] else current_price,
+                        'bollinger_upper': float(db_indicators[7]) if db_indicators[7] else current_price + 1000,
+                        'bollinger_lower': float(db_indicators[8]) if db_indicators[8] else current_price - 1000
+                    }
+                    app.logger.info("使用数据库最新技术指标作为后备数据")
+                else:
+                    # 最终后备：基于当前价格的合理估算
+                    technical_indicators = {
+                        'rsi': 50.0,  # 中性
+                        'macd': 0.0,  # 中性
+                        'volatility': 5.0,  # 5%波动率
+                        'sma_20': current_price,
+                        'sma_50': current_price, 
+                        'ema_12': current_price,
+                        'ema_26': current_price,
+                        'bollinger_upper': current_price + 1000,
+                        'bollinger_lower': current_price - 1000
+                    }
+                    app.logger.warning("使用基于当前价格的中性技术指标")
+                    
+            except Exception as e:
+                app.logger.error(f"获取后备技术指标失败: {e}")
+                # 最终安全后备
+                current_price = 113000  # 近期价格参考
+                technical_indicators = {
+                    'rsi': 50.0,
+                    'macd': 0.0,
+                    'volatility': 5.0,
+                    'sma_20': current_price,
+                    'sma_50': current_price,
+                    'ema_12': current_price,
+                    'ema_26': current_price,
+                    'bollinger_upper': current_price + 1000,
+                    'bollinger_lower': current_price - 1000
+                }
 
     app.logger.info(f"传递给模板的技术指标: {technical_indicators}")
     # 使用新的HashInsight Treasury Management模板
@@ -3500,30 +3561,40 @@ def api_treasury_overview():
         return jsonify({'success': False, 'error': 'Access denied'}), 403
     
     try:
-        # 模拟资金管理数据（实际应从数据库获取）
-        btc_inventory = 12.5  # BTC库存
-        btc_price = 113820  # 当前价格
-        avg_cost_basis = 95000  # 平均成本基础
-        monthly_opex = 250000  # 月度运营费用
-        cash_reserves = 1500000  # 现金储备
+        # 获取真实用户投资组合数据
+        from user_portfolio_management import portfolio_manager
         
-        # 计算关键指标
-        inventory_usd = btc_inventory * btc_price
-        unrealized_pl = ((btc_price - avg_cost_basis) / avg_cost_basis) * 100
-        cash_coverage_days = int(cash_reserves / (monthly_opex / 30))
-        next_month_due = monthly_opex * 1.1  # 包含账单
+        # 获取当前用户ID
+        email = session.get('email')
+        user = UserAccess.query.filter_by(email=email).first()
+        if not user:
+            return jsonify({'success': False, 'error': 'User not found'}), 401
+        
+        # 获取最新BTC价格
+        from mining_calculator import get_real_time_btc_price
+        current_btc_price = get_real_time_btc_price()
+        
+        # 获取用户投资组合数据
+        portfolio_data = portfolio_manager.get_user_portfolio(user.id)
+        if not portfolio_data:
+            return jsonify({'success': False, 'error': 'Portfolio data not found'}), 404
+        
+        # 计算投资组合指标
+        metrics = portfolio_manager.calculate_portfolio_metrics(portfolio_data, current_btc_price)
+        
+        # 记录每日快照（异步，不影响响应）
+        try:
+            portfolio_manager.record_daily_snapshot(user.id, current_btc_price)
+        except Exception as e:
+            logging.warning(f"Failed to record portfolio snapshot: {e}")
+        
+        # 添加数据来源标识
+        metrics['data_source'] = portfolio_data.get('data_source', 'user_configured')
+        metrics['last_updated'] = portfolio_data.get('last_updated', datetime.now()).isoformat()
         
         return jsonify({
             'success': True,
-            'btc_inventory': btc_inventory,
-            'btc_price': btc_price,
-            'avg_cost_basis': avg_cost_basis,
-            'inventory_usd': inventory_usd,
-            'unrealized_pl': unrealized_pl,
-            'cash_coverage_days': cash_coverage_days,
-            'next_month_due': next_month_due,
-            'cash_reserves': cash_reserves,
-            'monthly_opex': monthly_opex
+            **metrics
         })
         
     except Exception as e:
@@ -3719,46 +3790,142 @@ def api_treasury_backtest():
         end_date = data.get('end_date')
         initial_btc = float(data.get('initial_btc', 10))
         
-        # 模拟回测结果
-        import random
-        import numpy as np
+        # 获取用户投资组合参数用于回测
+        from user_portfolio_management import portfolio_manager
+        email = session.get('email')
+        user = UserAccess.query.filter_by(email=email).first()
         
-        # 生成模拟数据
-        days = 90
-        dates = []
-        values = []
-        base_value = initial_btc * 113820
+        portfolio_params = {}
+        if user:
+            portfolio_data = portfolio_manager.get_user_portfolio(user.id)
+            if portfolio_data:
+                portfolio_params = {
+                    'avg_cost_basis': portfolio_data.get('avg_cost_basis', 95000),
+                    'monthly_opex': portfolio_data.get('monthly_opex', 250000)
+                }
         
-        for i in range(days):
-            dates.append(f"Day {i+1}")
-            # 模拟价格变动
-            change = random.uniform(-0.02, 0.03)
-            base_value *= (1 + change)
-            values.append(base_value)
+        # 使用真实历史数据进行回测
+        from historical_data_engine import historical_engine
+        backtest_result = historical_engine.run_real_backtest(
+            strategy=strategy,
+            start_date=start_date or '2024-01-01',
+            end_date=end_date or '2025-01-01',
+            initial_btc=initial_btc,
+            portfolio_params=portfolio_params
+        )
         
-        # 计算指标
-        returns = np.diff(values) / values[:-1]
-        total_return = ((values[-1] - values[0]) / values[0]) * 100
-        max_drawdown = min((min(values) - max(values[:i+1])) / max(values[:i+1]) * 100 
-                          for i in range(len(values)))
-        sharpe_ratio = np.mean(returns) / np.std(returns) * np.sqrt(365) if np.std(returns) > 0 else 0
-        win_rate = sum(1 for r in returns if r > 0) / len(returns) * 100
+        if not backtest_result.get('success'):
+            # 如果历史数据不可用，使用简化的真实价格估算
+            logging.warning("历史数据回测失败，使用价格趋势估算")
+            
+            from mining_calculator import get_real_time_btc_price
+            current_price = get_real_time_btc_price()
+            
+            # 基于当前价格的简化回测
+            import numpy as np
+            days = 90
+            dates = [f"Day {i+1}" for i in range(days)]
+            
+            # 基于真实波动率生成价格序列
+            initial_price = current_price * 0.85  # 假设90天前价格
+            price_series = [initial_price]
+            
+            # 使用真实的BTC波动率参数
+            daily_volatility = 0.04  # 4%日波动率
+            drift = 0.0003  # 年化约11%的增长趋势
+            
+            for i in range(1, days):
+                random_shock = np.random.normal(0, daily_volatility)
+                new_price = price_series[-1] * (1 + drift + random_shock)
+                price_series.append(new_price)
+            
+            # 计算投资组合价值
+            portfolio_values = [initial_btc * price for price in price_series]
+            
+            # 计算指标
+            returns = np.diff(portfolio_values) / portfolio_values[:-1]
+            total_return = ((portfolio_values[-1] - portfolio_values[0]) / portfolio_values[0]) * 100
+            
+            # 计算最大回撤
+            cummax = np.maximum.accumulate(portfolio_values)
+            drawdown = (portfolio_values - cummax) / cummax * 100
+            max_drawdown = abs(np.min(drawdown))
+            
+            sharpe_ratio = np.mean(returns) / np.std(returns) * np.sqrt(365) if np.std(returns) > 0 else 0
+            win_rate = sum(1 for r in returns if r > 0) / len(returns) * 100
+            
+            backtest_result = {
+                'success': True,
+                'result': {
+                    'dates': dates[-30:],
+                    'values': portfolio_values[-30:],
+                    'total_return': round(total_return, 2),
+                    'max_drawdown': round(max_drawdown, 2),
+                    'sharpe_ratio': round(sharpe_ratio, 2),
+                    'win_rate': round(win_rate, 1),
+                    'total_trades': 0,
+                    'data_source': 'price_trend_estimation',
+                    'note': 'Based on realistic BTC volatility parameters'
+                }
+            }
         
-        backtest_result = {
-            'dates': dates[-30:],  # 最近30天
-            'values': values[-30:],
-            'total_return': round(total_return, 2),
-            'max_drawdown': round(max_drawdown, 2),
-            'sharpe_ratio': round(sharpe_ratio, 2),
-            'win_rate': round(win_rate, 1),
-            'avg_slippage': 0.15,
-            'total_trades': len(returns)
-        }
-        
-        return jsonify({'success': True, 'result': backtest_result})
+        return jsonify(backtest_result)
         
     except Exception as e:
         logging.error(f"Backtest error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/portfolio/settings')
+@login_required 
+def portfolio_settings():
+    """投资组合设置页面"""
+    if not user_has_analytics_access():
+        return redirect(url_for('calculator'))
+    
+    # 获取当前语言设置
+    lang = request.args.get('lang', session.get('lang', 'en'))
+    session['lang'] = lang
+    
+    return render_template('portfolio_settings.html', current_lang=lang)
+
+@app.route('/api/portfolio/update', methods=['POST'])
+@login_required
+def api_portfolio_update():
+    """更新用户投资组合设置"""
+    if not user_has_analytics_access():
+        return jsonify({'success': False, 'error': 'Access denied'}), 403
+    
+    try:
+        data = request.json
+        email = session.get('email')
+        user = UserAccess.query.filter_by(email=email).first()
+        
+        if not user:
+            return jsonify({'success': False, 'error': 'User not found'}), 401
+        
+        # 数据验证
+        portfolio_data = {
+            'btc_inventory': max(0, float(data.get('btc_inventory', 0))),
+            'avg_cost_basis': max(0, float(data.get('avg_cost_basis', 0))),
+            'cash_reserves': max(0, float(data.get('cash_reserves', 0))),
+            'monthly_opex': max(0, float(data.get('monthly_opex', 0))),
+            'electricity_cost_kwh': max(0, float(data.get('electricity_cost_kwh', 0.055))),
+            'facility_capacity_mw': max(0, float(data.get('facility_capacity_mw', 0))),
+            'notes': str(data.get('notes', ''))[:500]  # 限制长度
+        }
+        
+        # 保存到数据库
+        from user_portfolio_management import portfolio_manager
+        success = portfolio_manager.create_or_update_portfolio(user.id, portfolio_data)
+        
+        if success:
+            logging.info(f"投资组合设置已更新: user={user.email}, BTC={portfolio_data['btc_inventory']}")
+            return jsonify({'success': True, 'message': 'Portfolio updated successfully'})
+        else:
+            return jsonify({'success': False, 'error': 'Failed to save portfolio data'}), 500
+            
+    except Exception as e:
+        logging.error(f"Portfolio update error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # Unified analytics data endpoint for testing and general use

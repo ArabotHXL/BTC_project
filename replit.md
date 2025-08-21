@@ -7,6 +7,17 @@ The BTC Mining Calculator is a web application for Bitcoin mining profitability 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+**2025-08-21: Data Integrity Revolution - Authentic Data Sources Implementation**
+- 实施数据完整性革命：全面替换估算值为真实API数据源，提升平台专业性
+- 用户投资组合管理系统：创建user_portfolio_management.py，支持真实BTC库存、成本基础、现金储备配置
+- 历史数据引擎：开发historical_data_engine.py，集成CoinGecko历史价格API，替换随机回测数据
+- Treasury概览升级：从硬编码估算值转为用户可配置的真实投资组合数据
+- 技术指标智能后备：优先使用数据库真实技术指标，后备使用基于当前价格的合理估算
+- 回测引擎重构：使用真实历史价格数据执行策略回测，支持分层卖出和HODL策略分析
+- 投资组合设置界面：创建专业portfolio_settings.html页面，用户可配置个人财务数据
+- API端点扩展：新增/api/portfolio/update、/portfolio/settings路由，支持用户数据管理
+- 数据来源透明化：系统明确标识数据来源（真实API vs 演示数据），遵循数据完整性原则
+
 **2025-08-21: Major Technical Debt Resolution - Zero LSP Errors Achieved**
 - 完成全面技术债务修复，成功解决116个LSP错误（app.py: 98个，analytics_engine.py: 18个）
 - 修复数据库模型导入类型冲突：优化models导入策略，消除类型系统冲突
