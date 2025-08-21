@@ -38,6 +38,15 @@ mode = "sequential"
 task = "shell.exec"
 args = "python3 main.py"
 
+[[workflows.workflow]]
+name = "Run Application"
+author = 42135109
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python3 main.py"
+
 [[ports]]
 localPort = 5000
 externalPort = 80
