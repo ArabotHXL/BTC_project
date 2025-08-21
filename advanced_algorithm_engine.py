@@ -12,6 +12,23 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Import translation function
+try:
+    from language_engine import language_engine
+    ENHANCED_LANGUAGE = True
+except ImportError:
+    from translations import get_translation
+    ENHANCED_LANGUAGE = False
+
+def tr(text: str, **kwargs) -> str:
+    """翻译函数，支持变量插值"""
+    if ENHANCED_LANGUAGE:
+        return language_engine.translate(text, **kwargs)
+    else:
+        from flask import g
+        lang = getattr(g, 'language', 'en')
+        return get_translation(text, to_lang=lang)
+
 @dataclass
 class FeaturePack:
     """特征数据包"""
@@ -102,14 +119,14 @@ class AdvancedAlgorithmEngine:
         # 评分逻辑
         if trend_up and low_volatility:
             score += 0.2  # 上升趋势+低波动：提高门槛（延迟卖出）
-            notes.append("上升趋势+低波动：建议提高分层门槛")
+            notes.append(tr("uptrend_low_vol"))
         elif not trend_up and high_volatility:
             score -= 0.3  # 下降趋势+高波动：降低门槛（加速卖出）
-            notes.append("震荡/下降+高波动：建议降低门槛")
+            notes.append(tr("downtrend_high_vol"))
         
         if high_price_zone and high_volatility:
             score += 0.15  # 高位+高波动：谨慎信号
-            notes.append("价格高位+波动增加：谨慎观察")
+            notes.append(tr("high_price_volatility"))
             
         return ModuleScore("regime_aware", score, confidence, notes)
     
@@ -133,16 +150,16 @@ class AdvancedAlgorithmEngine:
         
         if effective_multiple > base_multiple * 1.3:
             score -= 0.1  # 高波动时拉远层距，减少卖出信号
-            notes.append(f"高波动环境：分层倍数调整至{effective_multiple:.1f}x")
+            notes.append(tr("high_volatility_adjustment", multiple=f"{effective_multiple:.1f}"))
         elif effective_multiple < base_multiple * 0.8:
             score += 0.1  # 低波动时缩小层距，增加卖出机会
-            notes.append(f"低波动环境：分层倍数调整至{effective_multiple:.1f}x")
+            notes.append(tr("low_volatility_adjustment", multiple=f"{effective_multiple:.1f}"))
             
         if momentum_confirmed:
-            notes.append("动能确认：RSI≥55")
+            notes.append(tr("momentum_confirmed"))
         else:
             score -= 0.05  # 缺乏动能确认
-            notes.append("动能不足：RSI<55")
+            notes.append(tr("momentum_insufficient"))
             
         return ModuleScore("adaptive_atr", score, confidence, notes)
     
@@ -170,14 +187,14 @@ class AdvancedAlgorithmEngine:
             for level in resistance_levels:
                 if abs(features.close - level) <= band_width:
                     near_resistance = True
-                    notes.append(f"接近阻力位：${level:.0f}")
+                    notes.append(tr("near_resistance", level=f"${level:.0f}"))
                     break
             
             if near_resistance:
                 # 检查拒绝形态（简化版）
                 if features.close < features.high * 0.995:  # 收盘价低于最高价0.5%
                     score += 0.25
-                    notes.append("检测到拒绝形态：上影线")
+                    notes.append(tr("rejection_pattern_detected"))
                     confidence = 0.7
         else:
             # 使用提供的支撑阻力位
@@ -190,7 +207,7 @@ class AdvancedAlgorithmEngine:
                     
             if total_strength >= 3:
                 score += min(0.3, total_strength * 0.1)
-                notes.append(f"共振区域：强度{total_strength:.1f}")
+                notes.append(tr("resonance_zone", strength=f"{total_strength:.1f}"))
                 confidence = 0.8
         
         return ModuleScore("confluence", score, confidence, notes)
@@ -262,50 +279,50 @@ class AdvancedAlgorithmEngine:
             if features.puell > 4.0:
                 # 极高Puell Multiple，强烈卖出信号
                 score += 0.4
-                notes.append(f"Puell Multiple极高：{features.puell:.2f} (>4.0)")
+                notes.append(tr("puell_extremely_high", value=f"{features.puell:.2f}"))
                 confidence = 0.9
             elif features.puell > 2.5:
                 # 高Puell Multiple，卖出信号
                 score += 0.25
-                notes.append(f"Puell Multiple偏高：{features.puell:.2f} (>2.5)")
+                notes.append(tr("puell_high", value=f"{features.puell:.2f}"))
                 confidence = 0.8
             elif features.puell > 1.5:
                 # 中性偏高区域
                 score += 0.1
-                notes.append(f"Puell Multiple中性：{features.puell:.2f}")
+                notes.append(tr("puell_neutral", value=f"{features.puell:.2f}"))
             else:
                 # 低Puell Multiple，矿工卖压较小
                 score -= 0.1
-                notes.append(f"Puell Multiple偏低：{features.puell:.2f} (矿工卖压小)")
+                notes.append(tr("puell_low", value=f"{features.puell:.2f}"))
         
         # 使用Hash Price Percentile评估矿工盈利能力
         if features.hashprice_pctile is not None:
             if features.hashprice_pctile > 0.9:
                 # 矿工处于极高盈利状态，卖出压力大
                 score += 0.2
-                notes.append(f"Hash Price高位：{features.hashprice_pctile*100:.0f}%分位")
+                notes.append(tr("hashprice_high", percentile=f"{features.hashprice_pctile*100:.0f}"))
                 confidence = max(confidence, 0.8)
             elif features.hashprice_pctile > 0.7:
                 # 矿工高盈利状态
                 score += 0.1
-                notes.append(f"Hash Price偏高：{features.hashprice_pctile*100:.0f}%分位")
+                notes.append(tr("hashprice_elevated", percentile=f"{features.hashprice_pctile*100:.0f}"))
             elif features.hashprice_pctile < 0.3:
                 # 矿工盈利较低，卖压减小
                 score -= 0.1
-                notes.append(f"Hash Price偏低：{features.hashprice_pctile*100:.0f}%分位 (矿工惜售)")
+                notes.append(tr("hashprice_low", percentile=f"{features.hashprice_pctile*100:.0f}"))
         
         # 价格位置与挖矿成本的关系
         if features.pct_52w > 0.8:
             # 价格处于52周高位，结合矿工指标
             if features.puell and features.puell > 2.0:
                 score += 0.15
-                notes.append("价格高位+矿工高收益：卖出时机成熟")
+                notes.append(tr("sell_timing_optimal"))
                 confidence = 0.85
         
         # 市场周期判断（基于移动平均线）
         if features.close > features.ma50 * 1.2:  # 价格显著高于50日MA
             score += 0.1
-            notes.append("价格过热：高于50日MA 20%+")
+            notes.append(tr("price_overheated"))
         
         return ModuleScore("miner_cycle", score, confidence, notes)
     
