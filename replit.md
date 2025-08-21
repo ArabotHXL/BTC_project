@@ -7,6 +7,15 @@ The BTC Mining Calculator is a web application for Bitcoin mining profitability 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+**2025-08-21: Enhanced ROI Chart Tooltips with Multilingual Support**
+- Implemented comprehensive multilingual tooltip system for ROI charts
+- Added algorithm income comparison showing both Static and Dynamic method revenues in dollars
+- Enhanced chart.js with built-in translation functionality supporting Chinese/English switching
+- Added chart-specific translations to translations.py for consistent language experience
+- Optimized tooltip content to show concise algorithm comparison and break-even point information
+- Fixed JavaScript errors in tooltip callback functions with proper error handling
+- User confirmed tooltip functionality working correctly with proper language switching
+
 **2025-08-21: Fixed Network Difficulty Display Issue**
 - Resolved critical bug where network difficulty displayed as 0.00T instead of correct value (129.43T)
 - Root cause: calculator_clean.js incorrectly divided API-returned difficulty by 1e12
@@ -51,7 +60,7 @@ The application is a modular Flask web application with a mobile-first design.
 - **Authentication System**: Manages user access, Gmail SMTP bilingual email verification, role-based permissions, and session security.
 - **CRM System**: Handles customer lifecycle management, lead and deal tracking, and commission management.
 - **Network Data Collection**: Automated historical data accumulation for BTC price, difficulty, and network hashrate from multiple sources.
-- **Multilingual System**: Provides dynamic Chinese/English interface support.
+- **Multilingual System**: Provides dynamic Chinese/English interface support with comprehensive chart tooltip localization.
 - **Subscription Management**: Comprehensive plan management with tiered access and role-based exemptions.
 
 ## External Dependencies
