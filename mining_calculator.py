@@ -1040,7 +1040,11 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
             for cost in electricity_costs:
                 # 计算这个BTC价格和电费成本组合下的利润
                 # 特别注意：必须将当前循环的电费成本'cost'传递给函数
-                # ENHANCED: 为热力图计算添加维护费 - 默认每月5000USD with pool fee consideration per expert recommendations
+                # ENHANCED: 为热力图计算添加维护费 - 基于矿机数量的合理维护费
+                # 维护费应该与矿机数量成正比，单个矿机约$10-20/月
+                maintenance_fee_per_miner = 15  # $15 per miner per month
+                total_maintenance_fee = maintenance_fee_per_miner * miner_count
+                
                 result = calculate_mining_profitability(
                     hashrate=hashrate,
                     power_consumption=power_consumption,
@@ -1052,7 +1056,7 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
                     use_real_time_data=False,  # 不使用实时数据，避免API调用
                     miner_model=miner_model,
                     miner_count=miner_count,
-                    maintenance_fee=5000,  # 添加默认维护费用
+                    maintenance_fee=total_maintenance_fee,  # 基于矿机数量的维护费用
                     pool_fee=DEFAULT_POOL_FEE,  # Include pool fee for realistic projections
                     consider_difficulty_adjustment=False  # Keep simple for heatmap generation
                 )
@@ -1087,7 +1091,7 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
                         # 1. 自营挖矿模式：利润 = 比特币产出收益 - 矿场电费 - 维护费
                         # 2. 托管服务模式：利润 = 客户电费差价收入 = (客户电费 - 矿场电费) * 耗电量
                         
-                        maintenance_monthly = result.get('maintenance_fee', {}).get('monthly', 5000)  # 维护费
+                        maintenance_monthly = result.get('maintenance_fee', {}).get('monthly', total_maintenance_fee)  # 维护费
                         
                         # 计算方式1：自营挖矿模式 - 基于比特币挖矿收益
                         btc_revenue = monthly_btc * price  # 比特币产出收益

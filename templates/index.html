@@ -383,15 +383,7 @@
         {% endif %}
 
         <main class="container mb-5">
-            <!-- 返回主页按钮 -->
-            <div class="row mb-3">
-                <div class="col-12">
-                    <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">
-                        <i class="bi bi-house-door me-2"></i>
-                        {% if current_lang == 'en' %}Back to Home{% else %}返回主页{% endif %}
-                    </a>
-                </div>
-            </div>
+
             
             <!-- 消息提示条 -->
             {% with messages = get_flashed_messages(with_categories=true) %}

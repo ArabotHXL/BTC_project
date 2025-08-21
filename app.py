@@ -1178,12 +1178,17 @@ def calculate_internal(request_obj):
             if isinstance(maintenance_fee_raw, str) and maintenance_fee_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
                 raise ValueError(f"Invalid numeric value: {maintenance_fee_raw}")
             maintenance_fee = float(maintenance_fee_raw)
+            
+            # 如果没有设置维护费，根据矿机数量自动计算合理的维护费
+            if maintenance_fee == 0:
+                maintenance_fee = miner_count * 15  # $15 per miner per month
+                
             # Additional check for NaN/inf after conversion
             if not (maintenance_fee == maintenance_fee and abs(maintenance_fee) != float('inf')):
                 raise ValueError("NaN or infinite value detected")
         except ValueError as e:
             logging.error(f"Invalid maintenance fee value: {data.get('maintenance_fee')} - {str(e)}")
-            maintenance_fee = 0
+            maintenance_fee = miner_count * 15  # Default maintenance fee based on miner count
         
         # ENHANCED: Pool fee parameter per expert recommendations
         pool_fee = None
