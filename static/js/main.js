@@ -5,7 +5,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // 元素引用 (Element references)
     var btcPriceEl = document.getElementById('btc-price');
     var networkDifficultyEl = document.getElementById('network-difficulty');
+    var networkDifficultyValueEl = document.getElementById('network-difficulty-value'); // 第二个difficulty元素
     var networkHashrateEl = document.getElementById('network-hashrate');
+    var networkHashrateValueEl = document.getElementById('network-hashrate-value'); // 第二个hashrate元素
     var blockRewardEl = document.getElementById('block-reward');
     
     var minerModelSelect = document.getElementById('miner-model');
@@ -29,6 +31,19 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("元素检查 - 单矿机功耗:", powerConsumptionInput ? "已找到" : "未找到");
     console.log("元素检查 - 总算力输入框:", totalHashrateInput ? "已找到" : "未找到");
     console.log("元素检查 - 总功耗输入框:", totalPowerInput ? "已找到" : "未找到");
+    
+    // 网络统计元素检查
+    console.log("=== 网络统计元素检查 ===");
+    console.log("btcPriceEl:", btcPriceEl ? "已找到" : "未找到", btcPriceEl ? btcPriceEl.textContent : "N/A");
+    console.log("networkDifficultyEl:", networkDifficultyEl ? "已找到" : "未找到", networkDifficultyEl ? networkDifficultyEl.textContent : "N/A");
+    console.log("networkDifficultyValueEl:", networkDifficultyValueEl ? "已找到" : "未找到", networkDifficultyValueEl ? networkDifficultyValueEl.textContent : "N/A");
+    console.log("networkHashrateEl:", networkHashrateEl ? "已找到" : "未找到", networkHashrateEl ? networkHashrateEl.textContent : "N/A");
+    console.log("networkHashrateValueEl:", networkHashrateValueEl ? "已找到" : "未找到", networkHashrateValueEl ? networkHashrateValueEl.textContent : "N/A");
+    console.log("blockRewardEl:", blockRewardEl ? "已找到" : "未找到", blockRewardEl ? blockRewardEl.textContent : "N/A");
+    
+    // formatNumber函数测试
+    console.log("=== formatNumber函数测试 ===");
+    console.log("formatNumber(129.4352355803448):", formatNumber(129.4352355803448));
     
     var resultsCard = document.getElementById('results-card');
     var chartCard = document.getElementById('chart-card');
@@ -95,16 +110,20 @@ document.addEventListener('DOMContentLoaded', function() {
         // 立即绑定关键事件
         bindCriticalEvents();
         
+        // 立即强制清除所有网络统计缓存
+        console.log('立即清除所有网络统计缓存');
+        clearNetworkStatsCache();
+        
+        // 立即强制刷新网络统计数据
+        setTimeout(function() {
+            console.log('立即强制刷新网络统计数据');
+            fetchNetworkStats(true); // 显示loading状态，确保用户看到更新
+        }, 100);
+        
         // 启动网络统计数据自动刷新
         setTimeout(function() {
             console.log('启动网络统计数据自动刷新');
             startNetworkStatsAutoRefresh();
-            
-            // 强制刷新网络统计数据（清除缓存）
-            setTimeout(function() {
-                console.log('页面加载后强制刷新网络统计数据');
-                fetchNetworkStats(false); // 不显示loading状态
-            }, 1000);
         }, 500);
     }
     
@@ -616,10 +635,31 @@ document.addEventListener('DOMContentLoaded', function() {
                     var data = JSON.parse(xhr.responseText);
                     
                     if (data && data.success) {
+                        // 调试信息
+                        console.log('=== 网络统计更新调试 ===');
+                        console.log('API返回数据:', data);
+                        console.log('difficulty原始值:', data.difficulty);
+                        console.log('networkDifficultyEl存在:', !!networkDifficultyEl);
+                        console.log('formatNumber(data.difficulty):', formatNumber(data.difficulty));
+                        
                         // 更新UI (Update UI)
                         if (btcPriceEl) btcPriceEl.textContent = formatCurrency(data.price, 2);
-                        if (networkDifficultyEl) networkDifficultyEl.textContent = formatNumber(data.difficulty) + 'T';
-                        if (networkHashrateEl) networkHashrateEl.textContent = formatNumber(data.hashrate) + ' EH/s';
+                        
+                        // 更新两个difficulty元素
+                        var formattedDifficulty = formatNumber(data.difficulty) + 'T';
+                        if (networkDifficultyEl) {
+                            console.log('设置第一个difficulty显示为:', formattedDifficulty);
+                            networkDifficultyEl.textContent = formattedDifficulty;
+                        }
+                        if (networkDifficultyValueEl) {
+                            console.log('设置第二个difficulty显示为:', formattedDifficulty);
+                            networkDifficultyValueEl.textContent = formattedDifficulty;
+                        }
+                        
+                        // 更新两个hashrate元素
+                        var formattedHashrate = formatNumber(data.hashrate) + ' EH/s';
+                        if (networkHashrateEl) networkHashrateEl.textContent = formattedHashrate;
+                        if (networkHashrateValueEl) networkHashrateValueEl.textContent = formattedHashrate;
                         if (blockRewardEl) {
                             console.log('区块奖励调试 - 原始值:', data.block_reward);
                             console.log('区块奖励调试 - 格式化值:', formatNumber(data.block_reward, 3));
