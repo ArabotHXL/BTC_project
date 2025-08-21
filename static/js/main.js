@@ -1,4 +1,22 @@
 // Bitcoin Mining Calculator - Main JavaScript
+
+// 格式化数字函数 - 确保在页面加载前定义
+function formatNumber(value, decimals) {
+    if (decimals === undefined) decimals = 2;
+    
+    var formatter = new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+    });
+    
+    return formatter.format(value);
+}
+
+// 格式化货币值函数
+function formatCurrency(value, decimals) {
+    return '$' + formatNumber(value, decimals);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log("页面已加载，初始化应用...");
     
@@ -43,7 +61,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // formatNumber函数测试
     console.log("=== formatNumber函数测试 ===");
-    console.log("formatNumber(129.4352355803448):", formatNumber(129.4352355803448));
+    if (typeof formatNumber === 'function') {
+        console.log("formatNumber(129.4352355803448):", formatNumber(129.4352355803448));
+        console.log("formatNumber(129435235580344):", formatNumber(129435235580344));
+        console.log("formatNumber(129435235580344, 0):", formatNumber(129435235580344, 0));
+    } else {
+        console.error("formatNumber函数未定义!");
+    }
     
     var resultsCard = document.getElementById('results-card');
     var chartCard = document.getElementById('chart-card');
@@ -640,7 +664,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.log('API返回数据:', data);
                         console.log('difficulty原始值:', data.difficulty);
                         console.log('networkDifficultyEl存在:', !!networkDifficultyEl);
-                        console.log('formatNumber(data.difficulty):', formatNumber(data.difficulty));
+                        console.log('networkDifficultyValueEl存在:', !!networkDifficultyValueEl);
+                        if (typeof formatNumber === 'function') {
+                            console.log('formatNumber(data.difficulty):', formatNumber(data.difficulty));
+                        } else {
+                            console.error('formatNumber函数未找到!');
+                        }
                         
                         // 更新UI (Update UI)
                         if (btcPriceEl) btcPriceEl.textContent = formatCurrency(data.price, 2);
@@ -650,10 +679,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (networkDifficultyEl) {
                             console.log('设置第一个difficulty显示为:', formattedDifficulty);
                             networkDifficultyEl.textContent = formattedDifficulty;
+                            console.log('第一个difficulty元素更新后内容:', networkDifficultyEl.textContent);
                         }
                         if (networkDifficultyValueEl) {
                             console.log('设置第二个difficulty显示为:', formattedDifficulty);
                             networkDifficultyValueEl.textContent = formattedDifficulty;
+                            console.log('第二个difficulty元素更新后内容:', networkDifficultyValueEl.textContent);
                         }
                         
                         // 更新两个hashrate元素
@@ -979,7 +1010,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // 更新比特币网络信息
         if (data.network_data) {
             if (networkDifficultyEl) {
-                networkDifficultyEl.textContent = formatNumber(data.network_data.network_difficulty, 2) + ' T';
+                // 检查difficulty是否已经转换为T单位
+                var difficultyValue = data.network_data.network_difficulty;
+                console.log('updateNetworkAndMiningInfo difficulty原始值:', difficultyValue);
+                
+                // 如果difficulty大于1000，说明是原始值，需要转换
+                if (difficultyValue > 1000) {
+                    difficultyValue = difficultyValue / 1e12; // 转换为T单位
+                }
+                console.log('updateNetworkAndMiningInfo difficulty转换后:', difficultyValue);
+                networkDifficultyEl.textContent = formatNumber(difficultyValue, 2) + ' T';
             }
             if (networkHashrateEl) {
                 networkHashrateEl.textContent = formatNumber(data.network_data.network_hashrate, 2) + ' EH/s';
@@ -1481,22 +1521,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // 格式化货币值 (Format currency value)
-    function formatCurrency(value, decimals) {
-        return '$' + formatNumber(value, decimals);
-    }
-    
-    // 格式化数字 (Format number)
-    function formatNumber(value, decimals) {
-        if (decimals === undefined) decimals = 2;
-        
-        var formatter = new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: decimals,
-            maximumFractionDigits: decimals
-        });
-        
-        return formatter.format(value);
-    }
+    // formatCurrency和formatNumber函数已在页面顶部定义
     
     // 独立的计算初始化函数 - 优化加载速度
     function initializeCalculations() {
