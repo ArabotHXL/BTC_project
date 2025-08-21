@@ -7,6 +7,14 @@ The BTC Mining Calculator is a web application for Bitcoin mining profitability 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+**2025-08-21: 语言切换系统和通知功能修复完成**
+- 完全修复了语言切换下拉菜单功能，支持中文/英文正常切换
+- 重构了Bootstrap dropdown结构，添加手动初始化和事件处理
+- 修复了session语言管理逻辑，确保默认中文和正确的语言传递
+- 优化了通知按钮点击事件处理，支持弹窗正常显示
+- 增强了前端调试功能，添加详细的语言状态日志
+- UI改进：提升了下拉菜单的z-index和样式，确保正确显示层级
+
 **2025-08-21: Data Integrity Revolution & Database Optimization Complete**
 - 实施数据完整性革命：全面替换估算值为真实API数据源，提升平台专业性
 - 用户投资组合管理系统：创建user_portfolio_management.py，支持真实BTC库存、成本基础、现金储备配置
