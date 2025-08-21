@@ -623,7 +623,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             const isDynamic = context.datasetIndex === 0; // Dynamic is first dataset
                             const algorithmType = isDynamic ? 'Dynamic ROI (考虑难度调整)' : 'Static ROI (静态假设)';
                             
-                            // Get the corresponding data point
+                            return `${algorithmType}: ${context.parsed.y.toFixed(2)}%`;
+                        },
+                        afterBody: function(context) {
+                            if (!context || context.length === 0) return [];
+                            const dataIndex = context[0].dataIndex;
+                            
+                            // Get financial data for this month
                             let monthlyProfit = 0;
                             let cumulativeProfit = 0;
                             let investmentBalance = 0;
@@ -634,32 +640,20 @@ document.addEventListener('DOMContentLoaded', () => {
                                 investmentBalance = clientRoi.forecast[dataIndex].investment_balance || 0;
                             }
                             
-                            return [
-                                `${algorithmType}: ${context.parsed.y.toFixed(2)}%`,
-                                `当月利润: $${monthlyProfit.toLocaleString()}`,
-                                `累计收益: $${cumulativeProfit.toLocaleString()}`,
-                                `剩余投资: $${investmentBalance.toLocaleString()}`
-                            ];
-                        },
-                        afterBody: function(context) {
-                            if (!context || context.length === 0) return [];
-                            const dataIndex = context[0].dataIndex;
-                            
                             // Show both algorithm values for comparison
                             const dynamicRoi = dynamicRoiPercentage[dataIndex];
                             const staticRoi = staticRoiPercentage[dataIndex];
                             const roiDifference = dynamicRoi - staticRoi;
                             
                             let comparisonInfo = [
+                                `当月利润: $${monthlyProfit.toLocaleString()}`,
+                                `累计收益: $${cumulativeProfit.toLocaleString()}`,
+                                `剩余投资: $${investmentBalance.toLocaleString()}`,
                                 '',
-                                '📊 双算法对比分析:',
-                                `动态算法 (难度调整): ${dynamicRoi.toFixed(2)}%`,
-                                `静态算法 (固定假设): ${staticRoi.toFixed(2)}%`,
-                                `算法差异: ${roiDifference >= 0 ? '+' : ''}${roiDifference.toFixed(2)}%`,
-                                '',
-                                '💡 算法说明:',
-                                '• 动态算法: 考虑网络难度增长',
-                                '• 静态算法: 假设难度保持不变'
+                                '📊 双算法对比:',
+                                `动态算法: ${dynamicRoi.toFixed(2)}%`,
+                                `静态算法: ${staticRoi.toFixed(2)}%`,
+                                `算法差异: ${roiDifference >= 0 ? '+' : ''}${roiDifference.toFixed(2)}%`
                             ];
                             
                             // Add break-even information if applicable
@@ -667,8 +661,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 comparisonInfo = comparisonInfo.concat([
                                     '',
                                     '🎯 达成回本点!',
-                                    `投资回收: $${breakEvenPoint.cumulative_profit.toLocaleString()}`,
-                                    `总ROI: ${breakEvenPoint.roi_percent.toFixed(2)}%`,
                                     `回本月份: 第${breakEvenPoint.month}个月`
                                 ]);
                             }
