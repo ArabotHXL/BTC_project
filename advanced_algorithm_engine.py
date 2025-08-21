@@ -244,7 +244,7 @@ class AdvancedAlgorithmEngine:
                 confidence = 0.85
             elif features.rsi14 > 65:  # 超买区域
                 score += 0.1
-                notes.append("RSI超买区域，关注背离")
+                notes.append(tr("rsi_overbought_watch"))
             
             # 3. 价格行为分析
             # 检查是否有长上影线（衰竭征象）
