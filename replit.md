@@ -48,8 +48,8 @@ The application is a modular Flask web application with a mobile-first design.
 - **Network Data Collection**: Automated historical data accumulation for BTC price, difficulty, and network hashrate from multiple sources.
 - **Subscription Management**: Comprehensive plan management with tiered access and role-based exemptions.
 - **Treasury Strategy Templates**: Pre-configured selling strategies including OPEX coverage, layered profit-taking, mining cycle, basis/funding, and volatility-triggered approaches.
-- **Signal Aggregation System**: Combines technical, on-chain, mining, and market structure signals for decision support.
-- **Advanced Algorithm**: Implements a 5-module intelligent system (A-E) for signal aggregation, including breakthrough fatigue detection and mining cycle integration.
+- **Signal Aggregation System**: Phase 3 Advanced Signal System - 10 sophisticated modules including regime-aware adaptation, breakout exhaustion detection, support/resistance confluence, adaptive ATR layering, pattern target recognition, miner cycle analysis, derivatives pressure monitoring, microstructure execution optimization, bandit-sizing allocation, and ensemble aggregation scoring.
+- **Advanced Algorithm**: Implements a comprehensive 10-module intelligent system (A-J) for advanced trading signal aggregation, including Phase 3 complete deployment with all sophisticated algorithms.
 - **Backtesting Engine**: Historical strategy performance evaluation with professional metrics (Sharpe ratio, max drawdown, win rate).
 
 ## External Dependencies
