@@ -615,11 +615,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     callbacks: {
                         title: function(context) {
+                            if (!context || context.length === 0) return '';
                             return `Month ${context[0].label.replace('M', '')}`;
                         },
                         label: function(context) {
-                            const dataIndex = context[0].dataIndex;
-                            const isDynamic = context[0].datasetIndex === 0; // Dynamic is first dataset
+                            const dataIndex = context.dataIndex;
+                            const isDynamic = context.datasetIndex === 0; // Dynamic is first dataset
                             const algorithmType = isDynamic ? 'Dynamic ROI (考虑难度调整)' : 'Static ROI (静态假设)';
                             
                             // Get the corresponding data point
@@ -641,6 +642,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             ];
                         },
                         afterBody: function(context) {
+                            if (!context || context.length === 0) return [];
                             const dataIndex = context[0].dataIndex;
                             
                             // Show both algorithm values for comparison
