@@ -323,9 +323,9 @@ class AdvancedAlgorithmEngine:
         bb_upper = float(technical_data.get('bollinger_upper', close * 1.02))
         bb_lower = float(technical_data.get('bollinger_lower', close * 0.98))
         
-        # ATR百分比（估算）
+        # ATR百分比（使用30天波动率）
         volatility = float(technical_data.get('volatility', 0.05))
-        atr_pct = volatility  # 使用波动率作为ATR百分比的近似
+        atr_pct = volatility / 100.0 if volatility > 1 else volatility  # 确保是小数格式
         
         # 52周百分位（估算）
         if historical_prices and len(historical_prices) >= 365:
@@ -352,8 +352,9 @@ class AdvancedAlgorithmEngine:
             donchian_20_high=donchian_20_high,
             bb_upper=bb_upper,
             bb_lower=bb_lower,
-            hashprice_pctile=0.8,  # 估算矿工数据
-            puell=1.2
+            hashprice_pctile=0.8,  # 估算矿工数据：80%分位（高盈利）
+            puell=1.2,  # Puell Multiple：1.2（中性偏高）
+            sr_bands=[]  # 支撑阻力位待完善
         )
     
     def aggregate_scores(self, module_scores: List[ModuleScore], 

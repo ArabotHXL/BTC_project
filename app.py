@@ -3619,7 +3619,7 @@ def api_treasury_advanced_signals():
             
             # 获取技术指标
             cursor.execute("""
-                SELECT rsi_14, macd, sma_20, sma_50, ema_12, ema_26, volatility, 
+                SELECT rsi_14, macd, sma_20, sma_50, ema_12, ema_26, volatility_30d, 
                        bollinger_upper, bollinger_lower
                 FROM technical_indicators 
                 ORDER BY recorded_at DESC LIMIT 1
