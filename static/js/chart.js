@@ -677,7 +677,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (!context || context.length === 0) return '';
                             return `${t('month')} ${context[0].label.replace('M', '')}`;
                         },
-                        afterLabel: function(context) {
+                        label: function(context) {
+                            // 只在第一个数据集（Dynamic）时显示完整信息，避免重复
+                            if (context.datasetIndex !== 0) {
+                                const algorithmType = t('static_roi');
+                                return `${algorithmType}: ${context.parsed.y.toFixed(1)}%`;
+                            }
+                            
                             const dataIndex = context.dataIndex;
                             
                             // Get monthly profit for this month
@@ -711,9 +717,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             const roiDifference = dynamicRoi - staticRoi;
                             
                             let comparisonInfo = [
+                                `${t('dynamic_roi')}: ${dynamicRoi.toFixed(1)}%`,
+                                `${t('static_roi')}: ${staticRoi.toFixed(1)}%`,
+                                '',
                                 `📊 ${t('algorithm_comparison')}:`,
-                                `${t('dynamic_method')}: $${monthlyProfit.toLocaleString()} (${dynamicRoi.toFixed(1)}%)`,
-                                `${t('static_method')}: $${staticMonthlyProfit.toLocaleString()} (${staticRoi.toFixed(1)}%)`,
+                                `${t('dynamic_method')}: $${monthlyProfit.toLocaleString()}`,
+                                `${t('static_method')}: $${staticMonthlyProfit.toLocaleString()}`,
                                 `${t('algorithm_difference')}: ${roiDifference >= 0 ? '+' : ''}${roiDifference.toFixed(1)}%`
                             ];
                             
@@ -727,13 +736,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                             
                             return comparisonInfo;
-                        },
-                        label: function(context) {
-                            const dataIndex = context.dataIndex;
-                            const isDynamic = context.datasetIndex === 0; // Dynamic is first dataset
-                            const algorithmType = isDynamic ? t('dynamic_roi') : t('static_roi');
-                            
-                            return `${algorithmType}: ${context.parsed.y.toFixed(1)}%`;
                         }
                     }
                 }
