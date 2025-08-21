@@ -481,17 +481,17 @@ document.addEventListener('DOMContentLoaded', () => {
             {
                 label: 'Dynamic ROI % (考虑难度调整)',
                 data: dynamicRoiPercentage,
-                borderColor: 'rgb(40, 167, 69)',
-                backgroundColor: 'rgba(40, 167, 69, 0.15)',
+                borderColor: 'rgb(139, 69, 255)', // Purple for dynamic method to match table
+                backgroundColor: 'rgba(139, 69, 255, 0.15)',
                 borderWidth: 3,
                 fill: false,
                 tension: 0.4,
-                pointBackgroundColor: 'rgb(40, 167, 69)',
+                pointBackgroundColor: 'rgb(139, 69, 255)',
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
                 pointRadius: 5,
                 pointHoverRadius: 8,
-                pointHoverBackgroundColor: 'rgb(40, 167, 69)',
+                pointHoverBackgroundColor: 'rgb(139, 69, 255)',
                 pointHoverBorderColor: '#ffffff',
                 pointHoverBorderWidth: 3,
                 borderDash: [] // Solid line for dynamic
@@ -499,7 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
             {
                 label: 'Static ROI % (静态假设)',
                 data: staticRoiPercentage,
-                borderColor: 'rgb(255, 193, 7)',
+                borderColor: 'rgb(255, 193, 7)', // Yellow for static method to match table
                 backgroundColor: 'rgba(255, 193, 7, 0.1)',
                 borderWidth: 2,
                 fill: false,
@@ -573,7 +573,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 title: {
                     display: true,
                     text: 'Client ROI Progression: Static vs Dynamic',
-                    color: 'rgb(40, 167, 69)',
+                    color: 'rgb(139, 69, 255)',
                     font: {
                         size: 18,
                         weight: 'bold'
@@ -585,13 +585,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 legend: {
                     display: true,
+                    position: 'top',
+                    align: 'center',
                     labels: {
                         color: 'rgba(255, 255, 255, 0.9)',
                         font: {
                             size: 13
                         },
                         usePointStyle: true,
-                        padding: 20
+                        padding: 15,
+                        boxWidth: 15,
+                        boxHeight: 3
                     }
                 },
                 tooltip: {
