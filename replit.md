@@ -1,112 +1,10 @@
 # BTC Mining Calculator System
 
 ## Overview
-The BTC Mining Calculator is a web application for Bitcoin mining profitability analysis, designed for mining site owners and their clients. It provides tools for mining operations, customer relationship management (CRM), and power management. Key capabilities include real-time data integration, highly accurate dual-algorithm validation for calculations, multilingual support (Chinese/English), and robust role-based access control. The project aims to be a reliable, enterprise-grade system for optimizing Bitcoin mining investments, offering a technical analysis platform and professional reporting.
+The BTC Mining Calculator is a web application designed for Bitcoin mining profitability analysis, serving mining site owners and their clients. Its main purpose is to be an enterprise-grade system for optimizing Bitcoin mining investments. Key capabilities include real-time data integration, dual-algorithm validation for calculations, multilingual support (Chinese/English), and robust role-based access control. The project provides tools for mining operations, customer relationship management (CRM), power management, technical analysis, and professional reporting, aiming to be a reliable platform.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
-
-## Recent Changes
-**2025-08-21: Cash Coverage 计算公式修复完成**
-- 识别并修复Cash Coverage天数计算错误，原公式导致显示180天的错误结果
-- 修正user_portfolio_management.py中计算逻辑：从 cash_reserves / (monthly_opex / 30) 改为 (cash_reserves / monthly_opex) * 30
-- 确保Cash Coverage正确反映现金储备能维持月度运营支出的实际天数
-- 修复Next Sell Indicator API的技术指标导入错误，移除不存在的TechnicalIndicator引用
-- 完善智能卖出指标系统，确保L2层级目标价格和RSI置信度评估正常工作
-
-**2025-08-21: Enhanced Language Engine v2.0 重构完成**
-- 构建了全新的Enhanced Language Engine v2.0，支持上下文感知翻译和变量插值
-- 实现了智能数字、货币、日期、百分比格式化功能，支持多语言显示习惯
-- 集成了高级缓存系统，提升翻译性能和用户体验
-- 添加了复数处理、模板辅助函数和错误恢复机制
-- 完全向下兼容原有翻译系统，支持平滑升级
-- 通过100%测试验证：基础翻译、格式化、模板集成、应用集成全部通过
-
-**2025-08-21: 语言切换系统和通知功能修复完成**
-- 完全修复了语言切换下拉菜单功能，支持中文/英文正常切换
-- 重构了Bootstrap dropdown结构，添加手动初始化和事件处理
-- 修复了session语言管理逻辑，确保默认中文和正确的语言传递
-- 优化了通知按钮点击事件处理，支持弹窗正常显示
-- 增强了前端调试功能，添加详细的语言状态日志
-- UI改进：提升了下拉菜单的z-index和样式，确保正确显示层级
-
-**2025-08-21: Data Integrity Revolution & Database Optimization Complete**
-- 实施数据完整性革命：全面替换估算值为真实API数据源，提升平台专业性
-- 用户投资组合管理系统：创建user_portfolio_management.py，支持真实BTC库存、成本基础、现金储备配置
-- 历史数据引擎：开发historical_data_engine.py，集成CoinGecko历史价格API，替换随机回测数据
-- Treasury概览升级：从硬编码估算值转为用户可配置的真实投资组合数据
-- 技术指标智能后备：优先使用数据库真实技术指标，后备使用基于当前价格的合理估算
-- 回测引擎重构：使用真实历史价格数据执行策略回测，支持分层卖出和HODL策略分析
-- 投资组合设置界面：创建专业portfolio_settings.html页面，用户可配置个人财务数据
-- API端点扩展：新增/api/portfolio/update、/portfolio/settings路由，支持用户数据管理
-- 数据库优化升级：合并market_analytics和network_snapshots表，优化数据存储至每日最多10个数据点
-- 数据保留策略：实施cleanup_market_analytics_daily()函数，自动维护数据质量和存储效率
-- 数据来源透明化：系统明确标识数据来源（真实API vs 演示数据），遵循数据完整性原则
-
-**2025-08-21: Major Technical Debt Resolution - Zero LSP Errors Achieved**
-- 完成全面技术债务修复，成功解决116个LSP错误（app.py: 98个，analytics_engine.py: 18个）
-- 修复数据库模型导入类型冲突：优化models导入策略，消除类型系统冲突
-- 解决缓存管理器None类型错误：在所有cache_manager调用前增加None检查
-- 修复数据库查询方法访问：确保所有.filter_by()、.order_by()、.get_or_404()方法正确工作
-- 优化错误处理机制：增强None值检查和异常处理逻辑
-- 验证系统稳定性：确认所有API端点、技术指标计算、数据收集功能正常运行
-- 企业级代码质量：达到零LSP错误状态，为后续算法升级奠定坚实基础
-
-**2025-08-21: Advanced Algorithm Phase 2 Implementation Completed**
-- 成功实施Phase 2高级算法框架，扩展至5个智能模块（A-E）
-- Phase 2新增模块：突破衰竭检测（D）+ 挖矿周期整合（E）
-- 模块D：识别虚假突破和衰竭信号，防止追高风险，包含成交量分析、RSI背离、价格行为检测
-- 模块E：整合Puell Multiple、Hash Price分位数、市场周期判断，提供宏观卖出时机
-- 权重优化：5个模块均衡分布（A:25%, B:20%, C:25%, D:15%, E:15%）
-- 前端更新显示Phase 2状态，支持5模块实时监控和信心度评估
-- API升级至Phase 2 (5 Modules: A-E)，提供更精准的智能信号聚合
-
-**2025-08-21: UI可见性优化和数据来源文档化**
-- 完成导航标签文字可见性修复，使用白色文字配合金色渐变背景增强对比度
-- 改善免责声明文字可读性，采用深蓝色文字配合渐变背景和金色边框
-- 优化右侧三个导航按钮（通知、语言切换、主页），使用金色主题设计增强可见性
-- 用户询问信号面板数据来源，已详细记录四大信号类别的真实数据源和演示数据说明
-- 信号数据来源包括：CoinGecko API、Blockchain.info、Alternative.me、Bitcoin RPC等真实数据源
-- 技术指标基于历史价格数据本地计算，部分链上和市场结构指标为教育演示用途
-
-**2025-08-21: Major Platform Evolution - HashInsight Treasury Management System**
-- Transformed analytics dashboard into comprehensive Bitcoin treasury management platform
-- Implemented professional-grade treasury overview with BTC inventory, cost basis, and cash coverage tracking
-- Added 5 strategy templates: OPEX Coverage (A), Layered Profit Taking (B), Mining Cycle (C), Basis/Funding (D), Volatility Triggered (E)
-- Created multi-panel signal system: Technical, On-Chain, Mining, and Market Structure indicators
-- Built execution panel supporting Market, Limit, Ladder, TWAP, and VWAP order types
-- Integrated backtesting engine with Sharpe ratio, max drawdown, and win rate metrics
-- Added treasury API endpoints: /api/treasury/overview, /api/treasury/signals, /api/treasury/backtest
-- Designed mobile-responsive UI with dark theme and golden accent professional styling
-- Implemented risk management settings with configurable daily sell limits and hedging options
-- Educational disclaimer: Platform provides information for educational purposes only, not investment advice
-
-**2025-08-21: Comprehensive Regression Testing Completed with 100% Success Rate**
-- Completed full regression testing suite covering all core application functionality
-- Achieved 100% success rate (9/9 tests passed) exceeding 99%+ requirement
-- Verified data accuracy: BTC price, network difficulty, hashrate all within expected ranges
-- Confirmed functional reliability: calculator, charts, authentication, multilingual support
-- Performance validation: sub-1-second response times for all critical operations
-- Fixed critical API path mappings and data validation logic issues
-- Enterprise-grade quality assurance with automated test coverage for future deployments
-
-**2025-08-21: Completed ROI Chart Tooltips with Full Multilingual Support**
-- Successfully implemented comprehensive multilingual tooltip system for ROI charts
-- Added algorithm income comparison showing both Static and Dynamic method revenues in dollars
-- Enhanced chart.js with robust translation functionality supporting Chinese/English switching
-- Added chart-specific translations to translations.py for consistent language experience
-- Optimized tooltip content structure to avoid duplicate data display
-- Fixed JavaScript language detection to work with global currentLang variable and multiple fallback methods
-- Resolved tooltip callback function errors and information hierarchy issues
-- User confirmed final implementation working correctly with proper language switching and clean data display
-
-**2025-08-21: Fixed Network Difficulty Display Issue**
-- Resolved critical bug where network difficulty displayed as 0.00T instead of correct value (129.43T)
-- Root cause: calculator_clean.js incorrectly divided API-returned difficulty by 1e12
-- API was returning correct pre-formatted values, but frontend was applying unnecessary conversion
-- Fixed conversion logic in both main.js and calculator_clean.js
-- Removed duplicate network statistics card that was causing UI confusion
-- User confirmed fix is working correctly
 
 ## System Architecture
 The application is a modular Flask web application with a mobile-first design.
@@ -117,14 +15,14 @@ The application is a modular Flask web application with a mobile-first design.
 - **JavaScript**: Vanilla JavaScript with Chart.js for data visualization.
 - **Responsive Design**: Mobile-first, supporting screen sizes from 320px to 1200px+.
 - **Multilingual Support**: Dynamic Chinese/English language switching across all UI elements.
-- **UI/UX Decisions**: Professional introduction page, clear navigation flow (Landing Page → Price Page → Login → Main Dashboard → Role-based Functions). Color-coded visual system for technical analysis (red, yellow, blue, green).
+- **UI/UX Decisions**: Professional introduction page, clear navigation flow (Landing Page → Price Page → Login → Main Dashboard → Role-based Functions). Color-coded visual system for technical analysis (red, yellow, blue, green), improved visibility for navigation elements and disclaimers with enhanced contrast.
 
 ### Backend Architecture
 - **Web Framework**: Flask, using Blueprint-based modular routing.
 - **Authentication**: Custom email-based system with role management and secure password hashing.
 - **API Integration**: Aggregates data from multiple sources with intelligent fallback mechanisms.
 - **Background Services**: Scheduler for automated data collection.
-- **Calculation Engine**: Dual-algorithm system for mining profitability analysis, supporting 17+ ASIC miner models, real-time data, ROI analysis, power curtailment analysis, and hashrate decay. Optimized for batch processing of large datasets (5000+ miners).
+- **Calculation Engine**: Dual-algorithm system for mining profitability analysis, supporting 17+ ASIC miner models, real-time data, ROI analysis, power curtailment analysis, and hashrate decay. Optimized for batch processing of large datasets.
 - **Technical Analysis Platform**: Server-side calculation of indicators (RSI, MACD, SMA20/50, EMA12/26, Bollinger Bands, 30-day volatility) using historical BTC price, with signal interpretation and real-time market integration.
 - **Permission Control System**: Advanced decorators and a comprehensive permission matrix for fine-grained, role-based access control.
 - **User Management**: Admin interface for user creation, role assignment, and management.
@@ -132,30 +30,33 @@ The application is a modular Flask web application with a mobile-first design.
 - **Data Consolidation**: Network snapshot data consolidated into a unified market_analytics table.
 - **Caching System**: Intelligent caching implemented for major API endpoints.
 - **Deployment Optimization**: Fast startup mode with deferred background services, lightweight health check endpoints, and deployment-ready configuration.
+- **Enhanced Language Engine v2.0**: Advanced multilingual system with context-aware translations, variable interpolation, smart formatting for numbers/currency/dates, caching system, and seamless Chinese/English interface support with comprehensive chart tooltip localization.
+- **Data Integrity**: Comprehensive system to use real API data sources, replacing estimated values for user portfolio management, historical data, and technical indicators.
 
 ### Database Architecture
 - **Primary Database**: PostgreSQL.
 - **ORM**: SQLAlchemy with declarative base.
 - **Connection Management**: Connection pooling with automatic reconnection, health monitoring, and retry logic.
 - **Data Models**: Comprehensive models for users, customers, mining data, network snapshots, and miner specifications.
+- **Optimization**: Data storage optimized to a maximum of 10 data points per day, with cleanup policies.
 
 ### Key Features
-- **HashInsight Treasury Management**: Professional Bitcoin treasury platform for miners with sell strategies, signal aggregation, and execution planning.
+- **HashInsight Treasury Management**: Professional Bitcoin treasury platform for miners with BTC inventory, cost basis, cash coverage tracking, sell strategies, signal aggregation, and execution planning.
 - **Mining Calculator Engine**: Core business logic for profitability calculations.
-- **Authentication System**: Manages user access, Gmail SMTP bilingual email verification, role-based permissions, and session security.
+- **Authentication System**: Manages user access, email verification, role-based permissions, and session security.
 - **CRM System**: Handles customer lifecycle management, lead and deal tracking, and commission management.
 - **Network Data Collection**: Automated historical data accumulation for BTC price, difficulty, and network hashrate from multiple sources.
-- **Enhanced Language Engine v2.0**: Advanced multilingual system with context-aware translations, variable interpolation, smart formatting for numbers/currency/dates, caching system, and seamless Chinese/English interface support with comprehensive chart tooltip localization.
 - **Subscription Management**: Comprehensive plan management with tiered access and role-based exemptions.
-- **Treasury Strategy Templates**: Pre-configured selling strategies including OPEX coverage, layered profit-taking, and mining cycle-driven approaches.
+- **Treasury Strategy Templates**: Pre-configured selling strategies including OPEX coverage, layered profit-taking, mining cycle, basis/funding, and volatility-triggered approaches.
 - **Signal Aggregation System**: Combines technical, on-chain, mining, and market structure signals for decision support.
-- **Backtesting Engine**: Historical strategy performance evaluation with professional metrics.
+- **Advanced Algorithm**: Implements a 5-module intelligent system (A-E) for signal aggregation, including breakthrough fatigue detection and mining cycle integration.
+- **Backtesting Engine**: Historical strategy performance evaluation with professional metrics (Sharpe ratio, max drawdown, win rate).
 
 ## External Dependencies
 
 ### APIs
 - **CoinWarz API**: Professional mining data and multi-coin profitability.
-- **CoinGecko API**: Real-time cryptocurrency pricing.
+- **CoinGecko API**: Real-time cryptocurrency pricing and historical data.
 - **Blockchain.info API**: Bitcoin network statistics.
 - **IP-API**: Geographic location services for login tracking.
 - **Ankr RPC**: Free Bitcoin RPC service for real-time blockchain data.
