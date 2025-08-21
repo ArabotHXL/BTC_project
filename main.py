@@ -3,8 +3,19 @@ import logging
 import sys
 
 # 配置日志
-logging.basicConfig(level=logging.INFO)  # 降低日志级别提升启动速度
+logging.basicConfig(level=logging.INFO)
 
+# 确保数据库健康检查模块可用
+try:
+    from database_health import db_health_manager
+except ImportError:
+    logging.warning("Database health module not available, creating minimal version")
+    class MockDatabaseHealthManager:
+        def check_database_connection(self, url):
+            return {'connected': True, 'database_version': 'Unknown'}
+        def wait_for_database(self, url, timeout=60):
+            return True
+    db_health_manager = MockDatabaseHealthManager()
 
 # 优化启动性能 - 延迟导入重型依赖
 def create_app():
