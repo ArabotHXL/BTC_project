@@ -780,9 +780,10 @@ document.addEventListener('DOMContentLoaded', function() {
             var minerCount = minerCountInput.value || 1;
             var clientElectricityCost = clientElectricityCostInput ? clientElectricityCostInput.value || 0 : 0;
             
+            // If no miner model selected, use a default one for heatmap
             if (!minerModel) {
-                console.log('[CALCULATOR] No miner model selected, skipping heatmap');
-                return;
+                console.log('[CALCULATOR] No miner model selected, using default for heatmap');
+                minerModel = 'Antminer S19 Pro'; // Default fallback
             }
             
             console.log('[CALCULATOR] Auto-generating heatmap with:', {
