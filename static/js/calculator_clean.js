@@ -23,11 +23,39 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Update display with proper formatting
-                    document.getElementById('btc-price').textContent = '$' + Math.round(data.btc_price).toLocaleString();
-                    document.getElementById('network-difficulty').textContent = (data.network_difficulty / 1e12).toFixed(2) + 'T';
-                    document.getElementById('network-hashrate').textContent = data.network_hashrate + ' EH/s';
-                    document.getElementById('block-reward').textContent = parseFloat(data.block_reward).toFixed(3) + ' BTC';
+                    // Update top cards display with proper formatting
+                    var networkDifficultyCard = document.getElementById('network-difficulty-value');
+                    if (networkDifficultyCard && data.network_difficulty) {
+                        networkDifficultyCard.textContent = (data.network_difficulty / 1e12).toFixed(1) + ' T';
+                    }
+                    
+                    var networkHashrateCard = document.getElementById('network-hashrate-value');
+                    if (networkHashrateCard && data.network_hashrate) {
+                        networkHashrateCard.textContent = data.network_hashrate.toFixed(2) + ' EH/s';
+                    }
+                    
+                    var btcPriceCard = document.getElementById('current-btc-price-value');
+                    if (btcPriceCard && data.btc_price) {
+                        btcPriceCard.textContent = '$' + Math.round(data.btc_price).toLocaleString();
+                    }
+                    
+                    var blockRewardCard = document.getElementById('block-reward-value');
+                    if (blockRewardCard && data.block_reward) {
+                        blockRewardCard.textContent = parseFloat(data.block_reward).toFixed(3) + ' BTC';
+                    }
+                    
+                    // Update older display elements (for backward compatibility)
+                    var btcPrice = document.getElementById('btc-price');
+                    if (btcPrice) btcPrice.textContent = '$' + Math.round(data.btc_price).toLocaleString();
+                    
+                    var networkDifficulty = document.getElementById('network-difficulty');
+                    if (networkDifficulty) networkDifficulty.textContent = (data.network_difficulty / 1e12).toFixed(2) + 'T';
+                    
+                    var networkHashrate = document.getElementById('network-hashrate');
+                    if (networkHashrate) networkHashrate.textContent = data.network_hashrate + ' EH/s';
+                    
+                    var blockReward = document.getElementById('block-reward');
+                    if (blockReward) blockReward.textContent = parseFloat(data.block_reward).toFixed(3) + ' BTC';
                     
                     // Update BTC price in form
                     var btcField = document.getElementById('btc-price-input');
@@ -632,7 +660,11 @@ document.addEventListener('DOMContentLoaded', function() {
             var difficulty = data.network_data.difficulty || data.network_data.network_difficulty;
             if (difficulty !== undefined && difficulty !== null) {
                 networkDifficulty.textContent = (difficulty / 1e12).toFixed(1) + ' T';
+            } else {
+                console.log('[CALCULATOR] Difficulty data not found in network_data:', data.network_data);
             }
+        } else if (networkDifficulty) {
+            console.log('[CALCULATOR] Network difficulty element found but no network_data in response');
         }
         
         var networkHashrate = document.getElementById('network-hashrate-value');
@@ -645,8 +677,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         var btcPriceResult = document.getElementById('current-btc-price-value');
-        if (btcPriceResult && data.btc_price) {
-            btcPriceResult.textContent = '$' + data.btc_price.toLocaleString('en-US');
+        if (btcPriceResult) {
+            // Try different possible sources for BTC price
+            var btcPrice = data.btc_price || (data.network_data && data.network_data.btc_price);
+            if (btcPrice !== undefined && btcPrice !== null) {
+                btcPriceResult.textContent = '$' + Math.round(btcPrice).toLocaleString('en-US');
+            } else {
+                console.log('[CALCULATOR] BTC price data not found in response:', data);
+            }
         }
         
         var blockReward = document.getElementById('block-reward-value');
