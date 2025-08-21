@@ -210,10 +210,6 @@ def initialize_database():
     """Initialize database with graceful error handling"""
     try:
         with app.app_context():
-            # 在导入models前确保数据库已初始化
-            from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot
-            import models_subscription  # noqa: F401
-            
             # Test database connection before creating tables
             from database_health import db_health_manager
             database_url = os.environ.get('DATABASE_URL')
@@ -223,6 +219,10 @@ def initialize_database():
                 if not db_status['connected']:
                     logging.error(f"Database connection failed during initialization: {db_status.get('error')}")
                     return False
+            
+            # Import models after database connection is verified
+            from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot, MinerModel
+            import models_subscription  # noqa: F401
             
             db.create_all()
             logging.info("Database tables created successfully")
@@ -246,17 +246,22 @@ initialize_database_result = initialize_database()
 
 # Import models at module level immediately after database initialization
 # This ensures models are available for all functions defined below
-try:
-    from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot, MinerModel
-    import models_subscription  # noqa: F401
-    logging.info("Models imported successfully at module level")
-except ImportError as e:
-    logging.error(f"Failed to import models: {e}")
-    # Create placeholder classes to prevent NameError
+if initialize_database_result:
+    try:
+        from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot, MinerModel
+        import models_subscription  # noqa: F401
+        logging.info("Models imported successfully at module level")
+    except ImportError as e:
+        logging.error(f"Failed to import models: {e}")
+        initialize_database_result = False
+
+# Create placeholder classes if database initialization failed
+if not initialize_database_result:
+    logging.warning("Using placeholder models due to database initialization failure")
+    
     class LoginRecord:
         def __init__(self, **kwargs):
             pass
-    class UserAccess:
         @classmethod
         def query(cls):
             class MockQuery:
@@ -264,7 +269,49 @@ except ImportError as e:
                     return self
                 def first(self):
                     return None
+                def order_by(self, *args):
+                    return self
+                def all(self):
+                    return []
             return MockQuery()
+    
+    class UserAccess:
+        def __init__(self, **kwargs):
+            pass
+        @classmethod
+        def query(cls):
+            class MockQuery:
+                def filter_by(self, **kwargs):
+                    return self
+                def first(self):
+                    return None
+                def get_or_404(self, id):
+                    return None
+                def order_by(self, *args):
+                    return self
+                def all(self):
+                    return []
+            return MockQuery()
+        def set_password(self, password):
+            pass
+        def generate_email_verification_token(self):
+            return "mock_token"
+    
+    # Create other placeholder classes
+    Customer = UserAccess
+    Contact = UserAccess  
+    Lead = UserAccess
+    Activity = UserAccess
+    NetworkSnapshot = UserAccess
+    MinerModel = UserAccess
+    
+    class LeadStatus:
+        NEW = "NEW"
+        CONTACTED = "CONTACTED"
+    
+    class DealStatus:
+        DRAFT = "DRAFT"
+        PENDING = "PENDING"
 
 if not initialize_database_result:
     logging.warning("Database initialization failed - some features may not work correctly")
