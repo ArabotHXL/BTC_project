@@ -590,7 +590,7 @@
             <div class="col-12">
                 <h2 class="mb-3 text-white">
                     <i class="bi bi-wallet2 me-2 text-warning"></i>
-                    Btc Treasury Overview
+                    {{ tr('btc_treasury_overview') }}
                 </h2>
             </div>
             
@@ -599,8 +599,8 @@
                 <div class="card treasury-card">
                     <div class="card-body">
                         <div class="metric-label">
-                            BTC INVENTORY
-                            <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="{{ tr('total_btc_holdings') }}"></i>
+                            {{ tr('btc_inventory') }}
+                            <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="{{ tr('btc_inventory_tooltip') }}"></i>
                         </div>
                         <div class="metric-value" id="btcInventory">0.0000</div>
                         <small class="text-muted">≈ $<span id="btcInventoryUSD">0</span></small>
@@ -612,7 +612,7 @@
                 <div class="card treasury-card">
                     <div class="card-body">
                         <div class="metric-label">
-                            COST BASIS
+                            {{ tr('cost_basis') }}
                             <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="{{ tr('fifo_method_tooltip') }}"></i>
                         </div>
                         <div class="metric-value" id="avgCostBasis">$0</div>
@@ -625,11 +625,11 @@
                 <div class="card treasury-card">
                     <div class="card-body">
                         <div class="metric-label">
-                            CASH COVERAGE (DAYS)
+                            {{ tr('cash_coverage_days') }}
                             <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="{{ tr('cash_coverage_tooltip') }}"></i>
                         </div>
                         <div class="metric-value" id="cashCoverage">0</div>
-                        <small class="text-muted">DAYS OF OPEX</small>
+                        <small class="text-muted">{{ tr('days_of_opex') }}</small>
                         <div class="progress mt-2">
                             <div class="progress-bar" id="cashCoverageBar" style="width: 0%"></div>
                         </div>
@@ -641,11 +641,11 @@
                 <div class="card treasury-card">
                     <div class="card-body">
                         <div class="metric-label">
-                            NEXT MONTH DUE
+                            {{ tr('next_month_due') }}
                             <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="{{ tr('monthly_opex_tooltip') }}"></i>
                         </div>
                         <div class="metric-value text-warning" id="nextMonthDue">$0</div>
-                        <small class="text-muted">OPEX + BILLS</small>
+                        <small class="text-muted">{{ tr('opex_bills') }}</small>
                     </div>
                 </div>
             </div>

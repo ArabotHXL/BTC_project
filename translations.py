@@ -243,6 +243,8 @@ TRANSLATIONS = {
         'max_drawdown_label': 'Max Drawdown',
         'win_rate_label': 'Win Rate',
         'specific_id': 'Specific ID',
+        'btc_treasury_overview': 'BTC Treasury Overview',
+        'cash_coverage_days': 'CASH COVERAGE (DAYS)',
         'priority': 'Priority',
         'source': 'Source',
         'high': 'High',
