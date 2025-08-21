@@ -524,6 +524,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // 6个月、12个月、24个月、36个月的利润和ROI
         if (data.roi && data.roi.client && data.roi.client.forecast) {
             var forecast = data.roi.client.forecast;
+            console.log('[ROI] Forecast data available, length:', forecast.length);
             
             // 6个月
             var month6 = forecast.find(p => p.month === 6);
@@ -532,6 +533,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 var elem6Roi = document.getElementById('client-6month-roi');
                 if (elem6Profit) elem6Profit.textContent = '$' + month6.cumulative_profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 if (elem6Roi) elem6Roi.textContent = month6.roi_percent.toFixed(2) + '%';
+                console.log('[ROI] 6-month data updated:', month6.cumulative_profit, month6.roi_percent);
             }
             
             // 12个月
@@ -541,6 +543,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 var elem12Roi = document.getElementById('client-12month-roi');
                 if (elem12Profit) elem12Profit.textContent = '$' + month12.cumulative_profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 if (elem12Roi) elem12Roi.textContent = month12.roi_percent.toFixed(2) + '%';
+                console.log('[ROI] 12-month data updated:', month12.cumulative_profit, month12.roi_percent);
+            } else {
+                console.log('[ROI] No 12-month data found in forecast');
             }
             
             // 24个月
@@ -550,6 +555,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 var elem24Roi = document.getElementById('client-24month-roi');
                 if (elem24Profit) elem24Profit.textContent = '$' + month24.cumulative_profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 if (elem24Roi) elem24Roi.textContent = month24.roi_percent.toFixed(2) + '%';
+                console.log('[ROI] 24-month data updated:', month24.cumulative_profit, month24.roi_percent);
+            } else {
+                console.log('[ROI] No 24-month data found in forecast');
             }
             
             // 36个月
@@ -559,7 +567,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 var elem36Roi = document.getElementById('client-36month-roi');
                 if (elem36Profit) elem36Profit.textContent = '$' + month36.cumulative_profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 if (elem36Roi) elem36Roi.textContent = month36.roi_percent.toFixed(2) + '%';
+                console.log('[ROI] 36-month data updated:', month36.cumulative_profit, month36.roi_percent);
+            } else {
+                console.log('[ROI] No 36-month data found in forecast');
             }
+        } else {
+            console.log('[ROI] ROI forecast data not available in response:', data);
         }
 
         // 风险分析和敏感性分析
@@ -868,6 +881,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (hashrateField && !hashrateField.value) hashrateField.value = '100';
         
         updateTotals();
+        
+        // Force refresh network stats for card display
+        setTimeout(function() {
+            console.log('[CALCULATOR] Refreshing network stats for cards...');
+            loadNetworkStats();
+        }, 1000);
+        
         console.log('[CALCULATOR] Initialization complete');
     }, 500);
 });

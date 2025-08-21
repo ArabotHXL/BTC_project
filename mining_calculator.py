@@ -154,9 +154,8 @@ def calculate_enhanced_roi(investment, yearly_profit, monthly_profit, btc_price,
             "break_even": break_even
         })
         
-        # Stop if payback is achieved
-        if roi_reached and len(forecast) >= 12:  # Ensure at least 1 year of data
-            break
+        # Continue full forecast regardless of break-even for comprehensive analysis
+        # Don't break early - continue to generate full 36-month forecast
     
     # Calculate final metrics
     payback_period_months = investment / monthly_profit if monthly_profit > 0 else None
