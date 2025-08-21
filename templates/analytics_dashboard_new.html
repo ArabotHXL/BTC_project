@@ -655,22 +655,22 @@
         <ul class="nav nav-tabs mb-4" id="mainTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="strategy-tab" data-bs-toggle="tab" data-bs-target="#strategy" type="button">
-                    <i class="bi bi-diagram-3 me-1"></i> Strategy Templates
+                    <i class="bi bi-diagram-3 me-1"></i> {{ tr('strategy_templates') }}
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="signals-tab" data-bs-toggle="tab" data-bs-target="#signals" type="button">
-                    <i class="bi bi-speedometer2 me-1"></i> Signal Aggregation
+                    <i class="bi bi-speedometer2 me-1"></i> {{ tr('signal_aggregation') }}
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="execution-tab" data-bs-toggle="tab" data-bs-target="#execution" type="button">
-                    <i class="bi bi-play-circle me-1"></i> Execution Panel
+                    <i class="bi bi-play-circle me-1"></i> {{ tr('execution_panel') }}
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="backtest-tab" data-bs-toggle="tab" data-bs-target="#backtest" type="button">
-                    <i class="bi bi-graph-up me-1"></i> Backtest Engine
+                    <i class="bi bi-graph-up me-1"></i> {{ tr('backtest_engine') }}
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -903,7 +903,7 @@
                     <div class="col-md-3">
                         <div class="card">
                             <div class="card-header">
-                                <i class="bi bi-graph-up me-2"></i>Technical
+                                <i class="bi bi-graph-up me-2"></i>{{ tr('technical') }}
                             </div>
                             <div class="card-body">
                                 <div class="signal-item mb-2">
@@ -932,7 +932,7 @@
                     <div class="col-md-3">
                         <div class="card">
                             <div class="card-header">
-                                <i class="bi bi-link-45deg me-2"></i>On-Chain
+                                <i class="bi bi-link-45deg me-2"></i>{{ tr('on_chain') }}
                             </div>
                             <div class="card-body">
                                 <div class="signal-item mb-2">
@@ -962,7 +962,7 @@
                     <div class="col-md-3">
                         <div class="card">
                             <div class="card-header">
-                                <i class="bi bi-cpu me-2"></i>Mining
+                                <i class="bi bi-cpu me-2"></i>{{ tr('mining') }}
                             </div>
                             <div class="card-body">
                                 <div class="signal-item mb-2">
@@ -992,7 +992,7 @@
                     <div class="col-md-3">
                         <div class="card">
                             <div class="card-header">
-                                <i class="bi bi-bar-chart me-2"></i>Market
+                                <i class="bi bi-bar-chart me-2"></i>{{ tr('market') }}
                             </div>
                             <div class="card-body">
                                 <div class="signal-item mb-2">
@@ -1024,15 +1024,15 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h5>Aggregated Signal & Recommendation</h5>
+                                <h5>{{ tr('aggregated_signal_recommendation') }}</h5>
                                 <button class="btn btn-sm btn-outline-light" onclick="exportSignal()">
-                                    <i class="bi bi-download me-1"></i>Export
+                                    <i class="bi bi-download me-1"></i>{{ tr('export') }}
                                 </button>
                             </div>
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <h6>Current Signal: <span class="text-warning">NEUTRAL-BULLISH</span></h6>
+                                        <h6>{{ tr('current_signal') }}: <span class="text-warning">NEUTRAL-BULLISH</span></h6>
                                         <div class="progress mb-2" style="height: 20px;">
                                             <div class="progress-bar bg-danger" style="width: 20%">Sell</div>
                                             <div class="progress-bar bg-warning" style="width: 40%">Hold</div>
@@ -1050,7 +1050,7 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <h6>Recommended Action:</h6>
+                                        <h6>{{ tr('recommended_action') }}:</h6>
                                         <p class="mb-1"><i class="bi bi-info-circle text-info me-2"></i>
                                             {{ tr('price_action_advice') }}
                                         </p>
