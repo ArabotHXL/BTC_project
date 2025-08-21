@@ -794,21 +794,21 @@
                             <div class="card-body">
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-green"></span>
-                                    <span>MA(50/200): Bullish</span>
+                                    <span>{{ tr('ma_bullish') }}</span>
                                 </div>
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-yellow"></span>
-                                    <span>RSI(14): 68.5</span>
-                                    <small class="text-muted d-block">Near 70 (hit)</small>
+                                    <span>{{ tr('rsi_14_value') }}</span>
+                                    <small class="text-muted d-block">{{ tr('rsi_near_70') }}</small>
                                 </div>
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-green"></span>
-                                    <span>Bollinger: Mid-Band</span>
+                                    <span>{{ tr('bollinger_mid') }}</span>
                                 </div>
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-red"></span>
-                                    <span>ATR: High Volatility</span>
-                                    <small class="text-muted d-block">Above 1.5%</small>
+                                    <span>{{ tr('atr_high_vol') }}</span>
+                                    <small class="text-muted d-block">{{ tr('above_1_5_percent') }}</small>
                                 </div>
                             </div>
                         </div>
@@ -823,22 +823,22 @@
                             <div class="card-body">
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-yellow"></span>
-                                    <span>Puell: 1.65</span>
-                                    <small class="text-muted d-block">Trigger >1.8</small>
+                                    <span>{{ tr('puell_trigger') }}</span>
+                                    <small class="text-muted d-block">{{ tr('trigger_above_1_8') }}</small>
                                 </div>
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-green"></span>
-                                    <span>SOPR: 1.02</span>
-                                    <small class="text-muted d-block">Profitable</small>
+                                    <span>{{ tr('sopr_profitable') }}</span>
+                                    <small class="text-muted d-block">{{ tr('profitable') }}</small>
                                 </div>
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-green"></span>
-                                    <span>MVRV: 2.1</span>
-                                    <small class="text-muted d-block">Fair value</small>
+                                    <span>{{ tr('mvrv_fair_value') }}</span>
+                                    <small class="text-muted d-block">{{ tr('fair_value') }}</small>
                                 </div>
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-green"></span>
-                                    <span>MPI: Low</span>
+                                    <span>{{ tr('mpi_low') }}</span>
                                 </div>
                             </div>
                         </div>
@@ -853,22 +853,22 @@
                             <div class="card-body">
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-yellow"></span>
-                                    <span>Hashprice: 65%ile</span>
-                                    <small class="text-muted d-block">Trigger >70%ile</small>
+                                    <span>{{ tr('hashprice_65_percentile') }}</span>
+                                    <small class="text-muted d-block">{{ tr('trigger_above_70_percentile') }}</small>
                                 </div>
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-green"></span>
-                                    <span>Hash Ribbons: Neutral</span>
+                                    <span>{{ tr('hash_ribbons_neutral') }}</span>
                                 </div>
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-green"></span>
-                                    <span>Difficulty: +2.1%</span>
-                                    <small class="text-muted d-block">Normal range</small>
+                                    <span>{{ tr('difficulty_increase') }}</span>
+                                    <small class="text-muted d-block">{{ tr('normal_range') }}</small>
                                 </div>
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-yellow"></span>
-                                    <span>Miner→Exchange: Normal</span>
-                                    <small class="text-muted d-block">No stress</small>
+                                    <span>{{ tr('miner_exchange_normal') }}</span>
+                                    <small class="text-muted d-block">{{ tr('no_stress') }}</small>
                                 </div>
                             </div>
                         </div>
@@ -883,22 +883,22 @@
                             <div class="card-body">
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-green"></span>
-                                    <span>Funding: 0.01%</span>
-                                    <small class="text-muted d-block">Neutral zone</small>
+                                    <span>{{ tr('funding_001_percent') }}</span>
+                                    <small class="text-muted d-block">{{ tr('neutral_zone') }}</small>
                                 </div>
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-yellow"></span>
-                                    <span>Basis: 5.2%</span>
-                                    <small class="text-muted d-block">Near 6% (alert)</small>
+                                    <span>{{ tr('basis_5_2_percent') }}</span>
+                                    <small class="text-muted d-block">{{ tr('near_alert') }}</small>
                                 </div>
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-green"></span>
-                                    <span>OI: Stable</span>
+                                    <span>{{ tr('oi_stable') }}</span>
                                 </div>
                                 <div class="signal-item mb-2">
                                     <span class="signal-indicator signal-green"></span>
-                                    <span>Spread: 0.02%</span>
-                                    <small class="text-muted d-block">Low liquidity</small>
+                                    <span>{{ tr('spread_002_percent') }}</span>
+                                    <small class="text-muted d-block">{{ tr('low_liquidity') }}</small>
                                 </div>
                             </div>
                         </div>
@@ -910,43 +910,43 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h5>Aggregated Signal & Recommendation</h5>
+                                <h5>{{ tr('aggregated_signal') }}</h5>
                                 <button class="btn btn-sm btn-outline-light" onclick="exportSignal()">
-                                    <i class="bi bi-download me-1"></i>Export
+                                    <i class="bi bi-download me-1"></i>{{ tr('export') }}
                                 </button>
                             </div>
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <h6>Current Signal: <span class="text-warning">NEUTRAL-BULLISH</span></h6>
+                                        <h6>{{ tr('current_signal') }}: <span class="text-warning">{{ tr('neutral_bullish') }}</span></h6>
                                         <div class="progress mb-2" style="height: 20px;">
-                                            <div class="progress-bar bg-danger" style="width: 20%">Sell</div>
-                                            <div class="progress-bar bg-warning" style="width: 40%">Hold</div>
-                                            <div class="progress-bar bg-success" style="width: 40%">Buy</div>
+                                            <div class="progress-bar bg-danger" style="width: 20%">{{ tr('sell') }}</div>
+                                            <div class="progress-bar bg-warning" style="width: 40%">{{ tr('hold') }}</div>
+                                            <div class="progress-bar bg-success" style="width: 40%">{{ tr('buy') }}</div>
                                         </div>
                                         <small class="text-muted">
                                             <i class="bi bi-calculator me-1"></i>
-                                            Weighted Score: Trend +18 | On-Chain +6 | Mining +4 | Market -2 = +26
+                                            {{ tr('weighted_score') }}
                                         </small>
                                         <div class="mt-2">
                                             <small class="text-success">
                                                 <i class="bi bi-check-circle me-1"></i>
-                                                Confidence: High (3 signals aligned)
+                                                {{ tr('confidence_high') }}
                                             </small>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <h6>Recommended Action:</h6>
+                                        <h6>{{ tr('recommended_action') }}:</h6>
                                         <p class="mb-1"><i class="bi bi-info-circle text-info me-2"></i>
-                                            Price above 52W median with RSI approaching overbought. Consider taking 15% profit at Layer 2 target.
+                                            {{ tr('price_action_advice') }}
                                         </p>
                                         <div class="alert alert-warning py-2 px-3 mt-2" style="font-size: 0.9rem; background-color: rgba(237, 137, 54, 0.15); border: 1px solid rgba(237, 137, 54, 0.5); color: #ffd700 !important;">
                                             <i class="bi bi-exclamation-triangle me-2" style="color: #ffd700 !important;"></i>
-                                            <strong style="color: #ffd700 !important;">Next trigger: L2 at $113,800 (sell 0.75 BTC)</strong>
+                                            <strong style="color: #ffd700 !important;">{{ tr('next_trigger') }}</strong>
                                         </div>
                                         <button class="btn btn-sm btn-outline-warning mt-2" onclick="document.getElementById('execution-tab').click()">
                                             <i class="bi bi-arrow-right-circle me-1"></i>
-                                            Execute Recommended Trade
+                                            {{ tr('execute_recommended') }}
                                         </button>
                                     </div>
                                 </div>
@@ -962,23 +962,23 @@
                     <div class="col-md-8">
                         <div class="card">
                             <div class="card-header">
-                                <h5>Order Execution Panel</h5>
+                                <h5>{{ tr('order_execution_panel') }}</h5>
                             </div>
                             <div class="card-body">
                                 <!-- Execution Type -->
                                 <div class="row mb-3">
                                     <div class="col-md-6">
-                                        <label class="form-label">Execution Type</label>
+                                        <label class="form-label">{{ tr('execution_type') }}</label>
                                         <select class="form-select" id="executionType">
-                                            <option value="market">Market Order</option>
-                                            <option value="limit">Limit Order</option>
-                                            <option value="ladder">Ladder Limit (3-6 levels)</option>
-                                            <option value="twap">TWAP (Time-Weighted)</option>
-                                            <option value="vwap">VWAP (Volume-Weighted)</option>
+                                            <option value="market">{{ tr('market_order') }}</option>
+                                            <option value="limit">{{ tr('limit_order') }}</option>
+                                            <option value="ladder">{{ tr('ladder_limit') }}</option>
+                                            <option value="twap">{{ tr('twap_order') }}</option>
+                                            <option value="vwap">{{ tr('vwap_order') }}</option>
                                         </select>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label">Amount (BTC)</label>
+                                        <label class="form-label">{{ tr('amount_btc') }}</label>
                                         <input type="number" class="form-control" id="executionAmount" step="0.0001" value="0.0" onchange="generateOrders()">
                                     </div>
                                 </div>
@@ -991,38 +991,38 @@
                                 <!-- Exchange Selection -->
                                 <div class="row mb-3">
                                     <div class="col-md-6">
-                                        <label class="form-label">Exchange</label>
+                                        <label class="form-label">{{ tr('exchange') }}</label>
                                         <select class="form-select" id="exchangeSelect">
-                                            <option value="spot">Spot Exchange</option>
-                                            <option value="otc">OTC Desk (>10 BTC)</option>
-                                            <option value="block">Block Trade</option>
+                                            <option value="spot">{{ tr('spot_exchange') }}</option>
+                                            <option value="otc">{{ tr('otc_desk') }}</option>
+                                            <option value="block">{{ tr('block_trade') }}</option>
                                         </select>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label">Slippage Tolerance</label>
+                                        <label class="form-label">{{ tr('slippage_tolerance') }}</label>
                                         <input type="number" class="form-control" id="slippageTolerance" value="0.5" step="0.1">
-                                        <small class="text-muted">Maximum acceptable slippage %</small>
+                                        <small class="text-muted">{{ tr('maximum_acceptable_slippage') }}</small>
                                     </div>
                                 </div>
                                 
                                 <!-- Preview -->
                                 <div class="execution-panel mb-3">
-                                    <h6>Execution Preview</h6>
+                                    <h6>{{ tr('execution_preview') }}</h6>
                                     <div id="executionPreview">
-                                        <p class="text-muted">Configure parameters to see execution preview</p>
+                                        <p class="text-muted">{{ tr('configure_parameters_preview') }}</p>
                                     </div>
                                 </div>
                                 
                                 <!-- Action Buttons -->
                                 <div class="d-flex gap-2">
                                     <button class="btn execution-btn" onclick="generateOrders()">
-                                        <i class="bi bi-list-ol me-2"></i>Generate Order List
+                                        <i class="bi bi-list-ol me-2"></i>{{ tr('generate_order_list') }}
                                     </button>
                                     <button class="btn btn-outline-info" onclick="simulateExecution()">
-                                        <i class="bi bi-play-circle me-2"></i>Simulate
+                                        <i class="bi bi-play-circle me-2"></i>{{ tr('simulate') }}
                                     </button>
                                     <button class="btn btn-outline-danger" onclick="clearExecution()">
-                                        <i class="bi bi-x-circle me-2"></i>Clear
+                                        <i class="bi bi-x-circle me-2"></i>{{ tr('clear') }}
                                     </button>
                                 </div>
                             </div>
@@ -1033,7 +1033,7 @@
                     <div class="col-md-4">
                         <div class="card">
                             <div class="card-header">
-                                <h5>Recent Executions</h5>
+                                <h5>{{ tr('recent_executions') }}</h5>
                             </div>
                             <div class="card-body" style="max-height: 400px; overflow-y: auto;">
                                 <div id="executionLog">
@@ -1060,39 +1060,39 @@
                     <div class="col-md-8">
                         <div class="card">
                             <div class="card-header">
-                                <h5>Strategy Backtesting</h5>
+                                <h5>{{ tr('strategy_backtesting') }}</h5>
                             </div>
                             <div class="card-body">
                                 <!-- Backtest Parameters -->
                                 <div class="row mb-3">
                                     <div class="col-md-4">
-                                        <label class="form-label">Start Date</label>
+                                        <label class="form-label">{{ tr('start_date_label') }}</label>
                                         <input type="date" class="form-control" id="backtestStart">
                                     </div>
                                     <div class="col-md-4">
-                                        <label class="form-label">End Date</label>
+                                        <label class="form-label">{{ tr('end_date_label') }}</label>
                                         <input type="date" class="form-control" id="backtestEnd">
                                     </div>
                                     <div class="col-md-4">
-                                        <label class="form-label">Initial BTC</label>
+                                        <label class="form-label">{{ tr('initial_btc_label') }}</label>
                                         <input type="number" class="form-control" id="backtestInitialBTC" value="10" step="0.1">
                                     </div>
                                 </div>
                                 
                                 <!-- Strategy Selection for Backtest -->
                                 <div class="mb-3">
-                                    <label class="form-label">Strategy to Test</label>
+                                    <label class="form-label">{{ tr('strategy_to_test') }}</label>
                                     <select class="form-select" id="backtestStrategy">
-                                        <option value="hold">Buy & Hold (Baseline)</option>
-                                        <option value="dca">DCA Selling</option>
-                                        <option value="opex">OPEX Coverage</option>
-                                        <option value="layered">Layered Profit Taking</option>
-                                        <option value="mining">Mining Cycle Driven</option>
+                                        <option value="hold">{{ tr('buy_hold_baseline') }}</option>
+                                        <option value="dca">{{ tr('dca_template') }}</option>
+                                        <option value="opex">{{ tr('opex_template') }}</option>
+                                        <option value="layered">{{ tr('layered_profit_template') }}</option>
+                                        <option value="mining">{{ tr('mining_cycle_template') }}</option>
                                     </select>
                                 </div>
                                 
                                 <button class="btn execution-btn" onclick="runBacktest()">
-                                    <i class="bi bi-play-fill me-2"></i>Run Backtest
+                                    <i class="bi bi-play-fill me-2"></i>{{ tr('run_backtest') }}
                                 </button>
                                 
                                 <!-- Results Chart -->
@@ -1107,31 +1107,31 @@
                     <div class="col-md-4">
                         <div class="card">
                             <div class="card-header">
-                                <h5>Performance Metrics</h5>
+                                <h5>{{ tr('performance_metrics') }}</h5>
                             </div>
                             <div class="card-body">
                                 <div class="mb-3">
-                                    <div class="metric-label">Total Return</div>
+                                    <div class="metric-label">{{ tr('total_return_label') }}</div>
                                     <div class="metric-value text-success" id="backtestReturn">+0.00%</div>
                                 </div>
                                 <div class="mb-3">
-                                    <div class="metric-label">Max Drawdown</div>
+                                    <div class="metric-label">{{ tr('max_drawdown_label') }}</div>
                                     <div class="metric-value text-danger" id="backtestDrawdown">-0.00%</div>
                                 </div>
                                 <div class="mb-3">
-                                    <div class="metric-label">Sharpe Ratio</div>
+                                    <div class="metric-label">{{ tr('sharpe_ratio_label') }}</div>
                                     <div class="metric-value" id="backtestSharpe">0.00</div>
                                 </div>
                                 <div class="mb-3">
-                                    <div class="metric-label">Win Rate</div>
+                                    <div class="metric-label">{{ tr('win_rate_label') }}</div>
                                     <div class="metric-value" id="backtestWinRate">0%</div>
                                 </div>
                                 <div class="mb-3">
-                                    <div class="metric-label">Avg Slippage</div>
+                                    <div class="metric-label">{{ tr('avg_slippage') }}</div>
                                     <div class="metric-value" id="backtestSlippage">0.00%</div>
                                 </div>
                                 <div class="mb-3">
-                                    <div class="metric-label">Total Trades</div>
+                                    <div class="metric-label">{{ tr('total_trades') }}</div>
                                     <div class="metric-value" id="backtestTrades">0</div>
                                 </div>
                             </div>
@@ -1146,31 +1146,31 @@
                     <div class="col-md-6">
                         <div class="card">
                             <div class="card-header">
-                                <h5>Core Inputs</h5>
+                                <h5>{{ tr('core_inputs') }}</h5>
                             </div>
                             <div class="card-body">
                                 <div class="mb-3">
-                                    <label class="form-label">Current BTC Inventory</label>
+                                    <label class="form-label">{{ tr('current_btc_inventory') }}</label>
                                     <input type="number" class="form-control" id="settingsBTCInventory" step="0.0001">
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Average Cost Basis ($)</label>
+                                    <label class="form-label">{{ tr('average_cost_basis') }}</label>
                                     <input type="number" class="form-control" id="settingsCostBasis" step="100">
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Monthly OPEX ($)</label>
+                                    <label class="form-label">{{ tr('monthly_opex') }}</label>
                                     <input type="number" class="form-control" id="settingsMonthlyOPEX" step="1000">
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Minimum Cash Reserve ($)</label>
+                                    <label class="form-label">{{ tr('minimum_cash_reserve') }}</label>
                                     <input type="number" class="form-control" id="settingsMinCash" step="1000">
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Cost Method</label>
+                                    <label class="form-label">{{ tr('cost_method') }}</label>
                                     <select class="form-select" id="settingsCostMethod">
-                                        <option value="fifo">FIFO</option>
+                                        <option value="fifo">{{ tr('fifo') }}</option>
                                         <option value="lifo">LIFO</option>
-                                        <option value="specific">Specific ID</option>
+                                        <option value="specific">{{ tr('specific_id') }}</option>
                                     </select>
                                 </div>
                             </div>
@@ -1180,32 +1180,32 @@
                     <div class="col-md-6">
                         <div class="card">
                             <div class="card-header">
-                                <h5>Risk & Execution Settings</h5>
+                                <h5>{{ tr('risk_execution_settings') }}</h5>
                             </div>
                             <div class="card-body">
                                 <div class="mb-3">
-                                    <label class="form-label">Risk Profile</label>
+                                    <label class="form-label">{{ tr('risk_profile') }}</label>
                                     <select class="form-select" id="settingsRiskProfile">
-                                        <option value="conservative">Conservative</option>
-                                        <option value="moderate">Moderate</option>
-                                        <option value="aggressive">Aggressive</option>
+                                        <option value="conservative">{{ tr('conservative') }}</option>
+                                        <option value="moderate">{{ tr('moderate') }}</option>
+                                        <option value="aggressive">{{ tr('aggressive') }}</option>
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Max Daily Sell %</label>
+                                    <label class="form-label">{{ tr('max_daily_sell_percent') }}</label>
                                     <input type="number" class="form-control" id="settingsMaxDailySell" value="10" min="1" max="100">
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Allow Derivatives Hedging</label>
+                                    <label class="form-label">{{ tr('allow_derivatives_hedging') }}</label>
                                     <select class="form-select" id="settingsAllowHedging">
-                                        <option value="no">No</option>
-                                        <option value="yes">Yes</option>
+                                        <option value="no">{{ tr('no') }}</option>
+                                        <option value="yes">{{ tr('yes') }}</option>
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Preferred Exchange</label>
+                                    <label class="form-label">{{ tr('preferred_exchange') }}</label>
                                     <select class="form-select" id="settingsExchange">
-                                        <option value="auto">Auto-select</option>
+                                        <option value="auto">{{ tr('auto_select') }}</option>
                                         <option value="coinbase">Coinbase</option>
                                         <option value="binance">Binance</option>
                                         <option value="kraken">Kraken</option>
@@ -1213,18 +1213,18 @@
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Alert Channels</label>
+                                    <label class="form-label">{{ tr('alert_channels') }}</label>
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="alertEmail">
-                                        <label class="form-check-label" for="alertEmail">Email</label>
+                                        <label class="form-check-label" for="alertEmail">{{ tr('email') }}</label>
                                     </div>
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="alertTelegram">
-                                        <label class="form-check-label" for="alertTelegram">Telegram</label>
+                                        <label class="form-check-label" for="alertTelegram">{{ tr('telegram') }}</label>
                                     </div>
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="alertDiscord">
-                                        <label class="form-check-label" for="alertDiscord">Discord Webhook</label>
+                                        <label class="form-check-label" for="alertDiscord">{{ tr('discord_webhook') }}</label>
                                     </div>
                                 </div>
                             </div>
@@ -1235,7 +1235,7 @@
                 <div class="row mt-3">
                     <div class="col-12 text-center">
                         <button class="btn execution-btn" onclick="saveSettings()">
-                            <i class="bi bi-save me-2"></i>Save All Settings
+                            <i class="bi bi-save me-2"></i>{{ tr('save_all_settings') }}
                         </button>
                     </div>
                 </div>
@@ -1247,9 +1247,7 @@
             <div class="col-12">
                 <div class="alert alert-warning disclaimer-text" style="background-color: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3);">
                     <i class="bi bi-info-circle me-2" style="color: #2c3e50 !important; font-size: 1.1em;"></i>
-                    <strong style="color: #2c3e50 !important;">Educational Purpose Only:</strong> 
-                    <span style="color: #2c3e50 !important;">This platform provides information and tools for educational purposes. 
-                    It does not constitute investment advice. All trading decisions are your own responsibility.</span>
+                    <strong style="color: #2c3e50 !important;">{{ tr('educational_purpose_only') }}</strong>
                 </div>
             </div>
         </div>
