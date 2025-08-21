@@ -143,63 +143,161 @@
                 font-size: 16px; /* 防止iOS自动缩放 */
             }
         }
+
+        /* 新导航栏样式增强 */
+        .navbar .btn-light:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            background: rgba(255,255,255,1) !important;
+        }
+
+        .navbar .dropdown-toggle:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        .navbar .dropdown-menu {
+            animation: fadeInUp 0.3s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-item:hover {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+            color: white !important;
+            transform: translateX(5px);
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-item.active {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+        }
+
+        /* 响应式导航优化 */
+        @media (max-width: 991px) {
+            .navbar .container-fluid {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .navbar-brand, .navbar-nav {
+                justify-content: center;
+            }
+            
+            .navbar h4 {
+                font-size: 1.2rem;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container-fluid">
-        <header class="py-3 mb-4 border-bottom">
-            <div class="container d-flex align-items-center justify-content-between">
-                <h1 class="fs-4">{% if current_lang == 'en' %}Bitcoin Mining Calculator{% else %}比特币挖矿计算器{% endif %}</h1>
+        <!-- 新版本导航栏 -->
+        <nav class="navbar navbar-expand-lg mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; padding: 1rem 1.5rem;">
+            <div class="container-fluid">
+                <!-- 左侧：返回主页按钮 -->
+                <div class="navbar-brand mb-0">
+                    <a href="/" class="btn btn-light btn-lg shadow-sm d-flex align-items-center text-decoration-none" 
+                       style="border-radius: 12px; padding: 0.75rem 1.5rem; transition: all 0.3s ease; background: rgba(255,255,255,0.95);">
+                        <i class="bi bi-house-door-fill me-2 text-primary" style="font-size: 1.2rem;"></i>
+                        <span class="fw-bold text-dark">{{ t('home') }}</span>
+                    </a>
+                </div>
                 
-                <div class="d-flex gap-2 gap-md-3 align-items-center flex-wrap justify-content-between w-100">
-                    <!-- Left side navigation -->
-                    <div class="d-flex gap-2 align-items-center flex-wrap">
-                        <!-- 主页按钮 / Home Button -->
-                        <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">
-                            <i class="bi bi-house-door me-1"></i>
-                            {% if current_lang == 'en' %}Home{% else %}主页{% endif %}
+                <!-- 中间：页面标题和快速导航 -->
+                <div class="navbar-nav mx-auto d-flex flex-row gap-3">
+                    <div class="d-flex align-items-center">
+                        <h4 class="mb-0 text-white fw-bold d-flex align-items-center me-4">
+                            <i class="bi bi-cpu me-2"></i>
+                            {% if current_lang == 'en' %}Mining Calculator{% else %}挖矿计算器{% endif %}
+                        </h4>
+                        <!-- 快速导航到批量计算器 -->
+                        <a href="/batch-calculator" class="btn btn-outline-light btn-sm d-flex align-items-center"
+                           style="border-radius: 8px; padding: 0.5rem 1rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3);">
+                            <i class="bi bi-calculator me-2"></i>
+                            {% if current_lang == 'en' %}Batch Mode{% else %}批量模式{% endif %}
                         </a>
-                        
-                        <!-- 批量计算器按钮 -->
-                        <a href="{{ url_for('batch_calculator.batch_calculator') }}" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-calculator-fill me-1"></i>
-                            {% if current_lang == 'en' %}Batch Calculator{% else %}批量计算器{% endif %}
-                        </a>
-                        
-                        <!-- CRM系统按钮 (对特定角色显示) -->
-                        {% if session.role in ['owner', 'admin'] %}
-                        <a href="/crm" class="btn btn-outline-info btn-sm">
-                            <i class="bi bi-people-fill me-1"></i>
-                            {% if current_lang == 'en' %}CRM System{% else %}客户管理系统{% endif %}
-                        </a>
-                        {% endif %}
-                        
-                        <!-- 语言切换 / Language Switcher -->
-                        <div style="display: inline-flex; margin-left: auto;">
-                            <a href="/mining-calculator?lang=zh" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}" style="padding: 0.15rem 0.4rem; font-size: 0.7rem; border-radius: 0.15rem 0 0 0.15rem; border-right: none; min-width: 35px;">中文</a>
-                            <a href="/mining-calculator?lang=en" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}" style="padding: 0.15rem 0.4rem; font-size: 0.7rem; border-radius: 0 0.15rem 0.15rem 0; min-width: 35px;">EN</a>
+                    </div>
+                </div>
+                
+                <!-- 右侧：语言切换系统 -->
+                <div class="navbar-nav">
+                    <div class="btn-group shadow-sm" role="group">
+                        <button type="button" class="btn btn-light dropdown-toggle d-flex align-items-center" 
+                                data-bs-toggle="dropdown" aria-expanded="false"
+                                style="border-radius: 12px; padding: 0.75rem 1.25rem; background: rgba(255,255,255,0.95); border: none;">
+                            <i class="bi bi-globe me-2 text-primary"></i>
+                            <span class="fw-semibold text-dark">{{ t('language') }}</span>
+                            <span class="ms-2 badge bg-primary">{{ 'CN' if current_lang == 'zh' else 'EN' }}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg" style="border-radius: 12px; border: none; min-width: 180px;">
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center py-2 {{ 'active bg-primary text-white' if current_lang == 'zh' else '' }}" 
+                                   href="/mining-calculator?lang=zh" style="border-radius: 8px; margin: 4px;">
+                                    <i class="bi bi-translate me-3"></i>
+                                    <span class="fw-semibold">中文 (简体)</span>
+                                    {% if current_lang == 'zh' %}<i class="bi bi-check-lg ms-auto"></i>{% endif %}
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center py-2 {{ 'active bg-primary text-white' if current_lang == 'en' else '' }}" 
+                                   href="/mining-calculator?lang=en" style="border-radius: 8px; margin: 4px;">
+                                    <i class="bi bi-globe-americas me-3"></i>
+                                    <span class="fw-semibold">English</span>
+                                    {% if current_lang == 'en' %}<i class="bi bi-check-lg ms-auto"></i>{% endif %}
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 网络状态信息栏 -->
+        <div class="container-fluid mb-4">
+            <div class="alert alert-info border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(13, 202, 240, 0.1) 100%); border-radius: 12px;">
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="alert-heading mb-2 text-info fw-bold d-flex align-items-center">
+                            <i class="bi bi-globe2 me-2"></i>
+                            {% if current_lang == 'en' %}Real-time Network Status{% else %}实时网络状态{% endif %}
+                        </h6>
+                        <div id="network-stats-container" class="d-flex gap-3 text-center flex-wrap justify-content-center">
+                            <div class="stats-item d-flex align-items-center">
+                                <span class="badge bg-warning text-dark me-2">{% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}</span>
+                                <strong id="btc-price" class="text-warning fs-6">$112,834</strong>
+                            </div>
+                            <div class="stats-item d-flex align-items-center">
+                                <span class="badge bg-info text-dark me-2">{% if current_lang == 'en' %}Difficulty{% else %}难度{% endif %}</span>
+                                <strong id="network-difficulty" class="text-info fs-6">129.44T</strong>
+                            </div>
+                            <div class="stats-item d-flex align-items-center">
+                                <span class="badge bg-danger text-white me-2">{% if current_lang == 'en' %}Network Hashrate{% else %}网络算力{% endif %}</span>
+                                <strong id="network-hashrate" class="text-danger fs-6">868.63 EH/s</strong>
+                            </div>
+                            <div class="stats-item d-flex align-items-center">
+                                <span class="badge bg-success text-white me-2">{% if current_lang == 'en' %}Block Reward{% else %}区块奖励{% endif %}</span>
+                                <strong id="block-reward" class="text-success fs-6">3.15445019 BTC</strong>
+                            </div>
                         </div>
                     </div>
-                    
-                    <!-- Network Stats - Improved Layout -->
-                    <div id="network-stats-container" class="d-flex gap-2 text-center flex-wrap justify-content-center">
-                        <div class="stats-item d-flex align-items-center">
-                            <span class="badge bg-warning text-dark me-1">{% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}</span>
-                            <strong id="btc-price" class="text-warning fs-6">$112,834</strong>
-                        </div>
-                        <div class="stats-item d-flex align-items-center">
-                            <span class="badge bg-info text-dark me-1">{% if current_lang == 'en' %}Difficulty{% else %}难度{% endif %}</span>
-                            <strong id="network-difficulty" class="text-info fs-6">129.44T</strong>
-                        </div>
-                        <div class="stats-item d-flex align-items-center">
-                            <span class="badge bg-danger text-white me-1">{% if current_lang == 'en' %}Network Hashrate{% else %}网络算力{% endif %}</span>
-                            <strong id="network-hashrate" class="text-danger fs-6">868.63 EH/s</strong>
-                        </div>
-                        <div class="stats-item d-flex align-items-center">
-                            <span class="badge bg-success text-white me-1">{% if current_lang == 'en' %}Block Reward{% else %}区块奖励{% endif %}</span>
-                            <strong id="block-reward" class="text-success fs-6">3.15445019 BTC</strong>
-                        </div>
-                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="container-fluid">
+            <div class="d-flex gap-2 gap-md-3 align-items-center flex-wrap justify-content-between w-100">
                     
                     <!-- User Account Info - Moved to the far right -->
                     <div class="dropdown ms-auto">
