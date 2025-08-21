@@ -110,7 +110,21 @@
             color: #000000 !important;
         }
         
-        .alert-warning.disclaimer-text .bi-info-circle {
+        /* Make icon red with highest specificity - must come after the * rule */
+        .alert-warning.disclaimer-text .bi-info-circle,
+        .alert-warning.disclaimer-text i.bi-info-circle,
+        .alert-warning.disclaimer-text > .bi-info-circle {
+            color: #dc3545 !important;
+        }
+        
+        /* Additional specificity for icon */
+        .disclaimer-text .bi-info-circle,
+        .disclaimer-icon {
+            color: #dc3545 !important;
+        }
+        
+        /* Force red color for disclaimer icon with maximum specificity */
+        .alert-warning.disclaimer-text .disclaimer-icon {
             color: #dc3545 !important;
         }
         
@@ -1426,7 +1440,7 @@
         <div class="row mt-5">
             <div class="col-12">
                 <div class="alert alert-warning disclaimer-text" style="background-color: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3);">
-                    <i class="bi bi-info-circle me-2" style="color: #dc3545 !important; font-size: 1.1em;"></i>
+                    <i class="bi bi-info-circle me-2 disclaimer-icon" style="color: #dc3545 !important; font-size: 1.1em !important;"></i>
                     <strong style="color: #000000 !important;">{{ tr('educational_purpose_only') }}</strong>
                 </div>
             </div>
