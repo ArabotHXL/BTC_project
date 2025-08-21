@@ -7,6 +7,14 @@ The BTC Mining Calculator is a web application for Bitcoin mining profitability 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+**2025-08-21: UI可见性优化和数据来源文档化**
+- 完成导航标签文字可见性修复，使用白色文字配合金色渐变背景增强对比度
+- 改善免责声明文字可读性，采用深蓝色文字配合渐变背景和金色边框
+- 优化右侧三个导航按钮（通知、语言切换、主页），使用金色主题设计增强可见性
+- 用户询问信号面板数据来源，已详细记录四大信号类别的真实数据源和演示数据说明
+- 信号数据来源包括：CoinGecko API、Blockchain.info、Alternative.me、Bitcoin RPC等真实数据源
+- 技术指标基于历史价格数据本地计算，部分链上和市场结构指标为教育演示用途
+
 **2025-08-21: Major Platform Evolution - HashInsight Treasury Management System**
 - Transformed analytics dashboard into comprehensive Bitcoin treasury management platform
 - Implemented professional-grade treasury overview with BTC inventory, cost basis, and cash coverage tracking
