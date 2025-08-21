@@ -649,6 +649,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function fetchNetworkStats(showLoading = true) {
+        console.log('[FETCH START] fetchNetworkStats 函数被调用，showLoading:', showLoading);
+        
         // 显示加载状态 (Show loading state) - 只在首次加载或手动刷新时显示
         if (showLoading) {
             var networkStatsElements = [btcPriceEl, networkDifficultyEl, networkHashrateEl, blockRewardEl];
