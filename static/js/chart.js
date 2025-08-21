@@ -659,24 +659,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Save context
                     ctx.save();
                     
-                    // Draw horizontal line at 100% ROI (break-even threshold)
-                    const breakEvenROI = 100;
-                    const horizontalY = yScale.getPixelForValue(breakEvenROI);
-                    
-                    ctx.beginPath();
-                    ctx.strokeStyle = '#dc3545'; // Red color for break-even threshold
-                    ctx.lineWidth = 2;
-                    ctx.setLineDash([8, 8]);
-                    ctx.moveTo(xScale.left, horizontalY);
-                    ctx.lineTo(xScale.right, horizontalY);
-                    ctx.stroke();
-                    ctx.setLineDash([]);
-                    
-                    // Draw horizontal line label
-                    ctx.fillStyle = '#dc3545';
-                    ctx.font = 'bold 11px Arial';
-                    ctx.textAlign = 'left';
-                    ctx.fillText('Break-even Line (100% ROI)', xScale.left + 10, horizontalY - 8);
+                    // 红线已移除 - 用户要求移除100% ROI水平参考线
                     
                     // Draw vertical line and marker if break-even point exists
                     if (breakEvenPoint && breakEvenIndex >= 0) {
