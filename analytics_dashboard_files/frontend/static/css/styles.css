@@ -1,0 +1,448 @@
+/* Bitcoin Mining Calculator - Unified Design System */
+
+/* Design System Variables */
+:root {
+    --primary-gradient: linear-gradient(135deg, #f7931e 0%, #ffc107 100%);
+    --secondary-gradient: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    --accent-color: #f7931e;
+    --accent-secondary: #ffc107;
+    --text-primary: #ffffff;
+    --text-secondary: #adb5bd;
+    --bg-primary: #212529;
+    --bg-secondary: #1a1a1a;
+    --bg-card: rgba(255, 255, 255, 0.05);
+    --border-color: #333;
+    --border-accent: #ffc107;
+    --shadow-color: rgba(255, 193, 7, 0.2);
+    --transition-default: all 0.3s ease;
+    --border-radius-card: 15px;
+    --border-radius-button: 8px;
+}
+
+/* Global Body Styling */
+body {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d3748 100%);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text-primary);
+}
+
+/* Unified Card System */
+.unified-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-card);
+    padding: 2rem;
+    transition: var(--transition-default);
+    position: relative;
+    overflow: hidden;
+}
+
+.unified-card:hover {
+    border-color: var(--border-accent);
+    box-shadow: 0 10px 25px var(--shadow-color);
+    transform: translateY(-2px);
+}
+
+.unified-card-header {
+    background: var(--primary-gradient);
+    color: #000;
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    margin: -2rem -2rem 2rem;
+    border-radius: var(--border-radius-card) var(--border-radius-card) 0 0;
+}
+
+/* Unified Button System */
+.btn-unified-primary {
+    background: var(--primary-gradient);
+    border: none;
+    color: #000;
+    font-weight: 600;
+    border-radius: var(--border-radius-button);
+    padding: 0.75rem 1.5rem;
+    transition: var(--transition-default);
+}
+
+.btn-unified-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px var(--shadow-color);
+    color: #000;
+}
+
+.btn-unified-secondary {
+    background: transparent;
+    border: 2px solid var(--border-accent);
+    color: var(--accent-secondary);
+    font-weight: 600;
+    border-radius: var(--border-radius-button);
+    padding: 0.75rem 1.5rem;
+    transition: var(--transition-default);
+}
+
+.btn-unified-secondary:hover {
+    background: var(--accent-secondary);
+    color: #000;
+    transform: translateY(-2px);
+}
+
+/* Unified Input System */
+.form-control-unified {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: var(--border-radius-button);
+    transition: var(--transition-default);
+}
+
+.form-control-unified:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--border-accent);
+    box-shadow: 0 0 0 0.25rem var(--shadow-color);
+    color: var(--text-primary);
+}
+
+/* Dashboard Grid System */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin: 2rem 0;
+}
+
+.dashboard-item {
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-card);
+    padding: 2rem;
+    text-align: center;
+    transition: var(--transition-default);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 不同功能区域的图标颜色 - 使用更具体的选择器 */
+.dashboard-grid .dashboard-item:nth-child(1) .bi, 
+.dashboard-grid .dashboard-item:nth-child(1) i {
+    color: #ffc107 !important; /* 挖矿计算器 - 金黄色 */
+}
+
+.dashboard-grid .dashboard-item:nth-child(2) .bi,
+.dashboard-grid .dashboard-item:nth-child(2) i {
+    color: #28a745 !important; /* 批量计算器 - 绿色 */
+}
+
+.dashboard-grid .dashboard-item:nth-child(3) .bi,
+.dashboard-grid .dashboard-item:nth-child(3) i {
+    color: #17a2b8 !important; /* 客户管理 - 青色 */
+}
+
+.dashboard-grid .dashboard-item:nth-child(4) .bi,
+.dashboard-grid .dashboard-item:nth-child(4) i {
+    color: #dc3545 !important; /* 分析平台 - 红色 */
+}
+
+.dashboard-grid .dashboard-item:nth-child(5) .bi,
+.dashboard-grid .dashboard-item:nth-child(5) i {
+    color: #6f42c1 !important; /* 用户管理 - 紫色 */
+}
+
+.dashboard-grid .dashboard-item:nth-child(6) .bi,
+.dashboard-grid .dashboard-item:nth-child(6) i {
+    color: #fd7e14 !important; /* 性能监控 - 橙色 */
+}
+
+/* 基于CSS类名的图标颜色选择器 - 更可靠的方法 */
+.dashboard-card.calculator-item .card-icon,
+.dashboard-card.calculator-item .bi,
+.dashboard-card.calculator-item i {
+    color: #ffc107 !important; /* 挖矿计算器 - 金黄色 */
+}
+
+.dashboard-card.batch-item .card-icon,
+.dashboard-card.batch-item .bi,
+.dashboard-card.batch-item i {
+    color: #28a745 !important; /* 批量计算器 - 绿色 */
+}
+
+.dashboard-card.customer-item .card-icon,
+.dashboard-card.customer-item .bi,
+.dashboard-card.customer-item i {
+    color: #17a2b8 !important; /* 客户管理 - 青色 */
+}
+
+.dashboard-card.analytics-item .card-icon,
+.dashboard-card.analytics-item .bi,
+.dashboard-card.analytics-item i {
+    color: #dc3545 !important; /* 分析平台 - 红色 */
+}
+
+.dashboard-card.user-item .card-icon,
+.dashboard-card.user-item .bi,
+.dashboard-card.user-item i {
+    color: #6f42c1 !important; /* 用户管理 - 紫色 */
+}
+
+.dashboard-card.performance-item .card-icon,
+.dashboard-card.performance-item .bi,
+.dashboard-card.performance-item i {
+    color: #fd7e14 !important; /* 性能监控 - 橙色 */
+}
+
+/* 备用选择器 - 基于特定功能的href属性 */
+.dashboard-item[href*="calculator"] .bi,
+.dashboard-item[href*="calculator"] i {
+    color: #ffc107 !important; /* 挖矿计算器 - 金黄色 */
+}
+
+.dashboard-item[href*="batch"] .bi,
+.dashboard-item[href*="batch"] i {
+    color: #28a745 !important; /* 批量计算器 - 绿色 */
+}
+
+.dashboard-item[href*="customer"] .bi,
+.dashboard-item[href*="customer"] i {
+    color: #17a2b8 !important; /* 客户管理 - 青色 */
+}
+
+.dashboard-item[href*="analytics"] .bi,
+.dashboard-item[href*="analytics"] i {
+    color: #dc3545 !important; /* 分析平台 - 红色 */
+}
+
+.dashboard-item[href*="broker"] .bi,
+.dashboard-item[href*="broker"] i {
+    color: #6f42c1 !important; /* 用户管理 - 紫色 */
+}
+
+.dashboard-item:hover {
+    border-color: var(--border-accent);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px var(--shadow-color);
+    background: rgba(255, 193, 7, 0.05);
+}
+
+.dashboard-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 193, 7, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.dashboard-item:hover::before {
+    left: 100%;
+}
+
+/* Network stats styling */
+#network-stats-container {
+    display: flex;
+    gap: 1rem;
+}
+
+.stats-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stats-value {
+    font-weight: bold;
+    margin-top: 0.25rem;
+    font-size: 0.9rem;
+}
+
+/* Dashboard cards with consistent heights */
+.dashboard-card {
+    height: 100%;
+    transition: all 0.2s ease;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Profit results styling */
+.profit-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.profit-positive {
+    color: var(--bs-success);
+}
+
+.profit-negative {
+    color: var(--bs-danger);
+}
+
+/* Algorithm outputs styling */
+#btc-method1-daily {
+    color: var(--bs-secondary);
+    font-weight: 500;
+}
+
+#btc-method2-daily {
+    /* 算法2 使用更明显的颜色 */
+    font-weight: 700;
+}
+
+#btc-method2-daily .text-info,
+#btc-method2-daily-card .text-info {
+    color: #5bc0de !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #network-stats-container {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .stats-item {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+    
+    .stats-value {
+        margin-top: 0;
+        margin-left: 0.5rem;
+    }
+}
+
+/* Loading indicator */
+.loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Custom form elements styling */
+.form-control:focus, .form-select:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+/* Chart container */
+#profit-heatmap {
+    min-height: 300px;
+}
+
+/* ROI Chart Styling */
+.chart-container {
+    width: 100%;
+    height: 400px; /* 增加高度以容纳底部说明文字 */
+    margin: 15px 0 60px; /* 增加底部边距 */
+    position: relative;
+    background-color: rgba(0, 0, 0, 0.03);
+    border-radius: 5px;
+}
+
+.roi-chart-description {
+    color: var(--bs-secondary);
+    padding-bottom: 20px;
+    margin-bottom: 30px !important;
+    font-size: 0.8rem;
+}
+
+/* Execution Panel Styles - 修复文字对比度问题 */
+.execution-panel {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.execution-panel h6 {
+    color: var(--accent-secondary);
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+#executionPreview {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 0.75rem;
+    min-height: 120px;
+}
+
+#executionPreview p,
+#executionPreview div,
+#executionPreview span {
+    color: #ffffff !important;
+    margin-bottom: 0.5rem;
+}
+
+#executionPreview .text-muted {
+    color: #adb5bd !important;
+}
+
+#executionPreview .text-success {
+    color: #28a745 !important;
+}
+
+#executionPreview .text-warning {
+    color: #ffc107 !important;
+}
+
+#executionPreview .text-info {
+    color: #17a2b8 !important;
+}
+
+#executionPreview .text-danger {
+    color: #dc3545 !important;
+}
+
+/* 执行预览表格样式 */
+#executionPreview table {
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+#executionPreview th,
+#executionPreview td {
+    color: #ffffff !important;
+    padding: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#executionPreview th {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107 !important;
+    font-weight: 600;
+}
+
+/* 执行按钮样式优化 */
+.execution-btn {
+    background: var(--primary-gradient);
+    border: none;
+    color: #000;
+    font-weight: 600;
+    border-radius: var(--border-radius-button);
+    padding: 0.75rem 1.5rem;
+    transition: var(--transition-default);
+}
+
+.execution-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px var(--shadow-color);
+    color: #000;
+}
