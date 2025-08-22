@@ -2089,9 +2089,17 @@
                     return;
                 }
                 
-                // Show loading state
-                const button = buttonElement || document.querySelector('.execution-btn');
+                // Show loading state - find the specific backtest button
+                let button = buttonElement;
+                if (!button) {
+                    button = document.querySelector('button[onclick="runBacktest(this)"]');
+                }
+                if (!button) {
+                    console.error('Backtest button not found');
+                    return;
+                }
                 const originalText = button.innerHTML;
+                console.log('Setting loading state, original text:', originalText);
                 button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>运行中...';
                 button.disabled = true;
                 
@@ -2163,11 +2171,24 @@
                 console.error('Backtest error:', error);
                 alert('回测执行出错: ' + error.message);
             } finally {
-                // Restore button state
-                const button = buttonElement || document.querySelector('.execution-btn');
-                if (button) {
+                // Restore button state - find the specific backtest button
+                let button = buttonElement;
+                if (!button) {
+                    button = document.querySelector('button[onclick="runBacktest(this)"]');
+                }
+                if (button && originalText) {
+                    console.log('Restoring button state:', originalText);
                     button.innerHTML = originalText;
                     button.disabled = false;
+                } else {
+                    console.warn('Could not find button to restore state, button:', button, 'originalText:', originalText);
+                    // Force reset any backtest button we can find
+                    const fallbackButton = document.querySelector('button[onclick="runBacktest(this)"]');
+                    if (fallbackButton) {
+                        fallbackButton.innerHTML = '运行回测';
+                        fallbackButton.disabled = false;
+                        console.log('Force restored fallback button');
+                    }
                 }
             }
         }
