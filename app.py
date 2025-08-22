@@ -2321,7 +2321,7 @@ def migrate_to_crm():
             
         # 设置成功消息
         flash(f'迁移完成！{migrated_count} 个用户已迁移，{already_exists_count} 个用户已跳过（已存在）。', 'success')
-        return redirect(url_for('crm.dashboard'))
+        return redirect(url_for('crm.crm_dashboard'))
     
     except Exception as e:
         db.session.rollback()
@@ -4420,7 +4420,7 @@ def crm_dashboard_redirect():
     if user_role not in ['owner', 'admin', 'mining_site']:
         flash('您没有权限访问CRM系统', 'danger')
         return redirect(url_for('index'))
-    return redirect(url_for('crm.dashboard'))
+    return redirect(url_for('crm.crm_dashboard'))
 
 @app.route('/curtailment/calculator')
 @login_required

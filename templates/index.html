@@ -347,7 +347,7 @@
                                     <!-- CRM系统入口 -->
                                     {% if user_has_crm_access() %}
                                     <li>
-                                        <a class="dropdown-item" href="{{ url_for('crm.dashboard') }}">
+                                        <a class="dropdown-item" href="{{ url_for('crm.crm_dashboard') }}">
                                             <i class="bi bi-people-fill me-1"></i> 
                                             {% if current_lang == 'en' %}Customer Relationship Management{% else %}客户关系管理系统{% endif %}
                                         </a>
