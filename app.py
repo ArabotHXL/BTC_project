@@ -5828,8 +5828,20 @@ def next_sell_indicator_api():
         
         # RSI和现货价格已在上面获取
         
-        # 计算下一层级目标价格 - 利益最大化模式
-        next_multiple = 1.85  # L3激进层级 (利益最大化)
+        # 获取用户选择的层级（从请求参数或session）
+        selected_layer = request.args.get('layer', session.get('selected_layer', 'L2'))
+        
+        # 不同层级配置
+        layer_config = {
+            'L1': {'multiple': 1.25, 'name': '保守策略', 'risk': 'Low'},
+            'L2': {'multiple': 1.52, 'name': '平衡策略', 'risk': 'Medium'}, 
+            'L3': {'multiple': 1.85, 'name': '激进策略', 'risk': 'High'},
+            'L4': {'multiple': 2.20, 'name': '极致策略', 'risk': 'Max'}
+        }
+        
+        # 使用选择的层级倍数
+        layer_info = layer_config.get(selected_layer, layer_config['L2'])
+        next_multiple = layer_info['multiple']
         atr_pct = 0.025  # 简化的ATR百分比
         atr_factor = min(max(1 + 3.5 * max(0, atr_pct - 0.022), 0.9), 1.4)
         adj_multiple = next_multiple * atr_factor
@@ -5867,11 +5879,14 @@ def next_sell_indicator_api():
                 'confidence': confidence,
                 'proximity_pct': proximity_pct,
                 'fallback_stop': int(spot_price * 0.85),  # 15%止损
-                'layer': 'L3-MAX',
+                'layer': selected_layer,
+                'layer_name': layer_info['name'],
+                'risk_level': layer_info['risk'],
                 'opex_reserved_btc': round(opex_qty, 4),
                 'reasons': [
-                    f"Ladder {next_multiple:.2f}× → adj {adj_multiple:.2f}×",
-                    f"RSI {rsi:.1f} {'≥' if rsi >= 65 else '<'} 65"
+                    f"{layer_info['name']}: {next_multiple:.2f}× → adj {adj_multiple:.2f}×",
+                    f"RSI {rsi:.1f} {'≥' if rsi >= 65 else '<'} 65",
+                    f"风险等级: {layer_info['risk']}"
                 ],
                 'timestamp': datetime.now().isoformat(),
                 'spot_price': spot_price,
@@ -5883,6 +5898,43 @@ def next_sell_indicator_api():
         
     except Exception as e:
         logging.error(f"Next sell indicator error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# 层级偏好设置API
+@app.route('/api/treasury/set-layer', methods=['POST'])
+@login_required  
+def set_layer_preference():
+    """设置用户的卖出层级偏好"""
+    try:
+        data = request.get_json()
+        layer = data.get('layer', 'L2')
+        
+        # 验证层级选择
+        valid_layers = ['L1', 'L2', 'L3', 'L4']
+        if layer not in valid_layers:
+            return jsonify({'success': False, 'error': 'Invalid layer'}), 400
+        
+        # 保存到session
+        session['selected_layer'] = layer
+        
+        # 层级信息
+        layer_config = {
+            'L1': {'multiple': 1.25, 'name': '保守策略', 'risk': 'Low'},
+            'L2': {'multiple': 1.52, 'name': '平衡策略', 'risk': 'Medium'}, 
+            'L3': {'multiple': 1.85, 'name': '激进策略', 'risk': 'High'},
+            'L4': {'multiple': 2.20, 'name': '极致策略', 'risk': 'Max'}
+        }
+        
+        layer_info = layer_config[layer]
+        
+        return jsonify({
+            'success': True,
+            'selected_layer': layer,
+            'layer_info': layer_info,
+            'message': f'已设置为 {layer_info["name"]}'
+        })
+        
+    except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
 if __name__ == '__main__':
