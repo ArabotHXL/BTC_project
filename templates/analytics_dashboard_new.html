@@ -2109,16 +2109,31 @@
                     })
                 });
                 
+                // Check if the response is ok
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const result = await response.json();
+                console.log('Backtest response received:', result);
                 
                 if (result.success) {
-                    // Update metrics
+                    // Update metrics with proper formatting
+                    const totalReturn = result.total_return || 0;
+                    const maxDrawdown = result.max_drawdown || 0;
+                    const sharpeRatio = result.sharpe_ratio || 0;
+                    
+                    // Format return percentage (handle both positive and negative)
+                    const returnPct = (totalReturn * 100).toFixed(2);
                     document.getElementById('backtestReturn').textContent = 
-                        result.total_return ? `+${(result.total_return * 100).toFixed(2)}%` : '+0.00%';
+                        totalReturn >= 0 ? `+${returnPct}%` : `${returnPct}%`;
+                    
+                    // Format drawdown (always negative)
                     document.getElementById('backtestDrawdown').textContent = 
-                        result.max_drawdown ? `-${(Math.abs(result.max_drawdown) * 100).toFixed(2)}%` : '-0.00%';
-                    document.getElementById('backtestSharpe').textContent = 
-                        result.sharpe_ratio ? result.sharpe_ratio.toFixed(2) : '0.00';
+                        `-${(Math.abs(maxDrawdown) * 100).toFixed(2)}%`;
+                    
+                    // Format Sharpe ratio
+                    document.getElementById('backtestSharpe').textContent = sharpeRatio.toFixed(2);
                     
                     // Update chart if data is available
                     if (result.dates && result.portfolio_values) {
@@ -2126,7 +2141,7 @@
                     }
                     
                     console.log('Backtest completed successfully:', result);
-                    alert('回测完成！查看结果图表和指标。');
+                    alert(`回测完成！\n总回报: ${returnPct}%\n最大回撤: ${(Math.abs(maxDrawdown) * 100).toFixed(2)}%\n夏普比率: ${sharpeRatio.toFixed(2)}`);
                 } else {
                     console.error('Backtest failed:', result.error);
                     alert('回测失败: ' + (result.error || '未知错误'));
