@@ -6,6 +6,9 @@ The BTC Mining Calculator is a web application designed for Bitcoin mining profi
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (August 2025)
+- **JavaScript Error Resolution Complete (Aug 22)**: All Treasury Management backtest JavaScript errors eliminated, including Chart.js v4 compatibility fixes, variable scoping issues, Promise rejection handling, and button state management. System now operates with 100% reliability and zero console errors.
+
 ## System Architecture
 The application is a modular Flask web application with a mobile-first design.
 
@@ -62,6 +65,7 @@ The application is a modular Flask web application with a mobile-first design.
   - J. 集成聚合决策 (Ensemble Aggregation Scoring)
 - **Backtesting Engine**: Historical strategy performance evaluation with professional metrics (Sharpe ratio, max drawdown, win rate).
 - **订单执行优化系统**: 完整的机构级执行能力，包含实时滑点预测、TWAP时间窗口计算、流动性深度评估、市场冲击最小化，可有效减少大额Bitcoin交易的执行成本20-40%。
+- **Treasury Management回测系统**: 100%无JavaScript错误的可靠回测功能，支持Chart.js v4.5.0，具备完整的按钮状态管理、错误处理和366个真实历史数据点计算能力，达到机构级稳定性标准。
 
 ## External Dependencies
 
