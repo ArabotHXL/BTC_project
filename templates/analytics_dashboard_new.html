@@ -2141,8 +2141,14 @@
                             updateBacktestChart(result.dates, result.portfolio_values);
                         } catch (chartError) {
                             console.warn('Chart update failed:', chartError);
-                            // Chart error shouldn't break the whole process
+                            // Show data in text format as fallback
+                            displayBacktestDataAsText(result.dates, result.portfolio_values);
                         }
+                    }
+                    
+                    // Also update win rate if available
+                    if (result.win_rate !== undefined) {
+                        document.getElementById('backtestWinRate').textContent = result.win_rate + '%';
                     }
                     
                     console.log('Backtest completed successfully:', result);
@@ -2165,126 +2171,95 @@
             }
         }
         
-        // Update backtest chart
+        // Test Chart.js availability on page load
+        function testChartJS() {
+            if (typeof Chart !== 'undefined') {
+                console.log('Chart.js is available, version:', Chart.version || 'unknown');
+                return true;
+            } else {
+                console.error('Chart.js is not available');
+                return false;
+            }
+        }
+        
+        // Fallback: Display data as text when chart fails
+        function displayBacktestDataAsText(dates, values) {
+            const chartContainer = document.querySelector('#backtestChart').parentElement;
+            chartContainer.innerHTML = `
+                <div class="chart-fallback" style="background: var(--bg-secondary); padding: 20px; border-radius: 8px;">
+                    <h6 style="color: #f39c12; margin-bottom: 15px;">📈 投资组合价值变化</h6>
+                    <div class="row">
+                        ${dates.map((date, i) => `
+                            <div class="col-6 col-md-3 mb-2">
+                                <small style="color: #a0aec0;">${date}</small><br>
+                                <strong style="color: #fff;">$${Number(values[i]).toLocaleString()}</strong>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <small style="color: #a0aec0; margin-top: 10px; display: block;">
+                        ⚠️ 图表显示功能暂时不可用，以上为数据列表
+                    </small>
+                </div>
+            `;
+        }
+        
+        // Simplified chart creation
         function updateBacktestChart(dates, values) {
+            console.log('Updating backtest chart with dates:', dates, 'values:', values);
+            
+            // Test Chart.js first
+            if (!testChartJS()) {
+                console.warn('Chart.js not available, using fallback display');
+                displayBacktestDataAsText(dates, values);
+                return;
+            }
+            
+            const chartCanvas = document.getElementById('backtestChart');
+            if (!chartCanvas) {
+                console.error('Chart canvas not found');
+                return;
+            }
+            
+            // Validate data
+            if (!dates || !values || dates.length === 0 || values.length === 0) {
+                console.warn('Invalid chart data');
+                return;
+            }
+            
             try {
-                console.log('Updating backtest chart with dates:', dates, 'values:', values);
-                
-                // Check if Chart.js is available
-                if (typeof Chart === 'undefined') {
-                    console.error('Chart.js is not loaded');
-                    alert('图表库未加载，无法显示回测图表');
-                    return;
-                }
-                
-                const chartCanvas = document.getElementById('backtestChart');
-                if (!chartCanvas) {
-                    console.error('Chart canvas not found');
-                    alert('找不到图表画布元素');
-                    return;
-                }
-                
-                // Validate data first
-                if (!dates || !values || dates.length === 0 || values.length === 0) {
-                    console.warn('Invalid chart data:', { dates, values });
-                    alert('回测数据无效，无法生成图表');
-                    return;
-                }
-                
-                // Get context with error handling
-                let ctx;
-                try {
-                    ctx = chartCanvas.getContext('2d');
-                } catch (canvasError) {
-                    console.error('Canvas context error:', canvasError);
-                    alert('画布上下文获取失败');
-                    return;
-                }
-                
-                // Destroy existing chart if it exists
+                // Destroy existing chart
                 if (window.backtestChartInstance) {
-                    try {
-                        window.backtestChartInstance.destroy();
-                        window.backtestChartInstance = null;
-                    } catch (destroyError) {
-                        console.warn('Chart destroy error:', destroyError);
-                    }
+                    window.backtestChartInstance.destroy();
+                    window.backtestChartInstance = null;
                 }
                 
-                // Create new chart with minimal config to avoid errors
+                // Create chart with minimal config
+                const ctx = chartCanvas.getContext('2d');
+                
                 window.backtestChartInstance = new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: dates,
                         datasets: [{
-                            label: '投资组合价值 ($)',
+                            label: '投资组合价值',
                             data: values,
                             borderColor: '#f39c12',
                             backgroundColor: 'rgba(243, 156, 18, 0.1)',
-                            fill: true,
-                            tension: 0.1,
-                            pointRadius: 4,
-                            pointHoverRadius: 6
+                            fill: true
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        interaction: {
-                            intersect: false,
-                            mode: 'index'
-                        },
                         plugins: {
-                            legend: {
-                                display: true,
-                                labels: { 
-                                    color: '#fff',
-                                    font: {
-                                        size: 12
-                                    }
-                                }
-                            },
-                            tooltip: {
-                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                titleColor: '#fff',
-                                bodyColor: '#fff',
-                                borderColor: '#f39c12',
-                                borderWidth: 1,
-                                callbacks: {
-                                    label: function(context) {
-                                        return '投资组合价值: $' + Number(context.parsed.y).toLocaleString();
-                                    }
-                                }
-                            }
+                            legend: { labels: { color: '#fff' } }
                         },
                         scales: {
-                            x: {
-                                display: true,
+                            x: { ticks: { color: '#fff' } },
+                            y: { 
                                 ticks: { 
                                     color: '#fff',
-                                    font: {
-                                        size: 10
-                                    }
-                                },
-                                grid: { 
-                                    color: 'rgba(255, 255, 255, 0.1)',
-                                    display: true
-                                }
-                            },
-                            y: {
-                                display: true,
-                                ticks: { 
-                                    color: '#fff',
-                                    font: {
-                                        size: 10
-                                    },
-                                    callback: function(value) {
-                                        return '$' + Number(value).toLocaleString();
-                                    }
-                                },
-                                grid: { 
-                                    color: 'rgba(255, 255, 255, 0.1)',
-                                    display: true
+                                    callback: v => '$' + Number(v).toLocaleString()
                                 }
                             }
                         }
@@ -2295,8 +2270,8 @@
                 
             } catch (error) {
                 console.error('Error updating backtest chart:', error);
-                alert('图表创建失败: ' + (error.message || '未知错误'));
-                // Don't throw the error to prevent breaking the parent function
+                console.log('Falling back to text display');
+                displayBacktestDataAsText(dates, values);
             }
         }
 
