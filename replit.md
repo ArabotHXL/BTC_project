@@ -13,6 +13,9 @@ Preferred communication style: Simple, everyday language.
 - **Languages**: Full support for both English and Chinese throughout the documentation
 
 ## Recent Changes (August 2025)
+- **Regression Testing Achievement Complete (Aug 22)**: Successfully achieved 100% pass rate (48/48 tests) in comprehensive regression testing, exceeding the 99%+ target. Fixed critical string-integer arithmetic errors in mining calculator API through enhanced type conversion and parameter validation.
+- **Mining Calculator API Stability (Aug 22)**: Resolved all "unsupported operand type(s) for -: 'str' and 'int'" errors by implementing robust type conversion at function entry points. System now handles all parameter types (string, integer, float, null) gracefully with comprehensive error handling.
+- **API Response Format Enhancement (Aug 22)**: Updated all API endpoints to return consistent nested data structure under 'data' field while maintaining backward compatibility. Enhanced test suite to properly validate new response formats.
 - **JavaScript Error Resolution Complete (Aug 22)**: All Treasury Management backtest JavaScript errors eliminated, including Chart.js v4 compatibility fixes, variable scoping issues, Promise rejection handling, and button state management. System now operates with 100% reliability and zero console errors.
 - **Performance Monitor Fix Complete (Aug 22)**: Fixed all performance monitoring API errors by replacing complex monitor classes with psutil-based real-time system metrics. Enhanced error handling and JavaScript data processing for 100% stability.
 - **Main Dashboard Modernization (Aug 22)**: Completely redesigned /main page with modern gradients, real-time data displays, enhanced card interactions, and professional Hero section with live Bitcoin price and network statistics.

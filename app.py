@@ -1060,7 +1060,12 @@ def calculate_internal(request_obj):
             # Guard against NaN injection
             if isinstance(electricity_cost_raw, str) and electricity_cost_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
                 raise ValueError(f"Invalid numeric value: {electricity_cost_raw}")
-            electricity_cost = float(electricity_cost_raw)
+            # Convert to string first to handle all input types consistently  
+            electricity_cost_str = str(electricity_cost_raw) if electricity_cost_raw is not None else '0.05'
+            if not electricity_cost_str or electricity_cost_str == '':
+                electricity_cost = 0.05
+            else:
+                electricity_cost = float(electricity_cost_str)
             # Additional check for NaN/inf after conversion
             if not (electricity_cost == electricity_cost and abs(electricity_cost) != float('inf')):
                 raise ValueError("NaN or infinite value detected")
@@ -1094,7 +1099,12 @@ def calculate_internal(request_obj):
             # Guard against NaN injection
             if isinstance(btc_price_raw, str) and btc_price_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
                 raise ValueError(f"Invalid numeric value: {btc_price_raw}")
-            btc_price = float(btc_price_raw)
+            # Convert to string first to handle all input types consistently  
+            btc_price_str = str(btc_price_raw) if btc_price_raw is not None else '0'
+            if not btc_price_str or btc_price_str == '':
+                btc_price = 0
+            else:
+                btc_price = float(btc_price_str)
             # Additional check for NaN/inf after conversion
             if not (btc_price == btc_price and abs(btc_price) != float('inf')):
                 raise ValueError("NaN or infinite value detected")
@@ -1212,17 +1222,18 @@ def calculate_internal(request_obj):
             }), 400
             
         try:
-            curtailment_str = request.form.get('curtailment', '0')
+            # Fix: JSON requests don't use request.form, use data instead
+            curtailment_str = str(data.get('curtailment', '0')) if data.get('curtailment') is not None else '0'
             # Guard against NaN injection
-            if isinstance(curtailment_str, str) and curtailment_str.lower() in ['nan', 'inf', '-inf', '+inf']:
+            if curtailment_str.lower() in ['nan', 'inf', '-inf', '+inf']:
                 raise ValueError(f"Invalid numeric value: {curtailment_str}")
             curtailment = float(curtailment_str)
             # Additional check for NaN/inf after conversion
             if not (curtailment == curtailment and abs(curtailment) != float('inf')):
                 raise ValueError("NaN or infinite value detected")
             logging.info(f"解析限电率: 原始值='{curtailment_str}'，转换后={curtailment}%")
-        except ValueError as e:
-            logging.error(f"Invalid curtailment value: {request.form.get('curtailment')} - {str(e)}")
+        except (ValueError, TypeError) as e:
+            logging.error(f"Invalid curtailment value: {data.get('curtailment')} - {str(e)}")
             curtailment = 0
             
         # 获取关机策略（如果有限电）
@@ -1235,10 +1246,17 @@ def calculate_internal(request_obj):
             
         try:
             maintenance_fee_raw = data.get('maintenance_fee', 0)
-            # Guard against NaN injection
-            if isinstance(maintenance_fee_raw, str) and maintenance_fee_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
-                raise ValueError(f"Invalid numeric value: {maintenance_fee_raw}")
-            maintenance_fee = float(maintenance_fee_raw)
+            # Convert to string first to handle all input types consistently  
+            maintenance_fee_str = str(maintenance_fee_raw) if maintenance_fee_raw is not None else '0'
+            
+            # Handle empty string case
+            if not maintenance_fee_str or maintenance_fee_str == '':
+                maintenance_fee = 0
+            else:
+                # Guard against NaN injection
+                if maintenance_fee_str.lower() in ['nan', 'inf', '-inf', '+inf']:
+                    raise ValueError(f"Invalid numeric value: {maintenance_fee_str}")
+                maintenance_fee = float(maintenance_fee_str)
             
             # 如果没有设置维护费，根据矿机数量自动计算合理的维护费
             if maintenance_fee == 0:
@@ -1247,7 +1265,7 @@ def calculate_internal(request_obj):
             # Additional check for NaN/inf after conversion
             if not (maintenance_fee == maintenance_fee and abs(maintenance_fee) != float('inf')):
                 raise ValueError("NaN or infinite value detected")
-        except ValueError as e:
+        except (ValueError, TypeError) as e:
             logging.error(f"Invalid maintenance fee value: {data.get('maintenance_fee')} - {str(e)}")
             maintenance_fee = float(miner_count) * 5  # Default maintenance fee based on miner count (reduced)
         

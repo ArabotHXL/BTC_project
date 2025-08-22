@@ -496,6 +496,28 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
     - Dictionary containing profitability metrics including ROI calculations
     """
     try:
+        # CRITICAL FIX: Ensure all numeric parameters are properly typed to prevent string-int errors
+        hashrate = float(hashrate) if hashrate is not None and str(hashrate) != '' else 0.0
+        power_consumption = float(power_consumption) if power_consumption is not None and str(power_consumption) != '' else 0.0
+        electricity_cost = float(electricity_cost) if electricity_cost is not None and str(electricity_cost) != '' else 0.05
+        client_electricity_cost = float(client_electricity_cost) if client_electricity_cost is not None and str(client_electricity_cost) != '' else None
+        btc_price = float(btc_price) if btc_price is not None and str(btc_price) != '' else None
+        miner_count = int(float(str(miner_count))) if miner_count is not None and str(miner_count) != '' else 1
+        site_power_mw = float(site_power_mw) if site_power_mw is not None and str(site_power_mw) != '' else None
+        curtailment = float(curtailment) if curtailment is not None and str(curtailment) != '' else 0.0
+        host_investment = float(host_investment) if host_investment is not None and str(host_investment) != '' else 0.0
+        client_investment = float(client_investment) if client_investment is not None and str(client_investment) != '' else 0.0
+        maintenance_fee = float(maintenance_fee) if maintenance_fee is not None and str(maintenance_fee) != '' else 0.0
+        manual_network_hashrate = float(manual_network_hashrate) if manual_network_hashrate is not None and str(manual_network_hashrate) != '' else None
+        manual_network_difficulty = float(manual_network_difficulty) if manual_network_difficulty is not None and str(manual_network_difficulty) != '' else None
+        
+        logging.info(f"Parameters after type conversion - hashrate={hashrate}, power_consumption={power_consumption}, electricity_cost={electricity_cost}, miner_count={miner_count}")
+        
+    except (ValueError, TypeError) as type_error:
+        logging.error(f"Parameter type conversion error: {type_error}")
+        return {'success': False, 'error': f'Invalid parameter types: {type_error}'}
+        
+    try:
         # Get values from miner model if provided
         if miner_model and miner_model in MINER_DATA:
             # Get single miner specs
@@ -693,7 +715,16 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         
         # 矿场主的比特币挖矿收益，减去电费和维护费
         # Ensure maintenance_fee is a float to avoid string-int errors
-        maintenance_fee_float = float(maintenance_fee) if maintenance_fee else 0
+        try:
+            # Handle all potential string types for maintenance_fee
+            if maintenance_fee is None or maintenance_fee == '' or maintenance_fee == 'null' or maintenance_fee == 'undefined':
+                maintenance_fee_float = 0.0
+            else:
+                maintenance_fee_float = float(str(maintenance_fee))
+        except (ValueError, TypeError) as e:
+            logging.warning(f"Invalid maintenance_fee '{maintenance_fee}', using 0: {e}")
+            maintenance_fee_float = 0.0
+            
         monthly_mining_profit = monthly_revenue - electricity_expense - maintenance_fee_float
         
         # 矿场主的电费差价收益（如果提供了客户电费且高于矿场电费）
@@ -715,6 +746,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             monthly_profit = monthly_mining_profit
         
         # 客户收益需要减去电费和维护费（与矿场主挖矿收益计算方式一样）
+        # Use the same maintenance_fee_float variable that was safely converted above
         client_monthly_profit = monthly_revenue - client_electricity_expense - maintenance_fee_float
         
         # === 最优电价 (Optimal Electricity Rate) 计算 ===

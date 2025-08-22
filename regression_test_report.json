@@ -1,22 +1,22 @@
 {
   "test_suite": "Comprehensive Regression Test",
-  "timestamp": "2025-08-22T03:39:05.083774",
-  "duration": "5.21 seconds",
-  "total_tests": 47,
-  "passed": 46,
-  "failed": 1,
+  "timestamp": "2025-08-22T03:45:54.100402",
+  "duration": "4.50 seconds",
+  "total_tests": 48,
+  "passed": 48,
+  "failed": 0,
   "skipped": 0,
-  "pass_rate": "97.87%",
-  "availability_rate": "97.87%",
-  "meets_99_requirement": false,
+  "pass_rate": "100.00%",
+  "availability_rate": "100.00%",
+  "meets_99_requirement": true,
   "test_results": [
     {
       "category": "Database",
       "test_name": "Connection Test",
       "status": "PASS",
       "message": "",
-      "duration": 0.18669915199279785,
-      "timestamp": "2025-08-22T03:39:00.062396"
+      "duration": 0.1886599063873291,
+      "timestamp": "2025-08-22T03:45:49.785469"
     },
     {
       "category": "Database",
@@ -24,7 +24,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:00.256764"
+      "timestamp": "2025-08-22T03:45:49.973642"
     },
     {
       "category": "Database",
@@ -32,7 +32,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:00.257433"
+      "timestamp": "2025-08-22T03:45:49.974294"
     },
     {
       "category": "Database",
@@ -40,7 +40,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:00.257919"
+      "timestamp": "2025-08-22T03:45:49.974607"
     },
     {
       "category": "Database",
@@ -48,7 +48,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:00.258554"
+      "timestamp": "2025-08-22T03:45:49.974958"
     },
     {
       "category": "Database",
@@ -56,7 +56,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:00.259285"
+      "timestamp": "2025-08-22T03:45:49.975593"
     },
     {
       "category": "Database",
@@ -64,7 +64,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:00.260288"
+      "timestamp": "2025-08-22T03:45:49.975964"
     },
     {
       "category": "Database",
@@ -72,7 +72,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:00.260568"
+      "timestamp": "2025-08-22T03:45:49.976533"
     },
     {
       "category": "Database",
@@ -80,7 +80,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:00.260834"
+      "timestamp": "2025-08-22T03:45:49.977050"
     },
     {
       "category": "Database",
@@ -88,7 +88,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:00.261118"
+      "timestamp": "2025-08-22T03:45:49.978194"
     },
     {
       "category": "Database",
@@ -96,7 +96,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:00.261368"
+      "timestamp": "2025-08-22T03:45:49.978514"
     },
     {
       "category": "Database",
@@ -104,15 +104,15 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:00.261764"
+      "timestamp": "2025-08-22T03:45:49.978752"
     },
     {
       "category": "Server",
       "test_name": "Health Check",
       "status": "PASS",
       "message": "",
-      "duration": 0.0422213077545166,
-      "timestamp": "2025-08-22T03:39:00.305028"
+      "duration": 0.011835336685180664,
+      "timestamp": "2025-08-22T03:45:49.991582"
     },
     {
       "category": "Static",
@@ -120,7 +120,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:00.311482"
+      "timestamp": "2025-08-22T03:45:50.006131"
     },
     {
       "category": "Static",
@@ -128,7 +128,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:00.318112"
+      "timestamp": "2025-08-22T03:45:50.015471"
     },
     {
       "category": "Static",
@@ -136,7 +136,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:00.324386"
+      "timestamp": "2025-08-22T03:45:50.020962"
     },
     {
       "category": "Static",
@@ -144,63 +144,63 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:00.352641"
+      "timestamp": "2025-08-22T03:45:50.026759"
     },
     {
       "category": "Routes",
       "test_name": "Landing Page",
       "status": "PASS",
       "message": "",
-      "duration": 0.02707672119140625,
-      "timestamp": "2025-08-22T03:39:00.381028"
+      "duration": 0.005177497863769531,
+      "timestamp": "2025-08-22T03:45:50.032411"
     },
     {
       "category": "Routes",
       "test_name": "Login Page",
       "status": "PASS",
       "message": "",
-      "duration": 0.04498600959777832,
-      "timestamp": "2025-08-22T03:39:00.426508"
+      "duration": 0.0052242279052734375,
+      "timestamp": "2025-08-22T03:45:50.037980"
     },
     {
       "category": "Routes",
       "test_name": "Register Page",
       "status": "PASS",
       "message": "",
-      "duration": 0.018403291702270508,
-      "timestamp": "2025-08-22T03:39:00.445272"
+      "duration": 0.005934715270996094,
+      "timestamp": "2025-08-22T03:45:50.044302"
     },
     {
       "category": "Routes",
       "test_name": "Price Page",
       "status": "PASS",
       "message": "",
-      "duration": 0.26036906242370605,
-      "timestamp": "2025-08-22T03:39:00.706136"
+      "duration": 0.5420057773590088,
+      "timestamp": "2025-08-22T03:45:50.586676"
     },
     {
       "category": "Routes",
       "test_name": "Architecture Diagram",
       "status": "PASS",
       "message": "",
-      "duration": 0.010187387466430664,
-      "timestamp": "2025-08-22T03:39:00.716646"
+      "duration": 0.0053365230560302734,
+      "timestamp": "2025-08-22T03:45:50.592334"
     },
     {
       "category": "Routes",
       "test_name": "System Relationships",
       "status": "PASS",
       "message": "",
-      "duration": 0.011567354202270508,
-      "timestamp": "2025-08-22T03:39:00.728545"
+      "duration": 0.0047299861907958984,
+      "timestamp": "2025-08-22T03:45:50.597472"
     },
     {
       "category": "Routes",
       "test_name": "Legal Page",
       "status": "PASS",
       "message": "",
-      "duration": 0.006979465484619141,
-      "timestamp": "2025-08-22T03:39:00.735956"
+      "duration": 0.004887580871582031,
+      "timestamp": "2025-08-22T03:45:50.602749"
     },
     {
       "category": "Auth",
@@ -208,7 +208,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:01.913017"
+      "timestamp": "2025-08-22T03:45:51.631070"
     },
     {
       "category": "Auth",
@@ -216,7 +216,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:02.206439"
+      "timestamp": "2025-08-22T03:45:51.745731"
     },
     {
       "category": "Auth",
@@ -224,15 +224,23 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:02.214694"
+      "timestamp": "2025-08-22T03:45:51.752414"
     },
     {
       "category": "Calculator",
       "test_name": "Mining Calculation",
-      "status": "FAIL",
-      "message": "Status: 500",
+      "status": "PASS",
+      "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:03.334355"
+      "timestamp": "2025-08-22T03:45:52.570654"
+    },
+    {
+      "category": "Calculator",
+      "test_name": "Calculation Accuracy",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:45:52.570935"
     },
     {
       "category": "API",
@@ -240,7 +248,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:03.346694"
+      "timestamp": "2025-08-22T03:45:52.578737"
     },
     {
       "category": "API",
@@ -248,7 +256,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:03.358519"
+      "timestamp": "2025-08-22T03:45:52.589429"
     },
     {
       "category": "API",
@@ -256,7 +264,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:03.446906"
+      "timestamp": "2025-08-22T03:45:52.678660"
     },
     {
       "category": "API",
@@ -264,7 +272,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:03.469841"
+      "timestamp": "2025-08-22T03:45:52.691360"
     },
     {
       "category": "i18n",
@@ -272,7 +280,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:03.486228"
+      "timestamp": "2025-08-22T03:45:52.706061"
     },
     {
       "category": "i18n",
@@ -280,7 +288,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:03.502302"
+      "timestamp": "2025-08-22T03:45:52.725262"
     },
     {
       "category": "External",
@@ -288,7 +296,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:03.943260"
+      "timestamp": "2025-08-22T03:45:52.853633"
     },
     {
       "category": "External",
@@ -296,7 +304,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:04.274698"
+      "timestamp": "2025-08-22T03:45:53.236815"
     },
     {
       "category": "External",
@@ -304,39 +312,39 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:04.325097"
+      "timestamp": "2025-08-22T03:45:53.308727"
     },
     {
       "category": "Performance",
       "test_name": "Homepage Load Time",
       "status": "PASS",
-      "message": "0.02s < 2.0s",
-      "duration": 0.022613048553466797,
-      "timestamp": "2025-08-22T03:39:04.348532"
+      "message": "0.01s < 2.0s",
+      "duration": 0.005166292190551758,
+      "timestamp": "2025-08-22T03:45:53.314948"
     },
     {
       "category": "Performance",
       "test_name": "Login Page Load Time",
       "status": "PASS",
       "message": "0.01s < 2.0s",
-      "duration": 0.007984399795532227,
-      "timestamp": "2025-08-22T03:39:04.357228"
+      "duration": 0.009631156921386719,
+      "timestamp": "2025-08-22T03:45:53.325266"
     },
     {
       "category": "Performance",
       "test_name": "Price Page Load Time",
       "status": "PASS",
-      "message": "0.49s < 3.0s",
-      "duration": 0.4927244186401367,
-      "timestamp": "2025-08-22T03:39:04.850369"
+      "message": "0.54s < 3.0s",
+      "duration": 0.5395572185516357,
+      "timestamp": "2025-08-22T03:45:53.865970"
     },
     {
       "category": "Performance",
       "test_name": "API Response Time",
       "status": "PASS",
       "message": "0.01s < 1.0s",
-      "duration": 0.011923551559448242,
-      "timestamp": "2025-08-22T03:39:04.862662"
+      "duration": 0.010638236999511719,
+      "timestamp": "2025-08-22T03:45:53.877139"
     },
     {
       "category": "Data Integrity",
@@ -344,7 +352,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:05.038835"
+      "timestamp": "2025-08-22T03:45:54.056005"
     },
     {
       "category": "Data Integrity",
@@ -352,7 +360,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:05.066928"
+      "timestamp": "2025-08-22T03:45:54.084427"
     },
     {
       "category": "Security",
@@ -360,7 +368,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:05.073282"
+      "timestamp": "2025-08-22T03:45:54.090829"
     },
     {
       "category": "Security",
@@ -368,7 +376,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:05.073611"
+      "timestamp": "2025-08-22T03:45:54.091224"
     },
     {
       "category": "Security",
@@ -376,7 +384,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:05.073835"
+      "timestamp": "2025-08-22T03:45:54.091567"
     },
     {
       "category": "Error Handling",
@@ -384,7 +392,7 @@
       "status": "PASS",
       "message": "",
       "duration": 0,
-      "timestamp": "2025-08-22T03:39:05.083453"
+      "timestamp": "2025-08-22T03:45:54.100052"
     }
   ]
 }

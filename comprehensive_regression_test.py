@@ -316,11 +316,15 @@ class ComprehensiveRegressionTest:
             
             if response.status_code == 200:
                 data = response.json()
-                if 'btc_mined' in data and 'profit' in data:
+                # Handle new API response format where data is nested under 'data' field
+                response_data = data.get('data', data)
+                
+                if 'btc_mined' in response_data and 'profit' in response_data and data.get('success', False):
                     self.log_test_result("Calculator", "Mining Calculation", "PASS")
                     
                     # Validate calculation accuracy
-                    if data.get('btc_mined', {}).get('daily', 0) > 0:
+                    daily_btc = response_data.get('btc_mined', {}).get('daily', 0)
+                    if daily_btc > 0:
                         self.log_test_result("Calculator", "Calculation Accuracy", "PASS")
                         return True
                     else:
@@ -328,8 +332,9 @@ class ComprehensiveRegressionTest:
                                            "Invalid calculation results")
                         return False
                 else:
+                    available_fields = list(response_data.keys()) if isinstance(response_data, dict) else []
                     self.log_test_result("Calculator", "Mining Calculation", "FAIL",
-                                       "Missing required fields in response")
+                                       f"Missing required fields. Available: {available_fields}")
                     return False
             else:
                 self.log_test_result("Calculator", "Mining Calculation", "FAIL",
