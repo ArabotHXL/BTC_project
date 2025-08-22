@@ -2950,153 +2950,212 @@ Generate this order?
             }, 30000);
         });
 
-        // Personal Layer Selection Functions
-        let currentSelectedPersonalLayer = 'L2'; // 默认层级
-        
-        // Layer multipliers mapping
-        const layerMultipliers = {
-            'L1': 1.25,  // +25% 保守策略
-            'L2': 1.52,  // +52% 平衡策略
-            'L3': 1.85,  // +85% 激进策略
-            'L4': 2.20   // +120% 极致策略
-        };
-        
-        // Layer risk levels
-        const layerRiskLevels = {
-            'L1': { zh: '低风险', en: 'Low Risk' },
-            'L2': { zh: '中等风险', en: 'Medium Risk' },
-            'L3': { zh: '高风险', en: 'High Risk' },
-            'L4': { zh: '极高风险', en: 'Very High Risk' }
-        };
-        
-        // Apply personal layer selection
-        async function applyPersonalLayerSetting() {
-            const layerSelector = document.getElementById('personalLayerSelector');
-            if (!layerSelector) return;
-            
-            const selectedLayer = layerSelector.value;
-            const lang = getCurrentLanguage();
-            
-            try {
-                // Update button state
-                const applyBtn = document.getElementById('applyPersonalLayerBtn');
-                if (applyBtn) {
-                    applyBtn.innerHTML = lang === 'zh' ? 
-                        '<i class="bi bi-clock me-1"></i>应用中...' : 
-                        '<i class="bi bi-clock me-1"></i>Applying...';
-                    applyBtn.disabled = true;
-                }
-                
-                // Send layer setting request
-                const response = await fetch('/api/treasury/set-layer', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
+        // ========================================
+        // 个人层级选择器管理系统 (Personal Layer Manager)
+        // ========================================
+        class PersonalLayerManager {
+            constructor() {
+                this.config = {
+                    defaultLayer: 'L2',
+                    costBasis: 95000,
+                    multipliers: {
+                        'L1': 1.25,  // +25% 保守策略
+                        'L2': 1.52,  // +52% 平衡策略  
+                        'L3': 1.85,  // +85% 激进策略
+                        'L4': 2.20   // +120% 极致策略
                     },
-                    body: JSON.stringify({ layer: selectedLayer })
-                });
+                    riskLevels: {
+                        'L1': { zh: '低风险', en: 'Low Risk' },
+                        'L2': { zh: '中等风险', en: 'Medium Risk' },
+                        'L3': { zh: '高风险', en: 'High Risk' },
+                        'L4': { zh: '极高风险', en: 'Very High Risk' }
+                    },
+                    selectors: {
+                        layerSelect: '#personalLayerSelector',
+                        applyButton: '#applyPersonalLayerBtn',
+                        currentRisk: '#currentPersonalRisk',
+                        explanation: '#layerExplanation',
+                        strategyPane: '#strategy'
+                    }
+                };
                 
-                const result = await response.json();
-                if (result.success) {
-                    // Update current layer info
-                    currentSelectedPersonalLayer = selectedLayer;
-                    updatePersonalLayerDisplay(selectedLayer, lang);
+                this.currentLayer = this.config.defaultLayer;
+                this.isProcessing = false;
+                
+                console.log('PersonalLayerManager initialized');
+            }
+
+            // 获取层级信息
+            getLayerInfo(layer) {
+                return {
+                    layer: layer,
+                    multiplier: this.config.multipliers[layer] || this.config.multipliers[this.config.defaultLayer],
+                    risk: this.config.riskLevels[layer] || this.config.riskLevels[this.config.defaultLayer],
+                    targetPrice: this.calculateTargetPrice(layer)
+                };
+            }
+
+            // 计算目标价格
+            calculateTargetPrice(layer) {
+                const multiplier = this.config.multipliers[layer] || this.config.multipliers[this.config.defaultLayer];
+                return this.config.costBasis * multiplier;
+            }
+
+            // 更新显示界面
+            updateDisplay(layer, language) {
+                const layerInfo = this.getLayerInfo(layer);
+                
+                // 更新风险等级显示
+                const riskElement = document.querySelector(this.config.selectors.currentRisk);
+                if (riskElement) {
+                    riskElement.textContent = layerInfo.risk[language] || layerInfo.risk.zh;
+                }
+                
+                // 更新目标价格解释
+                const explanationElement = document.querySelector(this.config.selectors.explanation);
+                if (explanationElement) {
+                    explanationElement.textContent = language === 'zh' ? 
+                        `目标: $${layerInfo.targetPrice.toLocaleString()}` : 
+                        `Target: $${layerInfo.targetPrice.toLocaleString()}`;
+                }
+                
+                console.log(`Layer display updated: ${layer} -> $${layerInfo.targetPrice.toLocaleString()}`);
+            }
+
+            // 更新按钮状态
+            updateButtonState(state, language) {
+                const button = document.querySelector(this.config.selectors.applyButton);
+                if (!button) return;
+
+                const states = {
+                    loading: {
+                        zh: '<i class="bi bi-clock me-1"></i>应用中...',
+                        en: '<i class="bi bi-clock me-1"></i>Applying...'
+                    },
+                    success: {
+                        zh: '<i class="bi bi-check-circle-fill"></i>',
+                        en: '<i class="bi bi-check-circle-fill"></i>'
+                    },
+                    error: {
+                        zh: '<i class="bi bi-x-circle me-1"></i>重试',
+                        en: '<i class="bi bi-x-circle me-1"></i>Retry'
+                    },
+                    ready: {
+                        zh: '<i class="bi bi-check-circle-fill"></i>',
+                        en: '<i class="bi bi-check-circle-fill"></i>'
+                    }
+                };
+
+                button.innerHTML = states[state][language] || states[state].en;
+                button.disabled = (state === 'loading');
+            }
+
+            // 显示成功消息
+            showSuccessMessage(message) {
+                const strategyPane = document.querySelector(this.config.selectors.strategyPane);
+                if (!strategyPane) return;
+                
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-success alert-dismissible fade show mb-3';
+                alert.innerHTML = `
+                    <i class="bi bi-check-circle me-1"></i> ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                
+                const layerPanel = strategyPane.querySelector('.row');
+                if (layerPanel) {
+                    layerPanel.parentNode.insertBefore(alert, layerPanel);
+                }
+                
+                // 自动消失
+                setTimeout(() => alert?.remove(), 4000);
+            }
+
+            // 应用层级设置（核心功能）
+            async applyLayerSetting() {
+                if (this.isProcessing) return;
+                
+                const layerSelector = document.querySelector(this.config.selectors.layerSelect);
+                if (!layerSelector) {
+                    console.error('Layer selector not found');
+                    return;
+                }
+
+                const selectedLayer = layerSelector.value;
+                const language = getCurrentLanguage();
+
+                this.isProcessing = true;
+                this.updateButtonState('loading', language);
+
+                try {
+                    // API请求
+                    const response = await fetch('/api/treasury/set-layer', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ layer: selectedLayer })
+                    });
+
+                    const result = await response.json();
                     
-                    // Refresh next sell price data
-                    await fetchNextSellIndicator();
-                    
-                    // Show success message
-                    showPersonalLayerUpdateMessage(result.message || 
-                        (lang === 'zh' ? 
+                    if (result.success) {
+                        // 更新当前层级
+                        this.currentLayer = selectedLayer;
+                        this.updateDisplay(selectedLayer, language);
+                        
+                        // 刷新Next Sell Price数据
+                        await fetchNextSellIndicator();
+                        
+                        // 显示成功消息
+                        const message = result.message || (language === 'zh' ? 
                             `层级已更新至 ${selectedLayer}` : 
-                            `Layer updated to ${selectedLayer}`
-                        ), lang);
+                            `Layer updated to ${selectedLayer}`);
+                        this.showSuccessMessage(message);
+                        
+                        console.log(`Personal layer successfully updated to: ${selectedLayer}`);
+                    } else {
+                        throw new Error(result.error || 'Layer setting failed');
+                    }
+                    
+                } catch (error) {
+                    console.error('PersonalLayerManager apply error:', error);
+                    this.updateButtonState('error', language);
+                    return;
                 }
                 
-                // Reset button
-                if (applyBtn) {
-                    applyBtn.innerHTML = lang === 'zh' ? 
-                        '<i class="bi bi-check-circle me-1"></i>应用选择的层级' : 
-                        '<i class="bi bi-check-circle me-1"></i>Apply Selected Layer';
-                    applyBtn.disabled = false;
-                }
+                // 重置状态
+                this.updateButtonState('success', language);
+                this.isProcessing = false;
+            }
+
+            // 初始化系统
+            initialize() {
+                const layerSelector = document.querySelector(this.config.selectors.layerSelect);
+                const applyButton = document.querySelector(this.config.selectors.applyButton);
                 
-            } catch (error) {
-                console.error('Personal layer setting error:', error);
+                if (!layerSelector || !applyButton) {
+                    console.warn('PersonalLayerManager: Required elements not found');
+                    return;
+                }
+
+                // 绑定事件
+                applyButton.addEventListener('click', () => this.applyLayerSetting());
                 
-                // Reset button on error
-                const applyBtn = document.getElementById('applyPersonalLayerBtn');
-                if (applyBtn) {
-                    applyBtn.innerHTML = lang === 'zh' ? 
-                        '<i class="bi bi-x-circle me-1"></i>重试' : 
-                        '<i class="bi bi-x-circle me-1"></i>Retry';
-                    applyBtn.disabled = false;
-                }
+                // 初始化显示
+                const initialLayer = layerSelector.value || this.config.defaultLayer;
+                const language = getCurrentLanguage();
+                this.currentLayer = initialLayer;
+                this.updateDisplay(initialLayer, language);
+                
+                console.log(`PersonalLayerManager initialized with layer: ${initialLayer}`);
             }
-        }
-        
-        // Update personal layer display
-        function updatePersonalLayerDisplay(layer, lang) {
-            const currentLayerEl = document.getElementById('currentPersonalLayer');
-            const currentRiskEl = document.getElementById('currentPersonalRisk');
-            const layerExplanationEl = document.getElementById('layerExplanation');
-            
-            if (currentLayerEl) currentLayerEl.textContent = layer;
-            if (currentRiskEl) {
-                currentRiskEl.textContent = layerRiskLevels[layer]?.[lang] || layerRiskLevels[layer]?.zh || 'Medium Risk';
-            }
-            
-            // Calculate and display target price explanation
-            if (layerExplanationEl) {
-                const costBasis = 95000; // From demo data
-                const multiplier = layerMultipliers[layer] || 1.52;
-                const targetPrice = costBasis * multiplier;
-                layerExplanationEl.textContent = lang === 'zh' ? 
-                    `目标: $${targetPrice.toLocaleString()}` : 
-                    `Target: $${targetPrice.toLocaleString()}`;
-            }
-        }
-        
-        // Show layer update message
-        function showPersonalLayerUpdateMessage(message, lang) {
-            const strategyPane = document.getElementById('strategy');
-            if (!strategyPane) return;
-            
-            const alert = document.createElement('div');
-            alert.className = 'alert alert-success alert-dismissible fade show mb-3';
-            alert.innerHTML = `
-                <i class="bi bi-check-circle me-1"></i> ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            
-            const layerPanel = strategyPane.querySelector('.row');
-            if (layerPanel) {
-                layerPanel.parentNode.insertBefore(alert, layerPanel);
-            }
-            
-            // Auto dismiss after 4 seconds
-            setTimeout(() => {
-                if (alert.parentNode) {
-                    alert.remove();
-                }
-            }, 4000);
         }
 
-        // Initialize personal layer selection when page loads
+        // 创建全局实例
+        const personalLayerManager = new PersonalLayerManager();
+
+        // 页面加载时自动初始化
         document.addEventListener('DOMContentLoaded', function() {
-            const personalLayerSelector = document.getElementById('personalLayerSelector');
-            const applyPersonalLayerBtn = document.getElementById('applyPersonalLayerBtn');
-            
-            if (personalLayerSelector && applyPersonalLayerBtn) {
-                applyPersonalLayerBtn.addEventListener('click', applyPersonalLayerSetting);
-                
-                // Initialize display
-                const initialLayer = personalLayerSelector.value || 'L2';
-                const currentLang = getCurrentLanguage();
-                updatePersonalLayerDisplay(initialLayer, currentLang);
-                
-                console.log('Personal layer selection initialized with layer:', initialLayer);
-            }
+            personalLayerManager.initialize();
         });
 
     </script>
