@@ -5839,13 +5839,10 @@ def next_sell_indicator_api():
             'L4': {'multiple': 2.20, 'name': '极致策略', 'risk': 'Max'}
         }
         
-        # 使用选择的层级倍数
+        # 使用选择的层级倍数（简化计算，去除ATR调整）
         layer_info = layer_config.get(selected_layer, layer_config['L2'])
-        next_multiple = layer_info['multiple']
-        atr_pct = 0.025  # 简化的ATR百分比
-        atr_factor = min(max(1 + 3.5 * max(0, atr_pct - 0.022), 0.9), 1.4)
-        adj_multiple = next_multiple * atr_factor
-        target_price = portfolio['blended_cost'] * adj_multiple
+        target_multiple = layer_info['multiple']
+        target_price = portfolio['blended_cost'] * target_multiple
         
         # 目标区间 (±0.2%)
         slip_pct = 0.002
@@ -5884,7 +5881,7 @@ def next_sell_indicator_api():
                 'risk_level': layer_info['risk'],
                 'opex_reserved_btc': round(opex_qty, 4),
                 'reasons': [
-                    f"{layer_info['name']}: {next_multiple:.2f}× → adj {adj_multiple:.2f}×",
+                    f"{layer_info['name']}: {target_multiple:.2f}×",
                     f"RSI {rsi:.1f} {'≥' if rsi >= 65 else '<'} 65",
                     f"风险等级: {layer_info['risk']}"
                 ],
