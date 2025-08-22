@@ -355,6 +355,156 @@ class HistoricalDataEngine:
         except Exception as e:
             logger.error(f"检测数据缺口失败: {e}")
             return []
+    
+    def run_real_backtest(self, strategy: str, start_date: str, end_date: str, 
+                         initial_btc: float, portfolio_params: dict = None) -> dict:
+        """运行真实历史数据回测"""
+        try:
+            logger.info(f"开始运行回测: {strategy}, {start_date} - {end_date}")
+            
+            # 获取历史价格数据
+            historical_prices = self.fetch_historical_prices(365)
+            
+            if not historical_prices:
+                logger.warning("无法获取历史数据，回测失败")
+                return {'success': False, 'error': '无法获取历史价格数据'}
+            
+            # 过滤日期范围
+            start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+            end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+            
+            filtered_data = [
+                point for point in historical_prices
+                if start_dt <= point['timestamp'] <= end_dt
+            ]
+            
+            if len(filtered_data) < 2:
+                logger.warning("过滤后的历史数据点太少")
+                return {'success': False, 'error': '指定日期范围内的数据点不足'}
+            
+            # 执行回测计算
+            portfolio_params = portfolio_params or {}
+            avg_cost_basis = portfolio_params.get('avg_cost_basis', 95000)
+            monthly_opex = portfolio_params.get('monthly_opex', 250000)
+            
+            # 初始化回测参数
+            btc_holdings = initial_btc
+            cash_position = 0
+            portfolio_values = []
+            dates = []
+            trades = 0
+            
+            for i, data_point in enumerate(filtered_data):
+                current_price = data_point['btc_price']
+                current_date = data_point['timestamp']
+                
+                # 基于策略的交易逻辑
+                if strategy == 'hold':
+                    # 买入持有策略 - 不交易
+                    pass
+                elif strategy == 'dca' and i % 7 == 0:  # 每周DCA
+                    # DCA策略 - 每周定投
+                    dca_amount = 1000  # $1000 每周
+                    if dca_amount <= cash_position:
+                        btc_to_buy = dca_amount / current_price
+                        btc_holdings += btc_to_buy
+                        cash_position -= dca_amount
+                        trades += 1
+                elif strategy == 'opex':
+                    # OPEX策略 - 价格高时卖出支付运营费用
+                    if current_price > avg_cost_basis * 1.2 and btc_holdings > 1:
+                        # 卖出部分比特币支付OPEX
+                        monthly_opex_btc = monthly_opex / current_price / 30  # 日均OPEX
+                        if btc_holdings > monthly_opex_btc:
+                            btc_holdings -= monthly_opex_btc
+                            cash_position += monthly_opex_btc * current_price
+                            trades += 1
+                elif strategy == 'layered':
+                    # 分层获利策略
+                    if current_price > avg_cost_basis * 1.1 and btc_holdings > 0.1:
+                        # 价格上涨10%时开始分层卖出
+                        sell_percentage = min(0.1, (current_price / avg_cost_basis - 1.1) * 0.5)
+                        btc_to_sell = btc_holdings * sell_percentage
+                        btc_holdings -= btc_to_sell
+                        cash_position += btc_to_sell * current_price
+                        trades += 1
+                elif strategy == 'mining':
+                    # 挖矿周期策略 - 基于难度调整
+                    if i % 14 == 0 and current_price > avg_cost_basis * 1.15:
+                        # 每两周检查，如果价格高于成本价15%则卖出
+                        btc_to_sell = btc_holdings * 0.05  # 卖出5%
+                        if btc_holdings > btc_to_sell:
+                            btc_holdings -= btc_to_sell
+                            cash_position += btc_to_sell * current_price
+                            trades += 1
+                
+                # 计算当前投资组合价值
+                portfolio_value = btc_holdings * current_price + cash_position
+                portfolio_values.append(portfolio_value)
+                dates.append(current_date.strftime('%Y-%m-%d'))
+            
+            # 计算回测指标
+            if len(portfolio_values) < 2:
+                return {'success': False, 'error': '投资组合价值数据不足'}
+            
+            initial_value = portfolio_values[0]
+            final_value = portfolio_values[-1]
+            
+            # 总回报率
+            total_return = (final_value - initial_value) / initial_value
+            
+            # 最大回撤
+            peak = portfolio_values[0]
+            max_drawdown = 0
+            for value in portfolio_values:
+                if value > peak:
+                    peak = value
+                drawdown = (peak - value) / peak
+                if drawdown > max_drawdown:
+                    max_drawdown = drawdown
+            
+            # 计算日收益率并计算夏普比率
+            returns = []
+            for i in range(1, len(portfolio_values)):
+                daily_return = (portfolio_values[i] - portfolio_values[i-1]) / portfolio_values[i-1]
+                returns.append(daily_return)
+            
+            if len(returns) > 1:
+                mean_return = np.mean(returns)
+                std_return = np.std(returns)
+                sharpe_ratio = (mean_return / std_return * np.sqrt(365)) if std_return > 0 else 0
+            else:
+                sharpe_ratio = 0
+            
+            # 胜率计算
+            positive_returns = [r for r in returns if r > 0]
+            win_rate = len(positive_returns) / len(returns) * 100 if returns else 0
+            
+            result = {
+                'success': True,
+                'result': {
+                    'dates': dates[-30:],  # 返回最后30天的数据用于图表
+                    'values': portfolio_values[-30:],
+                    'total_return': round(total_return, 4),
+                    'max_drawdown': round(max_drawdown, 4),
+                    'sharpe_ratio': round(sharpe_ratio, 2),
+                    'win_rate': round(win_rate, 1),
+                    'total_trades': trades,
+                    'final_btc_holdings': round(btc_holdings, 4),
+                    'final_cash_position': round(cash_position, 2),
+                    'final_portfolio_value': round(final_value, 2),
+                    'data_source': 'historical_api_data',
+                    'data_points': len(filtered_data),
+                    'strategy': strategy
+                }
+            }
+            
+            logger.info(f"回测完成: 总回报{total_return*100:.2f}%, 最大回撤{max_drawdown*100:.2f}%, 夏普比率{sharpe_ratio:.2f}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"回测执行失败: {e}")
+            return {'success': False, 'error': str(e)}
 
 # 全局实例
 historical_engine = HistoricalDataEngine()

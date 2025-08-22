@@ -3808,7 +3808,23 @@ def api_treasury_backtest():
             portfolio_params=portfolio_params
         )
         
-        if not backtest_result.get('success'):
+        if backtest_result.get('success'):
+            # 成功获取到真实历史数据回测结果
+            result_data = backtest_result.get('result', {})
+            return jsonify({
+                'success': True,
+                'dates': result_data.get('dates', []),
+                'portfolio_values': result_data.get('values', []),
+                'total_return': result_data.get('total_return', 0),
+                'max_drawdown': result_data.get('max_drawdown', 0),
+                'sharpe_ratio': result_data.get('sharpe_ratio', 0),
+                'win_rate': result_data.get('win_rate', 0),
+                'total_trades': result_data.get('total_trades', 0),
+                'data_source': result_data.get('data_source', 'historical_api'),
+                'strategy': strategy,
+                'note': f"基于{result_data.get('data_points', 0)}个真实历史数据点"
+            })
+        elif not backtest_result.get('success'):
             # 如果历史数据不可用，使用简化的真实价格估算
             logging.warning("历史数据回测失败，使用价格趋势估算")
             
