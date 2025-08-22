@@ -1118,7 +1118,11 @@ def calculate_internal(request_obj):
         
         try:
             # 修复字段名映射，前端发送的是 miner-count
-            miner_count = int(data.get('miner-count', data.get('count', data.get('miner_count', 1))))
+            miner_count_raw = data.get('miner-count', data.get('count', data.get('miner_count', 1)))
+            # Convert to string first to handle JSON input
+            miner_count_str = str(miner_count_raw) if miner_count_raw is not None else '1'
+            # Parse as float first then convert to int to handle decimal strings
+            miner_count = int(float(miner_count_str))
             logging.info(f"成功解析矿机数量: {miner_count}")
         except (ValueError, TypeError) as e:
             error_msg = f"无效的矿机数量: {data.get('miner-count', data.get('count', data.get('miner_count')))}"
@@ -1238,14 +1242,14 @@ def calculate_internal(request_obj):
             
             # 如果没有设置维护费，根据矿机数量自动计算合理的维护费
             if maintenance_fee == 0:
-                maintenance_fee = miner_count * 5  # $5 per miner per month (reduced for single miners)
+                maintenance_fee = float(miner_count) * 5  # $5 per miner per month (reduced for single miners)
                 
             # Additional check for NaN/inf after conversion
             if not (maintenance_fee == maintenance_fee and abs(maintenance_fee) != float('inf')):
                 raise ValueError("NaN or infinite value detected")
         except ValueError as e:
             logging.error(f"Invalid maintenance fee value: {data.get('maintenance_fee')} - {str(e)}")
-            maintenance_fee = miner_count * 5  # Default maintenance fee based on miner count (reduced)
+            maintenance_fee = float(miner_count) * 5  # Default maintenance fee based on miner count (reduced)
         
         # ENHANCED: Pool fee parameter per expert recommendations
         pool_fee = None
@@ -2701,6 +2705,40 @@ def view_customer_crm(user_id):
     return redirect(url_for('crm.customer_detail', customer_id=customer.id))
 
 # ============== 网络数据分析路由 ==============
+
+@app.route('/api/network/snapshots')  # API endpoint for network snapshots
+def api_network_snapshots():
+    """API endpoint to get network snapshots data"""
+    try:
+        # Get recent network snapshots
+        end_date = datetime.utcnow()
+        start_date = end_date - timedelta(days=7)
+        
+        snapshots = NetworkSnapshot.query.filter(
+            NetworkSnapshot.recorded_at >= start_date
+        ).order_by(NetworkSnapshot.recorded_at.desc()).limit(100).all()
+        
+        data = []
+        for snapshot in snapshots:
+            data.append({
+                'timestamp': snapshot.recorded_at.isoformat(),
+                'btc_price': float(snapshot.btc_price),
+                'network_difficulty': float(snapshot.network_difficulty),
+                'network_hashrate': float(snapshot.network_hashrate),
+                'block_reward': float(snapshot.block_reward)
+            })
+        
+        return jsonify({
+            'success': True,
+            'count': len(data),
+            'snapshots': data
+        })
+    except Exception as e:
+        logging.error(f"Network snapshots API error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @app.route('/network/history')
 @login_required
@@ -4952,6 +4990,7 @@ def add_security_headers(response):
 
 # 性能监控API端点 - 简化版本
 @app.route('/api/performance-stats')
+@app.route('/api/performance/metrics')  # Add missing route for regression tests
 @login_required
 def api_performance_stats():
     """获取性能统计数据"""

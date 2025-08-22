@@ -692,7 +692,9 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         monthly_revenue = monthly_btc * btc_price
         
         # 矿场主的比特币挖矿收益，减去电费和维护费
-        monthly_mining_profit = monthly_revenue - electricity_expense - maintenance_fee
+        # Ensure maintenance_fee is a float to avoid string-int errors
+        maintenance_fee_float = float(maintenance_fee) if maintenance_fee else 0
+        monthly_mining_profit = monthly_revenue - electricity_expense - maintenance_fee_float
         
         # 矿场主的电费差价收益（如果提供了客户电费且高于矿场电费）
         monthly_electricity_markup = 0
@@ -713,7 +715,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             monthly_profit = monthly_mining_profit
         
         # 客户收益需要减去电费和维护费（与矿场主挖矿收益计算方式一样）
-        client_monthly_profit = monthly_revenue - client_electricity_expense - maintenance_fee
+        client_monthly_profit = monthly_revenue - client_electricity_expense - maintenance_fee_float
         
         # === 最优电价 (Optimal Electricity Rate) 计算 ===
         # Include pool fee in break-even calculation
@@ -721,8 +723,8 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         
         # Warn if approaching break-even with maintenance fees
         break_even_threshold = optimal_electricity_rate * 0.95  # 95% of break-even as warning
-        if electricity_cost >= break_even_threshold and maintenance_fee > 0:
-            logging.warning(f"Approaching break-even: electricity cost ${electricity_cost:.4f}/kWh vs break-even ${optimal_electricity_rate:.4f}/kWh. Maintenance fee ${maintenance_fee}/month may cause losses.")
+        if electricity_cost >= break_even_threshold and maintenance_fee_float > 0:
+            logging.warning(f"Approaching break-even: electricity cost ${electricity_cost:.4f}/kWh vs break-even ${optimal_electricity_rate:.4f}/kWh. Maintenance fee ${maintenance_fee_float}/month may cause losses.")
         
         # === 最优削减比例 (Optimal Curtailment) 计算 ===
         if electricity_cost > optimal_electricity_rate and optimal_electricity_rate > 0:
@@ -734,7 +736,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         # running_miners 和 shutdown_miners 已经在前面计算为 running_miner_count 和 shutdown_miner_count
         
         # 计算每日维护费
-        daily_maintenance_fee = maintenance_fee / 30.5
+        daily_maintenance_fee = maintenance_fee_float / 30.5
         
         # Scale back to get daily values
         daily_revenue = monthly_revenue / 30.5
@@ -744,7 +746,7 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         client_daily_electricity_expense = client_electricity_expense / 30.5
         
         # 计算年度维护费
-        yearly_maintenance_fee = maintenance_fee * 12
+        yearly_maintenance_fee = maintenance_fee_float * 12
         
         # Scale to get yearly values
         yearly_revenue = monthly_revenue * 12
