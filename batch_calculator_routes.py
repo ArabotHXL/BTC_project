@@ -213,17 +213,42 @@ def batch_calculate():
         # 预获取共享数据以加速批量计算
         start_time = time.time()
         try:
-            # 获取共享的网络数据
-            btc_price = get_btc_price_with_fallback()
-            network_stats = get_network_stats_with_fallback()
-            shared_network_data = {
-                'btc_price': btc_price,
-                'network_difficulty': network_stats.get('difficulty'),
-                'network_hashrate': network_stats.get('hashrate'),
-                'block_reward': network_stats.get('block_reward', 3.125)
-            }
-            data_fetch_time = time.time() - start_time
-            logger.info(f"Shared network data fetched in {data_fetch_time:.3f}s: BTC=${btc_price}, Hashrate={network_stats.get('hashrate', 'N/A')}EH/s")
+            # 获取共享的网络数据 - 使用更快的数据库缓存
+            from db import get_db_connection
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            
+            # 从market_analytics表获取最新数据（更快）
+            cursor.execute("""
+                SELECT btc_price, network_difficulty, network_hashrate, block_reward 
+                FROM market_analytics 
+                ORDER BY timestamp DESC 
+                LIMIT 1
+            """)
+            
+            result = cursor.fetchone()
+            if result:
+                shared_network_data = {
+                    'btc_price': float(result[0]),
+                    'network_difficulty': float(result[1]),
+                    'network_hashrate': float(result[2]),
+                    'block_reward': float(result[3])
+                }
+                data_fetch_time = time.time() - start_time
+                logger.info(f"Fast database data fetched in {data_fetch_time:.3f}s: BTC=${result[0]}, Hashrate={result[2]}EH/s")
+            else:
+                # fallback to API if database is empty
+                btc_price = get_btc_price_with_fallback()
+                network_stats = get_network_stats_with_fallback()
+                shared_network_data = {
+                    'btc_price': btc_price,
+                    'network_difficulty': network_stats.get('difficulty'),
+                    'network_hashrate': network_stats.get('hashrate'),
+                    'block_reward': network_stats.get('block_reward', 3.125)
+                }
+                data_fetch_time = time.time() - start_time
+                logger.info(f"Fallback API data fetched in {data_fetch_time:.3f}s")
+                
         except Exception as e:
             logger.warning(f"Failed to fetch shared data: {e}, using individual API calls")
             shared_network_data = None
@@ -237,21 +262,31 @@ def batch_calculate():
                 # Single calculation for the entire group with batch optimization
                 # 如果有自定义算力，直接使用算力值；否则使用矿机型号
                 if hashrate > 0:
-                    # 使用自定义算力
+                    # 使用自定义算力，传递预获取的共享数据
                     calc_result = calculate_mining_profitability(
                         hashrate=hashrate * quantity,  # 总算力
                         power_consumption=power_consumption * quantity,  # 总功耗
                         electricity_cost=electricity_cost,
-                        host_investment=total_investment  # 正确的参数名：host_investment
+                        host_investment=total_investment,  # 正确的参数名：host_investment
+                        btc_price=shared_network_data.get('btc_price') if shared_network_data else None,
+                        difficulty=shared_network_data.get('network_difficulty') if shared_network_data else None,
+                        block_reward=shared_network_data.get('block_reward') if shared_network_data else None,
+                        manual_network_hashrate=shared_network_data.get('network_hashrate') if shared_network_data else None,
+                        use_real_time_data=False  # 禁用实时API调用
                     )
                 else:
-                    # 使用矿机型号默认值
+                    # 使用矿机型号默认值，传递预获取的共享数据
                     calc_result = calculate_mining_profitability(
                         power_consumption=power_consumption,
                         electricity_cost=electricity_cost,
                         miner_model=model,
                         miner_count=quantity,
-                        host_investment=total_investment  # 正确的参数名：host_investment
+                        host_investment=total_investment,  # 正确的参数名：host_investment
+                        btc_price=shared_network_data.get('btc_price') if shared_network_data else None,
+                        difficulty=shared_network_data.get('network_difficulty') if shared_network_data else None,
+                        block_reward=shared_network_data.get('block_reward') if shared_network_data else None,
+                        manual_network_hashrate=shared_network_data.get('network_hashrate') if shared_network_data else None,
+                        use_real_time_data=False  # 禁用实时API调用
                     )
                 
                 # 获取这组矿机的编号
