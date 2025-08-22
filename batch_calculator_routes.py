@@ -179,10 +179,11 @@ def batch_calculate():
         total_daily_cost = 0
         batch_size = 100  # Process in chunks to manage memory
         
-        # Group identical miners to optimize calculations (including hashrate and decay_rate)
+        # Group identical miners to optimize calculations (including hashrate, decay_rate, and machine_price for ROI)
         # 但保留矿机编号信息以便在结果中显示
         miner_groups = {}
         miner_numbers_map = {}  # 记录每组的矿机编号
+        miner_price_map = {}     # 记录每组的矿机价格
         
         for miner in miners:
             key = (
@@ -190,13 +191,16 @@ def batch_calculate():
                 float(miner.get('power_consumption', 3250)),
                 float(miner.get('electricity_cost', 0.08)),
                 float(miner.get('hashrate', 0)),
-                float(miner.get('decay_rate', 0))
+                float(miner.get('decay_rate', 0)),
+                float(miner.get('machine_price', 0))  # 添加机器价格到分组key中
             )
             miner_number = miner.get('miner_number', '')
+            machine_price = float(miner.get('machine_price', 0))
             
             if key not in miner_groups:
                 miner_groups[key] = 0
                 miner_numbers_map[key] = []
+                miner_price_map[key] = machine_price
             
             miner_groups[key] += int(miner.get('quantity', 1))
             if miner_number:
@@ -206,7 +210,9 @@ def batch_calculate():
         
         # Calculate once per unique group
         for groupKey, quantity in miner_groups.items():
-            (model, power_consumption, electricity_cost, hashrate, decay_rate) = groupKey
+            (model, power_consumption, electricity_cost, hashrate, decay_rate, machine_price) = groupKey
+            total_investment = machine_price * quantity  # 计算总投资成本
+            
             try:
                 # Single calculation for the entire group with batch optimization
                 # 如果有自定义算力，直接使用算力值；否则使用矿机型号
@@ -216,6 +222,7 @@ def batch_calculate():
                         hashrate=hashrate * quantity,  # 总算力
                         power_consumption=power_consumption * quantity,  # 总功耗
                         electricity_cost=electricity_cost,
+                        machine_price=total_investment,  # 传递总投资成本
                         _batch_mode=True
                     )
                 else:
@@ -225,6 +232,7 @@ def batch_calculate():
                         electricity_cost=electricity_cost,
                         miner_model=model,
                         miner_count=quantity,
+                        machine_price=total_investment,  # 传递总投资成本
                         _batch_mode=True
                     )
                 
@@ -238,6 +246,8 @@ def batch_calculate():
                     'quantity': quantity,
                     'power_consumption': power_consumption,
                     'electricity_cost': electricity_cost,
+                    'machine_price': machine_price,  # 添加单台矿机价格
+                    'total_machine_cost': total_investment,  # 添加总投资成本
                     'daily_profit': calc_result.get('daily_profit', 0),
                     'daily_revenue': calc_result.get('daily_revenue', 0),
                     'daily_cost': calc_result.get('daily_cost', 0),
