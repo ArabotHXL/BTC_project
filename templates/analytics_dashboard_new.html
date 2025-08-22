@@ -2385,9 +2385,8 @@
                 console.log('Settings loaded from current treasury data:', data);
             } else {
                 // Fetch fresh data if not available
-                fetchTreasuryData().then(() => {
-                    setTimeout(loadCurrentSettings, 100); // Retry after data loads
-                });
+                fetchTreasuryData();
+                setTimeout(loadCurrentSettings, 1000); // Retry after data loads
             }
         }
         
@@ -2430,7 +2429,9 @@
             console.log('Settings updated and treasury display refreshed');
             
             // Reload dashboard with new settings
-            fetchTreasuryData();
+            fetchTreasuryData().catch(error => {
+                console.warn('Failed to reload treasury data after settings save:', error);
+            });
         }
         
         // Initialize tooltips
@@ -2822,16 +2823,18 @@ Generate this order?
 
         // Fetch Treasury Overview Data
         function fetchTreasuryData() {
-            fetch('/api/treasury/overview')
+            return fetch('/api/treasury/overview')
                 .then(response => response.json())
                 .then(data => {
                     console.log('Treasury data loaded:', data);
                     if (data.success) {
                         updateTreasuryDisplay(data);
                     }
+                    return data;
                 })
                 .catch(error => {
                     console.error('Treasury data error:', error);
+                    throw error;
                 });
         }
         
