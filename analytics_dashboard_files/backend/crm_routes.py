@@ -279,17 +279,13 @@ def add_customer_note():
             'error': str(e)
         }), 500
 
-def init_crm_routes(app):
-    """初始化CRM路由到应用"""
+def register_crm_routes(app):
+    """注册CRM路由到应用"""
     try:
         app.register_blueprint(crm_bp, url_prefix='/crm')
         logger.info("CRM routes registered successfully")
     except Exception as e:
         logger.error(f"Failed to register CRM routes: {e}")
 
-def register_crm_routes(app):
-    """注册CRM路由到应用（别名）"""
-    return init_crm_routes(app)
-
 # 兼容性导出
-__all__ = ['crm_bp', 'init_crm_routes', 'register_crm_routes']
+__all__ = ['crm_bp', 'register_crm_routes']

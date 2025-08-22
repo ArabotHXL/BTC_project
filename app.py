@@ -4907,7 +4907,7 @@ def after_request_monitoring(response):
         
         # 记录性能指标
         from performance_monitor import monitor
-        monitor.track_request(endpoint, duration, response.status_code)
+        monitor().record_request(endpoint, duration, response.status_code)
         
         # 添加性能头部用于调试
         response.headers['X-Response-Time'] = f"{duration*1000:.1f}ms"

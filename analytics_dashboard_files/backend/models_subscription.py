@@ -304,20 +304,6 @@ def init_subscription_plans():
     except Exception as e:
         logger.error(f"Failed to initialize subscription plans: {e}")
 
-def initialize_default_plans():
-    """初始化默认订阅计划（别名）"""
-    return init_subscription_plans()
-
-def create_subscription_tables():
-    """创建订阅相关表"""
-    try:
-        # 这里应该使用实际的数据库设置来创建表
-        logger.info("Subscription tables would be created here")
-        return True
-    except Exception as e:
-        logger.error(f"Failed to create subscription tables: {e}")
-        return False
-
 # 兼容性导出
 __all__ = [
     'SubscriptionPlan', 
@@ -327,7 +313,5 @@ __all__ = [
     'PlanType', 
     'SubscriptionStatus', 
     'PaymentStatus',
-    'init_subscription_plans',
-    'initialize_default_plans',
-    'create_subscription_tables'
+    'init_subscription_plans'
 ]

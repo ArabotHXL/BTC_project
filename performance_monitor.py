@@ -1,248 +1,249 @@
 """
-性能监控工具 - 跟踪系统性能指标
+Performance Monitor
+系统性能监控和指标收集
 """
-import time
+
 import logging
-from functools import wraps
-try:
-    import psutil
-    HAS_PSUTIL = True
-except ImportError:
-    HAS_PSUTIL = False
-    logging.warning("psutil not available, system stats will be limited")
-from typing import Callable, Dict, List
+import time
+import psutil
+import threading
 from datetime import datetime, timedelta
+from typing import Dict, List, Optional
+import json
+import os
+from collections import deque, defaultdict
+from functools import wraps
 
 logger = logging.getLogger(__name__)
 
 class PerformanceMonitor:
     """性能监控器"""
     
-    def __init__(self):
-        self._metrics = {
-            'requests': [],
-            'database_queries': [],
-            'api_calls': [],
-            'errors': []
-        }
-        self._start_time = time.time()
-    
-    def track_request(self, endpoint: str, duration: float, status_code: int):
-        """跟踪请求性能"""
-        self._metrics['requests'].append({
-            'endpoint': endpoint,
-            'duration': duration,
-            'status_code': status_code,
-            'timestamp': datetime.now()
-        })
+    def __init__(self, max_history: int = 1000):
+        self.max_history = max_history
+        self.metrics_history = deque(maxlen=max_history)
+        self.endpoint_metrics = defaultdict(list)
+        self.request_times = defaultdict(deque)
+        self.error_counts = defaultdict(int)
+        self.start_time = datetime.now()
+        self.is_monitoring = False
+        self.monitor_thread = None
         
-        # 保留最近1000条记录
-        if len(self._metrics['requests']) > 1000:
-            self._metrics['requests'] = self._metrics['requests'][-1000:]
+        logger.info("Performance Monitor initialized")
     
-    def track_database_query(self, query_type: str, duration: float):
-        """跟踪数据库查询性能"""
-        self._metrics['database_queries'].append({
-            'type': query_type,
-            'duration': duration,
-            'timestamp': datetime.now()
-        })
+    def start_monitoring(self, interval: float = 30.0):
+        """开始性能监控"""
+        if self.is_monitoring:
+            logger.warning("Performance monitoring already running")
+            return
         
-        if len(self._metrics['database_queries']) > 500:
-            self._metrics['database_queries'] = self._metrics['database_queries'][-500:]
+        self.is_monitoring = True
+        self.monitor_thread = threading.Thread(
+            target=self._monitor_loop,
+            args=(interval,),
+            daemon=True
+        )
+        self.monitor_thread.start()
+        logger.info(f"Performance monitoring started with {interval}s interval")
     
-    def track_api_call(self, api_name: str, duration: float, success: bool):
-        """跟踪外部API调用"""
-        self._metrics['api_calls'].append({
-            'api': api_name,
-            'duration': duration,
-            'success': success,
-            'timestamp': datetime.now()
-        })
-        
-        if len(self._metrics['api_calls']) > 500:
-            self._metrics['api_calls'] = self._metrics['api_calls'][-500:]
+    def stop_monitoring(self):
+        """停止性能监控"""
+        self.is_monitoring = False
+        if self.monitor_thread:
+            self.monitor_thread.join(timeout=5)
+        logger.info("Performance monitoring stopped")
     
-    def track_error(self, error_type: str, message: str):
-        """跟踪错误"""
-        self._metrics['errors'].append({
-            'type': error_type,
-            'message': message,
-            'timestamp': datetime.now()
-        })
-        
-        if len(self._metrics['errors']) > 100:
-            self._metrics['errors'] = self._metrics['errors'][-100:]
+    def _monitor_loop(self, interval: float):
+        """监控循环"""
+        while self.is_monitoring:
+            try:
+                metrics = self._collect_system_metrics()
+                self.metrics_history.append(metrics)
+                
+                # 清理过期的请求时间记录
+                self._cleanup_old_metrics()
+                
+                time.sleep(interval)
+            except Exception as e:
+                logger.error(f"Performance monitoring error: {e}")
+                time.sleep(interval)
     
-    def get_system_stats(self) -> Dict:
-        """获取系统状态"""
-        if not HAS_PSUTIL:
-            return {
-                'cpu_percent': 0,
-                'memory_percent': 0,
-                'memory_used_mb': 0,
-                'memory_total_mb': 0,
-                'disk_percent': 0,
-                'disk_used_gb': 0,
-                'disk_total_gb': 0,
-                'uptime_hours': (time.time() - self._start_time) / 3600,
-                'note': 'psutil not available'
-            }
-        
+    def _collect_system_metrics(self) -> Dict:
+        """收集系统指标"""
         try:
+            # CPU和内存指标
             cpu_percent = psutil.cpu_percent(interval=1)
             memory = psutil.virtual_memory()
             disk = psutil.disk_usage('/')
             
-            return {
-                'cpu_percent': cpu_percent,
-                'memory_percent': memory.percent,
-                'memory_used_mb': memory.used / 1024 / 1024,
-                'memory_total_mb': memory.total / 1024 / 1024,
-                'disk_percent': disk.percent,
-                'disk_used_gb': disk.used / 1024 / 1024 / 1024,
-                'disk_total_gb': disk.total / 1024 / 1024 / 1024,
-                'uptime_hours': (time.time() - self._start_time) / 3600
-            }
-        except Exception as e:
-            logger.error(f"Failed to get system stats: {e}")
-            return {}
-    
-    def get_performance_summary(self) -> Dict:
-        """获取性能摘要"""
-        now = datetime.now()
-        one_hour_ago = now - timedelta(hours=1)
-        
-        # 计算最近1小时的指标
-        recent_requests = [
-            r for r in self._metrics['requests']
-            if r['timestamp'] > one_hour_ago
-        ]
-        
-        recent_queries = [
-            q for q in self._metrics['database_queries']
-            if q['timestamp'] > one_hour_ago
-        ]
-        
-        recent_api_calls = [
-            a for a in self._metrics['api_calls']
-            if a['timestamp'] > one_hour_ago
-        ]
-        
-        # 计算平均响应时间
-        avg_request_time = (
-            sum(r['duration'] for r in recent_requests) / len(recent_requests)
-            if recent_requests else 0
-        )
-        
-        avg_query_time = (
-            sum(q['duration'] for q in recent_queries) / len(recent_queries)
-            if recent_queries else 0
-        )
-        
-        # 计算成功率
-        successful_api_calls = sum(1 for a in recent_api_calls if a['success'])
-        api_success_rate = (
-            (successful_api_calls / len(recent_api_calls) * 100)
-            if recent_api_calls else 100
-        )
-        
-        # 错误统计
-        recent_errors = [
-            e for e in self._metrics['errors']
-            if e['timestamp'] > one_hour_ago
-        ]
-        
-        return {
-            'requests_per_hour': len(recent_requests),
-            'avg_request_time_ms': avg_request_time * 1000,
-            'database_queries_per_hour': len(recent_queries),
-            'avg_query_time_ms': avg_query_time * 1000,
-            'api_calls_per_hour': len(recent_api_calls),
-            'api_success_rate': f"{api_success_rate:.1f}%",
-            'errors_per_hour': len(recent_errors),
-            'system_stats': self.get_system_stats()
-        }
-    
-    def get_slow_endpoints(self, threshold_ms: float = 1000) -> List[Dict]:
-        """获取慢速端点"""
-        slow_requests = [
-            r for r in self._metrics['requests']
-            if r['duration'] * 1000 > threshold_ms
-        ]
-        
-        # 按端点分组统计
-        endpoint_stats = {}
-        for req in slow_requests:
-            endpoint = req['endpoint']
-            if endpoint not in endpoint_stats:
-                endpoint_stats[endpoint] = {
-                    'count': 0,
-                    'total_time': 0,
-                    'max_time': 0
+            metrics = {
+                'timestamp': datetime.now().isoformat(),
+                'cpu': {
+                    'percent': cpu_percent,
+                    'count': psutil.cpu_count()
+                },
+                'memory': {
+                    'total': memory.total,
+                    'available': memory.available,
+                    'percent': memory.percent,
+                    'used': memory.used
+                },
+                'disk': {
+                    'total': disk.total,
+                    'used': disk.used,
+                    'free': disk.free,
+                    'percent': (disk.used / disk.total) * 100
                 }
+            }
             
-            endpoint_stats[endpoint]['count'] += 1
-            endpoint_stats[endpoint]['total_time'] += req['duration']
-            endpoint_stats[endpoint]['max_time'] = max(
-                endpoint_stats[endpoint]['max_time'],
-                req['duration']
-            )
-        
-        # 转换为列表并排序
-        results = []
-        for endpoint, stats in endpoint_stats.items():
-            results.append({
+            return metrics
+            
+        except Exception as e:
+            logger.error(f"Failed to collect system metrics: {e}")
+            return {
+                'timestamp': datetime.now().isoformat(),
+                'error': str(e)
+            }
+    
+    def _cleanup_old_metrics(self):
+        """清理过期指标"""
+        try:
+            cutoff_time = datetime.now() - timedelta(hours=1)
+            
+            # 清理请求时间记录
+            for endpoint in list(self.request_times.keys()):
+                times = self.request_times[endpoint]
+                while times and times[0] < cutoff_time:
+                    times.popleft()
+                
+                if not times:
+                    del self.request_times[endpoint]
+                    
+        except Exception as e:
+            logger.error(f"Failed to cleanup old metrics: {e}")
+    
+    def record_request(self, endpoint: str, duration: float, status_code: int = 200):
+        """记录请求指标"""
+        try:
+            now = datetime.now()
+            
+            # 记录请求时间
+            self.request_times[endpoint].append(now)
+            
+            # 记录端点指标
+            metric = {
+                'timestamp': now.isoformat(),
                 'endpoint': endpoint,
-                'slow_requests': stats['count'],
-                'avg_time_ms': (stats['total_time'] / stats['count']) * 1000,
-                'max_time_ms': stats['max_time'] * 1000
-            })
-        
-        return sorted(results, key=lambda x: x['max_time_ms'], reverse=True)[:10]
+                'duration': duration,
+                'status_code': status_code
+            }
+            
+            self.endpoint_metrics[endpoint].append(metric)
+            
+            # 限制历史记录数量
+            if len(self.endpoint_metrics[endpoint]) > 1000:
+                self.endpoint_metrics[endpoint] = self.endpoint_metrics[endpoint][-500:]
+            
+            # 记录错误
+            if status_code >= 400:
+                self.error_counts[endpoint] += 1
+                
+        except Exception as e:
+            logger.error(f"Failed to record request metric: {e}")
+    
+    def track_request(self, endpoint: str, duration: float, status_code: int = 200):
+        """记录请求指标"""
+        try:
+            now = datetime.now()
+            
+            # 记录请求时间
+            self.request_times[endpoint].append(now)
+            
+            # 记录端点指标
+            metric = {
+                'timestamp': now.isoformat(),
+                'endpoint': endpoint,
+                'duration': duration,
+                'status_code': status_code
+            }
+            
+            self.endpoint_metrics[endpoint].append(metric)
+            
+            # 限制历史记录数量
+            if len(self.endpoint_metrics[endpoint]) > 1000:
+                self.endpoint_metrics[endpoint] = self.endpoint_metrics[endpoint][-500:]
+            
+            # 记录错误
+            if status_code >= 400:
+                self.error_counts[endpoint] += 1
+                
+        except Exception as e:
+            logger.error(f"Failed to record request metric: {e}")
+    
+    def get_metrics_summary(self) -> Dict:
+        """获取指标摘要"""
+        try:
+            if not self.metrics_history:
+                return {'error': 'No metrics available'}
+            
+            latest_metrics = self.metrics_history[-1]
+            
+            # 计算平均值
+            cpu_values = [m.get('cpu', {}).get('percent', 0) for m in self.metrics_history if 'cpu' in m]
+            memory_values = [m.get('memory', {}).get('percent', 0) for m in self.metrics_history if 'memory' in m]
+            
+            summary = {
+                'uptime': str(datetime.now() - self.start_time),
+                'latest_cpu': latest_metrics.get('cpu', {}).get('percent', 0),
+                'latest_memory': latest_metrics.get('memory', {}).get('percent', 0),
+                'avg_cpu': sum(cpu_values) / len(cpu_values) if cpu_values else 0,
+                'avg_memory': sum(memory_values) / len(memory_values) if memory_values else 0,
+                'total_requests': sum(len(times) for times in self.request_times.values()),
+                'total_errors': sum(self.error_counts.values()),
+                'monitored_endpoints': len(self.endpoint_metrics)
+            }
+            
+            return summary
+            
+        except Exception as e:
+            logger.error(f"Failed to get metrics summary: {e}")
+            return {'error': str(e)}
 
-# 全局性能监控实例
-monitor = PerformanceMonitor()
+def monitor():
+    """创建并返回性能监控器实例"""
+    return PerformanceMonitor()
 
-def measure_performance(metric_type: str = 'request'):
-    """性能测量装饰器"""
-    def decorator(func: Callable) -> Callable:
+# 创建全局监控器实例
+_global_monitor = None
+
+def get_monitor():
+    """获取全局监控器实例"""
+    global _global_monitor
+    if _global_monitor is None:
+        _global_monitor = PerformanceMonitor()
+    return _global_monitor
+
+# 装饰器：用于自动监控函数性能
+def monitor_performance(endpoint_name: str = None):
+    """性能监控装饰器"""
+    def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            start_time = time.time()
+            monitor_instance = get_monitor()
+            name = endpoint_name or f"{func.__module__}.{func.__name__}"
             
+            start_time = time.time()
             try:
                 result = func(*args, **kwargs)
                 duration = time.time() - start_time
-                
-                # 记录性能指标
-                if metric_type == 'request':
-                    endpoint = func.__name__
-                    status_code = 200
-                    monitor.track_request(endpoint, duration, status_code)
-                elif metric_type == 'database':
-                    monitor.track_database_query(func.__name__, duration)
-                elif metric_type == 'api':
-                    monitor.track_api_call(func.__name__, duration, True)
-                
-                # 记录慢速操作
-                if duration > 1.0:  # 超过1秒
-                    logger.warning(
-                        f"Slow {metric_type}: {func.__name__} took {duration:.2f}s"
-                    )
-                
+                monitor_instance.record_request(name, duration, 200)
                 return result
-                
             except Exception as e:
                 duration = time.time() - start_time
-                
-                # 记录错误
-                monitor.track_error(type(e).__name__, str(e))
-                
-                if metric_type == 'api':
-                    monitor.track_api_call(func.__name__, duration, False)
-                
+                monitor_instance.record_request(name, duration, 500)
                 raise
-        
         return wrapper
     return decorator
+
+# 导出
+__all__ = ['PerformanceMonitor', 'monitor', 'get_monitor', 'monitor_performance']

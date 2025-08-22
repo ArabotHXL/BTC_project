@@ -350,4 +350,13 @@ def reports():
 
 def init_broker_routes(app):
     """初始化矿场中介业务路由"""
-    app.register_blueprint(broker)
+    import logging
+    logger = logging.getLogger(__name__)
+    try:
+        app.register_blueprint(broker)
+        logger.info("Broker routes registered successfully")
+    except Exception as e:
+        logger.error(f"Failed to register broker routes: {e}")
+
+# 兼容性导出
+__all__ = ['broker', 'init_broker_routes']
