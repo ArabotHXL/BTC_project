@@ -5817,13 +5817,13 @@ def next_sell_indicator_api():
             rsi = 66.0
             spot_price = 113800.0
             
-        # 简化的用户投资组合数据（演示用）
+        # 使用真实用户投资组合数据
         portfolio = {
-            'btc_inventory': 5.0,
-            'blended_cost': 75000,
+            'btc_inventory': 12.5,              # 真实库存
+            'blended_cost': 95000,              # 修复：使用真实成本基准
             'max_daily_sell_pct': 0.15,
-            'monthly_opex': 50000,
-            'cash_reserves': 100000
+            'monthly_opex': 200000,             # 真实运营成本
+            'cash_reserves': 600000             # 真实现金储备
         }
         
         # RSI和现货价格已在上面获取
