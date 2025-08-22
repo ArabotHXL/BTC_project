@@ -1111,12 +1111,36 @@
         }
 
         function calculateBatchProfitability() {
+            // 防止重复点击
+            const calculateBtn = document.getElementById('calculateBtn');
+            if (calculateBtn.disabled) {
+                console.log('按钮已禁用，忽略点击');
+                return;
+            }
+            
             const miners = collectMinerData();
+            
+            console.log('收集到的矿机数据:', miners.length, '个');
             
             if (miners.length === 0) {
                 alert('{% if current_lang == "en" %}Please add at least one miner before calculating.{% else %}请至少添加一台矿机再进行计算。{% endif %}');
+                // 恢复按钮状态
+                calculateBtn.disabled = false;
+                calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>{% if current_lang == "en" %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}';
                 return;
             }
+            
+            // 临时禁用按钮防止重复点击
+            calculateBtn.disabled = true;
+            calculateBtn.innerHTML = '<i class="bi bi-clock me-2"></i>计算中...';
+            
+            // 2秒后恢复按钮（防止卡住）
+            setTimeout(() => {
+                if (calculateBtn.disabled) {
+                    calculateBtn.disabled = false;
+                    calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>{% if current_lang == "en" %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}';
+                }
+            }, 2000);
 
             // 使用与显示计数器相同的逻辑来计算总矿机数
             let totalMinersForQuota = 0;
@@ -1177,6 +1201,10 @@
             .then(data => {
                 console.log('Received data:', data);
                 
+                // 恢复按钮状态
+                calculateBtn.disabled = false;
+                calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>{% if current_lang == "en" %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}';
+                
                 // 先检查 results section 是否存在
                 const resultsSection = document.getElementById('resultsSection');
                 console.log('Results section found:', !!resultsSection);
@@ -1206,6 +1234,11 @@
             .catch(error => {
                 console.error('Calculation error:', error);
                 console.error('Error details:', error.message);
+                
+                // 恢复按钮状态
+                calculateBtn.disabled = false;
+                calculateBtn.innerHTML = '<i class="bi bi-calculator me-2"></i>{% if current_lang == "en" %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}';
+                
                 showErrorResults('{% if current_lang == "en" %}Calculation failed. Please try again.{% else %}计算失败，请重试。{% endif %}');
             });
         }
