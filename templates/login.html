@@ -336,6 +336,28 @@ body::before {
 * {
     transition: all 0.3s ease;
 }
+
+/* Ensure links are clickable */
+a, a:hover, a:focus, a:active {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    z-index: 1000;
+    position: relative;
+}
+
+/* Fix specific register link styling */
+.text-primary.text-decoration-none {
+    display: inline-block;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    z-index: 1001;
+    position: relative;
+    text-decoration: none !important;
+}
+
+.text-primary.text-decoration-none:hover {
+    text-decoration: underline !important;
+}
 </style>
 {% endblock %}
 
