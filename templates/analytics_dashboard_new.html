@@ -1301,7 +1301,7 @@
                                     </select>
                                 </div>
                                 
-                                <button class="btn execution-btn" onclick="runBacktest()">
+                                <button class="btn execution-btn" onclick="runBacktest(this)">
                                     <i class="bi bi-play-fill me-2"></i>{{ tr('run_backtest') }}
                                 </button>
                                 
@@ -2073,10 +2073,124 @@
         }
 
         // Backtest functions
-        function runBacktest() {
-            // Run strategy backtest
+        async function runBacktest(buttonElement) {
             console.log('Running backtest...');
-            // Implementation here
+            
+            try {
+                // Get parameters
+                const startDate = document.getElementById('backtestStart').value;
+                const endDate = document.getElementById('backtestEnd').value;
+                const initialBTC = document.getElementById('backtestInitialBTC').value;
+                const strategy = document.getElementById('backtestStrategy').value;
+                
+                // Validate inputs
+                if (!startDate || !endDate) {
+                    alert('请选择开始和结束日期');
+                    return;
+                }
+                
+                // Show loading state
+                const button = buttonElement || document.querySelector('.execution-btn');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>运行中...';
+                button.disabled = true;
+                
+                // Call backend API
+                const response = await fetch('/api/treasury/backtest', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        strategy: strategy,
+                        start_date: startDate,
+                        end_date: endDate,
+                        initial_btc: parseFloat(initialBTC)
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update metrics
+                    document.getElementById('backtestReturn').textContent = 
+                        result.total_return ? `+${(result.total_return * 100).toFixed(2)}%` : '+0.00%';
+                    document.getElementById('backtestDrawdown').textContent = 
+                        result.max_drawdown ? `-${(Math.abs(result.max_drawdown) * 100).toFixed(2)}%` : '-0.00%';
+                    document.getElementById('backtestSharpe').textContent = 
+                        result.sharpe_ratio ? result.sharpe_ratio.toFixed(2) : '0.00';
+                    
+                    // Update chart if data is available
+                    if (result.dates && result.portfolio_values) {
+                        updateBacktestChart(result.dates, result.portfolio_values);
+                    }
+                    
+                    console.log('Backtest completed successfully:', result);
+                    alert('回测完成！查看结果图表和指标。');
+                } else {
+                    console.error('Backtest failed:', result.error);
+                    alert('回测失败: ' + (result.error || '未知错误'));
+                }
+                
+            } catch (error) {
+                console.error('Backtest error:', error);
+                alert('回测执行出错: ' + error.message);
+            } finally {
+                // Restore button state
+                const button = buttonElement || document.querySelector('.execution-btn');
+                if (button) {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }
+            }
+        }
+        
+        // Update backtest chart
+        function updateBacktestChart(dates, values) {
+            const ctx = document.getElementById('backtestChart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (window.backtestChartInstance) {
+                window.backtestChartInstance.destroy();
+            }
+            
+            window.backtestChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: '投资组合价值',
+                        data: values,
+                        borderColor: '#f39c12',
+                        backgroundColor: 'rgba(243, 156, 18, 0.1)',
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#fff' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#fff' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        y: {
+                            ticks: { 
+                                color: '#fff',
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
         }
 
         // Settings functions
