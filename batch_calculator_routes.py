@@ -222,7 +222,7 @@ def batch_calculate():
                         hashrate=hashrate * quantity,  # 总算力
                         power_consumption=power_consumption * quantity,  # 总功耗
                         electricity_cost=electricity_cost,
-                        machine_price=total_investment,  # 传递总投资成本
+                        host_investment=total_investment,  # 正确的参数名：host_investment
                         _batch_mode=True
                     )
                 else:
@@ -232,13 +232,32 @@ def batch_calculate():
                         electricity_cost=electricity_cost,
                         miner_model=model,
                         miner_count=quantity,
-                        machine_price=total_investment,  # 传递总投资成本
+                        host_investment=total_investment,  # 正确的参数名：host_investment
                         _batch_mode=True
                     )
                 
                 # 获取这组矿机的编号
                 group_numbers = miner_numbers_map.get(groupKey, [])
                 display_number = ', '.join(group_numbers) if group_numbers else '-'
+                
+                # 从ROI数据中提取回收期并转换为天数
+                roi_data = calc_result.get('roi', {}).get('host', {})
+                payback_months = roi_data.get('payback_period_months', 0)
+                
+                # 调试日志
+                logger.info(f"ROI calculation debug - ROI data keys: {list(roi_data.keys()) if roi_data else 'No ROI data'}")
+                logger.info(f"ROI calculation debug - Payback months: {payback_months}")
+                
+                # 如果payback_months为None，使用简单的投资/月利润计算
+                if not payback_months and total_investment > 0:
+                    # 尝试从不同的数据结构中获取月利润
+                    monthly_profit = (calc_result.get('monthly_profit', 0) or 
+                                    calc_result.get('profit', {}).get('monthly', 0))
+                    if monthly_profit > 0:
+                        payback_months = total_investment / monthly_profit
+                        logger.info(f"ROI fallback calculation - Investment: ${total_investment}, Monthly profit: ${monthly_profit}, Calculated months: {payback_months}")
+                
+                roi_days = int(payback_months * 30.44) if payback_months and payback_months > 0 else 0  # 平均每月30.44天
                 
                 result_entry = {
                     'miner_number': display_number,  # 添加矿机编号
@@ -251,8 +270,9 @@ def batch_calculate():
                     'daily_profit': calc_result.get('daily_profit', 0),
                     'daily_revenue': calc_result.get('daily_revenue', 0),
                     'daily_cost': calc_result.get('daily_cost', 0),
-                    'monthly_profit': calc_result.get('monthly_profit', 0),
-                    'roi_days': calc_result.get('roi_days', 0),
+                    'monthly_profit': (calc_result.get('monthly_profit', 0) or 
+                                     calc_result.get('profit', {}).get('monthly', 0)),
+                    'roi_days': roi_days,  # 正确计算的ROI天数
                     'hash_rate': calc_result.get('hash_rate', hashrate),
                     'decay_rate': decay_rate
                 }
