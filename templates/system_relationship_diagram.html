@@ -1,0 +1,908 @@
+{% extends "base.html" %}
+
+{% block title %}
+    System Relationship Diagram / 系统关系图 - BTC Mining Calculator
+{% endblock %}
+
+{% block header_title %}
+    System Relationships / 系统关系图
+{% endblock %}
+
+{% block extra_css %}
+<style>
+body {
+    background: linear-gradient(135deg, #0a0f1c 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #0a0f1c 100%);
+    background-attachment: fixed;
+    color: #f8f9fa;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    overflow-x: auto;
+}
+
+.diagram-container {
+    max-width: 1600px;
+    margin: 2rem auto;
+    padding: 2rem;
+}
+
+.relationship-card {
+    background: rgba(26, 26, 46, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 193, 7, 0.2);
+    border-radius: 24px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.diagram-title {
+    color: #ffc107;
+    font-size: 2rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 2rem;
+    text-shadow: 0 0 20px rgba(255, 193, 7, 0.3);
+}
+
+/* System Relationship SVG Container */
+.relationship-svg-container {
+    position: relative;
+    width: 100%;
+    min-height: 900px;
+    background: radial-gradient(ellipse at center, rgba(255, 193, 7, 0.03) 0%, transparent 70%);
+    border-radius: 16px;
+    overflow: visible;
+    padding: 2rem;
+}
+
+.system-node {
+    position: absolute;
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(108, 92, 231, 0.15));
+    border: 2px solid rgba(255, 193, 7, 0.4);
+    border-radius: 16px;
+    padding: 1.5rem;
+    min-width: 180px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.system-node:hover {
+    transform: scale(1.05);
+    border-color: #ffc107;
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.25), rgba(108, 92, 231, 0.25));
+    box-shadow: 0 15px 40px rgba(255, 193, 7, 0.3);
+    z-index: 10;
+}
+
+.node-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.node-title {
+    font-weight: 700;
+    color: #ffc107;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.node-description {
+    font-size: 0.8rem;
+    color: #adb5bd;
+    line-height: 1.3;
+}
+
+/* Connection Lines */
+.connection-line {
+    position: absolute;
+    background: linear-gradient(90deg, #ffc107, #e67e22);
+    height: 2px;
+    z-index: 1;
+    transform-origin: left center;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.connection-line::after {
+    content: '▶';
+    position: absolute;
+    right: -8px;
+    top: -8px;
+    color: #ffc107;
+    font-size: 0.8rem;
+}
+
+.connection-line.animated::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+    animation: flow 3s linear infinite;
+}
+
+@keyframes flow {
+    to { left: 100%; }
+}
+
+/* Node Positioning */
+.node-frontend { top: 50px; left: 50px; }
+.node-auth { top: 50px; left: 300px; }
+.node-language { top: 50px; left: 550px; }
+.node-templates { top: 50px; left: 800px; }
+
+.node-mining { top: 200px; left: 50px; }
+.node-treasury { top: 200px; left: 300px; }
+.node-algorithm { top: 200px; left: 550px; }
+.node-analytics { top: 200px; left: 800px; }
+.node-crm { top: 200px; left: 1050px; }
+
+.node-database { top: 350px; left: 200px; }
+.node-cache { top: 350px; left: 450px; }
+.node-apis { top: 350px; left: 700px; }
+.node-scheduler { top: 350px; left: 950px; }
+
+.node-external-apis { top: 500px; left: 100px; }
+.node-coinwarz { top: 500px; left: 300px; }
+.node-coingecko { top: 500px; left: 500px; }
+.node-blockchain { top: 500px; left: 700px; }
+.node-rpc { top: 500px; left: 900px; }
+
+.node-services { top: 650px; left: 200px; }
+.node-gmail { top: 650px; left: 450px; }
+.node-monitoring { top: 650px; left: 700px; }
+
+/* Data Flow Lines */
+.line-auth-db { top: 150px; left: 380px; width: 120px; transform: rotate(45deg); }
+.line-mining-db { top: 280px; left: 180px; width: 120px; transform: rotate(45deg); }
+.line-treasury-cache { top: 280px; left: 430px; width: 120px; transform: rotate(45deg); }
+.line-algorithm-apis { top: 280px; left: 680px; width: 120px; transform: rotate(45deg); }
+.line-analytics-scheduler { top: 280px; left: 930px; width: 120px; transform: rotate(45deg); }
+
+.line-db-external { top: 430px; left: 250px; width: 150px; transform: rotate(25deg); }
+.line-apis-coinwarz { top: 580px; left: 300px; width: 200px; transform: rotate(0deg); }
+.line-apis-coingecko { top: 580px; left: 500px; width: 200px; transform: rotate(0deg); }
+.line-apis-blockchain { top: 580px; left: 700px; width: 200px; transform: rotate(0deg); }
+
+/* Module Detail Panels */
+.module-details {
+    display: none;
+    position: absolute;
+    background: rgba(0, 0, 0, 0.95);
+    border: 2px solid #ffc107;
+    border-radius: 12px;
+    padding: 1.5rem;
+    max-width: 400px;
+    z-index: 100;
+    backdrop-filter: blur(20px);
+}
+
+.module-details.show {
+    display: block;
+}
+
+.detail-title {
+    color: #ffc107;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.detail-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.detail-list li {
+    color: #adb5bd;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid rgba(255, 193, 7, 0.1);
+    font-size: 0.9rem;
+}
+
+.detail-list li:last-child {
+    border-bottom: none;
+}
+
+/* Language Toggle */
+.lang-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.lang-btn {
+    background: linear-gradient(135deg, #ffc107, #e67e22);
+    border: none;
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    color: #000;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.lang-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 20px rgba(255, 193, 7, 0.4);
+}
+
+/* Legend */
+.legend {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    font-size: 0.8rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    color: #adb5bd;
+}
+
+.legend-color {
+    width: 20px;
+    height: 3px;
+    margin-right: 0.5rem;
+    border-radius: 2px;
+}
+
+.legend-frontend { background: linear-gradient(90deg, #17a2b8, #6f42c1); }
+.legend-backend { background: linear-gradient(90deg, #ffc107, #e67e22); }
+.legend-data { background: linear-gradient(90deg, #28a745, #20c997); }
+.legend-external { background: linear-gradient(90deg, #dc3545, #fd7e14); }
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .relationship-svg-container {
+        transform: scale(0.8);
+        transform-origin: top left;
+        min-height: 720px;
+    }
+}
+
+@media (max-width: 768px) {
+    .relationship-svg-container {
+        transform: scale(0.6);
+        transform-origin: top left;
+        min-height: 540px;
+    }
+    
+    .system-node {
+        min-width: 140px;
+        padding: 1rem;
+    }
+    
+    .node-icon {
+        font-size: 2rem;
+    }
+    
+    .node-title {
+        font-size: 0.9rem;
+    }
+    
+    .node-description {
+        font-size: 0.7rem;
+    }
+}
+
+/* Hover Effects for Connections */
+.system-node:hover ~ .connection-line {
+    opacity: 1;
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+}
+
+/* Pulse Animation for Important Nodes */
+@keyframes pulse {
+    0%, 100% { 
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+    }
+    70% { 
+        box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+    }
+}
+
+.system-node.important {
+    animation: pulse 2s infinite;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="diagram-container">
+    <!-- Language Toggle -->
+    <div class="lang-toggle">
+        <button class="lang-btn" onclick="toggleLanguage()">
+            <span class="en-text">中文</span>
+            <span class="zh-text" style="display:none;">English</span>
+        </button>
+    </div>
+
+    <!-- Main Title -->
+    <div class="relationship-card">
+        <h1 class="diagram-title">
+            <span class="en-text">System Relationship Diagram</span>
+            <span class="zh-text" style="display:none;">系统关系图</span>
+        </h1>
+        
+        <!-- System Relationship Diagram -->
+        <div class="relationship-svg-container" id="relationshipDiagram">
+            
+            <!-- Frontend Layer Nodes -->
+            <div class="system-node node-frontend" data-module="frontend">
+                <span class="node-icon">🎨</span>
+                <div class="node-title">
+                    <span class="en-text">Frontend UI</span>
+                    <span class="zh-text" style="display:none;">前端界面</span>
+                </div>
+                <div class="node-description">
+                    <span class="en-text">Bootstrap 5, Jinja2</span>
+                    <span class="zh-text" style="display:none;">Bootstrap 5, Jinja2</span>
+                </div>
+            </div>
+
+            <div class="system-node node-auth" data-module="auth">
+                <span class="node-icon">🔐</span>
+                <div class="node-title">
+                    <span class="en-text">Authentication</span>
+                    <span class="zh-text" style="display:none;">身份认证</span>
+                </div>
+                <div class="node-description">
+                    <span class="en-text">RBAC, Sessions</span>
+                    <span class="zh-text" style="display:none;">角色控制, 会话</span>
+                </div>
+            </div>
+
+            <div class="system-node node-language" data-module="language">
+                <span class="node-icon">🌐</span>
+                <div class="node-title">
+                    <span class="en-text">Language Engine</span>
+                    <span class="zh-text" style="display:none;">语言引擎</span>
+                </div>
+                <div class="node-description">
+                    <span class="en-text">i18n, EN/ZH</span>
+                    <span class="zh-text" style="display:none;">国际化, 中英文</span>
+                </div>
+            </div>
+
+            <div class="system-node node-templates" data-module="templates">
+                <span class="node-icon">📄</span>
+                <div class="node-title">
+                    <span class="en-text">Templates</span>
+                    <span class="zh-text" style="display:none;">模板系统</span>
+                </div>
+                <div class="node-description">
+                    <span class="en-text">Dynamic Rendering</span>
+                    <span class="zh-text" style="display:none;">动态渲染</span>
+                </div>
+            </div>
+
+            <!-- Application Layer Nodes -->
+            <div class="system-node node-mining important" data-module="mining">
+                <span class="node-icon">⛏️</span>
+                <div class="node-title">
+                    <span class="en-text">Mining Calculator</span>
+                    <span class="zh-text" style="display:none;">挖矿计算器</span>
+                </div>
+                <div class="node-description">
+                    <span class="en-text">Dual Algorithm</span>
+                    <span class="zh-text" style="display:none;">双算法系统</span>
+                </div>
+            </div>
+
+            <div class="system-node node-treasury important" data-module="treasury">
+                <span class="node-icon">💼</span>
+                <div class="node-title">
+                    <span class="en-text">Treasury Mgmt</span>
+                    <span class="zh-text" style="display:none;">资金管理</span>
+                </div>
+                <div class="node-description">
+                    <span class="en-text">HashInsight</span>
+                    <span class="zh-text" style="display:none;">HashInsight</span>
+                </div>
+            </div>
+
+            <div class="system-node node-algorithm important" data-module="algorithm">
+                <span class="node-icon">🤖</span>
+                <div class="node-title">
+                    <span class="en-text">Algorithm Engine</span>
+                    <span class="zh-text" style="display:none;">算法引擎</span>
+                </div>
+                <div class="node-description">
+                    <span class="en-text">10 Modules (A-J)</span>
+                    <span class="zh-text" style="display:none;">10个模块 (A-J)</span>
+                </div>
+            </div>
+
+            <div class="system-node node-analytics" data-module="analytics">
+                <span class="node-icon">📈</span>
+                <div class="node-title">
+                    <span class="en-text">Analytics Engine</span>
+                    <span class="zh-text" style="display:none;">分析引擎</span>
+                </div>
+                <div class="node-description">
+                    <span class="en-text">Real-time Data</span>
+                    <span class="zh-text" style="display:none;">实时数据</span>
+                </div>
+            </div>
+
+            <div class="system-node node-crm" data-module="crm">
+                <span class="node-icon">👥</span>
+                <div class="node-title">
+                    <span class="en-text">CRM System</span>
+                    <span class="zh-text" style="display:none;">客户管理</span>
+                </div>
+                <div class="node-description">
+                    <span class="en-text">Customer Lifecycle</span>
+                    <span class="zh-text" style="display:none;">客户生命周期</span>
+                </div>
+            </div>
+
+            <!-- Data Layer Nodes -->
+            <div class="system-node node-database important" data-module="database">
+                <span class="node-icon">🗄️</span>
+                <div class="node-title">
+                    <span class="en-text">PostgreSQL</span>
+                    <span class="zh-text" style="display:none;">PostgreSQL</span>
+                </div>
+                <div class="node-description">
+                    <span class="en-text">Primary Database</span>
+                    <span class="zh-text" style="display:none;">主数据库</span>
+                </div>
+            </div>
+
+            <div class="system-node node-cache" data-module="cache">
+                <span class="node-icon">⚡</span>
+                <div class="node-title">
+                    <span class="en-text">Cache System</span>
+                    <span class="zh-text" style="display:none;">缓存系统</span>
+                </div>
+                <div class="node-description">
+                    <span class="en-text">In-Memory</span>
+                    <span class="zh-text" style="display:none;">内存缓存</span>
+                </div>
+            </div>
+
+            <div class="system-node node-apis" data-module="apis">
+                <span class="node-icon">🔄</span>
+                <div class="node-title">
+                    <span class="en-text">API Gateway</span>
+                    <span class="zh-text" style="display:none;">API网关</span>
+                </div>
+                <div class="node-description">
+                    <span class="en-text">External Integration</span>
+                    <span class="zh-text" style="display:none;">外部集成</span>
+                </div>
+            </div>
+
+            <div class="system-node node-scheduler" data-module="scheduler">
+                <span class="node-icon">⏰</span>
+                <div class="node-title">
+                    <span class="en-text">Task Scheduler</span>
+                    <span class="zh-text" style="display:none;">任务调度</span>
+                </div>
+                <div class="node-description">
+                    <span class="en-text">Automation</span>
+                    <span class="zh-text" style="display:none;">自动化</span>
+                </div>
+            </div>
+
+            <!-- External APIs -->
+            <div class="system-node node-coinwarz" data-module="coinwarz">
+                <span class="node-icon">🔗</span>
+                <div class="node-title">
+                    <span class="en-text">CoinWarz API</span>
+                    <span class="zh-text" style="display:none;">CoinWarz API</span>
+                </div>
+                <div class="node-description">
+                    <span class="en-text">Mining Data</span>
+                    <span class="zh-text" style="display:none;">挖矿数据</span>
+                </div>
+            </div>
+
+            <div class="system-node node-coingecko" data-module="coingecko">
+                <span class="node-icon">🦎</span>
+                <div class="node-title">
+                    <span class="en-text">CoinGecko API</span>
+                    <span class="zh-text" style="display:none;">CoinGecko API</span>
+                </div>
+                <div class="node-description">
+                    <span class="en-text">Price Data</span>
+                    <span class="zh-text" style="display:none;">价格数据</span>
+                </div>
+            </div>
+
+            <div class="system-node node-blockchain" data-module="blockchain">
+                <span class="node-icon">⛓️</span>
+                <div class="node-title">
+                    <span class="en-text">Blockchain.info</span>
+                    <span class="zh-text" style="display:none;">Blockchain.info</span>
+                </div>
+                <div class="node-description">
+                    <span class="en-text">Network Stats</span>
+                    <span class="zh-text" style="display:none;">网络统计</span>
+                </div>
+            </div>
+
+            <div class="system-node node-rpc" data-module="rpc">
+                <span class="node-icon">🌐</span>
+                <div class="node-title">
+                    <span class="en-text">Bitcoin RPC</span>
+                    <span class="zh-text" style="display:none;">Bitcoin RPC</span>
+                </div>
+                <div class="node-description">
+                    <span class="en-text">Real-time Data</span>
+                    <span class="zh-text" style="display:none;">实时数据</span>
+                </div>
+            </div>
+
+            <!-- Services -->
+            <div class="system-node node-gmail" data-module="gmail">
+                <span class="node-icon">📧</span>
+                <div class="node-title">
+                    <span class="en-text">Gmail SMTP</span>
+                    <span class="zh-text" style="display:none;">Gmail SMTP</span>
+                </div>
+                <div class="node-description">
+                    <span class="en-text">Email Service</span>
+                    <span class="zh-text" style="display:none;">邮件服务</span>
+                </div>
+            </div>
+
+            <div class="system-node node-monitoring" data-module="monitoring">
+                <span class="node-icon">📊</span>
+                <div class="node-title">
+                    <span class="en-text">Performance Monitor</span>
+                    <span class="zh-text" style="display:none;">性能监控</span>
+                </div>
+                <div class="node-description">
+                    <span class="en-text">System Health</span>
+                    <span class="zh-text" style="display:none;">系统健康</span>
+                </div>
+            </div>
+
+            <!-- Connection Lines -->
+            <div class="connection-line line-auth-db animated"></div>
+            <div class="connection-line line-mining-db animated"></div>
+            <div class="connection-line line-treasury-cache animated"></div>
+            <div class="connection-line line-algorithm-apis animated"></div>
+            <div class="connection-line line-analytics-scheduler animated"></div>
+            <div class="connection-line line-db-external animated"></div>
+            <div class="connection-line line-apis-coinwarz animated"></div>
+            <div class="connection-line line-apis-coingecko animated"></div>
+            <div class="connection-line line-apis-blockchain animated"></div>
+
+            <!-- Legend -->
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color legend-frontend"></div>
+                    <span class="en-text">Frontend Layer</span>
+                    <span class="zh-text" style="display:none;">前端层</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-backend"></div>
+                    <span class="en-text">Application Layer</span>
+                    <span class="zh-text" style="display:none;">应用层</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-data"></div>
+                    <span class="en-text">Data Layer</span>
+                    <span class="zh-text" style="display:none;">数据层</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-external"></div>
+                    <span class="en-text">External Services</span>
+                    <span class="zh-text" style="display:none;">外部服务</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Module Details Panels -->
+    <div id="moduleDetails" class="module-details">
+        <div class="detail-title" id="detailTitle"></div>
+        <ul class="detail-list" id="detailList"></ul>
+    </div>
+</div>
+
+<script>
+// Language Toggle Function
+function toggleLanguage() {
+    const enElements = document.querySelectorAll('.en-text');
+    const zhElements = document.querySelectorAll('.zh-text');
+    
+    enElements.forEach(el => {
+        el.style.display = el.style.display === 'none' ? 'inline' : 'none';
+    });
+    
+    zhElements.forEach(el => {
+        el.style.display = el.style.display === 'none' ? 'inline' : 'none';
+    });
+}
+
+// Module Details Data
+const moduleDetails = {
+    'frontend': {
+        'en': {
+            title: 'Frontend UI Components',
+            items: [
+                'Bootstrap 5 Framework',
+                'Jinja2 Template Engine',
+                'Chart.js for Data Visualization',
+                'Responsive Design (Mobile-First)',
+                'Glass Morphism Effects',
+                'Dark Theme with Gold Accents',
+                'Interactive Dashboard',
+                'Real-time Data Updates'
+            ]
+        },
+        'zh': {
+            title: '前端界面组件',
+            items: [
+                'Bootstrap 5 框架',
+                'Jinja2 模板引擎',
+                'Chart.js 数据可视化',
+                '响应式设计（移动优先）',
+                '玻璃态效果',
+                '深色主题配金色点缀',
+                '交互式仪表板',
+                '实时数据更新'
+            ]
+        }
+    },
+    'auth': {
+        'en': {
+            title: 'Authentication System',
+            items: [
+                'Email-based Authentication',
+                'Role-based Access Control (RBAC)',
+                'Session Management',
+                'Password Hashing (Werkzeug)',
+                'Login Security',
+                'User Registration',
+                'Email Verification',
+                'Permission Matrix'
+            ]
+        },
+        'zh': {
+            title: '身份认证系统',
+            items: [
+                '基于邮箱的认证',
+                '基于角色的访问控制',
+                '会话管理',
+                '密码哈希（Werkzeug）',
+                '登录安全',
+                '用户注册',
+                '邮箱验证',
+                '权限矩阵'
+            ]
+        }
+    },
+    'mining': {
+        'en': {
+            title: 'Mining Calculator Engine',
+            items: [
+                'Dual Algorithm Validation',
+                '17+ ASIC Miner Models',
+                'Real-time Profitability Calculation',
+                'ROI Analysis',
+                'Power Curtailment Analysis',
+                'Hashrate Decay Modeling',
+                'Batch Processing Support',
+                'Historical Performance Tracking'
+            ]
+        },
+        'zh': {
+            title: '挖矿计算引擎',
+            items: [
+                '双算法验证',
+                '17+ ASIC矿机型号',
+                '实时盈利能力计算',
+                'ROI分析',
+                '功率削减分析',
+                '算力衰减建模',
+                '批量处理支持',
+                '历史性能跟踪'
+            ]
+        }
+    },
+    'treasury': {
+        'en': {
+            title: 'Treasury Management (HashInsight)',
+            items: [
+                'BTC Inventory Tracking',
+                'Cost Basis Management',
+                'Cash Coverage Analysis',
+                'Selling Strategy Templates',
+                'Signal Aggregation',
+                'Execution Planning',
+                'Risk Management',
+                'Portfolio Optimization'
+            ]
+        },
+        'zh': {
+            title: '资金管理 (HashInsight)',
+            items: [
+                'BTC库存跟踪',
+                '成本基础管理',
+                '现金覆盖分析',
+                '销售策略模板',
+                '信号聚合',
+                '执行规划',
+                '风险管理',
+                '投资组合优化'
+            ]
+        }
+    },
+    'algorithm': {
+        'en': {
+            title: 'Advanced Algorithm Engine (10 Modules)',
+            items: [
+                'A. Regime-Aware Adaptation',
+                'B. Breakout Exhaustion Detection',
+                'C. Support/Resistance Confluence',
+                'D. Adaptive ATR Layering',
+                'E. Miner Cycle Analysis',
+                'F. Pattern Target Recognition',
+                'G. Derivatives Pressure Monitoring',
+                'H. Microstructure Execution',
+                'I. Bandit-Sizing Allocation',
+                'J. Ensemble Aggregation Scoring'
+            ]
+        },
+        'zh': {
+            title: '高级算法引擎（10个模块）',
+            items: [
+                'A. 趋势感知自适应',
+                'B. 突破衰竭检测',
+                'C. 支撑阻力共振',
+                'D. ATR动态分层',
+                'E. 挖矿周期分析',
+                'F. 形态目标识别',
+                'G. 衍生品压力监测',
+                'H. 微观结构优化',
+                'I. 智能仓位配置',
+                'J. 集成聚合决策'
+            ]
+        }
+    },
+    'database': {
+        'en': {
+            title: 'PostgreSQL Database',
+            items: [
+                'Primary Data Storage',
+                'Connection Pooling',
+                'Health Monitoring',
+                'Automatic Reconnection',
+                'Data Integrity Checks',
+                'Performance Optimization',
+                'User Management',
+                'Mining Data Storage',
+                'Historical Analytics',
+                'Relationship Management'
+            ]
+        },
+        'zh': {
+            title: 'PostgreSQL数据库',
+            items: [
+                '主要数据存储',
+                '连接池',
+                '健康监控',
+                '自动重连',
+                '数据完整性检查',
+                '性能优化',
+                '用户管理',
+                '挖矿数据存储',
+                '历史分析',
+                '关系管理'
+            ]
+        }
+    }
+};
+
+// Show module details on click
+document.querySelectorAll('.system-node').forEach(node => {
+    node.addEventListener('click', function() {
+        const module = this.getAttribute('data-module');
+        const details = moduleDetails[module];
+        const detailsPanel = document.getElementById('moduleDetails');
+        const detailTitle = document.getElementById('detailTitle');
+        const detailList = document.getElementById('detailList');
+        
+        if (details) {
+            const isZh = document.querySelector('.zh-text').style.display !== 'none';
+            const lang = isZh ? 'zh' : 'en';
+            const data = details[lang];
+            
+            detailTitle.textContent = data.title;
+            detailList.innerHTML = '';
+            
+            data.items.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                detailList.appendChild(li);
+            });
+            
+            // Position the panel near the clicked node
+            const rect = this.getBoundingClientRect();
+            const container = document.querySelector('.relationship-svg-container').getBoundingClientRect();
+            
+            detailsPanel.style.left = (rect.left - container.left + 50) + 'px';
+            detailsPanel.style.top = (rect.top - container.top + 100) + 'px';
+            detailsPanel.classList.add('show');
+            
+            // Hide panel after 5 seconds
+            setTimeout(() => {
+                detailsPanel.classList.remove('show');
+            }, 5000);
+        }
+    });
+});
+
+// Hide details panel when clicking elsewhere
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.system-node') && !e.target.closest('#moduleDetails')) {
+        document.getElementById('moduleDetails').classList.remove('show');
+    }
+});
+
+// Animate nodes on page load
+window.addEventListener('load', function() {
+    const nodes = document.querySelectorAll('.system-node');
+    nodes.forEach((node, index) => {
+        setTimeout(() => {
+            node.style.opacity = '0';
+            node.style.transform = 'translateY(20px) scale(0.8)';
+            node.style.animation = 'slideInUp 0.6s ease forwards';
+        }, index * 50);
+    });
+    
+    // Animate connection lines after nodes
+    setTimeout(() => {
+        document.querySelectorAll('.connection-line').forEach((line, index) => {
+            setTimeout(() => {
+                line.style.opacity = '0';
+                line.style.animation = 'fadeIn 0.5s ease forwards';
+            }, index * 100);
+        });
+    }, nodes.length * 50 + 500);
+});
+
+// Add the animation styles
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px) scale(0.8);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 0.7;
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

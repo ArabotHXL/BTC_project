@@ -16,3 +16,15 @@ def architecture_diagram():
         current_lang=current_lang,
         t=lambda key: key  # Simple passthrough since we're using inline translations
     )
+
+@app.route('/system-relationships')
+def system_relationships():
+    """Display the system relationship diagram / 显示系统关系图"""
+    # Get language from session
+    current_lang = session.get('language', 'zh')
+    
+    return render_template(
+        'system_relationship_diagram.html',
+        current_lang=current_lang,
+        t=lambda key: key  # Simple passthrough since we're using inline translations
+    )
