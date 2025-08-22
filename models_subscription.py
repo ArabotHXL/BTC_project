@@ -254,7 +254,7 @@ def init_subscription_plans():
                 'plan_type': PlanType.FREE,
                 'price_monthly': 0.0,
                 'price_yearly': 0.0,
-                'max_miners': 1,
+                'max_miners': 10,
                 'max_api_calls_per_day': 100,
                 'description': 'Basic mining calculator access'
             },

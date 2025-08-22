@@ -250,7 +250,7 @@ def get_default_free_plan():
     class FreePlan:
         id = 'free'
         name = 'Free'
-        max_miners = 1
+        max_miners = 10
         max_historical_days = 7
         allow_batch_calculator = True  # Free现在允许基础批量计算
         allow_crm_system = False

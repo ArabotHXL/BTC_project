@@ -41,7 +41,7 @@ def batch_calculator():
             class DefaultPlan:
                 id = 'free'
                 name = 'Free'
-                max_miners = 1
+                max_miners = 10
                 price = 0
                 allow_advanced_analytics = False
                 allow_api = False
@@ -172,7 +172,7 @@ def batch_calculate():
                 'error': 'upgrade_required',
                 'message': 'Quota exceeded. Please upgrade your plan.',
                 'current_plan': 'Free',
-                'max_miners': 1,
+                'max_miners': 10,
                 'attempted_miners': total_miners
             }), 402
         
