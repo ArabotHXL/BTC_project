@@ -10,6 +10,7 @@ from fast_batch_processor import fast_batch_processor
 import logging
 import io
 import os
+import time
 from datetime import datetime
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -241,9 +242,7 @@ def batch_calculate():
                         hashrate=hashrate * quantity,  # 总算力
                         power_consumption=power_consumption * quantity,  # 总功耗
                         electricity_cost=electricity_cost,
-                        host_investment=total_investment,  # 正确的参数名：host_investment
-                        _batch_mode=True,
-                        _shared_data=shared_network_data  # 使用预获取的数据
+                        host_investment=total_investment  # 正确的参数名：host_investment
                     )
                 else:
                     # 使用矿机型号默认值
@@ -252,9 +251,7 @@ def batch_calculate():
                         electricity_cost=electricity_cost,
                         miner_model=model,
                         miner_count=quantity,
-                        host_investment=total_investment,  # 正确的参数名：host_investment
-                        _batch_mode=True,
-                        _shared_data=shared_network_data  # 使用预获取的数据
+                        host_investment=total_investment  # 正确的参数名：host_investment
                     )
                 
                 # 获取这组矿机的编号

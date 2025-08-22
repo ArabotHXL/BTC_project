@@ -105,7 +105,7 @@ class UserSubscription(Base):
     
     # 订阅信息
     status = Column(Enum(SubscriptionStatus), nullable=False, default=SubscriptionStatus.PENDING)
-    start_date = Column(DateTime, nullable=False, default=datetime.utcnow)
+    started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     end_date = Column(DateTime, nullable=False)
     auto_renew = Column(Boolean, default=True)
     
@@ -145,7 +145,7 @@ class UserSubscription(Base):
             'user_id': self.user_id,
             'plan': self.plan.to_dict() if self.plan else None,
             'status': self.status.value,
-            'start_date': self.start_date.isoformat(),
+            'started_at': self.started_at.isoformat(),
             'end_date': self.end_date.isoformat(),
             'auto_renew': self.auto_renew,
             'is_active': self.is_active,
