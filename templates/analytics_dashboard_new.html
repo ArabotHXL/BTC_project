@@ -628,37 +628,6 @@
                                     </h5>
                                     <div class="h2 text-warning mb-0" id="nextSellPrice">$114,000</div>
                                     <small class="text-muted" id="nextSellLayer">(L2)</small>
-                                    
-                                    <!-- Compact Layer Selector -->
-                                    <div class="mt-2">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <select id="personalLayerSelector" class="form-select form-select-sm" style="width: auto; min-width: 80px; font-size: 0.8rem;">
-                                                {% if session.language == 'en' %}
-                                                    <option value="L1">L1</option>
-                                                    <option value="L2" selected>L2</option>
-                                                    <option value="L3">L3</option>
-                                                    <option value="L4">L4</option>
-                                                {% else %}
-                                                    <option value="L1">L1</option>
-                                                    <option value="L2" selected>L2</option>
-                                                    <option value="L3">L3</option>
-                                                    <option value="L4">L4</option>
-                                                {% endif %}
-                                            </select>
-                                            <button id="applyPersonalLayerBtn" class="btn btn-warning btn-sm px-2 py-1" style="font-size: 0.7rem;">
-                                                <i class="bi bi-check-circle-fill"></i>
-                                            </button>
-                                        </div>
-                                        <small class="text-muted d-block mt-1">
-                                            <span id="currentPersonalRisk">
-                                                {% if session.language == 'en' %}
-                                                    Medium Risk
-                                                {% else %}
-                                                    中等风险
-                                                {% endif %}
-                                            </span>
-                                        </small>
-                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-3">
@@ -699,11 +668,43 @@
                             </div>
                         </div>
                         
-                        <!-- Reasons/Notes -->
+                        <!-- Reasons/Notes and Compact Layer Selector -->
                         <div class="row mt-3">
-                            <div class="col-12">
+                            <div class="col-md-9">
                                 <div class="next-sell-reasons" id="nextSellReasons">
                                     <!-- Dynamic content loaded by JavaScript -->
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-end">
+                                <!-- Compact Layer Selector in empty space -->
+                                <div class="d-flex align-items-center justify-content-end gap-2 mb-2">
+                                    <small class="text-muted">
+                                        {% if session.language == 'en' %}
+                                            Layer:
+                                        {% else %}
+                                            层级:
+                                        {% endif %}
+                                    </small>
+                                    <select id="personalLayerSelector" class="form-select form-select-sm" style="width: 65px; font-size: 0.8rem;">
+                                        <option value="L1">L1</option>
+                                        <option value="L2" selected>L2</option>
+                                        <option value="L3">L3</option>
+                                        <option value="L4">L4</option>
+                                    </select>
+                                    <button id="applyPersonalLayerBtn" class="btn btn-warning btn-sm px-2 py-1" style="font-size: 0.7rem; min-width: 30px;">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                    </button>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted d-block">
+                                        <span id="currentPersonalRisk">
+                                            {% if session.language == 'en' %}
+                                                Medium Risk
+                                            {% else %}
+                                                中等风险
+                                            {% endif %}
+                                        </span>
+                                    </small>
                                 </div>
                             </div>
                         </div>
