@@ -1512,6 +1512,16 @@
             initLanguageDropdown(); // Initialize language dropdown
             updateTimestamp();
             
+            // Initialize settings form when the settings tab is shown
+            const settingsButton = document.querySelector('#settings-tab');
+            if (settingsButton) {
+                settingsButton.addEventListener('click', function() {
+                    setTimeout(() => {
+                        loadCurrentSettings();
+                    }, 100); // Small delay to ensure tab is shown
+                });
+            }
+            
             // Update timestamp every minute
             setInterval(updateTimestamp, 60000);
         });
@@ -2360,6 +2370,27 @@
             }
         }
 
+        // Load current settings into the form
+        function loadCurrentSettings() {
+            // Use the treasury data we already have
+            if (window.latestTreasuryData) {
+                const data = window.latestTreasuryData;
+                
+                // Fill in current values
+                document.getElementById('settingsBTCInventory').value = data.btc_inventory || 12.5;
+                document.getElementById('settingsCostBasis').value = data.avg_cost_basis || 95000;
+                document.getElementById('settingsMonthlyOPEX').value = data.monthly_opex || 200000;
+                document.getElementById('settingsMinCash').value = data.cash_reserves || 600000;
+                
+                console.log('Settings loaded from current treasury data:', data);
+            } else {
+                // Fetch fresh data if not available
+                fetchTreasuryData().then(() => {
+                    setTimeout(loadCurrentSettings, 100); // Retry after data loads
+                });
+            }
+        }
+        
         // Settings functions
         function saveSettings() {
             const settings = {
@@ -2383,10 +2414,23 @@
             localStorage.setItem('hashinsight_settings', JSON.stringify(settings));
             
             // Show success message
-            alert('Settings saved successfully!');
+            alert('设置已保存成功！');
+            
+            // Update the treasury data display immediately with new settings
+            updateTreasuryDisplay({
+                btc_inventory: settings.btcInventory,
+                avg_cost_basis: settings.costBasis,
+                monthly_opex: settings.monthlyOPEX,
+                cash_reserves: settings.minCash,
+                inventory_usd: settings.btcInventory * (window.currentBTCPrice || 113000),
+                cash_coverage_days: Math.round(settings.minCash / (settings.monthlyOPEX / 30)),
+                unrealized_pl: ((window.currentBTCPrice || 113000) - settings.costBasis) / settings.costBasis * 100
+            });
+            
+            console.log('Settings updated and treasury display refreshed');
             
             // Reload dashboard with new settings
-            loadTreasuryData();
+            fetchTreasuryData();
         }
         
         // Initialize tooltips
@@ -2793,6 +2837,9 @@ Generate this order?
         
         // Update Treasury Display
         function updateTreasuryDisplay(data) {
+            // Store data globally for settings form
+            window.latestTreasuryData = data;
+            
             // Update BTC inventory
             if (document.getElementById('btcInventory')) {
                 document.getElementById('btcInventory').textContent = data.btc_inventory?.toFixed(4) || '0.0000';
@@ -2819,6 +2866,12 @@ Generate this order?
                 const element = document.getElementById('unrealizedPL');
                 element.textContent = `${pl >= 0 ? '+' : ''}${pl.toFixed(1)}%`;
                 element.className = pl >= 0 ? 'text-success' : 'text-danger';
+            }
+            
+            // Update cost basis
+            if (document.getElementById('costBasis')) {
+                document.getElementById('costBasis').textContent = 
+                    data.avg_cost_basis ? `$${Math.round(data.avg_cost_basis).toLocaleString()}` : '$0';
             }
         }
 
