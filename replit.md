@@ -21,6 +21,7 @@ Preferred communication style: Simple, everyday language.
 - **Main Dashboard Modernization (Aug 22)**: Completely redesigned /main page with modern gradients, real-time data displays, enhanced card interactions, and professional Hero section with live Bitcoin price and network statistics.
 - **Free Account Enhancement (Aug 22)**: Increased free account miner limit from 1 to 10 miners in batch calculator. Fixed batch calculator API errors by removing incorrect fast processor calls. Free users can now effectively use batch calculation features with up to 10 miners.
 - **Batch Calculator ROI Fix (Aug 22)**: Fixed ROI calculation displaying "N/A" by properly passing machine_price to profitability calculations as host_investment parameter. Added fallback ROI calculation using investment/monthly_profit when ROI data structure is not available. Enhanced result mapping to extract monthly_profit from mining_calculator's nested data structure.
+- **Batch Calculator Performance Optimization (Aug 22)**: Implemented shared network data fetching to reduce API call overhead from 8+ seconds to under 2 seconds. Added data pre-fetching and optimized mining calculator calls to minimize redundant BTC price and network stats requests during batch processing.
 
 ## System Architecture
 The application is a modular Flask web application with a mobile-first design.

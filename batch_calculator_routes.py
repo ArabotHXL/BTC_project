@@ -4,6 +4,7 @@ Batch calculator routes for handling multiple miner calculations.
 from flask import Blueprint, request, jsonify, render_template, session, render_template_string, send_file, make_response, Response
 from decorators import check_miner_limit, get_user_plan, UpgradeRequired, require_feature
 from mining_calculator import calculate_mining_profitability, MINER_DATA
+from api_client import get_btc_price_with_fallback, get_network_stats_with_fallback
 from optimized_batch_processor import batch_processor
 from fast_batch_processor import fast_batch_processor
 import logging
@@ -208,6 +209,24 @@ def batch_calculate():
         
         logger.info(f"Optimized {len(miners)} entries into {len(miner_groups)} unique groups")
         
+        # 预获取共享数据以加速批量计算
+        start_time = time.time()
+        try:
+            # 获取共享的网络数据
+            btc_price = get_btc_price_with_fallback()
+            network_stats = get_network_stats_with_fallback()
+            shared_network_data = {
+                'btc_price': btc_price,
+                'network_difficulty': network_stats.get('difficulty'),
+                'network_hashrate': network_stats.get('hashrate'),
+                'block_reward': network_stats.get('block_reward', 3.125)
+            }
+            data_fetch_time = time.time() - start_time
+            logger.info(f"Shared network data fetched in {data_fetch_time:.3f}s: BTC=${btc_price}, Hashrate={network_stats.get('hashrate', 'N/A')}EH/s")
+        except Exception as e:
+            logger.warning(f"Failed to fetch shared data: {e}, using individual API calls")
+            shared_network_data = None
+        
         # Calculate once per unique group
         for groupKey, quantity in miner_groups.items():
             (model, power_consumption, electricity_cost, hashrate, decay_rate, machine_price) = groupKey
@@ -223,7 +242,8 @@ def batch_calculate():
                         power_consumption=power_consumption * quantity,  # 总功耗
                         electricity_cost=electricity_cost,
                         host_investment=total_investment,  # 正确的参数名：host_investment
-                        _batch_mode=True
+                        _batch_mode=True,
+                        _shared_data=shared_network_data  # 使用预获取的数据
                     )
                 else:
                     # 使用矿机型号默认值
@@ -233,7 +253,8 @@ def batch_calculate():
                         miner_model=model,
                         miner_count=quantity,
                         host_investment=total_investment,  # 正确的参数名：host_investment
-                        _batch_mode=True
+                        _batch_mode=True,
+                        _shared_data=shared_network_data  # 使用预获取的数据
                     )
                 
                 # 获取这组矿机的编号
