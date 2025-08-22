@@ -340,5 +340,11 @@ def main():
     
     return final_stats
 
+# 导出快速批量处理器函数供其他模块使用
+def fast_batch_processor():
+    """快速批量处理器入口函数"""
+    processor = FastBatchProcessor()
+    return processor.run_enhanced_collection()
+
 if __name__ == "__main__":
     main()
