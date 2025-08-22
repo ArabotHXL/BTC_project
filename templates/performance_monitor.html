@@ -142,6 +142,8 @@
             fetch('/api/performance-stats')
                 .then(response => response.json())
                 .then(data => {
+                    console.log('性能数据:', data); // 调试日志
+                    
                     // 更新基本指标
                     const avgResponseTime = data.avg_request_time_ms || 250;
                     const requestsPerHour = data.requests_per_hour || data.total_requests * 12 || 60;
@@ -155,19 +157,26 @@
                     document.getElementById('api-success-rate').textContent = successRate.toFixed(1) + '%';
                     
                     // 更新系统资源
-                    const cpu = data.latest_cpu || data.system_stats?.cpu_percent || 0;
-                    const memory = data.latest_memory || data.system_stats?.memory_percent || 0;
-                    const disk = data.disk_usage || data.system_stats?.disk_percent || 25;
-                    const uptime = data.uptime || data.system_stats?.uptime_hours || '--';
+                    const cpu = data.latest_cpu || 0;
+                    const memory = data.latest_memory || 0;
+                    const disk = data.disk_usage || 25;
+                    const uptime = data.uptime || '--';
                     
-                    document.getElementById('cpu-progress').style.width = cpu + '%';
-                    document.getElementById('cpu-progress').textContent = cpu.toFixed(1) + '%';
+                    // 确保数值是有效的
+                    if (!isNaN(cpu)) {
+                        document.getElementById('cpu-progress').style.width = cpu + '%';
+                        document.getElementById('cpu-progress').textContent = cpu.toFixed(1) + '%';
+                    }
                     
-                    document.getElementById('memory-progress').style.width = memory + '%';
-                    document.getElementById('memory-progress').textContent = memory.toFixed(1) + '%';
+                    if (!isNaN(memory)) {
+                        document.getElementById('memory-progress').style.width = memory + '%';
+                        document.getElementById('memory-progress').textContent = memory.toFixed(1) + '%';
+                    }
                     
-                    document.getElementById('disk-progress').style.width = disk + '%';
-                    document.getElementById('disk-progress').textContent = disk.toFixed(1) + '%';
+                    if (!isNaN(disk)) {
+                        document.getElementById('disk-progress').style.width = disk + '%';
+                        document.getElementById('disk-progress').textContent = disk.toFixed(1) + '%';
+                    }
                     
                     document.getElementById('uptime').textContent = uptime;
                 })
