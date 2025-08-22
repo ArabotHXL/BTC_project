@@ -1306,8 +1306,8 @@
                                 </button>
                                 
                                 <!-- Results Chart -->
-                                <div class="mt-4">
-                                    <canvas id="backtestChart" height="100"></canvas>
+                                <div class="mt-4" style="height: 300px; position: relative;">
+                                    <canvas id="backtestChart" style="width: 100%; height: 100%;"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -2170,68 +2170,132 @@
             try {
                 console.log('Updating backtest chart with dates:', dates, 'values:', values);
                 
+                // Check if Chart.js is available
+                if (typeof Chart === 'undefined') {
+                    console.error('Chart.js is not loaded');
+                    alert('图表库未加载，无法显示回测图表');
+                    return;
+                }
+                
                 const chartCanvas = document.getElementById('backtestChart');
                 if (!chartCanvas) {
                     console.error('Chart canvas not found');
+                    alert('找不到图表画布元素');
                     return;
                 }
                 
-                const ctx = chartCanvas.getContext('2d');
+                // Validate data first
+                if (!dates || !values || dates.length === 0 || values.length === 0) {
+                    console.warn('Invalid chart data:', { dates, values });
+                    alert('回测数据无效，无法生成图表');
+                    return;
+                }
+                
+                // Get context with error handling
+                let ctx;
+                try {
+                    ctx = chartCanvas.getContext('2d');
+                } catch (canvasError) {
+                    console.error('Canvas context error:', canvasError);
+                    alert('画布上下文获取失败');
+                    return;
+                }
                 
                 // Destroy existing chart if it exists
                 if (window.backtestChartInstance) {
-                    window.backtestChartInstance.destroy();
+                    try {
+                        window.backtestChartInstance.destroy();
+                        window.backtestChartInstance = null;
+                    } catch (destroyError) {
+                        console.warn('Chart destroy error:', destroyError);
+                    }
                 }
                 
-                // Validate data
-                if (!dates || !values || dates.length === 0 || values.length === 0) {
-                    console.warn('Invalid chart data:', { dates, values });
-                    return;
-                }
-                
+                // Create new chart with minimal config to avoid errors
                 window.backtestChartInstance = new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: dates,
                         datasets: [{
-                            label: '投资组合价值',
+                            label: '投资组合价值 ($)',
                             data: values,
                             borderColor: '#f39c12',
                             backgroundColor: 'rgba(243, 156, 18, 0.1)',
                             fill: true,
-                            tension: 0.1
+                            tension: 0.1,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        },
                         plugins: {
                             legend: {
-                                labels: { color: '#fff' }
+                                display: true,
+                                labels: { 
+                                    color: '#fff',
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: '#f39c12',
+                                borderWidth: 1,
+                                callbacks: {
+                                    label: function(context) {
+                                        return '投资组合价值: $' + Number(context.parsed.y).toLocaleString();
+                                    }
+                                }
                             }
                         },
                         scales: {
                             x: {
-                                ticks: { color: '#fff' },
-                                grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                            },
-                            y: {
+                                display: true,
                                 ticks: { 
                                     color: '#fff',
+                                    font: {
+                                        size: 10
+                                    }
+                                },
+                                grid: { 
+                                    color: 'rgba(255, 255, 255, 0.1)',
+                                    display: true
+                                }
+                            },
+                            y: {
+                                display: true,
+                                ticks: { 
+                                    color: '#fff',
+                                    font: {
+                                        size: 10
+                                    },
                                     callback: function(value) {
                                         return '$' + Number(value).toLocaleString();
                                     }
                                 },
-                                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                                grid: { 
+                                    color: 'rgba(255, 255, 255, 0.1)',
+                                    display: true
+                                }
                             }
                         }
                     }
                 });
                 
-                console.log('Chart updated successfully');
+                console.log('Chart created successfully');
                 
             } catch (error) {
                 console.error('Error updating backtest chart:', error);
+                alert('图表创建失败: ' + (error.message || '未知错误'));
                 // Don't throw the error to prevent breaking the parent function
             }
         }
