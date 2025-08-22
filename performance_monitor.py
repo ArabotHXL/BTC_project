@@ -208,6 +208,43 @@ class PerformanceMonitor:
         except Exception as e:
             logger.error(f"Failed to get metrics summary: {e}")
             return {'error': str(e)}
+    
+    def get_slow_endpoints(self, threshold_ms: int = 1000) -> Dict:
+        """获取慢速端点数据"""
+        try:
+            slow_endpoints = []
+            threshold_seconds = threshold_ms / 1000.0
+            
+            for endpoint, metrics in self.endpoint_metrics.items():
+                if not metrics:
+                    continue
+                    
+                # 计算平均响应时间
+                durations = [m['duration'] for m in metrics]
+                avg_duration = sum(durations) / len(durations)
+                max_duration = max(durations)
+                
+                if avg_duration >= threshold_seconds:
+                    slow_endpoints.append({
+                        'endpoint': endpoint,
+                        'avg_duration_ms': round(avg_duration * 1000, 2),
+                        'max_duration_ms': round(max_duration * 1000, 2),
+                        'request_count': len(metrics),
+                        'slow_percentage': round(len([d for d in durations if d >= threshold_seconds]) / len(durations) * 100, 2)
+                    })
+            
+            # 按平均响应时间排序
+            slow_endpoints.sort(key=lambda x: x['avg_duration_ms'], reverse=True)
+            
+            return {
+                'slow_endpoints': slow_endpoints,
+                'threshold_ms': threshold_ms,
+                'total_endpoints': len(self.endpoint_metrics)
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to get slow endpoints: {e}")
+            return {'error': str(e)}
 
 def monitor():
     """创建并返回性能监控器实例"""
