@@ -1132,7 +1132,7 @@
             
             // 临时禁用按钮防止重复点击
             calculateBtn.disabled = true;
-            calculateBtn.innerHTML = '<i class="bi bi-clock me-2"></i>计算中...';
+            calculateBtn.innerHTML = '<i class="bi bi-clock me-2"></i>{% if current_lang == "en" %}Calculating...{% else %}计算中...{% endif %}';
             
             // 2秒后恢复按钮（防止卡住）
             setTimeout(() => {
@@ -1386,7 +1386,7 @@
             resultsSection.innerHTML = `
                 <div class="text-center py-4">
                     <div class="spinner-border text-primary mb-3" role="status">
-                        <span class="visually-hidden">Loading...</span>
+                        <span class="visually-hidden">{% if current_lang == "en" %}Loading...{% else %}加载中...{% endif %}</span>
                     </div>
                     <p>{% if current_lang == "en" %}Calculating profitability...{% else %}正在计算收益...{% endif %}</p>
                 </div>
@@ -1723,10 +1723,10 @@
                     <div class="progress mb-2" style="height: 25px;">
                         <div class="progress-bar progress-bar-striped progress-bar-animated" 
                              role="progressbar" id="csvProgress" style="width: 0%">
-                            <span id="csvProgressText">Loading... 0%</span>
+                            <span id="csvProgressText">{% if current_lang == "en" %}Loading... 0%{% else %}加载中... 0%{% endif %}</span>
                         </div>
                     </div>
-                    <small class="text-muted">Processing CSV file...</small>
+                    <small class="text-muted">{% if current_lang == "en" %}Processing CSV file...{% else %}处理CSV文件...{% endif %}</small>
                 `;
                 tbody.appendChild(progressContainer);
                 
@@ -1780,7 +1780,7 @@
                     const progressBar = document.getElementById('csvProgress');
                     const progressText = document.getElementById('csvProgressText');
                     if (progressBar) progressBar.style.width = progress + '%';
-                    if (progressText) progressText.textContent = `Loading... ${progress}%`;
+                    if (progressText) progressText.textContent = `{% if current_lang == "en" %}Loading... ${progress}%{% else %}加载中... ${progress}%{% endif %}`;
                     
                     // 继续处理或完成
                     if (processedCount < validLines.length) {
