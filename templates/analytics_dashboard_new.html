@@ -2229,9 +2229,15 @@
             }
             
             try {
-                // Destroy existing chart
+                // Properly destroy existing chart using Chart.js v4 method
+                const existingChart = Chart.getChart(chartCanvas);
+                if (existingChart) {
+                    console.log('Destroying existing chart instance');
+                    existingChart.destroy();
+                }
+                
+                // Also clear our global reference
                 if (window.backtestChartInstance) {
-                    window.backtestChartInstance.destroy();
                     window.backtestChartInstance = null;
                 }
                 
