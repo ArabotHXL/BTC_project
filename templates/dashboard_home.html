@@ -276,7 +276,7 @@
 
         <!-- 客户管理 -->
         {% if user_has_crm_access() %}
-        <div class="dashboard-card customer-item" onclick="location.href='{{ url_for('crm.dashboard') }}'">
+        <div class="dashboard-card customer-item" onclick="location.href='{{ url_for('crm.crm_dashboard') }}'">
             <div class="card-content">
                 <i class="bi bi-people card-icon"></i>
                 <h3 class="card-title">
