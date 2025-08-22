@@ -5647,10 +5647,9 @@ def next_sell_indicator_api():
             
         # 获取最新技术指标和市场数据
         try:
-            # 获取当前BTC价格（使用现有的analytics_engine方法）
-            from analytics_engine import AnalyticsEngine
-            analytics = AnalyticsEngine()
-            spot_price = analytics.get_btc_price() or 113800.0
+            # 获取当前BTC价格（使用现有的方法）
+            from mining_calculator import get_real_time_btc_price
+            spot_price = get_real_time_btc_price() or 113800.0
             
             # 尝试获取RSI（从数据库或默认值）
             rsi = 66.0
