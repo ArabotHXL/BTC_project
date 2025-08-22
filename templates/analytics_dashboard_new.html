@@ -2152,7 +2152,10 @@
                     }
                     
                     console.log('Backtest completed successfully:', result);
-                    alert(`回测完成！\n总回报: ${returnPct}%\n最大回撤: ${(Math.abs(maxDrawdown) * 100).toFixed(2)}%\n夏普比率: ${sharpeRatio.toFixed(2)}`);
+                    // Use setTimeout to avoid promise rejection
+                    setTimeout(() => {
+                        alert(`回测完成！\n总回报: ${returnPct}%\n最大回撤: ${(Math.abs(maxDrawdown) * 100).toFixed(2)}%\n夏普比率: ${sharpeRatio.toFixed(2)}`);
+                    }, 100);
                 } else {
                     console.error('Backtest failed:', result.error);
                     alert('回测失败: ' + (result.error || '未知错误'));
@@ -2276,8 +2279,12 @@
                             y: {
                                 ticks: { 
                                     color: '#fff',
-                                    callback: function(value) {
-                                        return '$' + Number(value).toLocaleString();
+                                    callback: function(value, index, ticks) {
+                                        try {
+                                            return '$' + Number(value).toLocaleString();
+                                        } catch (e) {
+                                            return '$' + value;
+                                        }
                                     }
                                 },
                                 grid: {
