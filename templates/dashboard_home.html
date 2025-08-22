@@ -416,6 +416,30 @@ body {
     transition: all 0.2s ease;
 }
 
+/* 下拉菜单定位修复 */
+#userDropdown + .dropdown-menu {
+    min-width: 260px !important;
+    max-height: 400px !important;
+    overflow-y: auto !important;
+    position: absolute !important;
+    top: calc(100% + 0.5rem) !important;
+    right: 0 !important;
+    z-index: 9999 !important;
+    transform: translateY(10px) !important;
+    margin-top: 0 !important;
+}
+
+/* 确保下拉菜单不会与内容重叠 */
+.dashboard-hero {
+    margin-bottom: 3rem;
+}
+
+.dashboard-grid {
+    margin-top: 2rem;
+    position: relative;
+    z-index: 1;
+}
+
 /* 响应式统计栏调整 */
 @media (max-width: 768px) {
     .stats-bar {
@@ -437,6 +461,11 @@ body {
     #userDropdown {
         font-size: 0.9rem;
         padding: 0.5rem 1rem !important;
+    }
+    
+    #userDropdown + .dropdown-menu {
+        transform: translateY(5px) !important;
+        max-height: 300px !important;
     }
 }
 
@@ -489,21 +518,22 @@ body {
             </div>
             
             <!-- Right Side: User Account Dropdown -->
-            <div class="dropdown ms-3">
+            <div class="dropdown ms-3" style="position: relative;">
                 <button class="btn btn-outline-light dropdown-toggle d-flex align-items-center" 
                         type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false"
                         style="background: rgba(255, 255, 255, 0.1); 
                                border: 1px solid rgba(255, 193, 7, 0.3); 
                                border-radius: 16px; 
-                               padding: 0.75rem 1.25rem;
+                               padding: 0.6rem 1rem;
                                backdrop-filter: blur(10px);
                                box-shadow: 0 8px 32px rgba(255, 193, 7, 0.15);
                                transition: all 0.3s ease;
-                               white-space: nowrap;">
+                               white-space: nowrap;
+                               font-size: 0.9rem;">
                     <i class="bi bi-person-circle me-2" style="color: var(--primary-gold);"></i>
                     <span style="color: var(--text-primary); font-weight: 500;">
                         {% if session.email %}
-                            {{ session.email }}
+                            {{ session.email.split('@')[0] }}...
                         {% else %}
                             {% if current_lang == 'en' %}Guest{% else %}访客{% endif %}
                         {% endif %}
