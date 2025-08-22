@@ -6,6 +6,12 @@ The BTC Mining Calculator is a web application designed for Bitcoin mining profi
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## System Architecture Documentation
+- **Created**: Comprehensive bilingual (English/Chinese) system architecture documentation
+- **Location**: ARCHITECTURE.md
+- **Contents**: Technology stack, system components, database design, API architecture, security measures, performance optimization, deployment details, and data flow diagrams
+- **Languages**: Full support for both English and Chinese throughout the documentation
+
 ## Recent Changes (August 2025)
 - **JavaScript Error Resolution Complete (Aug 22)**: All Treasury Management backtest JavaScript errors eliminated, including Chart.js v4 compatibility fixes, variable scoping issues, Promise rejection handling, and button state management. System now operates with 100% reliability and zero console errors.
 - **Performance Monitor Fix Complete (Aug 22)**: Fixed all performance monitoring API errors by replacing complex monitor classes with psutil-based real-time system metrics. Enhanced error handling and JavaScript data processing for 100% stability.
