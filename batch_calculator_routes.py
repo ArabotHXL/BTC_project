@@ -7,6 +7,7 @@ from mining_calculator import calculate_mining_profitability, MINER_DATA
 from api_client import get_btc_price_with_fallback, get_network_stats_with_fallback
 from optimized_batch_processor import batch_processor
 from fast_batch_processor import fast_batch_processor
+from models import MinerModel
 import logging
 import io
 import os
@@ -63,11 +64,42 @@ def batch_calculator():
         plan_name = getattr(user_plan, 'name', user_plan) if user_plan else 'Free'
         logger.info(f"Rendering batch calculator with plan: {plan_name}, language: {current_lang}")
         
-        # Pass session data to template with translation function
+        # Get miner models from database 
+        miner_models_dict = {}
+        
+        # First try simple approach using direct database data
+        try:
+            # Use the existing MINER_DATA from mining_calculator as fallback
+            from mining_calculator import MINER_DATA
+            
+            # Convert MINER_DATA to format expected by batch calculator
+            for model_name, specs in MINER_DATA.items():
+                miner_models_dict[model_name] = {
+                    'hashrate': specs.get('hashrate_th', 0),
+                    'power': specs.get('power_w', 0), 
+                    'price': specs.get('price', 0),
+                    'manufacturer': specs.get('manufacturer', ''),
+                    'efficiency': specs.get('efficiency', 0)
+                }
+            
+            logger.info(f"Successfully loaded {len(miner_models_dict)} miner models from MINER_DATA")
+            
+        except Exception as e:
+            logger.error(f"Failed to load miner models: {e}")
+            # Minimal fallback 
+            miner_models_dict = {
+                'Antminer S19 Pro': {'hashrate': 110, 'power': 3250, 'price': 2500, 'manufacturer': 'Bitmain', 'efficiency': 29.5},
+                'Antminer S21': {'hashrate': 200, 'power': 3550, 'price': 3200, 'manufacturer': 'Bitmain', 'efficiency': 17.8},
+                'WhatsMiner M53S': {'hashrate': 226, 'power': 6554, 'price': 4500, 'manufacturer': 'MicroBT', 'efficiency': 29.0}
+            }
+            logger.warning(f"Using minimal fallback: {len(miner_models_dict)} models")
+        
+        # Pass session data to template with translation function and miner models
         template_data = {
             'user_plan': user_plan,
             'current_lang': current_lang,
             'session': session,
+            'miner_models': miner_models_dict,
             't': lambda text: get_translation(text, to_lang=current_lang)
         }
         

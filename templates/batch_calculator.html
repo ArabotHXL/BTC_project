@@ -870,20 +870,8 @@
     </div>
 
     <script>
-        // Available miner models with specifications (匹配CSV模板)
-        const minerModels = {
-            'Antminer S19 Pro': { hashrate: 110, power: 3250, price: 2500 },
-            'WhatsMiner M53S': { hashrate: 226, power: 6554, price: 4500 },
-            'Antminer S21': { hashrate: 200, power: 3550, price: 3200 },
-            'Antminer S19 XP': { hashrate: 140, power: 3010, price: 2800 },
-            'WhatsMiner M50S': { hashrate: 126, power: 3276, price: 2200 },
-            'Antminer T19': { hashrate: 84, power: 3150, price: 1800 },
-            'AvalonMiner 1366': { hashrate: 130, power: 3310, price: 2900 },
-            'AvalonMiner 1466': { hashrate: 150, power: 3400, price: 3100 },
-            'Antminer S21 Pro': { hashrate: 234, power: 3531, price: 3800 },
-            'WhatsMiner M56S': { hashrate: 212, power: 5550, price: 4200 },
-            'Antminer S19j Pro': { hashrate: 104, power: 3068, price: 2300 }
-        };
+        // Available miner models with specifications (从数据库动态加载)
+        const minerModels = {{ miner_models|tojson|safe }};
 
         let minerRowCount = 0;
         let calculationResults = [];
