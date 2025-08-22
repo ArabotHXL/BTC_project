@@ -1,75 +1,390 @@
 {
-  "timestamp": "2025-08-21T03:06:09.400288",
-  "total_tests": 9,
-  "passed_tests": 9,
-  "failed_tests": 0,
-  "success_rate": 100.0,
-  "target_rate": 99.0,
-  "meets_requirement": true,
-  "detailed_results": [
+  "test_suite": "Comprehensive Regression Test",
+  "timestamp": "2025-08-22T03:30:58.750432",
+  "duration": "5.86 seconds",
+  "total_tests": 47,
+  "passed": 40,
+  "failed": 7,
+  "skipped": 0,
+  "pass_rate": "85.11%",
+  "availability_rate": "85.11%",
+  "meets_99_requirement": false,
+  "test_results": [
     {
-      "test_name": "首页访问测试",
-      "success": true,
-      "timestamp": "2025-08-21T03:05:57.357690",
-      "details": "状态码: 200, 内容检查: [True, True, True]",
-      "data": null
+      "category": "Database",
+      "test_name": "Connection Test",
+      "status": "PASS",
+      "message": "",
+      "duration": 0.6608753204345703,
+      "timestamp": "2025-08-22T03:30:53.549895"
     },
     {
-      "test_name": "用户认证测试",
-      "success": true,
-      "timestamp": "2025-08-21T03:05:59.350823",
-      "details": "最终URL: https://c0c817cd-9663-4b96-9a33-086737bed5dc-00-3tjzms7flk2z6.janeway.replit.dev/main, 状态码: 200",
-      "data": null
+      "category": "Database",
+      "test_name": "Table users",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:53.869084"
     },
     {
-      "test_name": "挖矿计算器功能测试",
-      "success": true,
-      "timestamp": "2025-08-21T03:06:00.478886",
-      "details": "API状态码: 200, 页面元素检查: [True, True, True]",
-      "data": null
+      "category": "Database",
+      "test_name": "Table user_access",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:53.869477"
     },
     {
-      "test_name": "ROI图表生成测试",
-      "success": true,
-      "timestamp": "2025-08-21T03:06:02.287713",
-      "details": "数据结构验证: True, 响应长度: 2231",
-      "data": null
+      "category": "Database",
+      "test_name": "Table customers",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:53.869705"
     },
     {
-      "test_name": "利润热力图生成测试",
-      "success": true,
-      "timestamp": "2025-08-21T03:06:04.093214",
-      "details": "数据结构验证: True, 数据点数量: 25",
-      "data": null
+      "category": "Database",
+      "test_name": "Table leads",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:53.870311"
     },
     {
-      "test_name": "多语言切换测试",
-      "success": true,
-      "timestamp": "2025-08-21T03:06:05.151905",
-      "details": "中文: True, 英文: True",
-      "data": null
+      "category": "Database",
+      "test_name": "Table activities",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:53.870526"
     },
     {
-      "test_name": "网络数据准确性测试",
-      "success": true,
-      "timestamp": "2025-08-21T03:06:06.160502",
-      "details": "BTC价格: $113,954.00 (✓), 难度: 129.44T (✓), 算力: 945.84 EH/s (✓)",
-      "data": null
+      "category": "Database",
+      "test_name": "Table market_analytics",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:53.870719"
     },
     {
-      "test_name": "批量计算器功能测试",
-      "success": true,
-      "timestamp": "2025-08-21T03:06:07.389735",
-      "details": "页面元素检查: [True, True, True]",
-      "data": null
+      "category": "Database",
+      "test_name": "Table technical_indicators",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:53.870894"
     },
     {
-      "test_name": "性能基准测试",
-      "success": true,
-      "timestamp": "2025-08-21T03:06:08.399356",
-      "details": "响应时间: 0.01秒, 状态码: 200",
-      "data": null
+      "category": "Database",
+      "test_name": "Table miner_specs",
+      "status": "FAIL",
+      "message": "Table does not exist",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:53.871361"
+    },
+    {
+      "category": "Database",
+      "test_name": "Table network_snapshots",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:53.871734"
+    },
+    {
+      "category": "Database",
+      "test_name": "Table subscription_plans",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:53.871995"
+    },
+    {
+      "category": "Database",
+      "test_name": "Table user_subscriptions",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:53.872206"
+    },
+    {
+      "category": "Server",
+      "test_name": "Health Check",
+      "status": "PASS",
+      "message": "",
+      "duration": 0.02988147735595703,
+      "timestamp": "2025-08-22T03:30:53.902679"
+    },
+    {
+      "category": "Static",
+      "test_name": "/static/css/styles.css",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:53.909528"
+    },
+    {
+      "category": "Static",
+      "test_name": "/static/css/responsive.css",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:53.915400"
+    },
+    {
+      "category": "Static",
+      "test_name": "/static/css/animations.css",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:53.920340"
+    },
+    {
+      "category": "Static",
+      "test_name": "/static/js/chart.min.js",
+      "status": "FAIL",
+      "message": "Status: 404",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:53.931310"
+    },
+    {
+      "category": "Routes",
+      "test_name": "Landing Page",
+      "status": "PASS",
+      "message": "",
+      "duration": 0.0041158199310302734,
+      "timestamp": "2025-08-22T03:30:53.935825"
+    },
+    {
+      "category": "Routes",
+      "test_name": "Login Page",
+      "status": "PASS",
+      "message": "",
+      "duration": 0.024344921112060547,
+      "timestamp": "2025-08-22T03:30:53.960483"
+    },
+    {
+      "category": "Routes",
+      "test_name": "Register Page",
+      "status": "PASS",
+      "message": "",
+      "duration": 0.013514041900634766,
+      "timestamp": "2025-08-22T03:30:53.974447"
+    },
+    {
+      "category": "Routes",
+      "test_name": "Price Page",
+      "status": "PASS",
+      "message": "",
+      "duration": 0.34897851943969727,
+      "timestamp": "2025-08-22T03:30:54.324293"
+    },
+    {
+      "category": "Routes",
+      "test_name": "Architecture Diagram",
+      "status": "PASS",
+      "message": "",
+      "duration": 0.010727167129516602,
+      "timestamp": "2025-08-22T03:30:54.335303"
+    },
+    {
+      "category": "Routes",
+      "test_name": "System Relationships",
+      "status": "PASS",
+      "message": "",
+      "duration": 0.011269092559814453,
+      "timestamp": "2025-08-22T03:30:54.346977"
+    },
+    {
+      "category": "Routes",
+      "test_name": "Legal Page",
+      "status": "PASS",
+      "message": "",
+      "duration": 0.009478330612182617,
+      "timestamp": "2025-08-22T03:30:54.356961"
+    },
+    {
+      "category": "Auth",
+      "test_name": "Registration",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:55.647698"
+    },
+    {
+      "category": "Auth",
+      "test_name": "Login",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:55.776645"
+    },
+    {
+      "category": "Auth",
+      "test_name": "Logout",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:55.783041"
+    },
+    {
+      "category": "Calculator",
+      "test_name": "Mining Calculation",
+      "status": "FAIL",
+      "message": "Status: 500",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:56.548627"
+    },
+    {
+      "category": "API",
+      "test_name": "Market Data API",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:56.573258"
+    },
+    {
+      "category": "API",
+      "test_name": "Technical Indicators API",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:56.586844"
+    },
+    {
+      "category": "API",
+      "test_name": "Network Snapshots API",
+      "status": "FAIL",
+      "message": "Status: 404",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:56.597066"
+    },
+    {
+      "category": "API",
+      "test_name": "Performance Metrics API",
+      "status": "FAIL",
+      "message": "Status: 404",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:56.603536"
+    },
+    {
+      "category": "i18n",
+      "test_name": "Switch to Chinese",
+      "status": "FAIL",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:56.609826"
+    },
+    {
+      "category": "External",
+      "test_name": "CoinGecko API",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:57.040218"
+    },
+    {
+      "category": "External",
+      "test_name": "Blockchain.info API",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:57.405953"
+    },
+    {
+      "category": "External",
+      "test_name": "Mempool API",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:57.457607"
+    },
+    {
+      "category": "Performance",
+      "test_name": "Homepage Load Time",
+      "status": "PASS",
+      "message": "0.00s < 2.0s",
+      "duration": 0.004765033721923828,
+      "timestamp": "2025-08-22T03:30:57.463208"
+    },
+    {
+      "category": "Performance",
+      "test_name": "Login Page Load Time",
+      "status": "PASS",
+      "message": "0.01s < 2.0s",
+      "duration": 0.005455970764160156,
+      "timestamp": "2025-08-22T03:30:57.469017"
+    },
+    {
+      "category": "Performance",
+      "test_name": "Price Page Load Time",
+      "status": "PASS",
+      "message": "0.25s < 3.0s",
+      "duration": 0.2532224655151367,
+      "timestamp": "2025-08-22T03:30:57.722731"
+    },
+    {
+      "category": "Performance",
+      "test_name": "API Response Time",
+      "status": "PASS",
+      "message": "0.01s < 1.0s",
+      "duration": 0.012054681777954102,
+      "timestamp": "2025-08-22T03:30:57.735356"
+    },
+    {
+      "category": "Data Integrity",
+      "test_name": "No Orphaned Records",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:57.940383"
+    },
+    {
+      "category": "Data Integrity",
+      "test_name": "Valid Market Data",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:58.017853"
+    },
+    {
+      "category": "Security",
+      "test_name": "Header X-Content-Type-Options",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:58.024620"
+    },
+    {
+      "category": "Security",
+      "test_name": "Header X-Frame-Options",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:58.025040"
+    },
+    {
+      "category": "Security",
+      "test_name": "Header Content-Security-Policy",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:58.025509"
+    },
+    {
+      "category": "Error Handling",
+      "test_name": "404 Error Page",
+      "status": "PASS",
+      "message": "",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:58.031042"
+    },
+    {
+      "category": "Error Handling",
+      "test_name": "Invalid API Request",
+      "status": "FAIL",
+      "message": "Expected 400, got 200",
+      "duration": 0,
+      "timestamp": "2025-08-22T03:30:58.749924"
     }
-  ],
-  "failed_test_details": []
+  ]
 }
