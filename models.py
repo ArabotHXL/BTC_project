@@ -224,6 +224,9 @@ class UserAccess(db.Model):
     @property
     def has_access(self):
         """检查用户是否有访问权限"""
+        # Free 订阅计划没有时间限制
+        if self.subscription_plan == 'free':
+            return True
         return datetime.utcnow() <= self.expires_at
     
     @property
