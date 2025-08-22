@@ -182,7 +182,7 @@ def get_next_sell_recommendation(user_id: int = 1) -> Dict:
         input_data: NextSellInput = {
             'spot': latest_market.btc_price,
             'inventory_btc': portfolio.get('btc_inventory', 5.0),
-            'blended_cost': portfolio.get('average_cost', 75000),
+            'blended_cost': portfolio.get('avg_cost_basis', 75000),  # 修复字段名
             'max_daily_sell_pct': portfolio.get('max_daily_sell_pct', 0.15),
             'next_base_multiple': 1.52,  # L2 层级
             'next_quota_pct': 0.15,      # 15%配额
