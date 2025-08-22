@@ -662,8 +662,27 @@
                                 <button class="btn btn-warning btn-sm mb-2" onclick="generateNextSellOrder()" style="width: 100%;">
                                     <i class="bi bi-list-ol me-1"></i>{{ tr('generate_order') }}
                                 </button>
-                                <div class="small text-muted">
+                                <div class="small text-muted mb-2">
                                     <i class="bi bi-shield-check me-1"></i>{{ tr('stop') }}: $<span id="fallbackStop">104,120</span>
+                                </div>
+                                
+                                <!-- Layer Selector in empty space -->
+                                <div class="d-flex align-items-center justify-content-end gap-1 mt-2">
+                                    <small class="text-muted" style="font-size: 0.7rem;">Layer:</small>
+                                    <select id="personalLayerSelector" class="form-select form-select-sm" style="width: 50px; font-size: 0.7rem; padding: 2px 4px;">
+                                        <option value="L1">L1</option>
+                                        <option value="L2" selected>L2</option>
+                                        <option value="L3">L3</option>
+                                        <option value="L4">L4</option>
+                                    </select>
+                                    <button id="applyPersonalLayerBtn" class="btn btn-warning btn-sm px-1" style="font-size: 0.6rem; padding: 2px 6px;">
+                                        <i class="bi bi-check"></i>
+                                    </button>
+                                </div>
+                                <div class="text-end mt-1">
+                                    <small class="text-muted" style="font-size: 0.65rem;">
+                                        <span id="currentPersonalRisk">Medium Risk</span>
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -675,38 +694,7 @@
                                     <!-- Dynamic content loaded by JavaScript -->
                                 </div>
                             </div>
-                            <div class="col-md-3 text-end">
-                                <!-- Compact Layer Selector in empty space -->
-                                <div class="d-flex align-items-center justify-content-end gap-2 mb-2">
-                                    <small class="text-muted">
-                                        {% if session.language == 'en' %}
-                                            Layer:
-                                        {% else %}
-                                            层级:
-                                        {% endif %}
-                                    </small>
-                                    <select id="personalLayerSelector" class="form-select form-select-sm" style="width: 65px; font-size: 0.8rem;">
-                                        <option value="L1">L1</option>
-                                        <option value="L2" selected>L2</option>
-                                        <option value="L3">L3</option>
-                                        <option value="L4">L4</option>
-                                    </select>
-                                    <button id="applyPersonalLayerBtn" class="btn btn-warning btn-sm px-2 py-1" style="font-size: 0.7rem; min-width: 30px;">
-                                        <i class="bi bi-check-circle-fill"></i>
-                                    </button>
-                                </div>
-                                <div class="text-end">
-                                    <small class="text-muted d-block">
-                                        <span id="currentPersonalRisk">
-                                            {% if session.language == 'en' %}
-                                                Medium Risk
-                                            {% else %}
-                                                中等风险
-                                            {% endif %}
-                                        </span>
-                                    </small>
-                                </div>
-                            </div>
+                            <div class="col-md-3"></div>
                         </div>
                     </div>
                 </div>
