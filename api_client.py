@@ -6,7 +6,7 @@ import logging
 import requests
 from typing import Optional, Dict, Any
 from cache_manager import cache, CacheKeys
-from performance_monitor import measure_performance
+# from performance_monitor import measure_performance  # 暂时注释掉，不存在此函数
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,6 @@ class APIClient:
         
         return None
     
-    @measure_performance('api')
     def get_btc_price(self) -> Optional[float]:
         """获取BTC价格"""
         # 先检查缓存
@@ -81,7 +80,6 @@ class APIClient:
         
         return None
     
-    @measure_performance('api')
     def get_network_hashrate(self) -> Optional[float]:
         """获取网络算力"""
         # 先检查缓存
@@ -107,7 +105,6 @@ class APIClient:
         
         return None
     
-    @measure_performance('api')
     def get_network_difficulty(self) -> Optional[float]:
         """获取网络难度"""
         # 先检查缓存
@@ -131,7 +128,6 @@ class APIClient:
         
         return None
     
-    @measure_performance('api')
     def get_fear_greed_index(self) -> Optional[Dict]:
         """获取恐惧贪婪指数"""
         # 先检查缓存
@@ -180,3 +176,19 @@ class APIClient:
 
 # 全局API客户端实例
 api_client = APIClient()
+
+# 兼容性函数 - 为批量计算器路由提供
+def get_btc_price_with_fallback() -> float:
+    """获取BTC价格，带备用方案"""
+    price = api_client.get_btc_price()
+    return price or 80000.0  # 默认价格
+
+def get_network_stats_with_fallback() -> Dict[str, Any]:
+    """获取网络统计数据，带备用方案"""
+    market_data = api_client.get_market_data()
+    return {
+        'btc_price': market_data.get('btc_price', 80000.0),
+        'network_hashrate': market_data.get('network_hashrate', 900.0),
+        'network_difficulty': market_data.get('network_difficulty', 119.12),
+        'timestamp': market_data.get('timestamp', time.time())
+    }
