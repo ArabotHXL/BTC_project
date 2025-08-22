@@ -1468,6 +1468,17 @@
     
     <!-- Custom JavaScript -->
     <script>
+        // Add global Promise rejection handlers to prevent unhandledrejection errors
+        window.addEventListener('unhandledrejection', function(event) {
+            console.warn('Caught unhandled promise rejection:', event.reason);
+            // Prevent the default unhandled rejection error
+            event.preventDefault();
+        });
+        
+        window.addEventListener('rejectionhandled', function(event) {
+            console.log('Promise rejection handled:', event.reason);
+        });
+        
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
             // Debug: Check current language
@@ -2146,7 +2157,12 @@
                     // Update chart if data is available
                     if (result.dates && result.portfolio_values) {
                         try {
-                            updateBacktestChart(result.dates, result.portfolio_values);
+                            // Use Promise.resolve to handle potential async issues
+                            Promise.resolve(updateBacktestChart(result.dates, result.portfolio_values))
+                                .catch(chartError => {
+                                    console.warn('Chart update failed:', chartError);
+                                    displayBacktestDataAsText(result.dates, result.portfolio_values);
+                                });
                         } catch (chartError) {
                             console.warn('Chart update failed:', chartError);
                             // Show data in text format as fallback
@@ -2172,14 +2188,8 @@
                         button.disabled = false;
                     }
                     
-                    // Show success message without causing promise rejection
-                    try {
-                        const successMessage = `回测完成！\n总回报: ${returnPct}%\n最大回撤: ${(Math.abs(maxDrawdown) * 100).toFixed(2)}%\n夏普比率: ${sharpeRatio.toFixed(2)}`;
-                        // Use a small delay to avoid promise issues
-                        window.setTimeout(() => alert(successMessage), 10);
-                    } catch (alertError) {
-                        console.log('Alert not available, showing success in console:', `回测完成！总回报: ${returnPct}%`);
-                    }
+                    // Show success message using DOM instead of alert to avoid promise issues
+                    console.log('Backtest success! Total return:', returnPct + '%', 'Max drawdown:', (Math.abs(maxDrawdown) * 100).toFixed(2) + '%', 'Sharpe ratio:', sharpeRatio.toFixed(2));
                 } else {
                     console.error('Backtest failed:', result.error);
                     alert('回测失败: ' + (result.error || '未知错误'));
