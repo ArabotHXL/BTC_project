@@ -159,7 +159,7 @@ class OptimizedBatchProcessor:
             if len(prices) > 1:
                 price_variance = max(prices) - min(prices)
                 price_consistency = 1 - (price_variance / aggregated['consensus_price'])
-                aggregated['data_quality_score'] = price_consistency * 100
+                aggregated['data_quality_score'] = int(price_consistency * 100)
             else:
                 aggregated['data_quality_score'] = 85  # 单一数据源
         
@@ -385,6 +385,12 @@ def main():
             logger.info("用户取消")
     else:
         print("❌ 优化数据收集测试失败")
+
+# 导出批量处理器函数供其他模块使用
+def batch_processor():
+    """批量数据处理器入口函数"""
+    processor = OptimizedBatchProcessor()
+    return processor.run_optimized_collection()
 
 if __name__ == "__main__":
     main()
