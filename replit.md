@@ -19,6 +19,7 @@ Preferred communication style: Simple, everyday language.
 - **JavaScript Error Resolution Complete (Aug 22)**: All Treasury Management backtest JavaScript errors eliminated, including Chart.js v4 compatibility fixes, variable scoping issues, Promise rejection handling, and button state management. System now operates with 100% reliability and zero console errors.
 - **Performance Monitor Fix Complete (Aug 22)**: Fixed all performance monitoring API errors by replacing complex monitor classes with psutil-based real-time system metrics. Enhanced error handling and JavaScript data processing for 100% stability.
 - **Main Dashboard Modernization (Aug 22)**: Completely redesigned /main page with modern gradients, real-time data displays, enhanced card interactions, and professional Hero section with live Bitcoin price and network statistics.
+- **Free Account Enhancement (Aug 22)**: Increased free account miner limit from 1 to 10 miners in batch calculator. Fixed batch calculator API errors by removing incorrect fast processor calls. Free users can now effectively use batch calculation features with up to 10 miners.
 
 ## System Architecture
 The application is a modular Flask web application with a mobile-first design.

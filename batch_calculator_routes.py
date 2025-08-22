@@ -141,13 +141,9 @@ def batch_calculate():
         # Calculate total miner count
         total_miners = sum(miner.get('quantity', 1) for miner in miners)
         
-        # Use ultra-fast processor for all batch calculations
-        logger.info(f"Processing batch with ultra-fast processor: {total_miners} miners")
-        result = fast_batch_processor.process_fast_batch(miners, use_real_time_data=settings.get('use_realtime', True))
-        
-        if result['success']:
-            logger.info(f"Ultra-fast processor completed in {result['optimization_info'].get('processing_time', 0):.2f}s")
-            return jsonify(result)
+        # Skip the ultra-fast processor call since it's not implemented correctly
+        # Use the standard batch processing logic instead
+        logger.info(f"Processing batch calculation: {total_miners} miners")
         
         # Fallback to optimized processor for large datasets
         if total_miners > 1000:
