@@ -2137,7 +2137,12 @@
                     
                     // Update chart if data is available
                     if (result.dates && result.portfolio_values) {
-                        updateBacktestChart(result.dates, result.portfolio_values);
+                        try {
+                            updateBacktestChart(result.dates, result.portfolio_values);
+                        } catch (chartError) {
+                            console.warn('Chart update failed:', chartError);
+                            // Chart error shouldn't break the whole process
+                        }
                     }
                     
                     console.log('Backtest completed successfully:', result);
@@ -2162,50 +2167,73 @@
         
         // Update backtest chart
         function updateBacktestChart(dates, values) {
-            const ctx = document.getElementById('backtestChart').getContext('2d');
-            
-            // Destroy existing chart if it exists
-            if (window.backtestChartInstance) {
-                window.backtestChartInstance.destroy();
-            }
-            
-            window.backtestChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: dates,
-                    datasets: [{
-                        label: '投资组合价值',
-                        data: values,
-                        borderColor: '#f39c12',
-                        backgroundColor: 'rgba(243, 156, 18, 0.1)',
-                        fill: true,
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            labels: { color: '#fff' }
-                        }
+            try {
+                console.log('Updating backtest chart with dates:', dates, 'values:', values);
+                
+                const chartCanvas = document.getElementById('backtestChart');
+                if (!chartCanvas) {
+                    console.error('Chart canvas not found');
+                    return;
+                }
+                
+                const ctx = chartCanvas.getContext('2d');
+                
+                // Destroy existing chart if it exists
+                if (window.backtestChartInstance) {
+                    window.backtestChartInstance.destroy();
+                }
+                
+                // Validate data
+                if (!dates || !values || dates.length === 0 || values.length === 0) {
+                    console.warn('Invalid chart data:', { dates, values });
+                    return;
+                }
+                
+                window.backtestChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: '投资组合价值',
+                            data: values,
+                            borderColor: '#f39c12',
+                            backgroundColor: 'rgba(243, 156, 18, 0.1)',
+                            fill: true,
+                            tension: 0.1
+                        }]
                     },
-                    scales: {
-                        x: {
-                            ticks: { color: '#fff' },
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#fff' }
+                            }
                         },
-                        y: {
-                            ticks: { 
-                                color: '#fff',
-                                callback: function(value) {
-                                    return '$' + value.toLocaleString();
-                                }
+                        scales: {
+                            x: {
+                                ticks: { color: '#fff' },
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' }
                             },
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                            y: {
+                                ticks: { 
+                                    color: '#fff',
+                                    callback: function(value) {
+                                        return '$' + Number(value).toLocaleString();
+                                    }
+                                },
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                            }
                         }
                     }
-                }
-            });
+                });
+                
+                console.log('Chart updated successfully');
+                
+            } catch (error) {
+                console.error('Error updating backtest chart:', error);
+                // Don't throw the error to prevent breaking the parent function
+            }
         }
 
         // Settings functions
