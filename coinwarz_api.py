@@ -9,9 +9,13 @@ import os
 import psycopg2
 # from config import Config  # 已移除config模块
 
-# CoinWarz API配置
-COINWARZ_API_KEY = "8dd87e048ec84b6c8ad3322fb07f747a"
+# CoinWarz API配置 - 从环境变量加载
+COINWARZ_API_KEY = os.environ.get('COINWARZ_API_KEY', '')
 COINWARZ_BASE_URL = "https://www.coinwarz.com/v1/api"
+
+# 安全检查
+if not COINWARZ_API_KEY:
+    logging.warning("CoinWarz API key not configured. Please set COINWARZ_API_KEY environment variable.")
 
 def get_coinwarz_profitability(algorithm="sha-256"):
     """

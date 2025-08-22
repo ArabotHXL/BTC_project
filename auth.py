@@ -7,8 +7,9 @@ from functools import wraps
 from models import UserAccess
 from db import db
 
-# 设置日志
-logging.basicConfig(level=logging.DEBUG)
+# 设置日志 - 生产环境使用INFO级别
+log_level = logging.INFO if os.environ.get('FLASK_ENV') == 'production' else logging.DEBUG
+logging.basicConfig(level=log_level)
 
 def get_authorized_emails():
     """获取授权邮箱列表，优先从数据库获取，然后从环境变量获取"""
@@ -34,15 +35,14 @@ def get_authorized_emails():
         logging.debug(f"从环境变量获取到 {len(emails)} 个授权邮箱")
         return emails
     
-    # 默认授权邮箱列表（仅在开发环境使用，生产环境应使用数据库或环境变量）
-    default_emails = [
-        'admin@example.com',
-        'user@example.com',
-        'site@example.com',
-        'testing123@example.com'
-    ]
-    logging.debug(f"使用默认的 {len(default_emails)} 个授权邮箱")
-    return default_emails
+    # 生产环境必须配置授权邮箱
+    if os.environ.get('FLASK_ENV') == 'production':
+        logging.error("Production environment must configure AUTHORIZED_EMAILS")
+        return []
+    
+    # 仅开发环境使用默认测试邮箱
+    logging.warning("Using test emails for development environment only")
+    return ['test@localhost']
 
 def verify_password_login(email_or_username, password):
     """验证邮箱/用户名和密码登录"""

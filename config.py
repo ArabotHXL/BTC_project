@@ -2,12 +2,17 @@
 系统配置文件 - 集中管理所有配置
 """
 import os
+import logging
 from datetime import timedelta
 
 class Config:
     """基础配置类"""
-    # 基本设置
-    SECRET_KEY = os.environ.get('SESSION_SECRET') or 'dev-secret-key-change-in-production'
+    # 基本设置 - 生产环境必须设置
+    SECRET_KEY = os.environ.get('SESSION_SECRET')
+    if not SECRET_KEY:
+        import secrets
+        SECRET_KEY = secrets.token_hex(32)
+        logging.warning("No SESSION_SECRET set. Generated random key for this session.")
     
     # 数据库配置 - 增强版连接参数
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
