@@ -47,7 +47,7 @@ body {
 .relationship-svg-container {
     position: relative;
     width: 100%;
-    min-height: 900px;
+    min-height: auto;
     background: radial-gradient(ellipse at center, rgba(255, 193, 7, 0.03) 0%, transparent 70%);
     border-radius: 16px;
     overflow: visible;
@@ -55,7 +55,6 @@ body {
 }
 
 .system-node {
-    position: absolute;
     background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(108, 92, 231, 0.15));
     border: 2px solid rgba(255, 193, 7, 0.4);
     border-radius: 16px;
@@ -65,6 +64,11 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     backdrop-filter: blur(10px);
+    height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .system-node:hover {
@@ -129,44 +133,44 @@ body {
     to { left: 100%; }
 }
 
-/* Node Positioning */
-.node-frontend { top: 50px; left: 50px; }
-.node-auth { top: 50px; left: 300px; }
-.node-language { top: 50px; left: 550px; }
-.node-templates { top: 50px; left: 800px; }
+/* Layer-based Grid Positioning */
+.layer-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    margin-bottom: 3rem;
+    padding: 1rem;
+}
 
-.node-mining { top: 200px; left: 50px; }
-.node-treasury { top: 200px; left: 300px; }
-.node-algorithm { top: 200px; left: 550px; }
-.node-analytics { top: 200px; left: 800px; }
-.node-crm { top: 200px; left: 1050px; }
+.layer-grid.frontend-layer {
+    grid-template-columns: repeat(4, 1fr);
+}
 
-.node-database { top: 350px; left: 200px; }
-.node-cache { top: 350px; left: 450px; }
-.node-apis { top: 350px; left: 700px; }
-.node-scheduler { top: 350px; left: 950px; }
+.layer-grid.application-layer {
+    grid-template-columns: repeat(5, 1fr);
+}
 
-.node-external-apis { top: 500px; left: 100px; }
-.node-coinwarz { top: 500px; left: 300px; }
-.node-coingecko { top: 500px; left: 500px; }
-.node-blockchain { top: 500px; left: 700px; }
-.node-rpc { top: 500px; left: 900px; }
+.layer-grid.data-layer {
+    grid-template-columns: repeat(4, 1fr);
+}
 
-.node-services { top: 650px; left: 200px; }
-.node-gmail { top: 650px; left: 450px; }
-.node-monitoring { top: 650px; left: 700px; }
+.layer-grid.external-layer {
+    grid-template-columns: repeat(5, 1fr);
+}
 
-/* Data Flow Lines */
-.line-auth-db { top: 150px; left: 380px; width: 120px; transform: rotate(45deg); }
-.line-mining-db { top: 280px; left: 180px; width: 120px; transform: rotate(45deg); }
-.line-treasury-cache { top: 280px; left: 430px; width: 120px; transform: rotate(45deg); }
-.line-algorithm-apis { top: 280px; left: 680px; width: 120px; transform: rotate(45deg); }
-.line-analytics-scheduler { top: 280px; left: 930px; width: 120px; transform: rotate(45deg); }
+.layer-grid.services-layer {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 800px;
+    margin: 0 auto 3rem;
+}
 
-.line-db-external { top: 430px; left: 250px; width: 150px; transform: rotate(25deg); }
-.line-apis-coinwarz { top: 580px; left: 300px; width: 200px; transform: rotate(0deg); }
-.line-apis-coingecko { top: 580px; left: 500px; width: 200px; transform: rotate(0deg); }
-.line-apis-blockchain { top: 580px; left: 700px; width: 200px; transform: rotate(0deg); }
+/* Remove absolute positioning for grid layout */
+.system-node {
+    position: relative;
+    margin: 0;
+}
+
+/* Remove connection lines for cleaner layout */
 
 /* Module Detail Panels */
 .module-details {
@@ -340,249 +344,313 @@ body {
         <!-- System Relationship Diagram -->
         <div class="relationship-svg-container" id="relationshipDiagram">
             
-            <!-- Frontend Layer Nodes -->
-            <div class="system-node node-frontend" data-module="frontend">
-                <span class="node-icon">🎨</span>
-                <div class="node-title">
-                    <span class="en-text">Frontend UI</span>
-                    <span class="zh-text" style="display:none;">前端界面</span>
-                </div>
-                <div class="node-description">
-                    <span class="en-text">Bootstrap 5, Jinja2</span>
-                    <span class="zh-text" style="display:none;">Bootstrap 5, Jinja2</span>
+            <!-- Layer Headers -->
+            <div style="margin-bottom: 2rem;">
+                <h3 style="color: #17a2b8; text-align: center; margin-bottom: 1rem;">
+                    <span class="en-text">🎨 Frontend Layer</span>
+                    <span class="zh-text" style="display:none;">🎨 前端层</span>
+                </h3>
+                <div class="layer-grid frontend-layer">
+                    <div class="system-node" data-module="frontend">
+                        <span class="node-icon">🎨</span>
+                        <div class="node-title">
+                            <span class="en-text">Frontend UI</span>
+                            <span class="zh-text" style="display:none;">前端界面</span>
+                        </div>
+                        <div class="node-description">
+                            <span class="en-text">Bootstrap 5, Jinja2</span>
+                            <span class="zh-text" style="display:none;">Bootstrap 5, Jinja2</span>
+                        </div>
+                    </div>
+
+                    <div class="system-node" data-module="auth">
+                        <span class="node-icon">🔐</span>
+                        <div class="node-title">
+                            <span class="en-text">Authentication</span>
+                            <span class="zh-text" style="display:none;">身份认证</span>
+                        </div>
+                        <div class="node-description">
+                            <span class="en-text">RBAC, Sessions</span>
+                            <span class="zh-text" style="display:none;">角色控制, 会话</span>
+                        </div>
+                    </div>
+
+                    <div class="system-node" data-module="language">
+                        <span class="node-icon">🌐</span>
+                        <div class="node-title">
+                            <span class="en-text">Language Engine</span>
+                            <span class="zh-text" style="display:none;">语言引擎</span>
+                        </div>
+                        <div class="node-description">
+                            <span class="en-text">i18n, EN/ZH</span>
+                            <span class="zh-text" style="display:none;">国际化, 中英文</span>
+                        </div>
+                    </div>
+
+                    <div class="system-node" data-module="templates">
+                        <span class="node-icon">📄</span>
+                        <div class="node-title">
+                            <span class="en-text">Templates</span>
+                            <span class="zh-text" style="display:none;">模板系统</span>
+                        </div>
+                        <div class="node-description">
+                            <span class="en-text">Dynamic Rendering</span>
+                            <span class="zh-text" style="display:none;">动态渲染</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="system-node node-auth" data-module="auth">
-                <span class="node-icon">🔐</span>
-                <div class="node-title">
-                    <span class="en-text">Authentication</span>
-                    <span class="zh-text" style="display:none;">身份认证</span>
-                </div>
-                <div class="node-description">
-                    <span class="en-text">RBAC, Sessions</span>
-                    <span class="zh-text" style="display:none;">角色控制, 会话</span>
+            <!-- Flow Arrow -->
+            <div style="text-align: center; margin: 2rem 0;">
+                <div style="font-size: 2rem; color: #ffc107;">⬇️</div>
+                <div style="color: #adb5bd; font-size: 0.9rem;">
+                    <span class="en-text">Data Flow</span>
+                    <span class="zh-text" style="display:none;">数据流</span>
                 </div>
             </div>
 
-            <div class="system-node node-language" data-module="language">
-                <span class="node-icon">🌐</span>
-                <div class="node-title">
-                    <span class="en-text">Language Engine</span>
-                    <span class="zh-text" style="display:none;">语言引擎</span>
-                </div>
-                <div class="node-description">
-                    <span class="en-text">i18n, EN/ZH</span>
-                    <span class="zh-text" style="display:none;">国际化, 中英文</span>
+            <div style="margin-bottom: 2rem;">
+                <h3 style="color: #ffc107; text-align: center; margin-bottom: 1rem;">
+                    <span class="en-text">🚀 Application Layer</span>
+                    <span class="zh-text" style="display:none;">🚀 应用层</span>
+                </h3>
+                <div class="layer-grid application-layer">
+                    <div class="system-node important" data-module="mining">
+                        <span class="node-icon">⛏️</span>
+                        <div class="node-title">
+                            <span class="en-text">Mining Calculator</span>
+                            <span class="zh-text" style="display:none;">挖矿计算器</span>
+                        </div>
+                        <div class="node-description">
+                            <span class="en-text">Dual Algorithm</span>
+                            <span class="zh-text" style="display:none;">双算法系统</span>
+                        </div>
+                    </div>
+
+                    <div class="system-node important" data-module="treasury">
+                        <span class="node-icon">💼</span>
+                        <div class="node-title">
+                            <span class="en-text">Treasury Mgmt</span>
+                            <span class="zh-text" style="display:none;">资金管理</span>
+                        </div>
+                        <div class="node-description">
+                            <span class="en-text">HashInsight</span>
+                            <span class="zh-text" style="display:none;">HashInsight</span>
+                        </div>
+                    </div>
+
+                    <div class="system-node important" data-module="algorithm">
+                        <span class="node-icon">🤖</span>
+                        <div class="node-title">
+                            <span class="en-text">Algorithm Engine</span>
+                            <span class="zh-text" style="display:none;">算法引擎</span>
+                        </div>
+                        <div class="node-description">
+                            <span class="en-text">10 Modules (A-J)</span>
+                            <span class="zh-text" style="display:none;">10个模块 (A-J)</span>
+                        </div>
+                    </div>
+
+                    <div class="system-node" data-module="analytics">
+                        <span class="node-icon">📈</span>
+                        <div class="node-title">
+                            <span class="en-text">Analytics Engine</span>
+                            <span class="zh-text" style="display:none;">分析引擎</span>
+                        </div>
+                        <div class="node-description">
+                            <span class="en-text">Real-time Data</span>
+                            <span class="zh-text" style="display:none;">实时数据</span>
+                        </div>
+                    </div>
+
+                    <div class="system-node" data-module="crm">
+                        <span class="node-icon">👥</span>
+                        <div class="node-title">
+                            <span class="en-text">CRM System</span>
+                            <span class="zh-text" style="display:none;">客户管理</span>
+                        </div>
+                        <div class="node-description">
+                            <span class="en-text">Customer Lifecycle</span>
+                            <span class="zh-text" style="display:none;">客户生命周期</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="system-node node-templates" data-module="templates">
-                <span class="node-icon">📄</span>
-                <div class="node-title">
-                    <span class="en-text">Templates</span>
-                    <span class="zh-text" style="display:none;">模板系统</span>
-                </div>
-                <div class="node-description">
-                    <span class="en-text">Dynamic Rendering</span>
-                    <span class="zh-text" style="display:none;">动态渲染</span>
+            <!-- Flow Arrow -->
+            <div style="text-align: center; margin: 2rem 0;">
+                <div style="font-size: 2rem; color: #ffc107;">⬇️</div>
+                <div style="color: #adb5bd; font-size: 0.9rem;">
+                    <span class="en-text">Data Processing</span>
+                    <span class="zh-text" style="display:none;">数据处理</span>
                 </div>
             </div>
 
-            <!-- Application Layer Nodes -->
-            <div class="system-node node-mining important" data-module="mining">
-                <span class="node-icon">⛏️</span>
-                <div class="node-title">
-                    <span class="en-text">Mining Calculator</span>
-                    <span class="zh-text" style="display:none;">挖矿计算器</span>
-                </div>
-                <div class="node-description">
-                    <span class="en-text">Dual Algorithm</span>
-                    <span class="zh-text" style="display:none;">双算法系统</span>
+            <div style="margin-bottom: 2rem;">
+                <h3 style="color: #28a745; text-align: center; margin-bottom: 1rem;">
+                    <span class="en-text">💾 Data & Integration Layer</span>
+                    <span class="zh-text" style="display:none;">💾 数据与集成层</span>
+                </h3>
+                <div class="layer-grid data-layer">
+                    <div class="system-node important" data-module="database">
+                        <span class="node-icon">🗄️</span>
+                        <div class="node-title">
+                            <span class="en-text">PostgreSQL</span>
+                            <span class="zh-text" style="display:none;">PostgreSQL</span>
+                        </div>
+                        <div class="node-description">
+                            <span class="en-text">Primary Database</span>
+                            <span class="zh-text" style="display:none;">主数据库</span>
+                        </div>
+                    </div>
+
+                    <div class="system-node" data-module="cache">
+                        <span class="node-icon">⚡</span>
+                        <div class="node-title">
+                            <span class="en-text">Cache System</span>
+                            <span class="zh-text" style="display:none;">缓存系统</span>
+                        </div>
+                        <div class="node-description">
+                            <span class="en-text">In-Memory</span>
+                            <span class="zh-text" style="display:none;">内存缓存</span>
+                        </div>
+                    </div>
+
+                    <div class="system-node" data-module="apis">
+                        <span class="node-icon">🔄</span>
+                        <div class="node-title">
+                            <span class="en-text">API Gateway</span>
+                            <span class="zh-text" style="display:none;">API网关</span>
+                        </div>
+                        <div class="node-description">
+                            <span class="en-text">External Integration</span>
+                            <span class="zh-text" style="display:none;">外部集成</span>
+                        </div>
+                    </div>
+
+                    <div class="system-node" data-module="scheduler">
+                        <span class="node-icon">⏰</span>
+                        <div class="node-title">
+                            <span class="en-text">Task Scheduler</span>
+                            <span class="zh-text" style="display:none;">任务调度</span>
+                        </div>
+                        <div class="node-description">
+                            <span class="en-text">Automation</span>
+                            <span class="zh-text" style="display:none;">自动化</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="system-node node-treasury important" data-module="treasury">
-                <span class="node-icon">💼</span>
-                <div class="node-title">
-                    <span class="en-text">Treasury Mgmt</span>
-                    <span class="zh-text" style="display:none;">资金管理</span>
-                </div>
-                <div class="node-description">
-                    <span class="en-text">HashInsight</span>
-                    <span class="zh-text" style="display:none;">HashInsight</span>
+            <!-- Flow Arrow -->
+            <div style="text-align: center; margin: 2rem 0;">
+                <div style="font-size: 2rem; color: #ffc107;">⬇️</div>
+                <div style="color: #adb5bd; font-size: 0.9rem;">
+                    <span class="en-text">External APIs</span>
+                    <span class="zh-text" style="display:none;">外部API</span>
                 </div>
             </div>
 
-            <div class="system-node node-algorithm important" data-module="algorithm">
-                <span class="node-icon">🤖</span>
-                <div class="node-title">
-                    <span class="en-text">Algorithm Engine</span>
-                    <span class="zh-text" style="display:none;">算法引擎</span>
-                </div>
-                <div class="node-description">
-                    <span class="en-text">10 Modules (A-J)</span>
-                    <span class="zh-text" style="display:none;">10个模块 (A-J)</span>
+            <div style="margin-bottom: 2rem;">
+                <h3 style="color: #dc3545; text-align: center; margin-bottom: 1rem;">
+                    <span class="en-text">🌐 External Services</span>
+                    <span class="zh-text" style="display:none;">🌐 外部服务</span>
+                </h3>
+                <div class="layer-grid external-layer">
+                    <div class="system-node" data-module="coinwarz">
+                        <span class="node-icon">🔗</span>
+                        <div class="node-title">
+                            <span class="en-text">CoinWarz API</span>
+                            <span class="zh-text" style="display:none;">CoinWarz API</span>
+                        </div>
+                        <div class="node-description">
+                            <span class="en-text">Mining Data</span>
+                            <span class="zh-text" style="display:none;">挖矿数据</span>
+                        </div>
+                    </div>
+
+                    <div class="system-node" data-module="coingecko">
+                        <span class="node-icon">🦎</span>
+                        <div class="node-title">
+                            <span class="en-text">CoinGecko API</span>
+                            <span class="zh-text" style="display:none;">CoinGecko API</span>
+                        </div>
+                        <div class="node-description">
+                            <span class="en-text">Price Data</span>
+                            <span class="zh-text" style="display:none;">价格数据</span>
+                        </div>
+                    </div>
+
+                    <div class="system-node" data-module="blockchain">
+                        <span class="node-icon">⛓️</span>
+                        <div class="node-title">
+                            <span class="en-text">Blockchain.info</span>
+                            <span class="zh-text" style="display:none;">Blockchain.info</span>
+                        </div>
+                        <div class="node-description">
+                            <span class="en-text">Network Stats</span>
+                            <span class="zh-text" style="display:none;">网络统计</span>
+                        </div>
+                    </div>
+
+                    <div class="system-node" data-module="rpc">
+                        <span class="node-icon">🌐</span>
+                        <div class="node-title">
+                            <span class="en-text">Bitcoin RPC</span>
+                            <span class="zh-text" style="display:none;">Bitcoin RPC</span>
+                        </div>
+                        <div class="node-description">
+                            <span class="en-text">Real-time Data</span>
+                            <span class="zh-text" style="display:none;">实时数据</span>
+                        </div>
+                    </div>
+
+                    <div class="system-node" data-module="monitoring">
+                        <span class="node-icon">📊</span>
+                        <div class="node-title">
+                            <span class="en-text">Performance Monitor</span>
+                            <span class="zh-text" style="display:none;">性能监控</span>
+                        </div>
+                        <div class="node-description">
+                            <span class="en-text">System Health</span>
+                            <span class="zh-text" style="display:none;">系统健康</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="system-node node-analytics" data-module="analytics">
-                <span class="node-icon">📈</span>
-                <div class="node-title">
-                    <span class="en-text">Analytics Engine</span>
-                    <span class="zh-text" style="display:none;">分析引擎</span>
-                </div>
-                <div class="node-description">
-                    <span class="en-text">Real-time Data</span>
-                    <span class="zh-text" style="display:none;">实时数据</span>
+            <div style="margin-bottom: 2rem;">
+                <h3 style="color: #fd7e14; text-align: center; margin-bottom: 1rem;">
+                    <span class="en-text">🛠️ Support Services</span>
+                    <span class="zh-text" style="display:none;">🛠️ 支持服务</span>
+                </h3>
+                <div class="layer-grid services-layer">
+                    <div class="system-node" data-module="gmail">
+                        <span class="node-icon">📧</span>
+                        <div class="node-title">
+                            <span class="en-text">Gmail SMTP</span>
+                            <span class="zh-text" style="display:none;">Gmail SMTP</span>
+                        </div>
+                        <div class="node-description">
+                            <span class="en-text">Email Service</span>
+                            <span class="zh-text" style="display:none;">邮件服务</span>
+                        </div>
+                    </div>
+
+                    <div class="system-node" data-module="security">
+                        <span class="node-icon">🛡️</span>
+                        <div class="node-title">
+                            <span class="en-text">Security</span>
+                            <span class="zh-text" style="display:none;">安全</span>
+                        </div>
+                        <div class="node-description">
+                            <span class="en-text">Encryption & Auth</span>
+                            <span class="zh-text" style="display:none;">加密与认证</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <div class="system-node node-crm" data-module="crm">
-                <span class="node-icon">👥</span>
-                <div class="node-title">
-                    <span class="en-text">CRM System</span>
-                    <span class="zh-text" style="display:none;">客户管理</span>
-                </div>
-                <div class="node-description">
-                    <span class="en-text">Customer Lifecycle</span>
-                    <span class="zh-text" style="display:none;">客户生命周期</span>
-                </div>
-            </div>
-
-            <!-- Data Layer Nodes -->
-            <div class="system-node node-database important" data-module="database">
-                <span class="node-icon">🗄️</span>
-                <div class="node-title">
-                    <span class="en-text">PostgreSQL</span>
-                    <span class="zh-text" style="display:none;">PostgreSQL</span>
-                </div>
-                <div class="node-description">
-                    <span class="en-text">Primary Database</span>
-                    <span class="zh-text" style="display:none;">主数据库</span>
-                </div>
-            </div>
-
-            <div class="system-node node-cache" data-module="cache">
-                <span class="node-icon">⚡</span>
-                <div class="node-title">
-                    <span class="en-text">Cache System</span>
-                    <span class="zh-text" style="display:none;">缓存系统</span>
-                </div>
-                <div class="node-description">
-                    <span class="en-text">In-Memory</span>
-                    <span class="zh-text" style="display:none;">内存缓存</span>
-                </div>
-            </div>
-
-            <div class="system-node node-apis" data-module="apis">
-                <span class="node-icon">🔄</span>
-                <div class="node-title">
-                    <span class="en-text">API Gateway</span>
-                    <span class="zh-text" style="display:none;">API网关</span>
-                </div>
-                <div class="node-description">
-                    <span class="en-text">External Integration</span>
-                    <span class="zh-text" style="display:none;">外部集成</span>
-                </div>
-            </div>
-
-            <div class="system-node node-scheduler" data-module="scheduler">
-                <span class="node-icon">⏰</span>
-                <div class="node-title">
-                    <span class="en-text">Task Scheduler</span>
-                    <span class="zh-text" style="display:none;">任务调度</span>
-                </div>
-                <div class="node-description">
-                    <span class="en-text">Automation</span>
-                    <span class="zh-text" style="display:none;">自动化</span>
-                </div>
-            </div>
-
-            <!-- External APIs -->
-            <div class="system-node node-coinwarz" data-module="coinwarz">
-                <span class="node-icon">🔗</span>
-                <div class="node-title">
-                    <span class="en-text">CoinWarz API</span>
-                    <span class="zh-text" style="display:none;">CoinWarz API</span>
-                </div>
-                <div class="node-description">
-                    <span class="en-text">Mining Data</span>
-                    <span class="zh-text" style="display:none;">挖矿数据</span>
-                </div>
-            </div>
-
-            <div class="system-node node-coingecko" data-module="coingecko">
-                <span class="node-icon">🦎</span>
-                <div class="node-title">
-                    <span class="en-text">CoinGecko API</span>
-                    <span class="zh-text" style="display:none;">CoinGecko API</span>
-                </div>
-                <div class="node-description">
-                    <span class="en-text">Price Data</span>
-                    <span class="zh-text" style="display:none;">价格数据</span>
-                </div>
-            </div>
-
-            <div class="system-node node-blockchain" data-module="blockchain">
-                <span class="node-icon">⛓️</span>
-                <div class="node-title">
-                    <span class="en-text">Blockchain.info</span>
-                    <span class="zh-text" style="display:none;">Blockchain.info</span>
-                </div>
-                <div class="node-description">
-                    <span class="en-text">Network Stats</span>
-                    <span class="zh-text" style="display:none;">网络统计</span>
-                </div>
-            </div>
-
-            <div class="system-node node-rpc" data-module="rpc">
-                <span class="node-icon">🌐</span>
-                <div class="node-title">
-                    <span class="en-text">Bitcoin RPC</span>
-                    <span class="zh-text" style="display:none;">Bitcoin RPC</span>
-                </div>
-                <div class="node-description">
-                    <span class="en-text">Real-time Data</span>
-                    <span class="zh-text" style="display:none;">实时数据</span>
-                </div>
-            </div>
-
-            <!-- Services -->
-            <div class="system-node node-gmail" data-module="gmail">
-                <span class="node-icon">📧</span>
-                <div class="node-title">
-                    <span class="en-text">Gmail SMTP</span>
-                    <span class="zh-text" style="display:none;">Gmail SMTP</span>
-                </div>
-                <div class="node-description">
-                    <span class="en-text">Email Service</span>
-                    <span class="zh-text" style="display:none;">邮件服务</span>
-                </div>
-            </div>
-
-            <div class="system-node node-monitoring" data-module="monitoring">
-                <span class="node-icon">📊</span>
-                <div class="node-title">
-                    <span class="en-text">Performance Monitor</span>
-                    <span class="zh-text" style="display:none;">性能监控</span>
-                </div>
-                <div class="node-description">
-                    <span class="en-text">System Health</span>
-                    <span class="zh-text" style="display:none;">系统健康</span>
-                </div>
-            </div>
-
-            <!-- Connection Lines -->
-            <div class="connection-line line-auth-db animated"></div>
-            <div class="connection-line line-mining-db animated"></div>
-            <div class="connection-line line-treasury-cache animated"></div>
-            <div class="connection-line line-algorithm-apis animated"></div>
-            <div class="connection-line line-analytics-scheduler animated"></div>
-            <div class="connection-line line-db-external animated"></div>
-            <div class="connection-line line-apis-coinwarz animated"></div>
-            <div class="connection-line line-apis-coingecko animated"></div>
-            <div class="connection-line line-apis-blockchain animated"></div>
 
             <!-- Legend -->
             <div class="legend">
