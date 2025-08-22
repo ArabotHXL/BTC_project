@@ -2203,7 +2203,7 @@
             `;
         }
         
-        // Simplified chart creation
+        // Simplified chart creation compatible with Chart.js v4
         function updateBacktestChart(dates, values) {
             console.log('Updating backtest chart with dates:', dates, 'values:', values);
             
@@ -2217,12 +2217,14 @@
             const chartCanvas = document.getElementById('backtestChart');
             if (!chartCanvas) {
                 console.error('Chart canvas not found');
+                displayBacktestDataAsText(dates, values);
                 return;
             }
             
             // Validate data
             if (!dates || !values || dates.length === 0 || values.length === 0) {
                 console.warn('Invalid chart data');
+                displayBacktestDataAsText(dates, values);
                 return;
             }
             
@@ -2233,10 +2235,14 @@
                     window.backtestChartInstance = null;
                 }
                 
-                // Create chart with minimal config
+                // Get context
                 const ctx = chartCanvas.getContext('2d');
+                if (!ctx) {
+                    throw new Error('Cannot get canvas context');
+                }
                 
-                window.backtestChartInstance = new Chart(ctx, {
+                // Chart.js v4 compatible configuration
+                const config = {
                     type: 'line',
                     data: {
                         labels: dates,
@@ -2245,32 +2251,51 @@
                             data: values,
                             borderColor: '#f39c12',
                             backgroundColor: 'rgba(243, 156, 18, 0.1)',
-                            fill: true
+                            fill: true,
+                            tension: 0.1
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: {
-                            legend: { labels: { color: '#fff' } }
-                        },
                         scales: {
-                            x: { ticks: { color: '#fff' } },
-                            y: { 
+                            x: {
+                                ticks: { 
+                                    color: '#fff'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            y: {
                                 ticks: { 
                                     color: '#fff',
-                                    callback: v => '$' + Number(v).toLocaleString()
+                                    callback: function(value) {
+                                        return '$' + Number(value).toLocaleString();
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: { 
+                                    color: '#fff'
                                 }
                             }
                         }
                     }
-                });
+                };
                 
+                console.log('Creating chart with config:', config);
+                window.backtestChartInstance = new Chart(ctx, config);
                 console.log('Chart created successfully');
                 
             } catch (error) {
-                console.error('Error updating backtest chart:', error);
-                console.log('Falling back to text display');
+                console.error('Error creating chart:', error.message, error.stack);
+                console.log('Falling back to text display due to error:', error.message);
                 displayBacktestDataAsText(dates, values);
             }
         }
