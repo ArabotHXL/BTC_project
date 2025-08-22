@@ -5828,8 +5828,8 @@ def next_sell_indicator_api():
         
         # RSI和现货价格已在上面获取
         
-        # 计算下一层级目标价格
-        next_multiple = 1.52  # L2层级
+        # 计算下一层级目标价格 - 利益最大化模式
+        next_multiple = 1.85  # L3激进层级 (利益最大化)
         atr_pct = 0.025  # 简化的ATR百分比
         atr_factor = min(max(1 + 3.5 * max(0, atr_pct - 0.022), 0.9), 1.4)
         adj_multiple = next_multiple * atr_factor
@@ -5867,7 +5867,7 @@ def next_sell_indicator_api():
                 'confidence': confidence,
                 'proximity_pct': proximity_pct,
                 'fallback_stop': int(spot_price * 0.85),  # 15%止损
-                'layer': 'L2',
+                'layer': 'L3-MAX',
                 'opex_reserved_btc': round(opex_qty, 4),
                 'reasons': [
                     f"Ladder {next_multiple:.2f}× → adj {adj_multiple:.2f}×",
