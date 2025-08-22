@@ -4910,6 +4910,13 @@ try:
 except ImportError as e:
     logging.warning(f"Deribit routes not available: {e}")
 
+# Register architecture diagram route
+try:
+    import architecture_route
+    logging.info("Architecture diagram route registered")
+except ImportError as e:
+    logging.warning(f"Could not import architecture_route: {e}")
+
 # 添加性能监控中间件
 @app.before_request
 def before_request_monitoring():

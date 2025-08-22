@@ -1,0 +1,717 @@
+{% extends "base.html" %}
+
+{% block title %}
+    System Architecture Diagram / 系统架构图 - BTC Mining Calculator
+{% endblock %}
+
+{% block header_title %}
+    System Architecture / 系统架构
+{% endblock %}
+
+{% block extra_css %}
+<style>
+body {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #16213e 75%, #1a1a2e 100%);
+    background-attachment: fixed;
+    color: #f8f9fa;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.architecture-container {
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 2rem;
+}
+
+.diagram-card {
+    background: rgba(26, 26, 46, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 193, 7, 0.2);
+    border-radius: 24px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.diagram-title {
+    color: #ffc107;
+    font-size: 1.8rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 2rem;
+    text-shadow: 0 0 20px rgba(255, 193, 7, 0.3);
+}
+
+.diagram-subtitle {
+    color: #adb5bd;
+    font-size: 1rem;
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+/* Architecture Diagram Styles */
+.architecture-diagram {
+    position: relative;
+    min-height: 800px;
+    background: radial-gradient(ellipse at center, rgba(255, 193, 7, 0.05) 0%, transparent 70%);
+    padding: 3rem;
+}
+
+.layer {
+    position: relative;
+    margin-bottom: 4rem;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 193, 7, 0.1);
+}
+
+.layer-title {
+    position: absolute;
+    top: -15px;
+    left: 30px;
+    background: #1a1a2e;
+    padding: 0.5rem 1.5rem;
+    color: #ffc107;
+    font-weight: 600;
+    border-radius: 20px;
+    border: 2px solid #ffc107;
+    font-size: 0.9rem;
+}
+
+.components-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.component-box {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(108, 92, 231, 0.1));
+    border: 2px solid rgba(255, 193, 7, 0.3);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.component-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 193, 7, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.component-box:hover::before {
+    left: 100%;
+}
+
+.component-box:hover {
+    transform: translateY(-5px) scale(1.02);
+    border-color: #ffc107;
+    box-shadow: 0 10px 30px rgba(255, 193, 7, 0.3);
+}
+
+.component-icon {
+    font-size: 2.5rem;
+    color: #ffc107;
+    margin-bottom: 0.5rem;
+}
+
+.component-name {
+    font-weight: 600;
+    color: #f8f9fa;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.component-desc {
+    font-size: 0.85rem;
+    color: #adb5bd;
+    line-height: 1.4;
+}
+
+/* Flow Arrows */
+.flow-arrow {
+    position: relative;
+    width: 100%;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 2rem 0;
+}
+
+.arrow-line {
+    width: 2px;
+    height: 30px;
+    background: linear-gradient(to bottom, transparent, #ffc107, transparent);
+    position: relative;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.arrow-line::after {
+    content: '▼';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #ffc107;
+    font-size: 1.2rem;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+/* Data Flow Visualization */
+.data-flow-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 16px;
+    margin: 2rem 0;
+}
+
+.flow-node {
+    flex: 1;
+    text-align: center;
+    padding: 1rem;
+}
+
+.flow-node-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1rem;
+    background: linear-gradient(135deg, #ffc107, #e67e22);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: #fff;
+    box-shadow: 0 10px 30px rgba(255, 193, 7, 0.3);
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.flow-connector {
+    flex: 0 0 60px;
+    position: relative;
+}
+
+.flow-line {
+    height: 2px;
+    background: linear-gradient(90deg, #ffc107, #e67e22);
+    position: relative;
+    overflow: hidden;
+}
+
+.flow-line::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+    animation: flow 2s linear infinite;
+}
+
+@keyframes flow {
+    to { left: 100%; }
+}
+
+/* Tech Stack Cards */
+.tech-stack {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.tech-item {
+    background: rgba(255, 193, 7, 0.05);
+    border: 1px solid rgba(255, 193, 7, 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.tech-item:hover {
+    background: rgba(255, 193, 7, 0.1);
+    transform: scale(1.05);
+}
+
+.tech-name {
+    font-weight: 600;
+    color: #ffc107;
+    font-size: 0.9rem;
+}
+
+.tech-version {
+    font-size: 0.8rem;
+    color: #adb5bd;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .components-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .data-flow-container {
+        flex-direction: column;
+    }
+    
+    .flow-connector {
+        transform: rotate(90deg);
+        margin: 1rem 0;
+    }
+}
+
+/* Language Toggle */
+.lang-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.lang-btn {
+    background: linear-gradient(135deg, #ffc107, #e67e22);
+    border: none;
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    color: #000;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.lang-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 20px rgba(255, 193, 7, 0.4);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="architecture-container">
+    <!-- Language Toggle -->
+    <div class="lang-toggle">
+        <button class="lang-btn" onclick="toggleLanguage()">
+            <span class="en-text">中文</span>
+            <span class="zh-text" style="display:none;">English</span>
+        </button>
+    </div>
+
+    <!-- Main Title -->
+    <div class="diagram-card">
+        <h1 class="diagram-title">
+            <span class="en-text">System Architecture Diagram</span>
+            <span class="zh-text" style="display:none;">系统架构图</span>
+        </h1>
+        <p class="diagram-subtitle">
+            <span class="en-text">BTC Mining Calculator - Enterprise Architecture</span>
+            <span class="zh-text" style="display:none;">BTC挖矿计算器 - 企业级架构</span>
+        </p>
+
+        <!-- Architecture Layers -->
+        <div class="architecture-diagram">
+            
+            <!-- Frontend Layer -->
+            <div class="layer">
+                <div class="layer-title">
+                    <span class="en-text">Frontend Layer</span>
+                    <span class="zh-text" style="display:none;">前端层</span>
+                </div>
+                <div class="components-grid">
+                    <div class="component-box">
+                        <div class="component-icon">🎨</div>
+                        <div class="component-name">
+                            <span class="en-text">UI/UX</span>
+                            <span class="zh-text" style="display:none;">用户界面</span>
+                        </div>
+                        <div class="component-desc">
+                            <span class="en-text">Bootstrap 5, Glass Morphism</span>
+                            <span class="zh-text" style="display:none;">Bootstrap 5, 玻璃态设计</span>
+                        </div>
+                    </div>
+                    <div class="component-box">
+                        <div class="component-icon">📊</div>
+                        <div class="component-name">
+                            <span class="en-text">Charts</span>
+                            <span class="zh-text" style="display:none;">图表</span>
+                        </div>
+                        <div class="component-desc">
+                            <span class="en-text">Chart.js 4.5</span>
+                            <span class="zh-text" style="display:none;">Chart.js 4.5</span>
+                        </div>
+                    </div>
+                    <div class="component-box">
+                        <div class="component-icon">🌐</div>
+                        <div class="component-name">
+                            <span class="en-text">i18n</span>
+                            <span class="zh-text" style="display:none;">国际化</span>
+                        </div>
+                        <div class="component-desc">
+                            <span class="en-text">EN/ZH Support</span>
+                            <span class="zh-text" style="display:none;">中英文支持</span>
+                        </div>
+                    </div>
+                    <div class="component-box">
+                        <div class="component-icon">📱</div>
+                        <div class="component-name">
+                            <span class="en-text">Responsive</span>
+                            <span class="zh-text" style="display:none;">响应式</span>
+                        </div>
+                        <div class="component-desc">
+                            <span class="en-text">Mobile First</span>
+                            <span class="zh-text" style="display:none;">移动优先</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-arrow">
+                <div class="arrow-line"></div>
+            </div>
+
+            <!-- Application Layer -->
+            <div class="layer">
+                <div class="layer-title">
+                    <span class="en-text">Application Layer</span>
+                    <span class="zh-text" style="display:none;">应用层</span>
+                </div>
+                <div class="components-grid">
+                    <div class="component-box">
+                        <div class="component-icon">🔐</div>
+                        <div class="component-name">
+                            <span class="en-text">Auth System</span>
+                            <span class="zh-text" style="display:none;">认证系统</span>
+                        </div>
+                        <div class="component-desc">
+                            <span class="en-text">RBAC, Email Verify</span>
+                            <span class="zh-text" style="display:none;">角色控制, 邮箱验证</span>
+                        </div>
+                    </div>
+                    <div class="component-box">
+                        <div class="component-icon">⛏️</div>
+                        <div class="component-name">
+                            <span class="en-text">Mining Calc</span>
+                            <span class="zh-text" style="display:none;">挖矿计算</span>
+                        </div>
+                        <div class="component-desc">
+                            <span class="en-text">Dual Algorithm</span>
+                            <span class="zh-text" style="display:none;">双算法系统</span>
+                        </div>
+                    </div>
+                    <div class="component-box">
+                        <div class="component-icon">💼</div>
+                        <div class="component-name">
+                            <span class="en-text">Treasury</span>
+                            <span class="zh-text" style="display:none;">资金管理</span>
+                        </div>
+                        <div class="component-desc">
+                            <span class="en-text">HashInsight</span>
+                            <span class="zh-text" style="display:none;">HashInsight</span>
+                        </div>
+                    </div>
+                    <div class="component-box">
+                        <div class="component-icon">🤖</div>
+                        <div class="component-name">
+                            <span class="en-text">Algorithm</span>
+                            <span class="zh-text" style="display:none;">算法引擎</span>
+                        </div>
+                        <div class="component-desc">
+                            <span class="en-text">10 Modules</span>
+                            <span class="zh-text" style="display:none;">10个模块</span>
+                        </div>
+                    </div>
+                    <div class="component-box">
+                        <div class="component-icon">👥</div>
+                        <div class="component-name">
+                            <span class="en-text">CRM</span>
+                            <span class="zh-text" style="display:none;">客户管理</span>
+                        </div>
+                        <div class="component-desc">
+                            <span class="en-text">Customer Lifecycle</span>
+                            <span class="zh-text" style="display:none;">客户生命周期</span>
+                        </div>
+                    </div>
+                    <div class="component-box">
+                        <div class="component-icon">📈</div>
+                        <div class="component-name">
+                            <span class="en-text">Analytics</span>
+                            <span class="zh-text" style="display:none;">分析引擎</span>
+                        </div>
+                        <div class="component-desc">
+                            <span class="en-text">Real-time Data</span>
+                            <span class="zh-text" style="display:none;">实时数据</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-arrow">
+                <div class="arrow-line"></div>
+            </div>
+
+            <!-- Data Layer -->
+            <div class="layer">
+                <div class="layer-title">
+                    <span class="en-text">Data & Integration Layer</span>
+                    <span class="zh-text" style="display:none;">数据与集成层</span>
+                </div>
+                <div class="components-grid">
+                    <div class="component-box">
+                        <div class="component-icon">🗄️</div>
+                        <div class="component-name">
+                            <span class="en-text">PostgreSQL</span>
+                            <span class="zh-text" style="display:none;">PostgreSQL</span>
+                        </div>
+                        <div class="component-desc">
+                            <span class="en-text">Primary Database</span>
+                            <span class="zh-text" style="display:none;">主数据库</span>
+                        </div>
+                    </div>
+                    <div class="component-box">
+                        <div class="component-icon">⚡</div>
+                        <div class="component-name">
+                            <span class="en-text">Cache</span>
+                            <span class="zh-text" style="display:none;">缓存</span>
+                        </div>
+                        <div class="component-desc">
+                            <span class="en-text">In-Memory Cache</span>
+                            <span class="zh-text" style="display:none;">内存缓存</span>
+                        </div>
+                    </div>
+                    <div class="component-box">
+                        <div class="component-icon">🔄</div>
+                        <div class="component-name">
+                            <span class="en-text">APIs</span>
+                            <span class="zh-text" style="display:none;">API集成</span>
+                        </div>
+                        <div class="component-desc">
+                            <span class="en-text">External Services</span>
+                            <span class="zh-text" style="display:none;">外部服务</span>
+                        </div>
+                    </div>
+                    <div class="component-box">
+                        <div class="component-icon">⏰</div>
+                        <div class="component-name">
+                            <span class="en-text">Scheduler</span>
+                            <span class="zh-text" style="display:none;">调度器</span>
+                        </div>
+                        <div class="component-desc">
+                            <span class="en-text">Task Automation</span>
+                            <span class="zh-text" style="display:none;">任务自动化</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Flow Diagram -->
+    <div class="diagram-card">
+        <h2 class="diagram-title">
+            <span class="en-text">Data Flow Process</span>
+            <span class="zh-text" style="display:none;">数据流程</span>
+        </h2>
+        
+        <div class="data-flow-container">
+            <div class="flow-node">
+                <div class="flow-node-icon">🌐</div>
+                <div class="component-name">
+                    <span class="en-text">External APIs</span>
+                    <span class="zh-text" style="display:none;">外部API</span>
+                </div>
+            </div>
+            
+            <div class="flow-connector">
+                <div class="flow-line"></div>
+            </div>
+            
+            <div class="flow-node">
+                <div class="flow-node-icon">🔄</div>
+                <div class="component-name">
+                    <span class="en-text">Data Collector</span>
+                    <span class="zh-text" style="display:none;">数据收集器</span>
+                </div>
+            </div>
+            
+            <div class="flow-connector">
+                <div class="flow-line"></div>
+            </div>
+            
+            <div class="flow-node">
+                <div class="flow-node-icon">✅</div>
+                <div class="component-name">
+                    <span class="en-text">Validation</span>
+                    <span class="zh-text" style="display:none;">验证</span>
+                </div>
+            </div>
+            
+            <div class="flow-connector">
+                <div class="flow-line"></div>
+            </div>
+            
+            <div class="flow-node">
+                <div class="flow-node-icon">💾</div>
+                <div class="component-name">
+                    <span class="en-text">Database</span>
+                    <span class="zh-text" style="display:none;">数据库</span>
+                </div>
+            </div>
+            
+            <div class="flow-connector">
+                <div class="flow-line"></div>
+            </div>
+            
+            <div class="flow-node">
+                <div class="flow-node-icon">📊</div>
+                <div class="component-name">
+                    <span class="en-text">Analytics</span>
+                    <span class="zh-text" style="display:none;">分析</span>
+                </div>
+            </div>
+            
+            <div class="flow-connector">
+                <div class="flow-line"></div>
+            </div>
+            
+            <div class="flow-node">
+                <div class="flow-node-icon">👤</div>
+                <div class="component-name">
+                    <span class="en-text">User</span>
+                    <span class="zh-text" style="display:none;">用户</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Technology Stack -->
+    <div class="diagram-card">
+        <h2 class="diagram-title">
+            <span class="en-text">Technology Stack</span>
+            <span class="zh-text" style="display:none;">技术栈</span>
+        </h2>
+        
+        <div class="tech-stack">
+            <div class="tech-item">
+                <div class="tech-name">Python</div>
+                <div class="tech-version">3.9+</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">Flask</div>
+                <div class="tech-version">2.3.x</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">PostgreSQL</div>
+                <div class="tech-version">15.x</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">SQLAlchemy</div>
+                <div class="tech-version">2.0.x</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">Bootstrap</div>
+                <div class="tech-version">5.3.0</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">Chart.js</div>
+                <div class="tech-version">4.5.0</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">NumPy</div>
+                <div class="tech-version">Latest</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">Pandas</div>
+                <div class="tech-version">Latest</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">Gunicorn</div>
+                <div class="tech-version">21.x</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">Jinja2</div>
+                <div class="tech-version">3.1.x</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Language Toggle Function
+function toggleLanguage() {
+    const enElements = document.querySelectorAll('.en-text');
+    const zhElements = document.querySelectorAll('.zh-text');
+    
+    enElements.forEach(el => {
+        el.style.display = el.style.display === 'none' ? 'inline' : 'none';
+    });
+    
+    zhElements.forEach(el => {
+        el.style.display = el.style.display === 'none' ? 'inline' : 'none';
+    });
+}
+
+// Add hover effects with sound (optional)
+document.querySelectorAll('.component-box').forEach(box => {
+    box.addEventListener('mouseenter', function() {
+        // Could add click sound or animation here
+        this.style.transform = 'translateY(-5px) scale(1.02)';
+    });
+    
+    box.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0) scale(1)';
+    });
+});
+
+// Animate components on page load
+window.addEventListener('load', function() {
+    const components = document.querySelectorAll('.component-box');
+    components.forEach((comp, index) => {
+        setTimeout(() => {
+            comp.style.opacity = '0';
+            comp.style.transform = 'translateY(20px)';
+            comp.style.animation = 'slideInUp 0.5s ease forwards';
+        }, index * 100);
+    });
+});
+
+// Add the slideInUp animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}
