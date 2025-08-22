@@ -2087,6 +2087,10 @@
         async function runBacktest(buttonElement) {
             console.log('Running backtest...');
             
+            // Declare variables at function scope
+            let button = null;
+            let originalText = '';
+            
             try {
                 // Get parameters
                 const startDate = document.getElementById('backtestStart').value;
@@ -2101,7 +2105,7 @@
                 }
                 
                 // Show loading state - find the specific backtest button
-                let button = buttonElement;
+                button = buttonElement;
                 if (!button) {
                     button = document.querySelector('button[onclick="runBacktest(this)"]');
                 }
@@ -2109,7 +2113,7 @@
                     console.error('Backtest button not found');
                     return;
                 }
-                const originalText = button.innerHTML;
+                originalText = button.innerHTML;
                 console.log('Setting loading state, original text:', originalText);
                 button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>运行中...';
                 button.disabled = true;
@@ -2157,12 +2161,7 @@
                     // Update chart if data is available
                     if (result.dates && result.portfolio_values) {
                         try {
-                            // Use Promise.resolve to handle potential async issues
-                            Promise.resolve(updateBacktestChart(result.dates, result.portfolio_values))
-                                .catch(chartError => {
-                                    console.warn('Chart update failed:', chartError);
-                                    displayBacktestDataAsText(result.dates, result.portfolio_values);
-                                });
+                            updateBacktestChart(result.dates, result.portfolio_values);
                         } catch (chartError) {
                             console.warn('Chart update failed:', chartError);
                             // Show data in text format as fallback
@@ -2178,10 +2177,6 @@
                     console.log('Backtest completed successfully:', result);
                     
                     // Restore button state immediately after success
-                    let button = buttonElement;
-                    if (!button) {
-                        button = document.querySelector('button[onclick="runBacktest(this)"]');
-                    }
                     if (button && originalText) {
                         console.log('Restoring button state after success:', originalText);
                         button.innerHTML = originalText;
@@ -2195,10 +2190,6 @@
                     alert('回测失败: ' + (result.error || '未知错误'));
                     
                     // Restore button state on error too
-                    let button = buttonElement;
-                    if (!button) {
-                        button = document.querySelector('button[onclick="runBacktest(this)"]');
-                    }
                     if (button && originalText) {
                         button.innerHTML = originalText;
                         button.disabled = false;
@@ -2210,33 +2201,22 @@
                 alert('回测执行出错: ' + error.message);
                 
                 // Restore button state on exception
-                let button = buttonElement;
-                if (!button) {
-                    button = document.querySelector('button[onclick="runBacktest(this)"]');
-                }
                 if (button) {
                     button.innerHTML = originalText || '运行回测';
                     button.disabled = false;
                 }
             } finally {
-                // Restore button state - find the specific backtest button
-                let button = buttonElement;
-                if (!button) {
-                    button = document.querySelector('button[onclick="runBacktest(this)"]');
-                }
+                // Final button state restoration
                 if (button && originalText) {
-                    console.log('Restoring button state:', originalText);
+                    console.log('Final button restore:', originalText);
                     button.innerHTML = originalText;
                     button.disabled = false;
+                } else if (button) {
+                    console.log('Restoring button with fallback text');
+                    button.innerHTML = '运行回测';
+                    button.disabled = false;
                 } else {
-                    console.warn('Could not find button to restore state, button:', button, 'originalText:', originalText);
-                    // Force reset any backtest button we can find
-                    const fallbackButton = document.querySelector('button[onclick="runBacktest(this)"]');
-                    if (fallbackButton) {
-                        fallbackButton.innerHTML = '运行回测';
-                        fallbackButton.disabled = false;
-                        console.log('Force restored fallback button');
-                    }
+                    console.warn('No button reference for final restore');
                 }
             }
         }
