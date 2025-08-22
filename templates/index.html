@@ -1956,15 +1956,21 @@
     </script>
 
     <!-- Footer with Legal Link -->
-    <footer class="bg-dark text-center py-3 mt-5">
+    <footer class="bg-dark text-center py-4 mt-5">
         <div class="container">
             <div class="text-muted">
-                <a href="{{ url_for('legal_terms') }}" class="text-light text-decoration-none">
+                <a href="{{ url_for('legal_terms') }}" class="text-warning text-decoration-none me-3" style="font-weight: 500;">
                     <i class="bi bi-shield-check me-1"></i>
-                    {% if current_lang == 'zh' %}法律条款{% else %}Legal Terms{% endif %}
+                    {% if current_lang == 'zh' %}服务条款和隐私政策{% else %}Terms of Use & Privacy Notice{% endif %}
                 </a>
                 <span class="mx-2">|</span>
-                <small>© 2025 BTC Mining Calculator. {% if current_lang == 'zh' %}最后更新{% else %}Last Updated{% endif %}: 2025-07-04</small>
+                <a href="mailto:cryptocalculator123@gmail.com" class="text-info text-decoration-none me-3">
+                    <i class="bi bi-envelope me-1"></i>
+                    {% if current_lang == 'zh' %}联系我们{% else %}Contact Us{% endif %}
+                </a>
+                <div class="mt-2">
+                    <small>© 2025 HashInsight Mining Intelligence. {% if current_lang == 'zh' %}最后更新{% else %}Last Updated{% endif %}: 22 August 2025</small>
+                </div>
             </div>
         </div>
     </footer>

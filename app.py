@@ -4929,7 +4929,7 @@ def api_professional_report():
 @app.route('/legal')
 def legal_terms():
     """法律条款和使用条件页面 - 公开访问，无需登录"""
-    return render_template('legal_simple.html')
+    return render_template('legal.html')
 
 # 注册蓝图
 # Register billing blueprint if available

@@ -45,9 +45,26 @@
             {% block content %}{% endblock %}
         </main>
 
-        <footer class="py-3 my-4 border-top">
+        <!-- Legal Footer -->
+        <footer class="py-4 my-4 border-top bg-dark">
             <div class="container text-center">
-                <p class="text-muted">© 2025 BTC Mining Calculator</p>
+                <div class="row">
+                    <div class="col-12 mb-3">
+                        <a href="{{ url_for('legal_terms') }}" class="btn btn-outline-warning btn-sm me-3">
+                            <i class="bi bi-shield-check me-1"></i>
+                            {% if current_lang == 'zh' %}服务条款和隐私政策{% else %}Terms of Use & Privacy Notice{% endif %}
+                        </a>
+                        <a href="mailto:cryptocalculator123@gmail.com" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-envelope me-1"></i>
+                            {% if current_lang == 'zh' %}联系我们{% else %}Contact Us{% endif %}
+                        </a>
+                    </div>
+                    <div class="col-12">
+                        <p class="text-muted mb-0">
+                            <small>© 2025 HashInsight Mining Intelligence. {% if current_lang == 'zh' %}最后更新{% else %}Last Updated{% endif %}: 22 August 2025</small>
+                        </p>
+                    </div>
+                </div>
             </div>
         </footer>
     </div>
