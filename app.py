@@ -450,7 +450,7 @@ def nl2br_filter(s):
     return str(s).replace('\n', '<br>')
 
 # 默认语言 'zh' 中文, 'en' 英文
-DEFAULT_LANGUAGE = 'zh'
+DEFAULT_LANGUAGE = 'en'
 
 # Import enhanced language engine
 try:
@@ -467,7 +467,7 @@ except ImportError:
 def before_request():
     # 如果没有session中的语言，强制设置为中文
     if 'language' not in session:
-        session['language'] = 'zh'
+        session['language'] = 'en'
     
     # 优先从URL参数获取语言设置
     if request.args.get('lang'):

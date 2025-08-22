@@ -34,8 +34,8 @@ class LanguageEngine:
     
     def __init__(self):
         self.translations = TRANSLATIONS
-        self.default_lang = 'zh'  # 默认中文
-        self.current_lang = 'zh'
+        self.default_lang = 'en'  # 默认英文
+        self.current_lang = 'en'
         self.context_cache = {}
         self.format_cache = {}
         
