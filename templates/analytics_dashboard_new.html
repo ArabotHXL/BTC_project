@@ -677,11 +677,18 @@
                                             {% endif %}
                                         </small>
                                         <div class="d-flex gap-1">
-                                            <select id="personalLayerSelector" class="form-select form-select-sm" style="width: 65px; font-size: 0.85rem; padding: 4px 8px;">
-                                                <option value="L1">L1</option>
-                                                <option value="L2" selected>L2</option>
-                                                <option value="L3">L3</option>
-                                                <option value="L4">L4</option>
+                                            <select id="personalLayerSelector" class="form-select form-select-sm" style="width: 90px; font-size: 0.8rem; padding: 4px 8px;">
+                                                {% if session.language == 'en' %}
+                                                    <option value="L1">L1 (1.25x)</option>
+                                                    <option value="L2" selected>L2 (1.52x)</option>
+                                                    <option value="L3">L3 (1.85x)</option>
+                                                    <option value="L4">L4 (2.20x)</option>
+                                                {% else %}
+                                                    <option value="L1">L1 (1.25倍)</option>
+                                                    <option value="L2" selected>L2 (1.52倍)</option>
+                                                    <option value="L3">L3 (1.85倍)</option>
+                                                    <option value="L4">L4 (2.20倍)</option>
+                                                {% endif %}
                                             </select>
                                             <button id="applyPersonalLayerBtn" class="btn btn-warning btn-sm px-2" style="font-size: 0.8rem; padding: 4px 8px;">
                                                 <i class="bi bi-check-circle-fill"></i>
@@ -697,6 +704,14 @@
                                                     中等风险
                                                 {% endif %}
                                             </span>
+                                        </small>
+                                        <br>
+                                        <small class="text-info" style="font-size: 0.65rem;" id="layerExplanation">
+                                            {% if session.language == 'en' %}
+                                                Target: $144,400
+                                            {% else %}
+                                                目标: $144,400
+                                            {% endif %}
                                         </small>
                                     </div>
                                 </div>
@@ -3024,19 +3039,21 @@ Generate this order?
         function updatePersonalLayerDisplay(layer, lang) {
             const currentLayerEl = document.getElementById('currentPersonalLayer');
             const currentRiskEl = document.getElementById('currentPersonalRisk');
-            const currentTargetPriceEl = document.getElementById('currentTargetPrice');
+            const layerExplanationEl = document.getElementById('layerExplanation');
             
             if (currentLayerEl) currentLayerEl.textContent = layer;
             if (currentRiskEl) {
                 currentRiskEl.textContent = layerRiskLevels[layer]?.[lang] || layerRiskLevels[layer]?.zh || 'Medium Risk';
             }
             
-            // Calculate and display target price
-            if (currentTargetPriceEl) {
+            // Calculate and display target price explanation
+            if (layerExplanationEl) {
                 const costBasis = 95000; // From demo data
                 const multiplier = layerMultipliers[layer] || 1.52;
                 const targetPrice = costBasis * multiplier;
-                currentTargetPriceEl.textContent = `$${targetPrice.toLocaleString()}`;
+                layerExplanationEl.textContent = lang === 'zh' ? 
+                    `目标: $${targetPrice.toLocaleString()}` : 
+                    `Target: $${targetPrice.toLocaleString()}`;
             }
         }
         
