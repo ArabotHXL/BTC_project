@@ -106,7 +106,8 @@ class UserSubscription(Base):
     # 订阅信息
     status = Column(Enum(SubscriptionStatus), nullable=False, default=SubscriptionStatus.PENDING)
     started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    end_date = Column(DateTime, nullable=False)
+    expires_at = Column(DateTime, nullable=True)  # 使用与数据库表匹配的字段名
+    cancelled_at = Column(DateTime, nullable=True)  # 添加缺失的字段
     auto_renew = Column(Boolean, default=True)
     
     # Stripe相关
@@ -129,13 +130,13 @@ class UserSubscription(Base):
     def is_active(self):
         """检查订阅是否有效"""
         return (self.status == SubscriptionStatus.ACTIVE and 
-                self.end_date > datetime.utcnow())
+                self.expires_at and self.expires_at > datetime.utcnow())
     
     @property
     def days_remaining(self):
         """剩余天数"""
-        if self.end_date > datetime.utcnow():
-            return (self.end_date - datetime.utcnow()).days
+        if self.expires_at and self.expires_at > datetime.utcnow():
+            return (self.expires_at - datetime.utcnow()).days
         return 0
     
     def to_dict(self):
@@ -146,7 +147,8 @@ class UserSubscription(Base):
             'plan': self.plan.to_dict() if self.plan else None,
             'status': self.status.value,
             'started_at': self.started_at.isoformat(),
-            'end_date': self.end_date.isoformat(),
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'cancelled_at': self.cancelled_at.isoformat() if self.cancelled_at else None,
             'auto_renew': self.auto_renew,
             'is_active': self.is_active,
             'days_remaining': self.days_remaining
