@@ -145,6 +145,11 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
+                <button class="nav-link" id="treasury-tab" data-bs-toggle="tab" data-bs-target="#treasury" type="button" role="tab" aria-controls="treasury" aria-selected="false" style="color: black; background: white;">
+                    <i class="bi bi-bank"></i> Treasury Management
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link" id="deribit-tab" data-bs-toggle="tab" data-bs-target="#deribit" type="button" role="tab" aria-controls="deribit" aria-selected="false" style="color: black; background: lightblue;">
                     <i class="bi bi-graph-up-arrow"></i> Deribit深度分析
                 </button>
@@ -744,6 +749,148 @@
         </div>
             </div>
             <!-- /概览标签页结束 -->
+
+            <!-- Treasury Management 标签页 -->
+            <div class="tab-pane fade" id="treasury" role="tabpanel" aria-labelledby="treasury-tab">
+                <!-- 页面标题 -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card" style="background: linear-gradient(135deg, rgba(52, 152, 219, 0.2), rgba(41, 128, 185, 0.2)); border: 1px solid rgba(52, 152, 219, 0.3);">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h2><i class="bi bi-bank"></i> HashInsight Treasury Management</h2>
+                                    <div>
+                                        <span class="status-indicator status-online"></span>
+                                        <span>实时运行</span>
+                                    </div>
+                                </div>
+                                <p class="text-muted">智能BTC库存管理 · 风险可控的卖出策略 · 多层级利益最大化系统</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 层级选择控制面板 -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="bi bi-sliders"></i> 策略层级选择</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <label class="form-label">选择卖出策略层级：</label>
+                                        <select id="layerSelector" class="form-select mb-3">
+                                            <option value="L1">L1 保守策略 - 1.25x 倍数 (低风险)</option>
+                                            <option value="L2" selected>L2 平衡策略 - 1.52x 倍数 (中等风险)</option>
+                                            <option value="L3">L3 激进策略 - 1.85x 倍数 (高风险)</option>
+                                            <option value="L4">L4 极致策略 - 2.20x 倍数 (最高风险)</option>
+                                        </select>
+                                        <button id="applyLayerBtn" class="btn btn-primary">
+                                            <i class="bi bi-check-circle"></i> 应用策略
+                                        </button>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="p-3 bg-dark rounded">
+                                            <h6 class="text-info">当前策略信息</h6>
+                                            <div id="currentLayerInfo">
+                                                <small class="text-muted">层级：</small><strong id="currentLayer">L2</strong><br>
+                                                <small class="text-muted">名称：</small><strong id="currentLayerName">平衡策略</strong><br>
+                                                <small class="text-muted">风险：</small><strong id="currentRisk">Medium</strong><br>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Treasury数据面板 -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="bi bi-wallet2"></i> Next Sell Price指标</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="text-center mb-3">
+                                    <div class="metric-value text-success" id="nextSellPrice">--</div>
+                                    <div class="metric-label">目标价格 (USD)</div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">区间下限</small>
+                                        <div class="fw-bold" id="zoneLow">--</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">区间上限</small>
+                                        <div class="fw-bold" id="zoneHigh">--</div>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <small class="text-muted">建议数量：</small><span id="qtyBtc" class="fw-bold">--</span> BTC<br>
+                                    <small class="text-muted">置信度：</small><span id="confidence" class="fw-bold">--</span><br>
+                                    <small class="text-muted">接近度：</small><span id="proximity" class="fw-bold">--</span>%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> 投资组合概览</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-2">
+                                    <div class="col-6">
+                                        <small class="text-muted">BTC库存</small>
+                                        <div class="fw-bold" id="btcInventory">--</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">成本基准</small>
+                                        <div class="fw-bold" id="avgCostBasis">--</div>
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6">
+                                        <small class="text-muted">现金储备</small>
+                                        <div class="fw-bold" id="cashReserves">--</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">月度OPEX</small>
+                                        <div class="fw-bold" id="monthlyOpex">--</div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <small class="text-muted">未实现盈亏</small>
+                                        <div class="fw-bold" id="unrealizedPL">--</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 策略说明 -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="bi bi-info-circle"></i> 推理过程</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="reasonsList">
+                                    <!-- 动态生成的推理过程 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /Treasury Management标签页结束 -->
 
             <!-- Deribit深度分析标签页 -->
             <div class="tab-pane fade" id="deribit" role="tabpanel" aria-labelledby="deribit-tab">
@@ -2205,6 +2352,164 @@
                     }, 100);
                 });
             }
+        });
+        
+        // Treasury Management 相关函数
+        let currentSelectedLayer = 'L2'; // 默认层级
+        
+        // 获取Treasury数据
+        async function fetchTreasuryData(layer = null) {
+            try {
+                const url = layer ? `/api/treasury/next-sell-indicator?layer=${layer}` : '/api/treasury/next-sell-indicator';
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateTreasuryDisplay(data.data);
+                }
+            } catch (error) {
+                console.error('Treasury data fetch error:', error);
+            }
+        }
+        
+        // 获取投资组合数据
+        async function fetchPortfolioData() {
+            try {
+                const response = await fetch('/api/treasury/overview');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updatePortfolioDisplay(data);
+                }
+            } catch (error) {
+                console.error('Portfolio data fetch error:', error);
+            }
+        }
+        
+        // 更新Treasury显示
+        function updateTreasuryDisplay(data) {
+            const nextSellPriceEl = document.getElementById('nextSellPrice');
+            const zoneLowEl = document.getElementById('zoneLow');
+            const zoneHighEl = document.getElementById('zoneHigh');
+            const qtyBtcEl = document.getElementById('qtyBtc');
+            const confidenceEl = document.getElementById('confidence');
+            const proximityEl = document.getElementById('proximity');
+            
+            if (nextSellPriceEl) nextSellPriceEl.textContent = `$${data.next_price.toLocaleString()}`;
+            if (zoneLowEl) zoneLowEl.textContent = `$${data.zone_low.toLocaleString()}`;
+            if (zoneHighEl) zoneHighEl.textContent = `$${data.zone_high.toLocaleString()}`;
+            if (qtyBtcEl) qtyBtcEl.textContent = data.qty_btc;
+            if (confidenceEl) confidenceEl.textContent = data.confidence;
+            if (proximityEl) proximityEl.textContent = data.proximity_pct;
+            
+            // 更新当前层级信息
+            if (data.layer) {
+                const currentLayerEl = document.getElementById('currentLayer');
+                const currentLayerNameEl = document.getElementById('currentLayerName');
+                const currentRiskEl = document.getElementById('currentRisk');
+                
+                if (currentLayerEl) currentLayerEl.textContent = data.layer;
+                if (currentLayerNameEl) currentLayerNameEl.textContent = data.layer_name || '';
+                if (currentRiskEl) currentRiskEl.textContent = data.risk_level || '';
+            }
+            
+            // 更新推理过程
+            const reasonsList = document.getElementById('reasonsList');
+            if (data.reasons && reasonsList) {
+                reasonsList.innerHTML = data.reasons.map(reason => 
+                    `<div class="alert alert-info mb-2"><i class="bi bi-lightbulb"></i> ${reason}</div>`
+                ).join('');
+            }
+        }
+        
+        // 更新投资组合显示
+        function updatePortfolioDisplay(data) {
+            const btcInventoryEl = document.getElementById('btcInventory');
+            const avgCostBasisEl = document.getElementById('avgCostBasis');
+            const cashReservesEl = document.getElementById('cashReserves');
+            const monthlyOpexEl = document.getElementById('monthlyOpex');
+            const unrealizedPLEl = document.getElementById('unrealizedPL');
+            
+            if (btcInventoryEl) btcInventoryEl.textContent = `${data.btc_inventory} BTC`;
+            if (avgCostBasisEl) avgCostBasisEl.textContent = `$${data.avg_cost_basis.toLocaleString()}`;
+            if (cashReservesEl) cashReservesEl.textContent = `$${data.cash_reserves.toLocaleString()}`;
+            if (monthlyOpexEl) monthlyOpexEl.textContent = `$${data.monthly_opex.toLocaleString()}`;
+            if (unrealizedPLEl) unrealizedPLEl.textContent = `+${data.unrealized_pl.toFixed(2)}%`;
+        }
+        
+        // 应用层级设置
+        async function applyLayerSetting() {
+            const layerSelector = document.getElementById('layerSelector');
+            if (!layerSelector) return;
+            
+            const selectedLayer = layerSelector.value;
+            currentSelectedLayer = selectedLayer;
+            
+            try {
+                // 发送设置请求
+                const response = await fetch('/api/treasury/set-layer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ layer: selectedLayer })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    // 刷新数据
+                    await fetchTreasuryData(selectedLayer);
+                    
+                    // 显示成功消息
+                    showLayerUpdateMessage(result.message);
+                }
+            } catch (error) {
+                console.error('Layer setting error:', error);
+            }
+        }
+        
+        // 显示层级更新消息
+        function showLayerUpdateMessage(message) {
+            const treasuryPane = document.getElementById('treasury');
+            if (!treasuryPane) return;
+            
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success alert-dismissible fade show mt-3';
+            alert.innerHTML = `
+                <i class="bi bi-check-circle"></i> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const firstRow = treasuryPane.querySelector('.row');
+            if (firstRow) {
+                firstRow.parentNode.insertBefore(alert, firstRow);
+            }
+            
+            // 3秒后自动消失
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 3000);
+        }
+        
+        // 初始化Treasury Management
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化Treasury数据
+            fetchTreasuryData();
+            fetchPortfolioData();
+            
+            // 绑定层级选择事件
+            const applyLayerBtn = document.getElementById('applyLayerBtn');
+            if (applyLayerBtn) {
+                applyLayerBtn.addEventListener('click', applyLayerSetting);
+            }
+            
+            // 设置定时刷新Treasury数据
+            setInterval(() => {
+                fetchTreasuryData(currentSelectedLayer);
+                fetchPortfolioData();
+            }, 60000); // 60秒刷新一次
         });
         
     </script>
