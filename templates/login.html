@@ -10,65 +10,333 @@
 
 {% block extra_css %}
 <style>
-        body {
-            background-color: #121212;
-            color: #f8f9fa;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .login-container {
-            width: 100%;
-            max-width: 400px;
-            padding: 2rem;
-            background-color: rgba(33, 37, 41, 0.9);
-            border-radius: 0.5rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-        }
-        .login-logo {
-            text-align: center;
-            margin-bottom: 1.5rem;
-            color: #f8d000;
-            font-size: 2rem;
-            font-weight: bold;
-        }
-        .login-form .form-control {
-            background-color: #2b3035;
-            border-color: #495057;
-            color: #e9ecef;
-        }
-        .login-form .form-control:focus {
-            border-color: #f8d000;
-            box-shadow: 0 0 0 0.25rem rgba(248, 208, 0, 0.25);
-        }
-        .login-form .btn-primary {
-            background-color: #f8d000;
-            border-color: #f8d000;
-            color: #212529;
-            font-weight: bold;
-        }
-        .login-form .btn-primary:hover {
-            background-color: #e6c400;
-            border-color: #e6c400;
-        }
-        .alert {
-            margin-bottom: 1.5rem;
-        }
-        .btc-icon {
-            display: inline-block;
-            width: 60px;
-            height: 60px;
-            background-color: #f8d000; /* 恢复黄色背景 */
-            border-radius: 50%;
-            text-align: center;
-            line-height: 60px;
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            transform: rotate(12deg);
-            color: #dc3545; /* 比特币符号使用红色 */
-        }
-    </style>
+/* CSS Variables for consistent theming */
+:root {
+    --primary-gold: #ffc107;
+    --primary-dark: #1a1a2e;
+    --secondary-dark: #16213e;
+    --accent-purple: #6c5ce7;
+    --text-primary: #f8f9fa;
+    --text-secondary: #adb5bd;
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 193, 7, 0.2);
+}
+
+body {
+    background: linear-gradient(135deg, 
+        #1a1a2e 0%, 
+        #16213e 25%, 
+        #0f3460 50%, 
+        #16213e 75%, 
+        #1a1a2e 100%);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    overflow: hidden;
+}
+
+/* Animated background particles */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(2px 2px at 20px 30px, rgba(255, 193, 7, 0.3), transparent),
+        radial-gradient(2px 2px at 40px 70px, rgba(108, 92, 231, 0.3), transparent),
+        radial-gradient(1px 1px at 90px 40px, rgba(255, 193, 7, 0.2), transparent),
+        radial-gradient(1px 1px at 130px 80px, rgba(108, 92, 231, 0.2), transparent);
+    background-repeat: repeat;
+    background-size: 150px 150px;
+    animation: float 20s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(180deg); }
+}
+
+.login-container {
+    width: 100%;
+    max-width: 450px;
+    padding: 3rem 2.5rem;
+    background: rgba(26, 26, 46, 0.9);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 193, 7, 0.1);
+    position: relative;
+    overflow: hidden;
+    animation: slideInUp 0.8s ease-out;
+}
+
+.login-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent, rgba(255, 193, 7, 0.05), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.login-container:hover::before {
+    opacity: 1;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.login-logo {
+    text-align: center;
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 2;
+}
+
+.login-title {
+    color: var(--primary-gold);
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-top: 1rem;
+    text-shadow: 0 0 20px rgba(255, 193, 7, 0.3);
+}
+
+.btc-icon {
+    display: inline-block;
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--primary-gold), #e67e22);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 80px;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    transform: rotate(12deg);
+    color: #ffffff;
+    box-shadow: 
+        0 15px 35px rgba(255, 193, 7, 0.3),
+        0 0 0 3px rgba(255, 193, 7, 0.2);
+    transition: all 0.3s ease;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.btc-icon:hover {
+    transform: rotate(12deg) scale(1.1);
+    box-shadow: 
+        0 20px 50px rgba(255, 193, 7, 0.5),
+        0 0 0 5px rgba(255, 193, 7, 0.3);
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 15px 35px rgba(255, 193, 7, 0.3), 0 0 0 3px rgba(255, 193, 7, 0.2); }
+    50% { box-shadow: 0 20px 45px rgba(255, 193, 7, 0.4), 0 0 0 6px rgba(255, 193, 7, 0.3); }
+}
+
+/* Language Switcher */
+.btn-group .btn-outline-light {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 193, 7, 0.3);
+    color: var(--text-secondary);
+    border-radius: 12px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-group .btn-outline-light:hover,
+.btn-group .btn-outline-light.active {
+    background: var(--primary-gold);
+    border-color: var(--primary-gold);
+    color: #000;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 193, 7, 0.3);
+}
+
+/* Form Styling */
+.form-label {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.form-control {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 193, 7, 0.2);
+    border-radius: 16px;
+    color: var(--text-primary);
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.form-control:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--primary-gold);
+    box-shadow: 
+        0 0 0 4px rgba(255, 193, 7, 0.15),
+        0 8px 25px rgba(255, 193, 7, 0.2);
+    color: var(--text-primary);
+    transform: translateY(-2px);
+}
+
+.form-control::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+/* Primary Button */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-gold), #e67e22);
+    border: none;
+    border-radius: 16px;
+    color: #000;
+    font-weight: 700;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(255, 193, 7, 0.3);
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #e67e22, var(--primary-gold));
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(255, 193, 7, 0.4);
+}
+
+.btn-primary:hover::before {
+    left: 100%;
+}
+
+.btn-primary:active {
+    transform: translateY(-1px);
+}
+
+/* Alert Styling */
+.alert {
+    border-radius: 16px;
+    border: none;
+    backdrop-filter: blur(10px);
+    font-weight: 500;
+    animation: slideInDown 0.5s ease-out;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.alert-danger {
+    background: rgba(220, 53, 85, 0.2);
+    color: #ff6b8a;
+    border-left: 4px solid #dc3545;
+}
+
+.alert-success {
+    background: rgba(40, 167, 69, 0.2);
+    color: #6bcf7f;
+    border-left: 4px solid #28a745;
+}
+
+/* Links */
+.text-primary {
+    color: var(--primary-gold) !important;
+    transition: all 0.3s ease;
+}
+
+.text-primary:hover {
+    color: #e67e22 !important;
+    text-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+}
+
+.text-warning {
+    color: var(--primary-gold) !important;
+}
+
+.text-info {
+    color: #17a2b8 !important;
+}
+
+.form-text {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .login-container {
+        margin: 1rem;
+        padding: 2rem 1.5rem;
+        max-width: none;
+    }
+    
+    .btc-icon {
+        width: 70px;
+        height: 70px;
+        line-height: 70px;
+        font-size: 2rem;
+    }
+    
+    .login-title {
+        font-size: 1.5rem;
+    }
+}
+
+/* Additional modern touches */
+.card-title {
+    color: var(--text-primary);
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 1.3rem;
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+    transition: all 0.3s ease;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -78,7 +346,7 @@
                 <div class="login-container">
                     <div class="login-logo">
                         <div class="btc-icon">₿</div>
-                        <div>{{ t('btc_mining_calculator') }}</div>
+                        <div class="login-title">{{ t('btc_mining_calculator') }}</div>
                     </div>
                     
                     <!-- 语言切换 / Language Switcher -->
