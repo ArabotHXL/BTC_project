@@ -3310,6 +3310,7 @@ def inject_nav_menu():
 @app.route('/algorithm-test')
 @app.route('/algorithm_test')
 @login_required
+@requires_admin_or_owner
 def algorithm_test():
     """算法差异测试工具页面"""
     user_role = get_user_role(session.get('email'))

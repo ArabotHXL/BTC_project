@@ -666,11 +666,13 @@
                                                 <div id="algorithm-difference" class="text-success small" style="font-weight: 500;">
                                                     {% if current_lang == 'en' %}Calculating...{% else %}计算中...{% endif %}
                                                 </div>
+                                                {% if session.role in ['owner', 'admin'] %}
                                                 <div class="mt-1">
                                                     <a href="/algorithm_test" class="btn btn-outline-secondary btn-sm" style="font-size: 0.7rem;">
                                                         <i class="bi bi-gear"></i> {% if current_lang == 'en' %}Test Tool{% else %}测试工具{% endif %}
                                                     </a>
                                                 </div>
+                                                {% endif %}
                                             </div>
                                         </div>
                                     </div>
