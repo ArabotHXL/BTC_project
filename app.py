@@ -484,13 +484,13 @@ def before_request():
         session['language'] = 'zh'
     
     # Update enhanced language engine if available
-    if ENHANCED_LANGUAGE:
+    if ENHANCED_LANGUAGE and language_engine:
         language_engine.set_language(g.language)
 
 # 添加翻译函数到模板上下文
 @app.context_processor
 def inject_translator():
-    if ENHANCED_LANGUAGE:
+    if ENHANCED_LANGUAGE and create_template_helpers:
         # Use enhanced language engine
         helpers = create_template_helpers()
         helpers['current_lang'] = g.language
@@ -4811,7 +4811,13 @@ def generate_professional_report():
         if get_user_role(session.get('email')) != 'owner':
             return jsonify({'error': '权限不足，仅限拥有者使用'}), 403
             
-        from professional_report_generator import Professional5StepReportGenerator
+        try:
+            from analytics_dashboard_files.backend.professional_report_generator import Professional5StepReportGenerator
+        except ImportError:
+            try:
+                from professional_report_generator import Professional5StepReportGenerator
+            except ImportError:
+                return jsonify({'error': '专业报告生成器模块未找到'}), 500
         
         data = request.get_json() or {}
         generator = Professional5StepReportGenerator()
@@ -5389,7 +5395,7 @@ def pricing():
     """订阅计划页面"""
     try:
         try:
-            from models_subscription import Plan
+            from models_subscription import SubscriptionPlan as Plan
         except ImportError:
             logging.warning("Subscription models not available")
             Plan = None
@@ -5410,7 +5416,7 @@ def subscription():
             return redirect(url_for('login'))
         
         try:
-            from models_subscription import Subscription, Plan
+            from models_subscription import UserSubscription as Subscription, SubscriptionPlan as Plan
         except ImportError:
             logging.warning("Subscription models not available")
             Subscription = Plan = None
