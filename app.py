@@ -5841,7 +5841,7 @@ def next_sell_indicator_api():
         portfolio = {
             'btc_inventory': 12.5,              # 真实库存
             'blended_cost': 95000,              # 修复：使用真实成本基准
-            'max_daily_sell_pct': 0.15,
+            'max_daily_sell_pct': 0.25,
             'monthly_opex': 200000,             # 真实运营成本
             'cash_reserves': 600000             # 真实现金储备
         }

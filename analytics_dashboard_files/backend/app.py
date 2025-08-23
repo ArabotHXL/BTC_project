@@ -5674,7 +5674,7 @@ def next_sell_indicator_api():
         portfolio = {
             'btc_inventory': 5.0,
             'blended_cost': 75000,
-            'max_daily_sell_pct': 0.15,
+            'max_daily_sell_pct': 0.25,
             'monthly_opex': 50000,
             'cash_reserves': 100000
         }

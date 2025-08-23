@@ -124,7 +124,7 @@ class NextSellIndicator:
             'spot': 113800,
             'inventory_btc': 5.0,
             'blended_cost': 75000,
-            'max_daily_sell_pct': 0.15,
+            'max_daily_sell_pct': 0.25,
             'next_base_multiple': 1.52,
             'next_quota_pct': 0.15,
             'rsi14': 68.5,

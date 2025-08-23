@@ -153,7 +153,7 @@ class UserPortfolioManager:
             'monthly_opex': 200000,         # $200K 月度运营支出 (修改以显示Cash Coverage计算差异)
             'electricity_cost_kwh': 0.055,
             'facility_capacity_mw': 25.0,
-            'max_daily_sell_pct': 0.20,    # 20% 最大日卖出比例限制
+            'max_daily_sell_pct': 0.25,    # 25% 最大日卖出比例限制
             'last_updated': datetime.now(),
             'notes': "Demo Portfolio - Configure your real data in Settings",
             'data_source': 'demo'
