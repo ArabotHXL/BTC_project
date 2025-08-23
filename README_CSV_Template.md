@@ -4,7 +4,7 @@
 
 ### 完整格式（推荐）
 ```csv
-Model,Quantity,Power,Price,Electricity,DecayRate,Hashrate
+Model,Quantity,Power,Price,Electricity,Hashrate,DecayRate
 ```
 
 ### 简化格式（无衰减率）
@@ -21,8 +21,8 @@ Model,Quantity,Power,Price,Electricity
 | Power | 功耗 | 瓦特(W) | 3250 | ✓ |
 | Price | 价格 | 美元($) | 2500 | ✓ |
 | Electricity | 电费 | 美元/千瓦时 | 0.08 | ✓ |
-| DecayRate | 算力衰减率 | %/月 | 0.5 | 可选 |
 | Hashrate | 自定义算力 | TH/s | 110 | 可选 |
+| DecayRate | 算力衰减率 | %/月 | 0.5 | 可选 |
 
 ## 重要说明
 
@@ -58,6 +58,7 @@ Model,Quantity,Power,Price,Electricity
 ## 示例数据
 
 模板中包含了10种不同矿机的示例配置，按以下顺序排列：
+格式：Model,Quantity,Power,Price,Electricity,Hashrate,DecayRate
 1. Antminer S19 Pro,10,3250,2500,0.08,110,0.5
 2. WhatsMiner M53S,5,6554,4500,0.07,226,0.3
 3. Antminer S21,8,3550,3200,0.08,200,0.4
