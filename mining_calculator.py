@@ -1011,10 +1011,49 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
             logging.error("No miner model provided for chart generation")
             return {'success': False, 'error': 'No miner model provided'}
             
-        if miner_model not in MINER_DATA:
-            logging.error(f"Invalid miner model: {miner_model}, available models: {list(MINER_DATA.keys())}")
+        # Get miner models from database first, then fallback to MINER_DATA
+        valid_models = {}
+        try:
+            from models import db
+            from sqlalchemy import text
+            # Handle any failed transaction by rolling back
+            try:
+                db.session.rollback()
+            except:
+                pass
+            
+            # Query all active miner models from database
+            query = text("""
+                SELECT model_name, hashrate, power_consumption, price_usd, manufacturer, efficiency
+                FROM miner_models 
+                WHERE is_active = true 
+                ORDER BY model_name
+            """)
+            
+            result = db.session.execute(query)
+            
+            for row in result:
+                model_name = row[0]
+                valid_models[model_name] = {
+                    'hashrate': float(row[1]) if row[1] else 0,
+                    'power_watt': int(row[2]) if row[2] else 0,
+                    'price': float(row[3]) if row[3] else 0,
+                    'manufacturer': row[4] if row[4] else '',
+                    'efficiency': float(row[5]) if row[5] else 0
+                }
+            
+            db.session.commit()
+            logging.info(f"Loaded {len(valid_models)} miner models from database for chart generation")
+            
+        except Exception as e:
+            logging.error(f"Failed to load miner models from database: {e}")
+            # Fallback to MINER_DATA if database fails
+            valid_models = MINER_DATA
+            
+        if miner_model not in valid_models:
+            logging.error(f"Invalid miner model: {miner_model}, available models: {list(valid_models.keys())}")
             return {'success': False, 'error': f"Miner model '{miner_model}' not found in available models"}
-        
+            
         if not isinstance(electricity_costs, list) or len(electricity_costs) == 0:
             logging.warning(f"Invalid electricity costs: {electricity_costs}, using defaults")
             # 使用更多数据点和更均匀分布的电价，覆盖更广范围
@@ -1053,9 +1092,13 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
             current_block_reward = BLOCK_REWARD
             logging.info(f"Using default values: BTC price=${current_btc_price}, difficulty={current_difficulty/10**12}T, reward={current_block_reward}BTC")
         
-        # Get miner specs
-        single_hashrate = MINER_DATA[miner_model]["hashrate"]
-        single_power_watt = MINER_DATA[miner_model]["power_watt"]
+        # Get miner specs from either database or fallback data
+        if valid_models == MINER_DATA:
+            single_hashrate = MINER_DATA[miner_model]["hashrate"]
+            single_power_watt = MINER_DATA[miner_model]["power_watt"]
+        else:
+            single_hashrate = valid_models[miner_model]["hashrate"]
+            single_power_watt = valid_models[miner_model]["power_watt"]
         
         # Apply miner count
         hashrate = single_hashrate * miner_count
