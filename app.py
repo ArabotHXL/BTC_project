@@ -4827,9 +4827,38 @@ def generate_professional_report():
         distribution_methods = data.get('distribution_methods', [])
         
         # 获取市场数据用于报告生成
-        from market_analytics import MarketAnalytics
-        analytics = MarketAnalytics()
-        market_data = analytics.get_latest_data()
+        try:
+            from db import db
+            from sqlalchemy import text
+            result = db.session.execute(text("""
+                SELECT btc_price, network_hashrate, network_difficulty, block_reward, 
+                       btc_market_cap, btc_volume_24h, fear_greed_index, 
+                       price_change_1h, price_change_24h, price_change_7d,
+                       recorded_at
+                FROM market_analytics 
+                ORDER BY recorded_at DESC 
+                LIMIT 1
+            """)).fetchone()
+            
+            if result:
+                market_data = {
+                    'btc_price': result[0],
+                    'network_hashrate': result[1],
+                    'network_difficulty': result[2],
+                    'block_reward': result[3],
+                    'btc_market_cap': result[4],
+                    'btc_volume_24h': result[5],
+                    'fear_greed_index': result[6],
+                    'price_change_1h': result[7],
+                    'price_change_24h': result[8],
+                    'price_change_7d': result[9],
+                    'recorded_at': result[10]
+                }
+            else:
+                market_data = {}
+        except Exception as e:
+            logging.warning(f"Failed to get market data: {e}")
+            market_data = {}
         
         result = generator.generate_mining_analysis_report(
             data=market_data,
@@ -4878,9 +4907,38 @@ def download_professional_report(file_type):
             
             generator = ProfessionalReportGenerator()
             # 获取市场数据用于报告生成
-            from market_analytics import MarketAnalytics
-            analytics = MarketAnalytics()
-            market_data = analytics.get_latest_data()
+            try:
+                from db import db
+                from sqlalchemy import text
+                result = db.session.execute(text("""
+                    SELECT btc_price, network_hashrate, network_difficulty, block_reward, 
+                           btc_market_cap, btc_volume_24h, fear_greed_index, 
+                           price_change_1h, price_change_24h, price_change_7d,
+                           recorded_at
+                    FROM market_analytics 
+                    ORDER BY recorded_at DESC 
+                    LIMIT 1
+                """)).fetchone()
+                
+                if result:
+                    market_data = {
+                        'btc_price': result[0],
+                        'network_hashrate': result[1],
+                        'network_difficulty': result[2],
+                        'block_reward': result[3],
+                        'btc_market_cap': result[4],
+                        'btc_volume_24h': result[5],
+                        'fear_greed_index': result[6],
+                        'price_change_1h': result[7],
+                        'price_change_24h': result[8],
+                        'price_change_7d': result[9],
+                        'recorded_at': result[10]
+                    }
+                else:
+                    market_data = {}
+            except Exception as e:
+                logging.warning(f"Failed to get market data: {e}")
+                market_data = {}
             
             result = generator.generate_mining_analysis_report(
                 data=market_data,
