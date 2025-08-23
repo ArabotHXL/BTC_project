@@ -665,67 +665,69 @@
                                 <div class="small text-muted mb-2">
                                     <i class="bi bi-shield-check me-1"></i>{{ tr('stop') }}: $<span id="fallbackStop">104,120</span>
                                 </div>
-                                
-                                <!-- Layer Selector in empty space -->
-                                <div class="mt-2 p-2 rounded" style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3);">
-                                    <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
-                                        <small class="text-warning fw-bold" style="font-size: 0.85rem;">
-                                            {% if session.language == 'en' %}
-                                                Layer:
-                                            {% else %}
-                                                层级:
-                                            {% endif %}
-                                        </small>
-                                        <div class="d-flex gap-1">
-                                            <select id="personalLayerSelector" class="form-select form-select-sm" style="width: 90px; font-size: 0.8rem; padding: 4px 8px;">
-                                                {% if session.language == 'en' %}
-                                                    <option value="L1">L1 (1.25x)</option>
-                                                    <option value="L2" selected>L2 (1.52x)</option>
-                                                    <option value="L3">L3 (1.85x)</option>
-                                                    <option value="L4">L4 (2.20x)</option>
-                                                {% else %}
-                                                    <option value="L1">L1 (1.25倍)</option>
-                                                    <option value="L2" selected>L2 (1.52倍)</option>
-                                                    <option value="L3">L3 (1.85倍)</option>
-                                                    <option value="L4">L4 (2.20倍)</option>
-                                                {% endif %}
-                                            </select>
-                                            <button id="applyPersonalLayerBtn" class="btn btn-warning btn-sm px-2" style="font-size: 0.8rem; padding: 4px 8px;">
-                                                <i class="bi bi-check-circle-fill"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="text-center">
-                                        <small class="text-muted" style="font-size: 0.75rem;">
-                                            <span id="currentPersonalRisk">
-                                                {% if session.language == 'en' %}
-                                                    Medium Risk
-                                                {% else %}
-                                                    中等风险
-                                                {% endif %}
-                                            </span>
-                                        </small>
-                                        <br>
-                                        <small class="text-info" style="font-size: 0.65rem;" id="layerExplanation">
-                                            {% if session.language == 'en' %}
-                                                Target: $144,400
-                                            {% else %}
-                                                目标: $144,400
-                                            {% endif %}
-                                        </small>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                         
-                        <!-- Reasons/Notes and Compact Layer Selector -->
+                        <!-- Reasons/Notes and Personal Layer Selector -->
                         <div class="row mt-3">
-                            <div class="col-md-9">
+                            <div class="col-md-8">
                                 <div class="next-sell-reasons" id="nextSellReasons">
                                     <!-- Dynamic content loaded by JavaScript -->
                                 </div>
                             </div>
-                            <div class="col-md-3"></div>
+                            <div class="col-md-4">
+                                <!-- Personal Layer Selector - Better positioned -->
+                                <div class="card" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 193, 7, 0.3);">
+                                    <div class="card-header py-2" style="background: rgba(255, 193, 7, 0.1); border-bottom: 1px solid rgba(255, 193, 7, 0.2);">
+                                        <small class="text-warning fw-bold d-flex align-items-center">
+                                            <i class="bi bi-layers me-2"></i>
+                                            {% if session.language == 'en' %}
+                                                Personal Strategy Layer
+                                            {% else %}
+                                                个人策略层级
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                    <div class="card-body py-2 px-3">
+                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                            <select id="personalLayerSelector" class="form-select form-select-sm flex-grow-1">
+                                                {% if session.language == 'en' %}
+                                                    <option value="L1">L1 - Conservative (1.25x)</option>
+                                                    <option value="L2" selected>L2 - Balanced (1.52x)</option>
+                                                    <option value="L3">L3 - Aggressive (1.85x)</option>
+                                                    <option value="L4">L4 - Maximum (2.20x)</option>
+                                                {% else %}
+                                                    <option value="L1">L1 - 保守型 (1.25倍)</option>
+                                                    <option value="L2" selected>L2 - 平衡型 (1.52倍)</option>
+                                                    <option value="L3">L3 - 激进型 (1.85倍)</option>
+                                                    <option value="L4">L4 - 极致型 (2.20倍)</option>
+                                                {% endif %}
+                                            </select>
+                                            <button id="applyPersonalLayerBtn" class="btn btn-warning btn-sm px-3">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                            </button>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">
+                                                <span id="currentPersonalRisk">
+                                                    {% if session.language == 'en' %}
+                                                        Medium Risk
+                                                    {% else %}
+                                                        中等风险
+                                                    {% endif %}
+                                                </span>
+                                            </small>
+                                            <small class="text-info fw-bold" id="layerExplanation">
+                                                {% if session.language == 'en' %}
+                                                    Target: $144,400
+                                                {% else %}
+                                                    目标: $144,400
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
