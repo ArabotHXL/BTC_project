@@ -67,32 +67,55 @@ def batch_calculator():
         # Get miner models from database 
         miner_models_dict = {}
         
-        # First try simple approach using direct database data
+        # Load miner models directly from database
         try:
-            # Use the existing MINER_DATA from mining_calculator as fallback
-            from mining_calculator import MINER_DATA
+            from models import db
+            from sqlalchemy.text import text
             
-            # Convert MINER_DATA to format expected by batch calculator
-            for model_name, specs in MINER_DATA.items():
+            # Query all active miner models from database
+            query = text("""
+                SELECT model_name, hashrate, power_consumption, price_usd, manufacturer, efficiency
+                FROM miner_models 
+                WHERE is_active = true 
+                ORDER BY model_name
+            """)
+            
+            result = db.session.execute(query)
+            
+            for row in result:
+                model_name = row[0]
                 miner_models_dict[model_name] = {
-                    'hashrate': specs.get('hashrate_th', 0),
-                    'power': specs.get('power_w', 0), 
-                    'price': specs.get('price', 0),
-                    'manufacturer': specs.get('manufacturer', ''),
-                    'efficiency': specs.get('efficiency', 0)
+                    'hashrate': float(row[1]) if row[1] else 0,
+                    'power': int(row[2]) if row[2] else 0,
+                    'price': float(row[3]) if row[3] else 0,
+                    'manufacturer': row[4] if row[4] else '',
+                    'efficiency': float(row[5]) if row[5] else 0
                 }
             
-            logger.info(f"Successfully loaded {len(miner_models_dict)} miner models from MINER_DATA")
+            logger.info(f"Successfully loaded {len(miner_models_dict)} miner models from database")
             
         except Exception as e:
-            logger.error(f"Failed to load miner models: {e}")
-            # Minimal fallback 
-            miner_models_dict = {
-                'Antminer S19 Pro': {'hashrate': 110, 'power': 3250, 'price': 2500, 'manufacturer': 'Bitmain', 'efficiency': 29.5},
-                'Antminer S21': {'hashrate': 200, 'power': 3550, 'price': 3200, 'manufacturer': 'Bitmain', 'efficiency': 17.8},
-                'WhatsMiner M53S': {'hashrate': 226, 'power': 6554, 'price': 4500, 'manufacturer': 'MicroBT', 'efficiency': 29.0}
-            }
-            logger.warning(f"Using minimal fallback: {len(miner_models_dict)} models")
+            logger.error(f"Failed to load miner models from database: {e}")
+            # Fallback to MINER_DATA if database fails
+            try:
+                from mining_calculator import MINER_DATA
+                for model_name, specs in MINER_DATA.items():
+                    miner_models_dict[model_name] = {
+                        'hashrate': specs.get('hashrate_th', 0),
+                        'power': specs.get('power_w', 0), 
+                        'price': specs.get('price', 0),
+                        'manufacturer': specs.get('manufacturer', ''),
+                        'efficiency': specs.get('efficiency', 0)
+                    }
+                logger.warning(f"Using MINER_DATA fallback: {len(miner_models_dict)} models")
+            except:
+                # Ultimate fallback
+                miner_models_dict = {
+                    'Antminer S19 Pro': {'hashrate': 110, 'power': 3250, 'price': 2500, 'manufacturer': 'Bitmain', 'efficiency': 29.5},
+                    'Antminer S21': {'hashrate': 200, 'power': 3550, 'price': 3200, 'manufacturer': 'Bitmain', 'efficiency': 17.8},
+                    'WhatsMiner M53S': {'hashrate': 226, 'power': 6554, 'price': 4500, 'manufacturer': 'MicroBT', 'efficiency': 29.0}
+                }
+                logger.warning(f"Using minimal fallback: {len(miner_models_dict)} models")
         
         # Pass session data to template with translation function and miner models
         template_data = {
