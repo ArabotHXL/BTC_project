@@ -341,10 +341,34 @@ document.addEventListener('DOMContentLoaded', function() {
             clientMonthlyElec.textContent = '$' + data.client_electricity_cost.monthly.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
         
-        // Client Total Expenses
+        // Pool Fee
+        var clientPoolFee = document.getElementById('client-pool-fee');
+        console.log('[CALCULATOR] Pool fee data debug:', {
+            pool_fee_exists: !!data.pool_fee,
+            pool_fee_data: data.pool_fee,
+            monthly_impact: data.pool_fee ? data.pool_fee.monthly_impact : 'N/A'
+        });
+        if (clientPoolFee && data.pool_fee && data.pool_fee.monthly_impact !== undefined) {
+            clientPoolFee.textContent = '$' + data.pool_fee.monthly_impact.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            console.log('[CALCULATOR] Pool fee updated to:', data.pool_fee.monthly_impact);
+        } else {
+            console.log('[CALCULATOR] Pool fee update failed:', {
+                element_exists: !!clientPoolFee,
+                data_exists: !!data.pool_fee
+            });
+            if (clientPoolFee) {
+                clientPoolFee.textContent = '$0.00';
+            }
+        }
+        
+        // Client Total Expenses (electricity + pool fee)
         var clientTotalExpenses = document.getElementById('client-total-expenses');
         if (clientTotalExpenses && data.client_electricity_cost) {
-            clientTotalExpenses.textContent = '$' + data.client_electricity_cost.monthly.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            var totalExpenses = data.client_electricity_cost.monthly;
+            if (data.pool_fee && data.pool_fee.monthly_impact) {
+                totalExpenses += data.pool_fee.monthly_impact;
+            }
+            clientTotalExpenses.textContent = '$' + totalExpenses.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
         
         // Client Monthly/Yearly Profit
