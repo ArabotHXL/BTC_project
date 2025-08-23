@@ -245,23 +245,18 @@ def initialize_database():
 initialize_database_result = initialize_database()
 
 # Import models at module level for global access
+from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot, MinerModel, User
+import models
+import models_subscription  # noqa: F401
+logging.info("Models imported successfully at module level")
+
+# 初始化投资组合管理系统
 try:
-    from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot, MinerModel, User
-    import models
-    import models_subscription  # noqa: F401
-    logging.info("Models imported successfully at module level")
-    
-    # 初始化投资组合管理系统
-    try:
-        from user_portfolio_management import portfolio_manager
-        portfolio_manager.create_portfolio_table()
-        logging.info("用户投资组合管理系统初始化完成")
-    except Exception as e:
-        logging.error(f"投资组合管理系统初始化失败: {e}")
-        
-except ImportError as e:
-    logging.error(f"Failed to import models: {e}")
-    initialize_database_result = False
+    from user_portfolio_management import portfolio_manager
+    portfolio_manager.create_portfolio_table()
+    logging.info("用户投资组合管理系统初始化完成")
+except Exception as e:
+    logging.error(f"投资组合管理系统初始化失败: {e}")
 
 if not initialize_database_result:
     logging.warning("Database initialization failed - some features may not work correctly")
@@ -456,11 +451,18 @@ DEFAULT_LANGUAGE = 'en'
 try:
     from language_engine import language_engine, create_template_helpers
     ENHANCED_LANGUAGE = True
+    logging.info("Language Engine initialized with enhanced features")
 except ImportError:
     # Fallback to original translations
-    from translations import get_translation
+    try:
+        from translations import get_translation
+    except ImportError:
+        def get_translation(text, to_lang='en'):
+            return text
     ENHANCED_LANGUAGE = False
-    app.logger.warning("Enhanced language engine not available, using fallback")
+    language_engine = None
+    create_template_helpers = None
+    logging.warning("Enhanced language engine not available, using fallback")
 
 # 在请求前处理设置语言
 @app.before_request
