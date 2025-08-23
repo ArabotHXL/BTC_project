@@ -228,7 +228,11 @@
             </p>
             
             <div class="mt-4">
-                <a href="{{ url_for('login') }}" class="cta-button">
+                <a href="{{ url_for('calculator') }}" class="cta-button">
+                    <i class="fas fa-calculator"></i> 
+                    Try BTC Mining Calculator
+                </a>
+                <a href="{{ url_for('login') }}" class="cta-button cta-button-outline">
                     <i class="fas fa-sign-in-alt"></i> 
                     {% if current_lang == 'zh' %}立即登录{% else %}Login Now{% endif %}
                 </a>
