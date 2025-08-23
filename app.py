@@ -5850,7 +5850,8 @@ def next_sell_indicator_api():
         zone_high = int(target_price * (1 + slip_pct))
         
         # 计算建议数量 - 获取用户选择的配额比例
-        layer_quota = float(request.args.get('quota', 0.08))  # 默认8%配额
+        # 优先使用URL参数，其次使用会话存储的值，最后使用默认值
+        layer_quota = float(request.args.get('quota', session.get('selected_quota', 0.08)))
         daily_cap = portfolio['btc_inventory'] * portfolio['max_daily_sell_pct']
         opex_gap = max(0, portfolio['monthly_opex'] - portfolio['cash_reserves'])
         opex_qty = opex_gap / spot_price if opex_gap > 0 else 0
@@ -5905,6 +5906,7 @@ def set_layer_preference():
     try:
         data = request.get_json()
         layer = data.get('layer', 'L2')
+        quota = data.get('quota', 0.08)  # 添加配额参数支持
         
         # 验证层级选择
         valid_layers = ['L1', 'L2', 'L3', 'L4']
@@ -5913,6 +5915,7 @@ def set_layer_preference():
         
         # 保存到session
         session['selected_layer'] = layer
+        session['selected_quota'] = float(quota)  # 保存配额到会话
         
         # 层级信息
         layer_config = {
@@ -5927,6 +5930,7 @@ def set_layer_preference():
         return jsonify({
             'success': True,
             'selected_layer': layer,
+            'selected_quota': float(quota),
             'layer_info': layer_info,
             'message': f'已设置为 {layer_info["name"]}'
         })

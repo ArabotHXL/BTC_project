@@ -3158,6 +3158,8 @@ Generate this order?
                 }
 
                 const selectedLayer = layerSelector.value;
+                const quotaSelector = document.querySelector('#quotaPercentSelector');
+                const selectedQuota = quotaSelector ? quotaSelector.value : 0.08;
                 const language = getCurrentLanguage();
 
                 this.isProcessing = true;
@@ -3168,7 +3170,7 @@ Generate this order?
                     const response = await fetch('/api/treasury/set-layer', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ layer: selectedLayer })
+                        body: JSON.stringify({ layer: selectedLayer, quota: selectedQuota })
                     });
 
                     const result = await response.json();
@@ -3187,7 +3189,7 @@ Generate this order?
                             `Layer updated to ${selectedLayer}`);
                         this.showSuccessMessage(message);
                         
-                        console.log(`Personal layer successfully updated to: ${selectedLayer}`);
+                        console.log(`Personal layer successfully updated to: ${selectedLayer}, quota: ${(selectedQuota*100)}%`);
                     } else {
                         throw new Error(result.error || 'Layer setting failed');
                     }
