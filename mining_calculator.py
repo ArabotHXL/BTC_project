@@ -925,8 +925,8 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
             },
             'pool_fee': {
                 'rate': pool_fee_rate,
-                'daily_impact': daily_btc * pool_fee_rate * btc_price if daily_btc > 0 else 0,
-                'monthly_impact': monthly_btc * pool_fee_rate * btc_price if monthly_btc > 0 else 0
+                'daily_impact': site_daily_btc_output_difficulty_raw * pool_fee_rate * btc_price if site_daily_btc_output_difficulty_raw > 0 else 0,
+                'monthly_impact': (site_daily_btc_output_difficulty_raw * 30.5) * pool_fee_rate * btc_price if site_daily_btc_output_difficulty_raw > 0 else 0
             },
             'btc_mined': {
                 'daily': daily_btc,
