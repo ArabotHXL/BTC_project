@@ -1283,7 +1283,17 @@ document.addEventListener('DOMContentLoaded', function() {
             clientMonthlyElectricityEl.textContent = formatCurrency(data.client_electricity_cost.monthly);
         }
         
-        if (clientTotalExpensesEl && data.client_electricity_cost) {
+        // 显示pool fee
+        var clientPoolFeeEl = document.getElementById('client-pool-fee');
+        if (clientPoolFeeEl && data.pool_fee) {
+            clientPoolFeeEl.textContent = formatCurrency(data.pool_fee.monthly_impact);
+        }
+        
+        // 计算并显示总费用 (电费 + pool fee)
+        if (clientTotalExpensesEl && data.client_electricity_cost && data.pool_fee) {
+            var totalExpenses = data.client_electricity_cost.monthly + data.pool_fee.monthly_impact;
+            clientTotalExpensesEl.textContent = formatCurrency(totalExpenses);
+        } else if (clientTotalExpensesEl && data.client_electricity_cost) {
             clientTotalExpensesEl.textContent = formatCurrency(data.client_electricity_cost.monthly);
         }
         

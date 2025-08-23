@@ -830,6 +830,10 @@
                                                 <td>{% if session.role in ['owner', 'admin', 'mining_site'] %}{% if current_lang == 'en' %}Customer Monthly Electricity{% else %}客户月度电费{% endif %}{% else %}{% if current_lang == 'en' %}Monthly Electricity{% else %}月度电费{% endif %}{% endif %}</td>
                                                 <td id="client-monthly-electricity" class="text-end">$0.00</td>
                                             </tr>
+                                            <tr>
+                                                <td>{% if current_lang == 'en' %}Pool Fee (2.5%){% else %}矿池费用 (2.5%){% endif %}</td>
+                                                <td id="client-pool-fee" class="text-end">$0.00</td>
+                                            </tr>
                                             <tr class="table-danger bg-opacity-25">
                                                 <td><strong>{% if current_lang == 'en' %}Total Expenses{% else %}总支出{% endif %}</strong></td>
                                                 <td id="client-total-expenses" class="text-end fw-bold">$0.00</td>
