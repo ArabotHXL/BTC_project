@@ -101,12 +101,19 @@ def batch_calculator():
                 from mining_calculator import MINER_DATA
                 for model_name, specs in MINER_DATA.items():
                     miner_models_dict[model_name] = {
-                        'hashrate': specs.get('hashrate_th', 0),
-                        'power': specs.get('power_w', 0), 
-                        'price': specs.get('price', 0),
-                        'manufacturer': specs.get('manufacturer', ''),
-                        'efficiency': specs.get('efficiency', 0)
+                        'hashrate': float(specs.get('hashrate', 0)),  # 正确的字段名
+                        'power': int(specs.get('power_watt', 0)),     # 正确的字段名
+                        'price': float(specs.get('price', 2500)),     # 默认价格
+                        'manufacturer': specs.get('manufacturer', 'Unknown'),
+                        'efficiency': float(specs.get('efficiency', 30))  # 默认效率
                     }
+                logger.info(f"Successfully loaded {len(miner_models_dict)} models from MINER_DATA fallback")
+                
+                # Debug: print first few entries to verify data
+                if miner_models_dict:
+                    sample_model = list(miner_models_dict.keys())[0]
+                    logger.info(f"Sample model data: {sample_model} = {miner_models_dict[sample_model]}")
+                    
                 logger.warning(f"Using MINER_DATA fallback: {len(miner_models_dict)} models")
             except:
                 # Ultimate fallback
