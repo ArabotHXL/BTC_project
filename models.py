@@ -101,17 +101,20 @@ class MinerModel(db.Model):
     @classmethod
     def get_active_miners(cls):
         """获取所有启用的矿机型号"""
-        return cls.query.filter_by(is_active=True).order_by(cls.manufacturer, cls.model_name).all()
+        from app import db
+        return db.session.query(cls).filter_by(is_active=True).order_by(cls.manufacturer, cls.model_name).all()
     
     @classmethod
     def get_by_name(cls, model_name):
         """根据型号名称获取矿机"""
-        return cls.query.filter_by(model_name=model_name, is_active=True).first()
+        from app import db
+        return db.session.query(cls).filter_by(model_name=model_name, is_active=True).first()
     
     @classmethod
     def get_by_manufacturer(cls, manufacturer):
         """根据制造商获取矿机列表"""
-        return cls.query.filter_by(manufacturer=manufacturer, is_active=True).order_by(cls.model_name).all()
+        from app import db
+        return db.session.query(cls).filter_by(manufacturer=manufacturer, is_active=True).order_by(cls.model_name).all()
 
 class NetworkSnapshot(db.Model):
     """网络状态快照记录"""

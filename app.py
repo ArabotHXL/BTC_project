@@ -3836,7 +3836,7 @@ def api_treasury_backtest():
         return jsonify({'success': False, 'error': 'Access denied'}), 403
     
     try:
-        data = request.json
+        data = request.json or {}
         strategy = data.get('strategy', 'hold')
         start_date = data.get('start_date')
         end_date = data.get('end_date')
@@ -3972,13 +3972,14 @@ def api_portfolio_update():
             return jsonify({'success': False, 'error': 'User not found'}), 401
         
         # 数据验证
+        data = data or {}
         portfolio_data = {
-            'btc_inventory': max(0, float(data.get('btc_inventory', 0))),
-            'avg_cost_basis': max(0, float(data.get('avg_cost_basis', 0))),
-            'cash_reserves': max(0, float(data.get('cash_reserves', 0))),
-            'monthly_opex': max(0, float(data.get('monthly_opex', 0))),
-            'electricity_cost_kwh': max(0, float(data.get('electricity_cost_kwh', 0.055))),
-            'facility_capacity_mw': max(0, float(data.get('facility_capacity_mw', 0))),
+            'btc_inventory': max(0.0, float(data.get('btc_inventory', 0))),
+            'avg_cost_basis': max(0.0, float(data.get('avg_cost_basis', 0))),
+            'cash_reserves': max(0.0, float(data.get('cash_reserves', 0))),
+            'monthly_opex': max(0.0, float(data.get('monthly_opex', 0))),
+            'electricity_cost_kwh': max(0.0, float(data.get('electricity_cost_kwh', 0.055))),
+            'facility_capacity_mw': max(0.0, float(data.get('facility_capacity_mw', 0))),
             'notes': str(data.get('notes', ''))[:500]  # 限制长度
         }
         
@@ -4812,10 +4813,10 @@ def generate_professional_report():
             return jsonify({'error': '权限不足，仅限拥有者使用'}), 403
             
         try:
-            from analytics_dashboard_files.backend.professional_report_generator import Professional5StepReportGenerator
+            from analytics_dashboard_files.backend.professional_report_generator import ProfessionalReportGenerator as Professional5StepReportGenerator
         except ImportError:
             try:
-                from professional_report_generator import Professional5StepReportGenerator
+                from professional_report_generator import ProfessionalReportGenerator as Professional5StepReportGenerator
             except ImportError:
                 return jsonify({'error': '专业报告生成器模块未找到'}), 500
         
@@ -4825,9 +4826,14 @@ def generate_professional_report():
         output_formats = data.get('output_formats', ['web', 'pdf'])
         distribution_methods = data.get('distribution_methods', [])
         
-        result = generator.generate_comprehensive_report(
-            output_formats=output_formats,
-            distribution_methods=distribution_methods
+        # 获取市场数据用于报告生成
+        from market_analytics import MarketAnalytics
+        analytics = MarketAnalytics()
+        market_data = analytics.get_latest_data()
+        
+        result = generator.generate_mining_analysis_report(
+            data=market_data,
+            format='pdf' if 'pdf' in output_formats else 'json'
         )
         
         return jsonify(result)
@@ -4868,11 +4874,17 @@ def download_professional_report(file_type):
         else:
             # Try to generate report if not found
             logging.warning(f"Report file {filename} not found, trying to generate...")
-            from professional_report_generator import Professional5StepReportGenerator
+            from analytics_dashboard_files.backend.professional_report_generator import ProfessionalReportGenerator
             
-            generator = Professional5StepReportGenerator()
-            result = generator.generate_comprehensive_report(
-                output_formats=['web', 'pdf'] if file_type == 'pdf' else ['web', 'pptx']
+            generator = ProfessionalReportGenerator()
+            # 获取市场数据用于报告生成
+            from market_analytics import MarketAnalytics
+            analytics = MarketAnalytics()
+            market_data = analytics.get_latest_data()
+            
+            result = generator.generate_mining_analysis_report(
+                data=market_data,
+                format=file_type
             )
             
             if os.path.exists(filename):
