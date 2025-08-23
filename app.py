@@ -5857,13 +5857,13 @@ def next_sell_indicator_api():
         opex_qty = opex_gap / spot_price if opex_gap > 0 else 0
         
         # 调试信息
-        print(f"DEBUG: layer_quota={layer_quota}, btc_inventory={portfolio['btc_inventory']}, opex_qty={opex_qty}, daily_cap={daily_cap}")
+        logging.info(f"DEBUG: layer_quota={layer_quota}, btc_inventory={portfolio['btc_inventory']}, opex_qty={opex_qty}, daily_cap={daily_cap}")
         
         qty = min(daily_cap, max(0, portfolio['btc_inventory'] * layer_quota - opex_qty))
         if qty < 1e-4:
             qty = max(0, min(daily_cap, portfolio['btc_inventory'] * layer_quota))
         
-        print(f"DEBUG: Final qty={qty}")  # 调试信息
+        logging.info(f"DEBUG: Final qty={qty}, calculation: min({daily_cap}, max(0, {portfolio['btc_inventory']} * {layer_quota} - {opex_qty}))")  # 调试信息
             
         # 置信度评估
         confidence = 'high' if rsi >= 65 else 'medium' if rsi >= 55 else 'low'
