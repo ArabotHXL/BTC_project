@@ -72,6 +72,12 @@ def batch_calculator():
             from models import db
             from sqlalchemy import text
             
+            # Handle any failed transaction by rolling back
+            try:
+                db.session.rollback()
+            except:
+                pass
+            
             # Query all active miner models from database
             query = text("""
                 SELECT model_name, hashrate, power_consumption, price_usd, manufacturer, efficiency
@@ -92,6 +98,8 @@ def batch_calculator():
                     'efficiency': float(row[5]) if row[5] else 0
                 }
             
+            # Commit the transaction
+            db.session.commit()
             logger.info(f"Successfully loaded {len(miner_models_dict)} miner models from database")
             
         except Exception as e:
@@ -130,7 +138,7 @@ def batch_calculator():
             'current_lang': current_lang,
             'session': session,
             'miner_models': miner_models_dict,
-            't': lambda text: get_translation(text, to_lang=current_lang)
+            't': lambda text: get_translation(text, to_lang=current_lang or 'zh')
         }
         
         return render_template('batch_calculator.html', **template_data)
