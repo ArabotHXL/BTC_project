@@ -70,7 +70,7 @@ def batch_calculator():
         # Load miner models directly from database
         try:
             from models import db
-            from sqlalchemy.text import text
+            from sqlalchemy import text
             
             # Query all active miner models from database
             query = text("""
