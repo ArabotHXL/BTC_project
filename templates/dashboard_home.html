@@ -601,13 +601,13 @@ body {
         <!-- Real-time Stats Bar -->
         <div class="stats-bar">
             <div class="stat-item">
-                <span class="stat-value" id="btc-price">$113,332</span>
+                <span class="stat-value" id="btc-price">${{ "{:,}".format(btc_price) }}</span>
                 <span class="stat-label">
                     {% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}
                 </span>
             </div>
             <div class="stat-item">
-                <span class="stat-value" id="network-hashrate">965.14 EH/s</span>
+                <span class="stat-value" id="network-hashrate">{{ network_hashrate }}</span>
                 <span class="stat-label">
                     {% if current_lang == 'en' %}Network Hashrate{% else %}全网算力{% endif %}
                 </span>

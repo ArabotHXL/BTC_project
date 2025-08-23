@@ -19,6 +19,27 @@ from db import db
 from auth import verify_email, login_required
 from translations import get_translation
 
+def get_latest_market_data():
+    """从market_analytics表获取最新市场数据"""
+    try:
+        query = text("""
+            SELECT btc_price, network_hashrate, network_difficulty, block_reward 
+            FROM market_analytics 
+            ORDER BY created_at DESC 
+            LIMIT 1
+        """)
+        result = db.session.execute(query).fetchone()
+        if result:
+            return {
+                'btc_price': result[0],
+                'network_hashrate': result[1],
+                'network_difficulty': result[2],
+                'block_reward': result[3]
+            }
+    except Exception as e:
+        logging.error(f"获取市场数据失败: {e}")
+    return None
+
 # 延迟导入模式 - 减少启动时间
 _cache_manager = None
 _decorators_loaded = False
@@ -728,7 +749,21 @@ def logout():
 @login_required
 def index():
     """卡片式仪表盘主页"""
-    return render_template('dashboard_home.html')
+    # 获取最新的市场数据
+    market_data = get_latest_market_data()
+    
+    # 设置默认值以防数据库中没有数据
+    btc_price = 113332
+    network_hashrate = "965.14 EH/s"
+    
+    if market_data:
+        btc_price = int(market_data.get('btc_price', 113332))
+        hashrate_value = market_data.get('network_hashrate', 965.14)
+        network_hashrate = f"{hashrate_value:.2f} EH/s"
+    
+    return render_template('dashboard_home.html', 
+                         btc_price=btc_price,
+                         network_hashrate=network_hashrate)
 
 # 根路径显示介绍页面
 @app.route('/')
