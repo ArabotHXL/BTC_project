@@ -705,24 +705,54 @@
                                         </small>
                                     </div>
                                     <div class="card-body py-2 px-3">
-                                        <div class="d-flex align-items-center gap-2 mb-2">
-                                            <select id="personalLayerSelector" class="form-select form-select-sm flex-grow-1">
-                                                {% if session.language == 'en' %}
-                                                    <option value="L1">L1 - Conservative (1.25x)</option>
-                                                    <option value="L2" selected>L2 - Balanced (1.52x)</option>
-                                                    <option value="L3">L3 - Aggressive (1.85x)</option>
-                                                    <option value="L4">L4 - Maximum (2.20x)</option>
-                                                {% else %}
-                                                    <option value="L1">L1 - 保守型 (1.25倍)</option>
-                                                    <option value="L2" selected>L2 - 平衡型 (1.52倍)</option>
-                                                    <option value="L3">L3 - 激进型 (1.85倍)</option>
-                                                    <option value="L4">L4 - 极致型 (2.20倍)</option>
-                                                {% endif %}
-                                            </select>
-                                            <button id="applyPersonalLayerBtn" class="btn btn-warning btn-sm px-3">
-                                                <i class="bi bi-check-circle-fill"></i>
-                                            </button>
+                                        <!-- 层级选择器 -->
+                                        <div class="row g-2 mb-2">
+                                            <div class="col-8">
+                                                <select id="personalLayerSelector" class="form-select form-select-sm">
+                                                    {% if session.language == 'en' %}
+                                                        <option value="L1">L1 - Conservative (1.25x)</option>
+                                                        <option value="L2" selected>L2 - Balanced (1.52x)</option>
+                                                        <option value="L3">L3 - Aggressive (1.85x)</option>
+                                                        <option value="L4">L4 - Maximum (2.20x)</option>
+                                                    {% else %}
+                                                        <option value="L1">L1 - 保守型 (1.25倍)</option>
+                                                        <option value="L2" selected>L2 - 平衡型 (1.52倍)</option>
+                                                        <option value="L3">L3 - 激进型 (1.85倍)</option>
+                                                        <option value="L4">L4 - 极致型 (2.20倍)</option>
+                                                    {% endif %}
+                                                </select>
+                                            </div>
+                                            <div class="col-4">
+                                                <button id="applyPersonalLayerBtn" class="btn btn-warning btn-sm w-100">
+                                                    <i class="bi bi-check-circle-fill"></i>
+                                                </button>
+                                            </div>
                                         </div>
+                                        
+                                        <!-- 配额比例选择器 -->
+                                        <div class="row g-2 mb-2">
+                                            <div class="col-5">
+                                                <label class="form-label small text-warning mb-1 d-block">
+                                                    {% if session.language == 'en' %}
+                                                        Quota %
+                                                    {% else %}
+                                                        配额比例
+                                                    {% endif %}
+                                                </label>
+                                            </div>
+                                            <div class="col-7">
+                                                <select id="quotaPercentSelector" class="form-select form-select-sm">
+                                                    <option value="0.03">3% - Ultra Safe</option>
+                                                    <option value="0.05">5% - Conservative</option>
+                                                    <option value="0.08" selected>8% - Moderate</option>
+                                                    <option value="0.10">10% - Balanced</option>
+                                                    <option value="0.12">12% - Aggressive</option>
+                                                    <option value="0.15">15% - High Risk</option>
+                                                    <option value="0.20">20% - Maximum</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        
                                         <div class="d-flex justify-content-between align-items-center">
                                             <small class="text-muted">
                                                 <span id="currentPersonalRisk">
@@ -2757,7 +2787,11 @@
         // Next Sell Indicator Functions
         async function fetchNextSellIndicator() {
             try {
-                const response = await fetch('/api/treasury/next-sell-indicator');
+                // 获取当前配额设置
+                const quotaSelector = document.querySelector('#quotaPercentSelector');
+                const currentQuota = quotaSelector ? quotaSelector.value : 0.08;
+                
+                const response = await fetch(`/api/treasury/next-sell-indicator?quota=${currentQuota}`);
                 const result = await response.json();
                 
                 if (result.success && result.data) {
@@ -3174,6 +3208,16 @@ Generate this order?
         // 页面加载时自动初始化
         document.addEventListener('DOMContentLoaded', function() {
             personalLayerManager.initialize();
+            
+            // 添加配额选择器变化监听
+            const quotaSelector = document.querySelector('#quotaPercentSelector');
+            if (quotaSelector) {
+                quotaSelector.addEventListener('change', function() {
+                    console.log('Quota changed to:', this.value);
+                    // 立即刷新Next Sell数据
+                    fetchNextSellIndicator();
+                });
+            }
         });
 
     </script>

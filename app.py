@@ -5849,8 +5849,8 @@ def next_sell_indicator_api():
         zone_low = int(target_price * (1 - slip_pct))
         zone_high = int(target_price * (1 + slip_pct))
         
-        # 计算建议数量
-        layer_quota = 0.15  # 15%配额
+        # 计算建议数量 - 获取用户选择的配额比例
+        layer_quota = float(request.args.get('quota', 0.08))  # 默认8%配额
         daily_cap = portfolio['btc_inventory'] * portfolio['max_daily_sell_pct']
         opex_gap = max(0, portfolio['monthly_opex'] - portfolio['cash_reserves'])
         opex_qty = opex_gap / spot_price if opex_gap > 0 else 0
