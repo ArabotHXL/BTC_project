@@ -2377,8 +2377,46 @@ def get_profit_chart_data():
                 'error': 'Please select a miner model.'
             }), 400
             
-        if miner_model not in MINER_DATA:
-            logging.error(f"Invalid miner model: {miner_model} not in available models: {list(MINER_DATA.keys())}")
+        # Get miner models from database first, then fallback to MINER_DATA
+        valid_models = {}
+        try:
+            from sqlalchemy import text
+            # Handle any failed transaction by rolling back
+            try:
+                db.session.rollback()
+            except:
+                pass
+            
+            # Query all active miner models from database
+            query = text("""
+                SELECT model_name, hashrate, power_consumption, price_usd, manufacturer, efficiency
+                FROM miner_models 
+                WHERE is_active = true 
+                ORDER BY model_name
+            """)
+            
+            result = db.session.execute(query)
+            
+            for row in result:
+                model_name = row[0]
+                valid_models[model_name] = {
+                    'hashrate': float(row[1]) if row[1] else 0,
+                    'power_watt': int(row[2]) if row[2] else 0,
+                    'price': float(row[3]) if row[3] else 0,
+                    'manufacturer': row[4] if row[4] else '',
+                    'efficiency': float(row[5]) if row[5] else 0
+                }
+            
+            db.session.commit()
+            logging.info(f"Loaded {len(valid_models)} miner models from database for validation")
+            
+        except Exception as e:
+            logging.error(f"Failed to load miner models from database: {e}")
+            # Fallback to MINER_DATA if database fails
+            valid_models = MINER_DATA
+            
+        if miner_model not in valid_models:
+            logging.error(f"Invalid miner model: {miner_model} not in available models: {list(valid_models.keys())}")
             return jsonify({
                 'success': False,
                 'error': f"Selected miner model '{miner_model}' is not valid. Please select from available models."
