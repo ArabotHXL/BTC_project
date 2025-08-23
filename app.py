@@ -5856,14 +5856,21 @@ def next_sell_indicator_api():
         opex_gap = max(0, portfolio['monthly_opex'] - portfolio['cash_reserves'])
         opex_qty = opex_gap / spot_price if opex_gap > 0 else 0
         
+        # 直接计算，忽略所有限制来测试
+        basic_qty = portfolio['btc_inventory'] * layer_quota
+        
         # 调试信息
-        logging.info(f"DEBUG: layer_quota={layer_quota}, btc_inventory={portfolio['btc_inventory']}, opex_qty={opex_qty}, daily_cap={daily_cap}")
+        print(f"🔍 QUOTA DEBUG: layer_quota={layer_quota}")
+        print(f"🔍 INVENTORY DEBUG: btc_inventory={portfolio['btc_inventory']}")
+        print(f"🔍 BASIC CALC: basic_qty={basic_qty}")
+        print(f"🔍 OPEX DEBUG: opex_gap={max(0, portfolio['monthly_opex'] - portfolio['cash_reserves'])}, opex_qty={opex_gap / spot_price if opex_gap > 0 else 0}")
+        print(f"🔍 DAILY CAP: daily_cap={daily_cap}")
         
         qty = min(daily_cap, max(0, portfolio['btc_inventory'] * layer_quota - opex_qty))
         if qty < 1e-4:
             qty = max(0, min(daily_cap, portfolio['btc_inventory'] * layer_quota))
         
-        logging.info(f"DEBUG: Final qty={qty}, calculation: min({daily_cap}, max(0, {portfolio['btc_inventory']} * {layer_quota} - {opex_qty}))")  # 调试信息
+        print(f"🔍 FINAL QTY: {qty}")  # 调试信息
             
         # 置信度评估
         confidence = 'high' if rsi >= 65 else 'medium' if rsi >= 55 else 'low'
