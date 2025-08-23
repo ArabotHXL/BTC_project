@@ -3102,25 +3102,49 @@ Generate this order?
                 button.disabled = (state === 'loading');
             }
 
-            // 显示成功消息
+            // 显示成功消息 - 紧贴Personal Strategy Layer卡片上方
             showSuccessMessage(message) {
-                const strategyPane = document.querySelector(this.config.selectors.strategyPane);
-                if (!strategyPane) return;
-                
-                const alert = document.createElement('div');
-                alert.className = 'alert alert-success alert-dismissible fade show mb-3';
-                alert.innerHTML = `
-                    <i class="bi bi-check-circle me-1"></i> ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                `;
-                
-                const layerPanel = strategyPane.querySelector('.row');
-                if (layerPanel) {
-                    layerPanel.parentNode.insertBefore(alert, layerPanel);
+                // 使用ID定位Personal Layer选择器，找到其父容器
+                const personalLayerSelector = document.querySelector('#personalLayerSelector');
+                if (!personalLayerSelector) {
+                    console.warn('Personal Layer selector not found');
+                    return;
                 }
                 
-                // 自动消失
-                setTimeout(() => alert?.remove(), 4000);
+                const personalLayerContainer = personalLayerSelector.closest('.col-md-4');
+                if (!personalLayerContainer) {
+                    console.warn('Personal Layer container not found');
+                    return;
+                }
+                
+                // 移除已存在的消息
+                const existingAlert = personalLayerContainer.querySelector('.personal-layer-success-alert');
+                if (existingAlert) {
+                    existingAlert.remove();
+                }
+                
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-success alert-dismissible fade show personal-layer-success-alert';
+                alert.style.cssText = `
+                    padding: 0.4rem 0.7rem; 
+                    font-size: 0.8rem; 
+                    margin-bottom: 0.5rem;
+                    border-radius: 0.3rem;
+                    background: rgba(40, 167, 69, 0.15);
+                    border: 1px solid rgba(40, 167, 69, 0.3);
+                    color: #28a745;
+                `;
+                alert.innerHTML = `
+                    <i class="bi bi-check-circle-fill me-1" style="font-size: 0.8rem;"></i> 
+                    <span style="font-size: 0.8rem;">${message}</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" style="font-size: 0.7rem; padding: 0.2rem; opacity: 0.6;"></button>
+                `;
+                
+                // 插入到Personal Strategy Layer容器的开头
+                personalLayerContainer.insertBefore(alert, personalLayerContainer.firstChild);
+                
+                // 2.5秒后自动消失
+                setTimeout(() => alert?.remove(), 2500);
             }
 
             // 应用层级设置（核心功能）
