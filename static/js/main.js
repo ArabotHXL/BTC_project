@@ -1285,8 +1285,23 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 显示pool fee
         var clientPoolFeeEl = document.getElementById('client-pool-fee');
+        console.log('Pool fee 数据调试:', {
+            pool_fee_exists: !!data.pool_fee,
+            pool_fee_data: data.pool_fee,
+            monthly_impact: data.pool_fee ? data.pool_fee.monthly_impact : 'N/A'
+        });
         if (clientPoolFeeEl && data.pool_fee) {
             clientPoolFeeEl.textContent = formatCurrency(data.pool_fee.monthly_impact);
+            console.log('Pool fee 已更新为:', data.pool_fee.monthly_impact);
+        } else {
+            console.log('Pool fee 更新失败:', {
+                element_exists: !!clientPoolFeeEl,
+                data_exists: !!data.pool_fee
+            });
+            // 如果没有pool_fee数据，显示为$0.00
+            if (clientPoolFeeEl) {
+                clientPoolFeeEl.textContent = '$0.00';
+            }
         }
         
         // 计算并显示总费用 (电费 + pool fee)
