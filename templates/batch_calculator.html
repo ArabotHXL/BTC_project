@@ -976,6 +976,8 @@
             reorderMinerNumbers();
             updateEmptyState();
             updateTotalCount();
+            // 删除行后触发自动保存
+            autoSaveUserMiners();
         }
         
         function reorderMinerNumbers() {
@@ -1007,6 +1009,9 @@
                 if (hashrateInput) {
                     hashrateInput.value = minerModels[selectedModel].hashrate;
                 }
+                
+                // 更新矿机规格后触发自动保存
+                autoSaveUserMiners();
             }
         }
 
@@ -1045,6 +1050,9 @@
             
             // Update calculate button state
             updateCalculateButton(totalMiners);
+            
+            // 触发自动保存
+            autoSaveUserMiners();
         }
 
         function updateCalculateButton(totalMiners) {
@@ -1093,6 +1101,9 @@
                 updateEmptyState();
                 updateTotalCount();
                 hideResults();
+                
+                // 清空所有数据后触发自动保存（保存空状态）
+                autoSaveUserMiners();
                 
                 console.log('已清空所有矿机数据和上传文件');
             }
@@ -1798,18 +1809,18 @@
                                             <span class="badge bg-secondary auto-number" data-number="${index + 1}">${index + 1}</span>
                                         </td>
                                         <td>
-                                            <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, 'minerRow${index + 1}')">
+                                            <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, 'minerRow${index + 1}'); autoSaveUserMiners();">
                                                 ${Object.keys(minerModels).map(m => 
                                                     `<option value="${m}" ${m === data.model ? 'selected' : ''}>${m}</option>`
                                                 ).join('')}
                                             </select>
                                         </td>
                                         <td><input type="number" class="form-control form-control-sm" value="${data.quantity}" min="1" max="1000" onchange="updateTotalCount()"></td>
-                                        <td><input type="number" class="form-control form-control-sm" value="${data.power}" min="100" max="10000" step="10"></td>
-                                        <td><input type="number" class="form-control form-control-sm" value="${data.price}" min="100" max="20000" step="100"></td>
-                                        <td><input type="number" class="form-control form-control-sm" value="${data.electricity}" min="0.01" max="1" step="0.001"></td>
-                                        <td><input type="number" class="form-control form-control-sm" value="${finalHashrate}" min="1" max="500" step="1"></td>
-                                        <td><input type="number" class="form-control form-control-sm" value="${data.decayRate}" min="0" max="5" step="0.1"></td>
+                                        <td><input type="number" class="form-control form-control-sm" value="${data.power}" min="100" max="10000" step="10" onchange="autoSaveUserMiners()"></td>
+                                        <td><input type="number" class="form-control form-control-sm" value="${data.price}" min="100" max="20000" step="100" onchange="autoSaveUserMiners()"></td>
+                                        <td><input type="number" class="form-control form-control-sm" value="${data.electricity}" min="0.01" max="1" step="0.001" onchange="autoSaveUserMiners()"></td>
+                                        <td><input type="number" class="form-control form-control-sm" value="${finalHashrate}" min="1" max="500" step="1" onchange="autoSaveUserMiners()"></td>
+                                        <td><input type="number" class="form-control form-control-sm" value="${data.decayRate}" min="0" max="5" step="0.1" onchange="autoSaveUserMiners()"></td>
                                         <td>
                                             <button class="btn btn-outline-danger btn-sm" onclick="removeMinerRow('minerRow${index + 1}')">
                                                 <i class="bi bi-trash"></i>
@@ -1890,18 +1901,18 @@
                     <span class="badge bg-secondary auto-number" data-number="${minerRowCount}">${minerRowCount}</span>
                 </td>
                 <td>
-                    <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, 'minerRow${minerRowCount}')">
+                    <select class="form-select form-select-sm" onchange="updateMinerSpecs(this, 'minerRow${minerRowCount}'); autoSaveUserMiners();">
                         ${Object.keys(minerModels).map(m => 
                             `<option value="${m}" ${m === model ? 'selected' : ''}>${m}</option>`
                         ).join('')}
                     </select>
                 </td>
                 <td><input type="number" class="form-control form-control-sm" value="${quantity}" min="1" max="1000" onchange="updateTotalCount()"></td>
-                <td><input type="number" class="form-control form-control-sm" value="${power}" min="100" max="10000" step="10"></td>
-                <td><input type="number" class="form-control form-control-sm" value="${price}" min="100" max="20000" step="100"></td>
-                <td><input type="number" class="form-control form-control-sm" value="${electricity}" min="0.01" max="1" step="0.001"></td>
-                <td><input type="number" class="form-control form-control-sm" value="${finalHashrate}" min="1" max="500" step="1"></td>
-                <td><input type="number" class="form-control form-control-sm" value="${decayRate}" min="0" max="5" step="0.1"></td>
+                <td><input type="number" class="form-control form-control-sm" value="${power}" min="100" max="10000" step="10" onchange="autoSaveUserMiners()"></td>
+                <td><input type="number" class="form-control form-control-sm" value="${price}" min="100" max="20000" step="100" onchange="autoSaveUserMiners()"></td>
+                <td><input type="number" class="form-control form-control-sm" value="${electricity}" min="0.01" max="1" step="0.001" onchange="autoSaveUserMiners()"></td>
+                <td><input type="number" class="form-control form-control-sm" value="${finalHashrate}" min="1" max="500" step="1" onchange="autoSaveUserMiners()"></td>
+                <td><input type="number" class="form-control form-control-sm" value="${decayRate}" min="0" max="5" step="0.1" onchange="autoSaveUserMiners()"></td>
                 <td>
                     <button class="btn btn-outline-danger btn-sm" onclick="removeMinerRow('minerRow${minerRowCount}')">
                         <i class="bi bi-trash"></i>
@@ -2161,6 +2172,188 @@ Antminer S19j Pro,9,3068,2300,0.08,100,0.5`;
                 document.body.removeChild(toast);
             }, 3000);
         }
+
+        // ===== 自动保存/加载功能 =====
+        
+        let autoSaveTimeout = null;
+        let isLoadingUserData = false; // 防止加载时触发保存
+        
+        // 自动保存用户矿机配置
+        function autoSaveUserMiners() {
+            if (isLoadingUserData) {
+                console.log('跳过自动保存：正在加载用户数据');
+                return;
+            }
+            
+            // 防抖：延迟保存，避免频繁调用
+            if (autoSaveTimeout) {
+                clearTimeout(autoSaveTimeout);
+            }
+            
+            autoSaveTimeout = setTimeout(() => {
+                saveUserMinersToDatabase();
+            }, 2000); // 2秒后保存
+        }
+        
+        // 保存用户矿机数据到数据库
+        async function saveUserMinersToDatabase() {
+            try {
+                const minersData = collectCurrentMinersForSaving();
+                if (minersData.length === 0) {
+                    console.log('没有矿机数据需要保存');
+                    return;
+                }
+                
+                const response = await fetch('/api/user-miners', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        miners: minersData
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    console.log(`✅ 自动保存成功：${result.saved_count}台矿机配置`);
+                    showAutoSaveNotification(true, `已保存 ${result.saved_count} 台矿机配置`);
+                } else {
+                    console.error('自动保存失败:', result.message);
+                    showAutoSaveNotification(false, '配置保存失败');
+                }
+                
+            } catch (error) {
+                console.error('自动保存错误:', error);
+                showAutoSaveNotification(false, '网络错误，保存失败');
+            }
+        }
+        
+        // 从当前表格收集数据用于保存
+        function collectCurrentMinersForSaving() {
+            const miners = [];
+            const rows = document.querySelectorAll('#minersTableBody tr');
+            
+            rows.forEach((row) => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 8) {
+                    const modelSelect = cells[1].querySelector('select');
+                    const quantityInput = cells[2].querySelector('input');
+                    const powerInput = cells[3].querySelector('input');
+                    const priceInput = cells[4].querySelector('input');
+                    const electricityInput = cells[5].querySelector('input');
+                    const hashrateInput = cells[6].querySelector('input');
+                    const decayInput = cells[7].querySelector('input');
+                    
+                    if (modelSelect && quantityInput && powerInput && priceInput && 
+                        electricityInput && hashrateInput && decayInput) {
+                        
+                        miners.push({
+                            model: modelSelect.value,
+                            quantity: parseInt(quantityInput.value) || 1,
+                            power: parseInt(powerInput.value) || 0,
+                            price: parseFloat(priceInput.value) || 0,
+                            electricity: parseFloat(electricityInput.value) || 0,
+                            hashrate: parseFloat(hashrateInput.value) || 0,
+                            decayRate: parseFloat(decayInput.value) || 0
+                        });
+                    }
+                }
+            });
+            
+            return miners;
+        }
+        
+        // 加载用户保存的矿机配置
+        async function loadUserMiners() {
+            try {
+                isLoadingUserData = true; // 标记正在加载
+                console.log('开始加载用户保存的矿机配置...');
+                
+                const response = await fetch('/api/user-miners');
+                const result = await response.json();
+                
+                if (result.success && result.miners && result.miners.length > 0) {
+                    console.log(`找到 ${result.miners.length} 个保存的矿机配置`);
+                    
+                    // 清空现有表格
+                    const tbody = document.getElementById('minersTableBody');
+                    tbody.innerHTML = '';
+                    minerRowCount = 0;
+                    
+                    // 加载保存的配置
+                    result.miners.forEach(miner => {
+                        addMinerRowFromDataOptimized({
+                            model: miner.model,
+                            quantity: miner.quantity,
+                            power: miner.power,
+                            price: miner.price,
+                            electricity: miner.electricity,
+                            hashrate: miner.hashrate,
+                            decayRate: miner.decayRate
+                        });
+                    });
+                    
+                    // 更新界面状态
+                    updateEmptyState();
+                    updateTotalCount();
+                    
+                    console.log('✅ 用户矿机配置加载完成');
+                    showAutoSaveNotification(true, `已恢复 ${result.miners.length} 台矿机配置`);
+                    
+                } else {
+                    console.log('没有找到保存的矿机配置');
+                }
+                
+            } catch (error) {
+                console.error('加载用户配置失败:', error);
+            } finally {
+                isLoadingUserData = false; // 加载完成，恢复自动保存
+            }
+        }
+        
+        // 显示自动保存通知
+        function showAutoSaveNotification(isSuccess, message) {
+            // 创建通知元素
+            const notification = document.createElement('div');
+            notification.className = `alert ${isSuccess ? 'alert-success' : 'alert-danger'} position-fixed`;
+            notification.style.cssText = `
+                top: 20px; 
+                right: 20px; 
+                z-index: 9999; 
+                min-width: 250px;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            `;
+            
+            const icon = isSuccess ? 'bi-cloud-check' : 'bi-cloud-slash';
+            notification.innerHTML = `<i class="bi ${icon} me-2"></i>${message}`;
+            
+            document.body.appendChild(notification);
+            
+            // 淡入效果
+            setTimeout(() => {
+                notification.style.opacity = '1';
+            }, 10);
+            
+            // 自动消失
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // 页面加载时自动加载用户配置
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('页面加载完成，开始加载用户矿机配置...');
+            setTimeout(() => {
+                loadUserMiners();
+            }, 1000); // 等待1秒让页面完全初始化
+        });
 
 
     </script>
