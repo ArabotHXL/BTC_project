@@ -133,7 +133,7 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
             const header = document.createElement('div');
             header.textContent = cost.toFixed(2);
             header.style.cssText = `
-                width: 80px;
+                width: 99px;
                 text-align: center;
                 font-size: 12px;
                 font-weight: 600;
