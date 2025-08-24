@@ -82,7 +82,7 @@ def batch_calculator():
             
             # Query all active miner models from database
             query = text("""
-                SELECT model_name, hashrate, power_consumption, price_usd, manufacturer, efficiency
+                SELECT model_name, reference_hashrate, reference_power, reference_price, manufacturer, reference_efficiency
                 FROM miner_models 
                 WHERE is_active = true 
                 ORDER BY model_name
@@ -826,4 +826,138 @@ def batch_calculate_optimized():
             'success': False,
             'error': 'calculation_failed',
             'message': '优化批量计算失败，请重试'
+        }), 500
+
+
+# 新增：用户矿机自动保存/加载功能
+@batch_calculator_bp.route('/api/user-miners', methods=['GET'])
+@login_required
+def get_user_miners():
+    """获取用户保存的矿机配置"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({
+                'success': False,
+                'error': 'authentication_required',
+                'message': 'Please login first'
+            }), 401
+
+        from models import UserMiner, db
+        
+        # 获取用户的活跃矿机配置
+        user_miners = UserMiner.query.filter_by(
+            user_id=user_id,
+            status='active'
+        ).order_by(UserMiner.created_at.desc()).all()
+        
+        # 转换为前端需要的格式
+        miners_data = []
+        for miner in user_miners:
+            miners_data.append({
+                'id': miner.id,
+                'model': miner.miner_model.model_name if miner.miner_model else '',
+                'quantity': miner.quantity,
+                'power': miner.actual_power,
+                'price': miner.actual_price,
+                'electricity': miner.electricity_cost,
+                'hashrate': miner.actual_hashrate,
+                'decayRate': miner.decay_rate_monthly,
+                'custom_name': miner.custom_name,
+                'location': miner.location
+            })
+        
+        return jsonify({
+            'success': True,
+            'miners': miners_data,
+            'count': len(miners_data)
+        })
+        
+    except Exception as e:
+        logger.error(f"Failed to load user miners: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'load_failed',
+            'message': 'Failed to load saved miners'
+        }), 500
+
+
+@batch_calculator_bp.route('/api/user-miners', methods=['POST'])
+@login_required  
+def save_user_miners():
+    """保存用户矿机配置（自动保存）"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({
+                'success': False,
+                'error': 'authentication_required',
+                'message': 'Please login first'
+            }), 401
+
+        data = request.get_json()
+        if not data or 'miners' not in data:
+            return jsonify({
+                'success': False,
+                'error': 'invalid_data',
+                'message': 'Invalid miner data'
+            }), 400
+
+        miners = data['miners']
+        from models import UserMiner, MinerModel, db
+        
+        # 清除用户现有的自动保存配置（保留手动命名的配置）
+        UserMiner.query.filter_by(
+            user_id=user_id,
+            custom_name=None  # 只删除没有自定义名称的自动保存配置
+        ).delete()
+        
+        saved_count = 0
+        
+        # 保存新的矿机配置
+        for miner_data in miners:
+            # 查找对应的矿机型号
+            miner_model = MinerModel.query.filter_by(
+                model_name=miner_data.get('model', ''),
+                is_active=True
+            ).first()
+            
+            if not miner_model:
+                logger.warning(f"Miner model not found: {miner_data.get('model', '')}")
+                continue
+            
+            # 创建用户矿机记录
+            user_miner = UserMiner(
+                user_id=user_id,
+                miner_model_id=miner_model.id,
+                quantity=int(miner_data.get('quantity', 1)),
+                actual_hashrate=float(miner_data.get('hashrate', 0)),
+                actual_power=int(miner_data.get('power', 0)),
+                actual_price=float(miner_data.get('price', 0)),
+                electricity_cost=float(miner_data.get('electricity', 0)),
+                decay_rate_monthly=float(miner_data.get('decayRate', 0.5)),
+                custom_name=None,  # 自动保存的配置不设置自定义名称
+                status='active'
+            )
+            
+            db.session.add(user_miner)
+            saved_count += 1
+        
+        db.session.commit()
+        
+        logger.info(f"Auto-saved {saved_count} miner configurations for user {user_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Configuration auto-saved',
+            'saved_count': saved_count
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Failed to save user miners: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'save_failed',
+            'message': 'Failed to save configuration'
         }), 500
