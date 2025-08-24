@@ -1229,6 +1229,7 @@ def _filter_result_by_role(result, user_role):
             'inputs': result.get('inputs', {}),
             'network_data': result.get('network_data', {}),
             'revenue': result.get('revenue', {}),
+            'pool_fee': result.get('pool_fee', {}),
             'break_even': {
                 'btc_price': result.get('break_even', {}).get('btc_price', 0),
                 'electricity_cost': result.get('break_even', {}).get('electricity_cost', 0)
