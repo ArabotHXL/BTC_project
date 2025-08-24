@@ -3549,7 +3549,7 @@ def analytics_dashboard():
                         return 100.0
                     rs = avg_gain / avg_loss
                     rsi = 100 - (100 / (1 + rs))
-                    return float(min(max(rsi, 0), 100))
+                    return float(min(max(float(rsi), 0.0), 100.0))
                 
                 def calculate_sma(prices, period):
                     if len(prices) < period:
