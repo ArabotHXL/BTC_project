@@ -2140,7 +2140,6 @@ def migrate_to_crm():
 
 @app.route('/api/profit-chart-data', methods=['POST'])
 @app.route('/profit_chart_data', methods=['POST'])
-@login_required
 def get_profit_chart_data():
     """Generate profit chart data for visualization"""
     try:
