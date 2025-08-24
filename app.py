@@ -18,6 +18,7 @@ from sqlalchemy import text
 from db import db
 from auth import verify_email, login_required
 from translations import get_translation
+from rate_limiting import rate_limit
 
 def get_latest_market_data():
     """从market_analytics表获取最新市场数据"""
@@ -2140,7 +2141,7 @@ def migrate_to_crm():
 
 @app.route('/api/profit-chart-data', methods=['POST'])
 @app.route('/profit_chart_data', methods=['POST'])
-@login_required
+@rate_limit(max_requests=3, window_minutes=60, feature_name="热力图")
 def get_profit_chart_data():
     """Generate profit chart data for visualization"""
     try:
