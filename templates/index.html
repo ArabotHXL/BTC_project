@@ -1955,6 +1955,108 @@
         }
     </script>
 
+    <!-- Registration Call-to-Action Section -->
+    {% if not session.authenticated %}
+    <div class="bg-gradient" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); margin-top: 3rem;">
+        <div class="container py-5">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="text-center text-white">
+                        <div class="mb-4">
+                            <i class="bi bi-gem display-4 text-warning mb-3"></i>
+                            <h2 class="fw-bold mb-3">
+                                {% if current_lang == 'zh' %}
+                                    注册解锁专业挖矿工具
+                                {% else %}
+                                    Register to Unlock Professional Mining Tools
+                                {% endif %}
+                            </h2>
+                            <p class="lead text-light mb-4">
+                                {% if current_lang == 'zh' %}
+                                    免费注册，获取更强大的挖矿计算和分析功能
+                                {% else %}
+                                    Sign up for free to access advanced mining calculations and analytics
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-4">
+                                <div class="p-3 rounded bg-white bg-opacity-10">
+                                    <i class="bi bi-calculator display-6 text-warning mb-2"></i>
+                                    <h5 class="text-warning">
+                                        {% if current_lang == 'zh' %}批量计算器{% else %}Batch Calculator{% endif %}
+                                    </h5>
+                                    <p class="small text-light">
+                                        {% if current_lang == 'zh' %}
+                                            一次计算数千台矿机的收益
+                                        {% else %}
+                                            Calculate thousands of miners at once
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 rounded bg-white bg-opacity-10">
+                                    <i class="bi bi-graph-up display-6 text-info mb-2"></i>
+                                    <h5 class="text-info">
+                                        {% if current_lang == 'zh' %}技术分析{% else %}Technical Analysis{% endif %}
+                                    </h5>
+                                    <p class="small text-light">
+                                        {% if current_lang == 'zh' %}
+                                            RSI, MACD, 布林带等专业指标
+                                        {% else %}
+                                            RSI, MACD, Bollinger Bands & more
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 rounded bg-white bg-opacity-10">
+                                    <i class="bi bi-file-earmark-pdf display-6 text-success mb-2"></i>
+                                    <h5 class="text-success">
+                                        {% if current_lang == 'zh' %}专业报告{% else %}Professional Reports{% endif %}
+                                    </h5>
+                                    <p class="small text-light">
+                                        {% if current_lang == 'zh' %}
+                                            导出详细的PDF分析报告
+                                        {% else %}
+                                            Export detailed PDF analysis reports
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <a href="{{ url_for('register') }}" class="btn btn-warning btn-lg px-5 me-md-2">
+                                <i class="bi bi-person-plus-fill me-2"></i>
+                                {% if current_lang == 'zh' %}免费注册{% else %}Sign Up Free{% endif %}
+                            </a>
+                            <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg px-5">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>
+                                {% if current_lang == 'zh' %}已有账户？登录{% else %}Have Account? Login{% endif %}
+                            </a>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <small class="text-light opacity-75">
+                                {% if current_lang == 'zh' %}
+                                    <i class="bi bi-shield-check me-1"></i>
+                                    100% 免费 • 无需信用卡 • 立即访问高级功能
+                                {% else %}
+                                    <i class="bi bi-shield-check me-1"></i>
+                                    100% Free • No Credit Card • Instant Access to Premium Features
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Footer with Legal Link -->
     <footer class="bg-dark text-center py-4 mt-5">
         <div class="container">

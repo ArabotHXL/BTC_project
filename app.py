@@ -783,8 +783,42 @@ def dashboard():
 @app.route('/calculator')
 @app.route('/mining-calculator')  # Add missing route for regression tests
 def calculator():
-    """渲染BTC挖矿计算器主页 - Public access for testing"""
+    """渲染BTC挖矿计算器主页 - 带使用频率限制的版本"""
     try:
+        # 导入频率限制系统
+        from rate_limiting import rate_limit, get_client_identifier
+        
+        # 对未登录用户应用频率限制
+        if not session.get('authenticated'):
+            from rate_limiting import _rate_limit_store, get_rate_limit_info
+            from datetime import datetime, timedelta
+            
+            client_id = get_client_identifier()
+            now = datetime.now()
+            window_start = now - timedelta(minutes=60)
+            
+            # 获取客户端请求记录
+            if client_id not in _rate_limit_store:
+                _rate_limit_store[client_id] = []
+            
+            # 过滤时间窗口内的请求
+            recent_requests = [
+                req_time for req_time in _rate_limit_store[client_id] 
+                if req_time > window_start
+            ]
+            
+            # 检查是否超过限制（未登录用户：10次/小时）
+            if len(recent_requests) >= 10:
+                logging.warning(f"频率限制触发: {client_id} - calculator - {len(recent_requests)}/10")
+                return render_template('rate_limit_exceeded.html',
+                                     max_requests=10,
+                                     window_minutes=60,
+                                     feature_name='mining_calculator'), 429
+            
+            # 记录新请求
+            recent_requests.append(now)
+            _rate_limit_store[client_id] = recent_requests
+        
         # 验证关键环境变量
         if not os.environ.get("DATABASE_URL"):
             logging.error("DATABASE_URL environment variable not set")
