@@ -31,11 +31,11 @@ class MinerModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     model_name = db.Column(db.String(100), unique=True, nullable=False, index=True)
     manufacturer = db.Column(db.String(50), nullable=False)  # 制造商 (Antminer, WhatsMiner, etc.)
-    hashrate = db.Column(db.Float, nullable=False)  # 算力 (TH/s)
-    power_consumption = db.Column(db.Integer, nullable=False)  # 功耗 (W)
-    efficiency = db.Column(db.Float, nullable=True)  # 能效比 (W/TH)
+    reference_hashrate = db.Column(db.Float, nullable=False)  # 参考算力 (TH/s)
+    reference_power = db.Column(db.Integer, nullable=False)  # 参考功耗 (W)
+    reference_efficiency = db.Column(db.Float, nullable=True)  # 参考能效比 (W/TH)
     release_date = db.Column(db.Date, nullable=True)  # 发布日期
-    price_usd = db.Column(db.Float, nullable=True)  # 美金价格
+    reference_price = db.Column(db.Float, nullable=True)  # 参考价格 ($)
     is_active = db.Column(db.Boolean, default=True)  # 是否可用
     is_liquid_cooled = db.Column(db.Boolean, default=False)  # 是否水冷
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -54,15 +54,15 @@ class MinerModel(db.Model):
     height_mm = db.Column(db.Float, nullable=True)  # 高度(mm)
     weight_kg = db.Column(db.Float, nullable=True)  # 重量(kg)
     
-    def __init__(self, model_name, manufacturer, hashrate, power_consumption, **kwargs):
+    def __init__(self, model_name, manufacturer, reference_hashrate, reference_power, **kwargs):
         self.model_name = model_name
         self.manufacturer = manufacturer
-        self.hashrate = hashrate
-        self.power_consumption = power_consumption
+        self.reference_hashrate = reference_hashrate
+        self.reference_power = reference_power
         
-        # 自动计算能效比
-        if hashrate > 0:
-            self.efficiency = round(power_consumption / hashrate, 2)
+        # 自动计算参考能效比
+        if reference_hashrate > 0:
+            self.reference_efficiency = round(reference_power / reference_hashrate, 2)
         
         # 处理其他可选参数
         for key, value in kwargs.items():
@@ -70,7 +70,7 @@ class MinerModel(db.Model):
                 setattr(self, key, value)
     
     def __repr__(self):
-        return f"<MinerModel {self.model_name}: {self.hashrate}TH/s, {self.power_consumption}W>"
+        return f"<MinerModel {self.model_name}: {self.reference_hashrate}TH/s, {self.reference_power}W>"
     
     def to_dict(self):
         """转换为字典格式，便于JSON序列化"""
@@ -78,10 +78,10 @@ class MinerModel(db.Model):
             'id': self.id,
             'model_name': self.model_name,
             'manufacturer': self.manufacturer,
-            'hashrate': self.hashrate,
-            'power_consumption': self.power_consumption,
-            'efficiency': self.efficiency,
-            'price_usd': self.price_usd,
+            'reference_hashrate': self.reference_hashrate,
+            'reference_power': self.reference_power,
+            'reference_efficiency': self.reference_efficiency,
+            'reference_price': self.reference_price,
             'is_active': self.is_active,
             'is_liquid_cooled': self.is_liquid_cooled,
             'release_date': self.release_date.isoformat() if self.release_date else None,
@@ -115,6 +115,145 @@ class MinerModel(db.Model):
         """根据制造商获取矿机列表"""
         from app import db
         return db.session.query(cls).filter_by(manufacturer=manufacturer, is_active=True).order_by(cls.model_name).all()
+
+class UserMiner(db.Model):
+    """用户矿机设备数据库模型 - 存储用户的实际矿机信息"""
+    __tablename__ = 'user_miners'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 关联字段
+    user_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=False, index=True)
+    miner_model_id = db.Column(db.Integer, db.ForeignKey('miner_models.id'), nullable=False, index=True)
+    
+    # 用户自定义信息
+    custom_name = db.Column(db.String(100), nullable=True)  # 用户自定义名称
+    quantity = db.Column(db.Integer, nullable=False, default=1)  # 数量
+    
+    # 实际用户数据 (覆盖系统默认值)
+    actual_hashrate = db.Column(db.Float, nullable=False)  # 实际算力 (TH/s)
+    actual_power = db.Column(db.Integer, nullable=False)  # 实际功耗 (W)
+    actual_price = db.Column(db.Float, nullable=False)  # 实际购买价格 ($)
+    electricity_cost = db.Column(db.Float, nullable=False)  # 电费成本 ($/kWh)
+    decay_rate_monthly = db.Column(db.Float, nullable=False, default=0.5)  # 月衰减率 (%)
+    
+    # 设备管理信息
+    status = db.Column(db.String(20), nullable=False, default='active')  # active/maintenance/offline/sold
+    location = db.Column(db.String(200), nullable=True)  # 存放位置
+    purchase_date = db.Column(db.Date, nullable=True)  # 购买日期
+    notes = db.Column(db.Text, nullable=True)  # 用户备注
+    
+    # 维修和历史记录
+    original_hashrate = db.Column(db.Float, nullable=True)  # 原始算力，用于对比衰减
+    last_maintenance_date = db.Column(db.Date, nullable=True)  # 上次维修日期
+    maintenance_count = db.Column(db.Integer, nullable=False, default=0)  # 维修次数
+    
+    # 时间戳
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # 关联关系
+    user = db.relationship('UserAccess', backref='miners', foreign_keys=[user_id])
+    miner_model = db.relationship('MinerModel', backref='user_instances', foreign_keys=[miner_model_id])
+    
+    def __init__(self, user_id, miner_model_id, actual_hashrate, actual_power, 
+                 actual_price, electricity_cost, quantity=1, **kwargs):
+        self.user_id = user_id
+        self.miner_model_id = miner_model_id
+        self.actual_hashrate = actual_hashrate
+        self.actual_power = actual_power
+        self.actual_price = actual_price
+        self.electricity_cost = electricity_cost
+        self.quantity = quantity
+        
+        # 设置原始算力为当前算力（如果没有提供的话）
+        if 'original_hashrate' not in kwargs:
+            self.original_hashrate = actual_hashrate
+        
+        # 处理其他可选参数
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def __repr__(self):
+        model_name = self.miner_model.model_name if self.miner_model else "Unknown"
+        return f"<UserMiner {self.custom_name or model_name} x{self.quantity}: {self.actual_hashrate}TH/s>"
+    
+    def to_dict(self):
+        """转换为字典格式，便于JSON序列化"""
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'miner_model_id': self.miner_model_id,
+            'miner_model_name': self.miner_model.model_name if self.miner_model else None,
+            'custom_name': self.custom_name,
+            'quantity': self.quantity,
+            'actual_hashrate': self.actual_hashrate,
+            'actual_power': self.actual_power,
+            'actual_price': self.actual_price,
+            'electricity_cost': self.electricity_cost,
+            'decay_rate_monthly': self.decay_rate_monthly,
+            'status': self.status,
+            'location': self.location,
+            'purchase_date': self.purchase_date.isoformat() if self.purchase_date else None,
+            'notes': self.notes,
+            'original_hashrate': self.original_hashrate,
+            'last_maintenance_date': self.last_maintenance_date.isoformat() if self.last_maintenance_date else None,
+            'maintenance_count': self.maintenance_count,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+    
+    def calculate_total_hashrate(self):
+        """计算总算力"""
+        return self.actual_hashrate * self.quantity
+    
+    def calculate_total_power(self):
+        """计算总功耗"""
+        return self.actual_power * self.quantity
+    
+    def calculate_hashrate_degradation(self):
+        """计算算力衰减百分比"""
+        if not self.original_hashrate or self.original_hashrate == 0:
+            return 0
+        return ((self.original_hashrate - self.actual_hashrate) / self.original_hashrate) * 100
+    
+    def update_after_maintenance(self, new_hashrate, maintenance_notes=None):
+        """维修后更新算力"""
+        self.actual_hashrate = new_hashrate
+        self.last_maintenance_date = datetime.utcnow().date()
+        self.maintenance_count += 1
+        if maintenance_notes:
+            current_notes = self.notes or ""
+            maintenance_log = f"\n[{datetime.utcnow().strftime('%Y-%m-%d')}] 维修记录: {maintenance_notes}"
+            self.notes = current_notes + maintenance_log
+        self.updated_at = datetime.utcnow()
+    
+    @classmethod
+    def get_user_miners(cls, user_id, status=None):
+        """获取用户的矿机列表"""
+        from app import db
+        query = db.session.query(cls).filter_by(user_id=user_id)
+        if status:
+            query = query.filter_by(status=status)
+        return query.order_by(cls.created_at.desc()).all()
+    
+    @classmethod
+    def get_user_miner_summary(cls, user_id):
+        """获取用户矿机汇总信息"""
+        from app import db
+        miners = cls.get_user_miners(user_id, status='active')
+        
+        total_miners = sum(miner.quantity for miner in miners)
+        total_hashrate = sum(miner.calculate_total_hashrate() for miner in miners)
+        total_power = sum(miner.calculate_total_power() for miner in miners)
+        
+        return {
+            'total_miners': total_miners,
+            'total_hashrate': total_hashrate,
+            'total_power': total_power,
+            'active_records': len(miners)
+        }
 
 class NetworkSnapshot(db.Model):
     """网络状态快照记录"""
