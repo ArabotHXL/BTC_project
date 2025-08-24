@@ -111,8 +111,8 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
         const headerRow = document.createElement('div');
         headerRow.style.cssText = `
             display: flex;
-            gap: 8px;
-            margin-left: 140px;
+            gap: 6px;
+            margin-left: 120px;
             align-items: center;
         `;
         
@@ -133,12 +133,12 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
             const header = document.createElement('div');
             header.textContent = cost.toFixed(2);
             header.style.cssText = `
-                width: 95px;
+                width: 80px;
                 text-align: center;
-                font-size: 13px;
+                font-size: 12px;
                 font-weight: 600;
                 color: #e0e0e0;
-                padding: 8px;
+                padding: 6px;
             `;
             headerRow.appendChild(header);
         });
@@ -150,10 +150,10 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
         heatmapGrid.style.cssText = `
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
             background: rgba(255,255,255,0.05);
             border-radius: 12px;
-            padding: 30px;
+            padding: 25px;
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255,255,255,0.1);
         `;
@@ -171,19 +171,19 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
             row.style.cssText = `
                 display: flex;
                 align-items: center;
-                gap: 8px;
+                gap: 6px;
             `;
 
             // BTC price label (Y-axis)
             const rowLabel = document.createElement('div');
             rowLabel.textContent = `$${formatCurrency(btcPrice)}`;
             rowLabel.style.cssText = `
-                width: 120px;
+                width: 100px;
                 text-align: right;
-                font-size: 14px;
+                font-size: 13px;
                 font-weight: 600;
                 color: #e0e0e0;
-                padding: 12px 18px 12px 8px;
+                padding: 10px 15px 10px 5px;
                 display: flex;
                 align-items: center;
                 justify-content: flex-end;
@@ -199,11 +199,11 @@ function createEnhancedHeatmap(containerElement, profitData, options = {}) {
 
                 const square = document.createElement('div');
                 square.style.cssText = `
-                    width: 90px;
-                    height: 90px;
+                    width: 75px;
+                    height: 75px;
                     background: ${backgroundColor};
                     border: 2px solid rgba(255,255,255,0.2);
-                    border-radius: 12px;
+                    border-radius: 10px;
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
