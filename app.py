@@ -1075,6 +1075,199 @@ def calculate():
     
     return calculate_internal(request)
 
+# Helper functions for calculate_internal to reduce complexity
+
+def _parse_float_safely(value, default, field_name):
+    """Safely parse a float value with fallback to default"""
+    try:
+        if value is None or value == '':
+            return default
+        if isinstance(value, str) and value.lower() in ['nan', 'inf', '-inf', '+inf']:
+            logging.warning(f"Invalid {field_name} value: {value}, using default: {default}")
+            return default
+        parsed = float(value)
+        if not (parsed == parsed and abs(parsed) != float('inf')):
+            logging.warning(f"NaN/Inf {field_name} value detected, using default: {default}")
+            return default
+        return parsed
+    except (ValueError, TypeError) as e:
+        logging.warning(f"Error parsing {field_name}: {value} - {str(e)}, using default: {default}")
+        return default
+
+def _parse_calculation_inputs(data):
+    """Parse and validate all calculation inputs"""
+    input_errors = []
+    parsed_data = {}
+    
+    # Parse hashrate
+    try:
+        hashrate_raw = data.get('hashrate', 0)
+        if isinstance(hashrate_raw, str) and hashrate_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
+            raise ValueError(f"Invalid numeric value: {hashrate_raw}")
+        hashrate = float(hashrate_raw)
+        if not (hashrate == hashrate and abs(hashrate) != float('inf')):
+            raise ValueError("NaN or infinite value detected")
+        logging.info(f"解析单机算力: {hashrate} TH/s")
+    except (ValueError, TypeError) as e:
+        error_msg = f"无效的算力值: {data.get('hashrate')}"
+        logging.error(f"{error_msg} - {str(e)}")
+        input_errors.append(error_msg)
+        hashrate = 0
+    
+    parsed_data['hashrate'] = hashrate
+    parsed_data['hashrate_unit'] = data.get('hashrate_unit', 'TH/s')
+    
+    # Parse power consumption
+    try:
+        power_consumption_raw = data.get('power-consumption', data.get('power_consumption', 0))
+        if isinstance(power_consumption_raw, str) and power_consumption_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
+            raise ValueError(f"Invalid numeric value: {power_consumption_raw}")
+        power_consumption = float(power_consumption_raw)
+        if not (power_consumption == power_consumption and abs(power_consumption) != float('inf')):
+            raise ValueError("NaN or infinite value detected")
+        logging.info(f"解析单机功耗: {power_consumption} W")
+    except (ValueError, TypeError) as e:
+        error_msg = f"无效的功耗值: {data.get('power-consumption', data.get('power_consumption'))}"
+        logging.error(f"{error_msg} - {str(e)}")
+        input_errors.append(error_msg)
+        power_consumption = 0
+    
+    parsed_data['power_consumption'] = power_consumption
+    
+    # Parse electricity costs
+    try:
+        electricity_cost_raw = data.get('electricity-cost', data.get('electricity_cost', 0))
+        if isinstance(electricity_cost_raw, str) and electricity_cost_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
+            raise ValueError(f"Invalid numeric value: {electricity_cost_raw}")
+        electricity_cost_str = str(electricity_cost_raw) if electricity_cost_raw is not None else '0.05'
+        electricity_cost = 0.05 if not electricity_cost_str or electricity_cost_str == '' else float(electricity_cost_str)
+        if not (electricity_cost == electricity_cost and abs(electricity_cost) != float('inf')):
+            raise ValueError("NaN or infinite value detected")
+    except (ValueError, TypeError) as e:
+        error_msg = f"无效的电费值: {data.get('electricity-cost', data.get('electricity_cost'))}"
+        logging.error(f"{error_msg} - {str(e)}")
+        input_errors.append(error_msg)
+        electricity_cost = 0.05
+    
+    parsed_data['electricity_cost'] = electricity_cost
+    
+    return parsed_data, input_errors
+
+def _parse_additional_inputs(data, parsed_data, input_errors):
+    """Parse additional inputs like BTC price, miner details, etc."""
+    # Parse client electricity cost
+    try:
+        client_electricity_cost_raw = data.get('client_electricity_cost', 0)
+        if isinstance(client_electricity_cost_raw, str) and client_electricity_cost_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
+            raise ValueError(f"Invalid numeric value: {client_electricity_cost_raw}")
+        client_electricity_cost = float(client_electricity_cost_raw)
+        if not (client_electricity_cost == client_electricity_cost and abs(client_electricity_cost) != float('inf')):
+            raise ValueError("NaN or infinite value detected")
+        if client_electricity_cost < 0 or client_electricity_cost > 1000:
+            raise ValueError(f"客户电费超出合理范围 (0-1000): {client_electricity_cost}")
+    except (ValueError, TypeError) as e:
+        error_msg = f"无效的客户电费值: {data.get('client_electricity_cost')}"
+        logging.error(f"{error_msg} - {str(e)}")
+        input_errors.append(error_msg)
+        client_electricity_cost = 0.08
+    
+    parsed_data['client_electricity_cost'] = client_electricity_cost
+    
+    # Parse BTC price
+    try:
+        btc_price_raw = data.get('btc-price-input', data.get('btc_price', 0))
+        if isinstance(btc_price_raw, str) and btc_price_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
+            raise ValueError(f"Invalid numeric value: {btc_price_raw}")
+        btc_price_str = str(btc_price_raw) if btc_price_raw is not None else '0'
+        btc_price = 0 if not btc_price_str or btc_price_str == '' else float(btc_price_str)
+        if not (btc_price == btc_price and abs(btc_price) != float('inf')):
+            raise ValueError("NaN or infinite value detected")
+    except (ValueError, TypeError) as e:
+        error_msg = f"无效的BTC价格值: {data.get('btc-price-input', data.get('btc_price'))}"
+        logging.error(f"{error_msg} - {str(e)}")
+        input_errors.append(error_msg)
+        btc_price = 0
+    
+    parsed_data['btc_price'] = btc_price
+    parsed_data['use_real_time'] = data.get('use_real_time_data', data.get('use_real_time')) in ['on', True, 'true', '1']
+    
+    # Parse miner model and count
+    miner_model_raw = data.get('miner-model', data.get('miner_model'))
+    if miner_model_raw and '(' in miner_model_raw:
+        miner_model = miner_model_raw.split('(')[0].strip()
+    else:
+        miner_model = miner_model_raw
+    parsed_data['miner_model'] = miner_model
+    logging.info(f"解析矿机型号: 原始='{miner_model_raw}' -> 处理后='{miner_model}'")
+    
+    try:
+        miner_count_raw = data.get('miner-count', data.get('count', data.get('miner_count', 1)))
+        miner_count_str = str(miner_count_raw) if miner_count_raw is not None else '1'
+        miner_count = int(float(miner_count_str))
+        logging.info(f"成功解析矿机数量: {miner_count}")
+    except (ValueError, TypeError) as e:
+        error_msg = f"无效的矿机数量: {data.get('miner-count', data.get('count', data.get('miner_count')))}"
+        logging.error(f"{error_msg} - {str(e)}")
+        input_errors.append(error_msg)
+        miner_count = 1
+    
+    parsed_data['miner_count'] = miner_count
+    
+    return parsed_data, input_errors
+
+def _filter_result_by_role(result, user_role):
+    """Filter calculation results based on user role"""
+    if user_role not in ['owner', 'admin', 'mining_site']:
+        logging.info("用户没有矿场主权限，过滤敏感数据")
+        
+        filtered_result = {
+            'success': True,
+            'timestamp': result.get('timestamp', datetime.now().isoformat()),
+            'btc_mined': result.get('btc_mined', {}),
+            'client_electricity_cost': result.get('client_electricity_cost', {}),
+            'client_profit': result.get('client_profit', {}),
+            'inputs': result.get('inputs', {}),
+            'network_data': result.get('network_data', {}),
+            'revenue': result.get('revenue', {}),
+            'break_even': {
+                'btc_price': result.get('break_even', {}).get('btc_price', 0),
+                'electricity_cost': result.get('break_even', {}).get('electricity_cost', 0)
+            },
+            'optimization': result.get('optimization', {})
+        }
+        
+        if 'roi' in result and 'client' in result['roi']:
+            filtered_result['roi'] = {'client': result['roi']['client']}
+        
+        if 'estimation_note' in result:
+            filtered_result['estimation_note'] = result['estimation_note']
+        
+        return filtered_result
+    
+    return result
+
+def _record_network_snapshot(result, use_real_time):
+    """Record network data snapshot if conditions are met"""
+    try:
+        if use_real_time and result.get('success', True):
+            network_data = result.get('network_data', {})
+            if network_data:
+                utc_time = datetime.utcnow()
+                est_time = pytz.utc.localize(utc_time).astimezone(pytz.timezone('US/Eastern'))
+                
+                snapshot = NetworkSnapshot(
+                    btc_price=network_data.get('btc_price', 0),
+                    network_difficulty=network_data.get('network_difficulty', 0),
+                    network_hashrate=network_data.get('network_hashrate', 0),
+                    block_reward=network_data.get('block_reward', 3.125)
+                )
+                snapshot.recorded_at = est_time.replace(tzinfo=None)
+                db.session.add(snapshot)
+                db.session.commit()
+                logging.info(f"网络快照已记录: BTC=${network_data.get('btc_price')}, 难度={network_data.get('network_difficulty')}T")
+    except Exception as snapshot_error:
+        logging.error(f"记录网络快照失败: {snapshot_error}")
+
 def calculate_internal(request_obj):
     """Internal calculation function shared by authenticated and test endpoints"""
     try:
@@ -1086,204 +1279,54 @@ def calculate_internal(request_obj):
             data = request_obj.form
             logging.info(f"Received calculate request form data: {data}")
         
-        # 初始化错误收集列表
-        input_errors = []
+        # Parse basic inputs using helper function
+        parsed_data, input_errors = _parse_calculation_inputs(data)
         
-        # Get values from the request data with detailed error handling
-        try:
-            hashrate_raw = data.get('hashrate', 0)
-            # Guard against NaN injection
-            if isinstance(hashrate_raw, str) and hashrate_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
-                raise ValueError(f"Invalid numeric value: {hashrate_raw}")
-            hashrate = float(hashrate_raw)
-            # Additional check for NaN/inf after conversion
-            if not (hashrate == hashrate and abs(hashrate) != float('inf')):
-                raise ValueError("NaN or infinite value detected")
-            logging.info(f"解析单机算力: {hashrate} TH/s")
-        except (ValueError, TypeError) as e:
-            error_msg = f"无效的算力值: {data.get('hashrate')}"
-            logging.error(f"{error_msg} - {str(e)}")
-            input_errors.append(error_msg)
-            hashrate = 0
-            
-        hashrate_unit = data.get('hashrate_unit', 'TH/s')
+        # Parse additional inputs
+        parsed_data, input_errors = _parse_additional_inputs(data, parsed_data, input_errors)
         
-        try:
-            # 修复字段名映射，前端发送的是 power-consumption
-            power_consumption_raw = data.get('power-consumption', data.get('power_consumption', 0))
-            # Guard against NaN injection
-            if isinstance(power_consumption_raw, str) and power_consumption_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
-                raise ValueError(f"Invalid numeric value: {power_consumption_raw}")
-            power_consumption = float(power_consumption_raw)
-            # Additional check for NaN/inf after conversion
-            if not (power_consumption == power_consumption and abs(power_consumption) != float('inf')):
-                raise ValueError("NaN or infinite value detected")
-            logging.info(f"解析单机功耗: {power_consumption} W")
-        except (ValueError, TypeError) as e:
-            error_msg = f"无效的功耗值: {data.get('power-consumption', data.get('power_consumption'))}"
-            logging.error(f"{error_msg} - {str(e)}")
-            input_errors.append(error_msg)
-            power_consumption = 0
+        # Extract parsed values for easier use
+        hashrate = parsed_data['hashrate']
+        hashrate_unit = parsed_data['hashrate_unit']
+        power_consumption = parsed_data['power_consumption']
+        electricity_cost = parsed_data['electricity_cost']
+        client_electricity_cost = parsed_data['client_electricity_cost']
+        btc_price = parsed_data['btc_price']
+        use_real_time = parsed_data['use_real_time']
+        miner_model = parsed_data['miner_model']
+        miner_count = parsed_data['miner_count']
             
-        try:
-            # 修复字段名映射，前端发送的是 electricity-cost
-            electricity_cost_raw = data.get('electricity-cost', data.get('electricity_cost', 0))
-            # Guard against NaN injection
-            if isinstance(electricity_cost_raw, str) and electricity_cost_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
-                raise ValueError(f"Invalid numeric value: {electricity_cost_raw}")
-            # Convert to string first to handle all input types consistently  
-            electricity_cost_str = str(electricity_cost_raw) if electricity_cost_raw is not None else '0.05'
-            if not electricity_cost_str or electricity_cost_str == '':
-                electricity_cost = 0.05
-            else:
-                electricity_cost = float(electricity_cost_str)
-            # Additional check for NaN/inf after conversion
-            if not (electricity_cost == electricity_cost and abs(electricity_cost) != float('inf')):
-                raise ValueError("NaN or infinite value detected")
-        except (ValueError, TypeError) as e:
-            error_msg = f"无效的电费值: {data.get('electricity-cost', data.get('electricity_cost'))}"
-            logging.error(f"{error_msg} - {str(e)}")
-            input_errors.append(error_msg)
-            electricity_cost = 0.05  # Default value
-            
-        try:
-            client_electricity_cost_raw = data.get('client_electricity_cost', 0)
-            # Guard against NaN injection
-            if isinstance(client_electricity_cost_raw, str) and client_electricity_cost_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
-                raise ValueError(f"Invalid numeric value: {client_electricity_cost_raw}")
-            client_electricity_cost = float(client_electricity_cost_raw)
-            # Additional check for NaN/inf after conversion
-            if not (client_electricity_cost == client_electricity_cost and abs(client_electricity_cost) != float('inf')):
-                raise ValueError("NaN or infinite value detected")
-            # 添加合理性检查 - 客户电费不能是负数或极端值
-            if client_electricity_cost < 0 or client_electricity_cost > 1000:
-                raise ValueError(f"客户电费超出合理范围 (0-1000): {client_electricity_cost}")
-        except (ValueError, TypeError) as e:
-            error_msg = f"无效的客户电费值: {data.get('client_electricity_cost')}"
-            logging.error(f"{error_msg} - {str(e)}")
-            input_errors.append(error_msg)
-            client_electricity_cost = 0.08
-            
-        try:
-            # 修复字段名映射，前端发送的是 btc-price-input
-            btc_price_raw = data.get('btc-price-input', data.get('btc_price', 0))
-            # Guard against NaN injection
-            if isinstance(btc_price_raw, str) and btc_price_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
-                raise ValueError(f"Invalid numeric value: {btc_price_raw}")
-            # Convert to string first to handle all input types consistently  
-            btc_price_str = str(btc_price_raw) if btc_price_raw is not None else '0'
-            if not btc_price_str or btc_price_str == '':
-                btc_price = 0
-            else:
-                btc_price = float(btc_price_str)
-            # Additional check for NaN/inf after conversion
-            if not (btc_price == btc_price and abs(btc_price) != float('inf')):
-                raise ValueError("NaN or infinite value detected")
-        except (ValueError, TypeError) as e:
-            error_msg = f"无效的BTC价格值: {data.get('btc-price-input', data.get('btc_price'))}"
-            logging.error(f"{error_msg} - {str(e)}")
-            input_errors.append(error_msg)
-            btc_price = 0
-            
-        use_real_time = data.get('use_real_time_data', data.get('use_real_time')) in ['on', True, 'true', '1']
-        # 修复字段名映射，前端发送的是 miner-model
-        miner_model_raw = data.get('miner-model', data.get('miner_model'))
+        # Parse remaining parameters not handled by helper functions
+        site_power_mw = _parse_float_safely(data.get('site_power_mw', 1.0), 1.0, 'site_power_mw')
+        total_hashrate = _parse_float_safely(data.get('total-hashrate') or data.get('total_hashrate') or 0, 0, 'total_hashrate')
+        total_power = _parse_float_safely(data.get('total-power') or data.get('total_power') or 0, 0, 'total_power')
+        curtailment = _parse_float_safely(data.get('curtailment', '0'), 0, 'curtailment')
+        maintenance_fee = _parse_float_safely(data.get('maintenance_fee', 0), float(miner_count) * 5, 'maintenance_fee')
+        host_investment = _parse_float_safely(data.get('host_investment', '0'), 0, 'host_investment')
+        client_investment = _parse_float_safely(data.get('client_investment', '0'), 0, 'client_investment')
         
-        # 去掉矿机型号中的规格信息，例如 "Antminer S19j Pro (100 TH/s, 3068W)" -> "Antminer S19j Pro"
-        if miner_model_raw and '(' in miner_model_raw:
-            miner_model = miner_model_raw.split('(')[0].strip()
-        else:
-            miner_model = miner_model_raw
-            
-        logging.info(f"解析矿机型号: 原始='{miner_model_raw}' -> 处理后='{miner_model}'")
-        
-        try:
-            # 修复字段名映射，前端发送的是 miner-count
-            miner_count_raw = data.get('miner-count', data.get('count', data.get('miner_count', 1)))
-            # Convert to string first to handle JSON input
-            miner_count_str = str(miner_count_raw) if miner_count_raw is not None else '1'
-            # Parse as float first then convert to int to handle decimal strings
-            miner_count = int(float(miner_count_str))
-            logging.info(f"成功解析矿机数量: {miner_count}")
-        except (ValueError, TypeError) as e:
-            error_msg = f"无效的矿机数量: {data.get('miner-count', data.get('count', data.get('miner_count')))}"
-            logging.error(f"{error_msg} - {str(e)}")
-            input_errors.append(error_msg)
-            miner_count = 1
-            
-        try:
-            site_power_mw_raw = data.get('site_power_mw', 1.0)
-            # Guard against NaN injection
-            if isinstance(site_power_mw_raw, str) and site_power_mw_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
-                raise ValueError(f"Invalid numeric value: {site_power_mw_raw}")
-            site_power_mw = float(site_power_mw_raw)
-            # Additional check for NaN/inf after conversion
-            if not (site_power_mw == site_power_mw and abs(site_power_mw) != float('inf')):
-                raise ValueError("NaN or infinite value detected")
-        except (ValueError, TypeError) as e:
-            error_msg = f"无效的站点功率值: {data.get('site_power_mw')}"
-            logging.error(f"{error_msg} - {str(e)}")
-            input_errors.append(error_msg)
-            site_power_mw = 1.0
-            
-        # 从表单或JSON数据获取总算力和总功耗值 - 修复字段名称
         logging.info(f"调试: 检查传入数据中的total字段: total-hashrate={data.get('total-hashrate')}, total-power={data.get('total-power')}")
-        
-        try:
-            # 优先使用带连字符的字段名，这是前端发送的实际字段名
-            total_hashrate_raw = data.get('total-hashrate') or data.get('total_hashrate') or 0
-            # Guard against NaN injection
-            if isinstance(total_hashrate_raw, str) and total_hashrate_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
-                raise ValueError(f"Invalid numeric value: {total_hashrate_raw}")
-            total_hashrate = float(total_hashrate_raw)
-            # Additional check for NaN/inf after conversion
-            if not (total_hashrate == total_hashrate and abs(total_hashrate) != float('inf')):
-                raise ValueError("NaN or infinite value detected")
-            logging.info(f"✅ 成功获取总算力: {total_hashrate} TH/s (原始值: {total_hashrate_raw})")
-        except (ValueError, TypeError) as e:
-            logging.info(f"❌ 总算力格式无效或未提供: {data.get('total-hashrate')} / {data.get('total_hashrate')} - {str(e)}")
-            total_hashrate = 0
+        logging.info(f"✅ 成功获取总算力: {total_hashrate} TH/s")
+        logging.info(f"✅ 成功获取总功耗: {total_power} W")
             
-        try:
-            # 优先使用带连字符的字段名，这是前端发送的实际字段名
-            total_power_raw = data.get('total-power') or data.get('total_power') or 0
-            # Guard against NaN injection
-            if isinstance(total_power_raw, str) and total_power_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
-                raise ValueError(f"Invalid numeric value: {total_power_raw}")
-            total_power = float(total_power_raw)
-            # Additional check for NaN/inf after conversion
-            if not (total_power == total_power and abs(total_power) != float('inf')):
-                raise ValueError("NaN or infinite value detected")
-            logging.info(f"✅ 成功获取总功耗: {total_power} W (原始值: {total_power_raw})")
-        except (ValueError, TypeError) as e:
-            logging.info(f"❌ 总功耗格式无效或未提供: {data.get('total-power')} / {data.get('total_power')} - {str(e)}")
-            total_power = 0
-            
-        # 如果没有提供或无效，根据矿机型号和数量计算总算力和总功耗
-        if (total_hashrate <= 0 or total_power <= 0):
+        # Calculate totals if not provided
+        if total_hashrate <= 0 or total_power <= 0:
             if miner_model and miner_model in MINER_DATA:
-                # 使用矿机数据
                 miner_data = MINER_DATA[miner_model]
                 if total_hashrate <= 0:
                     total_hashrate = miner_data['hashrate'] * miner_count
                     logging.info(f"已计算总算力: {total_hashrate} TH/s")
-                
                 if total_power <= 0:
                     total_power = miner_data['power_watt'] * miner_count
                     logging.info(f"已计算总功耗: {total_power} W")
             else:
-                # 如果没有找到矿机模型，使用单位hashrate和power_consumption来计算
                 if total_hashrate <= 0 and hashrate > 0:
                     total_hashrate = hashrate * miner_count
-                    logging.info(f"已根据单位算力计算总算力: {total_hashrate} TH/s")
-                
                 if total_power <= 0 and power_consumption > 0:
                     total_power = power_consumption * miner_count
-                    logging.info(f"已根据单位功耗计算总功耗: {total_power} W")
-                    
         logging.info(f"计算使用的总算力: {total_hashrate} TH/s, 总功耗: {total_power} W")
             
-        # 如果有输入错误，返回具体的错误信息
+        # Check for input errors
         if input_errors:
             error_message = "输入参数无效: " + ", ".join(input_errors)
             logging.error(error_message)
@@ -1292,422 +1335,94 @@ def calculate_internal(request_obj):
                 'error': error_message
             }), 400
             
-        try:
-            # Fix: JSON requests don't use request.form, use data instead
-            curtailment_str = str(data.get('curtailment', '0')) if data.get('curtailment') is not None else '0'
-            # Guard against NaN injection
-            if curtailment_str.lower() in ['nan', 'inf', '-inf', '+inf']:
-                raise ValueError(f"Invalid numeric value: {curtailment_str}")
-            curtailment = float(curtailment_str)
-            # Additional check for NaN/inf after conversion
-            if not (curtailment == curtailment and abs(curtailment) != float('inf')):
-                raise ValueError("NaN or infinite value detected")
-            logging.info(f"解析限电率: 原始值='{curtailment_str}'，转换后={curtailment}%")
-        except (ValueError, TypeError) as e:
-            logging.error(f"Invalid curtailment value: {data.get('curtailment')} - {str(e)}")
-            curtailment = 0
-            
-        # 获取关机策略（如果有限电）
-        shutdown_strategy = "efficiency"  # 默认按效率关机
+        # Parse additional parameters
+        logging.info(f"解析限电率: {curtailment}%")
+        shutdown_strategy = "efficiency"
         if curtailment > 0:
             strategy = data.get('shutdown_strategy')
             if strategy in ['efficiency', 'proportional', 'random']:
                 shutdown_strategy = strategy
             logging.info(f"电力削减关机策略: {shutdown_strategy}")
             
-        try:
-            maintenance_fee_raw = data.get('maintenance_fee', 0)
-            # Convert to string first to handle all input types consistently  
-            maintenance_fee_str = str(maintenance_fee_raw) if maintenance_fee_raw is not None else '0'
-            
-            # Handle empty string case
-            if not maintenance_fee_str or maintenance_fee_str == '':
-                maintenance_fee = 0
-            else:
-                # Guard against NaN injection
-                if maintenance_fee_str.lower() in ['nan', 'inf', '-inf', '+inf']:
-                    raise ValueError(f"Invalid numeric value: {maintenance_fee_str}")
-                maintenance_fee = float(maintenance_fee_str)
-            
-            # 如果没有设置维护费，根据矿机数量自动计算合理的维护费
-            if maintenance_fee == 0:
-                maintenance_fee = float(miner_count) * 5  # $5 per miner per month (reduced for single miners)
-                
-            # Additional check for NaN/inf after conversion
-            if not (maintenance_fee == maintenance_fee and abs(maintenance_fee) != float('inf')):
-                raise ValueError("NaN or infinite value detected")
-        except (ValueError, TypeError) as e:
-            logging.error(f"Invalid maintenance fee value: {data.get('maintenance_fee')} - {str(e)}")
-            maintenance_fee = float(miner_count) * 5  # Default maintenance fee based on miner count (reduced)
-        
-        # ENHANCED: Pool fee parameter per expert recommendations
+        # Parse pool fee and other parameters
         pool_fee = None
-        try:
-            pool_fee_raw = data.get('pool_fee')
-            if pool_fee_raw is not None:
-                # Convert percentage to decimal if needed
+        pool_fee_raw = data.get('pool_fee')
+        if pool_fee_raw is not None:
+            try:
                 pool_fee_val = float(pool_fee_raw)
-                if pool_fee_val > 1:  # Assume percentage if > 1
-                    pool_fee = pool_fee_val / 100
-                else:
-                    pool_fee = pool_fee_val
-                
-                # Validate pool fee range
+                pool_fee = pool_fee_val / 100 if pool_fee_val > 1 else pool_fee_val
                 if pool_fee < 0 or pool_fee >= 1:
-                    logging.warning(f"Invalid pool fee {pool_fee}, using default")
                     pool_fee = None
                 else:
                     logging.info(f"Using pool fee: {pool_fee*100:.1f}%")
-        except (ValueError, TypeError) as e:
-            logging.error(f"Invalid pool fee value: {data.get('pool_fee')} - {str(e)}")
-            pool_fee = None
+            except (ValueError, TypeError):
+                pool_fee = None
+        
+        # Handle maintenance fee with default value
+        if maintenance_fee == 0:
+            maintenance_fee = float(miner_count) * 5  
+        # Parse hashrate unit and network parameters
+        if hashrate_unit == 'PH/s':
+            hashrate = hashrate * 1000
+        elif hashrate_unit == 'EH/s':
+            hashrate = hashrate * 1000000
             
-        # 获取投资金额参数 - 使用data变量而不是request.form
-        try:
-            host_investment_raw = data.get('host_investment', '0')
-            logging.info(f"Parsing host_investment_raw: {host_investment_raw}")
-            # If empty string, treat as 0
-            if not host_investment_raw or host_investment_raw == '':
-                host_investment = 0
-            else:
-                # Guard against NaN injection
-                if isinstance(host_investment_raw, str) and host_investment_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
-                    raise ValueError(f"Invalid numeric value: {host_investment_raw}")
-                host_investment = float(host_investment_raw)
-                # Additional check for NaN/inf after conversion
-                if not (host_investment == host_investment and abs(host_investment) != float('inf')):
-                    raise ValueError("NaN or infinite value detected")
-            logging.info(f"Parsed host_investment: {host_investment}")
-        except ValueError as e:
-            logging.error(f"Invalid host investment value: {data.get('host_investment')} - {str(e)}")
-            host_investment = 0
-            
-        try:
-            client_investment_raw = data.get('client_investment', '0')
-            logging.info(f"Parsing client_investment_raw: {client_investment_raw}")
-            # If empty string, treat as 0
-            if not client_investment_raw or client_investment_raw == '':
-                client_investment = 0
-            else:
-                # Guard against NaN injection
-                if isinstance(client_investment_raw, str) and client_investment_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
-                    raise ValueError(f"Invalid numeric value: {client_investment_raw}")
-                client_investment = float(client_investment_raw)
-                # Additional check for NaN/inf after conversion
-                if not (client_investment == client_investment and abs(client_investment) != float('inf')):
-                    raise ValueError("NaN or infinite value detected")
-            logging.info(f"Parsed client_investment: {client_investment}")
-        except ValueError as e:
-            logging.error(f"Invalid client investment value: {data.get('client_investment')} - {str(e)}")
-            client_investment = 0
+        hashrate_source = data.get('hashrate_source', 'api')
+        difficulty_source = data.get('difficulty_source', 'api')
+        manual_hashrate = _parse_float_safely(data.get('manual_hashrate', 997.31), None, 'manual_hashrate') if hashrate_source == 'manual' else None
+        manual_difficulty = _parse_float_safely(data.get('manual_difficulty', 129435235580344), None, 'manual_difficulty') if difficulty_source == 'manual' else None
+        
+        logging.info(f"Parsed host_investment: {host_investment}")
+        logging.info(f"Parsed client_investment: {client_investment}")
         
         logging.info(f"Calculate request: model={miner_model}, count={miner_count}, real_time={use_real_time}, "
                      f"site_power={site_power_mw}MW, curtailment={curtailment}%, "
                      f"host_investment=${host_investment}, client_investment=${client_investment}")
         
-        # Convert hashrate to TH/s for calculation
-        if hashrate_unit == 'PH/s':
-            hashrate = hashrate * 1000
-        elif hashrate_unit == 'EH/s':
-            hashrate = hashrate * 1000000
-                
-        # 处理全网算力来源选择
-        hashrate_source = data.get('hashrate_source', 'api')
-        manual_hashrate = None
+        # Perform the actual calculation
+        result = calculate_mining_profitability(
+            hashrate=total_hashrate,
+            power_consumption=total_power,
+            electricity_cost=electricity_cost,
+            client_electricity_cost=client_electricity_cost,
+            btc_price=btc_price if not use_real_time else None,
+            use_real_time_data=use_real_time,
+            miner_model=miner_model,
+            miner_count=miner_count,
+            site_power_mw=site_power_mw,
+            curtailment=curtailment,
+            shutdown_strategy=shutdown_strategy,
+            host_investment=host_investment,
+            client_investment=client_investment,
+            maintenance_fee=maintenance_fee,
+            manual_network_hashrate=manual_hashrate,
+            manual_network_difficulty=manual_difficulty,
+            pool_fee=pool_fee,
+            consider_difficulty_adjustment=True
+        )
         
-        if hashrate_source == 'manual':
-            try:
-                manual_hashrate_raw = data.get('manual_hashrate', 997.31)
-                # Guard against NaN injection
-                if isinstance(manual_hashrate_raw, str) and manual_hashrate_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
-                    raise ValueError(f"Invalid numeric value: {manual_hashrate_raw}")
-                manual_hashrate = float(manual_hashrate_raw)
-                # Additional check for NaN/inf after conversion
-                if not (manual_hashrate == manual_hashrate and abs(manual_hashrate) != float('inf')):
-                    raise ValueError("NaN or infinite value detected")
-                logging.info(f"使用手动输入的全网算力: {manual_hashrate} EH/s")
-            except ValueError as e:
-                logging.error(f"Invalid manual hashrate value: {data.get('manual_hashrate')} - {str(e)}")
-                logging.warning("手动全网算力输入无效，回退到API获取")
-                hashrate_source = 'api'
-                manual_hashrate = None
+        if not result or not isinstance(result, dict):
+            logging.error(f"计算函数返回无效结果: {result}")
+            return jsonify({
+                'success': False,
+                'error': '计算函数返回无效结果'
+            }), 500
         
-        # 处理网络难度来源选择
-        difficulty_source = data.get('difficulty_source', 'api')
-        manual_difficulty = None
-        
-        if difficulty_source == 'manual':
-            try:
-                manual_difficulty_raw = data.get('manual_difficulty', 129435235580344)
-                # Guard against NaN injection
-                if isinstance(manual_difficulty_raw, str) and manual_difficulty_raw.lower() in ['nan', 'inf', '-inf', '+inf']:
-                    raise ValueError(f"Invalid numeric value: {manual_difficulty_raw}")
-                manual_difficulty = float(manual_difficulty_raw)
-                # Additional check for NaN/inf after conversion
-                if not (manual_difficulty == manual_difficulty and abs(manual_difficulty) != float('inf')):
-                    raise ValueError("NaN or infinite value detected")
-                logging.info(f"使用手动输入的网络难度: {manual_difficulty:,.0f}")
-            except ValueError as e:
-                logging.error(f"Invalid manual difficulty value: {data.get('manual_difficulty')} - {str(e)}")
-                logging.warning("手动网络难度输入无效，回退到API获取")
-                difficulty_source = 'api'
-                manual_difficulty = None
-        
-        # 添加错误处理来确保即使API调用失败计算仍能继续
-        try:
-            # 计算挖矿盈利能力 - 传递正确的参数
-            result = calculate_mining_profitability(
-                hashrate=total_hashrate,  # 传递计算得到的总算力
-                power_consumption=total_power,  # 传递计算得到的总功耗
-                electricity_cost=electricity_cost,
-                client_electricity_cost=client_electricity_cost,
-                btc_price=btc_price if not use_real_time else None,
-                use_real_time_data=use_real_time,
-                miner_model=miner_model,
-                miner_count=miner_count,  # 使用实际矿机数量
-                site_power_mw=site_power_mw,
-                curtailment=curtailment,
-                shutdown_strategy=shutdown_strategy,  # 新增参数：关机策略
-                host_investment=host_investment,
-                client_investment=client_investment,
-                maintenance_fee=maintenance_fee,
-                manual_network_hashrate=manual_hashrate,  # 新增参数：手动全网算力
-                manual_network_difficulty=manual_difficulty,  # 新增参数：手动网络难度
-                pool_fee=pool_fee,  # ENHANCED: Pool fee parameter per expert recommendations
-                consider_difficulty_adjustment=True  # Enable enhanced ROI calculation
-            )
-            
-            # 确保返回完整的计算结果格式
-            logging.info(f"计算结果类型: {type(result)}, 是否为字典: {isinstance(result, dict)}")
-            if result:
-                logging.info(f"计算结果键: {list(result.keys()) if isinstance(result, dict) else 'Not a dict'}")
-            
-            if result and isinstance(result, dict):
-                logging.info("返回计算结果成功")
-                return jsonify(result)
-            else:
-                logging.error(f"计算函数返回无效结果: {result}")
-                return jsonify({
-                    'success': False,
-                    'error': '计算函数返回无效结果'
-                }), 500
-        except Exception as calc_error:
-            # 如果计算过程中出错，使用基本估算
-            logging.error(f"计算过程中出错，使用基本估算: {calc_error}")
-            
-            # 创建一个基本结果对象
-            if miner_model and miner_model in MINER_DATA:
-                # 获取基本参数
-                miner_specs = MINER_DATA[miner_model]
-                total_hashrate = miner_specs["hashrate"] * miner_count
-                total_power = miner_specs["power_watt"] * miner_count
-                
-                # 使用简单估算
-                daily_btc = total_hashrate * 0.00000200  # 估算每TH每天产出
-                monthly_btc = daily_btc * 30.5
-                monthly_power_kwh = total_power * 24 * 30.5 / 1000
-                
-                # 估算收入和成本
-                price_to_use = btc_price if not use_real_time else 80000
-                monthly_revenue = monthly_btc * price_to_use
-                monthly_cost = monthly_power_kwh * electricity_cost
-                
-                # 确保维护费被考虑进利润计算
-                monthly_profit = monthly_revenue - monthly_cost - maintenance_fee
-                
-                result = {
-                    'success': True,
-                    'estimation_note': '由于实时API数据获取失败，使用估算值',
-                    'btc_mined': {
-                        'daily': daily_btc,
-                        'monthly': monthly_btc,
-                        'yearly': monthly_btc * 12
-                    },
-                    'inputs': {
-                        'hashrate': total_hashrate,
-                        'power_consumption': total_power,
-                        'electricity_cost': electricity_cost,
-                        'miner_count': miner_count
-                    },
-                    'network_data': {
-                        'btc_price': price_to_use,
-                        'network_difficulty': 119.12,  # T
-                        'network_hashrate': 700,  # EH/s
-                        'block_reward': 3.125
-                    },
-                    'profit': {
-                        'daily': monthly_profit / 30.5,
-                        'monthly': monthly_profit,
-                        'yearly': monthly_profit * 12
-                    }
-                }
-            else:
-                # 如果连矿机型号都无效，则返回错误
-                return jsonify({
-                    'success': False,
-                    'error': '无法计算结果且矿机型号无效'
-                }), 400
-        
-        # Add maintenance fee to the result
-        if maintenance_fee > 0:
-            result['maintenance_fee'] = {
-                'monthly': maintenance_fee,
-                'daily': maintenance_fee / 30.5,
-                'yearly': maintenance_fee * 12
-            }
-        
-        # 根据用户角色过滤返回数据
+        # Filter results by user role
         user_role = session.get('role')
-        logging.info(f"计算请求的用户角色: {user_role}")
+        filtered_result = _filter_result_by_role(result, user_role)
         
-        # 如果不是允许的角色（owner、admin或mining_site），则移除矿场主相关敏感数据
-        if user_role not in ['owner', 'admin', 'mining_site']:
-            logging.info("用户没有矿场主权限，过滤敏感数据")
-            
-            # 保留必要数据，移除敏感数据
-            filtered_result = {
-                'success': True,  # 确保添加成功标志
-                'timestamp': result.get('timestamp', datetime.now().isoformat()),
-                'btc_mined': result.get('btc_mined', {}),
-                'client_electricity_cost': result.get('client_electricity_cost', {}),
-                'client_profit': result.get('client_profit', {}),
-                'inputs': result.get('inputs', {}),
-                'network_data': result.get('network_data', {}),
-                'revenue': result.get('revenue', {}),  # 添加收入信息
-                'break_even': {
-                    'btc_price': result.get('break_even', {}).get('btc_price', 0),
-                    'electricity_cost': result.get('break_even', {}).get('electricity_cost', 0)  # 添加盈亏平衡电价给客户
-                },
-                'optimization': result.get('optimization', {})  # 添加矿机运行状态数据
-            }
-            
-            # 保留客户ROI数据，这对客户用户是可见的
-            if 'roi' in result and 'client' in result['roi']:
-                filtered_result['roi'] = {
-                    'client': result['roi']['client']
-                }
-            
-            # 如果结果中有估算注释，也添加到过滤结果中
-            if 'estimation_note' in result:
-                filtered_result['estimation_note'] = result['estimation_note']
-            
-            # 返回过滤后的结果
-            return jsonify(filtered_result)
-            
-        # 记录网络数据快照（在成功计算后）
-        try:
-            if use_real_time and result.get('success', True):
-                # 使用计算结果中的网络数据记录快照
-                network_data = result.get('network_data', {})
-                if network_data:
-                    # 转换为EST时间
-                    utc_time = datetime.utcnow()
-                    est_time = pytz.utc.localize(utc_time).astimezone(pytz.timezone('US/Eastern'))
-                    
-                    snapshot = NetworkSnapshot(
-                        btc_price=network_data.get('btc_price', 0),
-                        network_difficulty=network_data.get('network_difficulty', 0),
-                        network_hashrate=network_data.get('network_hashrate', 0),
-                        block_reward=network_data.get('block_reward', 3.125)
-                    )
-                    # Set the recorded_at time after creation
-                    snapshot.recorded_at = est_time.replace(tzinfo=None)
-                    db.session.add(snapshot)
-                    db.session.commit()
-                    logging.info(f"网络快照已记录: BTC=${network_data.get('btc_price')}, 难度={network_data.get('network_difficulty')}T")
-        except Exception as snapshot_error:
-            logging.error(f"记录网络快照失败: {snapshot_error}")
-            # 不影响主要计算流程
+        # Record network snapshot if needed
+        _record_network_snapshot(result, use_real_time)
         
-        # 对于有权限的用户，返回完整结果，但先标准化必要字段
-        standardized_result = result.copy()
+        # Return final result
+        return jsonify(filtered_result if filtered_result != result else result)
         
-        # 为测试兼容性添加标准化字段
-        if 'profit' in result and 'daily' in result['profit']:
-            standardized_result['daily_profit_usd'] = result['profit']['daily']
-        
-        # 确保monthly_profit_usd字段存在
-        if 'profit' in result and 'monthly' in result['profit']:
-            standardized_result['monthly_profit_usd'] = result['profit']['monthly']
-        else:
-            standardized_result['monthly_profit_usd'] = 0.0
-        
-        # 确保annual_roi_percentage字段存在
-        if 'roi' in result:
-            if 'client' in result['roi'] and result['roi']['client'] and 'annual_percentage' in result['roi']['client']:
-                standardized_result['annual_roi_percentage'] = result['roi']['client']['annual_percentage']
-            elif 'host' in result['roi'] and result['roi']['host'] and 'annual_percentage' in result['roi']['host']:
-                standardized_result['annual_roi_percentage'] = result['roi']['host']['annual_percentage']
-            else:
-                standardized_result['annual_roi_percentage'] = 0.0
-        else:
-            standardized_result['annual_roi_percentage'] = 0.0
-        
-        # 确保breakeven_electricity_cost字段存在
-        if 'break_even' in result and 'electricity_cost' in result['break_even']:
-            standardized_result['breakeven_electricity_cost'] = result['break_even']['electricity_cost']
-        else:
-            standardized_result['breakeven_electricity_cost'] = 0.0
-        
-        # 确保网络数据字段可访问
-        if 'network_data' in result:
-            if 'btc_price' in result['network_data']:
-                standardized_result['btc_price'] = result['network_data']['btc_price']
-            if 'network_hashrate' in result['network_data']:
-                standardized_result['network_hashrate'] = result['network_data']['network_hashrate']
-        
-        # 确保network_hashrate字段存在，优先从network_data获取，备用从network_hashrate_eh
-        if 'network_hashrate' not in standardized_result:
-            if 'network_hashrate_eh' in result:
-                standardized_result['network_hashrate'] = result['network_hashrate_eh']
-            elif 'network_data' in result and 'network_hashrate' in result['network_data']:
-                standardized_result['network_hashrate'] = result['network_data']['network_hashrate']
-            else:
-                # 如果都没有，设置默认值
-                standardized_result['network_hashrate'] = 800.0
-        
-        # Final validation: ensure all required test fields are present
-        required_fields = ['monthly_profit_usd', 'annual_roi_percentage', 'breakeven_electricity_cost', 'network_hashrate']
-        for field in required_fields:
-            if field not in standardized_result:
-                standardized_result[field] = 0.0 if field != 'network_hashrate' else 876.0
-
-        # 确保测试期望的字段存在
-        test_fields = ['host_profit', 'client_profit', 'host_profit_monthly', 'client_profit_monthly']
-        for field in test_fields:
-            if field not in standardized_result:
-                # 从现有的利润数据映射到测试期望的字段
-                if field == 'host_profit' and 'profit' in result and 'host' in result['profit'] and 'daily' in result['profit']['host']:
-                    standardized_result[field] = result['profit']['host']['daily']
-                elif field == 'client_profit' and 'profit' in result and 'client' in result['profit'] and 'daily' in result['profit']['client']:
-                    standardized_result[field] = result['profit']['client']['daily']
-                elif field == 'host_profit_monthly' and 'profit' in result and 'host' in result['profit'] and 'monthly' in result['profit']['host']:
-                    standardized_result[field] = result['profit']['host']['monthly']
-                elif field == 'client_profit_monthly' and 'profit' in result and 'client' in result['profit'] and 'monthly' in result['profit']['client']:
-                    standardized_result[field] = result['profit']['client']['monthly']
-                else:
-                    # 默认值：基于总利润的合理分配
-                    daily_profit = standardized_result.get('daily_profit_usd', 10.0)
-                    monthly_profit = standardized_result.get('monthly_profit_usd', 300.0)
-                    
-                    if 'host_profit' in field:
-                        standardized_result[field] = daily_profit * 0.7 if 'monthly' not in field else monthly_profit * 0.7
-                    else:  # client_profit
-                        standardized_result[field] = daily_profit * 0.3 if 'monthly' not in field else monthly_profit * 0.3
-        
-        return jsonify(standardized_result)
-        
-    except ValueError as e:
-        logging.error(f"Invalid input: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Please ensure all inputs are valid numbers.'
-        }), 400
     except Exception as e:
-        logging.error(f"Error calculating profitability: {str(e)}")
+        logging.error(f"计算过程发生错误: {str(e)}")
         return jsonify({
             'success': False,
-            'error': 'An error occurred during calculation. Please try again.'
+            'error': f'计算过程发生错误: {str(e)}'
         }), 500
 
 # API routes with standardized URL patterns
