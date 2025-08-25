@@ -2175,7 +2175,7 @@ def get_profit_chart_data():
             
             # Query all active miner models from database
             query = text("""
-                SELECT model_name, hashrate, power_consumption, price_usd, manufacturer, efficiency
+                SELECT model_name, reference_hashrate, reference_power, reference_price, manufacturer, reference_efficiency
                 FROM miner_models 
                 WHERE is_active = true 
                 ORDER BY model_name
