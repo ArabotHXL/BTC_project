@@ -1666,13 +1666,13 @@ def get_miners():
         for miner in miners_from_db:
             miners_list.append({
                 'name': miner.model_name,
-                'hashrate': miner.hashrate,  # TH/s
-                'power_consumption': miner.power_consumption,  # W
-                'power_watt': miner.power_consumption,  # W (keep for backward compatibility)
-                'efficiency': miner.efficiency,  # W/TH
+                'hashrate': miner.reference_hashrate,  # TH/s
+                'power_consumption': miner.reference_power,  # W
+                'power_watt': miner.reference_power,  # W (keep for backward compatibility)
+                'efficiency': miner.reference_efficiency,  # W/TH
                 'manufacturer': miner.manufacturer,
                 'is_liquid_cooled': miner.is_liquid_cooled,
-                'price_usd': miner.price_usd
+                'price_usd': miner.reference_price
             })
         
         # 如果数据库为空，回退到硬编码数据
