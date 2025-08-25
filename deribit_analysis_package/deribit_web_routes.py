@@ -13,7 +13,7 @@ from multi_exchange_collector import MultiExchangeCollector
 import logging
 
 # 创建蓝图
-deribit_bp = Blueprint('deribit', __name__)
+deribit_bp = Blueprint('deribit_advanced', __name__)
 
 # 全局变量
 collection_thread = None

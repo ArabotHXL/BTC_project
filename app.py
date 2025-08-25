@@ -4865,6 +4865,15 @@ except Exception as e:
 try:
     from deribit_web_routes import deribit_bp
     app.register_blueprint(deribit_bp)
+    
+    # 注册高级Deribit分析包路由 
+    try:
+        from deribit_analysis_package.deribit_web_routes import deribit_bp as deribit_advanced_bp
+        app.register_blueprint(deribit_advanced_bp)
+        logging.info("Advanced Deribit analysis routes registered successfully")
+    except ImportError as e:
+        logging.warning(f"Advanced Deribit analysis package not available: {e}")
+        
     logging.info("Deribit analysis routes registered successfully")
 except ImportError as e:
     logging.warning(f"Deribit routes not available: {e}")
