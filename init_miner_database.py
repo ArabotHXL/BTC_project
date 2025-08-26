@@ -31,7 +31,8 @@ EXISTING_MINER_DATA = {
     "WhatsMiner M53": {"hashrate": 226, "power_watt": 6174},
     "WhatsMiner M53S": {"hashrate": 230, "power_watt": 6174},
     "WhatsMiner M56": {"hashrate": 230, "power_watt": 5550},
-    "WhatsMiner M56S": {"hashrate": 238, "power_watt": 5550}
+    "WhatsMiner M56S": {"hashrate": 238, "power_watt": 5550},
+    "Avalon Q": {"hashrate": 90, "power_watt": 1674}
 }
 
 # 补充详细的矿机信息
@@ -260,6 +261,19 @@ DETAILED_MINER_INFO = {
         "weight_kg": 18.8,
         "release_date": date(2024, 4, 1),
         "price_usd": 10000
+    },
+    "Avalon Q": {
+        "chip_type": "4nm ASIC",
+        "fan_count": 2,
+        "operating_temp_min": -5,
+        "operating_temp_max": 35,
+        "noise_level": 55,  # 45-65 dB范围，取中间值
+        "length_mm": 455,
+        "width_mm": 130.5,
+        "height_mm": 440,
+        "weight_kg": 10.5,
+        "release_date": date(2025, 1, 1),
+        "price_usd": 1599
     }
 }
 
@@ -269,6 +283,8 @@ def get_manufacturer(model_name):
         return "Bitmain"
     elif model_name.startswith("WhatsMiner"):
         return "MicroBT"
+    elif model_name.startswith("Avalon"):
+        return "Canaan"
     else:
         return "Unknown"
 
@@ -345,8 +361,8 @@ def add_new_miner(model_name, manufacturer, hashrate, power_consumption, **kwarg
             miner = MinerModel(
                 model_name=model_name,
                 manufacturer=manufacturer,
-                hashrate=hashrate,
-                power_consumption=power_consumption,
+                reference_hashrate=hashrate,
+                reference_power=power_consumption,
                 **kwargs
             )
             
