@@ -1,0 +1,13 @@
+id,name,company,email,phone,address,created_at,updated_at,tags,customer_type,mining_capacity,notes,created_by_id
+4,Nick,BTC Mining,hxl2022hao@gmail.com,,,2025-05-04 05:04:41.539913,2025-05-07 00:06:06.429520,"已迁移用户,授权用户",企业,,,
+7,管理员,BTC Mining,admin@example.com,,,2025-05-04 05:01:33.443972,2025-05-07 00:06:07.178176,"已迁移用户,授权用户",企业,,,
+6,Lucy,BITMAIN,mx665@nyu.edu,,,2025-05-05 04:51:39.422897,2025-05-07 00:06:06.923040,"已迁移用户,授权用户",企业,,,6.0
+2,TEST,客户公司,user@example.com,,,2025-05-04 05:09:05.151820,2025-05-07 00:06:05.881852,"已迁移用户,授权用户",企业,,,4.0
+8,test,abcd Crypto,testing123@example.com,,,2025-05-08 00:22:14.917012,2025-05-08 00:22:14.917016,,企业,,,4.0
+9,test123,abc crypto,test123@example.com,,,2025-05-08 00:24:47.613895,2025-05-08 00:24:47.613899,,企业,,,4.0
+10,tester,adf crypto,test123@example.com,,,2025-05-08 00:25:55.653041,2025-05-08 00:25:55.653045,,企业,,,4.0
+3,Yang Ming,IronClad,yangming1956@gmail.com,None,None,2025-05-05 04:42:22.262337,2025-05-21 02:33:37.986453,"已迁移用户,授权用户",企业,5.0,"有PA的场地 需要攻克
+",5.0
+11,Tim,TEST,site@example.com,,,2025-05-04 07:00:05.365535,2025-06-02 21:38:09.666965,"已迁移用户,授权用户",企业,,,
+12,Test Customer,Test Co.,testcustomer@example.com,9876543210,123 Test Street,2025-08-19 02:49:45.032348,2025-08-19 02:50:21.400576,"测试,VIP",企业,2.5,,2.0
+13,Demo Customer,Demo Co.,democust@example.com,9998887777,123 Demo Lane,2025-08-19 06:08:30.984803,2025-08-19 06:09:07.048545,"demo,test",企业,1.5,,2.0

@@ -1,0 +1,4 @@
+id,user_id,plan_id,status,started_at,expires_at,cancelled_at,stripe_subscription_id,stripe_customer_id,created_at,updated_at
+1,1,free,active,2025-08-13 03:42:52.839800,,,,,2025-08-13 03:42:46.758488,
+2,2,basic,active,2025-08-13 03:42:52.839800,2026-08-13 03:42:46.758488,,,,2025-08-13 03:42:46.758488,
+6,3,pro,active,2025-08-14 22:49:49.625601,,,,,,

@@ -1,0 +1,41 @@
+[
+  {
+    "id":1,
+    "user_id":1,
+    "plan_id":"free",
+    "status":"active",
+    "started_at":"2025-08-13 03:42:52",
+    "expires_at":null,
+    "cancelled_at":null,
+    "stripe_subscription_id":null,
+    "stripe_customer_id":null,
+    "created_at":"2025-08-13 03:42:46",
+    "updated_at":null
+  },
+  {
+    "id":2,
+    "user_id":2,
+    "plan_id":"basic",
+    "status":"active",
+    "started_at":"2025-08-13 03:42:52",
+    "expires_at":"2026-08-13 03:42:46",
+    "cancelled_at":null,
+    "stripe_subscription_id":null,
+    "stripe_customer_id":null,
+    "created_at":"2025-08-13 03:42:46",
+    "updated_at":null
+  },
+  {
+    "id":6,
+    "user_id":3,
+    "plan_id":"pro",
+    "status":"active",
+    "started_at":"2025-08-14 22:49:49",
+    "expires_at":null,
+    "cancelled_at":null,
+    "stripe_subscription_id":null,
+    "stripe_customer_id":null,
+    "created_at":null,
+    "updated_at":null
+  }
+]

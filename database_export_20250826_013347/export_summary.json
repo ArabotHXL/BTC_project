@@ -1,0 +1,256 @@
+{
+  "export_timestamp": "2025-08-26T01:33:47.251803",
+  "tables_exported": [
+    {
+      "table_name": "activities",
+      "record_count": 0,
+      "csv_file": "database_export_20250826_013347/activities.csv",
+      "json_file": "database_export_20250826_013347/activities.json"
+    },
+    {
+      "table_name": "analysis_reports",
+      "record_count": 62,
+      "csv_file": "database_export_20250826_013347/analysis_reports.csv",
+      "json_file": "database_export_20250826_013347/analysis_reports.json"
+    },
+    {
+      "table_name": "api_usage",
+      "record_count": 0,
+      "csv_file": "database_export_20250826_013347/api_usage.csv",
+      "json_file": "database_export_20250826_013347/api_usage.json"
+    },
+    {
+      "table_name": "commission_edit_history",
+      "record_count": 0,
+      "csv_file": "database_export_20250826_013347/commission_edit_history.csv",
+      "json_file": "database_export_20250826_013347/commission_edit_history.json"
+    },
+    {
+      "table_name": "commission_records",
+      "record_count": 0,
+      "csv_file": "database_export_20250826_013347/commission_records.csv",
+      "json_file": "database_export_20250826_013347/commission_records.json"
+    },
+    {
+      "table_name": "crm_activities",
+      "record_count": 29,
+      "csv_file": "database_export_20250826_013347/crm_activities.csv",
+      "json_file": "database_export_20250826_013347/crm_activities.json"
+    },
+    {
+      "table_name": "crm_contacts",
+      "record_count": 7,
+      "csv_file": "database_export_20250826_013347/crm_contacts.csv",
+      "json_file": "database_export_20250826_013347/crm_contacts.json"
+    },
+    {
+      "table_name": "crm_customers",
+      "record_count": 11,
+      "csv_file": "database_export_20250826_013347/crm_customers.csv",
+      "json_file": "database_export_20250826_013347/crm_customers.json"
+    },
+    {
+      "table_name": "crm_deals",
+      "record_count": 2,
+      "csv_file": "database_export_20250826_013347/crm_deals.csv",
+      "json_file": "database_export_20250826_013347/crm_deals.json"
+    },
+    {
+      "table_name": "crm_leads",
+      "record_count": 6,
+      "csv_file": "database_export_20250826_013347/crm_leads.csv",
+      "json_file": "database_export_20250826_013347/crm_leads.json"
+    },
+    {
+      "table_name": "customers",
+      "record_count": 0,
+      "csv_file": "database_export_20250826_013347/customers.csv",
+      "json_file": "database_export_20250826_013347/customers.json"
+    },
+    {
+      "table_name": "historical_prices",
+      "record_count": 365,
+      "csv_file": "database_export_20250826_013347/historical_prices.csv",
+      "json_file": "database_export_20250826_013347/historical_prices.json"
+    },
+    {
+      "table_name": "leads",
+      "record_count": 0,
+      "csv_file": "database_export_20250826_013347/leads.csv",
+      "json_file": "database_export_20250826_013347/leads.json"
+    },
+    {
+      "table_name": "login_records",
+      "record_count": 790,
+      "csv_file": "database_export_20250826_013347/login_records.csv",
+      "json_file": "database_export_20250826_013347/login_records.json"
+    },
+    {
+      "table_name": "market_analytics",
+      "record_count": 2865,
+      "csv_file": "database_export_20250826_013347/market_analytics.csv",
+      "json_file": "database_export_20250826_013347/market_analytics.json"
+    },
+    {
+      "table_name": "market_analytics_enhanced",
+      "record_count": 0,
+      "csv_file": "database_export_20250826_013347/market_analytics_enhanced.csv",
+      "json_file": "database_export_20250826_013347/market_analytics_enhanced.json"
+    },
+    {
+      "table_name": "miner_models",
+      "record_count": 42,
+      "csv_file": "database_export_20250826_013347/miner_models.csv",
+      "json_file": "database_export_20250826_013347/miner_models.json"
+    },
+    {
+      "table_name": "miner_specs",
+      "record_count": 2,
+      "csv_file": "database_export_20250826_013347/miner_specs.csv",
+      "json_file": "database_export_20250826_013347/miner_specs.json"
+    },
+    {
+      "table_name": "mining_metrics",
+      "record_count": 0,
+      "csv_file": "database_export_20250826_013347/mining_metrics.csv",
+      "json_file": "database_export_20250826_013347/mining_metrics.json"
+    },
+    {
+      "table_name": "network_snapshots",
+      "record_count": 89,
+      "csv_file": "database_export_20250826_013347/network_snapshots.csv",
+      "json_file": "database_export_20250826_013347/network_snapshots.json"
+    },
+    {
+      "table_name": "payments",
+      "record_count": 0,
+      "csv_file": "database_export_20250826_013347/payments.csv",
+      "json_file": "database_export_20250826_013347/payments.json"
+    },
+    {
+      "table_name": "plans",
+      "record_count": 3,
+      "csv_file": "database_export_20250826_013347/plans.csv",
+      "json_file": "database_export_20250826_013347/plans.json"
+    },
+    {
+      "table_name": "portfolio_history",
+      "record_count": 0,
+      "csv_file": "database_export_20250826_013347/portfolio_history.csv",
+      "json_file": "database_export_20250826_013347/portfolio_history.json"
+    },
+    {
+      "table_name": "subscription_plans",
+      "record_count": 3,
+      "csv_file": "database_export_20250826_013347/subscription_plans.csv",
+      "json_file": "database_export_20250826_013347/subscription_plans.json"
+    },
+    {
+      "table_name": "subscriptions",
+      "record_count": 0,
+      "csv_file": "database_export_20250826_013347/subscriptions.csv",
+      "json_file": "database_export_20250826_013347/subscriptions.json"
+    },
+    {
+      "table_name": "technical_indicators",
+      "record_count": 4716,
+      "csv_file": "database_export_20250826_013347/technical_indicators.csv",
+      "json_file": "database_export_20250826_013347/technical_indicators.json"
+    },
+    {
+      "table_name": "user_access",
+      "record_count": 37,
+      "csv_file": "database_export_20250826_013347/user_access.csv",
+      "json_file": "database_export_20250826_013347/user_access.json"
+    },
+    {
+      "table_name": "user_miners",
+      "record_count": 7,
+      "csv_file": "database_export_20250826_013347/user_miners.csv",
+      "json_file": "database_export_20250826_013347/user_miners.json"
+    },
+    {
+      "table_name": "user_portfolios",
+      "record_count": 0,
+      "csv_file": "database_export_20250826_013347/user_portfolios.csv",
+      "json_file": "database_export_20250826_013347/user_portfolios.json"
+    },
+    {
+      "table_name": "user_subscriptions",
+      "record_count": 3,
+      "csv_file": "database_export_20250826_013347/user_subscriptions.csv",
+      "json_file": "database_export_20250826_013347/user_subscriptions.json"
+    },
+    {
+      "table_name": "users",
+      "record_count": 4,
+      "csv_file": "database_export_20250826_013347/users.csv",
+      "json_file": "database_export_20250826_013347/users.json"
+    }
+  ],
+  "total_records": 9043,
+  "files_created": [
+    "database_export_20250826_013347/activities.csv",
+    "database_export_20250826_013347/activities.json",
+    "database_export_20250826_013347/analysis_reports.csv",
+    "database_export_20250826_013347/analysis_reports.json",
+    "database_export_20250826_013347/api_usage.csv",
+    "database_export_20250826_013347/api_usage.json",
+    "database_export_20250826_013347/commission_edit_history.csv",
+    "database_export_20250826_013347/commission_edit_history.json",
+    "database_export_20250826_013347/commission_records.csv",
+    "database_export_20250826_013347/commission_records.json",
+    "database_export_20250826_013347/crm_activities.csv",
+    "database_export_20250826_013347/crm_activities.json",
+    "database_export_20250826_013347/crm_contacts.csv",
+    "database_export_20250826_013347/crm_contacts.json",
+    "database_export_20250826_013347/crm_customers.csv",
+    "database_export_20250826_013347/crm_customers.json",
+    "database_export_20250826_013347/crm_deals.csv",
+    "database_export_20250826_013347/crm_deals.json",
+    "database_export_20250826_013347/crm_leads.csv",
+    "database_export_20250826_013347/crm_leads.json",
+    "database_export_20250826_013347/customers.csv",
+    "database_export_20250826_013347/customers.json",
+    "database_export_20250826_013347/historical_prices.csv",
+    "database_export_20250826_013347/historical_prices.json",
+    "database_export_20250826_013347/leads.csv",
+    "database_export_20250826_013347/leads.json",
+    "database_export_20250826_013347/login_records.csv",
+    "database_export_20250826_013347/login_records.json",
+    "database_export_20250826_013347/market_analytics.csv",
+    "database_export_20250826_013347/market_analytics.json",
+    "database_export_20250826_013347/market_analytics_enhanced.csv",
+    "database_export_20250826_013347/market_analytics_enhanced.json",
+    "database_export_20250826_013347/miner_models.csv",
+    "database_export_20250826_013347/miner_models.json",
+    "database_export_20250826_013347/miner_specs.csv",
+    "database_export_20250826_013347/miner_specs.json",
+    "database_export_20250826_013347/mining_metrics.csv",
+    "database_export_20250826_013347/mining_metrics.json",
+    "database_export_20250826_013347/network_snapshots.csv",
+    "database_export_20250826_013347/network_snapshots.json",
+    "database_export_20250826_013347/payments.csv",
+    "database_export_20250826_013347/payments.json",
+    "database_export_20250826_013347/plans.csv",
+    "database_export_20250826_013347/plans.json",
+    "database_export_20250826_013347/portfolio_history.csv",
+    "database_export_20250826_013347/portfolio_history.json",
+    "database_export_20250826_013347/subscription_plans.csv",
+    "database_export_20250826_013347/subscription_plans.json",
+    "database_export_20250826_013347/subscriptions.csv",
+    "database_export_20250826_013347/subscriptions.json",
+    "database_export_20250826_013347/technical_indicators.csv",
+    "database_export_20250826_013347/technical_indicators.json",
+    "database_export_20250826_013347/user_access.csv",
+    "database_export_20250826_013347/user_access.json",
+    "database_export_20250826_013347/user_miners.csv",
+    "database_export_20250826_013347/user_miners.json",
+    "database_export_20250826_013347/user_portfolios.csv",
+    "database_export_20250826_013347/user_portfolios.json",
+    "database_export_20250826_013347/user_subscriptions.csv",
+    "database_export_20250826_013347/user_subscriptions.json",
+    "database_export_20250826_013347/users.csv",
+    "database_export_20250826_013347/users.json"
+  ]
+}
