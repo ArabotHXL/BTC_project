@@ -1,0 +1,4 @@
+id,name,price,currency,max_miners,max_historical_days,allow_batch_calculator,allow_crm_system,allow_advanced_analytics,allow_api_access,allow_custom_scenarios,allow_professional_reports,allow_user_management,allow_priority_support,available_miner_models,created_at,updated_at
+basic,Basic,29.0,USD,100,30,True,False,False,False,False,True,False,False,17,2025-08-12 21:55:41.435719,2025-08-12 21:55:41.435719
+pro,Pro,99.0,USD,999999,365,True,True,True,True,True,True,True,True,17,2025-08-12 21:55:41.435721,2025-08-12 21:55:41.435722
+free,Free,0.0,USD,10,7,True,False,False,False,False,False,False,False,3,2025-08-12 21:55:41.435714,2025-08-12 21:55:41.435718
