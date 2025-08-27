@@ -32,7 +32,8 @@ EXISTING_MINER_DATA = {
     "WhatsMiner M53S": {"hashrate": 230, "power_watt": 6174},
     "WhatsMiner M56": {"hashrate": 230, "power_watt": 5550},
     "WhatsMiner M56S": {"hashrate": 238, "power_watt": 5550},
-    "Avalon Q": {"hashrate": 90, "power_watt": 1674}
+    "Avalon Q": {"hashrate": 90, "power_watt": 1674},
+    "Avalon Mini 3": {"hashrate": 37.5, "power_watt": 800}
 }
 
 # 补充详细的矿机信息
@@ -274,6 +275,19 @@ DETAILED_MINER_INFO = {
         "weight_kg": 10.5,
         "release_date": date(2025, 1, 1),
         "price_usd": 1599
+    },
+    "Avalon Mini 3": {
+        "chip_type": "4nm ASIC",
+        "fan_count": 2,
+        "operating_temp_min": -5,
+        "operating_temp_max": 40,
+        "noise_level": 45,  # 33-55 dB, using average
+        "length_mm": 760,
+        "width_mm": 104,
+        "height_mm": 214,
+        "weight_kg": 8.35,
+        "release_date": date(2024, 10, 1),
+        "price_usd": 1500  # Based on market pricing range
     }
 }
 
