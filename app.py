@@ -107,8 +107,8 @@ def send_verification_email(email, token, language='zh'):
         language: 语言 ('zh' 中文, 'en' 英文)
     """
     try:
-        # 构建验证链接
-        domain = os.environ.get('REPLIT_DOMAINS', 'localhost:5000').split(',')[0]
+        # 构建验证链接 - 使用自定义域名
+        domain = os.environ.get('VERIFICATION_DOMAIN', 'calc.hashinsight.net')
         verification_url = f"https://{domain}/verify-email/{token}"
         
         logging.info(f"邮箱验证链接已生成: {verification_url}")
