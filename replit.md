@@ -18,7 +18,20 @@ The application is a modular Flask web application with a mobile-first design, s
 - **UI/UX Decisions**: Professional introduction page, clear navigation flow (Landing Page → Price Page → Login → Main Dashboard → Role-based Functions). Color-coded visual system for technical analysis (red, yellow, blue, green), improved visibility for navigation elements and disclaimers with enhanced contrast.
 
 ### Backend Architecture
-- **Web Framework**: Flask, using Blueprint-based modular routing.
+- **Web Framework**: Flask, using Blueprint-based modular routing with **完全页面隔离架构**.
+- **Modular Architecture**: **NEW** - Complete page isolation system where each module operates independently with its own routes, templates, and static resources. Modules communicate only through the database layer.
+- **Module System**: 
+  - **Calculator Module**: Independent mining calculator with own CSS/JS
+  - **CRM Module**: Isolated customer management system
+  - **Batch Module**: Standalone batch processing calculator
+  - **Analytics Module**: Separate data analysis dashboard
+  - **Broker Module**: Independent broker management system
+- **Module Benefits**: 
+  - Complete isolation - changes to module A don't affect module B
+  - Independent static resources (CSS/JS) per module
+  - Shared database for data consistency
+  - Module-specific error handling
+  - Easy to enable/disable modules
 - **Authentication**: Custom email-based system with role management and secure password hashing.
 - **API Integration**: Aggregates data from multiple sources with intelligent fallback mechanisms.
 - **Background Services**: Scheduler for automated data collection.
