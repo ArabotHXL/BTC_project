@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模块架构测试页面</title>
+    <style>
+        body {
+            background: #1a1a1a;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .test-section {
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .success { color: #4CAF50; }
+        .error { color: #F44336; }
+        button {
+            background: #FFD700;
+            color: #1a1a1a;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #FFA500;
+        }
+        .result {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 模块化架构功能测试</h1>
+    
+    <div class="test-section">
+        <h2>📊 模块管理中心</h2>
+        <p>测试模块管理界面和API</p>
+        <button onclick="testModules()">测试模块列表</button>
+        <button onclick="window.open('/modules', '_blank')">打开模块中心</button>
+        <div id="modules-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 热力图功能</h2>
+        <p>测试矿机热力图数据生成</p>
+        <button onclick="testHeatmap()">测试热力图</button>
+        <div id="heatmap-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>💾 数据库连接</h2>
+        <p>测试模块间数据共享</p>
+        <button onclick="testDatabase()">测试数据连接</button>
+        <div id="database-result" class="result"></div>
+    </div>
+
+    <script>
+        async function testModules() {
+            const resultDiv = document.getElementById('modules-result');
+            try {
+                const response = await fetch('/api/modules/status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <span class="success">✅ 模块API正常</span><br>
+                        总模块数: ${data.total}<br>
+                        启用模块: ${data.modules.filter(m => m.enabled).length}<br>
+                        模块列表: ${data.modules.map(m => m.name).join(', ')}
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ 模块API错误: ${data.error}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ 网络错误: ${error.message}</span>`;
+            }
+        }
+
+        async function testHeatmap() {
+            const resultDiv = document.getElementById('heatmap-result');
+            try {
+                const formData = new FormData();
+                formData.append('miner_model', 'Antminer S19 XP (134T)');
+                formData.append('miner_count', '1');
+                formData.append('client_electricity_cost', '0.06');
+
+                const response = await fetch('/profit_chart_data', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <span class="success">✅ 热力图数据生成成功</span><br>
+                        数据点数量: ${data.profit_data ? data.profit_data.length : 0}<br>
+                        矿机型号: ${data.miner_model || 'N/A'}<br>
+                        数据库连接: 正常
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ 热力图生成失败: ${data.error}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ 网络错误: ${error.message}</span>`;
+            }
+        }
+
+        async function testDatabase() {
+            const resultDiv = document.getElementById('database-result');
+            try {
+                const response = await fetch('/network_stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <span class="success">✅ 数据库连接正常</span><br>
+                        BTC价格: $${data.btc_price?.toLocaleString()}<br>
+                        网络算力: ${data.network_hashrate} EH/s<br>
+                        数据时间: ${new Date().toLocaleString()}
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ 数据库连接失败</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ 网络错误: ${error.message}</span>`;
+            }
+        }
+
+        // 自动运行初始测试
+        window.onload = function() {
+            testModules();
+        };
+    </script>
+</body>
+</html>

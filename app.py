@@ -20,6 +20,9 @@ from auth import verify_email, login_required
 from translations import get_translation
 from rate_limiting import rate_limit
 
+# 延迟导入，避免循环导入
+app = Flask(__name__)
+
 def get_latest_market_data():
     """从market_analytics表获取最新市场数据"""
     try:
@@ -5861,6 +5864,52 @@ def set_layer_preference():
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+# 添加模块管理路由
+@app.route('/modules')
+def modules_dashboard():
+    """模块化系统仪表板"""
+    try:
+        from modules.config import get_enabled_modules
+        modules = get_enabled_modules()
+        return render_template('modules_dashboard.html', modules=modules)
+    except Exception as e:
+        logging.error(f"模块仪表板加载失败: {e}")
+        return render_template('modules_dashboard.html', modules=[])
+
+@app.route('/api/modules/status')
+def modules_status():
+    """获取所有模块状态"""
+    try:
+        from modules.config import get_enabled_modules
+        modules = get_enabled_modules()
+        status = []
+        
+        for key, config in modules:
+            status.append({
+                'key': key,
+                'name': config['name'],
+                'url': config['url_prefix'],
+                'requires_auth': config['requires_auth'],
+                'enabled': config['enabled']
+            })
+        
+        return jsonify({
+            'success': True,
+            'modules': status,
+            'total': len(status)
+        })
+    except Exception as e:
+        logging.error(f"获取模块状态失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/test-modules')
+def test_modules_page():
+    """模块功能测试页面"""
+    return render_template('test_modules.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
