@@ -56,7 +56,8 @@ MINER_DATA = {
     "WhatsMiner M53S": {"hashrate": 226, "power_watt": 6554},
     "WhatsMiner M56S": {"hashrate": 212, "power_watt": 5550},
     "AvalonMiner 1366": {"hashrate": 100, "power_watt": 3420},
-    "AvalonMiner 1466": {"hashrate": 150, "power_watt": 3420}
+    "AvalonMiner 1466": {"hashrate": 150, "power_watt": 3420},
+    "Avalon Mini 3": {"hashrate": 37.5, "power_watt": 800}
 }
 
 def calculate_mining_profit(miner_model, miner_count, site_power_mw, use_real_time=True):

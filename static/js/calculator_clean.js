@@ -817,13 +817,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 clientElectricityCost: clientElectricityCost
             });
             
-            // Use the existing chart generation function from chart.js
-            if (typeof generateChart === 'function') {
-                generateChart(minerModel, minerCount, clientElectricityCost);
-            } else if (typeof window.generateChart === 'function') {
-                window.generateChart(minerModel, minerCount, clientElectricityCost);
+            // Use the existing chart generation function from main_new.js
+            if (typeof generateProfitChart === 'function') {
+                generateProfitChart(minerModel, minerCount, clientElectricityCost);
+            } else if (typeof window.generateProfitChart === 'function') {
+                window.generateProfitChart(minerModel, minerCount, clientElectricityCost);
             } else {
-                console.log('[CALCULATOR] generateChart function not available, calling heatmap directly');
+                console.log('[CALCULATOR] generateProfitChart function not available, calling heatmap directly');
                 // Call the heatmap generation directly
                 autoGenerateHeatmapDirect(minerModel, minerCount, clientElectricityCost);
             }
