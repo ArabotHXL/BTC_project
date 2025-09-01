@@ -1,0 +1,171 @@
+
+{% extends "base.html" %}
+
+{% block title %}托管客户仪表板 - BTC Mining Calculator{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-0">
+                <i class="bi bi-person-circle"></i> 我的托管资产
+            </h1>
+            <p class="text-muted">查看您的托管设备和收益情况</p>
+        </div>
+    </div>
+
+    <!-- 资产概览卡片 -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="total-devices">--</h4>
+                            <p class="card-text">托管设备</p>
+                        </div>
+                        <i class="bi bi-cpu fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="total-hashrate">--</h4>
+                            <p class="card-text">总算力</p>
+                        </div>
+                        <i class="bi bi-speedometer2 fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="monthly-revenue">--</h4>
+                            <p class="card-text">月度收入</p>
+                        </div>
+                        <i class="bi bi-currency-dollar fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="net-profit">--</h4>
+                            <p class="card-text">净利润</p>
+                        </div>
+                        <i class="bi bi-graph-up fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设备列表和账单 -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-list-ul"></i> 我的设备
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="devices-table">
+                            <thead>
+                                <tr>
+                                    <th>设备编号</th>
+                                    <th>型号</th>
+                                    <th>算力</th>
+                                    <th>状态</th>
+                                    <th>运行时间</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- 数据通过JavaScript加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-receipt"></i> 本月账单
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>托管费:</span>
+                            <span id="hosting-fee">$--</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>电费:</span>
+                            <span id="electricity-fee">$--</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>维护费:</span>
+                            <span id="maintenance-fee">$--</span>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <strong>总计:</strong>
+                        <strong id="total-bill">$--</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadClientDashboard();
+});
+
+function loadClientDashboard() {
+    // 加载客户资产数据
+    fetch('/hosting/api/client/assets')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateAssetCards(data.assets);
+            }
+        })
+        .catch(error => console.error('加载资产数据失败:', error));
+}
+
+function updateAssetCards(assets) {
+    document.getElementById('total-devices').textContent = assets.total_devices;
+    document.getElementById('total-hashrate').textContent = assets.total_hashrate;
+    document.getElementById('monthly-revenue').textContent = '$' + assets.monthly_revenue.toFixed(2);
+    document.getElementById('net-profit').textContent = '$' + assets.net_profit.toFixed(2);
+    
+    // 更新账单信息
+    document.getElementById('hosting-fee').textContent = '$2,500.00';
+    document.getElementById('electricity-fee').textContent = '$' + assets.monthly_cost.toFixed(2);
+    document.getElementById('maintenance-fee').textContent = '$450.00';
+    document.getElementById('total-bill').textContent = '$' + (2500 + assets.monthly_cost + 450).toFixed(2);
+}
+</script>
+{% endblock %}

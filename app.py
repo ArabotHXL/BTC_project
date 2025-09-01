@@ -2752,6 +2752,14 @@ init_crm_routes(app)
 # 初始化矿场中介业务路由
 init_broker_routes(app)
 
+# 注册托管功能模块
+try:
+    from modules.hosting import hosting_bp
+    app.register_blueprint(hosting_bp)
+    logging.info("托管功能模块已注册")
+except ImportError as e:
+    logging.warning(f"托管功能模块不可用: {e}")
+
 # 添加矿场中介业务路由别名
 @app.route('/mining-broker')
 @login_required
