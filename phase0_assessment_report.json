@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-09-01T02:59:13.392761",
+  "timestamp": "2025-09-01T03:38:59.255495",
   "phase": "Phase 0 - 现状评估",
   "system_name": "Bitcoin Calculator (calc.hashinsight.net)",
   "assessment_status": "completed",
@@ -2073,7 +2073,7 @@
         "main.py": "✅ 存在",
         "main.py_lines": 142,
         "app.py": "✅ 存在",
-        "app.py_lines": 5915,
+        "app.py_lines": 5923,
         "config.py": "✅ 存在",
         "config.py_lines": 88,
         "models.py": "✅ 存在",
@@ -2088,12 +2088,13 @@
           "shared",
           "config.py",
           "app_integration.py",
-          "__pycache__"
+          "__pycache__",
+          "hosting"
         ]
       },
       "route_analysis": {},
       "template_structure": {
-        "count": 72,
+        "count": 74,
         "organized": true
       },
       "static_assets": {
