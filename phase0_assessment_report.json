@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-09-01T03:38:59.255495",
+  "timestamp": "2025-09-04T21:27:00.863561",
   "phase": "Phase 0 - 现状评估",
   "system_name": "Bitcoin Calculator (calc.hashinsight.net)",
   "assessment_status": "completed",
@@ -765,6 +765,486 @@
             }
           ]
         },
+        "hosting_audit_logs": {
+          "columns": 9,
+          "structure": [
+            {
+              "name": "id",
+              "type": "integer",
+              "nullable": "NO"
+            },
+            {
+              "name": "user_id",
+              "type": "integer",
+              "nullable": "NO"
+            },
+            {
+              "name": "action",
+              "type": "character varying",
+              "nullable": "NO"
+            },
+            {
+              "name": "resource_type",
+              "type": "character varying",
+              "nullable": "NO"
+            },
+            {
+              "name": "resource_id",
+              "type": "character varying",
+              "nullable": "YES"
+            },
+            {
+              "name": "details",
+              "type": "text",
+              "nullable": "YES"
+            },
+            {
+              "name": "ip_address",
+              "type": "character varying",
+              "nullable": "YES"
+            },
+            {
+              "name": "user_agent",
+              "type": "character varying",
+              "nullable": "YES"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone",
+              "nullable": "NO"
+            }
+          ]
+        },
+        "hosting_bill_items": {
+          "columns": 8,
+          "structure": [
+            {
+              "name": "id",
+              "type": "integer",
+              "nullable": "NO"
+            },
+            {
+              "name": "bill_id",
+              "type": "integer",
+              "nullable": "NO"
+            },
+            {
+              "name": "item_type",
+              "type": "character varying",
+              "nullable": "NO"
+            },
+            {
+              "name": "description",
+              "type": "character varying",
+              "nullable": "NO"
+            },
+            {
+              "name": "quantity",
+              "type": "double precision",
+              "nullable": "NO"
+            },
+            {
+              "name": "unit_price",
+              "type": "double precision",
+              "nullable": "NO"
+            },
+            {
+              "name": "amount",
+              "type": "double precision",
+              "nullable": "NO"
+            },
+            {
+              "name": "miner_id",
+              "type": "integer",
+              "nullable": "YES"
+            }
+          ]
+        },
+        "hosting_bills": {
+          "columns": 17,
+          "structure": [
+            {
+              "name": "id",
+              "type": "integer",
+              "nullable": "NO"
+            },
+            {
+              "name": "bill_number",
+              "type": "character varying",
+              "nullable": "NO"
+            },
+            {
+              "name": "customer_id",
+              "type": "integer",
+              "nullable": "NO"
+            },
+            {
+              "name": "site_id",
+              "type": "integer",
+              "nullable": "NO"
+            },
+            {
+              "name": "billing_period_start",
+              "type": "date",
+              "nullable": "NO"
+            },
+            {
+              "name": "billing_period_end",
+              "type": "date",
+              "nullable": "NO"
+            },
+            {
+              "name": "electricity_cost",
+              "type": "double precision",
+              "nullable": "NO"
+            },
+            {
+              "name": "hosting_fee",
+              "type": "double precision",
+              "nullable": "NO"
+            },
+            {
+              "name": "maintenance_cost",
+              "type": "double precision",
+              "nullable": "NO"
+            },
+            {
+              "name": "penalty_cost",
+              "type": "double precision",
+              "nullable": "NO"
+            },
+            {
+              "name": "discount",
+              "type": "double precision",
+              "nullable": "NO"
+            },
+            {
+              "name": "total_amount",
+              "type": "double precision",
+              "nullable": "NO"
+            },
+            {
+              "name": "status",
+              "type": "character varying",
+              "nullable": "NO"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone",
+              "nullable": "NO"
+            },
+            {
+              "name": "sent_at",
+              "type": "timestamp without time zone",
+              "nullable": "YES"
+            },
+            {
+              "name": "paid_at",
+              "type": "timestamp without time zone",
+              "nullable": "YES"
+            },
+            {
+              "name": "due_date",
+              "type": "date",
+              "nullable": "YES"
+            }
+          ]
+        },
+        "hosting_incidents": {
+          "columns": 12,
+          "structure": [
+            {
+              "name": "id",
+              "type": "integer",
+              "nullable": "NO"
+            },
+            {
+              "name": "site_id",
+              "type": "integer",
+              "nullable": "NO"
+            },
+            {
+              "name": "title",
+              "type": "character varying",
+              "nullable": "NO"
+            },
+            {
+              "name": "description",
+              "type": "text",
+              "nullable": "YES"
+            },
+            {
+              "name": "severity",
+              "type": "character varying",
+              "nullable": "NO"
+            },
+            {
+              "name": "status",
+              "type": "character varying",
+              "nullable": "NO"
+            },
+            {
+              "name": "affected_miners",
+              "type": "text",
+              "nullable": "YES"
+            },
+            {
+              "name": "estimated_loss",
+              "type": "double precision",
+              "nullable": "NO"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone",
+              "nullable": "NO"
+            },
+            {
+              "name": "resolved_at",
+              "type": "timestamp without time zone",
+              "nullable": "YES"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp without time zone",
+              "nullable": "NO"
+            },
+            {
+              "name": "assigned_to_id",
+              "type": "integer",
+              "nullable": "YES"
+            }
+          ]
+        },
+        "hosting_miners": {
+          "columns": 17,
+          "structure": [
+            {
+              "name": "id",
+              "type": "integer",
+              "nullable": "NO"
+            },
+            {
+              "name": "site_id",
+              "type": "integer",
+              "nullable": "NO"
+            },
+            {
+              "name": "customer_id",
+              "type": "integer",
+              "nullable": "NO"
+            },
+            {
+              "name": "miner_model_id",
+              "type": "integer",
+              "nullable": "NO"
+            },
+            {
+              "name": "serial_number",
+              "type": "character varying",
+              "nullable": "NO"
+            },
+            {
+              "name": "rack_position",
+              "type": "character varying",
+              "nullable": "YES"
+            },
+            {
+              "name": "ip_address",
+              "type": "character varying",
+              "nullable": "YES"
+            },
+            {
+              "name": "mac_address",
+              "type": "character varying",
+              "nullable": "YES"
+            },
+            {
+              "name": "actual_hashrate",
+              "type": "double precision",
+              "nullable": "NO"
+            },
+            {
+              "name": "actual_power",
+              "type": "double precision",
+              "nullable": "NO"
+            },
+            {
+              "name": "status",
+              "type": "character varying",
+              "nullable": "NO"
+            },
+            {
+              "name": "health_score",
+              "type": "integer",
+              "nullable": "NO"
+            },
+            {
+              "name": "install_date",
+              "type": "timestamp without time zone",
+              "nullable": "YES"
+            },
+            {
+              "name": "last_maintenance",
+              "type": "timestamp without time zone",
+              "nullable": "YES"
+            },
+            {
+              "name": "maintenance_count",
+              "type": "integer",
+              "nullable": "NO"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone",
+              "nullable": "NO"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp without time zone",
+              "nullable": "NO"
+            }
+          ]
+        },
+        "hosting_sites": {
+          "columns": 14,
+          "structure": [
+            {
+              "name": "id",
+              "type": "integer",
+              "nullable": "NO"
+            },
+            {
+              "name": "name",
+              "type": "character varying",
+              "nullable": "NO"
+            },
+            {
+              "name": "slug",
+              "type": "character varying",
+              "nullable": "NO"
+            },
+            {
+              "name": "location",
+              "type": "character varying",
+              "nullable": "NO"
+            },
+            {
+              "name": "capacity_mw",
+              "type": "double precision",
+              "nullable": "NO"
+            },
+            {
+              "name": "used_capacity_mw",
+              "type": "double precision",
+              "nullable": "NO"
+            },
+            {
+              "name": "status",
+              "type": "character varying",
+              "nullable": "NO"
+            },
+            {
+              "name": "operator_name",
+              "type": "character varying",
+              "nullable": "NO"
+            },
+            {
+              "name": "contact_email",
+              "type": "character varying",
+              "nullable": "YES"
+            },
+            {
+              "name": "contact_phone",
+              "type": "character varying",
+              "nullable": "YES"
+            },
+            {
+              "name": "electricity_rate",
+              "type": "double precision",
+              "nullable": "NO"
+            },
+            {
+              "name": "electricity_source",
+              "type": "character varying",
+              "nullable": "YES"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone",
+              "nullable": "NO"
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp without time zone",
+              "nullable": "NO"
+            }
+          ]
+        },
+        "hosting_tickets": {
+          "columns": 12,
+          "structure": [
+            {
+              "name": "id",
+              "type": "integer",
+              "nullable": "NO"
+            },
+            {
+              "name": "title",
+              "type": "character varying",
+              "nullable": "NO"
+            },
+            {
+              "name": "description",
+              "type": "text",
+              "nullable": "YES"
+            },
+            {
+              "name": "priority",
+              "type": "character varying",
+              "nullable": "NO"
+            },
+            {
+              "name": "status",
+              "type": "character varying",
+              "nullable": "NO"
+            },
+            {
+              "name": "category",
+              "type": "character varying",
+              "nullable": "YES"
+            },
+            {
+              "name": "customer_id",
+              "type": "integer",
+              "nullable": "NO"
+            },
+            {
+              "name": "site_id",
+              "type": "integer",
+              "nullable": "YES"
+            },
+            {
+              "name": "assigned_to_id",
+              "type": "integer",
+              "nullable": "YES"
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp without time zone",
+              "nullable": "NO"
+            },
+            {
+              "name": "first_response_at",
+              "type": "timestamp without time zone",
+              "nullable": "YES"
+            },
+            {
+              "name": "resolved_at",
+              "type": "timestamp without time zone",
+              "nullable": "YES"
+            }
+          ]
+        },
         "leads": {
           "columns": 10,
           "structure": [
@@ -1177,6 +1657,66 @@
               "name": "updated_at",
               "type": "timestamp without time zone",
               "nullable": "YES"
+            }
+          ]
+        },
+        "miner_telemetry": {
+          "columns": 11,
+          "structure": [
+            {
+              "name": "id",
+              "type": "integer",
+              "nullable": "NO"
+            },
+            {
+              "name": "miner_id",
+              "type": "integer",
+              "nullable": "NO"
+            },
+            {
+              "name": "hashrate",
+              "type": "double precision",
+              "nullable": "NO"
+            },
+            {
+              "name": "power_consumption",
+              "type": "double precision",
+              "nullable": "NO"
+            },
+            {
+              "name": "temperature",
+              "type": "double precision",
+              "nullable": "YES"
+            },
+            {
+              "name": "fan_speed",
+              "type": "integer",
+              "nullable": "YES"
+            },
+            {
+              "name": "pool_url",
+              "type": "character varying",
+              "nullable": "YES"
+            },
+            {
+              "name": "pool_worker",
+              "type": "character varying",
+              "nullable": "YES"
+            },
+            {
+              "name": "accepted_shares",
+              "type": "bigint",
+              "nullable": "YES"
+            },
+            {
+              "name": "rejected_shares",
+              "type": "bigint",
+              "nullable": "YES"
+            },
+            {
+              "name": "recorded_at",
+              "type": "timestamp without time zone",
+              "nullable": "NO"
             }
           ]
         },
@@ -2073,11 +2613,11 @@
         "main.py": "✅ 存在",
         "main.py_lines": 142,
         "app.py": "✅ 存在",
-        "app.py_lines": 5923,
+        "app.py_lines": 5931,
         "config.py": "✅ 存在",
         "config.py_lines": 88,
         "models.py": "✅ 存在",
-        "models.py_lines": 706
+        "models.py_lines": 1051
       },
       "module_structure": {
         "modules_dir": "✅ 存在",
@@ -2086,15 +2626,16 @@
           "calculator",
           "crm",
           "shared",
-          "config.py",
           "app_integration.py",
           "__pycache__",
-          "hosting"
+          "hosting",
+          "client",
+          "config.py"
         ]
       },
       "route_analysis": {},
       "template_structure": {
-        "count": 74,
+        "count": 76,
         "organized": true
       },
       "static_assets": {
