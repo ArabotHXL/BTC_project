@@ -322,6 +322,9 @@ def get_client_assets():
             'active_devices': active_devices,
             'total_hashrate': f'{total_hashrate:.1f} TH/s',
             'total_power': f'{total_power:.0f} W',
+            'monthly_revenue': total_hashrate * 0.15 * 30,  # 估算月收益
+            'net_profit': max(0, total_hashrate * 0.15 * 30 - total_power * 0.08 * 24 * 30 / 1000),  # 估算净利润
+            'monthly_cost': total_power * 0.08 * 24 * 30 / 1000,  # 估算月电费
             'sites': list(sites_data.values())
         }
         

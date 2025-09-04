@@ -4100,11 +4100,11 @@ def analytics_technical_indicators():
 @login_required
 def analytics_market_data():
     """获取分析系统的市场数据 - 统一从 market_analytics 表获取数据"""
-    # Check analytics access permission
-    if not user_has_analytics_access():
+    # Check analytics access permission - allow admin role for hosting platform
+    if not user_has_analytics_access() and not has_role(['admin']):
         return jsonify({
             'success': False,
-            'error': 'Access denied. Analytics API requires Owner privileges or Pro subscription.'
+            'error': 'Access denied. Analytics API requires Owner privileges, Admin role, or Pro subscription.'
         }), 403
     
     try:
