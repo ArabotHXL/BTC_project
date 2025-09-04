@@ -1,109 +1,125 @@
-<!DOCTYPE html>
-<html lang="zh-CN" data-bs-theme="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的矿机 - HashInsight 客户中心</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-</head>
-<body class="bg-dark">
-    <div class="container-fluid">
-        <!-- 导航栏 -->
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
-            <div class="container-fluid">
-                <a class="navbar-brand text-warning fw-bold" href="/client/">
-                    <i class="bi bi-cpu"></i> 客户中心
-                </a>
-                <div class="navbar-nav ms-auto">
-                    <a class="nav-link" href="/client/">仪表板</a>
-                    <a class="nav-link active" href="/client/miners">我的矿机</a>
-                    <a class="nav-link" href="/client/billing">账单查询</a>
-                    <a class="nav-link" href="/client/tickets">工单中心</a>
+{% extends "base.html" %}
+
+{% block title %}我的矿机 - BTC Mining Calculator{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-0">
+                <i class="bi bi-cpu"></i> 我的矿机
+            </h1>
+            <p class="text-muted">查看托管的矿机设备状态和性能</p>
+        </div>
+    </div>
+
+    <!-- 操作按钮区 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#applyMinerModal">
+                    <i class="bi bi-plus-circle"></i> 申请录入矿机
+                </button>
+                <button class="btn btn-info" onclick="refreshMiners()">
+                    <i class="bi bi-arrow-clockwise"></i> 刷新
+                </button>
+                <button class="btn btn-warning" onclick="showPendingApplications()">
+                    <i class="bi bi-clock"></i> 我的申请
+                    <span class="badge bg-light text-dark" id="pending-applications-count">0</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 矿机概览卡片 -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="total-miners">--</h4>
+                            <p class="card-text">总设备数</p>
+                        </div>
+                        <i class="bi bi-cpu fs-1"></i>
+                    </div>
                 </div>
             </div>
-        </nav>
-
-        <!-- 主内容 -->
-        <div class="container-fluid py-4">
-            <div class="row">
-                <div class="col-12">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 class="text-warning mb-0">
-                            <i class="bi bi-cpu-fill"></i> 我的矿机
-                        </h2>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="active-miners">--</h4>
+                            <p class="card-text">运行设备</p>
+                        </div>
+                        <i class="bi bi-check-circle fs-1"></i>
                     </div>
-
-                    <!-- 矿机概览卡片 -->
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <div class="card bg-secondary">
-                                <div class="card-body text-center">
-                                    <i class="bi bi-cpu fs-2 text-warning"></i>
-                                    <h5 class="card-title mt-2">总矿机数</h5>
-                                    <h3 class="text-warning">0</h3>
-                                </div>
-                            </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="total-hashrate">--</h4>
+                            <p class="card-text">总算力 (TH/s)</p>
                         </div>
-                        <div class="col-md-3">
-                            <div class="card bg-secondary">
-                                <div class="card-body text-center">
-                                    <i class="bi bi-play-circle fs-2 text-success"></i>
-                                    <h5 class="card-title mt-2">在线矿机</h5>
-                                    <h3 class="text-success">0</h3>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-secondary">
-                                <div class="card-body text-center">
-                                    <i class="bi bi-lightning fs-2 text-info"></i>
-                                    <h5 class="card-title mt-2">总算力</h5>
-                                    <h3 class="text-info">0 TH/s</h3>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-secondary">
-                                <div class="card-body text-center">
-                                    <i class="bi bi-thermometer-half fs-2 text-warning"></i>
-                                    <h5 class="card-title mt-2">平均温度</h5>
-                                    <h3 class="text-warning">--°C</h3>
-                                </div>
-                            </div>
-                        </div>
+                        <i class="bi bi-lightning fs-1"></i>
                     </div>
-
-                    <!-- 矿机列表 -->
-                    <div class="card bg-secondary">
-                        <div class="card-header">
-                            <h5 class="mb-0">矿机列表</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="estimated-revenue">--</h4>
+                            <p class="card-text">日收益 (USD)</p>
                         </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-dark table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>矿机编号</th>
-                                            <th>型号</th>
-                                            <th>状态</th>
-                                            <th>算力</th>
-                                            <th>温度</th>
-                                            <th>位置</th>
-                                            <th>操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td colspan="7" class="text-center text-muted py-4">
-                                                <i class="bi bi-inbox fs-3"></i>
-                                                <div class="mt-2">暂无矿机数据</div>
-                                                <small>请联系托管方添加您的矿机</small>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                        <i class="bi bi-currency-dollar fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 申请状态筛选器 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="status-filter" class="form-label">设备状态</label>
+                            <select class="form-select" id="status-filter" onchange="filterMiners()">
+                                <option value="">全部状态</option>
+                                <option value="active">运行中</option>
+                                <option value="offline">离线</option>
+                                <option value="maintenance">维护中</option>
+                                <option value="error">故障</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="approval-filter" class="form-label">审核状态</label>
+                            <select class="form-select" id="approval-filter" onchange="filterMiners()">
+                                <option value="">全部状态</option>
+                                <option value="draft">草稿</option>
+                                <option value="pending_approval">待审核</option>
+                                <option value="approved">已通过</option>
+                                <option value="rejected">已拒绝</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="site-filter" class="form-label">托管站点</label>
+                            <select class="form-select" id="site-filter" onchange="filterMiners()">
+                                <option value="">全部站点</option>
+                                <!-- 动态加载站点选项 -->
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -111,6 +127,469 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <!-- 矿机列表 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-list"></i> 设备列表
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-info" id="total-count">总计: 0</span>
+                        <span class="badge bg-success" id="approved-count">已通过: 0</span>
+                        <span class="badge bg-warning" id="pending-count">待审核: 0</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="miners-table">
+                            <thead>
+                                <tr>
+                                    <th>序列号</th>
+                                    <th>矿机型号</th>
+                                    <th>托管站点</th>
+                                    <th>算力</th>
+                                    <th>功耗</th>
+                                    <th>设备状态</th>
+                                    <th>审核状态</th>
+                                    <th>申请时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- 数据通过JavaScript加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 申请录入矿机模态框 -->
+<div class="modal fade" id="applyMinerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">申请录入矿机</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>申请须知：</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>请确保填写的信息准确无误</li>
+                        <li>序列号必须与实际设备一致</li>
+                        <li>申请提交后需要托管方审核</li>
+                        <li>审核通过后设备将正式录入系统</li>
+                    </ul>
+                </div>
+                
+                <form id="apply-miner-form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="apply-site-select" class="form-label">托管站点 *</label>
+                                <select class="form-select" id="apply-site-select" name="site_id" required>
+                                    <option value="">选择托管站点</option>
+                                    <!-- 动态加载站点选项 -->
+                                </select>
+                                <div class="form-text">选择设备托管的站点</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="apply-miner-model-select" class="form-label">矿机型号 *</label>
+                                <select class="form-select" id="apply-miner-model-select" name="miner_model_id" required>
+                                    <option value="">选择矿机型号</option>
+                                    <!-- 动态加载矿机型号选项 -->
+                                </select>
+                                <div class="form-text">选择您的矿机型号</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="apply-serial-number" class="form-label">设备序列号 *</label>
+                                <input type="text" class="form-control" id="apply-serial-number" name="serial_number" required>
+                                <div class="form-text">请输入设备机身上的序列号</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="apply-rack-position" class="form-label">机架位置（如已知）</label>
+                                <input type="text" class="form-control" id="apply-rack-position" name="rack_position" placeholder="例: A-01-05">
+                                <div class="form-text">如果知道具体位置请填写</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="apply-actual-hashrate" class="form-label">实际算力 (TH/s) *</label>
+                                <input type="number" class="form-control" id="apply-actual-hashrate" name="actual_hashrate" step="0.1" required>
+                                <div class="form-text">设备的实际算力性能</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="apply-actual-power" class="form-label">实际功耗 (W) *</label>
+                                <input type="number" class="form-control" id="apply-actual-power" name="actual_power" required>
+                                <div class="form-text">设备的实际功耗</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="apply-approval-notes" class="form-label">申请说明</label>
+                        <textarea class="form-control" id="apply-approval-notes" name="approval_notes" rows="3" placeholder="请描述设备的详细情况或其他说明..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-success" onclick="submitMinerApplication()">提交申请</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 查看申请详情模态框 -->
+<div class="modal fade" id="applicationDetailModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">申请详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="application-detail-content">
+                <!-- 申请详情将动态加载 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.approval-status {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.approval-status.draft { background-color: #6c757d; color: white; }
+.approval-status.pending_approval { background-color: #ffc107; color: black; }
+.approval-status.approved { background-color: #198754; color: white; }
+.approval-status.rejected { background-color: #dc3545; color: white; }
+
+.status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+</style>
+
+<script>
+let currentMiners = [];
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadClientMiners();
+    loadFilterOptions();
+});
+
+// 加载客户矿机列表
+async function loadClientMiners() {
+    try {
+        const response = await fetch('/hosting/api/client/miners');
+        const data = await response.json();
+        
+        if (data.success) {
+            currentMiners = data.miners;
+            displayMiners(data.miners);
+            updateSummaryCards(data.miners);
+        } else {
+            throw new Error(data.error);
+        }
+    } catch (error) {
+        console.error('加载矿机列表失败:', error);
+        showAlert('加载矿机列表失败: ' + error.message, 'danger');
+    }
+}
+
+// 显示矿机列表
+function displayMiners(miners) {
+    const tbody = document.querySelector('#miners-table tbody');
+    tbody.innerHTML = '';
+    
+    if (miners.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center text-muted py-4">
+                    <i class="bi bi-inbox fs-3"></i>
+                    <div class="mt-2">暂无矿机数据</div>
+                    <small>点击"申请录入矿机"添加您的设备</small>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    miners.forEach(miner => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>
+                <strong>${miner.serial_number}</strong>
+                ${miner.rack_position ? `<br><small class="text-muted">${miner.rack_position}</small>` : ''}
+            </td>
+            <td>${miner.miner_model_name || 'Unknown'}</td>
+            <td>${miner.site_name || 'Unknown'}</td>
+            <td>${miner.actual_hashrate} TH/s</td>
+            <td>${miner.actual_power} W</td>
+            <td><span class="badge bg-${getStatusColor(miner.status)}">${getStatusText(miner.status)}</span></td>
+            <td><span class="approval-status ${miner.approval_status}">${getApprovalStatusText(miner.approval_status)}</span></td>
+            <td>${miner.submitted_at ? formatDate(miner.submitted_at) : '--'}</td>
+            <td>
+                <button class="btn btn-sm btn-info" onclick="viewMinerDetail(${miner.id})">
+                    <i class="bi bi-eye"></i>
+                </button>
+                ${miner.approval_status === 'draft' ? 
+                    `<button class="btn btn-sm btn-warning" onclick="editApplication(${miner.id})">
+                        <i class="bi bi-pencil"></i>
+                    </button>` : ''}
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// 更新概览卡片
+function updateSummaryCards(miners) {
+    const totalMiners = miners.length;
+    const activeMiners = miners.filter(m => m.status === 'active' && m.approval_status === 'approved').length;
+    const totalHashrate = miners
+        .filter(m => m.approval_status === 'approved')
+        .reduce((sum, m) => sum + (m.actual_hashrate || 0), 0);
+    const estimatedRevenue = totalHashrate * 0.15; // 简单估算
+    
+    document.getElementById('total-miners').textContent = totalMiners;
+    document.getElementById('active-miners').textContent = activeMiners;
+    document.getElementById('total-hashrate').textContent = totalHashrate.toFixed(1);
+    document.getElementById('estimated-revenue').textContent = '$' + estimatedRevenue.toFixed(2);
+    
+    // 更新统计徽章
+    const approvedCount = miners.filter(m => m.approval_status === 'approved').length;
+    const pendingCount = miners.filter(m => m.approval_status === 'pending_approval').length;
+    
+    document.getElementById('total-count').textContent = `总计: ${totalMiners}`;
+    document.getElementById('approved-count').textContent = `已通过: ${approvedCount}`;
+    document.getElementById('pending-count').textContent = `待审核: ${pendingCount}`;
+    document.getElementById('pending-applications-count').textContent = pendingCount;
+}
+
+// 筛选矿机
+function filterMiners() {
+    const statusFilter = document.getElementById('status-filter').value;
+    const approvalFilter = document.getElementById('approval-filter').value;
+    const siteFilter = document.getElementById('site-filter').value;
+    
+    let filteredMiners = currentMiners;
+    
+    if (statusFilter) {
+        filteredMiners = filteredMiners.filter(m => m.status === statusFilter);
+    }
+    
+    if (approvalFilter) {
+        filteredMiners = filteredMiners.filter(m => m.approval_status === approvalFilter);
+    }
+    
+    if (siteFilter) {
+        filteredMiners = filteredMiners.filter(m => m.site_id == siteFilter);
+    }
+    
+    displayMiners(filteredMiners);
+}
+
+// 显示待审核申请
+function showPendingApplications() {
+    document.getElementById('approval-filter').value = 'pending_approval';
+    filterMiners();
+}
+
+// 刷新矿机列表
+function refreshMiners() {
+    loadClientMiners();
+}
+
+// 提交矿机申请
+async function submitMinerApplication() {
+    try {
+        const form = document.getElementById('apply-miner-form');
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        
+        // 转换数字字段
+        data.actual_hashrate = parseFloat(data.actual_hashrate);
+        data.actual_power = parseInt(data.actual_power);
+        data.site_id = parseInt(data.site_id);
+        data.miner_model_id = parseInt(data.miner_model_id);
+        
+        const response = await fetch('/hosting/api/miners/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showAlert(result.message, 'success');
+            document.getElementById('applyMinerModal').querySelector('.btn-close').click();
+            form.reset();
+            loadClientMiners();
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error('提交申请失败:', error);
+        showAlert('提交申请失败: ' + error.message, 'danger');
+    }
+}
+
+// 查看矿机详情
+function viewMinerDetail(minerId) {
+    const miner = currentMiners.find(m => m.id === minerId);
+    if (!miner) return;
+    
+    const content = `
+        <div class="row">
+            <div class="col-md-6">
+                <strong>序列号:</strong> ${miner.serial_number}<br>
+                <strong>矿机型号:</strong> ${miner.miner_model_name || 'Unknown'}<br>
+                <strong>托管站点:</strong> ${miner.site_name || 'Unknown'}<br>
+                <strong>机架位置:</strong> ${miner.rack_position || '--'}<br>
+            </div>
+            <div class="col-md-6">
+                <strong>算力:</strong> ${miner.actual_hashrate} TH/s<br>
+                <strong>功耗:</strong> ${miner.actual_power} W<br>
+                <strong>设备状态:</strong> <span class="badge bg-${getStatusColor(miner.status)}">${getStatusText(miner.status)}</span><br>
+                <strong>审核状态:</strong> <span class="approval-status ${miner.approval_status}">${getApprovalStatusText(miner.approval_status)}</span><br>
+            </div>
+        </div>
+        ${miner.approval_notes ? `<div class="mt-3"><strong>备注:</strong><br>${miner.approval_notes}</div>` : ''}
+        ${miner.submitted_at ? `<div class="mt-2"><small class="text-muted">申请时间: ${formatDate(miner.submitted_at)}</small></div>` : ''}
+        ${miner.approved_at ? `<div><small class="text-muted">审核时间: ${formatDate(miner.approved_at)}</small></div>` : ''}
+    `;
+    
+    document.getElementById('application-detail-content').innerHTML = content;
+    const modal = new bootstrap.Modal(document.getElementById('applicationDetailModal'));
+    modal.show();
+}
+
+// 编辑申请
+function editApplication(minerId) {
+    showAlert('编辑功能待实现', 'info');
+}
+
+// 加载筛选器选项
+async function loadFilterOptions() {
+    try {
+        // 加载站点选项
+        const sitesResponse = await fetch('/hosting/api/sites');
+        const sitesData = await sitesResponse.json();
+        if (sitesData.success) {
+            populateSelect('site-filter', sitesData.sites, 'id', 'name');
+            populateSelect('apply-site-select', sitesData.sites, 'id', 'name');
+        }
+        
+        // 这里应该加载矿机型号选项
+        // 临时使用示例数据
+        const mockModels = [
+            {id: 1, name: 'Antminer S19 Pro'},
+            {id: 2, name: 'Antminer S19j Pro'},
+            {id: 3, name: 'WhatsMiner M30S++'}
+        ];
+        populateSelect('apply-miner-model-select', mockModels, 'id', 'name');
+        
+    } catch (error) {
+        console.error('加载筛选器选项失败:', error);
+    }
+}
+
+// 填充下拉框
+function populateSelect(selectId, options, valueKey, textKey) {
+    const select = document.getElementById(selectId);
+    const originalFirstOption = select.querySelector('option').outerHTML;
+    select.innerHTML = originalFirstOption;
+    
+    options.forEach(option => {
+        const optionElement = document.createElement('option');
+        optionElement.value = option[valueKey];
+        optionElement.textContent = option[textKey];
+        select.appendChild(optionElement);
+    });
+}
+
+// 辅助函数
+function getStatusColor(status) {
+    const colors = {
+        'active': 'success',
+        'offline': 'secondary',
+        'maintenance': 'warning',
+        'error': 'danger'
+    };
+    return colors[status] || 'secondary';
+}
+
+function getStatusText(status) {
+    const texts = {
+        'active': '运行中',
+        'offline': '离线',
+        'maintenance': '维护中',
+        'error': '故障'
+    };
+    return texts[status] || status;
+}
+
+function getApprovalStatusText(status) {
+    const texts = {
+        'draft': '草稿',
+        'pending_approval': '待审核',
+        'approved': '已通过',
+        'rejected': '已拒绝'
+    };
+    return texts[status] || status;
+}
+
+function formatDate(dateString) {
+    return new Date(dateString).toLocaleString('zh-CN');
+}
+
+// 显示提示信息
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

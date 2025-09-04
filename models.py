@@ -798,6 +798,14 @@ class HostingMiner(db.Model):
     status = db.Column(db.String(20), default='active', nullable=False)  # active/offline/maintenance/error
     health_score = db.Column(db.Integer, default=100, nullable=False)  # 健康度评分 0-100
     
+    # 审核工作流字段
+    approval_status = db.Column(db.String(20), default='draft')  # draft, pending_approval, approved, rejected
+    submitted_by = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)  # 申请人
+    approved_by = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)  # 审核人
+    approval_notes = db.Column(db.Text, nullable=True)  # 审核备注
+    submitted_at = db.Column(db.DateTime, nullable=True)  # 申请时间
+    approved_at = db.Column(db.DateTime, nullable=True)  # 审核时间
+    
     # 运营数据
     install_date = db.Column(db.DateTime, nullable=True)  # 安装日期
     last_maintenance = db.Column(db.DateTime, nullable=True)  # 上次维护时间
@@ -810,6 +818,8 @@ class HostingMiner(db.Model):
     # 关联关系
     customer = db.relationship('UserAccess', foreign_keys=[customer_id], backref='hosted_miners')
     miner_model = db.relationship('MinerModel', foreign_keys=[miner_model_id])
+    submitter = db.relationship('UserAccess', foreign_keys=[submitted_by], backref='submitted_miners')
+    approver = db.relationship('UserAccess', foreign_keys=[approved_by], backref='approved_miners')
     telemetry_data = db.relationship('MinerTelemetry', backref='miner', lazy=True, cascade="all, delete-orphan")
     
     def __init__(self, site_id, customer_id, miner_model_id, serial_number, actual_hashrate, actual_power, **kwargs):
@@ -836,6 +846,12 @@ class HostingMiner(db.Model):
             'actual_power': self.actual_power,
             'status': self.status,
             'health_score': self.health_score,
+            'approval_status': self.approval_status,
+            'submitted_by': self.submitted_by,
+            'approved_by': self.approved_by,
+            'approval_notes': self.approval_notes,
+            'submitted_at': self.submitted_at.isoformat() if self.submitted_at else None,
+            'approved_at': self.approved_at.isoformat() if self.approved_at else None,
             'install_date': self.install_date.isoformat() if self.install_date else None,
             'last_maintenance': self.last_maintenance.isoformat() if self.last_maintenance else None
         }

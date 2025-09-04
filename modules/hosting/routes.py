@@ -38,7 +38,7 @@ def host_view(subpath='dashboard'):
         elif subpath == 'sites':
             return render_template('hosting/site_management.html')
         elif subpath == 'devices':
-            return render_template('hosting/device_management.html')
+            return render_template('hosting/miner_management.html')
         elif subpath == 'monitoring':
             return render_template('hosting/event_monitoring.html')
         elif subpath == 'sla':
@@ -352,6 +352,391 @@ def get_client_miners():
     except Exception as e:
         logger.error(f"获取客户矿机失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+# ==================== 矿机管理API ====================
+
+@hosting_bp.route('/api/miners', methods=['GET'])
+@login_required
+def get_miners():
+    """获取矿机列表（支持筛选和分页）"""
+    try:
+        user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        
+        # 查询参数
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        status = request.args.get('status')
+        approval_status = request.args.get('approval_status')
+        site_id = request.args.get('site_id', type=int)
+        customer_id = request.args.get('customer_id', type=int)
+        
+        # 构建查询
+        query = HostingMiner.query
+        
+        # 权限控制
+        if user_role in ['owner', 'admin', 'mining_site']:
+            # 托管商可以查看所有矿机
+            pass
+        else:
+            # 客户只能查看自己的矿机
+            query = query.filter_by(customer_id=user_id)
+        
+        # 应用筛选条件
+        if status:
+            query = query.filter_by(status=status)
+        if approval_status:
+            query = query.filter_by(approval_status=approval_status)
+        if site_id:
+            query = query.filter_by(site_id=site_id)
+        if customer_id and user_role in ['owner', 'admin', 'mining_site']:
+            query = query.filter_by(customer_id=customer_id)
+        
+        # 分页
+        pagination = query.paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+        
+        miners_data = []
+        for miner in pagination.items:
+            miner_data = miner.to_dict()
+            
+            # 添加关联信息
+            if miner.customer:
+                miner_data['customer_name'] = miner.customer.display_name
+                miner_data['customer_email'] = miner.customer.email
+            
+            if miner.submitter:
+                miner_data['submitted_by_name'] = miner.submitter.display_name
+            
+            if miner.approver:
+                miner_data['approved_by_name'] = miner.approver.display_name
+            
+            miners_data.append(miner_data)
+        
+        return jsonify({
+            'success': True,
+            'miners': miners_data,
+            'pagination': {
+                'page': page,
+                'pages': pagination.pages,
+                'per_page': per_page,
+                'total': pagination.total,
+                'has_next': pagination.has_next,
+                'has_prev': pagination.has_prev
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取矿机列表失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': '获取矿机列表失败'
+        }), 500
+
+@hosting_bp.route('/api/miners/create', methods=['POST'])
+@login_required
+def create_miner():
+    """创建新矿机"""
+    try:
+        data = request.get_json()
+        user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        
+        # 验证必填字段
+        required_fields = ['site_id', 'customer_id', 'miner_model_id', 'serial_number', 'actual_hashrate', 'actual_power']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({
+                    'success': False,
+                    'error': f'缺少必填字段: {field}'
+                }), 400
+        
+        # 检查序列号唯一性
+        existing_miner = HostingMiner.query.filter_by(serial_number=data['serial_number']).first()
+        if existing_miner:
+            return jsonify({
+                'success': False,
+                'error': '序列号已存在'
+            }), 400
+        
+        # 权限控制和状态设置
+        if user_role in ['owner', 'admin', 'mining_site']:
+            # 托管方直接录入 - 立即激活
+            approval_status = 'approved'
+            approved_by = user_id
+            approved_at = datetime.utcnow()
+            submitted_by = user_id
+            submitted_at = datetime.utcnow()
+        else:
+            # 客户申请录入 - 需要审核
+            approval_status = 'pending_approval'
+            approved_by = None
+            approved_at = None
+            submitted_by = user_id
+            submitted_at = datetime.utcnow()
+            
+            # 客户只能为自己录入矿机
+            data['customer_id'] = user_id
+        
+        # 创建矿机记录
+        miner = HostingMiner(
+            site_id=data['site_id'],
+            customer_id=data['customer_id'],
+            miner_model_id=data['miner_model_id'],
+            serial_number=data['serial_number'],
+            actual_hashrate=data['actual_hashrate'],
+            actual_power=data['actual_power'],
+            rack_position=data.get('rack_position'),
+            ip_address=data.get('ip_address'),
+            mac_address=data.get('mac_address'),
+            approval_status=approval_status,
+            submitted_by=submitted_by,
+            approved_by=approved_by,
+            submitted_at=submitted_at,
+            approved_at=approved_at,
+            approval_notes=data.get('approval_notes')
+        )
+        
+        db.session.add(miner)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': '矿机创建成功' if approval_status == 'approved' else '矿机申请已提交，等待审核',
+            'miner': miner.to_dict()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"创建矿机失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': '创建矿机失败'
+        }), 500
+
+@hosting_bp.route('/api/miners/batch', methods=['POST'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def batch_create_miners():
+    """批量创建矿机"""
+    try:
+        data = request.get_json()
+        user_id = session.get('user_id')
+        
+        miners_data = data.get('miners', [])
+        if not miners_data:
+            return jsonify({
+                'success': False,
+                'error': '没有提供矿机数据'
+            }), 400
+        
+        # 验证数据
+        created_miners = []
+        errors = []
+        
+        for i, miner_data in enumerate(miners_data):
+            try:
+                # 验证必填字段
+                required_fields = ['site_id', 'customer_id', 'miner_model_id', 'serial_number', 'actual_hashrate', 'actual_power']
+                for field in required_fields:
+                    if not miner_data.get(field):
+                        errors.append(f'第{i+1}行: 缺少必填字段 {field}')
+                        continue
+                
+                # 检查序列号唯一性
+                existing_miner = HostingMiner.query.filter_by(serial_number=miner_data['serial_number']).first()
+                if existing_miner:
+                    errors.append(f'第{i+1}行: 序列号 {miner_data["serial_number"]} 已存在')
+                    continue
+                
+                # 创建矿机记录（托管方批量导入直接激活）
+                miner = HostingMiner(
+                    site_id=miner_data['site_id'],
+                    customer_id=miner_data['customer_id'],
+                    miner_model_id=miner_data['miner_model_id'],
+                    serial_number=miner_data['serial_number'],
+                    actual_hashrate=miner_data['actual_hashrate'],
+                    actual_power=miner_data['actual_power'],
+                    rack_position=miner_data.get('rack_position'),
+                    ip_address=miner_data.get('ip_address'),
+                    mac_address=miner_data.get('mac_address'),
+                    approval_status='approved',
+                    submitted_by=user_id,
+                    approved_by=user_id,
+                    submitted_at=datetime.utcnow(),
+                    approved_at=datetime.utcnow(),
+                    approval_notes='批量导入自动审核'
+                )
+                
+                created_miners.append(miner)
+                
+            except Exception as e:
+                errors.append(f'第{i+1}行: {str(e)}')
+        
+        # 批量保存成功的记录
+        if created_miners:
+            db.session.add_all(created_miners)
+            db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'批量创建完成: 成功 {len(created_miners)} 个，失败 {len(errors)} 个',
+            'created_count': len(created_miners),
+            'error_count': len(errors),
+            'errors': errors
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"批量创建矿机失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': '批量创建矿机失败'
+        }), 500
+
+@hosting_bp.route('/api/miners/<int:miner_id>/approve', methods=['PUT'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def approve_miner(miner_id):
+    """审核通过矿机"""
+    try:
+        data = request.get_json()
+        user_id = session.get('user_id')
+        
+        miner = HostingMiner.query.get_or_404(miner_id)
+        
+        # 检查状态
+        if miner.approval_status != 'pending_approval':
+            return jsonify({
+                'success': False,
+                'error': '矿机状态不允许审核'
+            }), 400
+        
+        # 更新审核状态
+        miner.approval_status = 'approved'
+        miner.approved_by = user_id
+        miner.approved_at = datetime.utcnow()
+        miner.approval_notes = data.get('notes', '')
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': '矿机审核通过',
+            'miner': miner.to_dict()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"审核矿机失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': '审核矿机失败'
+        }), 500
+
+@hosting_bp.route('/api/miners/<int:miner_id>/reject', methods=['PUT'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def reject_miner(miner_id):
+    """拒绝矿机申请"""
+    try:
+        data = request.get_json()
+        user_id = session.get('user_id')
+        
+        miner = HostingMiner.query.get_or_404(miner_id)
+        
+        # 检查状态
+        if miner.approval_status != 'pending_approval':
+            return jsonify({
+                'success': False,
+                'error': '矿机状态不允许审核'
+            }), 400
+        
+        # 更新审核状态
+        miner.approval_status = 'rejected'
+        miner.approved_by = user_id
+        miner.approved_at = datetime.utcnow()
+        miner.approval_notes = data.get('notes', '申请被拒绝')
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': '矿机申请已拒绝',
+            'miner': miner.to_dict()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"拒绝矿机申请失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': '拒绝矿机申请失败'
+        }), 500
+
+@hosting_bp.route('/api/miners/<int:miner_id>', methods=['PUT'])
+@login_required
+def update_miner(miner_id):
+    """更新矿机信息"""
+    try:
+        data = request.get_json()
+        user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        
+        miner = HostingMiner.query.get_or_404(miner_id)
+        
+        # 权限检查
+        if user_role not in ['owner', 'admin', 'mining_site'] and miner.customer_id != user_id:
+            return jsonify({
+                'success': False,
+                'error': '无权限操作'
+            }), 403
+        
+        # 更新允许的字段
+        updateable_fields = ['rack_position', 'ip_address', 'mac_address', 'actual_hashrate', 'actual_power', 'status']
+        
+        for field in updateable_fields:
+            if field in data:
+                setattr(miner, field, data[field])
+        
+        miner.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': '矿机信息更新成功',
+            'miner': miner.to_dict()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"更新矿机失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': '更新矿机失败'
+        }), 500
+
+@hosting_bp.route('/api/miners/<int:miner_id>', methods=['DELETE'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def delete_miner(miner_id):
+    """删除矿机"""
+    try:
+        miner = HostingMiner.query.get_or_404(miner_id)
+        
+        # 软删除或硬删除（这里选择硬删除）
+        db.session.delete(miner)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': '矿机删除成功'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"删除矿机失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': '删除矿机失败'
+        }), 500
 
 # ==================== 公开状态页面 ====================
 
