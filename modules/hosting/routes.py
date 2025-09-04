@@ -752,33 +752,3 @@ def analyze_reconciliation():
     except Exception as e:
         logger.error(f"分析对账差异失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
-
-# Sprint 1 KPI API Routes
-@hosting_bp.route("/api/kpi-summary", methods=["GET"])  
-@requires_role(["owner", "admin", "mining_site"])
-def get_kpi_summary():
-    """获取KPI总览数据"""
-    try:
-        sites = HostingSite.query.all()
-        online_miners = HostingMiner.query.filter_by(status="active").all()
-        total_hashrate = sum(miner.actual_hashrate for miner in online_miners)
-        kpi_data = {
-            "online_miners": len(online_miners),
-            "total_hashrate": total_hashrate,
-            "sites": [{"name": s.name, "status": s.status} for s in sites]
-        }
-        return jsonify({"success": True, "kpi": kpi_data})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@hosting_bp.route("/api/generate-demo-data", methods=["POST"])
-@requires_role(["owner", "admin"])  
-def generate_demo_data_api():
-    """生成演示数据API"""
-    try:
-        from demo_data_generator import generate_demo_data
-        success = generate_demo_data()
-        return jsonify({"success": success, "message": "演示数据生成" + ("成功" if success else "失败")})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
