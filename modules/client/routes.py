@@ -37,11 +37,11 @@ def dashboard():
             'recent_tickets': recent_tickets
         }
         
-        return render_template('client/dashboard.html', data=dashboard_data)
+        return render_template('hosting/client_dashboard.html', data=dashboard_data)
     except Exception as e:
         logger.error(f"客户仪表板加载失败: {e}")
         flash('仪表板加载失败', 'error')
-        return render_template('client/dashboard.html', data={})
+        return render_template('hosting/client_dashboard.html', data={})
 
 @client_bp.route('/miners')
 @login_required
