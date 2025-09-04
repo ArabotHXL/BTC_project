@@ -47,31 +47,31 @@ def dashboard():
 @login_required
 def miners():
     """我的矿机页面"""
-    return render_template('client/miners.html')
+    return render_template('hosting/client_miners.html')
 
 @client_bp.route('/billing')
 @login_required
 def billing():
     """账单查询页面"""
-    return render_template('client/billing.html')
+    return render_template('hosting/client_billing.html')
 
 @client_bp.route('/reports')
 @login_required
 def reports():
     """透明月报页面"""
-    return render_template('client/reports.html')
+    return render_template('hosting/client_reports.html')
 
 @client_bp.route('/tickets')
 @login_required
 def tickets():
     """我的工单页面"""
-    return render_template('client/tickets.html')
+    return render_template('hosting/client_tickets.html')
 
 @client_bp.route('/alerts')
 @login_required
 def alerts():
     """告警中心页面"""
-    return render_template('client/alerts.html')
+    return render_template('hosting/client_alerts.html')
 
 # ==================== 客户API路由 ====================
 
