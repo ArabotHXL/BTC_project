@@ -14,6 +14,9 @@ logging.basicConfig(level=logging.INFO)
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "change-me-please")
 
+# 设置缺失的环境变量
+os.environ.setdefault("SECRET_KEY", app.secret_key)
+
 # 数据库初始化
 from db import db
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///hashinsight.db")
@@ -43,18 +46,21 @@ def load_user(user_id):
     from models import UserAccess
     return UserAccess.query.get(int(user_id))
 
-# 基础路由
+# 基础路由  
 @app.route('/')
 def index():
-    return render_template('index.html')
+    """Sprint 1 - 托管平台主页"""
+    return render_template('hosting_landing.html')
 
 @app.route('/login')
 def login():
-    return render_template('auth/login.html')
+    def t(key): return key
+    return render_template('auth/login.html', t=t)
 
 @app.route('/register') 
 def register():
-    return render_template('auth/register.html')
+    def t(key): return key
+    return render_template('auth/register.html', t=t)
 
 # 注册托管模块
 try:

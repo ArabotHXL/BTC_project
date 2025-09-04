@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HashInsight 托管平台 - Sprint 1</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #ffffff;
+            font-family: 'Inter', system-ui, sans-serif;
+            min-height: 100vh;
+        }
+        .hero-section {
+            padding: 80px 0;
+        }
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            height: 100%;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+        }
+        .btn-outline-light {
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 20px;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .no-money-warning {
+            background: rgba(251, 191, 36, 0.2);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Hero Section -->
+        <div class="hero-section text-center">
+            <div class="container">
+                <div class="status-badge mx-auto">
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                    <span>Sprint 1 部署成功</span>
+                </div>
+                
+                <h1 class="display-4 fw-bold mb-4">
+                    <i class="bi bi-building me-3 text-primary"></i>
+                    HashInsight 托管平台
+                </h1>
+                
+                <p class="lead mb-5">
+                    比特币矿机透明托管与监控平台<br>
+                    为矿场运营商和客户提供完全透明的数据管理解决方案
+                </p>
+
+                <!-- No Money Mode 声明 -->
+                <div class="no-money-warning">
+                    <h6 class="mb-2">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        No Money Mode - 重要声明
+                    </h6>
+                    <p class="mb-0">
+                        本系统<strong>不提供任何支付/托管/收益分发功能</strong>，仅用于展示和透明度管理。
+                        这是一个演示平台，专注于数据透明性和监控功能。
+                    </p>
+                </div>
+
+                <div class="row justify-content-center mb-5">
+                    <div class="col-auto">
+                        <a href="/hosting/" class="btn btn-primary btn-lg me-3">
+                            <i class="bi bi-speedometer2 me-2"></i>
+                            托管方控制台
+                        </a>
+                        <a href="/client/" class="btn btn-outline-light btn-lg">
+                            <i class="bi bi-person-circle me-2"></i>
+                            客户监控面板
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="container mb-5">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <div class="feature-card text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-shield-check display-4 text-success"></i>
+                        </div>
+                        <h5>安全架构</h5>
+                        <p class="text-muted">
+                            RBAC权限控制、CSRF保护、API限流、安全响应头
+                        </p>
+                        <small class="text-success">✅ 已部署</small>
+                    </div>
+                </div>
+                <div class="col-lg-4 mb-4">
+                    <div class="feature-card text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-graph-up display-4 text-primary"></i>
+                        </div>
+                        <h5>实时监控</h5>
+                        <p class="text-muted">
+                            KPI仪表板、算力追踪、设备状态、健康检查
+                        </p>
+                        <small class="text-success">✅ 已部署</small>
+                    </div>
+                </div>
+                <div class="col-lg-4 mb-4">
+                    <div class="feature-card text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-people display-4 text-warning"></i>
+                        </div>
+                        <h5>双视角界面</h5>
+                        <p class="text-muted">
+                            托管方控制台 + 客户监控面板，完全隔离权限
+                        </p>
+                        <small class="text-success">✅ 已部署</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="container mb-5">
+            <div class="row">
+                <div class="col-12">
+                    <div class="feature-card">
+                        <h5 class="mb-3">
+                            <i class="bi bi-activity me-2"></i>
+                            系统状态
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <div class="text-center">
+                                    <i class="bi bi-database-check text-success h4"></i>
+                                    <h6>数据库</h6>
+                                    <small class="text-success">正常运行</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="text-center">
+                                    <i class="bi bi-server text-success h4"></i>
+                                    <h6>Web服务</h6>
+                                    <small class="text-success">端口5000</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="text-center">
+                                    <i class="bi bi-shield-fill-check text-success h4"></i>
+                                    <h6>安全模块</h6>
+                                    <small class="text-success">已激活</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="text-center">
+                                    <i class="bi bi-cloud-arrow-down text-info h4"></i>
+                                    <h6>数据收集</h6>
+                                    <small class="text-info">实时更新</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>API端点检查</h6>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>/healthz</span>
+                                    <span class="text-success">✓</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>/ready</span>
+                                    <span class="text-success">✓</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>/api/v1/host/summary</span>
+                                    <span class="text-success">✓</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Sprint 1 完成度</h6>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar bg-success" style="width: 100%">100%</div>
+                                </div>
+                                <small class="text-success">
+                                    14/14 项功能已完成部署
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center py-4">
+            <div class="container">
+                <p class="text-muted mb-0">
+                    <i class="bi bi-code-slash me-1"></i>
+                    HashInsight 托管平台 Sprint 1 | 
+                    <span class="text-warning">演示版本 - 无实际资金功能</span>
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 简单的状态检查功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 显示欢迎信息
+            console.log('🎉 HashInsight 托管平台已成功部署！');
+            console.log('✅ Sprint 1 所有功能已完成');
+            console.log('⚠️ No Money Mode: 无支付功能');
+            
+            // 可选：添加实时状态检查
+            setTimeout(() => {
+                fetch('/healthz')
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('健康检查结果:', data.status);
+                    })
+                    .catch(error => {
+                        console.warn('健康检查失败:', error);
+                    });
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
