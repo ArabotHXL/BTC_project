@@ -27,6 +27,22 @@ def dashboard():
         # 客户视角
         return render_template('hosting/client_dashboard.html')
 
+@hosting_bp.route('/host/sites/<int:site_id>')
+@requires_role(['owner', 'admin', 'mining_site'])
+def site_detail(site_id):
+    """站点详情页面"""
+    try:
+        site = HostingSite.query.get_or_404(site_id)
+        return render_template('hosting/site_detail.html', site=site)
+    except Exception as e:
+        logger.error(f"站点详情页面错误: {e}")
+        current_lang = session.get('language', 'zh')
+        if current_lang == 'en':
+            flash('Site not found', 'error')
+        else:
+            flash('站点未找到', 'error')
+        return redirect(url_for('hosting.dashboard'))
+
 @hosting_bp.route('/host')
 @hosting_bp.route('/host/<path:subpath>')
 @requires_role(['owner', 'admin', 'mining_site'])
