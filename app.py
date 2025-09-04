@@ -2760,6 +2760,14 @@ try:
 except ImportError as e:
     logging.warning(f"托管功能模块不可用: {e}")
 
+# 注册客户功能模块
+try:
+    from modules.client import client_bp
+    app.register_blueprint(client_bp)
+    logging.info("客户功能模块已注册")
+except ImportError as e:
+    logging.warning(f"客户功能模块不可用: {e}")
+
 # 添加矿场中介业务路由别名
 @app.route('/mining-broker')
 @login_required

@@ -101,20 +101,17 @@ class MinerModel(db.Model):
     @classmethod
     def get_active_miners(cls):
         """获取所有启用的矿机型号"""
-        from app import db
-        return db.session.query(cls).filter_by(is_active=True).order_by(cls.manufacturer, cls.model_name).all()
+        return cls.query.filter_by(is_active=True).order_by(cls.manufacturer, cls.model_name).all()
 
     @classmethod
     def get_by_name(cls, model_name):
         """根据型号名称获取矿机"""
-        from app import db
-        return db.session.query(cls).filter_by(model_name=model_name, is_active=True).first()
+        return cls.query.filter_by(model_name=model_name, is_active=True).first()
 
     @classmethod
     def get_by_manufacturer(cls, manufacturer):
         """根据制造商获取矿机列表"""
-        from app import db
-        return db.session.query(cls).filter_by(manufacturer=manufacturer, is_active=True).order_by(cls.model_name).all()
+        return cls.query.filter_by(manufacturer=manufacturer, is_active=True).order_by(cls.model_name).all()
 
 class UserMiner(db.Model):
     """用户矿机设备数据库模型 - 存储用户的实际矿机信息"""
@@ -704,3 +701,351 @@ class Activity(db.Model):
 
     def __repr__(self):
         return f"<Activity {self.type} - {self.summary}>"
+
+# ==================== 托管平台数据模型 ====================
+
+class HostingSite(db.Model):
+    """托管站点管理"""
+    __tablename__ = 'hosting_sites'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    slug = db.Column(db.String(50), unique=True, nullable=False, index=True)  # 用于公开状态页面
+    location = db.Column(db.String(200), nullable=False)
+    capacity_mw = db.Column(db.Float, nullable=False)  # 总容量(MW)
+    used_capacity_mw = db.Column(db.Float, default=0.0, nullable=False)  # 已用容量(MW)
+    
+    # 站点状态
+    status = db.Column(db.String(20), default='online', nullable=False)  # online/offline/maintenance
+    operator_name = db.Column(db.String(100), nullable=False)  # 运营商名称
+    contact_email = db.Column(db.String(256), nullable=True)
+    contact_phone = db.Column(db.String(50), nullable=True)
+    
+    # 电力信息
+    electricity_rate = db.Column(db.Float, nullable=False)  # 电费费率 ($/kWh)
+    electricity_source = db.Column(db.String(50), nullable=True)  # 电力来源
+    
+    # 时间戳
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # 关联关系
+    miners = db.relationship('HostingMiner', backref='site', lazy=True, cascade="all, delete-orphan")
+    incidents = db.relationship('HostingIncident', backref='site', lazy=True, cascade="all, delete-orphan")
+    
+    def __init__(self, name, slug, location, capacity_mw, electricity_rate, operator_name, **kwargs):
+        self.name = name
+        self.slug = slug
+        self.location = location
+        self.capacity_mw = capacity_mw
+        self.electricity_rate = electricity_rate
+        self.operator_name = operator_name
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    @property
+    def utilization_rate(self):
+        """计算容量利用率"""
+        if self.capacity_mw == 0:
+            return 0
+        return (self.used_capacity_mw / self.capacity_mw) * 100
+    
+    @property
+    def available_capacity_mw(self):
+        """可用容量"""
+        return self.capacity_mw - self.used_capacity_mw
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'slug': self.slug,
+            'location': self.location,
+            'capacity_mw': self.capacity_mw,
+            'used_capacity_mw': self.used_capacity_mw,
+            'available_capacity_mw': self.available_capacity_mw,
+            'utilization_rate': self.utilization_rate,
+            'status': self.status,
+            'operator_name': self.operator_name,
+            'electricity_rate': self.electricity_rate,
+            'created_at': self.created_at.isoformat()
+        }
+
+class HostingMiner(db.Model):
+    """托管矿机实例"""
+    __tablename__ = 'hosting_miners'
+
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 关联字段
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False, index=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=False, index=True)
+    miner_model_id = db.Column(db.Integer, db.ForeignKey('miner_models.id'), nullable=False, index=True)
+    
+    # 设备信息
+    serial_number = db.Column(db.String(100), unique=True, nullable=False, index=True)
+    rack_position = db.Column(db.String(50), nullable=True)  # 机架位置
+    ip_address = db.Column(db.String(45), nullable=True)  # 支持IPv6
+    mac_address = db.Column(db.String(17), nullable=True)
+    
+    # 实际性能数据
+    actual_hashrate = db.Column(db.Float, nullable=False)  # 实际算力 (TH/s)
+    actual_power = db.Column(db.Float, nullable=False)  # 实际功耗 (W)
+    
+    # 状态管理
+    status = db.Column(db.String(20), default='active', nullable=False)  # active/offline/maintenance/error
+    health_score = db.Column(db.Integer, default=100, nullable=False)  # 健康度评分 0-100
+    
+    # 运营数据
+    install_date = db.Column(db.DateTime, nullable=True)  # 安装日期
+    last_maintenance = db.Column(db.DateTime, nullable=True)  # 上次维护时间
+    maintenance_count = db.Column(db.Integer, default=0, nullable=False)
+    
+    # 时间戳
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # 关联关系
+    customer = db.relationship('UserAccess', foreign_keys=[customer_id], backref='hosted_miners')
+    miner_model = db.relationship('MinerModel', foreign_keys=[miner_model_id])
+    telemetry_data = db.relationship('MinerTelemetry', backref='miner', lazy=True, cascade="all, delete-orphan")
+    
+    def __init__(self, site_id, customer_id, miner_model_id, serial_number, actual_hashrate, actual_power, **kwargs):
+        self.site_id = site_id
+        self.customer_id = customer_id
+        self.miner_model_id = miner_model_id
+        self.serial_number = serial_number
+        self.actual_hashrate = actual_hashrate
+        self.actual_power = actual_power
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'site_id': self.site_id,
+            'customer_id': self.customer_id,
+            'serial_number': self.serial_number,
+            'rack_position': self.rack_position,
+            'miner_model_name': self.miner_model.model_name if self.miner_model else None,
+            'actual_hashrate': self.actual_hashrate,
+            'actual_power': self.actual_power,
+            'status': self.status,
+            'health_score': self.health_score,
+            'install_date': self.install_date.isoformat() if self.install_date else None,
+            'last_maintenance': self.last_maintenance.isoformat() if self.last_maintenance else None
+        }
+
+class MinerTelemetry(db.Model):
+    """矿机遥测数据"""
+    __tablename__ = 'miner_telemetry'
+
+    id = db.Column(db.Integer, primary_key=True)
+    miner_id = db.Column(db.Integer, db.ForeignKey('hosting_miners.id'), nullable=False, index=True)
+    
+    # 性能指标
+    hashrate = db.Column(db.Float, nullable=False)  # 当前算力
+    power_consumption = db.Column(db.Float, nullable=False)  # 当前功耗
+    temperature = db.Column(db.Float, nullable=True)  # 温度
+    fan_speed = db.Column(db.Integer, nullable=True)  # 风扇转速
+    
+    # 矿池数据
+    pool_url = db.Column(db.String(200), nullable=True)
+    pool_worker = db.Column(db.String(100), nullable=True)
+    accepted_shares = db.Column(db.BigInteger, default=0)
+    rejected_shares = db.Column(db.BigInteger, default=0)
+    
+    # 记录时间
+    recorded_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    
+    def __init__(self, miner_id, hashrate, power_consumption, **kwargs):
+        self.miner_id = miner_id
+        self.hashrate = hashrate
+        self.power_consumption = power_consumption
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+
+class HostingIncident(db.Model):
+    """托管事件记录"""
+    __tablename__ = 'hosting_incidents'
+
+    id = db.Column(db.Integer, primary_key=True)
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False, index=True)
+    
+    # 事件信息
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    severity = db.Column(db.String(20), default='low', nullable=False)  # low/medium/high/critical
+    status = db.Column(db.String(20), default='open', nullable=False)  # open/investigating/resolved/closed
+    
+    # 影响范围
+    affected_miners = db.Column(db.Text, nullable=True)  # JSON格式存储受影响的矿机列表
+    estimated_loss = db.Column(db.Float, default=0.0, nullable=False)  # 预估损失
+    
+    # 时间追踪
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    resolved_at = db.Column(db.DateTime, nullable=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # 负责人
+    assigned_to_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
+    assigned_to = db.relationship('UserAccess', foreign_keys=[assigned_to_id], backref='assigned_incidents')
+    
+    def __init__(self, site_id, title, severity='low', **kwargs):
+        self.site_id = site_id
+        self.title = title
+        self.severity = severity
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+
+class HostingTicket(db.Model):
+    """工单系统"""
+    __tablename__ = 'hosting_tickets'
+
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 基本信息
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    priority = db.Column(db.String(20), default='medium', nullable=False)  # low/medium/high/urgent
+    status = db.Column(db.String(20), default='open', nullable=False)  # open/assigned/in_progress/resolved/closed
+    category = db.Column(db.String(50), nullable=True)  # hardware/network/power/other
+    
+    # 关联信息
+    customer_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=False, index=True)
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=True, index=True)
+    assigned_to_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
+    
+    # SLA追踪
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    first_response_at = db.Column(db.DateTime, nullable=True)  # 首次响应时间
+    resolved_at = db.Column(db.DateTime, nullable=True)  # 解决时间
+    
+    # 关联关系
+    customer = db.relationship('UserAccess', foreign_keys=[customer_id], backref='tickets')
+    assigned_to = db.relationship('UserAccess', foreign_keys=[assigned_to_id], backref='assigned_tickets')
+    
+    def __init__(self, title, customer_id, **kwargs):
+        self.title = title
+        self.customer_id = customer_id
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    @property
+    def response_time_minutes(self):
+        """首响时间（分钟）"""
+        if not self.first_response_at:
+            return None
+        delta = self.first_response_at - self.created_at
+        return int(delta.total_seconds() / 60)
+    
+    @property
+    def resolution_time_hours(self):
+        """解决时间（小时）"""
+        if not self.resolved_at:
+            return None
+        delta = self.resolved_at - self.created_at
+        return round(delta.total_seconds() / 3600, 1)
+
+class HostingBill(db.Model):
+    """托管账单"""
+    __tablename__ = 'hosting_bills'
+
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 账单基本信息
+    bill_number = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=False, index=True)
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False, index=True)
+    
+    # 计费周期
+    billing_period_start = db.Column(db.Date, nullable=False)
+    billing_period_end = db.Column(db.Date, nullable=False)
+    
+    # 费用明细
+    electricity_cost = db.Column(db.Float, default=0.0, nullable=False)  # 电费
+    hosting_fee = db.Column(db.Float, default=0.0, nullable=False)  # 托管费
+    maintenance_cost = db.Column(db.Float, default=0.0, nullable=False)  # 维护费
+    penalty_cost = db.Column(db.Float, default=0.0, nullable=False)  # 罚金/扣费
+    discount = db.Column(db.Float, default=0.0, nullable=False)  # 折扣
+    total_amount = db.Column(db.Float, nullable=False)  # 总金额
+    
+    # 账单状态
+    status = db.Column(db.String(20), default='draft', nullable=False)  # draft/sent/paid/overdue/cancelled
+    
+    # 时间戳
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    sent_at = db.Column(db.DateTime, nullable=True)
+    paid_at = db.Column(db.DateTime, nullable=True)
+    due_date = db.Column(db.Date, nullable=True)
+    
+    # 关联关系
+    customer = db.relationship('UserAccess', foreign_keys=[customer_id], backref='hosting_bills')
+    site = db.relationship('HostingSite', foreign_keys=[site_id], backref='bills')
+    bill_items = db.relationship('HostingBillItem', backref='bill', lazy=True, cascade="all, delete-orphan")
+    
+    def calculate_total(self):
+        """计算总金额"""
+        self.total_amount = (self.electricity_cost + self.hosting_fee + 
+                           self.maintenance_cost + self.penalty_cost - self.discount)
+        return self.total_amount
+
+class HostingBillItem(db.Model):
+    """账单明细项"""
+    __tablename__ = 'hosting_bill_items'
+
+    id = db.Column(db.Integer, primary_key=True)
+    bill_id = db.Column(db.Integer, db.ForeignKey('hosting_bills.id'), nullable=False, index=True)
+    
+    # 明细信息
+    item_type = db.Column(db.String(50), nullable=False)  # electricity/hosting/maintenance/penalty/discount
+    description = db.Column(db.String(500), nullable=False)
+    quantity = db.Column(db.Float, default=1.0, nullable=False)
+    unit_price = db.Column(db.Float, nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    
+    # 关联矿机（可选）
+    miner_id = db.Column(db.Integer, db.ForeignKey('hosting_miners.id'), nullable=True)
+    miner = db.relationship('HostingMiner', foreign_keys=[miner_id])
+
+class HostingAuditLog(db.Model):
+    """审计日志"""
+    __tablename__ = 'hosting_audit_logs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 操作信息
+    user_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=False, index=True)
+    action = db.Column(db.String(100), nullable=False)  # 操作类型
+    resource_type = db.Column(db.String(50), nullable=False)  # 资源类型
+    resource_id = db.Column(db.String(50), nullable=True)  # 资源ID
+    
+    # 详细信息
+    details = db.Column(db.Text, nullable=True)  # JSON格式的详细信息
+    ip_address = db.Column(db.String(45), nullable=True)
+    user_agent = db.Column(db.String(500), nullable=True)
+    
+    # 时间戳
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    
+    # 关联关系
+    user = db.relationship('UserAccess', foreign_keys=[user_id], backref='audit_logs')
+    
+    def __init__(self, user_id, action, resource_type, **kwargs):
+        self.user_id = user_id
+        self.action = action
+        self.resource_type = resource_type
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)

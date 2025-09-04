@@ -44,6 +44,20 @@ AVAILABLE_MODULES = {
         'url_prefix': '/broker',
         'requires_auth': True,
         'enabled': True
+    },
+    'hosting': {
+        'name': '托管服务',
+        'blueprint': 'modules.hosting',
+        'url_prefix': '/hosting',
+        'requires_auth': True,
+        'enabled': True
+    },
+    'client': {
+        'name': '客户服务',
+        'blueprint': 'modules.client',
+        'url_prefix': '/client',
+        'requires_auth': True,
+        'enabled': True
     }
 }
 
