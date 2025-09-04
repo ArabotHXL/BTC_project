@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的矿机 - HashInsight 客户中心</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-dark">
+    <div class="container-fluid">
+        <!-- 导航栏 -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
+            <div class="container-fluid">
+                <a class="navbar-brand text-warning fw-bold" href="/client/">
+                    <i class="bi bi-cpu"></i> 客户中心
+                </a>
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-link" href="/client/">仪表板</a>
+                    <a class="nav-link active" href="/client/miners">我的矿机</a>
+                    <a class="nav-link" href="/client/billing">账单查询</a>
+                    <a class="nav-link" href="/client/tickets">工单中心</a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 主内容 -->
+        <div class="container-fluid py-4">
+            <div class="row">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="text-warning mb-0">
+                            <i class="bi bi-cpu-fill"></i> 我的矿机
+                        </h2>
+                    </div>
+
+                    <!-- 矿机概览卡片 -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-secondary">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-cpu fs-2 text-warning"></i>
+                                    <h5 class="card-title mt-2">总矿机数</h5>
+                                    <h3 class="text-warning">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-secondary">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-play-circle fs-2 text-success"></i>
+                                    <h5 class="card-title mt-2">在线矿机</h5>
+                                    <h3 class="text-success">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-secondary">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-lightning fs-2 text-info"></i>
+                                    <h5 class="card-title mt-2">总算力</h5>
+                                    <h3 class="text-info">0 TH/s</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-secondary">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-thermometer-half fs-2 text-warning"></i>
+                                    <h5 class="card-title mt-2">平均温度</h5>
+                                    <h3 class="text-warning">--°C</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 矿机列表 -->
+                    <div class="card bg-secondary">
+                        <div class="card-header">
+                            <h5 class="mb-0">矿机列表</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-dark table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>矿机编号</th>
+                                            <th>型号</th>
+                                            <th>状态</th>
+                                            <th>算力</th>
+                                            <th>温度</th>
+                                            <th>位置</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted py-4">
+                                                <i class="bi bi-inbox fs-3"></i>
+                                                <div class="mt-2">暂无矿机数据</div>
+                                                <small>请联系托管方添加您的矿机</small>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
