@@ -145,7 +145,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">添加新矿机</h5>
+                <h5 class="modal-title">{% if current_lang == 'en' %}Add New Miner{% else %}添加新矿机{% endif %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -153,18 +153,18 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="customer-select" class="form-label">客户 *</label>
+                                <label for="customer-select" class="form-label">{% if current_lang == 'en' %}Customer *{% else %}客户 *{% endif %}</label>
                                 <select class="form-select" id="customer-select" name="customer_id" required>
-                                    <option value="">选择客户</option>
+                                    <option value="">{% if current_lang == 'en' %}Select Customer{% else %}选择客户{% endif %}</option>
                                     <!-- 动态加载客户选项 -->
                                 </select>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="site-select" class="form-label">托管站点 *</label>
+                                <label for="site-select" class="form-label">{% if current_lang == 'en' %}Hosting Site *{% else %}托管站点 *{% endif %}</label>
                                 <select class="form-select" id="site-select" name="site_id" required>
-                                    <option value="">选择站点</option>
+                                    <option value="">{% if current_lang == 'en' %}Select Site{% else %}选择站点{% endif %}</option>
                                     <!-- 动态加载站点选项 -->
                                 </select>
                             </div>
@@ -174,18 +174,18 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="miner-model-select" class="form-label">矿机型号 *</label>
+                                <label for="miner-model-select" class="form-label">{% if current_lang == 'en' %}Miner Model *{% else %}矿机型号 *{% endif %}</label>
                                 <select class="form-select" id="miner-model-select" name="miner_model_id" required>
-                                    <option value="">选择型号</option>
+                                    <option value="">{% if current_lang == 'en' %}Select Model{% else %}选择型号{% endif %}</option>
                                     <!-- 动态加载矿机型号选项 -->
                                 </select>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="serial-number" class="form-label">序列号 *</label>
+                                <label for="serial-number" class="form-label">{% if current_lang == 'en' %}Serial Number *{% else %}序列号 *{% endif %}</label>
                                 <input type="text" class="form-control" id="serial-number" name="serial_number" required>
-                                <div class="form-text">必须唯一</div>
+                                <div class="form-text">{% if current_lang == 'en' %}Must be unique{% else %}必须唯一{% endif %}</div>
                             </div>
                         </div>
                     </div>
@@ -193,13 +193,13 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="actual-hashrate" class="form-label">实际算力 (TH/s) *</label>
+                                <label for="actual-hashrate" class="form-label">{% if current_lang == 'en' %}Actual Hashrate (TH/s) *{% else %}实际算力 (TH/s) *{% endif %}</label>
                                 <input type="number" class="form-control" id="actual-hashrate" name="actual_hashrate" step="0.1" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="actual-power" class="form-label">实际功耗 (W) *</label>
+                                <label for="actual-power" class="form-label">{% if current_lang == 'en' %}Actual Power (W) *{% else %}实际功耗 (W) *{% endif %}</label>
                                 <input type="number" class="form-control" id="actual-power" name="actual_power" required>
                             </div>
                         </div>
@@ -208,33 +208,33 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="rack-position" class="form-label">机架位置</label>
-                                <input type="text" class="form-control" id="rack-position" name="rack_position" placeholder="例: A-01-05">
+                                <label for="rack-position" class="form-label">{% if current_lang == 'en' %}Rack Position{% else %}机架位置{% endif %}</label>
+                                <input type="text" class="form-control" id="rack-position" name="rack_position" placeholder="{% if current_lang == 'en' %}e.g: A-01-05{% else %}例: A-01-05{% endif %}">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="ip-address" class="form-label">IP地址</label>
+                                <label for="ip-address" class="form-label">{% if current_lang == 'en' %}IP Address{% else %}IP地址{% endif %}</label>
                                 <input type="text" class="form-control" id="ip-address" name="ip_address" placeholder="192.168.1.100">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="mac-address" class="form-label">MAC地址</label>
+                                <label for="mac-address" class="form-label">{% if current_lang == 'en' %}MAC Address{% else %}MAC地址{% endif %}</label>
                                 <input type="text" class="form-control" id="mac-address" name="mac_address" placeholder="00:11:22:33:44:55">
                             </div>
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="approval-notes" class="form-label">备注</label>
+                        <label for="approval-notes" class="form-label">{% if current_lang == 'en' %}Notes{% else %}备注{% endif %}</label>
                         <textarea class="form-control" id="approval-notes" name="approval_notes" rows="3"></textarea>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" onclick="submitMiner()">添加矿机</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}</button>
+                <button type="button" class="btn btn-primary" onclick="submitMiner()">{% if current_lang == 'en' %}Add Miner{% else %}添加矿机{% endif %}</button>
             </div>
         </div>
     </div>
@@ -245,33 +245,33 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">批量导入矿机</h5>
+                <h5 class="modal-title">{% if current_lang == 'en' %}Batch Import Miners{% else %}批量导入矿机{% endif %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label for="import-file" class="form-label">上传CSV文件</label>
+                    <label for="import-file" class="form-label">{% if current_lang == 'en' %}Upload CSV File{% else %}上传CSV文件{% endif %}</label>
                     <input type="file" class="form-control" id="import-file" accept=".csv">
                     <div class="form-text">
-                        支持CSV格式。<a href="#" onclick="downloadTemplate()">下载模板</a>
+                        {% if current_lang == 'en' %}CSV format supported. <a href="#" onclick="downloadTemplate()">Download Template</a>{% else %}支持CSV格式。<a href="#" onclick="downloadTemplate()">下载模板</a>{% endif %}
                     </div>
                 </div>
                 
                 <div class="mb-3">
-                    <h6>CSV格式要求：</h6>
+                    <h6>{% if current_lang == 'en' %}CSV Format Requirements:{% else %}CSV格式要求：{% endif %}</h6>
                     <table class="table table-sm">
                         <thead>
                             <tr>
-                                <th>列名</th>
-                                <th>说明</th>
-                                <th>必填</th>
+                                <th>{% if current_lang == 'en' %}Column{% else %}列名{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Description{% else %}说明{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Required{% else %}必填{% endif %}</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr><td>site_id</td><td>站点ID</td><td>是</td></tr>
-                            <tr><td>customer_id</td><td>客户ID</td><td>是</td></tr>
-                            <tr><td>miner_model_id</td><td>矿机型号ID</td><td>是</td></tr>
-                            <tr><td>serial_number</td><td>序列号</td><td>是</td></tr>
+                            <tr><td>site_id</td><td>{% if current_lang == 'en' %}Site ID{% else %}站点ID{% endif %}</td><td>{% if current_lang == 'en' %}Yes{% else %}是{% endif %}</td></tr>
+                            <tr><td>customer_id</td><td>{% if current_lang == 'en' %}Customer ID{% else %}客户ID{% endif %}</td><td>{% if current_lang == 'en' %}Yes{% else %}是{% endif %}</td></tr>
+                            <tr><td>miner_model_id</td><td>{% if current_lang == 'en' %}Miner Model ID{% else %}矿机型号ID{% endif %}</td><td>{% if current_lang == 'en' %}Yes{% else %}是{% endif %}</td></tr>
+                            <tr><td>serial_number</td><td>{% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %}</td><td>{% if current_lang == 'en' %}Yes{% else %}是{% endif %}</td></tr>
                             <tr><td>actual_hashrate</td><td>实际算力(TH/s)</td><td>是</td></tr>
                             <tr><td>actual_power</td><td>实际功耗(W)</td><td>是</td></tr>
                             <tr><td>rack_position</td><td>机架位置</td><td>否</td></tr>
@@ -292,9 +292,9 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-info" onclick="previewImport()">预览</button>
-                <button type="button" class="btn btn-success" onclick="submitBatchImport()" id="import-btn" disabled>导入</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}</button>
+                <button type="button" class="btn btn-info" onclick="previewImport()">{% if current_lang == 'en' %}Preview{% else %}预览{% endif %}</button>
+                <button type="button" class="btn btn-success" onclick="submitBatchImport()" id="import-btn" disabled>{% if current_lang == 'en' %}Import{% else %}导入{% endif %}</button>
             </div>
         </div>
     </div>
@@ -305,7 +305,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">矿机审核</h5>
+                <h5 class="modal-title">{% if current_lang == 'en' %}Miner Approval{% else %}矿机审核{% endif %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -313,14 +313,14 @@
                     <!-- 矿机信息将动态加载 -->
                 </div>
                 <div class="mb-3">
-                    <label for="approval-notes-input" class="form-label">审核备注</label>
+                    <label for="approval-notes-input" class="form-label">{% if current_lang == 'en' %}Approval Notes{% else %}审核备注{% endif %}</label>
                     <textarea class="form-control" id="approval-notes-input" rows="3" placeholder="请输入审核意见..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-danger" onclick="rejectMiner()">拒绝</button>
-                <button type="button" class="btn btn-success" onclick="approveMiner()">通过</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}</button>
+                <button type="button" class="btn btn-danger" onclick="rejectMiner()">{% if current_lang == 'en' %}Reject{% else %}拒绝{% endif %}</button>
+                <button type="button" class="btn btn-success" onclick="approveMiner()">{% if current_lang == 'en' %}Approve{% else %}通过{% endif %}</button>
             </div>
         </div>
     </div>

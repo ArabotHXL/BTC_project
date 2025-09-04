@@ -1,7 +1,9 @@
 
 {% extends "base.html" %}
 
-{% block title %}托管服务商仪表板 - BTC Mining Calculator{% endblock %}
+{% block title %}
+    {% if current_lang == 'en' %}Hosting Service Provider Dashboard{% else %}托管服务商仪表板{% endif %} - BTC Mining Calculator
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -9,9 +11,11 @@
     <div class="row mb-4">
         <div class="col-12">
             <h1 class="h3 mb-0">
-                <i class="bi bi-building"></i> 托管服务商仪表板
+                <i class="bi bi-building"></i> {% if current_lang == 'en' %}Hosting Service Provider Dashboard{% else %}托管服务商仪表板{% endif %}
             </h1>
-            <p class="text-muted">管理托管站点、设备和客户</p>
+            <p class="text-muted">
+                {% if current_lang == 'en' %}Manage hosting sites, devices and customers{% else %}管理托管站点、设备和客户{% endif %}
+            </p>
         </div>
     </div>
 
@@ -23,7 +27,7 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <h4 class="card-title" id="total-sites">--</h4>
-                            <p class="card-text">托管站点</p>
+                            <p class="card-text">{% if current_lang == 'en' %}Hosting Sites{% else %}托管站点{% endif %}</p>
                         </div>
                         <i class="bi bi-geo-alt fs-1"></i>
                     </div>
@@ -36,7 +40,7 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <h4 class="card-title" id="total-devices">--</h4>
-                            <p class="card-text">托管设备</p>
+                            <p class="card-text">{% if current_lang == 'en' %}Hosted Devices{% else %}托管设备{% endif %}</p>
                         </div>
                         <i class="bi bi-cpu fs-1"></i>
                     </div>
@@ -49,7 +53,7 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <h4 class="card-title" id="total-capacity">--</h4>
-                            <p class="card-text">总容量 (MW)</p>
+                            <p class="card-text">{% if current_lang == 'en' %}Total Capacity (MW){% else %}总容量 (MW){% endif %}</p>
                         </div>
                         <i class="bi bi-lightning fs-1"></i>
                     </div>
@@ -62,7 +66,7 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <h4 class="card-title" id="monthly-revenue">--</h4>
-                            <p class="card-text">月度收入</p>
+                            <p class="card-text">{% if current_lang == 'en' %}Monthly Revenue{% else %}月度收入{% endif %}</p>
                         </div>
                         <i class="bi bi-currency-dollar fs-1"></i>
                     </div>
@@ -77,14 +81,14 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-building"></i> 站点总览
+                        <i class="bi bi-building"></i> {% if current_lang == 'en' %}Sites Overview{% else %}站点总览{% endif %}
                     </h5>
                     <div class="btn-group" role="group">
                         <button class="btn btn-primary btn-sm" onclick="refreshSites()">
-                            <i class="bi bi-arrow-clockwise"></i> 刷新
+                            <i class="bi bi-arrow-clockwise"></i> {% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
                         </button>
                         <a href="/hosting/host/devices" class="btn btn-success btn-sm">
-                            <i class="bi bi-cpu"></i> 矿机管理
+                            <i class="bi bi-cpu"></i> {% if current_lang == 'en' %}Miner Management{% else %}矿机管理{% endif %}
                         </a>
                     </div>
                 </div>
@@ -93,12 +97,12 @@
                         <table class="table table-hover" id="sites-table">
                             <thead>
                                 <tr>
-                                    <th>站点名称</th>
-                                    <th>位置</th>
-                                    <th>容量利用率</th>
-                                    <th>设备数量</th>
-                                    <th>状态</th>
-                                    <th>操作</th>
+                                    <th>{% if current_lang == 'en' %}Site Name{% else %}站点名称{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Location{% else %}位置{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Capacity Utilization{% else %}容量利用率{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Device Count{% else %}设备数量{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -117,7 +121,7 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-exclamation-triangle"></i> 最新事件
+                        <i class="bi bi-exclamation-triangle"></i> {% if current_lang == 'en' %}Recent Events{% else %}最新事件{% endif %}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -145,7 +149,11 @@ function loadHostDashboard() {
                 updateSummaryCards(data.sites);
             }
         })
-        .catch(error => console.error('加载站点数据失败:', error));
+        .catch(error => {
+            const lang = '{{ current_lang }}';
+            const errorMsg = lang === 'en' ? 'Failed to load site data:' : '加载站点数据失败:';
+            console.error(errorMsg, error);
+        });
 }
 
 function displaySites(sites) {
@@ -175,7 +183,7 @@ function displaySites(sites) {
                 <td><span class="badge bg-${statusBadge}">${site.status}</span></td>
                 <td>
                     <button class="btn btn-sm btn-outline-primary" onclick="viewSiteDetail(${site.id})">
-                        <i class="bi bi-eye"></i> 查看
+                        <i class="bi bi-eye"></i> {% if current_lang == 'en' %}View{% else %}查看{% endif %}
                     </button>
                 </td>
             </tr>

@@ -47,7 +47,11 @@ def host_view(subpath='dashboard'):
             return render_template('hosting/host_dashboard.html')
     except Exception as e:
         logger.error(f"托管商视图错误: {e}")
-        flash('页面加载失败', 'error')
+        current_lang = session.get('language', 'zh')
+        if current_lang == 'en':
+            flash('Page loading failed', 'error')
+        else:
+            flash('页面加载失败', 'error')
         return redirect(url_for('hosting.dashboard'))
 
 @hosting_bp.route('/client')
@@ -68,7 +72,11 @@ def client_view(subpath='dashboard'):
             return render_template('hosting/client_dashboard.html')
     except Exception as e:
         logger.error(f"客户视图错误: {e}")
-        flash('页面加载失败', 'error')
+        current_lang = session.get('language', 'zh')
+        if current_lang == 'en':
+            flash('Page loading failed', 'error')
+        else:
+            flash('页面加载失败', 'error')
         return redirect(url_for('hosting.dashboard'))
 
 # ==================== 托管商API路由 ====================
