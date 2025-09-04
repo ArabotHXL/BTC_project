@@ -22,28 +22,28 @@ AVAILABLE_MODULES = {
         'blueprint': 'modules.crm',
         'url_prefix': '/crm',
         'requires_auth': True,
-        'enabled': True
+        'enabled': False  # No-Money模式禁用CRM
     },
     'batch': {
         'name': '批量计算器',
         'blueprint': 'modules.batch',
         'url_prefix': '/batch',
         'requires_auth': True,
-        'enabled': True
+        'enabled': False  # No-Money模式禁用批量计算
     },
     'analytics': {
         'name': '数据分析',
         'blueprint': 'modules.analytics',
         'url_prefix': '/analytics',
         'requires_auth': True,
-        'enabled': True
+        'enabled': False  # No-Money模式禁用分析模块
     },
     'broker': {
         'name': '经纪人系统',
         'blueprint': 'modules.broker',
         'url_prefix': '/broker',
         'requires_auth': True,
-        'enabled': True
+        'enabled': False  # No-Money模式禁用经纪人系统
     },
     'hosting': {
         'name': '托管服务',

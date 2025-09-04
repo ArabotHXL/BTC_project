@@ -439,6 +439,15 @@ def status_check():
     """Basic status endpoint for load balancer health checks"""
     return jsonify({"status": "ok"}), 200
 
+@app.route('/status/<site_slug>')
+def public_site_status(site_slug):
+    """公开的站点状态页面 - 重定向到托管模块"""
+    try:
+        return redirect(url_for('hosting.public_site_status', site_slug=site_slug))
+    except Exception as e:
+        logging.error(f"Public site status redirect failed: {e}")
+        return jsonify({"error": "Site not found"}), 404
+
 # Deployment readiness endpoint - minimal checks for fast response
 @app.route('/ready', methods=['GET'])
 def readiness_check():

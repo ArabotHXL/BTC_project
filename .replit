@@ -60,4 +60,3 @@ localPort = 8888
 externalPort = 3001
 
 [agent]
-integrations = ["flask_authentication==1.0.0"]
