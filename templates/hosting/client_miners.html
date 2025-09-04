@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}我的矿机 - BTC Mining Calculator{% endblock %}
+{% block title %}
+    {% if current_lang == 'en' %}My Miners{% else %}我的矿机{% endif %} - BTC Mining Calculator
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -8,9 +10,11 @@
     <div class="row mb-4">
         <div class="col-12">
             <h1 class="h3 mb-0">
-                <i class="bi bi-cpu"></i> 我的矿机
+                <i class="bi bi-cpu"></i> {% if current_lang == 'en' %}My Miners{% else %}我的矿机{% endif %}
             </h1>
-            <p class="text-muted">查看托管的矿机设备状态和性能</p>
+            <p class="text-muted">
+                {% if current_lang == 'en' %}View the status and performance of hosted mining devices{% else %}查看托管的矿机设备状态和性能{% endif %}
+            </p>
         </div>
     </div>
 
@@ -19,13 +23,13 @@
         <div class="col-12">
             <div class="d-flex flex-wrap gap-2">
                 <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#applyMinerModal">
-                    <i class="bi bi-plus-circle"></i> 申请录入矿机
+                    <i class="bi bi-plus-circle"></i> {% if current_lang == 'en' %}Apply for Miner Registration{% else %}申请录入矿机{% endif %}
                 </button>
                 <button class="btn btn-info" onclick="refreshMiners()">
-                    <i class="bi bi-arrow-clockwise"></i> 刷新
+                    <i class="bi bi-arrow-clockwise"></i> {% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
                 </button>
                 <button class="btn btn-warning" onclick="showPendingApplications()">
-                    <i class="bi bi-clock"></i> 我的申请
+                    <i class="bi bi-clock"></i> {% if current_lang == 'en' %}My Applications{% else %}我的申请{% endif %}
                     <span class="badge bg-light text-dark" id="pending-applications-count">0</span>
                 </button>
             </div>
@@ -40,7 +44,7 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <h4 class="card-title" id="total-miners">--</h4>
-                            <p class="card-text">总设备数</p>
+                            <p class="card-text">{% if current_lang == 'en' %}Total Devices{% else %}总设备数{% endif %}</p>
                         </div>
                         <i class="bi bi-cpu fs-1"></i>
                     </div>
@@ -53,7 +57,7 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <h4 class="card-title" id="active-miners">--</h4>
-                            <p class="card-text">运行设备</p>
+                            <p class="card-text">{% if current_lang == 'en' %}Running Devices{% else %}运行设备{% endif %}</p>
                         </div>
                         <i class="bi bi-check-circle fs-1"></i>
                     </div>
@@ -66,7 +70,7 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <h4 class="card-title" id="total-hashrate">--</h4>
-                            <p class="card-text">总算力 (TH/s)</p>
+                            <p class="card-text">{% if current_lang == 'en' %}Total Hashrate (TH/s){% else %}总算力 (TH/s){% endif %}</p>
                         </div>
                         <i class="bi bi-lightning fs-1"></i>
                     </div>
@@ -79,7 +83,7 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <h4 class="card-title" id="estimated-revenue">--</h4>
-                            <p class="card-text">日收益 (USD)</p>
+                            <p class="card-text">{% if current_lang == 'en' %}Daily Revenue (USD){% else %}日收益 (USD){% endif %}</p>
                         </div>
                         <i class="bi bi-currency-dollar fs-1"></i>
                     </div>
