@@ -347,7 +347,8 @@ body {
 .dashboard-card:nth-child(3) { animation-delay: 0.3s; }
 .dashboard-card:nth-child(4) { animation-delay: 0.4s; }
 .dashboard-card:nth-child(5) { animation-delay: 0.5s; }
-.dashboard-card:nth-child(6) { animation-delay: 0.6s; } /* Add delay for the new card */
+.dashboard-card:nth-child(6) { animation-delay: 0.6s; }
+.dashboard-card:nth-child(7) { animation-delay: 0.7s; } /* Add delay for hosting card */
 
 @keyframes slideInUp {
     to {
@@ -399,6 +400,10 @@ body {
 .performance-item .card-icon,
 .performance-item .bi,
 .performance-item i { color: #fd7e14 !important; } /* 性能监控 - 橙色 */
+
+.hosting-item .card-icon,
+.hosting-item .bi,
+.hosting-item i { color: #20c997 !important; } /* 托管管理 - 青绿色 */
 
 /* 用户下拉按钮悬停效果 */
 #userDropdown:hover {
@@ -684,6 +689,22 @@ body {
                 </h3>
                 <p class="card-description">
                     {% if current_lang == 'en' %}Advanced treasury management with 10-module AI trading algorithms and institutional-grade backtesting{% else %}高级资金管理，配备10模块AI交易算法和机构级回测{% endif %}
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 托管管理 -->
+        {% if session.role in ['owner', 'admin', 'mining_site'] %}
+        <div class="dashboard-card hosting-item" onclick="location.href='{{ url_for('hosting.dashboard') }}'">
+            <div class="card-stats">Professional</div>
+            <div class="card-content">
+                <i class="bi bi-building card-icon"></i>
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}Hosting Management{% else %}托管管理{% endif %}
+                </h3>
+                <p class="card-description">
+                    {% if current_lang == 'en' %}Comprehensive hosting platform with client management, device monitoring, and transparent reporting{% else %}全面的托管平台，包含客户管理、设备监控和透明报告{% endif %}
                 </p>
             </div>
         </div>
