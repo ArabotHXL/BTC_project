@@ -5,72 +5,139 @@
     {% if current_lang == 'en' %}Hosting Client Dashboard{% else %}托管客户仪表板{% endif %} - BTC Mining Calculator
 {% endblock %}
 
+{% block extra_css %}
+<style>
+/* Client Dashboard Unified Styling */
+.client-dashboard {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d3748 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.client-hero {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.client-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #f7931e, #ffc107);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1rem;
+}
+
+.client-subtitle {
+    color: #adb5bd;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+.asset-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 2px solid #333;
+    border-radius: 15px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+    height: 150px;
+    position: relative;
+    overflow: hidden;
+}
+
+.asset-card:hover {
+    border-color: #ffc107;
+    box-shadow: 0 10px 25px rgba(255, 193, 7, 0.2);
+    transform: translateY(-5px);
+}
+
+.asset-card .icon {
+    font-size: 3rem;
+    opacity: 0.7;
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.asset-value {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #ffc107;
+}
+
+.asset-label {
+    color: #adb5bd;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.content-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 2px solid #333;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+}
+
+.content-card:hover {
+    border-color: #ffc107;
+    box-shadow: 0 10px 25px rgba(255, 193, 7, 0.2);
+}
+
+.content-card .card-header {
+    background: linear-gradient(135deg, #f7931e, #ffc107);
+    color: #000;
+    font-weight: 600;
+    border: none;
+    border-radius: 13px 13px 0 0;
+}
+</style>
+{% endblock %}
+
 {% block content %}
+<div class="client-dashboard">
 <div class="container-fluid">
     <!-- 页面标题 -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="h3 mb-0">
-                <i class="bi bi-person-circle"></i> {% if current_lang == 'en' %}My Hosted Assets{% else %}我的托管资产{% endif %}
-            </h1>
-            <p class="text-muted">
-                {% if current_lang == 'en' %}View your hosted devices and revenue status{% else %}查看您的托管设备和收益情况{% endif %}
-            </p>
-        </div>
+    <div class="client-hero">
+        <h1 class="client-title">
+            <i class="bi bi-person-circle me-3"></i>{% if current_lang == 'en' %}My Hosted Assets{% else %}我的托管资产{% endif %}
+        </h1>
+        <p class="client-subtitle">
+            {% if current_lang == 'en' %}View your hosted devices and revenue status with real-time monitoring{% else %}实时监控您的托管设备和收益情况{% endif %}
+        </p>
     </div>
 
     <!-- 资产概览卡片 -->
-    <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title" id="total-devices">--</h4>
-                            <p class="card-text">{% if current_lang == 'en' %}Hosted Devices{% else %}托管设备{% endif %}</p>
-                        </div>
-                        <i class="bi bi-cpu fs-1"></i>
-                    </div>
-                </div>
+    <div class="row mb-5 g-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="asset-card">
+                <div class="asset-value" id="total-devices">--</div>
+                <div class="asset-label">{% if current_lang == 'en' %}Hosted Devices{% else %}托管设备{% endif %}</div>
+                <i class="bi bi-cpu icon text-warning"></i>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title" id="total-hashrate">--</h4>
-                            <p class="card-text">{% if current_lang == 'en' %}Total Hashrate{% else %}总算力{% endif %}</p>
-                        </div>
-                        <i class="bi bi-speedometer2 fs-1"></i>
-                    </div>
-                </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="asset-card">
+                <div class="asset-value" id="total-hashrate">--</div>
+                <div class="asset-label">{% if current_lang == 'en' %}Total Hashrate{% else %}总算力{% endif %}</div>
+                <i class="bi bi-speedometer2 icon text-warning"></i>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title" id="monthly-revenue">--</h4>
-                            <p class="card-text">{% if current_lang == 'en' %}Monthly Revenue{% else %}月度收入{% endif %}</p>
-                        </div>
-                        <i class="bi bi-currency-dollar fs-1"></i>
-                    </div>
-                </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="asset-card">
+                <div class="asset-value" id="monthly-revenue">--</div>
+                <div class="asset-label">{% if current_lang == 'en' %}Monthly Revenue{% else %}月度收入{% endif %}</div>
+                <i class="bi bi-currency-dollar icon text-warning"></i>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title" id="net-profit">--</h4>
-                            <p class="card-text">{% if current_lang == 'en' %}Net Profit{% else %}净利润{% endif %}</p>
-                        </div>
-                        <i class="bi bi-graph-up fs-1"></i>
-                    </div>
-                </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="asset-card">
+                <div class="asset-value" id="net-profit">--</div>
+                <div class="asset-label">{% if current_lang == 'en' %}Net Profit{% else %}净利润{% endif %}</div>
+                <i class="bi bi-graph-up icon text-warning"></i>
             </div>
         </div>
     </div>
@@ -78,10 +145,10 @@
     <!-- 设备列表和账单 -->
     <div class="row">
         <div class="col-lg-8 mb-4">
-            <div class="card">
+            <div class="content-card card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-list-ul"></i> {% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}
+                        <i class="bi bi-list-ul me-2"></i>{% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -106,10 +173,10 @@
         </div>
         
         <div class="col-lg-4 mb-4">
-            <div class="card">
+            <div class="content-card card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-receipt"></i> {% if current_lang == 'en' %}This Month's Bill{% else %}本月账单{% endif %}
+                        <i class="bi bi-receipt me-2"></i>{% if current_lang == 'en' %}This Month's Bill{% else %}本月账单{% endif %}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -140,6 +207,7 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 
 <script>

@@ -4,7 +4,117 @@
     {% if current_lang == 'en' %}Site Details{% else %}站点详情{% endif %} - {{ site.name }} - BTC Mining Calculator
 {% endblock %}
 
+{% block extra_css %}
+<style>
+/* Site Detail Unified Styling */
+.site-detail {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d3748 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.site-hero {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.site-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #f7931e, #ffc107);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1rem;
+}
+
+.site-subtitle {
+    color: #adb5bd;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+.content-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 2px solid #333;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+    margin-bottom: 2rem;
+}
+
+.content-card:hover {
+    border-color: #ffc107;
+    box-shadow: 0 10px 25px rgba(255, 193, 7, 0.2);
+}
+
+.content-card .card-header {
+    background: linear-gradient(135deg, #f7931e, #ffc107);
+    color: #000;
+    font-weight: 600;
+    border: none;
+    border-radius: 13px 13px 0 0;
+}
+
+.btn-site-primary {
+    background: linear-gradient(135deg, #f7931e, #ffc107);
+    border: none;
+    color: #000;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-site-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3);
+    color: #000;
+}
+
+.btn-site-secondary {
+    background: transparent;
+    border: 2px solid #ffc107;
+    color: #ffc107;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-site-secondary:hover {
+    background: #ffc107;
+    color: #000;
+    transform: translateY(-2px);
+}
+
+.info-table {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.quick-stats {
+    text-align: center;
+    padding: 2rem;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #ffc107;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #adb5bd;
+    font-size: 0.9rem;
+}
+</style>
+{% endblock %}
+
 {% block content %}
+<div class="site-detail">
 <div class="container-fluid">
     <!-- 页面标题 -->
     <div class="row mb-4">
@@ -19,11 +129,11 @@
                     </p>
                 </div>
                 <div>
-                    <a href="/hosting/host" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left"></i> {% if current_lang == 'en' %}Back to Dashboard{% else %}返回仪表板{% endif %}
+                    <a href="/hosting/host" class="btn btn-site-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>{% if current_lang == 'en' %}Back to Dashboard{% else %}返回仪表板{% endif %}
                     </a>
-                    <a href="/hosting/host/devices" class="btn btn-primary">
-                        <i class="bi bi-cpu"></i> {% if current_lang == 'en' %}Manage Devices{% else %}设备管理{% endif %}
+                    <a href="/hosting/host/devices" class="btn btn-site-primary">
+                        <i class="bi bi-cpu me-2"></i>{% if current_lang == 'en' %}Manage Devices{% else %}设备管理{% endif %}
                     </a>
                 </div>
             </div>
@@ -33,10 +143,10 @@
     <!-- 站点信息卡片 -->
     <div class="row mb-4">
         <div class="col-lg-8">
-            <div class="card">
+            <div class="content-card card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-info-circle"></i> {% if current_lang == 'en' %}Site Information{% else %}站点信息{% endif %}
+                        <i class="bi bi-info-circle me-2"></i>{% if current_lang == 'en' %}Site Information{% else %}站点信息{% endif %}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -100,25 +210,25 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card">
+            <div class="content-card card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-graph-up"></i> {% if current_lang == 'en' %}Quick Stats{% else %}快速统计{% endif %}
+                        <i class="bi bi-graph-up me-2"></i>{% if current_lang == 'en' %}Quick Stats{% else %}快速统计{% endif %}
                     </h5>
                 </div>
                 <div class="card-body">
-                    <div class="text-center">
+                    <div class="quick-stats">
                         <div class="mb-3">
-                            <h4 class="text-primary" id="device-count">--</h4>
-                            <small class="text-muted">{% if current_lang == 'en' %}Total Devices{% else %}总设备数{% endif %}</small>
+                            <div class="stat-value" id="device-count">--</div>
+                            <div class="stat-label">{% if current_lang == 'en' %}Total Devices{% else %}总设备数{% endif %}</div>
                         </div>
                         <div class="mb-3">
-                            <h4 class="text-success" id="active-devices">--</h4>
-                            <small class="text-muted">{% if current_lang == 'en' %}Active Devices{% else %}运行设备{% endif %}</small>
+                            <div class="stat-value" id="active-devices">--</div>
+                            <div class="stat-label">{% if current_lang == 'en' %}Active Devices{% else %}运行设备{% endif %}</div>
                         </div>
                         <div class="mb-3">
-                            <h4 class="text-info" id="total-hashrate">--</h4>
-                            <small class="text-muted">{% if current_lang == 'en' %}Total Hashrate{% else %}总算力{% endif %}</small>
+                            <div class="stat-value" id="total-hashrate">--</div>
+                            <div class="stat-label">{% if current_lang == 'en' %}Total Hashrate{% else %}总算力{% endif %}</div>
                         </div>
                     </div>
                 </div>
@@ -129,10 +239,10 @@
     <!-- 容量利用率图表 -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
+            <div class="content-card card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-bar-chart"></i> {% if current_lang == 'en' %}Capacity Utilization{% else %}容量利用率{% endif %}
+                        <i class="bi bi-bar-chart me-2"></i>{% if current_lang == 'en' %}Capacity Utilization{% else %}容量利用率{% endif %}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -156,13 +266,13 @@
     <!-- 设备列表预览 -->
     <div class="row">
         <div class="col-12">
-            <div class="card">
+            <div class="content-card card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-cpu"></i> {% if current_lang == 'en' %}Recent Devices{% else %}最近设备{% endif %}
+                        <i class="bi bi-cpu me-2"></i>{% if current_lang == 'en' %}Recent Devices{% else %}最近设备{% endif %}
                     </h5>
-                    <a href="/hosting/host/devices?site={{ site.id }}" class="btn btn-primary btn-sm">
-                        <i class="bi bi-list"></i> {% if current_lang == 'en' %}View All Devices{% else %}查看全部设备{% endif %}
+                    <a href="/hosting/host/devices?site={{ site.id }}" class="btn btn-site-primary btn-sm">
+                        <i class="bi bi-list me-2"></i>{% if current_lang == 'en' %}View All Devices{% else %}查看全部设备{% endif %}
                     </a>
                 </div>
                 <div class="card-body">
@@ -191,6 +301,7 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 
 <script>

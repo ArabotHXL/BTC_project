@@ -42,9 +42,11 @@
     <!-- 筛选器 -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <form class="row g-3" id="filter-form">
+            <div class="filter-card">
+                <h6 class="text-warning mb-3">
+                    <i class="bi bi-funnel me-2"></i>{% if current_lang == 'en' %}Filter Options{% else %}筛选选项{% endif %}
+                </h6>
+                <form class="row g-3" id="filter-form">
                         <div class="col-md-3">
                             <label for="status-filter" class="form-label">
                                 {% if current_lang == 'en' %}Status{% else %}状态{% endif %}
@@ -87,8 +89,7 @@
                                 <!-- 动态加载客户选项 -->
                             </select>
                         </div>
-                    </form>
-                </div>
+                </form>
             </div>
         </div>
     </div>
@@ -96,15 +97,15 @@
     <!-- 矿机列表 -->
     <div class="row">
         <div class="col-12">
-            <div class="card">
+            <div class="content-card card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-list"></i> {% if current_lang == 'en' %}Miner List{% else %}矿机列表{% endif %}
+                        <i class="bi bi-list me-2"></i>{% if current_lang == 'en' %}Miner List{% else %}矿机列表{% endif %}
                     </h5>
-                    <div class="d-flex gap-2">
-                        <span class="badge bg-info" id="total-count">{% if current_lang == 'en' %}Total: 0{% else %}总计: 0{% endif %}</span>
-                        <span class="badge bg-success" id="active-count">{% if current_lang == 'en' %}Running: 0{% else %}运行: 0{% endif %}</span>
-                        <span class="badge bg-warning" id="pending-approval-count">{% if current_lang == 'en' %}Pending: 0{% else %}待审核: 0{% endif %}</span>
+                    <div class="stats-badges">
+                        <span class="stat-badge" id="total-count">{% if current_lang == 'en' %}Total: 0{% else %}总计: 0{% endif %}</span>
+                        <span class="stat-badge" id="active-count">{% if current_lang == 'en' %}Running: 0{% else %}运行: 0{% endif %}</span>
+                        <span class="stat-badge" id="pending-approval-count">{% if current_lang == 'en' %}Pending: 0{% else %}待审核: 0{% endif %}</span>
                     </div>
                 </div>
                 <div class="card-body">

@@ -5,72 +5,171 @@
     {% if current_lang == 'en' %}Hosting Service Provider Dashboard{% else %}托管服务商仪表板{% endif %} - BTC Mining Calculator
 {% endblock %}
 
+{% block extra_css %}
+<style>
+/* Hosting Dashboard Unified Styling */
+.hosting-dashboard {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d3748 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.hosting-hero {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.hosting-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #f7931e, #ffc107);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1rem;
+}
+
+.hosting-subtitle {
+    color: #adb5bd;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 2px solid #333;
+    border-radius: 15px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+    height: 150px;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    border-color: #ffc107;
+    box-shadow: 0 10px 25px rgba(255, 193, 7, 0.2);
+    transform: translateY(-5px);
+}
+
+.stat-card .icon {
+    font-size: 3rem;
+    opacity: 0.7;
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.stat-value {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #ffc107;
+}
+
+.stat-label {
+    color: #adb5bd;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.content-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 2px solid #333;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+}
+
+.content-card:hover {
+    border-color: #ffc107;
+    box-shadow: 0 10px 25px rgba(255, 193, 7, 0.2);
+}
+
+.content-card .card-header {
+    background: linear-gradient(135deg, #f7931e, #ffc107);
+    color: #000;
+    font-weight: 600;
+    border: none;
+    border-radius: 13px 13px 0 0;
+}
+
+.btn-hosting-primary {
+    background: linear-gradient(135deg, #f7931e, #ffc107);
+    border: none;
+    color: #000;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-hosting-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3);
+    color: #000;
+}
+
+.btn-hosting-secondary {
+    background: transparent;
+    border: 2px solid #ffc107;
+    color: #ffc107;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-hosting-secondary:hover {
+    background: #ffc107;
+    color: #000;
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}
+
 {% block content %}
+<div class="hosting-dashboard">
 <div class="container-fluid">
     <!-- 页面标题 -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="h3 mb-0">
-                <i class="bi bi-building"></i> {% if current_lang == 'en' %}Hosting Service Provider Dashboard{% else %}托管服务商仪表板{% endif %}
-            </h1>
-            <p class="text-muted">
-                {% if current_lang == 'en' %}Manage hosting sites, devices and customers{% else %}管理托管站点、设备和客户{% endif %}
-            </p>
-        </div>
+    <div class="hosting-hero">
+        <h1 class="hosting-title">
+            <i class="bi bi-building me-3"></i>{% if current_lang == 'en' %}Hosting Service Provider Dashboard{% else %}托管服务商仪表板{% endif %}
+        </h1>
+        <p class="hosting-subtitle">
+            {% if current_lang == 'en' %}Manage hosting sites, devices and customers with professional-grade tools{% else %}使用专业级工具管理托管站点、设备和客户{% endif %}
+        </p>
     </div>
 
     <!-- 概览卡片 -->
-    <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title" id="total-sites">--</h4>
-                            <p class="card-text">{% if current_lang == 'en' %}Hosting Sites{% else %}托管站点{% endif %}</p>
-                        </div>
-                        <i class="bi bi-geo-alt fs-1"></i>
-                    </div>
-                </div>
+    <div class="row mb-5 g-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-value" id="total-sites">--</div>
+                <div class="stat-label">{% if current_lang == 'en' %}Hosting Sites{% else %}托管站点{% endif %}</div>
+                <i class="bi bi-geo-alt icon text-warning"></i>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title" id="total-devices">--</h4>
-                            <p class="card-text">{% if current_lang == 'en' %}Hosted Devices{% else %}托管设备{% endif %}</p>
-                        </div>
-                        <i class="bi bi-cpu fs-1"></i>
-                    </div>
-                </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-value" id="total-devices">--</div>
+                <div class="stat-label">{% if current_lang == 'en' %}Hosted Devices{% else %}托管设备{% endif %}</div>
+                <i class="bi bi-cpu icon text-warning"></i>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title" id="total-capacity">--</h4>
-                            <p class="card-text">{% if current_lang == 'en' %}Total Capacity (MW){% else %}总容量 (MW){% endif %}</p>
-                        </div>
-                        <i class="bi bi-lightning fs-1"></i>
-                    </div>
-                </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-value" id="total-capacity">--</div>
+                <div class="stat-label">{% if current_lang == 'en' %}Total Capacity (MW){% else %}总容量 (MW){% endif %}</div>
+                <i class="bi bi-lightning icon text-warning"></i>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title" id="monthly-revenue">--</h4>
-                            <p class="card-text">{% if current_lang == 'en' %}Monthly Revenue{% else %}月度收入{% endif %}</p>
-                        </div>
-                        <i class="bi bi-currency-dollar fs-1"></i>
-                    </div>
-                </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-value" id="monthly-revenue">--</div>
+                <div class="stat-label">{% if current_lang == 'en' %}Monthly Revenue{% else %}月度收入{% endif %}</div>
+                <i class="bi bi-currency-dollar icon text-warning"></i>
             </div>
         </div>
     </div>
@@ -78,17 +177,17 @@
     <!-- 站点总览 -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
+            <div class="content-card card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-building"></i> {% if current_lang == 'en' %}Sites Overview{% else %}站点总览{% endif %}
+                        <i class="bi bi-building me-2"></i>{% if current_lang == 'en' %}Sites Overview{% else %}站点总览{% endif %}
                     </h5>
                     <div class="btn-group" role="group">
-                        <button class="btn btn-primary btn-sm" onclick="refreshSites()">
-                            <i class="bi bi-arrow-clockwise"></i> {% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+                        <button class="btn btn-hosting-secondary btn-sm" onclick="refreshSites()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>{% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
                         </button>
-                        <a href="/hosting/host/devices" class="btn btn-success btn-sm">
-                            <i class="bi bi-cpu"></i> {% if current_lang == 'en' %}Miner Management{% else %}矿机管理{% endif %}
+                        <a href="/hosting/host/devices" class="btn btn-hosting-primary btn-sm">
+                            <i class="bi bi-cpu me-1"></i>{% if current_lang == 'en' %}Miner Management{% else %}矿机管理{% endif %}
                         </a>
                     </div>
                 </div>
@@ -118,10 +217,10 @@
     <!-- 事件监控 -->
     <div class="row">
         <div class="col-12">
-            <div class="card">
+            <div class="content-card card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-exclamation-triangle"></i> {% if current_lang == 'en' %}Recent Events{% else %}最新事件{% endif %}
+                        <i class="bi bi-exclamation-triangle me-2"></i>{% if current_lang == 'en' %}Recent Events{% else %}最新事件{% endif %}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -132,6 +231,7 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 
 <script>
