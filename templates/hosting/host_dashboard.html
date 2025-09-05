@@ -1,311 +1,169 @@
+{% extends "hosting/hosting_base.html" %}
 
-{% extends "base.html" %}
-
-{% block title %}
-    {% if current_lang == 'en' %}Hosting Service Provider Dashboard{% else %}托管服务商仪表板{% endif %} - BTC Mining Calculator
-{% endblock %}
-
-{% block extra_css %}
-<style>
-/* Hosting Dashboard Unified Styling */
-.hosting-dashboard {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d3748 100%);
-    min-height: 100vh;
-    padding: 2rem 0;
-}
-
-.hosting-hero {
-    text-align: center;
-    margin-bottom: 3rem;
-}
-
-.hosting-title {
-    font-size: 2.5rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, #f7931e, #ffc107);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 1rem;
-}
-
-.hosting-subtitle {
-    color: #adb5bd;
-    font-size: 1.1rem;
-    margin-bottom: 2rem;
-}
-
-.stat-card {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border: 2px solid #333;
-    border-radius: 15px;
-    padding: 2rem;
-    transition: all 0.3s ease;
-    height: 150px;
-    position: relative;
-    overflow: hidden;
-}
-
-.stat-card:hover {
-    border-color: #ffc107;
-    box-shadow: 0 10px 25px rgba(255, 193, 7, 0.2);
-    transform: translateY(-5px);
-}
-
-.stat-card .icon {
-    font-size: 3rem;
-    opacity: 0.7;
-    position: absolute;
-    right: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-}
-
-.stat-value {
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: #ffc107;
-}
-
-.stat-label {
-    color: #adb5bd;
-    font-size: 0.9rem;
-    margin-top: 0.5rem;
-}
-
-.content-card {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border: 2px solid #333;
-    border-radius: 15px;
-    transition: all 0.3s ease;
-}
-
-.content-card:hover {
-    border-color: #ffc107;
-    box-shadow: 0 10px 25px rgba(255, 193, 7, 0.2);
-}
-
-.content-card .card-header {
-    background: linear-gradient(135deg, #f7931e, #ffc107);
-    color: #000;
-    font-weight: 600;
-    border: none;
-    border-radius: 13px 13px 0 0;
-}
-
-.btn-hosting-primary {
-    background: linear-gradient(135deg, #f7931e, #ffc107);
-    border: none;
-    color: #000;
-    font-weight: 600;
-    border-radius: 8px;
-    padding: 0.75rem 1.5rem;
-    transition: all 0.3s ease;
-}
-
-.btn-hosting-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3);
-    color: #000;
-}
-
-.btn-hosting-secondary {
-    background: transparent;
-    border: 2px solid #ffc107;
-    color: #ffc107;
-    font-weight: 600;
-    border-radius: 8px;
-    padding: 0.75rem 1.5rem;
-    transition: all 0.3s ease;
-}
-
-.btn-hosting-secondary:hover {
-    background: #ffc107;
-    color: #000;
-    transform: translateY(-2px);
-}
-</style>
-{% endblock %}
+{% block page_title %}{% if current_lang == 'en' %}Host Dashboard{% else %}托管商仪表板{% endif %}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}Manage hosting sites, devices and customers{% else %}管理托管站点、设备和客户{% endif %}{% endblock %}
 
 {% block content %}
-<div class="hosting-dashboard">
-<div class="container-fluid">
-    <!-- 页面标题 -->
-    <div class="hosting-hero">
-        <h1 class="hosting-title">
-            <i class="bi bi-building me-3"></i>{% if current_lang == 'en' %}Hosting Service Provider Dashboard{% else %}托管服务商仪表板{% endif %}
-        </h1>
-        <p class="hosting-subtitle">
-            {% if current_lang == 'en' %}Manage hosting sites, devices and customers with professional-grade tools{% else %}使用专业级工具管理托管站点、设备和客户{% endif %}
-        </p>
-    </div>
 
-    <!-- 概览卡片 -->
-    <div class="row mb-5 g-4">
-        <div class="col-lg-3 col-md-6">
-            <div class="stat-card">
-                <div class="stat-value" id="total-sites">--</div>
-                <div class="stat-label">{% if current_lang == 'en' %}Hosting Sites{% else %}托管站点{% endif %}</div>
-                <i class="bi bi-geo-alt icon text-warning"></i>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6">
-            <div class="stat-card">
-                <div class="stat-value" id="total-devices">--</div>
-                <div class="stat-label">{% if current_lang == 'en' %}Hosted Devices{% else %}托管设备{% endif %}</div>
-                <i class="bi bi-cpu icon text-warning"></i>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6">
-            <div class="stat-card">
-                <div class="stat-value" id="total-capacity">--</div>
-                <div class="stat-label">{% if current_lang == 'en' %}Total Capacity (MW){% else %}总容量 (MW){% endif %}</div>
-                <i class="bi bi-lightning icon text-warning"></i>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6">
-            <div class="stat-card">
-                <div class="stat-value" id="monthly-revenue">--</div>
-                <div class="stat-label">{% if current_lang == 'en' %}Monthly Revenue{% else %}月度收入{% endif %}</div>
-                <i class="bi bi-currency-dollar icon text-warning"></i>
-            </div>
+<!-- 概览统计 -->
+<div class="hosting-stats-grid">
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-sites">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Hosting Sites{% else %}托管站点{% endif %}</div>
+        <i class="bi bi-geo-alt hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-devices">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Hosted Devices{% else %}托管设备{% endif %}</div>
+        <i class="bi bi-cpu hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-capacity">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Total Capacity (MW){% else %}总容量 (MW){% endif %}</div>
+        <i class="bi bi-lightning hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="monthly-revenue">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Monthly Revenue{% else %}月度收入{% endif %}</div>
+        <i class="bi bi-currency-dollar hosting-stat-icon"></i>
+    </div>
+</div>
+
+<!-- 站点总览 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-building me-2"></i>{% if current_lang == 'en' %}Sites Overview{% else %}站点总览{% endif %}
+        </h5>
+        <div class="btn-group" role="group">
+            <button class="btn btn-hosting-secondary btn-sm" onclick="refreshSites()">
+                <i class="bi bi-arrow-clockwise me-1"></i>{% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+            </button>
+            <a href="/hosting/host/devices" class="btn btn-hosting-primary btn-sm">
+                <i class="bi bi-cpu me-1"></i>{% if current_lang == 'en' %}Miner Management{% else %}矿机管理{% endif %}
+            </a>
         </div>
     </div>
-
-    <!-- 站点总览 -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="content-card card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-building me-2"></i>{% if current_lang == 'en' %}Sites Overview{% else %}站点总览{% endif %}
-                    </h5>
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-hosting-secondary btn-sm" onclick="refreshSites()">
-                            <i class="bi bi-arrow-clockwise me-1"></i>{% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
-                        </button>
-                        <a href="/hosting/host/devices" class="btn btn-hosting-primary btn-sm">
-                            <i class="bi bi-cpu me-1"></i>{% if current_lang == 'en' %}Miner Management{% else %}矿机管理{% endif %}
-                        </a>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover" id="sites-table">
-                            <thead>
-                                <tr>
-                                    <th>{% if current_lang == 'en' %}Site Name{% else %}站点名称{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Location{% else %}位置{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Capacity Utilization{% else %}容量利用率{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Device Count{% else %}设备数量{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- 数据通过JavaScript加载 -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+    <div class="hosting-card-body">
+        <div class="hosting-table">
+            <table class="table table-hover" id="sites-table">
+                <thead>
+                    <tr>
+                        <th>{% if current_lang == 'en' %}Site Name{% else %}站点名称{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Location{% else %}位置{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Capacity{% else %}容量{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Used{% else %}已用{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Devices{% else %}设备数{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 数据通过JavaScript加载 -->
+                </tbody>
+            </table>
         </div>
     </div>
+</div>
 
-    <!-- 事件监控 -->
-    <div class="row">
-        <div class="col-12">
-            <div class="content-card card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-exclamation-triangle me-2"></i>{% if current_lang == 'en' %}Recent Events{% else %}最新事件{% endif %}
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div id="events-list">
-                        <!-- 事件列表通过JavaScript加载 -->
-                    </div>
-                </div>
+<!-- 事件监控 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-exclamation-triangle me-2"></i>{% if current_lang == 'en' %}Recent Events{% else %}最新事件{% endif %}
+        </h5>
+    </div>
+    <div class="hosting-card-body">
+        <div id="events-list">
+            <div class="text-center text-muted py-4">
+                <i class="bi bi-clock-history fs-1 mb-3"></i>
+                <p>{% if current_lang == 'en' %}No recent events{% else %}暂无最新事件{% endif %}</p>
             </div>
         </div>
     </div>
 </div>
-</div>
 
+{% endblock %}
+
+{% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    loadHostDashboard();
+    loadDashboardData();
 });
 
-function loadHostDashboard() {
-    // 加载站点数据
+function loadDashboardData() {
+    // 加载概览统计
+    loadSitesOverview();
+    loadEventsData();
+}
+
+function loadSitesOverview() {
     fetch('/hosting/api/sites')
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                displaySites(data.sites);
-                updateSummaryCards(data.sites);
-            }
+            const sitesTable = document.getElementById('sites-table').getElementsByTagName('tbody')[0];
+            sitesTable.innerHTML = '';
+            
+            let totalCapacity = 0;
+            let usedCapacity = 0;
+            let totalDevices = 0;
+            let totalRevenue = 0;
+            
+            data.sites.forEach(site => {
+                const row = sitesTable.insertRow();
+                row.innerHTML = `
+                    <td><a href="/hosting/host/sites/${site.id}" class="text-decoration-none text-warning">${site.name}</a></td>
+                    <td>${site.location}</td>
+                    <td>${site.capacity_mw} MW</td>
+                    <td>${site.used_capacity_mw} MW</td>
+                    <td><span class="badge bg-success">${site.device_count || 0}</span></td>
+                    <td><span class="badge bg-${site.status === 'active' ? 'success' : 'warning'}">${getStatusText(site.status)}</span></td>
+                    <td>
+                        <a href="/hosting/host/sites/${site.id}" class="btn btn-hosting-outline btn-sm">
+                            <i class="bi bi-eye"></i> ${getLanguage() === 'en' ? 'View' : '查看'}
+                        </a>
+                    </td>
+                `;
+                
+                totalCapacity += parseFloat(site.capacity_mw || 0);
+                usedCapacity += parseFloat(site.used_capacity_mw || 0);
+                totalDevices += parseInt(site.device_count || 0);
+                totalRevenue += parseFloat(site.monthly_revenue || 0);
+            });
+            
+            // 更新统计数据
+            document.getElementById('total-sites').textContent = data.sites.length;
+            document.getElementById('total-devices').textContent = totalDevices;
+            document.getElementById('total-capacity').textContent = totalCapacity.toFixed(1);
+            document.getElementById('monthly-revenue').textContent = '$' + totalRevenue.toLocaleString();
         })
         .catch(error => {
-            const lang = '{{ current_lang }}';
-            const errorMsg = lang === 'en' ? 'Failed to load site data:' : '加载站点数据失败:';
-            console.error(errorMsg, error);
+            console.error('Error loading sites overview:', error);
         });
 }
 
-function displaySites(sites) {
-    const tbody = document.querySelector('#sites-table tbody');
-    tbody.innerHTML = '';
-    
-    sites.forEach(site => {
-        const utilizationPercent = ((site.used_capacity_mw / site.capacity_mw) * 100).toFixed(1);
-        const statusBadge = site.status === 'online' ? 'success' : 'danger';
-        
-        const row = `
-            <tr>
-                <td><strong>${site.name}</strong></td>
-                <td>${site.location}</td>
-                <td>
-                    <div class="progress" style="height: 20px;">
-                        <div class="progress-bar" role="progressbar" 
-                             style="width: ${utilizationPercent}%" 
-                             aria-valuenow="${utilizationPercent}" 
-                             aria-valuemin="0" aria-valuemax="100">
-                            ${utilizationPercent}%
-                        </div>
-                    </div>
-                    <small class="text-muted">${site.used_capacity_mw}/${site.capacity_mw} MW</small>
-                </td>
-                <td>${site.devices_count}</td>
-                <td><span class="badge bg-${statusBadge}">${site.status}</span></td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="viewSiteDetail(${site.id})">
-                        <i class="bi bi-eye"></i> {% if current_lang == 'en' %}View{% else %}查看{% endif %}
-                    </button>
-                </td>
-            </tr>
-        `;
-        tbody.innerHTML += row;
-    });
-}
-
-function updateSummaryCards(sites) {
-    document.getElementById('total-sites').textContent = sites.length;
-    document.getElementById('total-devices').textContent = sites.reduce((sum, site) => sum + site.devices_count, 0);
-    document.getElementById('total-capacity').textContent = sites.reduce((sum, site) => sum + site.capacity_mw, 0).toFixed(1);
-    document.getElementById('monthly-revenue').textContent = '$45,680'; // 示例数据
+function loadEventsData() {
+    // 模拟加载事件数据
+    const eventsList = document.getElementById('events-list');
+    // 这里可以添加实际的事件数据加载逻辑
 }
 
 function refreshSites() {
-    loadHostDashboard();
+    loadSitesOverview();
 }
 
-function viewSiteDetail(siteId) {
-    // 跳转到站点详情页
-    window.location.href = `/hosting/host/sites/${siteId}`;
+function getStatusText(status) {
+    const language = getLanguage();
+    const statusMap = {
+        'active': language === 'en' ? 'Active' : '运行中',
+        'maintenance': language === 'en' ? 'Maintenance' : '维护中',
+        'offline': language === 'en' ? 'Offline' : '离线'
+    };
+    return statusMap[status] || status;
+}
+
+function getLanguage() {
+    return document.querySelector('meta[name="language"]').content;
 }
 </script>
 {% endblock %}

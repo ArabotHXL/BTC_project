@@ -1,334 +1,271 @@
-{% extends "base.html" %}
+{% extends "hosting/hosting_base.html" %}
 
-{% block title %}
-    {% if current_lang == 'en' %}My Miners{% else %}我的矿机{% endif %} - BTC Mining Calculator
+{% block page_title %}{% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}Manage and monitor your hosted mining devices{% else %}管理和监控您的托管矿机设备{% endif %}{% endblock %}
+
+{% block header_actions %}
+{{ super() }}
+<div class="btn-group ms-3" role="group">
+    <button class="btn btn-hosting-primary btn-sm" data-bs-toggle="modal" data-bs-target="#registerMinerModal">
+        <i class="bi bi-plus-circle me-1"></i>{% if current_lang == 'en' %}Register Miner{% else %}注册矿机{% endif %}
+    </button>
+    <button class="btn btn-hosting-secondary btn-sm" onclick="refreshMiners()">
+        <i class="bi bi-arrow-clockwise me-1"></i>{% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+    </button>
+</div>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- 页面标题 -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="h3 mb-0">
-                <i class="bi bi-cpu"></i> {% if current_lang == 'en' %}My Miners{% else %}我的矿机{% endif %}
-            </h1>
-            <p class="text-muted">
-                {% if current_lang == 'en' %}View the status and performance of hosted mining devices{% else %}查看托管的矿机设备状态和性能{% endif %}
-            </p>
-        </div>
-    </div>
 
-    <!-- 操作按钮区 -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex flex-wrap gap-2">
-                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#applyMinerModal">
-                    <i class="bi bi-plus-circle"></i> {% if current_lang == 'en' %}Apply for Miner Registration{% else %}申请录入矿机{% endif %}
-                </button>
-                <button class="btn btn-info" onclick="refreshMiners()">
-                    <i class="bi bi-arrow-clockwise"></i> {% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
-                </button>
-                <button class="btn btn-warning" onclick="showPendingApplications()">
-                    <i class="bi bi-clock"></i> {% if current_lang == 'en' %}My Applications{% else %}我的申请{% endif %}
-                    <span class="badge bg-light text-dark" id="pending-applications-count">0</span>
-                </button>
-            </div>
-        </div>
+<!-- 设备状态概览 -->
+<div class="hosting-stats-grid mb-4">
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-devices">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Total Devices{% else %}总设备数{% endif %}</div>
+        <i class="bi bi-cpu hosting-stat-icon"></i>
     </div>
-
-    <!-- 矿机概览卡片 -->
-    <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title" id="total-miners">--</h4>
-                            <p class="card-text">{% if current_lang == 'en' %}Total Devices{% else %}总设备数{% endif %}</p>
-                        </div>
-                        <i class="bi bi-cpu fs-1"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title" id="active-miners">--</h4>
-                            <p class="card-text">{% if current_lang == 'en' %}Running Devices{% else %}运行设备{% endif %}</p>
-                        </div>
-                        <i class="bi bi-check-circle fs-1"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title" id="total-hashrate">--</h4>
-                            <p class="card-text">{% if current_lang == 'en' %}Total Hashrate (TH/s){% else %}总算力 (TH/s){% endif %}</p>
-                        </div>
-                        <i class="bi bi-lightning fs-1"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title" id="estimated-revenue">--</h4>
-                            <p class="card-text">{% if current_lang == 'en' %}Daily Revenue (USD){% else %}日收益 (USD){% endif %}</p>
-                        </div>
-                        <i class="bi bi-currency-dollar fs-1"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="active-devices">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Running{% else %}运行中{% endif %}</div>
+        <i class="bi bi-play-circle hosting-stat-icon"></i>
     </div>
-
-    <!-- 申请状态筛选器 -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label for="status-filter" class="form-label">设备状态</label>
-                            <select class="form-select" id="status-filter" onchange="filterMiners()">
-                                <option value="">全部状态</option>
-                                <option value="active">运行中</option>
-                                <option value="offline">离线</option>
-                                <option value="maintenance">维护中</option>
-                                <option value="error">故障</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="approval-filter" class="form-label">审核状态</label>
-                            <select class="form-select" id="approval-filter" onchange="filterMiners()">
-                                <option value="">全部状态</option>
-                                <option value="draft">草稿</option>
-                                <option value="pending_approval">待审核</option>
-                                <option value="approved">已通过</option>
-                                <option value="rejected">已拒绝</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="site-filter" class="form-label">托管站点</label>
-                            <select class="form-select" id="site-filter" onchange="filterMiners()">
-                                <option value="">全部站点</option>
-                                <!-- 动态加载站点选项 -->
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="pending-devices">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Pending Approval{% else %}待审核{% endif %}</div>
+        <i class="bi bi-clock hosting-stat-icon"></i>
     </div>
-
-    <!-- 矿机列表 -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-list"></i> 设备列表
-                    </h5>
-                    <div class="d-flex gap-2">
-                        <span class="badge bg-info" id="total-count">总计: 0</span>
-                        <span class="badge bg-success" id="approved-count">已通过: 0</span>
-                        <span class="badge bg-warning" id="pending-count">待审核: 0</span>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover" id="miners-table">
-                            <thead>
-                                <tr>
-                                    <th>序列号</th>
-                                    <th>矿机型号</th>
-                                    <th>托管站点</th>
-                                    <th>算力</th>
-                                    <th>功耗</th>
-                                    <th>设备状态</th>
-                                    <th>审核状态</th>
-                                    <th>申请时间</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- 数据通过JavaScript加载 -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="offline-devices">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</div>
+        <i class="bi bi-x-circle hosting-stat-icon"></i>
     </div>
 </div>
 
-<!-- 申请录入矿机模态框 -->
-<div class="modal fade" id="applyMinerModal" tabindex="-1">
+<!-- 筛选和搜索 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h6 class="hosting-card-title mb-0">
+            <i class="bi bi-search me-2"></i>{% if current_lang == 'en' %}Search & Filter{% else %}搜索和筛选{% endif %}
+        </h6>
+    </div>
+    <div class="hosting-card-body">
+        <form class="row g-3" id="filter-form">
+            <div class="col-md-4">
+                <label for="search-input" class="form-label">
+                    {% if current_lang == 'en' %}Search{% else %}搜索{% endif %}
+                </label>
+                <input type="text" class="form-control" id="search-input" name="search" 
+                       placeholder="{% if current_lang == 'en' %}Serial number, model...{% else %}序列号、型号...{% endif %}">
+            </div>
+            <div class="col-md-2">
+                <label for="status-filter" class="form-label">
+                    {% if current_lang == 'en' %}Status{% else %}状态{% endif %}
+                </label>
+                <select class="form-select" id="status-filter" name="status">
+                    <option value="">{% if current_lang == 'en' %}All{% else %}全部{% endif %}</option>
+                    <option value="active">{% if current_lang == 'en' %}Running{% else %}运行中{% endif %}</option>
+                    <option value="offline">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</option>
+                    <option value="maintenance">{% if current_lang == 'en' %}Maintenance{% else %}维护中{% endif %}</option>
+                    <option value="pending_approval">{% if current_lang == 'en' %}Pending{% else %}待审核{% endif %}</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="model-filter" class="form-label">
+                    {% if current_lang == 'en' %}Model{% else %}型号{% endif %}
+                </label>
+                <select class="form-select" id="model-filter" name="model">
+                    <option value="">{% if current_lang == 'en' %}All{% else %}全部{% endif %}</option>
+                    <!-- 动态加载型号选项 -->
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="site-filter" class="form-label">
+                    {% if current_lang == 'en' %}Site{% else %}站点{% endif %}
+                </label>
+                <select class="form-select" id="site-filter" name="site">
+                    <option value="">{% if current_lang == 'en' %}All{% else %}全部{% endif %}</option>
+                    <!-- 动态加载站点选项 -->
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-hosting-primary">
+                        <i class="bi bi-search me-1"></i>{% if current_lang == 'en' %}Search{% else %}搜索{% endif %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 设备列表 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-list me-2"></i>{% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}
+        </h5>
+        <div class="d-flex gap-2 flex-wrap">
+            <span class="badge bg-info" id="result-count">{% if current_lang == 'en' %}Total: 0{% else %}共 0 台{% endif %}</span>
+        </div>
+    </div>
+    <div class="hosting-card-body">
+        <div class="hosting-table">
+            <table class="table table-hover" id="miners-table">
+                <thead>
+                    <tr>
+                        <th>{% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Model{% else %}型号{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Power{% else %}功耗{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Daily Revenue{% else %}日收益{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Uptime{% else %}在线时间{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 数据通过JavaScript加载 -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 分页 -->
+        <nav aria-label="Device pagination" class="mt-3">
+            <ul class="pagination justify-content-center" id="pagination">
+                <!-- 分页按钮通过JavaScript生成 -->
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- 注册矿机模态框 -->
+<div class="modal fade" id="registerMinerModal" tabindex="-1" aria-labelledby="registerMinerModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">申请录入矿机</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
+                <h5 class="modal-title" id="registerMinerModalLabel">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    {% if current_lang == 'en' %}Register New Miner{% else %}注册新矿机{% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i>
-                    <strong>申请须知：</strong>
-                    <ul class="mb-0 mt-2">
-                        <li>请确保填写的信息准确无误</li>
-                        <li>序列号必须与实际设备一致</li>
-                        <li>申请提交后需要托管方审核</li>
-                        <li>审核通过后设备将正式录入系统</li>
-                    </ul>
+                    <i class="bi bi-info-circle me-2"></i>
+                    {% if current_lang == 'en' %}Your miner registration will be pending approval by the hosting provider.{% else %}您的矿机注册将等待托管商审核批准。{% endif %}
                 </div>
                 
-                <form id="apply-miner-form">
-                    <div class="row">
+                <form id="registerMinerForm">
+                    <div class="row g-3">
                         <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="apply-site-select" class="form-label">托管站点 *</label>
-                                <select class="form-select" id="apply-site-select" name="site_id" required>
-                                    <option value="">选择托管站点</option>
-                                    <!-- 动态加载站点选项 -->
-                                </select>
-                                <div class="form-text">选择设备托管的站点</div>
-                            </div>
+                            <label for="reg_serial_number" class="form-label">
+                                {% if current_lang == 'en' %}Serial Number{% else %}矿机序列号{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="reg_serial_number" name="serial_number" required>
                         </div>
                         <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="apply-miner-model-select" class="form-label">矿机型号 *</label>
-                                <select class="form-select" id="apply-miner-model-select" name="miner_model_id" required>
-                                    <option value="">选择矿机型号</option>
-                                    <!-- 动态加载矿机型号选项 -->
-                                </select>
-                                <div class="form-text">选择您的矿机型号</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="apply-serial-number" class="form-label">设备序列号 *</label>
-                                <input type="text" class="form-control" id="apply-serial-number" name="serial_number" required>
-                                <div class="form-text">请输入设备机身上的序列号</div>
-                            </div>
+                            <label for="reg_miner_model" class="form-label">
+                                {% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="reg_miner_model" name="miner_model" required>
+                                <option value="">{% if current_lang == 'en' %}Select Model{% else %}选择型号{% endif %}</option>
+                                <option value="Antminer S19 Pro">Antminer S19 Pro</option>
+                                <option value="Antminer S19j Pro">Antminer S19j Pro</option>
+                                <option value="WhatsMiner M30S++">WhatsMiner M30S++</option>
+                                <option value="WhatsMiner M31S+">WhatsMiner M31S+</option>
+                                <option value="AvalonMiner 1246">AvalonMiner 1246</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="apply-rack-position" class="form-label">机架位置（如已知）</label>
-                                <input type="text" class="form-control" id="apply-rack-position" name="rack_position" placeholder="例: A-01-05">
-                                <div class="form-text">如果知道具体位置请填写</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="apply-actual-hashrate" class="form-label">实际算力 (TH/s) *</label>
-                                <input type="number" class="form-control" id="apply-actual-hashrate" name="actual_hashrate" step="0.1" required>
-                                <div class="form-text">设备的实际算力性能</div>
-                            </div>
+                            <label for="reg_hosting_site" class="form-label">
+                                {% if current_lang == 'en' %}Preferred Hosting Site{% else %}首选托管站点{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="reg_hosting_site" name="hosting_site" required>
+                                <option value="">{% if current_lang == 'en' %}Select Site{% else %}选择站点{% endif %}</option>
+                                <!-- 动态加载站点选项 -->
+                            </select>
                         </div>
                         <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="apply-actual-power" class="form-label">实际功耗 (W) *</label>
-                                <input type="number" class="form-control" id="apply-actual-power" name="actual_power" required>
-                                <div class="form-text">设备的实际功耗</div>
-                            </div>
+                            <label for="reg_purchase_date" class="form-label">
+                                {% if current_lang == 'en' %}Purchase Date{% else %}购买日期{% endif %}
+                            </label>
+                            <input type="date" class="form-control" id="reg_purchase_date" name="purchase_date">
                         </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="apply-approval-notes" class="form-label">申请说明</label>
-                        <textarea class="form-control" id="apply-approval-notes" name="approval_notes" rows="3" placeholder="请描述设备的详细情况或其他说明..."></textarea>
+                        <div class="col-12">
+                            <label for="reg_notes" class="form-label">
+                                {% if current_lang == 'en' %}Additional Notes{% else %}补充说明{% endif %}
+                            </label>
+                            <textarea class="form-control" id="reg_notes" name="notes" rows="3"></textarea>
+                        </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-success" onclick="submitMinerApplication()">提交申请</button>
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                </button>
+                <button type="button" class="btn btn-hosting-primary" onclick="registerMiner()">
+                    {% if current_lang == 'en' %}Submit Registration{% else %}提交注册{% endif %}
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- 查看申请详情模态框 -->
-<div class="modal fade" id="applicationDetailModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">申请详情</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<!-- 设备详情模态框 -->
+<div class="modal fade" id="deviceDetailModal" tabindex="-1" aria-labelledby="deviceDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
+                <h5 class="modal-title" id="deviceDetailModalLabel">
+                    <i class="bi bi-info-circle me-2"></i>
+                    {% if current_lang == 'en' %}Device Details{% else %}设备详情{% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body" id="application-detail-content">
-                <!-- 申请详情将动态加载 -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            <div class="modal-body" id="device-detail-content">
+                <!-- 设备详情内容将在这里加载 -->
             </div>
         </div>
     </div>
 </div>
 
-<style>
-.approval-status {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-}
+{% endblock %}
 
-.approval-status.draft { background-color: #6c757d; color: white; }
-.approval-status.pending_approval { background-color: #ffc107; color: black; }
-.approval-status.approved { background-color: #198754; color: white; }
-.approval-status.rejected { background-color: #dc3545; color: white; }
-
-.status-badge {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-}
-</style>
-
+{% block scripts %}
 <script>
-let currentMiners = [];
-
-// 页面加载时初始化
 document.addEventListener('DOMContentLoaded', function() {
-    loadClientMiners();
-    loadFilterOptions();
+    loadMiners();
+    setupFilters();
+    loadDropdownOptions();
 });
 
-// 加载客户矿机列表
-async function loadClientMiners() {
-    try {
-        const response = await fetch('/hosting/api/client/miners');
-        const data = await response.json();
-        
-        if (data.success) {
-            currentMiners = data.miners;
-            displayMiners(data.miners);
-            updateSummaryCards(data.miners);
-        } else {
-            throw new Error(data.error);
-        }
-    } catch (error) {
-        console.error('加载矿机列表失败:', error);
-        showAlert('加载矿机列表失败: ' + error.message, 'danger');
-    }
+let currentPage = 1;
+const perPage = 20;
+
+function loadMiners(page = 1, filters = {}) {
+    const queryParams = new URLSearchParams({
+        page: page,
+        per_page: perPage,
+        ...filters
+    });
+    
+    fetch(`/hosting/api/client/miners?${queryParams}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayMiners(data.miners);
+                updateStats(data.stats);
+                updatePagination(data.pagination);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading miners:', error);
+        });
 }
 
-// 显示矿机列表
 function displayMiners(miners) {
     const tbody = document.querySelector('#miners-table tbody');
     tbody.innerHTML = '';
@@ -337,9 +274,12 @@ function displayMiners(miners) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="9" class="text-center text-muted py-4">
-                    <i class="bi bi-inbox fs-3"></i>
-                    <div class="mt-2">暂无矿机数据</div>
-                    <small>点击"申请录入矿机"添加您的设备</small>
+                    <i class="bi bi-inbox fs-1 mb-2 d-block"></i>
+                    ${getLanguage() === 'en' ? 'No devices found' : '未找到设备'}
+                    <br>
+                    <button class="btn btn-hosting-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#registerMinerModal">
+                        ${getLanguage() === 'en' ? 'Register Your First Miner' : '注册您的第一台矿机'}
+                    </button>
                 </td>
             </tr>
         `;
@@ -347,253 +287,259 @@ function displayMiners(miners) {
     }
     
     miners.forEach(miner => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>
-                <strong>${miner.serial_number}</strong>
-                ${miner.rack_position ? `<br><small class="text-muted">${miner.rack_position}</small>` : ''}
-            </td>
-            <td>${miner.miner_model_name || 'Unknown'}</td>
-            <td>${miner.site_name || 'Unknown'}</td>
-            <td>${miner.actual_hashrate} TH/s</td>
-            <td>${miner.actual_power} W</td>
-            <td><span class="badge bg-${getStatusColor(miner.status)}">${getStatusText(miner.status)}</span></td>
-            <td><span class="approval-status ${miner.approval_status}">${getApprovalStatusText(miner.approval_status)}</span></td>
-            <td>${miner.submitted_at ? formatDate(miner.submitted_at) : '--'}</td>
-            <td>
-                <button class="btn btn-sm btn-info" onclick="viewMinerDetail(${miner.id})">
-                    <i class="bi bi-eye"></i>
-                </button>
-                ${miner.approval_status === 'draft' ? 
-                    `<button class="btn btn-sm btn-warning" onclick="editApplication(${miner.id})">
-                        <i class="bi bi-pencil"></i>
-                    </button>` : ''}
-            </td>
+        const row = `
+            <tr>
+                <td><strong>${miner.serial_number}</strong></td>
+                <td>${miner.miner_model}</td>
+                <td>${miner.site_name || '-'}</td>
+                <td>${miner.hashrate || '-'} TH/s</td>
+                <td>${miner.power_consumption || '-'} W</td>
+                <td><span class="badge bg-${getStatusColor(miner.status)}">${getStatusText(miner.status)}</span></td>
+                <td>$${(miner.daily_revenue || 0).toFixed(2)}</td>
+                <td>${miner.uptime || '-'}</td>
+                <td>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-hosting-outline" onclick="showDeviceDetail(${miner.id})" title="${getLanguage() === 'en' ? 'View Details' : '查看详情'}">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-hosting-outline" onclick="restartDevice(${miner.id})" title="${getLanguage() === 'en' ? 'Restart' : '重启'}">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
         `;
-        tbody.appendChild(row);
+        tbody.insertAdjacentHTML('beforeend', row);
     });
 }
 
-// 更新概览卡片
-function updateSummaryCards(miners) {
-    const totalMiners = miners.length;
-    const activeMiners = miners.filter(m => m.status === 'active' && m.approval_status === 'approved').length;
-    const totalHashrate = miners
-        .filter(m => m.approval_status === 'approved')
-        .reduce((sum, m) => sum + (m.actual_hashrate || 0), 0);
-    const estimatedRevenue = totalHashrate * 0.15; // 简单估算
-    
-    document.getElementById('total-miners').textContent = totalMiners;
-    document.getElementById('active-miners').textContent = activeMiners;
-    document.getElementById('total-hashrate').textContent = totalHashrate.toFixed(1);
-    document.getElementById('estimated-revenue').textContent = '$' + estimatedRevenue.toFixed(2);
-    
-    // 更新统计徽章
-    const approvedCount = miners.filter(m => m.approval_status === 'approved').length;
-    const pendingCount = miners.filter(m => m.approval_status === 'pending_approval').length;
-    
-    document.getElementById('total-count').textContent = `总计: ${totalMiners}`;
-    document.getElementById('approved-count').textContent = `已通过: ${approvedCount}`;
-    document.getElementById('pending-count').textContent = `待审核: ${pendingCount}`;
-    document.getElementById('pending-applications-count').textContent = pendingCount;
+function updateStats(stats) {
+    document.getElementById('total-devices').textContent = stats.total || 0;
+    document.getElementById('active-devices').textContent = stats.active || 0;
+    document.getElementById('pending-devices').textContent = stats.pending || 0;
+    document.getElementById('offline-devices').textContent = stats.offline || 0;
+    document.getElementById('result-count').textContent = `${getLanguage() === 'en' ? 'Total:' : '共'} ${stats.total}${getLanguage() === 'en' ? '' : ' 台'}`;
 }
 
-// 筛选矿机
-function filterMiners() {
-    const statusFilter = document.getElementById('status-filter').value;
-    const approvalFilter = document.getElementById('approval-filter').value;
-    const siteFilter = document.getElementById('site-filter').value;
+function setupFilters() {
+    const form = document.getElementById('filter-form');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const filters = getFilters();
+        currentPage = 1;
+        loadMiners(currentPage, filters);
+    });
     
-    let filteredMiners = currentMiners;
-    
-    if (statusFilter) {
-        filteredMiners = filteredMiners.filter(m => m.status === statusFilter);
-    }
-    
-    if (approvalFilter) {
-        filteredMiners = filteredMiners.filter(m => m.approval_status === approvalFilter);
-    }
-    
-    if (siteFilter) {
-        filteredMiners = filteredMiners.filter(m => m.site_id == siteFilter);
-    }
-    
-    displayMiners(filteredMiners);
+    // 实时搜索
+    const searchInput = document.getElementById('search-input');
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const filters = getFilters();
+            currentPage = 1;
+            loadMiners(currentPage, filters);
+        }, 500);
+    });
 }
 
-// 显示待审核申请
-function showPendingApplications() {
-    document.getElementById('approval-filter').value = 'pending_approval';
-    filterMiners();
-}
-
-// 刷新矿机列表
-function refreshMiners() {
-    loadClientMiners();
-}
-
-// 提交矿机申请
-async function submitMinerApplication() {
-    try {
-        const form = document.getElementById('apply-miner-form');
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData.entries());
-        
-        // 转换数字字段
-        data.actual_hashrate = parseFloat(data.actual_hashrate);
-        data.actual_power = parseInt(data.actual_power);
-        data.site_id = parseInt(data.site_id);
-        data.miner_model_id = parseInt(data.miner_model_id);
-        
-        const response = await fetch('/hosting/api/miners/create', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            showAlert(result.message, 'success');
-            document.getElementById('applyMinerModal').querySelector('.btn-close').click();
-            form.reset();
-            loadClientMiners();
-        } else {
-            throw new Error(result.error);
+function getFilters() {
+    const form = document.getElementById('filter-form');
+    const formData = new FormData(form);
+    const filters = {};
+    
+    for (let [key, value] of formData.entries()) {
+        if (value) {
+            filters[key] = value;
         }
-    } catch (error) {
-        console.error('提交申请失败:', error);
-        showAlert('提交申请失败: ' + error.message, 'danger');
     }
+    
+    return filters;
 }
 
-// 查看矿机详情
-function viewMinerDetail(minerId) {
-    const miner = currentMiners.find(m => m.id === minerId);
-    if (!miner) return;
+function refreshMiners() {
+    const filters = getFilters();
+    loadMiners(currentPage, filters);
+}
+
+function loadDropdownOptions() {
+    // 加载站点选项
+    fetch('/hosting/api/sites')
+        .then(response => response.json())
+        .then(data => {
+            const siteFilter = document.getElementById('site-filter');
+            const regSiteSelect = document.getElementById('reg_hosting_site');
+            
+            data.sites.forEach(site => {
+                const option = `<option value="${site.id}">${site.name}</option>`;
+                siteFilter.insertAdjacentHTML('beforeend', option);
+                regSiteSelect.insertAdjacentHTML('beforeend', option);
+            });
+        });
+}
+
+function registerMiner() {
+    const form = document.getElementById('registerMinerForm');
+    const formData = new FormData(form);
     
-    const content = `
-        <div class="row">
+    fetch('/hosting/api/client/register-miner', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('registerMinerModal')).hide();
+            form.reset();
+            refreshMiners();
+            showToast(getLanguage() === 'en' ? 'Miner registration submitted successfully' : '矿机注册提交成功', 'success');
+        } else {
+            showToast(data.message || (getLanguage() === 'en' ? 'Registration failed' : '注册失败'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error registering miner:', error);
+        showToast(getLanguage() === 'en' ? 'Registration failed' : '注册失败', 'error');
+    });
+}
+
+function showDeviceDetail(deviceId) {
+    fetch(`/hosting/api/client/miners/${deviceId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayDeviceDetail(data.device);
+                new bootstrap.Modal(document.getElementById('deviceDetailModal')).show();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading device details:', error);
+        });
+}
+
+function displayDeviceDetail(device) {
+    const content = document.getElementById('device-detail-content');
+    content.innerHTML = `
+        <div class="row g-4">
             <div class="col-md-6">
-                <strong>序列号:</strong> ${miner.serial_number}<br>
-                <strong>矿机型号:</strong> ${miner.miner_model_name || 'Unknown'}<br>
-                <strong>托管站点:</strong> ${miner.site_name || 'Unknown'}<br>
-                <strong>机架位置:</strong> ${miner.rack_position || '--'}<br>
+                <h6 class="text-warning mb-3">${getLanguage() === 'en' ? 'Basic Information' : '基本信息'}</h6>
+                <table class="table table-borderless">
+                    <tr>
+                        <td class="text-muted">${getLanguage() === 'en' ? 'Serial Number' : '序列号'}:</td>
+                        <td><strong>${device.serial_number}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">${getLanguage() === 'en' ? 'Model' : '型号'}:</td>
+                        <td>${device.miner_model}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">${getLanguage() === 'en' ? 'Site' : '站点'}:</td>
+                        <td>${device.site_name || '-'}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">${getLanguage() === 'en' ? 'Status' : '状态'}:</td>
+                        <td><span class="badge bg-${getStatusColor(device.status)}">${getStatusText(device.status)}</span></td>
+                    </tr>
+                </table>
             </div>
             <div class="col-md-6">
-                <strong>算力:</strong> ${miner.actual_hashrate} TH/s<br>
-                <strong>功耗:</strong> ${miner.actual_power} W<br>
-                <strong>设备状态:</strong> <span class="badge bg-${getStatusColor(miner.status)}">${getStatusText(miner.status)}</span><br>
-                <strong>审核状态:</strong> <span class="approval-status ${miner.approval_status}">${getApprovalStatusText(miner.approval_status)}</span><br>
+                <h6 class="text-warning mb-3">${getLanguage() === 'en' ? 'Performance' : '性能指标'}</h6>
+                <table class="table table-borderless">
+                    <tr>
+                        <td class="text-muted">${getLanguage() === 'en' ? 'Hashrate' : '算力'}:</td>
+                        <td><strong>${device.hashrate || '-'} TH/s</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">${getLanguage() === 'en' ? 'Power' : '功耗'}:</td>
+                        <td>${device.power_consumption || '-'} W</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">${getLanguage() === 'en' ? 'Temperature' : '温度'}:</td>
+                        <td>${device.temperature || '-'} °C</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">${getLanguage() === 'en' ? 'Uptime' : '在线时间'}:</td>
+                        <td>${device.uptime || '-'}</td>
+                    </tr>
+                </table>
             </div>
         </div>
-        ${miner.approval_notes ? `<div class="mt-3"><strong>备注:</strong><br>${miner.approval_notes}</div>` : ''}
-        ${miner.submitted_at ? `<div class="mt-2"><small class="text-muted">申请时间: ${formatDate(miner.submitted_at)}</small></div>` : ''}
-        ${miner.approved_at ? `<div><small class="text-muted">审核时间: ${formatDate(miner.approved_at)}</small></div>` : ''}
+        <div class="row mt-4">
+            <div class="col-12">
+                <h6 class="text-warning mb-3">${getLanguage() === 'en' ? 'Recent Revenue' : '最近收益'}</h6>
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="text-warning fw-bold">$${(device.daily_revenue || 0).toFixed(2)}</div>
+                        <small class="text-muted">${getLanguage() === 'en' ? 'Today' : '今日'}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-warning fw-bold">$${(device.weekly_revenue || 0).toFixed(2)}</div>
+                        <small class="text-muted">${getLanguage() === 'en' ? 'This Week' : '本周'}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-warning fw-bold">$${(device.monthly_revenue || 0).toFixed(2)}</div>
+                        <small class="text-muted">${getLanguage() === 'en' ? 'This Month' : '本月'}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-warning fw-bold">$${(device.total_revenue || 0).toFixed(2)}</div>
+                        <small class="text-muted">${getLanguage() === 'en' ? 'Total' : '总计'}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
     `;
-    
-    document.getElementById('application-detail-content').innerHTML = content;
-    const modal = new bootstrap.Modal(document.getElementById('applicationDetailModal'));
-    modal.show();
 }
 
-// 编辑申请
-function editApplication(minerId) {
-    showAlert('编辑功能待实现', 'info');
-}
-
-// 加载筛选器选项
-async function loadFilterOptions() {
-    try {
-        // 加载站点选项
-        const sitesResponse = await fetch('/hosting/api/sites');
-        const sitesData = await sitesResponse.json();
-        if (sitesData.success) {
-            populateSelect('site-filter', sitesData.sites, 'id', 'name');
-            populateSelect('apply-site-select', sitesData.sites, 'id', 'name');
-        }
-        
-        // 这里应该加载矿机型号选项
-        // 临时使用示例数据
-        const mockModels = [
-            {id: 1, name: 'Antminer S19 Pro'},
-            {id: 2, name: 'Antminer S19j Pro'},
-            {id: 3, name: 'WhatsMiner M30S++'}
-        ];
-        populateSelect('apply-miner-model-select', mockModels, 'id', 'name');
-        
-    } catch (error) {
-        console.error('加载筛选器选项失败:', error);
+function restartDevice(deviceId) {
+    if (confirm(getLanguage() === 'en' ? 'Are you sure you want to restart this device?' : '确定要重启这台设备吗？')) {
+        fetch(`/hosting/api/client/miners/${deviceId}/restart`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(getLanguage() === 'en' ? 'Restart command sent successfully' : '重启命令发送成功', 'success');
+                refreshMiners();
+            } else {
+                showToast(data.message || (getLanguage() === 'en' ? 'Restart failed' : '重启失败'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error restarting device:', error);
+            showToast(getLanguage() === 'en' ? 'Restart failed' : '重启失败', 'error');
+        });
     }
 }
 
-// 填充下拉框
-function populateSelect(selectId, options, valueKey, textKey) {
-    const select = document.getElementById(selectId);
-    const originalFirstOption = select.querySelector('option').outerHTML;
-    select.innerHTML = originalFirstOption;
-    
-    options.forEach(option => {
-        const optionElement = document.createElement('option');
-        optionElement.value = option[valueKey];
-        optionElement.textContent = option[textKey];
-        select.appendChild(optionElement);
-    });
-}
-
-// 辅助函数
 function getStatusColor(status) {
-    const colors = {
+    const colorMap = {
         'active': 'success',
-        'offline': 'secondary',
+        'offline': 'danger',
         'maintenance': 'warning',
-        'error': 'danger'
+        'error': 'danger',
+        'pending_approval': 'warning'
     };
-    return colors[status] || 'secondary';
+    return colorMap[status] || 'secondary';
 }
 
 function getStatusText(status) {
-    const texts = {
-        'active': '运行中',
-        'offline': '离线',
-        'maintenance': '维护中',
-        'error': '故障'
+    const language = getLanguage();
+    const statusMap = {
+        'active': language === 'en' ? 'Running' : '运行中',
+        'offline': language === 'en' ? 'Offline' : '离线',
+        'maintenance': language === 'en' ? 'Maintenance' : '维护中',
+        'error': language === 'en' ? 'Error' : '故障',
+        'pending_approval': language === 'en' ? 'Pending' : '待审核'
     };
-    return texts[status] || status;
+    return statusMap[status] || status;
 }
 
-function getApprovalStatusText(status) {
-    const texts = {
-        'draft': '草稿',
-        'pending_approval': '待审核',
-        'approved': '已通过',
-        'rejected': '已拒绝'
-    };
-    return texts[status] || status;
+function getLanguage() {
+    return document.querySelector('meta[name="language"]').content;
 }
 
-function formatDate(dateString) {
-    return new Date(dateString).toLocaleString('zh-CN');
-}
-
-// 显示提示信息
-function showAlert(message, type) {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    document.body.appendChild(alertDiv);
-    
-    setTimeout(() => {
-        if (alertDiv.parentNode) {
-            alertDiv.parentNode.removeChild(alertDiv);
-        }
-    }, 5000);
+function showToast(message, type) {
+    console.log(`[${type.toUpperCase()}] ${message}`);
 }
 </script>
 {% endblock %}

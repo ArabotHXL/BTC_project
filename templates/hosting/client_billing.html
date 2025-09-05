@@ -1,116 +1,403 @@
-<!DOCTYPE html>
-<html lang="zh-CN" data-bs-theme="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>账单查询 - HashInsight 客户中心</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-</head>
-<body class="bg-dark">
-    <div class="container-fluid">
-        <!-- 导航栏 -->
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
-            <div class="container-fluid">
-                <a class="navbar-brand text-warning fw-bold" href="/client/">
-                    <i class="bi bi-cpu"></i> 客户中心
-                </a>
-                <div class="navbar-nav ms-auto">
-                    <a class="nav-link" href="/client/">仪表板</a>
-                    <a class="nav-link" href="/client/miners">我的矿机</a>
-                    <a class="nav-link active" href="/client/billing">账单查询</a>
-                    <a class="nav-link" href="/client/tickets">工单中心</a>
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}{% if current_lang == 'en' %}Billing{% else %}账单管理{% endif %}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}View and manage your hosting billing information{% else %}查看和管理您的托管账单信息{% endif %}{% endblock %}
+
+{% block content %}
+
+<!-- 账单概览统计 -->
+<div class="hosting-stats-grid">
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="current-month-bill">$0.00</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Current Month{% else %}本月账单{% endif %}</div>
+        <i class="bi bi-receipt hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="paid-bills">$0.00</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Paid Total{% else %}已付总额{% endif %}</div>
+        <i class="bi bi-check-circle hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="pending-bills">$0.00</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Pending{% else %}待付款{% endif %}</div>
+        <i class="bi bi-exclamation-triangle hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="next-due-date">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Next Due{% else %}下次到期{% endif %}</div>
+        <i class="bi bi-calendar hosting-stat-icon"></i>
+    </div>
+</div>
+
+<!-- 快速操作 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-lightning-charge me-2"></i>{% if current_lang == 'en' %}Quick Actions{% else %}快速操作{% endif %}
+        </h5>
+    </div>
+    <div class="hosting-card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <button class="btn btn-hosting-primary w-100 py-3" onclick="payOutstandingBalance()">
+                    <i class="bi bi-credit-card fs-4 d-block mb-2"></i>
+                    {% if current_lang == 'en' %}Pay Now{% else %}立即付款{% endif %}
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-hosting-secondary w-100 py-3" onclick="downloadBill()">
+                    <i class="bi bi-download fs-4 d-block mb-2"></i>
+                    {% if current_lang == 'en' %}Download Bill{% else %}下载账单{% endif %}
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-hosting-secondary w-100 py-3" data-bs-toggle="modal" data-bs-target="#autoPayModal">
+                    <i class="bi bi-credit-card-2-front fs-4 d-block mb-2"></i>
+                    {% if current_lang == 'en' %}Auto Pay{% else %}自动付款{% endif %}
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-hosting-secondary w-100 py-3" onclick="showBillingHistory()">
+                    <i class="bi bi-clock-history fs-4 d-block mb-2"></i>
+                    {% if current_lang == 'en' %}History{% else %}历史记录{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 当前账单详情 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-file-earmark-text me-2"></i>{% if current_lang == 'en' %}Current Bill Details{% else %}当前账单详情{% endif %}
+        </h5>
+        <span class="badge bg-warning text-dark" id="current-status">{% if current_lang == 'en' %}Pending{% else %}待付款{% endif %}</span>
+    </div>
+    <div class="hosting-card-body">
+        <div class="row g-4">
+            <div class="col-md-8">
+                <div class="hosting-table">
+                    <table class="table" id="current-bill-items">
+                        <thead>
+                            <tr>
+                                <th>{% if current_lang == 'en' %}Item{% else %}项目{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Description{% else %}描述{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Quantity{% else %}数量{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Rate{% else %}单价{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Amount{% else %}金额{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{% if current_lang == 'en' %}Hosting Service{% else %}托管服务费{% endif %}</td>
+                                <td>{% if current_lang == 'en' %}Monthly hosting fee{% else %}月度托管费用{% endif %}</td>
+                                <td id="hosting-quantity">3</td>
+                                <td id="hosting-rate">$50.00</td>
+                                <td id="hosting-amount">$150.00</td>
+                            </tr>
+                            <tr>
+                                <td>{% if current_lang == 'en' %}Electricity{% else %}电力费用{% endif %}</td>
+                                <td>{% if current_lang == 'en' %}Power consumption{% else %}电力消耗费用{% endif %}</td>
+                                <td id="power-quantity">2,160 kWh</td>
+                                <td id="power-rate">$0.08</td>
+                                <td id="power-amount">$172.80</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-warning">
+                                <th colspan="4" class="text-end">{% if current_lang == 'en' %}Total Due:{% else %}应付总额:{% endif %}</th>
+                                <th id="total-amount">$322.80</th>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
-        </nav>
-
-        <!-- 主内容 -->
-        <div class="container-fluid py-4">
-            <div class="row">
-                <div class="col-12">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 class="text-warning mb-0">
-                            <i class="bi bi-receipt"></i> 账单查询
-                        </h2>
+            <div class="col-md-4">
+                <div class="bg-dark p-3 rounded">
+                    <h6 class="text-warning mb-3">{% if current_lang == 'en' %}Payment Information{% else %}付款信息{% endif %}</h6>
+                    <div class="mb-3">
+                        <small class="text-muted">{% if current_lang == 'en' %}Bill Date:{% else %}账单日期:{% endif %}</small>
+                        <div id="bill-date">2025-01-01</div>
                     </div>
-
-                    <!-- 账单概览 -->
-                    <div class="row mb-4">
-                        <div class="col-md-4">
-                            <div class="card bg-secondary">
-                                <div class="card-body text-center">
-                                    <i class="bi bi-receipt fs-2 text-warning"></i>
-                                    <h5 class="card-title mt-2">本月账单</h5>
-                                    <h3 class="text-warning">$0.00</h3>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card bg-secondary">
-                                <div class="card-body text-center">
-                                    <i class="bi bi-check-circle fs-2 text-success"></i>
-                                    <h5 class="card-title mt-2">已付账单</h5>
-                                    <h3 class="text-success">$0.00</h3>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card bg-secondary">
-                                <div class="card-body text-center">
-                                    <i class="bi bi-exclamation-triangle fs-2 text-danger"></i>
-                                    <h5 class="card-title mt-2">待付账单</h5>
-                                    <h3 class="text-danger">$0.00</h3>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="mb-3">
+                        <small class="text-muted">{% if current_lang == 'en' %}Due Date:{% else %}到期日期:{% endif %}</small>
+                        <div id="due-date" class="text-warning">2025-01-15</div>
                     </div>
-
-                    <!-- 账单历史 -->
-                    <div class="card bg-secondary">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">账单历史</h5>
-                            <div class="btn-group">
-                                <button class="btn btn-outline-warning btn-sm">
-                                    <i class="bi bi-filter"></i> 筛选
-                                </button>
-                                <button class="btn btn-outline-warning btn-sm">
-                                    <i class="bi bi-download"></i> 导出
-                                </button>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-dark table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>账单编号</th>
-                                            <th>账单月份</th>
-                                            <th>矿机数量</th>
-                                            <th>电费</th>
-                                            <th>托管费</th>
-                                            <th>总金额</th>
-                                            <th>状态</th>
-                                            <th>操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td colspan="8" class="text-center text-muted py-4">
-                                                <i class="bi bi-receipt fs-3"></i>
-                                                <div class="mt-2">暂无账单数据</div>
-                                                <small>请等待托管方生成账单</small>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                    <div class="mb-3">
+                        <small class="text-muted">{% if current_lang == 'en' %}Payment Method:{% else %}付款方式:{% endif %}</small>
+                        <div id="payment-method">Credit Card ****1234</div>
                     </div>
+                    <button class="btn btn-hosting-primary w-100" onclick="payCurrentBill()">
+                        <i class="bi bi-credit-card me-2"></i>{% if current_lang == 'en' %}Pay $322.80{% else %}支付 $322.80{% endif %}
+                    </button>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<!-- 账单历史 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-clock-history me-2"></i>{% if current_lang == 'en' %}Billing History{% else %}账单历史{% endif %}
+        </h5>
+        <div class="btn-group" role="group">
+            <button class="btn btn-hosting-secondary btn-sm" onclick="exportBillingHistory()">
+                <i class="bi bi-download me-1"></i>{% if current_lang == 'en' %}Export{% else %}导出{% endif %}
+            </button>
+        </div>
+    </div>
+    <div class="hosting-card-body">
+        <div class="hosting-table">
+            <table class="table table-hover" id="billing-history-table">
+                <thead>
+                    <tr>
+                        <th>{% if current_lang == 'en' %}Bill Date{% else %}账单日期{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Due Date{% else %}到期日期{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Amount{% else %}金额{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2024-12-01</td>
+                        <td>2024-12-15</td>
+                        <td>$298.50</td>
+                        <td><span class="badge bg-success">{% if current_lang == 'en' %}Paid{% else %}已付{% endif %}</span></td>
+                        <td>
+                            <button class="btn btn-hosting-outline btn-sm" onclick="downloadBillPdf('2024-12')">
+                                <i class="bi bi-download"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2024-11-01</td>
+                        <td>2024-11-15</td>
+                        <td>$275.20</td>
+                        <td><span class="badge bg-success">{% if current_lang == 'en' %}Paid{% else %}已付{% endif %}</span></td>
+                        <td>
+                            <button class="btn btn-hosting-outline btn-sm" onclick="downloadBillPdf('2024-11')">
+                                <i class="bi bi-download"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 自动付款设置模态框 -->
+<div class="modal fade" id="autoPayModal" tabindex="-1" aria-labelledby="autoPayModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
+                <h5 class="modal-title" id="autoPayModalLabel">
+                    <i class="bi bi-credit-card-2-front me-2"></i>
+                    {% if current_lang == 'en' %}Auto Payment Setup{% else %}自动付款设置{% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="autoPayForm">
+                    <div class="mb-3">
+                        <label for="auto-pay-enabled" class="form-label">
+                            {% if current_lang == 'en' %}Enable Auto Payment{% else %}启用自动付款{% endif %}
+                        </label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="auto-pay-enabled">
+                            <label class="form-check-label" for="auto-pay-enabled">
+                                {% if current_lang == 'en' %}Automatically pay bills when due{% else %}到期时自动支付账单{% endif %}
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="payment-method-select" class="form-label">
+                            {% if current_lang == 'en' %}Payment Method{% else %}付款方式{% endif %}
+                        </label>
+                        <select class="form-select" id="payment-method-select">
+                            <option value="card-1234">Credit Card ****1234</option>
+                            <option value="bank-5678">Bank Account ****5678</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="advance-days" class="form-label">
+                            {% if current_lang == 'en' %}Pay in advance (days){% else %}提前付款 (天数){% endif %}
+                        </label>
+                        <select class="form-select" id="advance-days">
+                            <option value="0">{% if current_lang == 'en' %}On due date{% else %}到期日当天{% endif %}</option>
+                            <option value="3">{% if current_lang == 'en' %}3 days before{% else %}提前3天{% endif %}</option>
+                            <option value="7">{% if current_lang == 'en' %}7 days before{% else %}提前7天{% endif %}</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                </button>
+                <button type="button" class="btn btn-hosting-primary" onclick="saveAutoPaySettings()">
+                    {% if current_lang == 'en' %}Save Settings{% else %}保存设置{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadBillingData();
+});
+
+function loadBillingData() {
+    fetch('/hosting/api/client/billing')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateBillingSummary(data.summary);
+                updateCurrentBill(data.current_bill);
+                updateBillingHistory(data.history);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading billing data:', error);
+        });
+}
+
+function updateBillingSummary(summary) {
+    document.getElementById('current-month-bill').textContent = `$${summary.current_month.toFixed(2)}`;
+    document.getElementById('paid-bills').textContent = `$${summary.paid_total.toFixed(2)}`;
+    document.getElementById('pending-bills').textContent = `$${summary.pending_total.toFixed(2)}`;
+    document.getElementById('next-due-date').textContent = summary.next_due_date || '--';
+}
+
+function updateCurrentBill(bill) {
+    if (!bill) return;
+    
+    document.getElementById('bill-date').textContent = bill.bill_date;
+    document.getElementById('due-date').textContent = bill.due_date;
+    document.getElementById('total-amount').textContent = `$${bill.total_amount.toFixed(2)}`;
+    
+    const statusBadge = document.getElementById('current-status');
+    statusBadge.textContent = getStatusText(bill.status);
+    statusBadge.className = `badge bg-${getStatusColor(bill.status)} text-${bill.status === 'pending' ? 'dark' : 'white'}`;
+}
+
+function updateBillingHistory(history) {
+    const tbody = document.querySelector('#billing-history-table tbody');
+    tbody.innerHTML = '';
+    
+    history.forEach(bill => {
+        const row = `
+            <tr>
+                <td>${bill.bill_date}</td>
+                <td>${bill.due_date}</td>
+                <td>$${bill.amount.toFixed(2)}</td>
+                <td><span class="badge bg-${getStatusColor(bill.status)}">${getStatusText(bill.status)}</span></td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-hosting-outline" onclick="downloadBillPdf('${bill.id}')">
+                            <i class="bi bi-download"></i>
+                        </button>
+                        ${bill.status === 'pending' ? `<button class="btn btn-hosting-primary" onclick="payBill('${bill.id}')"><i class="bi bi-credit-card"></i></button>` : ''}
+                    </div>
+                </td>
+            </tr>
+        `;
+        tbody.insertAdjacentHTML('beforeend', row);
+    });
+}
+
+function payCurrentBill() {
+    if (confirm(getLanguage() === 'en' ? 'Pay the current bill?' : '确认支付当前账单？')) {
+        fetch('/hosting/api/client/billing/pay-current', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(getLanguage() === 'en' ? 'Payment successful' : '支付成功', 'success');
+                loadBillingData();
+            } else {
+                showToast(data.message || (getLanguage() === 'en' ? 'Payment failed' : '支付失败'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error processing payment:', error);
+            showToast(getLanguage() === 'en' ? 'Payment failed' : '支付失败', 'error');
+        });
+    }
+}
+
+function downloadBillPdf(billId) {
+    window.open(`/hosting/api/client/billing/${billId}/download`, '_blank');
+}
+
+function saveAutoPaySettings() {
+    const form = document.getElementById('autoPayForm');
+    const formData = new FormData(form);
+    
+    const settings = {
+        enabled: document.getElementById('auto-pay-enabled').checked,
+        payment_method: document.getElementById('payment-method-select').value,
+        advance_days: document.getElementById('advance-days').value
+    };
+    
+    fetch('/hosting/api/client/billing/auto-pay', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(settings)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('autoPayModal')).hide();
+            showToast(getLanguage() === 'en' ? 'Auto payment settings saved' : '自动付款设置已保存', 'success');
+        } else {
+            showToast(data.message || (getLanguage() === 'en' ? 'Save failed' : '保存失败'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving auto pay settings:', error);
+        showToast(getLanguage() === 'en' ? 'Save failed' : '保存失败', 'error');
+    });
+}
+
+function getStatusColor(status) {
+    const colorMap = {
+        'paid': 'success',
+        'pending': 'warning',
+        'overdue': 'danger',
+        'cancelled': 'secondary'
+    };
+    return colorMap[status] || 'secondary';
+}
+
+function getStatusText(status) {
+    const language = getLanguage();
+    const statusMap = {
+        'paid': language === 'en' ? 'Paid' : '已付',
+        'pending': language === 'en' ? 'Pending' : '待付款',
+        'overdue': language === 'en' ? 'Overdue' : '逾期',
+        'cancelled': language === 'en' ? 'Cancelled' : '已取消'
+    };
+    return statusMap[status] || status;
+}
+
+function getLanguage() {
+    return document.querySelector('meta[name="language"]').content;
+}
+
+function showToast(message, type) {
+    console.log(`[${type.toUpperCase()}] ${message}`);
+}
+</script>
+{% endblock %}
