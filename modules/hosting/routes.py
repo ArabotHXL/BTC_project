@@ -829,7 +829,7 @@ def public_site_status(site_slug):
         # 近期公开事件（只显示高级别事件，不包含敏感详情）
         public_incidents = HostingIncident.query.filter(
             HostingIncident.site_id == site.id,
-            HostingIncident.severity.in_(['high', 'critical'])  # 只显示高级别事件
+            HostingIncident.severity.in_(['high', 'critical']),  # 只显示高级别事件
             HostingIncident.created_at >= datetime.now() - timedelta(days=7)
         ).order_by(HostingIncident.created_at.desc()).limit(5).all()
         
