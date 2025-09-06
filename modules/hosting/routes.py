@@ -829,7 +829,7 @@ def public_site_status(site_slug):
         # 近期公开事件（只显示高级别事件，不包含敏感详情）
         public_incidents = HostingIncident.query.filter(
             HostingIncident.site_id == site.id,
-            HostingIncident.severity.in_(['high', 'critical']),  # 只显示高级别事件
+            HostingIncident.severity.in_(['high', 'critical'])  # 只显示高级别事件
             HostingIncident.created_at >= datetime.now() - timedelta(days=7)
         ).order_by(HostingIncident.created_at.desc()).limit(5).all()
         
@@ -1094,7 +1094,7 @@ def upload_reconcile_data():
         if file.filename == '':
             return jsonify({'success': False, 'error': '文件名为空'}), 400
         
-        if not file.filename.endswith('.csv'):
+        if not (file.filename and file.filename.endswith('.csv')):
             return jsonify({'success': False, 'error': '只支持CSV文件'}), 400
         
         # 读取CSV内容
@@ -1349,10 +1349,8 @@ def get_monitoring_incidents():
             query = query.filter(HostingIncident.site_id == site_id)
         if search:
             query = query.filter(
-                db.or_(
-                    HostingIncident.title.contains(search),
-                    HostingIncident.description.contains(search)
-                )
+                HostingIncident.title.contains(search) |
+                HostingIncident.description.contains(search)
             )
         
         # 分页

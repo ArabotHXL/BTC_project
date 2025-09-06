@@ -272,20 +272,50 @@ function loadMiners(page = 1, filters = {}) {
     });
     
     fetch(`/hosting/api/miners?${queryParams}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
-            displayMiners(data.miners);
-            updateCounts(data.counts);
-            updatePagination(data.pagination);
+            if (data.success) {
+                displayMiners(data.miners || []);
+                updateCounts(data.counts || {total: 0, active: 0, pending: 0});
+                updatePagination(data.pagination || {});
+            } else {
+                console.error('API returned error:', data.error);
+                displayMiners([]);
+                updateCounts({total: 0, active: 0, pending: 0});
+            }
         })
         .catch(error => {
-            console.error('Error loading miners:', error);
+            console.error('Error loading miners:', error.message || error);
+            displayMiners([]);
+            updateCounts({total: 0, active: 0, pending: 0});
         });
 }
 
 function displayMiners(miners) {
     const tbody = document.querySelector('#miners-table tbody');
+    if (!tbody) {
+        console.error('Miners table body not found');
+        return;
+    }
+    
     tbody.innerHTML = '';
+    
+    if (!miners || miners.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center text-muted py-4">
+                    <i class="bi bi-cpu fs-1 mb-2 d-block"></i>
+                    ${getLanguage() === 'en' ? 'No miners found' : '未找到矿机'}
+                </td>
+            </tr>
+        `;
+        return;
+    }
     
     miners.forEach(miner => {
         const row = `
@@ -363,11 +393,13 @@ function loadSitesForDropdown() {
             const siteFilter = document.getElementById('site-filter');
             const siteSelect = document.getElementById('site_id');
             
-            data.sites.forEach(site => {
-                const option = `<option value="${site.id}">${site.name}</option>`;
-                siteFilter.insertAdjacentHTML('beforeend', option);
-                siteSelect.insertAdjacentHTML('beforeend', option);
-            });
+            if (data.success && data.sites) {
+                data.sites.forEach(site => {
+                    const option = `<option value="${site.id}">${site.name}</option>`;
+                    if (siteFilter) siteFilter.insertAdjacentHTML('beforeend', option);
+                    if (siteSelect) siteSelect.insertAdjacentHTML('beforeend', option);
+                });
+            }
         });
 }
 
