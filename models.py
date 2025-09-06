@@ -906,6 +906,7 @@ class HostingIncident(db.Model):
     
     # 时间追踪
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    first_response_at = db.Column(db.DateTime, nullable=True)  # 首次响应时间
     resolved_at = db.Column(db.DateTime, nullable=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
