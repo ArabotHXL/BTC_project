@@ -217,14 +217,31 @@ document.addEventListener('DOMContentLoaded', function() {
 function loadSitesData() {
     // 加载站点概览统计
     fetch('/hosting/api/overview')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 updateSiteStats(data.data);
+            } else {
+                console.error('API returned error:', data.error);
+                // 显示默认值
+                updateSiteStats({
+                    sites: {total: 0, online: 0},
+                    capacity: {total_mw: 0, utilization_rate: 0}
+                });
             }
         })
         .catch(error => {
             console.error('Error loading site stats:', error);
+            // 显示默认值
+            updateSiteStats({
+                sites: {total: 0, online: 0},
+                capacity: {total_mw: 0, utilization_rate: 0}
+            });
         });
     
     // 加载站点列表
@@ -240,14 +257,24 @@ function updateSiteStats(data) {
 
 function loadSitesList() {
     fetch('/hosting/api/sites')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 displaySites(data.sites);
+                loadLocationOptions(data.sites);
+            } else {
+                console.error('API returned error:', data.error);
+                displaySites([]);
             }
         })
         .catch(error => {
             console.error('Error loading sites:', error);
+            displaySites([]);
         });
 }
 
@@ -282,8 +309,11 @@ function displaySites(sites) {
                         <small>${site.utilization_rate}%</small>
                     </div>
                 </td>
-                <td>${site.devices_count || 0} / ${site.active_devices || 0}</td>
-                <td>${new Date(site.updated_at || site.created_at).toLocaleDateString()}</td>
+                <td>
+                    <span class="badge bg-info me-1">${site.devices_count || 0}</span>
+                    <span class="badge bg-success">${site.active_devices || 0}</span>
+                </td>
+                <td>${new Date(site.updated_at || site.created_at || Date.now()).toLocaleDateString()}</td>
                 <td>
                     <div class="btn-group btn-group-sm">
                         <button class="btn btn-hosting-outline" onclick="viewSite(${site.id})">
@@ -307,11 +337,30 @@ function createSite() {
     const form = document.getElementById('createSiteForm');
     const formData = new FormData(form);
     
+    // 转换为JSON格式
+    const siteData = {
+        name: formData.get('name'),
+        slug: formData.get('slug'),
+        location: formData.get('location'),
+        operator_name: formData.get('operator_name'),
+        capacity_mw: parseFloat(formData.get('capacity_mw')),
+        electricity_rate: parseFloat(formData.get('electricity_rate')) || 0.05,
+        description: formData.get('description')
+    };
+    
     fetch('/hosting/api/sites', {
         method: 'POST',
-        body: formData
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(siteData)
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('createSiteModal')).hide();
@@ -319,7 +368,7 @@ function createSite() {
             loadSitesData();
             showToast(getLanguage() === 'en' ? 'Site created successfully' : '站点创建成功', 'success');
         } else {
-            showToast(data.message || (getLanguage() === 'en' ? 'Creation failed' : '创建失败'), 'error');
+            showToast(data.error || (getLanguage() === 'en' ? 'Creation failed' : '创建失败'), 'error');
         }
     })
     .catch(error => {
@@ -358,6 +407,27 @@ function getLanguage() {
 
 function showToast(message, type) {
     console.log(`[${type.toUpperCase()}] ${message}`);
+    
+    // 创建简单的通知
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 250px;';
+    toast.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // 自动删除
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.remove();
+        }
+    }, 5000);
 }
 
 // 其他辅助函数
@@ -370,6 +440,22 @@ function switchMapView(view) { /* 切换地图视图 */ }
 function viewSite(id) { /* 查看站点详情 */ }
 function editSite(id) { /* 编辑站点 */ }
 function manageSite(id) { /* 管理站点 */ }
-function loadLocationOptions() { /* 加载地区选项 */ }
+function loadLocationOptions(sites) {
+    if (!sites) return;
+    
+    const locationFilter = document.getElementById('location-filter');
+    const locations = [...new Set(sites.map(site => site.location).filter(Boolean))];
+    
+    // 清空现有选项
+    locationFilter.innerHTML = `<option value="">${getLanguage() === 'en' ? 'All Locations' : '全部地区'}</option>`;
+    
+    // 添加地区选项
+    locations.forEach(location => {
+        const option = document.createElement('option');
+        option.value = location;
+        option.textContent = location;
+        locationFilter.appendChild(option);
+    });
+}
 </script>
 {% endblock %}

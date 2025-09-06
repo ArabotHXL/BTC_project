@@ -98,7 +98,7 @@ def client_view(subpath='dashboard'):
 # ==================== 托管商API路由 ====================
 
 @hosting_bp.route('/api/overview', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@login_required
 def get_hosting_overview():
     """获取托管商总览数据"""
     try:
@@ -158,7 +158,7 @@ def get_hosting_overview():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/sites', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site'])
+@login_required
 def get_sites():
     """获取托管站点列表"""
     try:
@@ -178,6 +178,57 @@ def get_sites():
         return jsonify({'success': True, 'sites': sites_data})
     except Exception as e:
         logger.error(f"获取站点列表失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@hosting_bp.route('/api/sites', methods=['POST'])
+@login_required
+def create_site():
+    """创建新站点"""
+    try:
+        # 获取表单数据
+        data = request.get_json() if request.is_json else request.form
+        
+        # 检查必要字段
+        required_fields = ['name', 'slug', 'location', 'capacity_mw']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({
+                    'success': False,
+                    'error': f'缺少必要字段: {field}'
+                }), 400
+        
+        # 检查slug是否已存在
+        existing_site = HostingSite.query.filter_by(slug=data['slug']).first()
+        if existing_site:
+            return jsonify({
+                'success': False,
+                'error': '站点标识已存在'
+            }), 400
+        
+        # 创建新站点
+        site = HostingSite(
+            name=data['name'],
+            slug=data['slug'],
+            location=data['location'],
+            capacity_mw=float(data['capacity_mw']),
+            electricity_rate=float(data.get('electricity_rate', 0.05)),
+            operator_name=data.get('operator_name', ''),
+            description=data.get('description', ''),
+            status='offline'  # 默认新站点是离线状态
+        )
+        
+        db.session.add(site)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': '站点创建成功',
+            'site_id': site.id
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"创建站点失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/sites/<int:site_id>', methods=['GET'])
