@@ -1165,6 +1165,38 @@ def analyze_reconciliation():
         logger.error(f"分析对账差异失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# ==================== 健康检查端点 ====================
+
+@hosting_bp.route('/healthz')
+def health_check():
+    """健康检查端点 - 不需要认证"""
+    try:
+        # 基本数据库连接检查
+        db.session.execute(db.text('SELECT 1')).fetchone()
+        
+        # 简单的系统状态检查
+        status_data = {
+            'status': 'healthy',
+            'timestamp': datetime.now().isoformat(),
+            'database': 'connected',
+            'version': '1.0.0',
+            'services': {
+                'hosting': 'running',
+                'monitoring': 'active',
+                'status_pages': 'available'
+            }
+        }
+        
+        return jsonify(status_data), 200
+    except Exception as e:
+        error_status = {
+            'status': 'unhealthy',
+            'timestamp': datetime.now().isoformat(),
+            'error': str(e),
+            'database': 'disconnected'
+        }
+        return jsonify(error_status), 503
+
 # ==================== 监控API路由 ====================
 
 @hosting_bp.route('/api/monitoring/overview', methods=['GET'])
