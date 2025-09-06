@@ -8,7 +8,7 @@
    - 订阅管理
    - 多语言支持
 
-2. **高级分析平台** - `btc_mining_analytics_advanced.tar.gz` (0.5 MB) 
+2. **高级分析平台** - `btc_mining_analytics_advanced.tar.gz` (0.6 MB) 
    - HashInsight Treasury Management
    - CRM系统
    - 高级算法引擎
@@ -38,4 +38,4 @@ pip install -r requirements.txt
 python main.py
 ```
 
-生成时间: 2025-09-04 23:26:12
+生成时间: 2025-09-06 23:27:38

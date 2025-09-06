@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-09-04T23:26:12.657688",
+  "timestamp": "2025-09-06T23:27:35.461441",
   "phase": "Phase 0 - 现状评估",
   "system_name": "Bitcoin Calculator (calc.hashinsight.net)",
   "assessment_status": "completed",
@@ -1016,7 +1016,7 @@
           ]
         },
         "hosting_miners": {
-          "columns": 17,
+          "columns": 23,
           "structure": [
             {
               "name": "id",
@@ -1102,6 +1102,36 @@
               "name": "updated_at",
               "type": "timestamp without time zone",
               "nullable": "NO"
+            },
+            {
+              "name": "approval_status",
+              "type": "character varying",
+              "nullable": "YES"
+            },
+            {
+              "name": "submitted_by",
+              "type": "integer",
+              "nullable": "YES"
+            },
+            {
+              "name": "approved_by",
+              "type": "integer",
+              "nullable": "YES"
+            },
+            {
+              "name": "approval_notes",
+              "type": "text",
+              "nullable": "YES"
+            },
+            {
+              "name": "submitted_at",
+              "type": "timestamp without time zone",
+              "nullable": "YES"
+            },
+            {
+              "name": "approved_at",
+              "type": "timestamp without time zone",
+              "nullable": "YES"
             }
           ]
         },
@@ -2617,7 +2647,7 @@
         "config.py": "✅ 存在",
         "config.py_lines": 88,
         "models.py": "✅ 存在",
-        "models.py_lines": 1051
+        "models.py_lines": 1067
       },
       "module_structure": {
         "modules_dir": "✅ 存在",
@@ -2635,7 +2665,7 @@
       },
       "route_analysis": {},
       "template_structure": {
-        "count": 81,
+        "count": 85,
         "organized": true
       },
       "static_assets": {

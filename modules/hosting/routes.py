@@ -1164,3 +1164,185 @@ def analyze_reconciliation():
     except Exception as e:
         logger.error(f"分析对账差异失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+# ==================== 监控API路由 ====================
+
+@hosting_bp.route('/api/monitoring/overview', methods=['GET'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def get_monitoring_overview():
+    """获取监控概览数据"""
+    try:
+        # 活跃告警统计
+        active_alerts = HostingIncident.query.filter(
+            HostingIncident.status.in_(['open', 'investigating'])
+        ).count()
+        
+        # 总事件统计
+        total_incidents = HostingIncident.query.count()
+        
+        # 平均响应时间（分钟）
+        recent_incidents = HostingIncident.query.filter(
+            HostingIncident.created_at >= datetime.now() - timedelta(days=30)
+        ).all()
+        
+        avg_response_time = 0
+        if recent_incidents:
+            response_times = []
+            for incident in recent_incidents:
+                if incident.first_response_at:
+                    response_time = (incident.first_response_at - incident.created_at).total_seconds() / 60
+                    response_times.append(response_time)
+            avg_response_time = round(sum(response_times) / len(response_times)) if response_times else 0
+        
+        # 系统可用率
+        total_sites = HostingSite.query.count()
+        online_sites = HostingSite.query.filter_by(status='online').count()
+        uptime_percentage = round((online_sites / total_sites * 100) if total_sites > 0 else 100, 1)
+        
+        # 模拟系统指标（后续可接入真实监控数据）
+        import random
+        metrics = {
+            'cpu_usage': random.randint(15, 85),
+            'memory_usage': random.randint(40, 80),
+            'network_io': round(random.uniform(1.2, 15.8), 1),
+            'error_rate': round(random.uniform(0.1, 2.5), 1)
+        }
+        
+        # 近期告警列表
+        recent_alerts = HostingIncident.query.filter(
+            HostingIncident.status.in_(['open', 'investigating']),
+            HostingIncident.created_at >= datetime.now() - timedelta(hours=24)
+        ).order_by(HostingIncident.created_at.desc()).limit(5).all()
+        
+        alerts_data = []
+        for alert in recent_alerts:
+            site_name = alert.site.name if alert.site else 'Global'
+            alerts_data.append({
+                'id': alert.id,
+                'title': alert.title,
+                'description': alert.description[:100] + '...' if len(alert.description) > 100 else alert.description,
+                'severity': alert.severity,
+                'site_name': site_name,
+                'created_at': alert.created_at.strftime('%H:%M')
+            })
+        
+        overview_data = {
+            'stats': {
+                'active_alerts': active_alerts,
+                'total_incidents': total_incidents,
+                'avg_response_time': avg_response_time,
+                'uptime_percentage': uptime_percentage
+            },
+            'metrics': metrics,
+            'alerts': alerts_data
+        }
+        
+        return jsonify({'success': True, **overview_data})
+    except Exception as e:
+        logger.error(f"获取监控概览失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@hosting_bp.route('/api/monitoring/incidents', methods=['GET'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def get_monitoring_incidents():
+    """获取事件管理数据"""
+    try:
+        # 获取筛选参数
+        severity = request.args.get('severity')
+        status = request.args.get('status')
+        site_id = request.args.get('site_id')
+        search = request.args.get('search')
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 20))
+        
+        # 构建查询
+        query = HostingIncident.query
+        
+        if severity:
+            query = query.filter(HostingIncident.severity == severity)
+        if status:
+            query = query.filter(HostingIncident.status == status)
+        if site_id:
+            query = query.filter(HostingIncident.site_id == site_id)
+        if search:
+            query = query.filter(
+                db.or_(
+                    HostingIncident.title.contains(search),
+                    HostingIncident.description.contains(search)
+                )
+            )
+        
+        # 分页
+        incidents_page = query.order_by(HostingIncident.created_at.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+        
+        incidents_data = []
+        for incident in incidents_page.items:
+            # 计算持续时间
+            duration = None
+            if incident.resolved_at:
+                duration_delta = incident.resolved_at - incident.created_at
+                hours = int(duration_delta.total_seconds() // 3600)
+                minutes = int((duration_delta.total_seconds() % 3600) // 60)
+                duration = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
+            
+            site_name = incident.site.name if incident.site else 'Global'
+            
+            incidents_data.append({
+                'id': incident.id,
+                'title': incident.title,
+                'severity': incident.severity,
+                'status': incident.status,
+                'site_name': site_name,
+                'created_at': incident.created_at.strftime('%Y-%m-%d %H:%M'),
+                'duration': duration
+            })
+        
+        pagination_data = {
+            'current_page': page,
+            'total_pages': incidents_page.pages,
+            'total_items': incidents_page.total,
+            'per_page': per_page,
+            'has_next': incidents_page.has_next,
+            'has_prev': incidents_page.has_prev
+        }
+        
+        return jsonify({
+            'success': True,
+            'incidents': incidents_data,
+            'pagination': pagination_data
+        })
+    except Exception as e:
+        logger.error(f"获取事件列表失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@hosting_bp.route('/api/monitoring/incidents', methods=['POST'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def create_monitoring_incident():
+    """创建新的监控事件"""
+    try:
+        data = request.get_json() if request.is_json else request.form
+        
+        incident = HostingIncident(
+            title=data['title'],
+            description=data['description'],
+            severity=data['severity'],
+            category=data.get('category', 'other'),
+            site_id=data.get('site_id') if data.get('site_id') else None,
+            status='open',
+            reporter_id=session.get('user_id')
+        )
+        
+        db.session.add(incident)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': '事件创建成功',
+            'incident_id': incident.id
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"创建监控事件失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
