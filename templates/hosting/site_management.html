@@ -1,0 +1,375 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}{% if current_lang == 'en' %}Site Management{% else %}站点管理{% endif %}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}Manage hosting sites and capacity{% else %}管理托管站点和容量{% endif %}{% endblock %}
+
+{% block header_actions %}
+{{ super() }}
+<div class="btn-group ms-3" role="group">
+    <button class="btn btn-hosting-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createSiteModal">
+        <i class="bi bi-plus-circle me-1"></i>{% if current_lang == 'en' %}New Site{% else %}新建站点{% endif %}
+    </button>
+    <button class="btn btn-hosting-secondary btn-sm" onclick="refreshSites()">
+        <i class="bi bi-arrow-clockwise me-1"></i>{% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- 站点概览统计 -->
+<div class="hosting-stats-grid">
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-sites">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Total Sites{% else %}总站点数{% endif %}</div>
+        <i class="bi bi-building hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="online-sites">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Online Sites{% else %}在线站点{% endif %}</div>
+        <i class="bi bi-check-circle hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-capacity">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Total Capacity{% else %}总容量{% endif %}</div>
+        <i class="bi bi-lightning hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="utilization-rate">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Utilization Rate{% else %}利用率{% endif %}</div>
+        <i class="bi bi-speedometer hosting-stat-icon"></i>
+    </div>
+</div>
+
+<!-- 站点管理 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-buildings me-2"></i>{% if current_lang == 'en' %}Hosting Sites{% else %}托管站点{% endif %}
+        </h5>
+        <div class="btn-group" role="group">
+            <button class="btn btn-hosting-outline btn-sm active" onclick="filterSites('all')">{% if current_lang == 'en' %}All{% else %}全部{% endif %}</button>
+            <button class="btn btn-hosting-outline btn-sm" onclick="filterSites('online')">{% if current_lang == 'en' %}Online{% else %}在线{% endif %}</button>
+            <button class="btn btn-hosting-outline btn-sm" onclick="filterSites('offline')">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</button>
+        </div>
+    </div>
+    <div class="hosting-card-body">
+        <!-- 筛选选项 -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <select class="form-select" id="location-filter" onchange="filterSitesByLocation()">
+                    <option value="">{% if current_lang == 'en' %}All Locations{% else %}全部地区{% endif %}</option>
+                    <!-- 地区选项通过JavaScript动态加载 -->
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="capacity-filter" onchange="filterSitesByCapacity()">
+                    <option value="">{% if current_lang == 'en' %}All Capacities{% else %}全部容量{% endif %}</option>
+                    <option value="small">{% if current_lang == 'en' %}Small (< 10MW){% else %}小型 (< 10MW){% endif %}</option>
+                    <option value="medium">{% if current_lang == 'en' %}Medium (10-50MW){% else %}中型 (10-50MW){% endif %}</option>
+                    <option value="large">{% if current_lang == 'en' %}Large (> 50MW){% else %}大型 (> 50MW){% endif %}</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="status-filter" onchange="filterSitesByStatus()">
+                    <option value="">{% if current_lang == 'en' %}All Statuses{% else %}全部状态{% endif %}</option>
+                    <option value="online">{% if current_lang == 'en' %}Online{% else %}在线{% endif %}</option>
+                    <option value="offline">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</option>
+                    <option value="maintenance">{% if current_lang == 'en' %}Maintenance{% else %}维护中{% endif %}</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="text" class="form-control" id="search-sites" placeholder="{% if current_lang == 'en' %}Search sites...{% else %}搜索站点...{% endif %}" onkeyup="searchSites()">
+            </div>
+        </div>
+        
+        <!-- 站点列表 -->
+        <div class="hosting-table">
+            <table class="table table-hover" id="sites-table">
+                <thead>
+                    <tr>
+                        <th>{% if current_lang == 'en' %}Name{% else %}名称{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Location{% else %}位置{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Capacity{% else %}容量{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Utilization{% else %}利用率{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Devices{% else %}设备数{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Last Updated{% else %}最后更新{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                    </tr>
+                </thead>
+                <tbody id="sites-table-body">
+                    <!-- 站点数据通过JavaScript加载 -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 分页 -->
+        <nav aria-label="Sites pagination" class="mt-3">
+            <ul class="pagination justify-content-center" id="sites-pagination">
+                <!-- 分页按钮通过JavaScript生成 -->
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- 站点地图视图 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-geo-alt me-2"></i>{% if current_lang == 'en' %}Sites Map{% else %}站点地图{% endif %}
+        </h5>
+        <div class="btn-group" role="group">
+            <button class="btn btn-hosting-outline btn-sm active" onclick="switchMapView('markers')">{% if current_lang == 'en' %}Markers{% else %}标记{% endif %}</button>
+            <button class="btn btn-hosting-outline btn-sm" onclick="switchMapView('heatmap')">{% if current_lang == 'en' %}Heatmap{% else %}热力图{% endif %}</button>
+        </div>
+    </div>
+    <div class="hosting-card-body">
+        <div id="sites-map" style="height: 400px; background: #1a1a1a; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+            <div class="text-muted">
+                <i class="bi bi-geo-alt fs-1 mb-2 d-block"></i>
+                {% if current_lang == 'en' %}Map integration available{% else %}地图集成可用{% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 创建站点模态框 -->
+<div class="modal fade" id="createSiteModal" tabindex="-1" aria-labelledby="createSiteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
+                <h5 class="modal-title" id="createSiteModalLabel">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    {% if current_lang == 'en' %}Create New Site{% else %}创建新站点{% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createSiteForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="site-name" class="form-label">
+                                {% if current_lang == 'en' %}Site Name{% else %}站点名称{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="site-name" name="name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="site-slug" class="form-label">
+                                {% if current_lang == 'en' %}Site Slug{% else %}站点标识{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="site-slug" name="slug" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="site-location" class="form-label">
+                                {% if current_lang == 'en' %}Location{% else %}位置{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="site-location" name="location" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="site-operator" class="form-label">
+                                {% if current_lang == 'en' %}Operator Name{% else %}运营商名称{% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="site-operator" name="operator_name">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="site-capacity" class="form-label">
+                                {% if current_lang == 'en' %}Capacity (MW){% else %}容量 (MW){% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="site-capacity" name="capacity_mw" step="0.1" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="site-electricity-rate" class="form-label">
+                                {% if current_lang == 'en' %}Electricity Rate ($/kWh){% else %}电价 ($/kWh){% endif %}
+                            </label>
+                            <input type="number" class="form-control" id="site-electricity-rate" name="electricity_rate" step="0.001">
+                        </div>
+                        <div class="col-12">
+                            <label for="site-description" class="form-label">
+                                {% if current_lang == 'en' %}Description{% else %}描述{% endif %}
+                            </label>
+                            <textarea class="form-control" id="site-description" name="description" rows="3"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                </button>
+                <button type="button" class="btn btn-hosting-primary" onclick="createSite()">
+                    {% if current_lang == 'en' %}Create Site{% else %}创建站点{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadSitesData();
+    loadLocationOptions();
+});
+
+function loadSitesData() {
+    // 加载站点概览统计
+    fetch('/hosting/api/overview')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateSiteStats(data.data);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading site stats:', error);
+        });
+    
+    // 加载站点列表
+    loadSitesList();
+}
+
+function updateSiteStats(data) {
+    document.getElementById('total-sites').textContent = data.sites.total || 0;
+    document.getElementById('online-sites').textContent = data.sites.online || 0;
+    document.getElementById('total-capacity').textContent = `${data.capacity.total_mw || 0} MW`;
+    document.getElementById('utilization-rate').textContent = `${data.capacity.utilization_rate || 0}%`;
+}
+
+function loadSitesList() {
+    fetch('/hosting/api/sites')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displaySites(data.sites);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading sites:', error);
+        });
+}
+
+function displaySites(sites) {
+    const tbody = document.getElementById('sites-table-body');
+    tbody.innerHTML = '';
+    
+    if (sites.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center text-muted py-4">
+                    <i class="bi bi-building fs-1 mb-2 d-block"></i>
+                    ${getLanguage() === 'en' ? 'No sites found' : '未找到站点'}
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    sites.forEach(site => {
+        const row = `
+            <tr>
+                <td><strong>${site.name}</strong></td>
+                <td>${site.location}</td>
+                <td><span class="badge bg-${getStatusColor(site.status)}">${getStatusText(site.status)}</span></td>
+                <td>${site.capacity_mw} MW</td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="progress flex-grow-1 me-2" style="height: 20px; width: 60px;">
+                            <div class="progress-bar bg-warning" style="width: ${site.utilization_rate}%"></div>
+                        </div>
+                        <small>${site.utilization_rate}%</small>
+                    </div>
+                </td>
+                <td>${site.devices_count || 0} / ${site.active_devices || 0}</td>
+                <td>${new Date(site.updated_at || site.created_at).toLocaleDateString()}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-hosting-outline" onclick="viewSite(${site.id})">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-hosting-outline" onclick="editSite(${site.id})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-hosting-outline" onclick="manageSite(${site.id})">
+                            <i class="bi bi-gear"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        tbody.insertAdjacentHTML('beforeend', row);
+    });
+}
+
+function createSite() {
+    const form = document.getElementById('createSiteForm');
+    const formData = new FormData(form);
+    
+    fetch('/hosting/api/sites', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('createSiteModal')).hide();
+            form.reset();
+            loadSitesData();
+            showToast(getLanguage() === 'en' ? 'Site created successfully' : '站点创建成功', 'success');
+        } else {
+            showToast(data.message || (getLanguage() === 'en' ? 'Creation failed' : '创建失败'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error creating site:', error);
+        showToast(getLanguage() === 'en' ? 'Creation failed' : '创建失败', 'error');
+    });
+}
+
+function refreshSites() {
+    loadSitesData();
+    showToast(getLanguage() === 'en' ? 'Sites data refreshed' : '站点数据已刷新', 'success');
+}
+
+function getStatusColor(status) {
+    const colorMap = {
+        'online': 'success',
+        'offline': 'danger',
+        'maintenance': 'warning'
+    };
+    return colorMap[status] || 'secondary';
+}
+
+function getStatusText(status) {
+    const language = getLanguage();
+    const statusMap = {
+        'online': language === 'en' ? 'Online' : '在线',
+        'offline': language === 'en' ? 'Offline' : '离线',
+        'maintenance': language === 'en' ? 'Maintenance' : '维护中'
+    };
+    return statusMap[status] || status;
+}
+
+function getLanguage() {
+    return document.querySelector('meta[name="language"]').content;
+}
+
+function showToast(message, type) {
+    console.log(`[${type.toUpperCase()}] ${message}`);
+}
+
+// 其他辅助函数
+function filterSites(filter) { /* 实现站点过滤 */ }
+function filterSitesByLocation() { /* 按地区过滤 */ }
+function filterSitesByCapacity() { /* 按容量过滤 */ }
+function filterSitesByStatus() { /* 按状态过滤 */ }
+function searchSites() { /* 搜索站点 */ }
+function switchMapView(view) { /* 切换地图视图 */ }
+function viewSite(id) { /* 查看站点详情 */ }
+function editSite(id) { /* 编辑站点 */ }
+function manageSite(id) { /* 管理站点 */ }
+function loadLocationOptions() { /* 加载地区选项 */ }
+</script>
+{% endblock %}
