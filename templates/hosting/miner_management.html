@@ -354,15 +354,23 @@ function displayMiners(miners) {
 }
 
 function updateCounts(counts) {
-    const totalCountEl = document.getElementById('total-count');
-    const activeCountEl = document.getElementById('active-count');
-    const pendingApprovalCountEl = document.getElementById('pending-approval-count');
-    const pendingCountEl = document.getElementById('pending-count');
+    const totalCountEl = document.querySelector('[data-stat="total"]');
+    const activeCountEl = document.querySelector('[data-stat="running"]');
+    const pendingCountEl = document.querySelector('[data-stat="pending"]');
     
-    if (totalCountEl) totalCountEl.textContent = `${getLanguage() === 'en' ? 'Total:' : '总计:'} ${counts.total || 0}`;
-    if (activeCountEl) activeCountEl.textContent = `${getLanguage() === 'en' ? 'Running:' : '运行:'} ${counts.active || 0}`;
-    if (pendingApprovalCountEl) pendingApprovalCountEl.textContent = `${getLanguage() === 'en' ? 'Pending:' : '待审核:'} ${counts.pending || 0}`;
+    // 更新数据统计显示
+    if (totalCountEl) totalCountEl.textContent = counts.total || 0;
+    if (activeCountEl) activeCountEl.textContent = counts.active || 0;
     if (pendingCountEl) pendingCountEl.textContent = counts.pending || 0;
+    
+    // 更新顶部显示区域
+    const totalDisplay = document.getElementById('total-count');
+    const activeDisplay = document.getElementById('active-count');
+    const pendingDisplay = document.getElementById('pending-count');
+    
+    if (totalDisplay) totalDisplay.textContent = `${getLanguage() === 'en' ? 'Total:' : '总计:'} ${counts.total || 0}`;
+    if (activeDisplay) activeDisplay.textContent = `${getLanguage() === 'en' ? 'Running:' : '运行:'} ${counts.active || 0}`;
+    if (pendingDisplay) pendingDisplay.textContent = `${getLanguage() === 'en' ? 'Pending:' : '待审核:'} ${counts.pending || 0}`;
 }
 
 function updatePagination(pagination) {

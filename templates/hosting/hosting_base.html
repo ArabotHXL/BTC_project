@@ -438,25 +438,25 @@
                         {% if current_lang == 'en' %}My Assets{% else %}我的资产{% endif %}
                     </div>
                     <div class="hosting-nav-item">
-                        <a href="/hosting/client" class="hosting-nav-link {{ 'active' if request.endpoint == 'hosting.dashboard' }}">
+                        <a href="/hosting/client" class="hosting-nav-link {{ 'active' if request.path == '/hosting/client' or request.path == '/hosting/client/' }}">
                             <i class="bi bi-person-circle hosting-nav-icon"></i>
                             {% if current_lang == 'en' %}Dashboard{% else %}资产概览{% endif %}
                         </a>
                     </div>
                     <div class="hosting-nav-item">
-                        <a href="/hosting/client/miners" class="hosting-nav-link {{ 'active' if 'miners' in request.path }}">
+                        <a href="/hosting/client/miners" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/miners') }}">
                             <i class="bi bi-cpu hosting-nav-icon"></i>
                             {% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}
                         </a>
                     </div>
                     <div class="hosting-nav-item">
-                        <a href="/hosting/client/billing" class="hosting-nav-link {{ 'active' if 'billing' in request.path }}">
+                        <a href="/hosting/client/billing" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/billing') }}">
                             <i class="bi bi-receipt hosting-nav-icon"></i>
                             {% if current_lang == 'en' %}Billing{% else %}账单管理{% endif %}
                         </a>
                     </div>
                     <div class="hosting-nav-item">
-                        <a href="/hosting/client/reports" class="hosting-nav-link {{ 'active' if 'reports' in request.path }}">
+                        <a href="/hosting/client/reports" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/reports') }}">
                             <i class="bi bi-graph-up hosting-nav-icon"></i>
                             {% if current_lang == 'en' %}Reports{% else %}报告分析{% endif %}
                         </a>
@@ -470,13 +470,13 @@
                         {% if current_lang == 'en' %}Support{% else %}支持服务{% endif %}
                     </div>
                     <div class="hosting-nav-item">
-                        <a href="/hosting/client/tickets" class="hosting-nav-link {{ 'active' if 'tickets' in request.path }}">
+                        <a href="/hosting/client/tickets" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/tickets') }}">
                             <i class="bi bi-headset hosting-nav-icon"></i>
                             {% if current_lang == 'en' %}Support Tickets{% else %}技术支持{% endif %}
                         </a>
                     </div>
                     <div class="hosting-nav-item">
-                        <a href="/hosting/global/status" class="hosting-nav-link {{ 'active' if 'status' in request.path }}">
+                        <a href="/hosting/status" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/status') }}">
                             <i class="bi bi-globe hosting-nav-icon"></i>
                             {% if current_lang == 'en' %}System Status{% else %}系统状态{% endif %}
                         </a>
