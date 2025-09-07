@@ -407,25 +407,25 @@
                         {% if current_lang == 'en' %}Host Management{% else %}托管商管理{% endif %}
                     </div>
                     <div class="hosting-nav-item">
-                        <a href="/hosting/host" class="hosting-nav-link {{ 'active' if request.path.endswith('/hosting/host') }}">
+                        <a href="/hosting/host" class="hosting-nav-link {{ 'active' if request.path == '/hosting/host' or request.path == '/hosting/host/' }}">
                             <i class="bi bi-speedometer2 hosting-nav-icon"></i>
                             {% if current_lang == 'en' %}Dashboard{% else %}仪表板{% endif %}
                         </a>
                     </div>
                     <div class="hosting-nav-item">
-                        <a href="/hosting/host/devices" class="hosting-nav-link {{ 'active' if '/host/devices' in request.path }}">
+                        <a href="/hosting/host/devices" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/host/devices') }}">
                             <i class="bi bi-cpu hosting-nav-icon"></i>
                             {% if current_lang == 'en' %}Device Management{% else %}设备管理{% endif %}
                         </a>
                     </div>
                     <div class="hosting-nav-item">
-                        <a href="/hosting/host/sites" class="hosting-nav-link {{ 'active' if '/host/sites' in request.path }}">
+                        <a href="/hosting/host/sites" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/host/sites') }}">
                             <i class="bi bi-geo-alt hosting-nav-icon"></i>
                             {% if current_lang == 'en' %}Site Management{% else %}站点管理{% endif %}
                         </a>
                     </div>
                     <div class="hosting-nav-item">
-                        <a href="/hosting/host/monitoring" class="hosting-nav-link {{ 'active' if '/host/monitoring' in request.path }}">
+                        <a href="/hosting/host/monitoring" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/host/monitoring') }}">
                             <i class="bi bi-activity hosting-nav-icon"></i>
                             {% if current_lang == 'en' %}Monitoring{% else %}监控管理{% endif %}
                         </a>
