@@ -407,25 +407,25 @@
                         {% if current_lang == 'en' %}Host Management{% else %}托管商管理{% endif %}
                     </div>
                     <div class="hosting-nav-item">
-                        <a href="/hosting/host" class="hosting-nav-link {% if request.path == '/hosting/host' or request.path == '/hosting/host/' %}active{% endif %}">
+                        <a href="/hosting/host" class="hosting-nav-link" data-nav="dashboard">
                             <i class="bi bi-speedometer2 hosting-nav-icon"></i>
                             {% if current_lang == 'en' %}Dashboard{% else %}仪表板{% endif %}
                         </a>
                     </div>
                     <div class="hosting-nav-item">
-                        <a href="/hosting/host/devices" class="hosting-nav-link {% if request.path == '/hosting/host/devices' or request.path.startswith('/hosting/host/devices/') %}active{% endif %}">
+                        <a href="/hosting/host/devices" class="hosting-nav-link" data-nav="devices">
                             <i class="bi bi-cpu hosting-nav-icon"></i>
                             {% if current_lang == 'en' %}Device Management{% else %}设备管理{% endif %}
                         </a>
                     </div>
                     <div class="hosting-nav-item">
-                        <a href="/hosting/host/sites" class="hosting-nav-link {% if request.path == '/hosting/host/sites' or request.path.startswith('/hosting/host/sites/') %}active{% endif %}">
+                        <a href="/hosting/host/sites" class="hosting-nav-link" data-nav="sites">
                             <i class="bi bi-geo-alt hosting-nav-icon"></i>
                             {% if current_lang == 'en' %}Site Management{% else %}站点管理{% endif %}
                         </a>
                     </div>
                     <div class="hosting-nav-item">
-                        <a href="/hosting/host/monitoring" class="hosting-nav-link {% if request.path == '/hosting/host/monitoring' or request.path.startswith('/hosting/host/monitoring/') %}active{% endif %}">
+                        <a href="/hosting/host/monitoring" class="hosting-nav-link" data-nav="monitoring">
                             <i class="bi bi-activity hosting-nav-icon"></i>
                             {% if current_lang == 'en' %}Monitoring{% else %}监控管理{% endif %}
                         </a>
@@ -585,15 +585,23 @@
             }
         });
         
-        // Set active navigation item
+        // Set active navigation item - 清除所有并精确匹配
         const currentPath = window.location.pathname;
         const navLinks = document.querySelectorAll('.hosting-nav-link');
-        navLinks.forEach(link => {
-            if (link.getAttribute('href') === currentPath || 
-                (currentPath.includes(link.getAttribute('href')) && link.getAttribute('href') !== '/hosting/')) {
-                link.classList.add('active');
-            }
-        });
+        
+        // 先清除所有active类
+        navLinks.forEach(link => link.classList.remove('active'));
+        
+        // 精确匹配路径并设置高亮
+        if (currentPath === '/hosting/host' || currentPath === '/hosting/host/') {
+            document.querySelector('[data-nav="dashboard"]')?.classList.add('active');
+        } else if (currentPath === '/hosting/host/devices' || currentPath.startsWith('/hosting/host/devices/')) {
+            document.querySelector('[data-nav="devices"]')?.classList.add('active');
+        } else if (currentPath === '/hosting/host/sites' || currentPath.startsWith('/hosting/host/sites/')) {
+            document.querySelector('[data-nav="sites"]')?.classList.add('active');
+        } else if (currentPath === '/hosting/host/monitoring' || currentPath.startsWith('/hosting/host/monitoring/')) {
+            document.querySelector('[data-nav="monitoring"]')?.classList.add('active');
+        }
     });
     </script>
 </body>
