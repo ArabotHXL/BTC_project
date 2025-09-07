@@ -428,6 +428,153 @@ def get_client_miners():
         logger.error(f"获取客户矿机失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@hosting_bp.route('/api/client/dashboard', methods=['GET'])
+@login_required
+def get_client_dashboard():
+    """获取客户仪表板数据"""
+    try:
+        user_id = session.get('user_id')
+        
+        # 获取客户矿机统计
+        miners = HostingMiner.query.filter_by(customer_id=user_id).all()
+        total_miners = len(miners)
+        active_miners = len([m for m in miners if m.status == 'active'])
+        
+        # 计算算力和功耗
+        total_hashrate = sum(m.actual_hashrate or 0 for m in miners if m.status == 'active')
+        total_power = sum(m.actual_power or 0 for m in miners if m.status == 'active')
+        
+        # 估算收益（简化计算）
+        daily_revenue = total_hashrate * 0.000005 * 110000  # 估算日收益
+        monthly_revenue = daily_revenue * 30
+        
+        # 估算成本
+        daily_power_cost = total_power * 24 * 0.08 / 1000  # 估算电费
+        monthly_power_cost = daily_power_cost * 30
+        
+        dashboard_data = {
+            'miners': {
+                'total': total_miners,
+                'active': active_miners,
+                'offline': total_miners - active_miners
+            },
+            'performance': {
+                'total_hashrate': round(total_hashrate, 2),
+                'total_power': round(total_power, 0),
+                'efficiency': round(total_hashrate / (total_power / 1000), 2) if total_power > 0 else 0
+            },
+            'revenue': {
+                'daily': round(daily_revenue, 2),
+                'monthly': round(monthly_revenue, 2),
+                'daily_cost': round(daily_power_cost, 2),
+                'monthly_cost': round(monthly_power_cost, 2),
+                'daily_profit': round(daily_revenue - daily_power_cost, 2),
+                'monthly_profit': round(monthly_revenue - monthly_power_cost, 2)
+            }
+        }
+        
+        return jsonify({'success': True, 'data': dashboard_data})
+    except Exception as e:
+        logger.error(f"获取客户仪表板数据失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@hosting_bp.route('/api/client/revenue-chart', methods=['GET'])
+@login_required
+def get_client_revenue_chart():
+    """获取客户收益图表数据"""
+    try:
+        user_id = session.get('user_id')
+        period = request.args.get('period', '7d')
+        
+        # 生成模拟数据（实际应用中应从数据库获取历史数据）
+        from datetime import datetime, timedelta
+        import random
+        
+        if period == '7d':
+            days = 7
+        elif period == '30d':
+            days = 30
+        else:
+            days = 7
+            
+        labels = []
+        revenue_data = []
+        cost_data = []
+        
+        for i in range(days):
+            date = (datetime.now() - timedelta(days=days-i-1)).strftime('%m-%d')
+            labels.append(date)
+            
+            # 模拟数据
+            base_revenue = 150 + random.uniform(-20, 20)
+            base_cost = 80 + random.uniform(-10, 10)
+            
+            revenue_data.append(round(base_revenue, 2))
+            cost_data.append(round(base_cost, 2))
+        
+        chart_data = {
+            'labels': labels,
+            'datasets': [
+                {
+                    'label': 'Revenue',
+                    'data': revenue_data,
+                    'borderColor': 'rgb(255, 193, 7)',
+                    'backgroundColor': 'rgba(255, 193, 7, 0.1)'
+                },
+                {
+                    'label': 'Cost',
+                    'data': cost_data,
+                    'borderColor': 'rgb(220, 53, 69)',
+                    'backgroundColor': 'rgba(220, 53, 69, 0.1)'
+                }
+            ]
+        }
+        
+        return jsonify({'success': True, 'chart': chart_data})
+    except Exception as e:
+        logger.error(f"获取收益图表数据失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@hosting_bp.route('/api/client/miner-distribution', methods=['GET'])
+@login_required
+def get_client_miner_distribution():
+    """获取客户矿机分布数据"""
+    try:
+        user_id = session.get('user_id')
+        
+        # 按站点统计矿机分布
+        miners = HostingMiner.query.filter_by(customer_id=user_id).all()
+        
+        site_distribution = {}
+        for miner in miners:
+            site_name = miner.site.name if miner.site else 'Unknown'
+            if site_name not in site_distribution:
+                site_distribution[site_name] = 0
+            site_distribution[site_name] += 1
+        
+        # 转换为图表数据格式
+        labels = list(site_distribution.keys())
+        data = list(site_distribution.values())
+        
+        # 颜色方案
+        colors = ['#FFB800', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57']
+        background_colors = [colors[i % len(colors)] for i in range(len(labels))]
+        
+        chart_data = {
+            'labels': labels,
+            'datasets': [{
+                'data': data,
+                'backgroundColor': background_colors,
+                'borderWidth': 2,
+                'borderColor': '#2c3e50'
+            }]
+        }
+        
+        return jsonify({'success': True, 'chart': chart_data})
+    except Exception as e:
+        logger.error(f"获取矿机分布数据失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # ==================== 矿机管理API ====================
 
 @hosting_bp.route('/api/miners', methods=['GET'])
