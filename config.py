@@ -50,7 +50,7 @@ class Config:
     
     # 功能开关
     ENABLE_BACKGROUND_SERVICES = os.environ.get('ENABLE_BACKGROUND_SERVICES', '0') == '1'
-    USAGE_TRACKING_ENABLED = False  # DISABLED: Gold flow module - was: os.environ.get('STRIPE_SECRET_KEY') is not None
+    USAGE_TRACKING_ENABLED = False  # DISABLED: Gold flow module - hosting transparency only
     MINING_BROKER_ENABLED = False  # DISABLED: Gold flow module
     SUBSCRIPTION_ENABLED = False  # DISABLED: Gold flow module
     BATCH_CALCULATOR_ENABLED = True
@@ -94,8 +94,8 @@ class Config:
         'HOSTING_DATA_LIMIT': '200/minute'
     }
     
-    # API密钥
-    STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
+    # API密钥 - 托管透明性平台
+    # STRIPE_SECRET_KEY removed - no payment processing in hosting transparency platform
     COINWARZ_API_KEY = os.environ.get('COINWARZ_API_KEY')
     
     # 挖矿计算常量配置 - 外置硬编码值
