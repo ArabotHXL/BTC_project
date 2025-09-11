@@ -148,11 +148,12 @@ def send_verification_email(email, token, language='zh'):
 
 # 导入订阅系统模块（延迟导入以避免循环依赖）
 try:
-    from billing_routes import billing_bp
-    BILLING_ENABLED = True
+    # DISABLED: Gold flow module - from billing_routes import billing_bp
+    # BILLING_ENABLED = True
+    pass
 except ImportError as e:
     logging.warning(f"Billing modules not available: {e}")
-    BILLING_ENABLED = False
+    pass  # BILLING_ENABLED = False
 
 # 导入批量计算器路由
 try:
@@ -174,7 +175,7 @@ from mining_calculator import (
 from crm_routes import init_crm_routes
 # Network analysis service temporarily disabled due to database query issues
 # from services.network_data_service import network_collector, network_analyzer
-from mining_broker_routes import init_broker_routes
+# DISABLED: Gold flow module - from mining_broker_routes import init_broker_routes
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -247,18 +248,19 @@ def initialize_database():
             
             # Import models after database connection is verified
             from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot, MinerModel
-            import models_subscription  # noqa: F401
+            # DISABLED: Gold flow module - import models_subscription  # noqa: F401
             
             db.create_all()
             logging.info("Database tables created successfully")
             
-            # Initialize subscription plans
-            try:
-                from models_subscription import initialize_default_plans
-                initialize_default_plans()
-                logging.info("Subscription plans initialized successfully")
-            except Exception as e:
-                logging.warning(f"Failed to initialize subscription plans: {e}")
+            # DISABLED: Gold flow module - subscription plans initialization
+            # try:
+            #     from models_subscription import initialize_default_plans
+            #     initialize_default_plans()
+            #     logging.info("Subscription plans initialized successfully")
+            # except Exception as e:
+            #     logging.warning(f"Failed to initialize subscription plans: {e}")
+            logging.info("Subscription plans initialization disabled (gold flow module)")
             
             return True
             
@@ -272,7 +274,7 @@ initialize_database_result = initialize_database()
 # Import models at module level for global access
 from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot, MinerModel, User
 import models
-import models_subscription  # noqa: F401
+# DISABLED: Gold flow module - import models_subscription  # noqa: F401
 logging.info("Models imported successfully at module level")
 
 # 初始化投资组合管理系统
@@ -312,27 +314,34 @@ def user_has_analytics_access():
     if role == 'owner':
         return True
     
-    # Check if user has Pro subscription with analytics access
-    try:
-        from models_subscription import SubscriptionPlan, UserSubscription
-        from models import User
-        user_email = session.get('email')
-        if user_email:
-            # Find user by email in the users table (subscription system)
-            user = User.query.filter_by(email=user_email).first()
-            if user:
-                # Get user's active subscription
-                subscription = UserSubscription.query.filter_by(
-                    user_id=user.id, 
-                    status='active'
-                ).first()
-                
-                if subscription and subscription.is_active():
-                    plan = subscription.plan
-                    if plan and plan.allow_advanced_analytics:
-                        return True
-    except Exception as e:
-        logging.warning(f"Error checking subscription for analytics access: {e}")
+    # DISABLED: Gold flow module - subscription checks disabled
+    # Since subscription system is disabled, only owners have analytics access
+    from config import Config
+    if not getattr(Config, 'SUBSCRIPTION_ENABLED', False):
+        logging.debug("Subscription system disabled - analytics access restricted to owners only")
+        return False
+    
+    # Legacy subscription check (disabled)
+    # try:
+    #     from models_subscription import SubscriptionPlan, UserSubscription
+    #     from models import User
+    #     user_email = session.get('email')
+    #     if user_email:
+    #         # Find user by email in the users table (subscription system)
+    #         user = User.query.filter_by(email=user_email).first()
+    #         if user:
+    #             # Get user's active subscription
+    #             subscription = UserSubscription.query.filter_by(
+    #                 user_id=user.id, 
+    #                 status='active'
+    #             ).first()
+    #             
+    #             if subscription and subscription.is_active():
+    #                 plan = subscription.plan
+    #                 if plan and plan.allow_advanced_analytics:
+    #                     return True
+    # except Exception as e:
+    #     logging.warning(f"Error checking subscription for analytics access: {e}")
     
     return False
     
@@ -2758,8 +2767,8 @@ def network_history():
 # 初始化CRM系统
 init_crm_routes(app)
 
-# 初始化矿场中介业务路由
-init_broker_routes(app)
+# DISABLED: Gold flow module - mining broker routes
+# init_broker_routes(app)
 
 # 注册托管功能模块
 try:
@@ -2778,11 +2787,12 @@ except ImportError as e:
     logging.warning(f"客户功能模块不可用: {e}")
 
 # 添加矿场中介业务路由别名
-@app.route('/mining-broker')
-@login_required
-def mining_broker_redirect():
-    """矿场中介业务重定向"""
-    return redirect(url_for('broker.dashboard'))
+# DISABLED: Gold flow module - mining broker redirect
+# @app.route('/mining-broker')
+# @login_required
+# def mining_broker_redirect():
+#     """矿场中介业务重定向"""
+#     return redirect(url_for('broker.dashboard'))
 
 # 添加调试信息页面
 @app.route('/debug_info')
@@ -3059,27 +3069,33 @@ def inject_nav_menu():
         if role == 'owner':
             return True
         
-        # Check if user has Pro subscription with analytics access
-        try:
-            from models_subscription import SubscriptionPlan, UserSubscription
-            from models import User
-            user_email = session.get('email')
-            if user_email:
-                # Find user by email in the users table (subscription system)
-                user = User.query.filter_by(email=user_email).first()
-                if user:
-                    # Get user's active subscription
-                    subscription = UserSubscription.query.filter_by(
-                        user_id=user.id, 
-                        status='active'
-                    ).first()
-                    
-                    if subscription and subscription.is_active():
-                        plan = subscription.plan
-                        if plan and plan.allow_advanced_analytics:
-                            return True
-        except Exception as e:
-            logging.warning(f"Error checking subscription for analytics access: {e}")
+        # DISABLED: Gold flow module - subscription checks disabled
+        # Since subscription system is disabled, only owners have analytics access
+        from config import Config
+        if not getattr(Config, 'SUBSCRIPTION_ENABLED', False):
+            return False
+        
+        # Legacy subscription check (disabled)
+        # try:
+        #     from models_subscription import SubscriptionPlan, UserSubscription
+        #     from models import User
+        #     user_email = session.get('email')
+        #     if user_email:
+        #         # Find user by email in the users table (subscription system)
+        #         user = User.query.filter_by(email=user_email).first()
+        #         if user:
+        #             # Get user's active subscription
+        #             subscription = UserSubscription.query.filter_by(
+        #                 user_id=user.id, 
+        #                 status='active'
+        #             ).first()
+        #             
+        #             if subscription and subscription.is_active():
+        #                 plan = subscription.plan
+        #                 if plan and plan.allow_advanced_analytics:
+        #                     return True
+        # except Exception as e:
+        #     logging.warning(f"Error checking subscription for analytics access: {e}")
         
         return False
     
@@ -3099,6 +3115,10 @@ def inject_nav_menu():
     
     def user_has_billing_access():
         """检查用户是否有访问计费管理的权限"""
+        # DISABLED: Gold flow module - billing access disabled
+        from config import Config
+        if not getattr(Config, 'BILLING_ENABLED', False):
+            return False
         if not session.get('authenticated'):
             return False
         role = session.get('role')
@@ -3106,6 +3126,10 @@ def inject_nav_menu():
     
     def user_has_mining_broker_access():
         """检查用户是否有访问矿场中介的权限"""
+        # DISABLED: Gold flow module - mining broker access disabled
+        from config import Config
+        if not getattr(Config, 'MINING_BROKER_ENABLED', False):
+            return False
         if not session.get('authenticated'):
             return False
         role = session.get('role')
@@ -4864,13 +4888,14 @@ def legal_terms():
 
 # 注册蓝图
 # Register billing blueprint if available
-try:
-    if BILLING_ENABLED:
-        from billing_routes import billing_bp
-        app.register_blueprint(billing_bp, url_prefix="/billing")
-        logging.info("Stripe billing routes registered successfully")
-except Exception as e:
-    logging.warning(f"Billing routes not available: {e}")
+# DISABLED: Gold flow module - billing routes registration
+# try:
+#     if BILLING_ENABLED:
+#         from billing_routes import billing_bp
+#         app.register_blueprint(billing_bp, url_prefix="/billing")
+#         logging.info("Stripe billing routes registered successfully")
+# except Exception as e:
+#     logging.warning(f"Billing routes not available: {e}")
 
 # Register batch calculator blueprint
 try:
@@ -5321,50 +5346,51 @@ def admin_extend_access(user_id):
     
     return jsonify({'success': True})
 
-# 添加订阅系统路由
-@app.route('/pricing')
-def pricing():
-    """订阅计划页面"""
-    try:
-        try:
-            from models_subscription import SubscriptionPlan as Plan
-        except ImportError:
-            logging.warning("Subscription models not available")
-            Plan = None
-        plans = Plan.query.all() if Plan else []
-        return render_template('pricing.html', plans=plans)
-    except Exception as e:
-        logging.error(f"Pricing page error: {e}")
-        return render_template('pricing.html', plans=[])
+# DISABLED: Gold flow module - subscription system routes
+# @app.route('/pricing')
+# def pricing():
+#     """订阅计划页面"""
+#     try:
+#         try:
+#             from models_subscription import SubscriptionPlan as Plan
+#         except ImportError:
+#             logging.warning("Subscription models not available")
+#             Plan = None
+#         plans = Plan.query.all() if Plan else []
+#         return render_template('pricing.html', plans=plans)
+#     except Exception as e:
+#         logging.error(f"Pricing page error: {e}")
+#         return render_template('pricing.html', plans=[])
 
-@app.route('/subscription')  
-@login_required
-def subscription():
-    """用户订阅管理页面"""
-    try:
-        email = session.get('email')
-        user = UserAccess.query.filter_by(email=email).first()
-        if not user:
-            return redirect(url_for('login'))
-        
-        try:
-            from models_subscription import UserSubscription as Subscription, SubscriptionPlan as Plan
-        except ImportError:
-            logging.warning("Subscription models not available")
-            Subscription = Plan = None
-        subscription = Subscription.query.filter_by(user_id=user.id).first() if Subscription else None
-        plans = Plan.query.all() if Plan else []
-        
-        return render_template('subscription.html', 
-                             user=user, 
-                             subscription=subscription, 
-                             plans=plans)
-    except Exception as e:
-        logging.error(f"Subscription page error: {e}")
-        return render_template('subscription.html', 
-                             user=None, 
-                             subscription=None, 
-                             plans=[])
+# DISABLED: Gold flow module - subscription management route
+# @app.route('/subscription')  
+# @login_required
+# def subscription():
+#     """用户订阅管理页面"""
+#     try:
+#         email = session.get('email')
+#         user = UserAccess.query.filter_by(email=email).first()
+#         if not user:
+#             return redirect(url_for('login'))
+#         
+#         try:
+#             from models_subscription import UserSubscription as Subscription, SubscriptionPlan as Plan
+#         except ImportError:
+#             logging.warning("Subscription models not available")
+#             Subscription = Plan = None
+#         subscription = Subscription.query.filter_by(user_id=user.id).first() if Subscription else None
+#         plans = Plan.query.all() if Plan else []
+#         
+#         return render_template('subscription.html', 
+#                              user=user, 
+#                              subscription=subscription, 
+#                              plans=plans)
+#     except Exception as e:
+#         logging.error(f"Subscription page error: {e}")
+#         return render_template('subscription.html', 
+#                              user=None, 
+#                              subscription=None, 
+#                              plans=[])
 
 @app.route('/api/network-data')
 def api_network_data():

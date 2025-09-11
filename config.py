@@ -50,7 +50,9 @@ class Config:
     
     # 功能开关
     ENABLE_BACKGROUND_SERVICES = os.environ.get('ENABLE_BACKGROUND_SERVICES', '0') == '1'
-    BILLING_ENABLED = os.environ.get('STRIPE_SECRET_KEY') is not None
+    BILLING_ENABLED = False  # DISABLED: Gold flow module - was: os.environ.get('STRIPE_SECRET_KEY') is not None
+    MINING_BROKER_ENABLED = False  # DISABLED: Gold flow module
+    SUBSCRIPTION_ENABLED = False  # DISABLED: Gold flow module
     BATCH_CALCULATOR_ENABLED = True
     
     # API密钥
