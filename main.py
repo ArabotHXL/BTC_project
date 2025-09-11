@@ -101,7 +101,7 @@ def create_app():
             enable_bg = os.environ.get("ENABLE_BACKGROUND_SERVICES", "1").lower() in ("1", "true", "yes")
             if enable_bg:
                 try:
-                    from analytics_engine import AnalyticsEngine
+                    from modules.analytics.engines.analytics_engine import AnalyticsEngine
                     engine = AnalyticsEngine()
                     engine.start_scheduler()
                     logging.info("Background services started successfully (delayed)")
@@ -118,7 +118,7 @@ def create_app():
         if enable_bg:
             def start_background_services():
                 try:
-                    from analytics_engine import AnalyticsEngine
+                    from modules.analytics.engines.analytics_engine import AnalyticsEngine
                     engine = AnalyticsEngine()
                     engine.start_scheduler()
                     logging.info("Background services started successfully")

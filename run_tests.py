@@ -173,7 +173,7 @@ class AlgorithmTests(unittest.TestCase):
         
         # 导入测试
         try:
-            from advanced_algorithm_engine import AdvancedAlgorithmEngine
+            from modules.analytics.engines.advanced_algorithm_engine import AdvancedAlgorithmEngine
             engine = AdvancedAlgorithmEngine()
             self.assertIsNotNone(engine)
         except Exception as e:

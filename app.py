@@ -3206,7 +3206,7 @@ def analytics_dashboard():
     latest_report = None
     
     try:
-        from analytics_engine import DatabaseManager
+        from modules.analytics.engines.analytics_engine import DatabaseManager
         db_manager = DatabaseManager()
         db_manager.connect()
         
@@ -3666,7 +3666,7 @@ def api_treasury_advanced_signals():
         
         # 尝试生成高级信号
         try:
-            from advanced_algorithm_engine import advanced_engine
+            from modules.analytics.engines.advanced_algorithm_engine import advanced_engine
             if advanced_engine:
                 signals = advanced_engine.generate_advanced_signals(market_data, technical_data)
                 signals['success'] = True
@@ -3734,7 +3734,7 @@ def api_treasury_backtest():
                 }
         
         # 使用真实历史数据进行回测
-        from historical_data_engine import historical_engine
+        from modules.analytics.engines.historical_data_engine import historical_engine
         backtest_result = historical_engine.run_real_backtest(
             strategy=strategy,
             start_date=start_date or '2024-01-01',
@@ -4217,7 +4217,7 @@ def analytics_latest_report():
     
     try:
         import psycopg2
-        import analytics_engine
+        from modules.analytics.engines import analytics_engine
         
         # 直接连接数据库获取最新分析报告
         conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
@@ -4399,7 +4399,7 @@ def analytics_latest_report_api():
         return jsonify({'error': '需要拥有者权限'}), 403
     
     try:
-        from analytics_engine import DatabaseManager
+        from modules.analytics.engines.analytics_engine import DatabaseManager
         db_manager = DatabaseManager()
         db_manager.connect()
         
@@ -4476,7 +4476,7 @@ def analytics_price_history_api():
         return jsonify({'error': '需要拥有者权限'}), 403
     
     try:
-        from analytics_engine import DatabaseManager
+        from modules.analytics.engines.analytics_engine import DatabaseManager
         db_manager = DatabaseManager()
         db_manager.connect()
         
@@ -4507,7 +4507,7 @@ def analytics_price_history_api():
 def api_price_trend():
     """价格趋势API"""
     try:
-        from analytics_engine import DatabaseManager
+        from modules.analytics.engines.analytics_engine import DatabaseManager
         db_manager = DatabaseManager()
         db_manager.connect()
         
@@ -4535,7 +4535,7 @@ def api_price_trend():
 def api_difficulty_trend():
     """难度趋势API"""
     try:
-        from analytics_engine import DatabaseManager
+        from modules.analytics.engines.analytics_engine import DatabaseManager
         db_manager = DatabaseManager()
         db_manager.connect()
         
@@ -4574,7 +4574,7 @@ def api_generate_detailed_report():
         
         # 获取实时市场数据 - 使用和主页面相同的数据源
         try:
-            from analytics_engine import AnalyticsEngine
+            from modules.analytics.engines.analytics_engine import AnalyticsEngine
             analytics = AnalyticsEngine()
             # 获取最新的市场数据
             latest_market_data = analytics.data_collector.collect_all_data()
@@ -4690,10 +4690,10 @@ def generate_professional_report():
             return jsonify({'error': '权限不足，仅限拥有者使用'}), 403
             
         try:
-            from professional_report_generator import ProfessionalReportGenerator as Professional5StepReportGenerator
+            from modules.analytics.reports.professional_report_generator import ProfessionalReportGenerator as Professional5StepReportGenerator
         except ImportError:
             try:
-                from professional_report_generator import ProfessionalReportGenerator as Professional5StepReportGenerator
+                from modules.analytics.reports.professional_report_generator import ProfessionalReportGenerator as Professional5StepReportGenerator
             except ImportError:
                 return jsonify({'error': '专业报告生成器模块未找到'}), 500
         
@@ -4780,7 +4780,7 @@ def download_professional_report(file_type):
         else:
             # Try to generate report if not found
             logging.warning(f"Report file {filename} not found, trying to generate...")
-            from professional_report_generator import ProfessionalReportGenerator
+            from modules.analytics.reports.professional_report_generator import ProfessionalReportGenerator
             
             generator = ProfessionalReportGenerator()
             # 获取市场数据用于报告生成

@@ -4,8 +4,8 @@
 """
 import json
 from datetime import datetime
-from analytics_engine import AnalyticsEngine
-from advanced_algorithm_engine import advanced_engine
+from modules.analytics.engines.analytics_engine import AnalyticsEngine
+from modules.analytics.engines.advanced_algorithm_engine import advanced_engine
 
 def analyze_system_precision():
     """全面分析系统精度"""

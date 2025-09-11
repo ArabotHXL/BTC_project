@@ -22,7 +22,7 @@ import pytz
 # 延迟导入高级算法引擎，避免循环依赖
 advanced_engine = None
 try:
-    from advanced_algorithm_engine import advanced_engine
+    from .advanced_algorithm_engine import advanced_engine
 except ImportError as e:
     logging.warning(f"高级算法引擎暂不可用: {e}")
     advanced_engine = None
@@ -70,6 +70,7 @@ class DatabaseManager:
         if not conn:
             return
         
+        cursor = None
         try:
             cursor = conn.cursor()
             
@@ -158,7 +159,8 @@ class DatabaseManager:
             logger.error(f"创建数据表失败: {e}")
             conn.rollback()
         finally:
-            cursor.close()
+            if cursor:
+                cursor.close()
             conn.close()
 
 class DataCollector:
@@ -636,6 +638,7 @@ class DataCollector:
         if not conn:
             return
         
+        cursor = None
         try:
             cursor = conn.cursor()
             
@@ -666,7 +669,8 @@ class DataCollector:
             logger.error(f"保存市场数据失败: {e}")
             conn.rollback()
         finally:
-            cursor.close()
+            if cursor:
+                cursor.close()
             conn.close()
 
 class TechnicalAnalyzer:
@@ -699,7 +703,9 @@ class TechnicalAnalyzer:
             cursor.close()
             
             if results:
-                df = pd.DataFrame(results, columns=['recorded_at', 'btc_price'])
+                # Ensure proper DataFrame construction with explicit column names
+                df = pd.DataFrame(results)
+                df.columns = ['recorded_at', 'btc_price']
                 df['recorded_at'] = pd.to_datetime(df['recorded_at'])
                 df.set_index('recorded_at', inplace=True)
                 df = df.sort_index()
@@ -721,25 +727,31 @@ class TechnicalAnalyzer:
             return None
         
         try:
-            prices = df['btc_price']
+            # Ensure prices is a pandas Series
+            prices = pd.Series(df['btc_price'].values, index=df.index, name='btc_price')
             latest_timestamp = df.index[-1]
             
             # 简单移动平均线
-            sma_20 = prices.rolling(window=20).mean().iloc[-1] if len(prices) >= 20 else None
-            sma_50 = prices.rolling(window=50).mean().iloc[-1] if len(prices) >= 50 else None
+            sma_20_series = prices.rolling(window=20).mean() if len(prices) >= 20 else None
+            sma_20 = float(sma_20_series.iloc[-1]) if sma_20_series is not None and hasattr(sma_20_series, 'iloc') and len(sma_20_series) > 0 else None
+            sma_50_series = prices.rolling(window=50).mean() if len(prices) >= 50 else None
+            sma_50 = float(sma_50_series.iloc[-1]) if sma_50_series is not None and hasattr(sma_50_series, 'iloc') and len(sma_50_series) > 0 else None
             
             # 指数移动平均线
-            ema_12 = prices.ewm(span=12).mean().iloc[-1] if len(prices) >= 12 else None
-            ema_26 = prices.ewm(span=26).mean().iloc[-1] if len(prices) >= 26 else None
+            ema_12_series = prices.ewm(span=12).mean() if len(prices) >= 12 else None
+            ema_12 = float(ema_12_series.iloc[-1]) if ema_12_series is not None and len(ema_12_series) > 0 else None
+            ema_26_series = prices.ewm(span=26).mean() if len(prices) >= 26 else None
+            ema_26 = float(ema_26_series.iloc[-1]) if ema_26_series is not None and len(ema_26_series) > 0 else None
             
-            # RSI
+            # RSI - ensure we pass a pandas Series
             rsi_14 = self.calculate_rsi(prices, 14) if len(prices) >= 15 else None
             
-            # 布林带
+            # 布林带 - ensure we pass a pandas Series
             bollinger_upper, bollinger_lower = self.calculate_bollinger_bands(prices, 20, 2) if len(prices) >= 20 else (None, None)
             
             # 波动率
-            volatility_30d = prices.pct_change().rolling(window=30).std().iloc[-1] * 100 if len(prices) >= 30 else None
+            volatility_series = prices.pct_change().rolling(window=30).std() if len(prices) >= 30 else None
+            volatility_30d = float(volatility_series.iloc[-1]) * 100 if volatility_series is not None and len(volatility_series) > 0 else None
             
             # MACD
             macd = (ema_12 - ema_26) if ema_12 and ema_26 else None
@@ -778,7 +790,13 @@ class TechnicalAnalyzer:
         rs = gain / loss
         rsi = 100 - (100 / (1 + rs))
         
-        return rsi.iloc[-1]
+        # Ensure we get a float value from the Series
+        if isinstance(rsi, pd.Series) and len(rsi) > 0:
+            return float(rsi.iloc[-1])
+        elif isinstance(rsi, (int, float)):
+            return float(rsi)
+        else:
+            return None
     
     def calculate_bollinger_bands(self, prices: pd.Series, period: int = 20, std_dev: int = 2):
         """计算布林带"""
@@ -791,7 +809,18 @@ class TechnicalAnalyzer:
         upper_band = sma + (std * std_dev)
         lower_band = sma - (std * std_dev)
         
-        return upper_band.iloc[-1], lower_band.iloc[-1]
+        # Ensure we get float values from the Series
+        if isinstance(upper_band, pd.Series) and len(upper_band) > 0:
+            upper_val = float(upper_band.iloc[-1])
+        else:
+            upper_val = None
+            
+        if isinstance(lower_band, pd.Series) and len(lower_band) > 0:
+            lower_val = float(lower_band.iloc[-1])
+        else:
+            lower_val = None
+            
+        return upper_val, lower_val
     
     def save_technical_indicators(self, indicators: Dict):
         """保存技术指标"""
@@ -799,6 +828,7 @@ class TechnicalAnalyzer:
         if not conn:
             return
         
+        cursor = None
         try:
             cursor = conn.cursor()
             
@@ -821,7 +851,8 @@ class TechnicalAnalyzer:
             logger.error(f"保存技术指标失败: {e}")
             conn.rollback()
         finally:
-            cursor.close()
+            if cursor:
+                cursor.close()
             conn.close()
 
 class ReportGenerator:
@@ -836,6 +867,7 @@ class ReportGenerator:
         if not conn:
             return {}
         
+        cursor = None
         try:
             # 获取最近24小时数据
             cursor = conn.cursor()
@@ -898,7 +930,8 @@ class ReportGenerator:
             logger.error(f"生成日报失败: {e}")
             return {}
         finally:
-            cursor.close()
+            if cursor:
+                cursor.close()
             conn.close()
     
     def _generate_daily_summary(self, market_stats, tech_data) -> str:
@@ -1014,6 +1047,7 @@ class ReportGenerator:
         if not conn:
             return
         
+        cursor = None
         try:
             cursor = conn.cursor()
             
@@ -1038,7 +1072,8 @@ class ReportGenerator:
             logger.error(f"保存分析报告失败: {e}")
             conn.rollback()
         finally:
-            cursor.close()
+            if cursor:
+                cursor.close()
             conn.close()
 
 class AnalyticsEngine:

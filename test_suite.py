@@ -28,7 +28,7 @@ from models import UserAccess, Customer, Deal
 from auth import verify_password_login, get_authorized_emails
 from security_enhancements import SecurityManager, validate_mining_input
 from mining_calculator import calculate_mining_profitability, MINER_DATA
-from analytics_engine import AnalyticsEngine
+from modules.analytics.engines.analytics_engine import AnalyticsEngine
 from language_engine import LanguageEngine
 from coinwarz_api import get_coinwarz_profitability
 

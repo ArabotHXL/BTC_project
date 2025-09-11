@@ -214,6 +214,37 @@ class BitcoinRPCClient:
         except Exception as e:
             logger.error(f"RPC连接测试失败: {e}")
             return False
+    
+    def is_rpc_available(self) -> bool:
+        """检查RPC是否可用"""
+        return self.test_connection()
+    
+    def get_comprehensive_mining_data(self) -> Optional[Dict]:
+        """获取综合挖矿数据"""
+        try:
+            stats = self.get_comprehensive_stats()
+            if not stats:
+                return None
+            
+            # 添加一些额外的挖矿数据
+            mining_info = self.get_mining_info()
+            
+            result = {
+                'current_block_height': stats.get('blocks', 0),
+                'difficulty': stats.get('difficulty', 0),
+                'network_hashrate_eh': stats.get('network_hashrate_eh', 0),
+                'mempool_size': stats.get('mempool_size', 0),
+                'median_time': mining_info.get('mediantime', int(time.time())),
+                'blocks_until_difficulty_adjustment': mining_info.get('blocks', 0) % 2016,
+                'source': 'bitcoin_rpc',
+                'timestamp': stats.get('timestamp', datetime.now().isoformat())
+            }
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"获取综合挖矿数据失败: {e}")
+            return None
 
 # 全局RPC客户端实例
 bitcoin_rpc = BitcoinRPCClient()
