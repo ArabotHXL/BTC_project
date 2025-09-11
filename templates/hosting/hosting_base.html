@@ -450,9 +450,9 @@
                         </a>
                     </div>
                     <div class="hosting-nav-item">
-                        <a href="/hosting/client/billing" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/billing') }}">
-                            <i class="bi bi-receipt hosting-nav-icon"></i>
-                            {% if current_lang == 'en' %}Billing{% else %}账单管理{% endif %}
+                        <a href="/hosting/client/usage" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/usage') }}">
+                            <i class="bi bi-activity hosting-nav-icon"></i>
+                            {% if current_lang == 'en' %}Usage Tracking{% else %}使用记录{% endif %}
                         </a>
                     </div>
                     <div class="hosting-nav-item">

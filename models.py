@@ -1066,3 +1066,63 @@ class HostingAuditLog(db.Model):
         for key, value in kwargs.items():
             if hasattr(self, key):
                 setattr(self, key, value)
+
+class HostingUsageRecord(db.Model):
+    """托管使用记录"""
+    __tablename__ = 'hosting_usage_records'
+
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 使用记录基本信息
+    record_number = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=False, index=True)
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False, index=True)
+    
+    # 使用周期
+    usage_period_start = db.Column(db.Date, nullable=False)
+    usage_period_end = db.Column(db.Date, nullable=False)
+    
+    # 费用明细
+    electricity_cost = db.Column(db.Float, default=0.0, nullable=False)  # 电费
+    hosting_fee = db.Column(db.Float, default=0.0, nullable=False)  # 托管费
+    maintenance_cost = db.Column(db.Float, default=0.0, nullable=False)  # 维护费
+    penalty_cost = db.Column(db.Float, default=0.0, nullable=False)  # 罚金/扣费
+    discount = db.Column(db.Float, default=0.0, nullable=False)  # 折扣
+    total_amount = db.Column(db.Float, nullable=False)  # 总金额
+    
+    # 使用记录状态
+    status = db.Column(db.String(20), default='draft', nullable=False)  # draft/completed/cancelled
+    
+    # 时间戳
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    report_date = db.Column(db.Date, nullable=True)
+    
+    # 关联关系
+    customer = db.relationship('UserAccess', foreign_keys=[customer_id], backref='hosting_usage_records')
+    site = db.relationship('HostingSite', foreign_keys=[site_id], backref='usage_records')
+    usage_items = db.relationship('HostingUsageItem', backref='usage_record', lazy=True, cascade="all, delete-orphan")
+    
+    def calculate_total(self):
+        """计算总金额"""
+        self.total_amount = (self.electricity_cost + self.hosting_fee + 
+                           self.maintenance_cost + self.penalty_cost - self.discount)
+        return self.total_amount
+
+class HostingUsageItem(db.Model):
+    """使用记录明细项"""
+    __tablename__ = 'hosting_usage_items'
+
+    id = db.Column(db.Integer, primary_key=True)
+    usage_record_id = db.Column(db.Integer, db.ForeignKey('hosting_usage_records.id'), nullable=False, index=True)
+    
+    # 明细信息
+    item_type = db.Column(db.String(50), nullable=False)  # electricity/hosting/maintenance/penalty/discount
+    description = db.Column(db.String(500), nullable=False)
+    quantity = db.Column(db.Float, default=1.0, nullable=False)
+    unit_price = db.Column(db.Float, nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    
+    # 关联矿机（可选）
+    miner_id = db.Column(db.Integer, db.ForeignKey('hosting_miners.id'), nullable=True)
+    miner = db.relationship('HostingMiner', foreign_keys=[miner_id])

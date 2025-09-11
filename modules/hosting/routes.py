@@ -7,7 +7,7 @@ from flask import render_template, request, jsonify, session, redirect, url_for,
 from . import hosting_bp
 from auth import login_required
 from decorators import requires_role
-from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingBill, HostingBillItem, MinerTelemetry
+from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingUsageRecord, HostingUsageItem, MinerTelemetry
 import logging
 import json
 from datetime import datetime, timedelta
@@ -80,8 +80,8 @@ def client_view(subpath='dashboard'):
             return render_template('hosting/client_dashboard.html')
         elif subpath == 'assets':
             return render_template('hosting/asset_overview.html')
-        elif subpath == 'billing':
-            return render_template('hosting/billing_view.html')
+        elif subpath == 'usage':
+            return render_template('hosting/client_usage.html')
         elif subpath == 'reports':
             return render_template('hosting/client_reports.html')
         else:
@@ -1093,12 +1093,12 @@ def global_status():
         else:
             return render_template('hosting/global_status.html', data=None)
 
-# ==================== 账单和对账系统 ====================
+# ==================== 使用记录和对账系统 ====================
 
-@hosting_bp.route('/api/billing/preview', methods=['POST'])
+@hosting_bp.route('/api/usage/preview', methods=['POST'])
 @requires_role(['owner', 'admin', 'mining_site'])
-def generate_billing_preview():
-    """生成账单预估"""
+def generate_usage_preview():
+    """生成使用情况预估"""
     try:
         data = request.get_json()
         customer_id = data.get('customer_id')
@@ -1134,8 +1134,8 @@ def generate_billing_preview():
         total_hashrate = sum(miner.actual_hashrate for miner in miners)
         maintenance_cost = total_hashrate * 0.01 * days
         
-        # 创建账单预估
-        bill_preview = {
+        # 创建使用情况预估
+        usage_preview = {
             'customer_id': customer_id,
             'site_id': site_id,
             'site_name': site.name,
@@ -1170,27 +1170,27 @@ def generate_billing_preview():
             ]
         }
         
-        return jsonify({'success': True, 'preview': bill_preview})
+        return jsonify({'success': True, 'preview': usage_preview})
     except Exception as e:
-        logger.error(f"生成账单预估失败: {e}")
+        logger.error(f"生成使用情况预估失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@hosting_bp.route('/api/billing/create', methods=['POST'])
+@hosting_bp.route('/api/usage/create', methods=['POST'])
 @requires_role(['owner', 'admin', 'mining_site'])
-def create_bill():
-    """根据预估创建正式账单"""
+def create_usage_record():
+    """根据预估创建正式使用记录"""
     try:
         data = request.get_json()
         
-        # 生成账单编号
-        bill_number = f"BILL-{datetime.now().strftime('%Y%m%d')}-{data['customer_id']:04d}-{data['site_id']:02d}"
+        # 生成使用记录编号
+        record_number = f"USAGE-{datetime.now().strftime('%Y%m%d')}-{data['customer_id']:04d}-{data['site_id']:02d}"
         
-        bill = HostingBill(
-            bill_number=bill_number,
+        usage_record = HostingUsageRecord(
+            record_number=record_number,
             customer_id=data['customer_id'],
             site_id=data['site_id'],
-            billing_period_start=datetime.fromisoformat(data['period_start']).date(),
-            billing_period_end=datetime.fromisoformat(data['period_end']).date(),
+            usage_period_start=datetime.fromisoformat(data['period_start']).date(),
+            usage_period_end=datetime.fromisoformat(data['period_end']).date(),
             electricity_cost=data['costs']['electricity_cost'],
             hosting_fee=data['costs']['hosting_fee'],
             maintenance_cost=data['costs']['maintenance_cost'],
@@ -1198,32 +1198,32 @@ def create_bill():
             due_date=datetime.now().date() + timedelta(days=30)  # 30天付款期
         )
         
-        db.session.add(bill)
+        db.session.add(usage_record)
         db.session.flush()  # 获取ID
         
-        # 创建账单明细
+        # 创建使用记录明细
         for item in data['breakdown']:
-            bill_item = HostingBillItem(
-                bill_id=bill.id,
+            usage_item = HostingUsageItem(
+                usage_record_id=usage_record.id,
                 item_type=item['item'].lower(),
                 description=item['description'],
                 quantity=1,
                 unit_price=item['amount'],
                 amount=item['amount']
             )
-            db.session.add(bill_item)
+            db.session.add(usage_item)
         
         db.session.commit()
         
         return jsonify({
             'success': True,
-            'message': '账单创建成功',
-            'bill_id': bill.id,
-            'bill_number': bill.bill_number
+            'message': '使用记录创建成功',
+            'record_id': usage_record.id,
+            'record_number': usage_record.record_number
         }), 201
     except Exception as e:
         db.session.rollback()
-        logger.error(f"创建账单失败: {e}")
+        logger.error(f"创建使用记录失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/reconcile/upload', methods=['POST'])

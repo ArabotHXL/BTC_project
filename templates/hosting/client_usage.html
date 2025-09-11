@@ -1,0 +1,401 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}{% if current_lang == 'en' %}Usage Tracking{% else %}使用记录{% endif %}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}View and monitor your hosting usage information{% else %}查看和监控您的托管使用信息{% endif %}{% endblock %}
+
+{% block content %}
+
+<!-- 使用概览统计 -->
+<div class="hosting-stats-grid">
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="current-month-usage">0.00 MW</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Current Month{% else %}本月使用{% endif %}</div>
+        <i class="bi bi-activity hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-usage">0.00 MW</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Total Usage{% else %}总使用量{% endif %}</div>
+        <i class="bi bi-check-circle hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="active-devices">0</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Active Devices{% else %}活跃设备{% endif %}</div>
+        <i class="bi bi-cpu hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="next-report-date">--</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Next Report{% else %}下次报告{% endif %}</div>
+        <i class="bi bi-calendar hosting-stat-icon"></i>
+    </div>
+</div>
+
+<!-- 快速操作 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-lightning-charge me-2"></i>{% if current_lang == 'en' %}Quick Actions{% else %}快速操作{% endif %}
+        </h5>
+    </div>
+    <div class="hosting-card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <button class="btn btn-hosting-primary w-100 py-3" onclick="viewCurrentUsage()">
+                    <i class="bi bi-bar-chart fs-4 d-block mb-2"></i>
+                    {% if current_lang == 'en' %}View Usage{% else %}查看使用情况{% endif %}
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-hosting-secondary w-100 py-3" onclick="downloadUsageReport()">
+                    <i class="bi bi-download fs-4 d-block mb-2"></i>
+                    {% if current_lang == 'en' %}Download Report{% else %}下载报告{% endif %}
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-hosting-secondary w-100 py-3" data-bs-toggle="modal" data-bs-target="#alertModal">
+                    <i class="bi bi-bell fs-4 d-block mb-2"></i>
+                    {% if current_lang == 'en' %}Set Alerts{% else %}设置提醒{% endif %}
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-hosting-secondary w-100 py-3" onclick="showUsageHistory()">
+                    <i class="bi bi-clock-history fs-4 d-block mb-2"></i>
+                    {% if current_lang == 'en' %}History{% else %}历史记录{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 当前使用详情 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-file-earmark-bar-graph me-2"></i>{% if current_lang == 'en' %}Current Usage Details{% else %}当前使用详情{% endif %}
+        </h5>
+        <span class="badge bg-success text-white" id="current-status">{% if current_lang == 'en' %}Active{% else %}活跃{% endif %}</span>
+    </div>
+    <div class="hosting-card-body">
+        <div class="row g-4">
+            <div class="col-md-8">
+                <div class="hosting-table">
+                    <table class="table" id="current-usage-items">
+                        <thead>
+                            <tr>
+                                <th>{% if current_lang == 'en' %}Resource{% else %}资源{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Description{% else %}描述{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Consumption{% else %}消耗量{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Rate{% else %}费率{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Cost{% else %}成本{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{% if current_lang == 'en' %}Hosting Service{% else %}托管服务{% endif %}</td>
+                                <td>{% if current_lang == 'en' %}Device hosting{% else %}设备托管{% endif %}</td>
+                                <td id="hosting-quantity">3 units</td>
+                                <td id="hosting-rate">$50.00/unit</td>
+                                <td id="hosting-amount">$150.00</td>
+                            </tr>
+                            <tr>
+                                <td>{% if current_lang == 'en' %}Electricity{% else %}电力消耗{% endif %}</td>
+                                <td>{% if current_lang == 'en' %}Power consumption{% else %}电力消耗{% endif %}</td>
+                                <td id="power-quantity">2,160 kWh</td>
+                                <td id="power-rate">$0.08/kWh</td>
+                                <td id="power-amount">$172.80</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-info">
+                                <th colspan="4" class="text-end">{% if current_lang == 'en' %}Total Cost:{% else %}总成本:{% endif %}</th>
+                                <th id="total-amount">$322.80</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="bg-dark p-3 rounded">
+                    <h6 class="text-warning mb-3">{% if current_lang == 'en' %}Usage Information{% else %}使用信息{% endif %}</h6>
+                    <div class="mb-3">
+                        <small class="text-muted">{% if current_lang == 'en' %}Report Date:{% else %}报告日期:{% endif %}</small>
+                        <div id="report-date">2025-01-01</div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">{% if current_lang == 'en' %}Period End:{% else %}结束日期:{% endif %}</small>
+                        <div id="period-end" class="text-warning">2025-01-31</div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">{% if current_lang == 'en' %}Tracking Method:{% else %}追踪方式:{% endif %}</small>
+                        <div id="tracking-method">Real-time monitoring</div>
+                    </div>
+                    <button class="btn btn-hosting-primary w-100" onclick="generateUsageReport()">
+                        <i class="bi bi-file-earmark-bar-graph me-2"></i>{% if current_lang == 'en' %}Generate Report{% else %}生成报告{% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 使用历史 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-clock-history me-2"></i>{% if current_lang == 'en' %}Usage History{% else %}使用历史{% endif %}
+        </h5>
+        <div class="btn-group" role="group">
+            <button class="btn btn-hosting-secondary btn-sm" onclick="exportUsageHistory()">
+                <i class="bi bi-download me-1"></i>{% if current_lang == 'en' %}Export{% else %}导出{% endif %}
+            </button>
+        </div>
+    </div>
+    <div class="hosting-card-body">
+        <div class="hosting-table">
+            <table class="table table-hover" id="usage-history-table">
+                <thead>
+                    <tr>
+                        <th>{% if current_lang == 'en' %}Report Date{% else %}报告日期{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Period{% else %}期间{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Usage{% else %}使用量{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2024-12-01</td>
+                        <td>2024-12-01 - 2024-12-31</td>
+                        <td>2,890 kWh</td>
+                        <td><span class="badge bg-success">{% if current_lang == 'en' %}Completed{% else %}已完成{% endif %}</span></td>
+                        <td>
+                            <button class="btn btn-hosting-outline btn-sm" onclick="downloadUsagePdf('2024-12')">
+                                <i class="bi bi-download"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2024-11-01</td>
+                        <td>2024-11-01 - 2024-11-30</td>
+                        <td>2,756 kWh</td>
+                        <td><span class="badge bg-success">{% if current_lang == 'en' %}Completed{% else %}已完成{% endif %}</span></td>
+                        <td>
+                            <button class="btn btn-hosting-outline btn-sm" onclick="downloadUsagePdf('2024-11')">
+                                <i class="bi bi-download"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 使用提醒设置模态框 -->
+<div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
+                <h5 class="modal-title" id="alertModalLabel">
+                    <i class="bi bi-bell me-2"></i>
+                    {% if current_lang == 'en' %}Usage Alert Setup{% else %}使用提醒设置{% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="alertForm">
+                    <div class="mb-3">
+                        <label for="alert-enabled" class="form-label">
+                            {% if current_lang == 'en' %}Enable Usage Alerts{% else %}启用使用提醒{% endif %}
+                        </label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="alert-enabled">
+                            <label class="form-check-label" for="alert-enabled">
+                                {% if current_lang == 'en' %}Notify when usage thresholds are reached{% else %}达到使用阈值时通知{% endif %}
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="alert-threshold" class="form-label">
+                            {% if current_lang == 'en' %}Usage Threshold (kWh){% else %}使用阈值 (kWh){% endif %}
+                        </label>
+                        <input type="number" class="form-control" id="alert-threshold" value="2500" min="0" step="100">
+                    </div>
+                    <div class="mb-3">
+                        <label for="alert-frequency" class="form-label">
+                            {% if current_lang == 'en' %}Alert Frequency{% else %}提醒频率{% endif %}
+                        </label>
+                        <select class="form-select" id="alert-frequency">
+                            <option value="daily">{% if current_lang == 'en' %}Daily{% else %}每日{% endif %}</option>
+                            <option value="weekly">{% if current_lang == 'en' %}Weekly{% else %}每周{% endif %}</option>
+                            <option value="monthly">{% if current_lang == 'en' %}Monthly{% else %}每月{% endif %}</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                </button>
+                <button type="button" class="btn btn-hosting-primary" onclick="saveAlertSettings()">
+                    {% if current_lang == 'en' %}Save Settings{% else %}保存设置{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadUsageData();
+});
+
+function loadUsageData() {
+    fetch('/hosting/api/client/usage')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateUsageSummary(data.summary);
+                updateCurrentUsage(data.current_usage);
+                updateUsageHistory(data.history);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading usage data:', error);
+        });
+}
+
+function updateUsageSummary(summary) {
+    document.getElementById('current-month-usage').textContent = `${summary.current_month.toFixed(2)} MW`;
+    document.getElementById('total-usage').textContent = `${summary.total_usage.toFixed(2)} MW`;
+    document.getElementById('active-devices').textContent = summary.active_devices;
+    document.getElementById('next-report-date').textContent = summary.next_report_date || '--';
+}
+
+function updateCurrentUsage(usage) {
+    if (!usage) return;
+    
+    document.getElementById('report-date').textContent = usage.report_date;
+    document.getElementById('period-end').textContent = usage.period_end;
+    document.getElementById('total-amount').textContent = `$${usage.total_cost.toFixed(2)}`;
+    
+    const statusBadge = document.getElementById('current-status');
+    statusBadge.textContent = getStatusText(usage.status);
+    statusBadge.className = `badge bg-${getStatusColor(usage.status)} text-white`;
+}
+
+function updateUsageHistory(history) {
+    const tbody = document.querySelector('#usage-history-table tbody');
+    tbody.innerHTML = '';
+    
+    history.forEach(record => {
+        const row = `
+            <tr>
+                <td>${record.report_date}</td>
+                <td>${record.period}</td>
+                <td>${record.usage} kWh</td>
+                <td><span class="badge bg-${getStatusColor(record.status)}">${getStatusText(record.status)}</span></td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-hosting-outline" onclick="downloadUsagePdf('${record.id}')">
+                            <i class="bi bi-download"></i>
+                        </button>
+                        <button class="btn btn-hosting-primary" onclick="viewUsageDetail('${record.id}')">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        tbody.insertAdjacentHTML('beforeend', row);
+    });
+}
+
+function generateUsageReport() {
+    fetch('/hosting/api/client/usage/generate-report', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(getLanguage() === 'en' ? 'Usage report generated successfully' : '使用报告生成成功', 'success');
+            loadUsageData();
+        } else {
+            showToast(data.message || (getLanguage() === 'en' ? 'Report generation failed' : '报告生成失败'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error generating usage report:', error);
+        showToast(getLanguage() === 'en' ? 'Report generation failed' : '报告生成失败', 'error');
+    });
+}
+
+function downloadUsagePdf(recordId) {
+    window.open(`/hosting/api/client/usage/${recordId}/download`, '_blank');
+}
+
+function saveAlertSettings() {
+    const form = document.getElementById('alertForm');
+    
+    const settings = {
+        enabled: document.getElementById('alert-enabled').checked,
+        threshold: document.getElementById('alert-threshold').value,
+        frequency: document.getElementById('alert-frequency').value
+    };
+    
+    fetch('/hosting/api/client/usage/alerts', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(settings)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('alertModal')).hide();
+            showToast(getLanguage() === 'en' ? 'Alert settings saved' : '提醒设置已保存', 'success');
+        } else {
+            showToast(data.message || (getLanguage() === 'en' ? 'Save failed' : '保存失败'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving alert settings:', error);
+        showToast(getLanguage() === 'en' ? 'Save failed' : '保存失败', 'error');
+    });
+}
+
+function getStatusColor(status) {
+    const colorMap = {
+        'completed': 'success',
+        'active': 'primary',
+        'pending': 'warning',
+        'error': 'danger',
+        'cancelled': 'secondary'
+    };
+    return colorMap[status] || 'secondary';
+}
+
+function getStatusText(status) {
+    const language = getLanguage();
+    const statusMap = {
+        'completed': language === 'en' ? 'Completed' : '已完成',
+        'active': language === 'en' ? 'Active' : '活跃',
+        'pending': language === 'en' ? 'Pending' : '待处理',
+        'error': language === 'en' ? 'Error' : '错误',
+        'cancelled': language === 'en' ? 'Cancelled' : '已取消'
+    };
+    return statusMap[status] || status;
+}
+
+function getLanguage() {
+    return document.querySelector('meta[name="language"]').content;
+}
+
+function showToast(message, type) {
+    console.log(`[${type.toUpperCase()}] ${message}`);
+}
+</script>
+{% endblock %}

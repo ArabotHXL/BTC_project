@@ -194,12 +194,12 @@ def send_verification_email(email, token, language='zh'):
 
 # 导入订阅系统模块（延迟导入以避免循环依赖）
 try:
-    # DISABLED: Gold flow module - from billing_routes import billing_bp
-    # BILLING_ENABLED = True
+    # DISABLED: Gold flow module - from usage_routes import usage_bp
+    # USAGE_TRACKING_ENABLED = True
     pass
 except ImportError as e:
-    logging.warning(f"Billing modules not available: {e}")
-    pass  # BILLING_ENABLED = False
+    logging.warning(f"Usage tracking modules not available: {e}")
+    pass  # USAGE_TRACKING_ENABLED = False
 
 # 导入批量计算器路由
 try:
@@ -3156,11 +3156,11 @@ def inject_nav_menu():
         role = session.get('role')
         return role in ['owner', 'admin', 'mining_site']
     
-    def user_has_billing_access():
-        """检查用户是否有访问计费管理的权限"""
-        # DISABLED: Gold flow module - billing access disabled
+    def user_has_usage_access():
+        """检查用户是否有访问使用记录管理的权限"""
+        # DISABLED: Gold flow module - usage tracking access disabled
         from config import Config
-        if not getattr(Config, 'BILLING_ENABLED', False):
+        if not getattr(Config, 'USAGE_TRACKING_ENABLED', False):
             return False
         if not session.get('authenticated'):
             return False
@@ -3184,7 +3184,7 @@ def inject_nav_menu():
         'user_has_analytics_access': user_has_analytics_access,
         'user_has_user_management_access': user_has_user_management_access,
         'user_has_batch_calculator_access': user_has_batch_calculator_access,
-        'user_has_billing_access': user_has_billing_access,
+        'user_has_usage_access': user_has_usage_access,
         'user_has_mining_broker_access': user_has_mining_broker_access
     }
 
