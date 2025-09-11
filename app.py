@@ -19,9 +19,62 @@ from db import db
 from auth import verify_email, login_required
 from translations import get_translation
 from rate_limiting import rate_limit
+from security_enhancements import SecurityManager
 
-# 延迟导入，避免循环导入
-app = Flask(__name__)
+# 延迟导入，避免循环导入 - 统一Flask应用实例
+app = Flask(__name__, static_folder='static', static_url_path='/static')
+
+# Load hosting transparency platform security configuration - SINGLE SOURCE OF TRUTH
+try:
+    from config import get_config
+    config_class = get_config()
+    app.config.from_object(config_class)
+    
+    # Set secret key from environment - SINGLE LOCATION with production fail-safe
+    session_secret = os.environ.get("SESSION_SECRET")
+    if not session_secret:
+        if os.environ.get('FLASK_ENV') == 'production':
+            raise ValueError("SESSION_SECRET environment variable is required in production")
+        else:
+            # Generate random key for development with warning
+            import secrets
+            session_secret = secrets.token_hex(32)
+            logging.warning("No SESSION_SECRET set. Generated random key for development session.")
+    
+    app.secret_key = session_secret
+    
+    logging.info("Security configuration loaded for hosting transparency platform")
+except Exception as e:
+    logging.warning(f"Failed to load security configuration: {e}")
+
+# Initialize database with app
+from db import db
+db.init_app(app)
+
+# Initialize Security Manager with CSRF protection
+security_manager = SecurityManager(app)
+
+# Make CSRF token available to all templates
+@app.context_processor
+def inject_csrf_token():
+    return dict(csrf_token=SecurityManager.generate_csrf_token)
+
+# Apply security headers middleware for hosting transparency
+@app.after_request
+def apply_security_headers(response):
+    """Apply comprehensive security headers to all responses"""
+    # Security headers from configuration
+    for header, value in app.config.get('SECURITY_HEADERS', {}).items():
+        response.headers[header] = value
+    
+    # CSP header if enabled
+    if app.config.get('CSP_ENABLED', False):
+        csp_directives = app.config.get('CSP_DIRECTIVES', {})
+        if csp_directives:
+            csp_header = '; '.join([f"{key} {value}" for key, value in csp_directives.items()])
+            response.headers['Content-Security-Policy'] = csp_header
+    
+    return response
 
 def get_latest_market_data():
     """从market_analytics表获取最新市场数据"""
@@ -205,8 +258,7 @@ DEFAULT_BTC_PRICE = 80000  # 默认比特币价格，单位: USD
 DEFAULT_DIFFICULTY = 119.12  # 默认难度，单位: T
 DEFAULT_BLOCK_REWARD = 3.125  # 默认区块奖励，单位: BTC
 
-# Initialize Flask app with explicit static folder
-app = Flask(__name__, static_folder='static', static_url_path='/static')
+# REMOVED: Duplicate Flask app initialization - now using unified instance at line 27
 
 # Add explicit route for calculator JS to fix serving issue
 @app.route('/static/js/calculator_clean.js')
@@ -221,15 +273,11 @@ def serve_calculator_js():
         logging.error(f"Error serving calculator JS: {e}")
         return "", 404
 
-# 设置安全的会话密钥
-app.secret_key = os.environ.get("SESSION_SECRET", secrets.token_hex(32))
+# REMOVED: Duplicate secret key setting - now using unified config at line 36
 
-# 配置数据库 - 使用增强的配置
-from config import Config
-app.config.from_object(Config)
+# REMOVED: Duplicate config loading - now using unified get_config() at line 33
 
-# 初始化数据库
-db.init_app(app)
+# REMOVED: Duplicate db initialization - now using unified init at line 44
 
 # 创建数据库表 - 带错误处理
 def initialize_database():
@@ -552,6 +600,8 @@ def inject_translator():
 
 # 登录页面
 @app.route('/login', methods=['GET', 'POST'])
+@rate_limit(max_requests=5, window_minutes=15, feature_name="login")
+@SecurityManager.csrf_protect
 def login():
     """处理用户登录"""
     # 如果用户已经登录，重定向到主页
@@ -1086,6 +1136,8 @@ def test_calculate():
     return calculate_internal(request)
 
 @app.route('/calculate', methods=['POST'])
+@rate_limit(max_requests=30, window_minutes=15, feature_name="calculate")
+@SecurityManager.csrf_protect
 def calculate():
     """Handle the calculation request and return results as JSON"""
     # Remove authentication for testing compatibility
@@ -1751,6 +1803,8 @@ def user_access():
     return render_template('user_access.html', users=users)
 
 @app.route('/admin/user_access/add', methods=['POST'])
+@rate_limit(max_requests=10, window_minutes=60, feature_name="admin_user_add")
+@SecurityManager.csrf_protect
 @requires_admin_or_owner
 @log_access_attempt('添加用户访问权限')
 def add_user_access():
@@ -5089,6 +5143,8 @@ def api_miner_data():
         }), 500
 
 @app.route('/api/calculate', methods=['POST'])
+@rate_limit(max_requests=20, window_minutes=15, feature_name="api_calculate")
+@SecurityManager.csrf_protect
 def api_calculate():
     """计算API端点"""
     try:
@@ -5130,6 +5186,8 @@ def api_calculate():
 
 # 注册页面路由
 @app.route('/register', methods=['GET', 'POST'])
+@rate_limit(max_requests=3, window_minutes=30, feature_name="register")
+@SecurityManager.csrf_protect
 def register():
     """用户注册页面"""
     if request.method == 'GET':

@@ -34,11 +34,11 @@ class Config:
     DB_RETRY_DELAY = 2  # seconds
     DB_CONNECTION_TIMEOUT = 60  # seconds
     
-    # 会话配置
+    # 会话配置 - 托管透明性平台安全设置
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
-    PERMANENT_SESSION_LIFETIME = timedelta(days=7)
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=2)  # 2小时安全会话
     
     # 缓存配置
     CACHE_TYPE = 'simple'
@@ -54,6 +54,45 @@ class Config:
     MINING_BROKER_ENABLED = False  # DISABLED: Gold flow module
     SUBSCRIPTION_ENABLED = False  # DISABLED: Gold flow module
     BATCH_CALCULATOR_ENABLED = True
+    
+    # 安全配置 - 托管透明性平台
+    # CSRF 保护 (使用环境变量或SESSION_SECRET)
+    CSRF_ENABLED = True
+    CSRF_TOKEN_LIFETIME = 3600  # 1小时
+    
+    # Content Security Policy (CSP) - 生产级严格策略
+    CSP_ENABLED = True
+    CSP_DIRECTIVES = {
+        'default-src': "'self'",
+        'script-src': "'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+        'style-src': "'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com",
+        'font-src': "'self' https://fonts.gstatic.com https://cdn.jsdelivr.net",
+        'img-src': "'self' data: https:",
+        'connect-src': "'self' https://api.coingecko.com https://mempool.space https://blockchain.info",
+        'frame-src': "'none'",
+        'object-src': "'none'",
+        'base-uri': "'self'",
+        'form-action': "'self'"
+    }
+    
+    # 安全头配置
+    SECURITY_HEADERS = {
+        'X-Frame-Options': 'DENY',
+        'X-Content-Type-Options': 'nosniff', 
+        'X-XSS-Protection': '1; mode=block',
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': 'geolocation=(), microphone=(), camera=()'
+    }
+    
+    # 速率限制配置
+    RATE_LIMITING = {
+        'ENABLED': True,
+        'GLOBAL_RATE_LIMIT': '1000/hour',
+        'LOGIN_RATE_LIMIT': '10/minute',
+        'API_RATE_LIMIT': '100/minute',
+        'HOSTING_DATA_LIMIT': '200/minute'
+    }
     
     # API密钥
     STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
@@ -75,7 +114,32 @@ class DevelopmentConfig(Config):
 class ProductionConfig(Config):
     """生产环境配置"""
     DEBUG = False
+    TESTING = False
     SESSION_COOKIE_SECURE = True
+    TEMPLATES_AUTO_RELOAD = False
+    EXPLAIN_TEMPLATE_LOADING = False
+    
+    # Production-specific logging
+    LOG_LEVEL = 'WARNING'  # More restrictive logging in production
+    
+    # Enhanced session security for production
+    SESSION_COOKIE_DOMAIN = None  # Use default domain handling
+    SESSION_COOKIE_PATH = '/'
+    
+    # Strict CSP for production
+    CSP_DIRECTIVES = {
+        'default-src': "'self'",
+        'script-src': "'self'",  # More restrictive - remove CDN if not needed
+        'style-src': "'self' 'unsafe-inline'",  # Inline styles only if necessary
+        'font-src': "'self'",
+        'img-src': "'self' data:",
+        'connect-src': "'self'",
+        'frame-src': "'none'",
+        'object-src': "'none'",
+        'base-uri': "'self'",
+        'form-action': "'self'",
+        'upgrade-insecure-requests': ""
+    }
     
 # 根据环境变量选择配置
 config = {
