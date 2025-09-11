@@ -531,6 +531,7 @@ a, a:hover, a:focus, a:active {
                     <div class="card-body">
                         <h5 class="card-title text-center mb-4">{{ t('email_verification_login') }}</h5>
                         <form class="login-form" method="post" action="{{ url_for('login') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
                             <div class="mb-3">
                                 <label for="email" class="form-label">{{ t('email_or_username') }}</label>
                                 <input type="text" class="form-control" id="email" name="email" 
