@@ -98,7 +98,7 @@ class Config:
     }
     
     # API密钥 - 托管透明性平台
-    # STRIPE_SECRET_KEY removed - no payment processing in hosting transparency platform
+    # 托管透明性平台 - 不处理任何支付功能
     COINWARZ_API_KEY = os.environ.get('COINWARZ_API_KEY')
     
     # 挖矿计算常量配置 - 外置硬编码值

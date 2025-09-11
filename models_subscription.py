@@ -110,9 +110,7 @@ class UserSubscription(Base):
     cancelled_at = Column(DateTime, nullable=True)  # 添加缺失的字段
     auto_renew = Column(Boolean, default=True)
     
-    # Stripe相关
-    stripe_subscription_id = Column(String(255))
-    stripe_customer_id = Column(String(255))
+    # 移除了Stripe集成 - 使用其他支付方案
     
     # 时间戳
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -166,9 +164,7 @@ class Payment(Base):
     currency = Column(String(3), nullable=False, default='USD')
     status = Column(Enum(PaymentStatus), nullable=False, default=PaymentStatus.PENDING)
     
-    # Stripe相关
-    stripe_payment_intent_id = Column(String(255))
-    stripe_charge_id = Column(String(255))
+    # 移除了Stripe集成 - 使用其他支付方案
     
     # 发票信息
     invoice_number = Column(String(100))
