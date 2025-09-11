@@ -11,7 +11,7 @@ import pytz
 
 # 第三方库导入
 import numpy as np
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, g
+from flask import Flask, send_from_directory, render_template, request, jsonify, session, redirect, url_for, flash, g
 from sqlalchemy import text
 
 # 本地模块导入 - 优化为延迟导入模式
@@ -5938,3 +5938,18 @@ def test_modules_page():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+@app.route("/download/<filename>")
+def download_package(filename):
+    """提供下载包下载"""
+    import os
+    if filename in ["BTC-Hosting-Platform-Core.tar.gz", "BTC-Analytics-Suite.tar.gz"]:
+        return send_from_directory("static", filename, as_attachment=True)
+    else:
+        return "File not found", 404
+
+@app.route("/downloads")  
+def downloads_page():
+    """下载页面"""
+    with open("download_packages.html", "r", encoding="utf-8") as f:
+        return f.read()
+
