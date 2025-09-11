@@ -30,11 +30,14 @@ try:
     config_class = get_config()
     app.config.from_object(config_class)
     
-    # Secret key is now handled in config.py - remove duplication
+    # 🔧 FIX: 确保SECRET_KEY稳定 - 避免gunicorn workers间会话丢失
+    app.secret_key = os.environ.get('SESSION_SECRET') or app.config.get('SECRET_KEY', 'dev-fallback-key-12345')
     
     logging.info("Security configuration loaded for hosting transparency platform")
 except Exception as e:
     logging.warning(f"Failed to load security configuration: {e}")
+    # 紧急fallback - 确保至少有一个密钥
+    app.secret_key = 'emergency-fallback-key-67890'
 
 # Initialize database with app
 from db import db

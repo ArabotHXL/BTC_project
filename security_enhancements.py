@@ -34,6 +34,9 @@ class SecurityManager:
         """生成CSRF令牌"""
         if 'csrf_token' not in session:
             session['csrf_token'] = secrets.token_hex(16)
+            logger.debug(f"🔧 Generated new CSRF token: {session['csrf_token']}")
+        else:
+            logger.debug(f"🔧 Using existing CSRF token: {session['csrf_token']}")
         return session['csrf_token']
     
     @staticmethod
