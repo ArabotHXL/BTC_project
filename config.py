@@ -127,6 +127,31 @@ class DevelopmentConfig(Config):
     DEBUG = True
     TEMPLATES_AUTO_RELOAD = True
     
+    # Replit预览专用配置 - 允许iframe嵌入
+    SECURITY_HEADERS = {
+        # 移除X-Frame-Options以支持Replit预览窗口
+        'X-Content-Type-Options': 'nosniff', 
+        'X-XSS-Protection': '1; mode=block',
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': 'geolocation=(), microphone=(), camera=()'
+    }
+    
+    # 开发环境CSP - 允许Replit iframe
+    CSP_DIRECTIVES = {
+        'default-src': "'self'",
+        'script-src': "'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.replit.com",
+        'style-src': "'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.replit.com",
+        'font-src': "'self' https://fonts.gstatic.com https://cdn.jsdelivr.net",
+        'img-src': "'self' data: https:",
+        'connect-src': "'self' https://api.coingecko.com https://mempool.space https://blockchain.info",
+        'frame-src': "'self'",  # 允许同源iframe
+        'frame-ancestors': "'self' https://*.replit.dev https://*.janeway.replit.dev",  # 允许Replit嵌入
+        'object-src': "'none'",
+        'base-uri': "'self'",
+        'form-action': "'self'"
+    }
+    
 class ProductionConfig(Config):
     """生产环境配置"""
     DEBUG = False
