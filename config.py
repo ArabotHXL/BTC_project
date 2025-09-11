@@ -63,8 +63,8 @@ class Config:
     CSRF_ENABLED = True
     CSRF_TOKEN_LIFETIME = 3600  # 1小时
     
-    # Content Security Policy (CSP) - 生产级严格策略
-    CSP_ENABLED = True
+    # Content Security Policy (CSP) - 开发环境禁用CSP
+    CSP_ENABLED = False
     CSP_DIRECTIVES = {
         'default-src': "'self'",
         'script-src': "'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.replit.com",
@@ -137,23 +137,8 @@ class DevelopmentConfig(Config):
         'Permissions-Policy': 'geolocation=(), microphone=(), camera=()'
     }
     
-    # 开发环境CSP - 完全放宽限制以支持开发调试
-    CSP_DIRECTIVES = {
-        'default-src': "'self' 'unsafe-inline' 'unsafe-eval' data: https:",
-        'script-src': "'self' 'unsafe-inline' 'unsafe-eval' https: data:",
-        'style-src': "'self' 'unsafe-inline' https: data:",
-        'font-src': "'self' data: https:",
-        'img-src': "'self' data: https: blob:",
-        'connect-src': "'self' https: wss: ws:",
-        'media-src': "'self' data: https:",
-        'worker-src': "'self' blob:",
-        'child-src': "'self' https:",
-        'frame-src': "'self' https:",
-        'frame-ancestors': "'self' https://*.replit.dev https://*.janeway.replit.dev",
-        'object-src': "'self' data:",
-        'base-uri': "'self'",
-        'form-action': "'self' https:"
-    }
+    # 开发环境CSP - 禁用CSP以避免所有问题  
+    CSP_ENABLED = False
     
 class ProductionConfig(Config):
     """生产环境配置"""
