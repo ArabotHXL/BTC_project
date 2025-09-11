@@ -5938,6 +5938,12 @@ def test_modules_page():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+@app.route("/download")
+def download_redirect():
+    """重定向到下载页面"""
+    from flask import redirect, url_for
+    return redirect("/downloads")
+
 @app.route("/download/<filename>")
 def download_package(filename):
     """提供下载包下载"""
