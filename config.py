@@ -48,12 +48,15 @@ class Config:
     API_RATE_LIMIT = '100/hour'
     API_BURST_LIMIT = '20/minute'
     
-    # 功能开关
+    # 功能开关 - 托管透明性平台
     ENABLE_BACKGROUND_SERVICES = os.environ.get('ENABLE_BACKGROUND_SERVICES', '0') == '1'
     USAGE_TRACKING_ENABLED = False  # DISABLED: Gold flow module - hosting transparency only
     MINING_BROKER_ENABLED = False  # DISABLED: Gold flow module
     SUBSCRIPTION_ENABLED = False  # DISABLED: Gold flow module
     BATCH_CALCULATOR_ENABLED = True
+    
+    # 彻底禁用支付相关功能以避免Stripe询问
+    PAYMENT_PROCESSING_DISABLED = True
     
     # 安全配置 - 托管透明性平台
     # CSRF 保护 (使用环境变量或SESSION_SECRET)
