@@ -7,6 +7,7 @@ import calendar
 import os
 import time
 from datetime import datetime
+from flask import current_app
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -15,15 +16,39 @@ logging.basicConfig(level=logging.INFO)
 _API_CACHE = {}
 _CACHE_TIMEOUT = 60  # 60秒缓存
 
-# Constants - Updated 2025-08-19
+# Constants - Updated 2025-08-19 - Now using config fallbacks
 BLOCKS_PER_DAY = 144
-DEFAULT_BTC_PRICE = 120499  # USD - Last updated from live API
-DEFAULT_NETWORK_DIFFICULTY = 129435235580344  # ~129.44T - Last updated from blockchain.info
-DEFAULT_NETWORK_HASHRATE = 997.31  # EH/s - Last updated from blockchain.info 2025-08-13
-BLOCK_REWARD = 3.125  # BTC - Post-halving April 2024
 
-# Pool fee configuration - Added per expert recommendation
-DEFAULT_POOL_FEE = 0.025  # 2.5% default pool fee
+# Function to get config values with fallbacks
+def get_config_value(key, fallback):
+    """Get config value with fallback for when app context is not available"""
+    try:
+        return current_app.config.get(key, fallback)
+    except RuntimeError:
+        # App context not available, use fallback
+        return fallback
+
+# Dynamic constants that use config values
+def get_default_btc_price():
+    return get_config_value('DEFAULT_BTC_PRICE', 80000)
+
+def get_default_network_difficulty():
+    return get_config_value('DEFAULT_DIFFICULTY', 119.12) * 1e12  # Convert T to raw difficulty
+
+def get_default_network_hashrate():
+    return get_config_value('DEFAULT_HASHRATE_EH', 900)
+
+def get_default_block_reward():
+    return get_config_value('DEFAULT_BLOCK_REWARD', 3.125)
+
+def get_default_electricity_cost():
+    return get_config_value('DEFAULT_ELECTRICITY_COST', 0.06)
+
+# Pool fee configuration - Added per expert recommendation  
+def get_default_pool_fee():
+    return get_config_value('DEFAULT_POOL_FEE', 0.025)  # 2.5% default pool fee
+
+DEFAULT_POOL_FEE = 0.025  # Kept for backward compatibility
 TYPICAL_POOL_FEES = {
     "antpool": 0.025,
     "f2pool": 0.025, 
@@ -35,8 +60,11 @@ TYPICAL_POOL_FEES = {
 
 # Difficulty adjustment parameters - Added for dynamic modeling
 DIFFICULTY_ADJUSTMENT_BLOCKS = 2016  # Bitcoin difficulty adjusts every 2016 blocks (~14 days)
-AVERAGE_DIFFICULTY_INCREASE = 0.02  # 2% average historical increase per adjustment
+def get_average_difficulty_increase():
+    return get_config_value('AVERAGE_DIFFICULTY_INCREASE', 0.02)  # 2% average historical increase per adjustment
+
 HALVING_BLOCKS = 210000  # Bitcoin halves every 210,000 blocks (~4 years)
+AVERAGE_DIFFICULTY_INCREASE = 0.02  # Kept for backward compatibility
 
 # Fixed miner data including hashrate and power consumption for each model
 MINER_DATA = {
@@ -120,7 +148,7 @@ def calculate_enhanced_roi(investment, yearly_profit, monthly_profit, btc_price,
     roi_reached = False
     
     # Calculate monthly difficulty increase rate (2% per 2 weeks = ~4.3% per month)
-    monthly_difficulty_increase = 1 + (AVERAGE_DIFFICULTY_INCREASE * 2.17)  # 2.17 adjustments per month on average
+    monthly_difficulty_increase = 1 + (get_average_difficulty_increase() * 2.17)  # 2.17 adjustments per month on average
     
     for month in range(1, forecast_months + 1):
         # Apply difficulty adjustment impact on profit
@@ -284,8 +312,9 @@ def get_real_time_btc_price():
         logging.warning(f"Analytics数据库价格获取失败: {e}")
     
     # 最后备用：使用默认值
-    logging.warning(f"使用默认BTC价格: ${DEFAULT_BTC_PRICE:,.3f}")
-    return DEFAULT_BTC_PRICE
+    default_price = get_default_btc_price()
+    logging.warning(f"使用默认BTC价格: ${default_price:,.3f}")
+    return default_price
 
 def get_real_time_difficulty():
     """获取网络难度 - 优先使用market_analytics表数据"""
@@ -345,8 +374,9 @@ def get_real_time_difficulty():
             # 继续尝试下一个API
     
     # 所有API都失败时，使用默认值
-    logging.warning(f"无法从任何API获取实时BTC难度，使用默认值 {DEFAULT_NETWORK_DIFFICULTY}")
-    return DEFAULT_NETWORK_DIFFICULTY
+    default_difficulty = get_default_network_difficulty()
+    logging.warning(f"无法从任何API获取实时BTC难度，使用默认值 {default_difficulty}")
+    return default_difficulty
 
 def get_real_time_block_reward():
     """获取区块奖励 - 优先使用market_analytics表数据"""
@@ -395,7 +425,7 @@ def get_real_time_block_reward():
             raise Exception(f"API returned status code {response.status_code}")
     except Exception as e:
         logging.warning(f"Unable to get real-time BTC block reward: {e}")
-        return BLOCK_REWARD
+        return get_default_block_reward()
         
 def get_real_time_btc_hashrate():
     """获取网络算力 - 优先使用market_analytics表数据"""
@@ -463,8 +493,9 @@ def get_real_time_btc_hashrate():
         logging.error(f"获取网络算力时出错: {e}")
     
     # 最后的fallback
-    logging.warning(f"使用默认网络算力: {DEFAULT_NETWORK_HASHRATE} EH/s")
-    return DEFAULT_NETWORK_HASHRATE
+    default_hashrate = get_default_network_hashrate()
+    logging.warning(f"使用默认网络算力: {default_hashrate} EH/s")
+    return default_hashrate
 
 def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electricity_cost=0.05, client_electricity_cost=None, 
                              btc_price=None, difficulty=None, block_reward=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0.0, 
@@ -554,23 +585,23 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
                 real_time_btc_hashrate = manual_network_hashrate  # EH/s (manual input)
                 logging.info(f"使用手动输入的网络算力: {manual_network_hashrate} EH/s")
             else:
-                real_time_btc_hashrate = get_real_time_btc_hashrate() or DEFAULT_NETWORK_HASHRATE  # EH/s
+                real_time_btc_hashrate = get_real_time_btc_hashrate() or get_default_network_hashrate()  # EH/s
             current_block_reward = get_real_time_block_reward()
         else:
-            real_time_btc_price = btc_price or DEFAULT_BTC_PRICE
+            real_time_btc_price = btc_price or get_default_btc_price()
             # Use manual difficulty if provided, otherwise use provided/default
             if manual_network_difficulty is not None:
                 difficulty_raw = manual_network_difficulty
                 logging.info(f"使用手动输入的网络难度: {manual_network_difficulty:,.0f}")
             else:
-                difficulty_raw = difficulty or DEFAULT_NETWORK_DIFFICULTY
+                difficulty_raw = difficulty or get_default_network_difficulty()
             # Use manual hashrate if provided, otherwise use default
             if manual_network_hashrate is not None:
                 real_time_btc_hashrate = manual_network_hashrate  # EH/s (manual input)
                 logging.info(f"使用手动输入的网络算力: {manual_network_hashrate} EH/s")
             else:
-                real_time_btc_hashrate = DEFAULT_NETWORK_HASHRATE  # EH/s
-            current_block_reward = BLOCK_REWARD
+                real_time_btc_hashrate = get_default_network_hashrate()  # EH/s
+            current_block_reward = get_default_block_reward()
         
         # Use provided values if given
         btc_price = btc_price or real_time_btc_price
@@ -1088,9 +1119,9 @@ def generate_profit_chart_data(miner_model, electricity_costs, btc_prices, miner
             logging.info(f"Network data: BTC price=${current_btc_price}, difficulty={current_difficulty/10**12}T, reward={current_block_reward}BTC")
         except Exception as e:
             logging.error(f"Error fetching real-time data for chart: {str(e)}")
-            current_btc_price = DEFAULT_BTC_PRICE
-            current_difficulty = DEFAULT_NETWORK_DIFFICULTY
-            current_block_reward = BLOCK_REWARD
+            current_btc_price = get_default_btc_price()
+            current_difficulty = get_default_network_difficulty()
+            current_block_reward = get_default_block_reward()
             logging.info(f"Using default values: BTC price=${current_btc_price}, difficulty={current_difficulty/10**12}T, reward={current_block_reward}BTC")
         
         # Get miner specs from either database or fallback data
@@ -1337,7 +1368,7 @@ def calculate_monthly_curtailment_impact(
         daily_btc_raw = (hashrate_h * block_reward * 86400) / (difficulty_h * difficulty_factor)
         
         # Apply pool fee correction (1 - pool_fee) as recommended
-        pool_fee_rate = DEFAULT_POOL_FEE  # 2.5% default
+        pool_fee_rate = get_default_pool_fee()  # 2.5% default
         daily_btc = daily_btc_raw * (1 - pool_fee_rate)
         monthly_btc = daily_btc * days_in_month
         
@@ -1525,3 +1556,62 @@ def get_miner_specifications(model_name=None):
     if model_name:
         return MINER_DATA.get(model_name, {})
     return MINER_DATA
+
+# MiningCalculator class wrapper for compatibility with calculator module
+class MiningCalculator:
+    """
+    Wrapper class for mining calculation functions to maintain compatibility
+    with the calculator module routes
+    """
+    
+    def __init__(self):
+        """Initialize the mining calculator"""
+        pass
+    
+    def calculate_profitability(self, hashrate=0.0, power_consumption=0.0, electricity_cost=None, 
+                               btc_price=None, network_hashrate=None, network_difficulty=None,
+                               miner_count=1, **kwargs):
+        """
+        Calculate mining profitability with simplified parameters for calculator module
+        
+        This method adapts the complex calculate_mining_profitability function
+        to work with the simpler parameter structure expected by the calculator routes
+        """
+        try:
+            # Use config defaults for missing values
+            if electricity_cost is None:
+                electricity_cost = get_default_electricity_cost()
+                
+            if btc_price is None:
+                btc_price = get_real_time_btc_price()
+                
+            if network_difficulty is None:
+                network_difficulty = get_real_time_difficulty()
+                
+            if network_hashrate is None:
+                network_hashrate = get_real_time_btc_hashrate()
+            
+            # Call the main calculation function
+            result = calculate_mining_profitability(
+                hashrate=hashrate,
+                power_consumption=power_consumption,
+                electricity_cost=electricity_cost,
+                btc_price=btc_price,
+                difficulty=network_difficulty,  # Map network_difficulty to difficulty
+                use_real_time_data=False,  # We're providing the data
+                miner_count=miner_count,
+                **kwargs
+            )
+            
+            return result
+            
+        except Exception as e:
+            logging.error(f"MiningCalculator.calculate_profitability error: {e}")
+            # Return a basic error response format expected by calculator routes
+            return {
+                'success': False,
+                'error': str(e),
+                'daily_btc': 0,
+                'daily_profit': 0,
+                'monthly_profit': 0
+            }

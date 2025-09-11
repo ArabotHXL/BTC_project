@@ -7,7 +7,7 @@ from datetime import timedelta
 
 class Config:
     """基础配置类"""
-    # 基本设置 - 生产环境必须设置
+    # 基本设置 - 开发环境允许随机密钥
     SECRET_KEY = os.environ.get('SESSION_SECRET')
     if not SECRET_KEY:
         import secrets
@@ -98,6 +98,19 @@ class Config:
     STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
     COINWARZ_API_KEY = os.environ.get('COINWARZ_API_KEY')
     
+    # 挖矿计算常量配置 - 外置硬编码值
+    DEFAULT_ELECTRICITY_COST = 0.06  # 默认电费单价 USD/kWh
+    DEFAULT_HASHRATE_EH = 900  # 默认网络算力，单位: EH/s
+    DEFAULT_BTC_PRICE = 80000  # 默认比特币价格，单位: USD
+    DEFAULT_DIFFICULTY = 119.12  # 默认难度，单位: T
+    DEFAULT_BLOCK_REWARD = 3.125  # 默认区块奖励，单位: BTC
+    
+    # 托管相关默认配置
+    DEFAULT_HOSTING_ELECTRICITY_RATE = 0.05  # 托管默认电费率 USD/kWh
+    
+    # 安全配置常量
+    HSTS_MAX_AGE = 31536000  # HSTS持续时间（1年）
+    
     # 日志配置
     LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
     LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -119,6 +132,11 @@ class ProductionConfig(Config):
     TEMPLATES_AUTO_RELOAD = False
     EXPLAIN_TEMPLATE_LOADING = False
     
+    # 生产环境强制要求SESSION_SECRET - 安全关键
+    SECRET_KEY = os.environ.get('SESSION_SECRET')
+    if not SECRET_KEY:
+        raise ValueError("Production requires SESSION_SECRET environment variable - security critical")
+    
     # Production-specific logging
     LOG_LEVEL = 'WARNING'  # More restrictive logging in production
     
@@ -126,14 +144,14 @@ class ProductionConfig(Config):
     SESSION_COOKIE_DOMAIN = None  # Use default domain handling
     SESSION_COOKIE_PATH = '/'
     
-    # Strict CSP for production
+    # Strict CSP for production - SECURE DIRECTIVES ONLY
     CSP_DIRECTIVES = {
         'default-src': "'self'",
-        'script-src': "'self'",  # More restrictive - remove CDN if not needed
-        'style-src': "'self' 'unsafe-inline'",  # Inline styles only if necessary
-        'font-src': "'self'",
-        'img-src': "'self' data:",
-        'connect-src': "'self'",
+        'script-src': "'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+        'style-src': "'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com",
+        'font-src': "'self' https://fonts.gstatic.com https://cdn.jsdelivr.net",
+        'img-src': "'self' data: https:",
+        'connect-src': "'self' https://api.coingecko.com https://mempool.space https://blockchain.info",
         'frame-src': "'none'",
         'object-src': "'none'",
         'base-uri': "'self'",

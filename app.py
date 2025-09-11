@@ -30,18 +30,7 @@ try:
     config_class = get_config()
     app.config.from_object(config_class)
     
-    # Set secret key from environment - SINGLE LOCATION with production fail-safe
-    session_secret = os.environ.get("SESSION_SECRET")
-    if not session_secret:
-        if os.environ.get('FLASK_ENV') == 'production':
-            raise ValueError("SESSION_SECRET environment variable is required in production")
-        else:
-            # Generate random key for development with warning
-            import secrets
-            session_secret = secrets.token_hex(32)
-            logging.warning("No SESSION_SECRET set. Generated random key for development session.")
-    
-    app.secret_key = session_secret
+    # Secret key is now handled in config.py - remove duplication
     
     logging.info("Security configuration loaded for hosting transparency platform")
 except Exception as e:
@@ -62,17 +51,21 @@ def inject_csrf_token():
 # Apply security headers middleware for hosting transparency
 @app.after_request
 def apply_security_headers(response):
-    """Apply comprehensive security headers to all responses"""
+    """Apply comprehensive security headers to all responses - UNIFIED APPROACH"""
     # Security headers from configuration
     for header, value in app.config.get('SECURITY_HEADERS', {}).items():
         response.headers[header] = value
     
-    # CSP header if enabled
+    # CSP header if enabled - config-driven approach
     if app.config.get('CSP_ENABLED', False):
         csp_directives = app.config.get('CSP_DIRECTIVES', {})
         if csp_directives:
             csp_header = '; '.join([f"{key} {value}" for key, value in csp_directives.items()])
             response.headers['Content-Security-Policy'] = csp_header
+    
+    # HTTPS enforcement for production
+    if os.environ.get('FLASK_ENV') == 'production':
+        response.headers['Strict-Transport-Security'] = f'max-age={app.config.get("HSTS_MAX_AGE", 31536000)}; includeSubDomains'
     
     return response
 
@@ -252,11 +245,7 @@ def safe_float_conversion(value, default=0):
     except (ValueError, TypeError):
         return default
 
-# 默认网络参数
-DEFAULT_HASHRATE_EH = 900  # 默认哈希率，单位: EH/s
-DEFAULT_BTC_PRICE = 80000  # 默认比特币价格，单位: USD
-DEFAULT_DIFFICULTY = 119.12  # 默认难度，单位: T
-DEFAULT_BLOCK_REWARD = 3.125  # 默认区块奖励，单位: BTC
+# 默认网络参数 - 现在使用配置文件中的常量
 
 # REMOVED: Duplicate Flask app initialization - now using unified instance at line 27
 
@@ -4985,6 +4974,14 @@ try:
 except ImportError as e:
     logging.warning(f"Deribit routes not available: {e}")
 
+# Register calculator module blueprint for modular architecture
+try:
+    from modules.config import register_modules
+    registered_modules = register_modules(app)
+    logging.info(f"Modular architecture initialized: {len(registered_modules)} modules registered")
+except Exception as e:
+    logging.warning(f"Module registration failed: {e}")
+
 # Register architecture diagram route
 try:
     import architecture_route
@@ -5017,13 +5014,8 @@ def after_request_monitoring(response):
     
     return response
 
-# 添加安全头
-@app.after_request  
-def add_security_headers(response):
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'DENY'
-    response.headers['Content-Security-Policy'] = "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data:; img-src 'self' data: https:;"
-    return response
+# REMOVED: Duplicate security headers handler - now unified in apply_security_headers()
+# This was causing CSP conflicts and contained unsafe directives
 
 # 性能监控API端点 - 简化版本
 @app.route('/api/performance-stats')

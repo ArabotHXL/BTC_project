@@ -29,30 +29,7 @@ class SecurityManager:
         """初始化应用安全设置"""
         self.app = app
         
-        # 设置安全头
-        @app.after_request
-        def set_security_headers(response):
-            # 防止点击劫持
-            response.headers['X-Frame-Options'] = 'DENY'
-            # 防止MIME类型嗅探
-            response.headers['X-Content-Type-Options'] = 'nosniff'
-            # 启用XSS保护
-            response.headers['X-XSS-Protection'] = '1; mode=block'
-            # 内容安全策略
-            response.headers['Content-Security-Policy'] = (
-                "default-src 'self'; "
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "
-                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-                "img-src 'self' data: https:; "
-                "font-src 'self' data: https://cdn.jsdelivr.net;"
-            )
-            # HTTPS强制
-            if os.environ.get('FLASK_ENV') == 'production':
-                response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-            
-            return response
-        
-        # CSRF令牌生成
+        # CSRF令牌生成 - 移除重复的安全头设置（现在由app.py统一处理）
         @app.before_request
         def generate_csrf_token():
             if 'csrf_token' not in session:

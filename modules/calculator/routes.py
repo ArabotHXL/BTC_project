@@ -2,7 +2,7 @@
 计算器模块路由
 完全独立的路由处理，不依赖其他模块
 """
-from flask import render_template, request, jsonify, session
+from flask import render_template, request, jsonify, session, current_app
 from . import calculator_bp
 from models import MinerModel, NetworkSnapshot, db
 from mining_calculator import MiningCalculator
@@ -49,7 +49,7 @@ def calculate():
             return jsonify({'success': False, 'error': '未找到矿机型号'})
         
         # 从数据库获取网络数据
-        network_data = NetworkSnapshot.query.order_by(NetworkSnapshot.timestamp.desc()).first()
+        network_data = NetworkSnapshot.query.order_by(NetworkSnapshot.recorded_at.desc()).first()
         
         if not network_data:
             return jsonify({'success': False, 'error': '无法获取网络数据'})
@@ -59,7 +59,7 @@ def calculate():
         result = calc.calculate_profitability(
             hashrate=miner.reference_hashrate,
             power_consumption=miner.reference_power,
-            electricity_cost=float(data.get('electricity_cost', 0.06)),
+            electricity_cost=float(data.get('electricity_cost', current_app.config.get('DEFAULT_ELECTRICITY_COST', 0.06))),
             btc_price=network_data.btc_price,
             network_hashrate=network_data.network_hashrate,
             network_difficulty=network_data.network_difficulty
@@ -76,7 +76,7 @@ def get_network_stats():
     """获取网络统计数据 - 从数据库读取"""
     try:
         # 从数据库获取最新的网络数据
-        network_data = NetworkSnapshot.query.order_by(NetworkSnapshot.timestamp.desc()).first()
+        network_data = NetworkSnapshot.query.order_by(NetworkSnapshot.recorded_at.desc()).first()
         
         if network_data:
             return jsonify({
@@ -85,7 +85,7 @@ def get_network_stats():
                 'network_hashrate': network_data.network_hashrate,
                 'network_difficulty': network_data.network_difficulty,
                 'block_reward': network_data.block_reward,
-                'timestamp': network_data.timestamp.isoformat()
+                'timestamp': network_data.recorded_at.isoformat()
             })
         else:
             return jsonify({'success': False, 'error': '无网络数据'})
