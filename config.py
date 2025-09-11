@@ -137,12 +137,12 @@ class DevelopmentConfig(Config):
         'Permissions-Policy': 'geolocation=(), microphone=(), camera=()'
     }
     
-    # 开发环境CSP - 允许Replit iframe + 内联样式
+    # 开发环境CSP - 允许Replit iframe + 内联样式 + Font Awesome
     CSP_DIRECTIVES = {
         'default-src': "'self'",
         'script-src': "'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.replit.com",
         'style-src': "'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.replit.com",
-        'font-src': "'self' https://fonts.gstatic.com https://cdn.jsdelivr.net",
+        'font-src': "'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
         'img-src': "'self' data: https:",
         'connect-src': "'self' https://api.coingecko.com https://mempool.space https://blockchain.info",
         'frame-src': "'self'",  # 允许同源iframe
