@@ -64,8 +64,8 @@ class Config:
     CSP_ENABLED = True
     CSP_DIRECTIVES = {
         'default-src': "'self'",
-        'script-src': "'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
-        'style-src': "'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com",
+        'script-src': "'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.replit.com",
+        'style-src': "'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.replit.com",
         'font-src': "'self' https://fonts.gstatic.com https://cdn.jsdelivr.net",
         'img-src': "'self' data: https:",
         'connect-src': "'self' https://api.coingecko.com https://mempool.space https://blockchain.info",
@@ -147,8 +147,8 @@ class ProductionConfig(Config):
     # Strict CSP for production - SECURE DIRECTIVES ONLY
     CSP_DIRECTIVES = {
         'default-src': "'self'",
-        'script-src': "'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
-        'style-src': "'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com",
+        'script-src': "'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.replit.com",
+        'style-src': "'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.replit.com",
         'font-src': "'self' https://fonts.gstatic.com https://cdn.jsdelivr.net",
         'img-src': "'self' data: https:",
         'connect-src': "'self' https://api.coingecko.com https://mempool.space https://blockchain.info",
