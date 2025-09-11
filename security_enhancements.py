@@ -28,12 +28,6 @@ class SecurityManager:
     def init_app(self, app):
         """初始化应用安全设置"""
         self.app = app
-        
-        # CSRF令牌生成 - 移除重复的安全头设置（现在由app.py统一处理）
-        @app.before_request
-        def generate_csrf_token():
-            if 'csrf_token' not in session:
-                session['csrf_token'] = secrets.token_hex(16)
     
     @staticmethod
     def generate_csrf_token():
