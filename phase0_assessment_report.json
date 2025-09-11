@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-09-06T23:27:35.461441",
+  "timestamp": "2025-09-09T03:15:20.283671",
   "phase": "Phase 0 - 现状评估",
   "system_name": "Bitcoin Calculator (calc.hashinsight.net)",
   "assessment_status": "completed",
@@ -951,7 +951,7 @@
           ]
         },
         "hosting_incidents": {
-          "columns": 12,
+          "columns": 13,
           "structure": [
             {
               "name": "id",
@@ -1011,6 +1011,11 @@
             {
               "name": "assigned_to_id",
               "type": "integer",
+              "nullable": "YES"
+            },
+            {
+              "name": "first_response_at",
+              "type": "timestamp without time zone",
               "nullable": "YES"
             }
           ]
@@ -2647,7 +2652,7 @@
         "config.py": "✅ 存在",
         "config.py_lines": 88,
         "models.py": "✅ 存在",
-        "models.py_lines": 1067
+        "models.py_lines": 1068
       },
       "module_structure": {
         "modules_dir": "✅ 存在",
@@ -2665,7 +2670,7 @@
       },
       "route_analysis": {},
       "template_structure": {
-        "count": 85,
+        "count": 86,
         "organized": true
       },
       "static_assets": {
