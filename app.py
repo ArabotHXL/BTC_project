@@ -4666,7 +4666,7 @@ def generate_professional_report():
             return jsonify({'error': '权限不足，仅限拥有者使用'}), 403
             
         try:
-            from analytics_dashboard_files.backend.professional_report_generator import ProfessionalReportGenerator as Professional5StepReportGenerator
+            from professional_report_generator import ProfessionalReportGenerator as Professional5StepReportGenerator
         except ImportError:
             try:
                 from professional_report_generator import ProfessionalReportGenerator as Professional5StepReportGenerator
@@ -4756,7 +4756,7 @@ def download_professional_report(file_type):
         else:
             # Try to generate report if not found
             logging.warning(f"Report file {filename} not found, trying to generate...")
-            from analytics_dashboard_files.backend.professional_report_generator import ProfessionalReportGenerator
+            from professional_report_generator import ProfessionalReportGenerator
             
             generator = ProfessionalReportGenerator()
             # 获取市场数据用于报告生成
