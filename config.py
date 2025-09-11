@@ -137,19 +137,22 @@ class DevelopmentConfig(Config):
         'Permissions-Policy': 'geolocation=(), microphone=(), camera=()'
     }
     
-    # 开发环境CSP - 允许Replit iframe + 内联样式和脚本 + Font Awesome
+    # 开发环境CSP - 完全放宽限制以支持开发调试
     CSP_DIRECTIVES = {
-        'default-src': "'self'",
-        'script-src': "'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.replit.com",
-        'style-src': "'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.replit.com",
-        'font-src': "'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
-        'img-src': "'self' data: https:",
-        'connect-src': "'self' https://api.coingecko.com https://mempool.space https://blockchain.info",
-        'frame-src': "'self'",  # 允许同源iframe
-        'frame-ancestors': "'self' https://*.replit.dev https://*.janeway.replit.dev",  # 允许Replit嵌入
-        'object-src': "'none'",
+        'default-src': "'self' 'unsafe-inline' 'unsafe-eval' data: https:",
+        'script-src': "'self' 'unsafe-inline' 'unsafe-eval' https: data:",
+        'style-src': "'self' 'unsafe-inline' https: data:",
+        'font-src': "'self' data: https:",
+        'img-src': "'self' data: https: blob:",
+        'connect-src': "'self' https: wss: ws:",
+        'media-src': "'self' data: https:",
+        'worker-src': "'self' blob:",
+        'child-src': "'self' https:",
+        'frame-src': "'self' https:",
+        'frame-ancestors': "'self' https://*.replit.dev https://*.janeway.replit.dev",
+        'object-src': "'self' data:",
         'base-uri': "'self'",
-        'form-action': "'self'"
+        'form-action': "'self' https:"
     }
     
 class ProductionConfig(Config):
