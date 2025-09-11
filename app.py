@@ -49,7 +49,9 @@ security_manager = SecurityManager(app)
 # Make CSRF token available to all templates
 @app.context_processor
 def inject_csrf_token():
-    return dict(csrf_token=SecurityManager.generate_csrf_token())
+    token = SecurityManager.generate_csrf_token()
+    logging.warning(f"🔧 Context processor: injecting csrf_token='{token}', session_id={session.get('_permanent', 'no-session')}")
+    return dict(csrf_token=token)
 
 # Apply security headers middleware for hosting transparency
 @app.after_request

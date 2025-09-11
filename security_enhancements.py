@@ -42,9 +42,15 @@ class SecurityManager:
     @staticmethod
     def validate_csrf_token(token):
         """验证CSRF令牌"""
+        logger.warning(f"🔧 CSRF validation: received token='{token}', session has csrf_token={('csrf_token' in session)}")
         if 'csrf_token' not in session:
+            logger.warning(f"🔧 CSRF validation failed: No csrf_token in session. Session keys: {list(session.keys())}")
             return False
-        return secrets.compare_digest(session['csrf_token'], token)
+        session_token = session['csrf_token']
+        logger.warning(f"🔧 CSRF validation: session token='{session_token}', comparing with received='{token}'")
+        result = secrets.compare_digest(session_token, token)
+        logger.warning(f"🔧 CSRF validation result: {result}")
+        return result
     
     @staticmethod
     def csrf_protect(f):
