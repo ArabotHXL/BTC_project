@@ -317,7 +317,7 @@ pip install -r requirements.txt
 export DATABASE_URL="your_database_url"
 export SESSION_SECRET="your_secret_key"
 export DERIBIT_API_KEY="your_deribit_key"
-export STRIPE_SECRET_KEY="your_stripe_key"
+# export STRIPE_SECRET_KEY="your_stripe_key"  # 已移除 - 使用其他支付方案
 ```
 
 3. 运行应用：
