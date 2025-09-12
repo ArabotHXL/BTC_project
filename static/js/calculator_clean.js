@@ -214,9 +214,16 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('[CALCULATOR] Sending data:', data);
         
+        // 获取CSRF令牌
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                         document.querySelector('input[name="csrf_token"]')?.value;
+        
         fetch('/calculate', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
             body: JSON.stringify(data)
         })
         .then(response => response.json())
