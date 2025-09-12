@@ -1141,9 +1141,20 @@ document.addEventListener('DOMContentLoaded', function() {
         var hostBreakEvenBtcEl = document.getElementById('host-break-even-btc');
         var optimalCurtailmentEl = document.getElementById('optimal-curtailment');
         
-        // 电费差计算 (Electricity differential)
-        if (data.client_electricity_cost && data.electricity_cost) {
-            // 计算电费差收益 - 客户电费减去实际电费
+        // 使用API返回的Host profit数据
+        if (data.host_profit && data.host_profit.monthly) {
+            // 使用API计算的Host月度利润
+            var hostElectricProfit = data.host_profit.monthly;
+            
+            // 更新矿场主电费差收益显示
+            if (hostMonthlyProfitEl) {
+                hostMonthlyProfitEl.textContent = formatCurrency(hostElectricProfit);
+            }
+            if (hostMonthlyProfitDisplayEl) {
+                hostMonthlyProfitDisplayEl.textContent = formatCurrency(hostElectricProfit);
+            }
+        } else if (data.client_electricity_cost && data.electricity_cost) {
+            // 如果没有host_profit字段，回退到电费差计算 (向后兼容)
             var hostElectricProfit = data.client_electricity_cost.monthly - data.electricity_cost.monthly;
             
             // 更新矿场主电费差收益显示
@@ -1181,13 +1192,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // 更新矿场主利润详情
-            if (hostDailyProfitEl && data.electricity_cost) {
-                var dailyProfit = hostElectricProfit / 30.5;
+            if (hostDailyProfitEl) {
+                var dailyProfit = data.host_profit && data.host_profit.daily ? data.host_profit.daily : hostElectricProfit / 30.5;
                 hostDailyProfitEl.textContent = formatCurrency(dailyProfit);
             }
             
             if (hostYearlyProfitEl) {
-                var yearlyProfit = hostElectricProfit * 12;
+                var yearlyProfit = data.host_profit && data.host_profit.yearly ? data.host_profit.yearly : hostElectricProfit * 12;
                 hostYearlyProfitEl.textContent = formatCurrency(yearlyProfit);
             }
             
