@@ -31,12 +31,20 @@ class SecurityManager:
     
     @staticmethod
     def generate_csrf_token():
-        """生成CSRF令牌"""
+        """生成CSRF令牌 - 强制session建立"""
+        # 🔧 强制建立session以解决Replit iframe问题
+        session.permanent = True  # 强制保存session
+        session['_csrf_init'] = True  # 确保session被修改
+        
         if 'csrf_token' not in session:
             session['csrf_token'] = secrets.token_hex(16)
-            logger.debug(f"🔧 Generated new CSRF token: {session['csrf_token']}")
+            logger.warning(f"🔧 Generated NEW CSRF token: {session['csrf_token']}")
         else:
-            logger.debug(f"🔧 Using existing CSRF token: {session['csrf_token']}")
+            logger.warning(f"🔧 Using EXISTING CSRF token: {session['csrf_token']}")
+        
+        # 确保session标记修改
+        session.modified = True
+        logger.warning(f"🔧 Session state: permanent={session.permanent}, modified={session.modified}")
         return session['csrf_token']
     
     @staticmethod

@@ -46,17 +46,46 @@ db.init_app(app)
 # Initialize Security Manager with CSRF protection
 security_manager = SecurityManager(app)
 
+# 🔧 CRITICAL FIX: WSGI middleware to add Partitioned attribute for Chrome 3PCD iframe support
+class CookiePartitionMiddleware:
+    def __init__(self, app, session_cookie_name):
+        self.app = app
+        self.session_cookie_name = session_cookie_name
+
+    def __call__(self, environ, start_response):
+        def _start_response(status, headers, exc_info=None):
+            new_headers = []
+            for k, v in headers:
+                if k.lower() == 'set-cookie' and v.startswith(f"{self.session_cookie_name}="):
+                    if 'SameSite=None' in v and 'Secure' in v and 'Partitioned' not in v:
+                        v = v + '; Partitioned'
+                        logging.warning(f"🔧 Added Partitioned to session cookie via WSGI middleware")
+                new_headers.append((k, v))
+            return start_response(status, new_headers, exc_info)
+        return self.app(environ, _start_response)
+
+# Apply the middleware (Flask's default session cookie name is 'session')
+app.wsgi_app = CookiePartitionMiddleware(app.wsgi_app, app.config.get('SESSION_COOKIE_NAME', 'session'))
+
 # Make CSRF token available to all templates
 @app.context_processor
 def inject_csrf_token():
+    # 🔧 强制初始化session
+    from flask import session as flask_session
+    if not flask_session:
+        flask_session['_init'] = True
+        
     token = SecurityManager.generate_csrf_token()
-    logging.warning(f"🔧 Context processor: injecting csrf_token='{token}', session_id={session.get('_permanent', 'no-session')}")
+    session_info = f"keys={list(session.keys())}, permanent={session.permanent}"
+    logging.warning(f"🔧 Context processor: csrf_token='{token}', session_info=[{session_info}]")
     return dict(csrf_token=token)
 
 # Apply security headers middleware for hosting transparency
 @app.after_request
 def apply_security_headers(response):
     """Apply comprehensive security headers to all responses - UNIFIED APPROACH"""
+    logging.warning(f"🔧 after_request called for: {request.endpoint}")
+    
     # Security headers from configuration
     for header, value in app.config.get('SECURITY_HEADERS', {}).items():
         response.headers[header] = value
@@ -71,6 +100,8 @@ def apply_security_headers(response):
     # HTTPS enforcement for production
     if os.environ.get('FLASK_ENV') == 'production':
         response.headers['Strict-Transport-Security'] = f'max-age={app.config.get("HSTS_MAX_AGE", 31536000)}; includeSubDomains'
+    
+    # Note: Session cookies are added AFTER after_request, so we use WSGI middleware instead
     
     return response
 
@@ -594,7 +625,7 @@ def inject_translator():
 
 # 登录页面
 @app.route('/login', methods=['GET', 'POST'])
-@rate_limit(max_requests=5, window_minutes=15, feature_name="login")
+# @rate_limit(max_requests=5, window_minutes=15, feature_name="login")  # 🔧 临时禁用用于调试
 @SecurityManager.csrf_protect
 def login():
     """处理用户登录"""
@@ -602,6 +633,21 @@ def login():
     if session.get('authenticated'):
         return redirect(url_for('index'))
     
+    # 🔧 CSRF调试 - 详细cookie和token信息
+    if request.method == 'POST':
+        session_cookie_name = app.session_cookie_name
+        incoming_session_cookie = request.cookies.get(session_cookie_name)
+        csrf_token_from_form = request.form.get('csrf_token')
+        session_csrf_token = session.get('csrf_token')
+        
+        logging.warning(f"🔧 POST /login Cookie Debug:")
+        logging.warning(f"   - Session cookie name: {session_cookie_name}")
+        logging.warning(f"   - Incoming session cookie: {incoming_session_cookie}")
+        logging.warning(f"   - CSRF token from form: {csrf_token_from_form}")
+        logging.warning(f"   - CSRF token in session: {session_csrf_token}")
+        logging.warning(f"   - Session keys: {list(session.keys())}")
+        logging.warning(f"   - All request cookies: {dict(request.cookies)}")
+        
     # 处理表单提交
     if request.method == 'POST':
         email_or_username = request.form.get('email', '').strip()

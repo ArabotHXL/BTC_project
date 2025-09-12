@@ -9,7 +9,7 @@ import multiprocessing
 
 # Basic configuration
 bind = f"0.0.0.0:{os.environ.get('PORT', 5000)}"
-workers = min(multiprocessing.cpu_count() + 1, 3)  # Optimized for faster deployment startup
+workers = 1  # 🔧 单worker以解决session一致性问题（CSRF修复）
 worker_class = "sync"
 worker_connections = 1000
 max_requests = 1000

@@ -34,12 +34,16 @@ class Config:
     DB_RETRY_DELAY = 2  # seconds
     DB_CONNECTION_TIMEOUT = 60  # seconds
     
-    # 会话配置 - Replit开发环境优化
-    SESSION_COOKIE_SECURE = False  # 🔧 允许HTTP连接用于开发环境
-    SESSION_COOKIE_HTTPONLY = False  # 🔧 允许JavaScript访问以调试
+    # 会话配置 - Replit iframe环境修复
+    SESSION_COOKIE_SECURE = True   # 🔧 必须True以配合SameSite=None（现代浏览器要求）
+    SESSION_COOKIE_HTTPONLY = True  # 🔧 恢复安全设置
     SESSION_COOKIE_SAMESITE = 'None'  # 🔧 允许跨站点cookie（Replit iframe）
     SESSION_COOKIE_DOMAIN = None  # 🔧 允许跨域cookie
+    SESSION_COOKIE_PATH = '/'  # 🔧 确保cookie作用于整个站点
     PERMANENT_SESSION_LIFETIME = timedelta(hours=2)  # 2小时安全会话
+    
+    # 🔧 强制单worker以解决session一致性问题（开发环境）
+    GUNICORN_WORKERS = 1
     
     # 缓存配置
     CACHE_TYPE = 'simple'
