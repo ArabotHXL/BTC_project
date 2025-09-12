@@ -34,10 +34,11 @@ class Config:
     DB_RETRY_DELAY = 2  # seconds
     DB_CONNECTION_TIMEOUT = 60  # seconds
     
-    # 会话配置 - 托管透明性平台安全设置
-    SESSION_COOKIE_SECURE = True
-    SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Lax'
+    # 会话配置 - Replit开发环境优化
+    SESSION_COOKIE_SECURE = False  # 🔧 允许HTTP连接用于开发环境
+    SESSION_COOKIE_HTTPONLY = False  # 🔧 允许JavaScript访问以调试
+    SESSION_COOKIE_SAMESITE = 'None'  # 🔧 允许跨站点cookie（Replit iframe）
+    SESSION_COOKIE_DOMAIN = None  # 🔧 允许跨域cookie
     PERMANENT_SESSION_LIFETIME = timedelta(hours=2)  # 2小时安全会话
     
     # 缓存配置
