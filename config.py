@@ -7,12 +7,12 @@ from datetime import timedelta
 
 class Config:
     """基础配置类"""
-    # 基本设置 - 开发环境允许随机密钥
+    # 基本设置 - 使用稳定密钥确保session一致性
     SECRET_KEY = os.environ.get('SESSION_SECRET')
     if not SECRET_KEY:
-        import secrets
-        SECRET_KEY = secrets.token_hex(32)
-        logging.warning("No SESSION_SECRET set. Generated random key for this session.")
+        # 开发环境使用稳定密钥，避免session在进程重启间丢失
+        SECRET_KEY = "dev-bitcoin-mining-platform-stable-key-2025"
+        logging.warning("No SESSION_SECRET set. Using stable development key.")
     
     # 数据库配置 - 增强版连接参数
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')

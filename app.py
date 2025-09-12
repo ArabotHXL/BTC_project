@@ -795,7 +795,8 @@ def login():
             db.session.rollback()
         
         if login_successful:
-            # 登录成功，设置会话
+            # 登录成功，设置会话 - CRITICAL FIX: Mark session as permanent for iframe compatibility
+            session.permanent = True  # 🔧 关键修复：确保session在重定向后保持
             session['authenticated'] = True
             session['email'] = email
             
