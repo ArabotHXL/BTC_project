@@ -958,8 +958,8 @@ document.addEventListener('DOMContentLoaded', function() {
             updateNetworkAndMiningInfo(data);
             
             // ===== 3. 矿场主(Host)数据 - 仅当有相关权限和数据时显示 =====
-            // 如果数据中有profit字段，说明用户有权限查看矿场主数据
-            if (data.profit) {
+            // 如果数据中有host_profit或profit字段，说明用户有权限查看矿场主数据
+            if (data.host_profit || data.profit) {
                 updateHostData(data);
             }
             
@@ -1106,10 +1106,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 更新矿场主数据
     function updateHostData(data) {
+        console.log('[DEBUG] updateHostData called with data:', {
+            has_host_profit: !!data.host_profit,
+            has_profit: !!data.profit,
+            host_profit_monthly: data.host_profit?.monthly,
+            profit_monthly: data.profit?.monthly
+        });
+        
         // 检查用户角色权限 - 从页面元数据中获取
         var userRole = document.querySelector('meta[name="user-role"]')?.getAttribute('content');
         var allowedRoles = ['owner', 'admin', 'mining_site'];
         var hasAccess = allowedRoles.includes(userRole);
+        
+        console.log('[DEBUG] User role check:', {user_role: userRole, has_access: hasAccess});
         
         // 如果用户没有权限，直接返回，不更新矿场主数据
         if (!hasAccess) {
