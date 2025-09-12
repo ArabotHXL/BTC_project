@@ -59,7 +59,7 @@ class CookiePartitionMiddleware:
                 if k.lower() == 'set-cookie' and v.startswith(f"{self.session_cookie_name}="):
                     if 'SameSite=None' in v and 'Secure' in v and 'Partitioned' not in v:
                         v = v + '; Partitioned'
-                        logging.warning(f"🔧 Added Partitioned to session cookie via WSGI middleware")
+                        pass  # Partitioned attribute added successfully
                 new_headers.append((k, v))
             return start_response(status, new_headers, exc_info)
         return self.app(environ, _start_response)
@@ -101,7 +101,6 @@ def apply_security_headers(response):
     if os.environ.get('FLASK_ENV') == 'production':
         response.headers['Strict-Transport-Security'] = f'max-age={app.config.get("HSTS_MAX_AGE", 31536000)}; includeSubDomains'
     
-    # Note: Session cookies are added AFTER after_request, so we use WSGI middleware instead
     
     return response
 
@@ -633,21 +632,6 @@ def login():
     if session.get('authenticated'):
         return redirect(url_for('index'))
     
-    # 🔧 CSRF调试 - 详细cookie和token信息
-    if request.method == 'POST':
-        session_cookie_name = app.session_cookie_name
-        incoming_session_cookie = request.cookies.get(session_cookie_name)
-        csrf_token_from_form = request.form.get('csrf_token')
-        session_csrf_token = session.get('csrf_token')
-        
-        logging.warning(f"🔧 POST /login Cookie Debug:")
-        logging.warning(f"   - Session cookie name: {session_cookie_name}")
-        logging.warning(f"   - Incoming session cookie: {incoming_session_cookie}")
-        logging.warning(f"   - CSRF token from form: {csrf_token_from_form}")
-        logging.warning(f"   - CSRF token in session: {session_csrf_token}")
-        logging.warning(f"   - Session keys: {list(session.keys())}")
-        logging.warning(f"   - All request cookies: {dict(request.cookies)}")
-        
     # 处理表单提交
     if request.method == 'POST':
         email_or_username = request.form.get('email', '').strip()

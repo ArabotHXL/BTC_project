@@ -31,34 +31,24 @@ class SecurityManager:
     
     @staticmethod
     def generate_csrf_token():
-        """生成CSRF令牌 - 强制session建立"""
-        # 🔧 强制建立session以解决Replit iframe问题
-        session.permanent = True  # 强制保存session
-        session['_csrf_init'] = True  # 确保session被修改
+        """生成CSRF令牌 - iframe兼容性配置"""
+        # 强制建立permanent session以解决iframe环境问题
+        session.permanent = True
+        session['_csrf_init'] = True
         
         if 'csrf_token' not in session:
             session['csrf_token'] = secrets.token_hex(16)
-            logger.warning(f"🔧 Generated NEW CSRF token: {session['csrf_token']}")
-        else:
-            logger.warning(f"🔧 Using EXISTING CSRF token: {session['csrf_token']}")
         
-        # 确保session标记修改
         session.modified = True
-        logger.warning(f"🔧 Session state: permanent={session.permanent}, modified={session.modified}")
         return session['csrf_token']
     
     @staticmethod
     def validate_csrf_token(token):
         """验证CSRF令牌"""
-        logger.warning(f"🔧 CSRF validation: received token='{token}', session has csrf_token={('csrf_token' in session)}")
         if 'csrf_token' not in session:
-            logger.warning(f"🔧 CSRF validation failed: No csrf_token in session. Session keys: {list(session.keys())}")
             return False
         session_token = session['csrf_token']
-        logger.warning(f"🔧 CSRF validation: session token='{session_token}', comparing with received='{token}'")
-        result = secrets.compare_digest(session_token, token)
-        logger.warning(f"🔧 CSRF validation result: {result}")
-        return result
+        return secrets.compare_digest(session_token, token)
     
     @staticmethod
     def csrf_protect(f):
@@ -66,12 +56,12 @@ class SecurityManager:
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if request.method in ['POST', 'PUT', 'DELETE', 'PATCH']:
+                # Extract CSRF token from multiple sources
                 token = request.form.get('csrf_token') or \
                         request.headers.get('X-CSRF-Token') or \
                         request.json.get('csrf_token') if request.is_json else None
                 
                 if not token or not SecurityManager.validate_csrf_token(token):
-                    logger.warning(f"CSRF token validation failed for {request.endpoint}")
                     abort(403, 'CSRF token validation failed')
             
             return f(*args, **kwargs)
