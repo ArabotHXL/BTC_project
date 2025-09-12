@@ -77,9 +77,14 @@ class CookiePartitionMiddleware:
             new_headers = []
             for k, v in headers:
                 if k.lower() == 'set-cookie' and v.startswith(f"{self.session_cookie_name}="):
-                    if 'SameSite=None' in v and 'Secure' in v and 'Partitioned' not in v:
-                        v = v + '; Partitioned'
-                        pass  # Partitioned attribute added successfully
+                    # 强化iframe兼容性 - 确保所有必要属性
+                    if 'SameSite=None' in v and 'Secure' in v:
+                        # 添加Partitioned属性用于Chrome CHIPS
+                        if 'Partitioned' not in v:
+                            v = v + '; Partitioned'
+                        # 确保路径正确
+                        if 'Path=/' not in v:
+                            v = v + '; Path=/'
                 new_headers.append((k, v))
             return start_response(status, new_headers, exc_info)
         return self.app(environ, _start_response)
