@@ -56,10 +56,19 @@ class SecurityManager:
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if request.method in ['POST', 'PUT', 'DELETE', 'PATCH']:
-                # Extract CSRF token from multiple sources
-                token = request.form.get('csrf_token') or \
-                        request.headers.get('X-CSRF-Token') or \
-                        request.json.get('csrf_token') if request.is_json else None
+                # Extract CSRF token from multiple sources - FIXED for iframe compatibility
+                token = None
+                try:
+                    # Primary method: direct dict access (Flask form handling quirk fix)
+                    if 'csrf_token' in request.form:
+                        token = request.form['csrf_token']
+                    # Fallback methods
+                    elif request.headers.get('X-CSRF-Token'):
+                        token = request.headers.get('X-CSRF-Token')
+                    elif request.is_json and request.json and 'csrf_token' in request.json:
+                        token = request.json['csrf_token']
+                except Exception:
+                    pass  # Continue with token validation
                 
                 if not token or not SecurityManager.validate_csrf_token(token):
                     abort(403, 'CSRF token validation failed')

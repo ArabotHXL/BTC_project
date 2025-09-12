@@ -46,6 +46,26 @@ db.init_app(app)
 # Initialize Security Manager with CSRF protection
 security_manager = SecurityManager(app)
 
+# 🔧 CRITICAL FIX: Disable Flask-WTF automatic CSRF protection to prevent conflicts
+# We use custom CSRF protection in SecurityManager
+app.config['WTF_CSRF_ENABLED'] = False
+app.config['SECRET_KEY'] = app.secret_key  # Ensure SECRET_KEY is set for Flask-WTF
+
+# Force disable Flask-WTF global CSRF protection that may auto-activate
+try:
+    from flask_wtf.csrf import CSRFProtect
+    # Prevent CSRFProtect from auto-initializing
+    if hasattr(CSRFProtect, '_exempt_views'):
+        CSRFProtect._exempt_views = set()
+    # Make sure no CSRFProtect instance is attached to our app
+    if hasattr(app, 'extensions') and 'csrf' in app.extensions:
+        del app.extensions['csrf']
+    logging.info("Flask-WTF CSRF protection forcefully disabled")
+except ImportError:
+    logging.info("Flask-WTF not available - no conflict")
+except Exception as e:
+    logging.warning(f"Error disabling Flask-WTF: {e}")
+
 # 🔧 CRITICAL FIX: WSGI middleware to add Partitioned attribute for Chrome 3PCD iframe support
 class CookiePartitionMiddleware:
     def __init__(self, app, session_cookie_name):
