@@ -994,6 +994,11 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
                 'monthly': client_monthly_profit,
                 'yearly': client_yearly_profit
             },
+            'host_profit': {
+                'daily': daily_profit,
+                'monthly': monthly_profit,
+                'yearly': yearly_profit
+            },
             'client_electricity_cost': {
                 'daily': client_daily_electricity_expense,
                 'monthly': client_electricity_expense,

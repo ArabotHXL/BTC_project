@@ -310,8 +310,17 @@ document.addEventListener('DOMContentLoaded', function() {
         // Top Cards - 顶部卡片
         // Host Profit Card (矿场主月度收益)
         var hostProfitCard = document.getElementById('host-profit-card');
-        if (hostProfitCard && data.profit && data.profit.host_monthly) {
-            hostProfitCard.textContent = '$' + data.profit.host_monthly.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        console.log('[CALCULATOR] hostProfitCard element:', hostProfitCard);
+        if (hostProfitCard && data.host_profit && data.host_profit.monthly) {
+            console.log('[CALCULATOR] Updating host profit with:', data.host_profit.monthly);
+            hostProfitCard.textContent = '$' + data.host_profit.monthly.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            console.log('[CALCULATOR] hostProfitCard after update:', hostProfitCard.textContent);
+        } else {
+            console.log('[CALCULATOR] Host profit update failed:', {
+                element_exists: !!hostProfitCard,
+                host_profit_exists: !!data.host_profit,
+                monthly_exists: data.host_profit ? !!data.host_profit.monthly : false
+            });
         }
         
         // Client Profit Card (客户月度收益)
