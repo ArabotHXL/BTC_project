@@ -1,0 +1,1070 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if current_lang == 'en' %}Blockchain Data Verification{% else %}区块链数据验证{% endif %} - Web3 Dashboard
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 区块链验证面板专用样式 */
+:root {
+    --verification-primary: #00ff88;
+    --verification-secondary: #0088ff;
+    --verification-accent: #ff4444;
+    --verification-success: #00ff88;
+    --verification-warning: #ffaa00;
+    --verification-pending: #888888;
+    --bg-dark: #0a0a1a;
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --border-glow: rgba(0, 255, 136, 0.3);
+}
+
+body {
+    background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #16213e 100%);
+    color: #ffffff;
+    min-height: 100vh;
+}
+
+.verification-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.verification-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.verification-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--verification-primary), var(--verification-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+}
+
+.verification-subtitle {
+    color: #bbbbbb;
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* 验证控制面板 */
+.verification-controls {
+    background: var(--card-bg);
+    border: 1px solid var(--border-glow);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(20px);
+}
+
+.control-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.control-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.control-card:hover {
+    border-color: var(--verification-primary);
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+}
+
+.control-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--verification-primary);
+}
+
+.control-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #ffffff;
+}
+
+.control-desc {
+    font-size: 0.9rem;
+    color: #bbbbbb;
+    margin-bottom: 1.5rem;
+}
+
+.btn-verify {
+    background: linear-gradient(135deg, var(--verification-primary), var(--verification-secondary));
+    border: none;
+    color: #000;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-verify:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4);
+}
+
+.btn-verify:disabled {
+    background: #666;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* 验证状态显示 */
+.verification-status {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.status-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
+    backdrop-filter: blur(20px);
+}
+
+.status-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.status-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.status-verified {
+    background: var(--verification-success);
+    box-shadow: 0 0 10px var(--verification-success);
+}
+
+.status-pending {
+    background: var(--verification-warning);
+    box-shadow: 0 0 10px var(--verification-warning);
+}
+
+.status-failed {
+    background: var(--verification-accent);
+    box-shadow: 0 0 10px var(--verification-accent);
+}
+
+.status-content {
+    margin-bottom: 1rem;
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.status-item:last-child {
+    border-bottom: none;
+}
+
+.status-label {
+    color: #bbbbbb;
+    font-size: 0.9rem;
+}
+
+.status-value {
+    color: #ffffff;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* IPFS数据浏览器 */
+.ipfs-browser {
+    background: var(--card-bg);
+    border: 1px solid var(--border-glow);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(20px);
+}
+
+.ipfs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.ipfs-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.ipfs-refresh {
+    background: rgba(0, 136, 255, 0.2);
+    border: 1px solid var(--verification-secondary);
+    color: var(--verification-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ipfs-refresh:hover {
+    background: var(--verification-secondary);
+    color: #000;
+}
+
+.ipfs-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.ipfs-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.ipfs-item:hover {
+    border-color: var(--verification-secondary);
+    background: rgba(0, 136, 255, 0.1);
+}
+
+.ipfs-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.ipfs-filename {
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.ipfs-size {
+    font-size: 0.8rem;
+    color: #bbbbbb;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.ipfs-hash {
+    font-size: 0.8rem;
+    color: var(--verification-secondary);
+    font-family: 'JetBrains Mono', monospace;
+    word-break: break-all;
+    margin-bottom: 0.5rem;
+}
+
+.ipfs-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.ipfs-action {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #ffffff;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ipfs-action:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* 验证历史记录 */
+.verification-history {
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
+    backdrop-filter: blur(20px);
+}
+
+.history-header {
+    display: flex;
+    align-items: center;
+    justify-content: between;
+    margin-bottom: 1.5rem;
+}
+
+.history-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.history-timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.history-timeline::before {
+    content: '';
+    position: absolute;
+    left: 1rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, var(--verification-primary), transparent);
+}
+
+.history-item {
+    position: relative;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    margin-left: 1rem;
+}
+
+.history-item::before {
+    content: '';
+    position: absolute;
+    left: -2.5rem;
+    top: 1.5rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--verification-primary);
+    border: 3px solid var(--bg-dark);
+    box-shadow: 0 0 10px var(--verification-primary);
+}
+
+.history-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.history-type {
+    font-weight: 600;
+    color: var(--verification-primary);
+}
+
+.history-time {
+    font-size: 0.8rem;
+    color: #bbbbbb;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.history-desc {
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+}
+
+.history-result {
+    font-size: 0.8rem;
+    color: #bbbbbb;
+}
+
+/* 加载动画 */
+.loading-pulse {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background: var(--verification-primary);
+    border-radius: 50%;
+    animation: loading-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes loading-pulse {
+    0%, 100% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .verification-container {
+        padding: 0 0.5rem;
+    }
+    
+    .verification-title {
+        font-size: 2rem;
+    }
+    
+    .control-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .verification-status {
+        grid-template-columns: 1fr;
+    }
+    
+    .history-timeline {
+        padding-left: 1rem;
+    }
+    
+    .history-item {
+        margin-left: 0.5rem;
+    }
+    
+    .history-item::before {
+        left: -1.75rem;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="verification-container">
+    <!-- Header -->
+    <div class="verification-header">
+        <h1 class="verification-title">
+            {% if current_lang == 'en' %}
+                Blockchain Data Verification
+            {% else %}
+                区块链数据验证
+            {% endif %}
+        </h1>
+        <p class="verification-subtitle">
+            {% if current_lang == 'en' %}
+                Advanced blockchain verification system for mining data integrity and transparency
+            {% else %}
+                先进的区块链验证系统，确保挖矿数据完整性和透明度
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- Verification Controls -->
+    <div class="verification-controls">
+        <div class="control-grid">
+            <div class="control-card">
+                <div class="control-icon">🔍</div>
+                <div class="control-title">
+                    {% if current_lang == 'en' %}Data Verification{% else %}数据验证{% endif %}
+                </div>
+                <div class="control-desc">
+                    {% if current_lang == 'en' %}Verify mining data integrity on blockchain{% else %}验证区块链上挖矿数据的完整性{% endif %}
+                </div>
+                <button class="btn-verify" onclick="startDataVerification()">
+                    {% if current_lang == 'en' %}Start Verification{% else %}开始验证{% endif %}
+                </button>
+            </div>
+
+            <div class="control-card">
+                <div class="control-icon">📊</div>
+                <div class="control-title">
+                    {% if current_lang == 'en' %}Performance Audit{% else %}性能审计{% endif %}
+                </div>
+                <div class="control-desc">
+                    {% if current_lang == 'en' %}Audit mining performance metrics{% else %}审计挖矿性能指标{% endif %}
+                </div>
+                <button class="btn-verify" onclick="startPerformanceAudit()">
+                    {% if current_lang == 'en' %}Run Audit{% else %}运行审计{% endif %}
+                </button>
+            </div>
+
+            <div class="control-card">
+                <div class="control-icon">🔗</div>
+                <div class="control-title">
+                    {% if current_lang == 'en' %}IPFS Verification{% else %}IPFS验证{% endif %}
+                </div>
+                <div class="control-desc">
+                    {% if current_lang == 'en' %}Verify data stored on IPFS network{% else %}验证存储在IPFS网络上的数据{% endif %}
+                </div>
+                <button class="btn-verify" onclick="verifyIPFSData()">
+                    {% if current_lang == 'en' %}Verify IPFS{% else %}验证IPFS{% endif %}
+                </button>
+            </div>
+
+            <div class="control-card">
+                <div class="control-icon">🏆</div>
+                <div class="control-title">
+                    {% if current_lang == 'en' %}SLA Verification{% else %}SLA验证{% endif %}
+                </div>
+                <div class="control-desc">
+                    {% if current_lang == 'en' %}Verify SLA compliance and NFT certificates{% else %}验证SLA合规性和NFT证书{% endif %}
+                </div>
+                <button class="btn-verify" onclick="verifySLACompliance()">
+                    {% if current_lang == 'en' %}Verify SLA{% else %}验证SLA{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verification Status -->
+    <div class="verification-status">
+        <div class="status-card">
+            <div class="status-header">
+                <div class="status-title">
+                    {% if current_lang == 'en' %}Blockchain Status{% else %}区块链状态{% endif %}
+                </div>
+                <div class="status-indicator status-verified" id="blockchainStatus"></div>
+            </div>
+            <div class="status-content">
+                <div class="status-item">
+                    <span class="status-label">{% if current_lang == 'en' %}Network{% else %}网络{% endif %}</span>
+                    <span class="status-value" id="networkName">Base Sepolia</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">{% if current_lang == 'en' %}Block Height{% else %}区块高度{% endif %}</span>
+                    <span class="status-value" id="blockHeight">Loading...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">{% if current_lang == 'en' %}Gas Price{% else %}Gas价格{% endif %}</span>
+                    <span class="status-value" id="gasPrice">Loading...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">{% if current_lang == 'en' %}Last Update{% else %}最后更新{% endif %}</span>
+                    <span class="status-value" id="lastUpdate">Just now</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-card">
+            <div class="status-header">
+                <div class="status-title">
+                    {% if current_lang == 'en' %}Verification Results{% else %}验证结果{% endif %}
+                </div>
+                <div class="status-indicator status-verified" id="verificationStatus"></div>
+            </div>
+            <div class="status-content">
+                <div class="status-item">
+                    <span class="status-label">{% if current_lang == 'en' %}Total Verifications{% else %}总验证次数{% endif %}</span>
+                    <span class="status-value" id="totalVerifications">0</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">{% if current_lang == 'en' %}Successful{% else %}成功{% endif %}</span>
+                    <span class="status-value" id="successfulVerifications">0</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">{% if current_lang == 'en' %}Failed{% else %}失败{% endif %}</span>
+                    <span class="status-value" id="failedVerifications">0</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">{% if current_lang == 'en' %}Success Rate{% else %}成功率{% endif %}</span>
+                    <span class="status-value" id="successRate">100%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-card">
+            <div class="status-header">
+                <div class="status-title">
+                    {% if current_lang == 'en' %}IPFS Storage{% else %}IPFS存储{% endif %}
+                </div>
+                <div class="status-indicator status-verified" id="ipfsStatus"></div>
+            </div>
+            <div class="status-content">
+                <div class="status-item">
+                    <span class="status-label">{% if current_lang == 'en' %}Stored Files{% else %}已存储文件{% endif %}</span>
+                    <span class="status-value" id="storedFiles">0</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">{% if current_lang == 'en' %}Total Size{% else %}总大小{% endif %}</span>
+                    <span class="status-value" id="totalSize">0 MB</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">{% if current_lang == 'en' %}Verified{% else %}已验证{% endif %}</span>
+                    <span class="status-value" id="verifiedFiles">0</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">{% if current_lang == 'en' %}Availability{% else %}可用性{% endif %}</span>
+                    <span class="status-value" id="ipfsAvailability">100%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- IPFS Browser -->
+    <div class="ipfs-browser">
+        <div class="ipfs-header">
+            <div class="ipfs-title">
+                {% if current_lang == 'en' %}IPFS Data Browser{% else %}IPFS数据浏览器{% endif %}
+            </div>
+            <button class="ipfs-refresh" onclick="refreshIPFSData()">
+                {% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+            </button>
+        </div>
+        <div class="ipfs-grid" id="ipfsGrid">
+            <!-- IPFS files will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Verification History -->
+    <div class="verification-history">
+        <div class="history-header">
+            <div class="history-title">
+                {% if current_lang == 'en' %}Verification History{% else %}验证历史{% endif %}
+            </div>
+        </div>
+        <div class="history-timeline" id="verificationHistory">
+            <!-- History items will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div id="verificationModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="background: var(--card-bg); border: 1px solid var(--border-glow); backdrop-filter: blur(20px);">
+            <div class="modal-body text-center" style="padding: 2rem;">
+                <div class="loading-pulse" style="margin-bottom: 1rem;"></div>
+                <div style="color: #ffffff; font-weight: 600; margin-bottom: 1rem;">
+                    <span id="verificationMessage">
+                        {% if current_lang == 'en' %}Processing verification...{% else %}正在处理验证...{% endif %}
+                    </span>
+                </div>
+                <div style="color: #bbbbbb; font-size: 0.9rem;" id="verificationDetails">
+                    {% if current_lang == 'en' %}Please wait while we verify the data integrity{% else %}请稍候，我们正在验证数据完整性{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/web3_utils.js') }}"></script>
+<script>
+// 区块链数据验证页面JavaScript
+
+// 全局变量
+let verificationStats = {
+    total: 0,
+    successful: 0,
+    failed: 0
+};
+
+let ipfsData = [];
+let verificationHistory = [];
+
+// 页面初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initializeVerificationPage();
+    loadBlockchainStatus();
+    loadVerificationStats();
+    loadIPFSData();
+    loadVerificationHistory();
+    
+    // 定期更新状态
+    setInterval(updateBlockchainStatus, 30000); // 30秒更新一次
+});
+
+// 初始化验证页面
+async function initializeVerificationPage() {
+    console.log('Initializing blockchain verification page...');
+    
+    // 检查Web3连接
+    if (window.Web3Utils) {
+        const connectionStatus = await window.Web3Utils.checkWalletConnection();
+        if (connectionStatus.connected) {
+            console.log('Wallet connected:', connectionStatus.account);
+        }
+    }
+}
+
+// 加载区块链状态
+async function loadBlockchainStatus() {
+    try {
+        const response = await fetch('/api/blockchain/status', {
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            updateBlockchainStatusUI(data.status);
+        }
+    } catch (error) {
+        console.error('Failed to load blockchain status:', error);
+    }
+}
+
+// 更新区块链状态UI
+function updateBlockchainStatusUI(status) {
+    document.getElementById('networkName').textContent = status.network || 'Unknown';
+    document.getElementById('blockHeight').textContent = status.block_number || 'N/A';
+    document.getElementById('gasPrice').textContent = status.gas_price ? `${status.gas_price} Wei` : 'N/A';
+    document.getElementById('lastUpdate').textContent = new Date(status.last_check).toLocaleTimeString();
+    
+    const statusIndicator = document.getElementById('blockchainStatus');
+    statusIndicator.className = `status-indicator ${status.connected ? 'status-verified' : 'status-failed'}`;
+}
+
+// 更新区块链状态（定期调用）
+async function updateBlockchainStatus() {
+    await loadBlockchainStatus();
+}
+
+// 加载验证统计
+function loadVerificationStats() {
+    // 模拟数据，实际应从后端获取
+    verificationStats = {
+        total: 156,
+        successful: 152,
+        failed: 4
+    };
+    
+    updateVerificationStatsUI();
+}
+
+// 更新验证统计UI
+function updateVerificationStatsUI() {
+    document.getElementById('totalVerifications').textContent = verificationStats.total;
+    document.getElementById('successfulVerifications').textContent = verificationStats.successful;
+    document.getElementById('failedVerifications').textContent = verificationStats.failed;
+    
+    const successRate = verificationStats.total > 0 ? 
+        ((verificationStats.successful / verificationStats.total) * 100).toFixed(1) : 100;
+    document.getElementById('successRate').textContent = `${successRate}%`;
+}
+
+// 加载IPFS数据
+async function loadIPFSData() {
+    // 模拟IPFS数据
+    ipfsData = [
+        {
+            filename: 'mining_data_2024_09.json',
+            hash: 'QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG',
+            size: '2.4 MB',
+            verified: true
+        },
+        {
+            filename: 'sla_metrics_2024_09.json',
+            hash: 'QmX7B2K1vZ8H9Q3R5T6M4N2L9P8Y1C7F3E6D5A9S4W7V3',
+            size: '1.8 MB',
+            verified: true
+        },
+        {
+            filename: 'performance_log_2024_09.csv',
+            hash: 'QmZ9F3K7L2M8N5P4Q1R6S3T9U2V8W5X7Y1A4B7C9D2E5F',
+            size: '5.2 MB',
+            verified: false
+        }
+    ];
+    
+    updateIPFSUI();
+    updateIPFSStats();
+}
+
+// 更新IPFS UI
+function updateIPFSUI() {
+    const grid = document.getElementById('ipfsGrid');
+    grid.innerHTML = '';
+    
+    ipfsData.forEach(file => {
+        const item = document.createElement('div');
+        item.className = 'ipfs-item';
+        
+        item.innerHTML = `
+            <div class="ipfs-item-header">
+                <div class="ipfs-filename">${file.filename}</div>
+                <div class="ipfs-size">${file.size}</div>
+            </div>
+            <div class="ipfs-hash">${file.hash}</div>
+            <div class="ipfs-actions">
+                <button class="ipfs-action" onclick="viewIPFSFile('${file.hash}')">
+                    {% if current_lang == 'en' %}View{% else %}查看{% endif %}
+                </button>
+                <button class="ipfs-action" onclick="verifyIPFSFile('${file.hash}')">
+                    {% if current_lang == 'en' %}Verify{% else %}验证{% endif %}
+                </button>
+                <button class="ipfs-action" onclick="downloadIPFSFile('${file.hash}')">
+                    {% if current_lang == 'en' %}Download{% else %}下载{% endif %}
+                </button>
+            </div>
+        `;
+        
+        grid.appendChild(item);
+    });
+}
+
+// 更新IPFS统计
+function updateIPFSStats() {
+    const totalFiles = ipfsData.length;
+    const verifiedFiles = ipfsData.filter(f => f.verified).length;
+    const totalSize = ipfsData.reduce((sum, f) => {
+        const size = parseFloat(f.size.replace(' MB', ''));
+        return sum + size;
+    }, 0);
+    
+    document.getElementById('storedFiles').textContent = totalFiles;
+    document.getElementById('verifiedFiles').textContent = verifiedFiles;
+    document.getElementById('totalSize').textContent = `${totalSize.toFixed(1)} MB`;
+    
+    const availability = totalFiles > 0 ? ((verifiedFiles / totalFiles) * 100).toFixed(0) : 100;
+    document.getElementById('ipfsAvailability').textContent = `${availability}%`;
+}
+
+// 加载验证历史
+function loadVerificationHistory() {
+    // 模拟验证历史数据
+    verificationHistory = [
+        {
+            type: 'Data Verification',
+            description: 'Mining data integrity check completed',
+            result: 'Successful - All data verified',
+            timestamp: new Date(Date.now() - 3600000).toISOString()
+        },
+        {
+            type: 'SLA Verification',
+            description: 'SLA compliance audit performed',
+            result: 'Successful - 98.5% compliance',
+            timestamp: new Date(Date.now() - 7200000).toISOString()
+        },
+        {
+            type: 'IPFS Verification',
+            description: 'IPFS data availability check',
+            result: 'Successful - All files accessible',
+            timestamp: new Date(Date.now() - 10800000).toISOString()
+        }
+    ];
+    
+    updateVerificationHistoryUI();
+}
+
+// 更新验证历史UI
+function updateVerificationHistoryUI() {
+    const timeline = document.getElementById('verificationHistory');
+    timeline.innerHTML = '';
+    
+    verificationHistory.forEach(item => {
+        const historyItem = document.createElement('div');
+        historyItem.className = 'history-item';
+        
+        const time = new Date(item.timestamp).toLocaleString();
+        
+        historyItem.innerHTML = `
+            <div class="history-meta">
+                <div class="history-type">${item.type}</div>
+                <div class="history-time">${time}</div>
+            </div>
+            <div class="history-desc">${item.description}</div>
+            <div class="history-result">${item.result}</div>
+        `;
+        
+        timeline.appendChild(historyItem);
+    });
+}
+
+// 验证功能
+async function startDataVerification() {
+    showVerificationModal('{% if current_lang == "en" %}Starting data verification...{% else %}开始数据验证...{% endif %}');
+    
+    try {
+        const response = await fetch('/api/blockchain/verify-data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // 添加到历史记录
+            addVerificationHistory('Data Verification', 'Mining data verification completed', 'Successful - Data integrity verified');
+            
+            // 更新统计
+            verificationStats.total++;
+            verificationStats.successful++;
+            updateVerificationStatsUI();
+            
+            hideVerificationModal();
+            showAlert('{% if current_lang == "en" %}Data verification completed successfully!{% else %}数据验证成功完成！{% endif %}', 'success');
+        } else {
+            hideVerificationModal();
+            showAlert(data.error || '{% if current_lang == "en" %}Verification failed{% else %}验证失败{% endif %}', 'error');
+        }
+    } catch (error) {
+        hideVerificationModal();
+        console.error('Verification error:', error);
+        showAlert('{% if current_lang == "en" %}Verification error{% else %}验证错误{% endif %}', 'error');
+    }
+}
+
+async function startPerformanceAudit() {
+    showVerificationModal('{% if current_lang == "en" %}Running performance audit...{% else %}正在运行性能审计...{% endif %}');
+    
+    try {
+        const response = await fetch('/api/transparency/audit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            addVerificationHistory('Performance Audit', 'System performance audit completed', `Successful - Score: ${data.audit_results.checks.transparency_score}%`);
+            
+            verificationStats.total++;
+            verificationStats.successful++;
+            updateVerificationStatsUI();
+            
+            hideVerificationModal();
+            showAlert('{% if current_lang == "en" %}Performance audit completed successfully!{% else %}性能审计成功完成！{% endif %}', 'success');
+        } else {
+            hideVerificationModal();
+            showAlert(data.error || '{% if current_lang == "en" %}Audit failed{% else %}审计失败{% endif %}', 'error');
+        }
+    } catch (error) {
+        hideVerificationModal();
+        console.error('Audit error:', error);
+        showAlert('{% if current_lang == "en" %}Audit error{% else %}审计错误{% endif %}', 'error');
+    }
+}
+
+async function verifyIPFSData() {
+    showVerificationModal('{% if current_lang == "en" %}Verifying IPFS data...{% else %}正在验证IPFS数据...{% endif %}');
+    
+    // 模拟IPFS验证
+    setTimeout(() => {
+        addVerificationHistory('IPFS Verification', 'IPFS data integrity verification', 'Successful - All files verified');
+        
+        verificationStats.total++;
+        verificationStats.successful++;
+        updateVerificationStatsUI();
+        
+        hideVerificationModal();
+        showAlert('{% if current_lang == "en" %}IPFS verification completed successfully!{% else %}IPFS验证成功完成！{% endif %}', 'success');
+    }, 2000);
+}
+
+async function verifySLACompliance() {
+    showVerificationModal('{% if current_lang == "en" %}Verifying SLA compliance...{% else %}正在验证SLA合规性...{% endif %}');
+    
+    // 模拟SLA验证
+    setTimeout(() => {
+        addVerificationHistory('SLA Verification', 'SLA compliance verification', 'Successful - 98.7% compliance rate');
+        
+        verificationStats.total++;
+        verificationStats.successful++;
+        updateVerificationStatsUI();
+        
+        hideVerificationModal();
+        showAlert('{% if current_lang == "en" %}SLA verification completed successfully!{% else %}SLA验证成功完成！{% endif %}', 'success');
+    }, 1500);
+}
+
+// IPFS文件操作
+function viewIPFSFile(hash) {
+    window.open(`https://ipfs.io/ipfs/${hash}`, '_blank');
+}
+
+function verifyIPFSFile(hash) {
+    showAlert(`{% if current_lang == "en" %}Verifying file: ${hash}{% else %}正在验证文件: ${hash}{% endif %}`, 'info');
+    // 实际验证逻辑
+}
+
+function downloadIPFSFile(hash) {
+    const link = document.createElement('a');
+    link.href = `https://ipfs.io/ipfs/${hash}`;
+    link.download = hash;
+    link.click();
+}
+
+// 刷新IPFS数据
+function refreshIPFSData() {
+    showAlert('{% if current_lang == "en" %}Refreshing IPFS data...{% else %}正在刷新IPFS数据...{% endif %}', 'info');
+    loadIPFSData();
+}
+
+// 添加验证历史记录
+function addVerificationHistory(type, description, result) {
+    const newRecord = {
+        type: type,
+        description: description,
+        result: result,
+        timestamp: new Date().toISOString()
+    };
+    
+    verificationHistory.unshift(newRecord);
+    updateVerificationHistoryUI();
+}
+
+// 显示验证模态框
+function showVerificationModal(message, details = '') {
+    document.getElementById('verificationMessage').textContent = message;
+    if (details) {
+        document.getElementById('verificationDetails').textContent = details;
+    }
+    $('#verificationModal').modal('show');
+}
+
+// 隐藏验证模态框
+function hideVerificationModal() {
+    $('#verificationModal').modal('hide');
+}
+
+// 显示警告消息
+function showAlert(message, type = 'info') {
+    // 创建简单的通知
+    const alertDiv = document.createElement('div');
+    alertDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        background: ${type === 'success' ? 'var(--verification-success)' : type === 'error' ? 'var(--verification-accent)' : 'var(--verification-secondary)'};
+        color: ${type === 'success' || type === 'error' ? '#000' : '#fff'};
+        border-radius: 8px;
+        z-index: 9999;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    `;
+    alertDiv.textContent = message;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

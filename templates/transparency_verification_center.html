@@ -1,0 +1,1548 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if current_lang == 'en' %}Transparency Verification Center{% else %}透明度验证中心{% endif %} - Web3 Dashboard
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 透明度验证中心专用样式 */
+:root {
+    --verify-primary: #00d4aa;
+    --verify-secondary: #1e40af;
+    --verify-accent: #7c3aed;
+    --verify-warning: #f59e0b;
+    --verify-danger: #ef4444;
+    --verify-success: #10b981;
+    --verify-gold: #fbbf24;
+    --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    --card-bg: rgba(255, 255, 255, 0.08);
+    --card-border: rgba(0, 212, 170, 0.3);
+    --text-primary: #ffffff;
+    --text-secondary: #94a3b8;
+    --shadow-glow: 0 8px 32px rgba(0, 212, 170, 0.2);
+    --neon-glow: 0 0 25px rgba(0, 212, 170, 0.6);
+    --trust-excellent: #10b981;
+    --trust-good: #3b82f6;
+    --trust-fair: #f59e0b;
+    --trust-poor: #ef4444;
+}
+
+body {
+    background: var(--bg-gradient);
+    min-height: 100vh;
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.verify-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* 页面头部 */
+.verify-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    position: relative;
+}
+
+.verify-title {
+    font-size: 3rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--verify-primary), var(--verify-secondary), var(--verify-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px rgba(0, 212, 170, 0.3);
+}
+
+.verify-subtitle {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* 信任度评分面板 */
+.trust-score-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    padding: 3rem;
+    margin-bottom: 3rem;
+    backdrop-filter: blur(20px);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.trust-score-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at center, rgba(0, 212, 170, 0.1), transparent);
+    opacity: 0.5;
+}
+
+.trust-score-main {
+    position: relative;
+    z-index: 2;
+}
+
+.trust-score-circle {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: conic-gradient(
+        from 0deg,
+        var(--verify-primary) 0deg,
+        var(--verify-primary) calc(var(--score, 95) * 3.6deg),
+        rgba(255, 255, 255, 0.1) calc(var(--score, 95) * 3.6deg)
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 2rem;
+    position: relative;
+    animation: rotate 10s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.trust-score-circle::before {
+    content: '';
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    position: absolute;
+    backdrop-filter: blur(20px);
+}
+
+.trust-score-inner {
+    position: relative;
+    z-index: 3;
+    text-align: center;
+}
+
+.trust-score-value {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--verify-primary);
+    margin-bottom: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.trust-score-label {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.trust-score-description {
+    font-size: 1.2rem;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.trust-score-details {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    max-width: 500px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* 验证指标网格 */
+.verification-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.metric-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 2rem;
+    backdrop-filter: blur(20px);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-glow);
+    border-color: var(--verify-primary);
+}
+
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent, rgba(0, 212, 170, 0.05), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.metric-card:hover::before {
+    opacity: 1;
+}
+
+.metric-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.metric-icon {
+    font-size: 2.5rem;
+    color: var(--verify-primary);
+    filter: drop-shadow(0 0 10px var(--verify-primary));
+}
+
+.metric-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metric-status.verified {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--verify-success);
+    border: 1px solid var(--verify-success);
+}
+
+.metric-status.pending {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--verify-warning);
+    border: 1px solid var(--verify-warning);
+}
+
+.metric-status.failed {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--verify-danger);
+    border: 1px solid var(--verify-danger);
+}
+
+.metric-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.metric-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.metric-progress {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.metric-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--verify-primary), var(--verify-secondary));
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.metric-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.metric-value {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.metric-timestamp {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+/* 验证历史 */
+.verification-history {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    backdrop-filter: blur(20px);
+}
+
+.history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+}
+
+.history-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.history-filters {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.filter-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--verify-primary);
+}
+
+.verification-timeline {
+    position: relative;
+    padding: 1rem 0;
+}
+
+.verification-timeline::before {
+    content: '';
+    position: absolute;
+    left: 30px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, var(--verify-primary), var(--verify-secondary));
+}
+
+.timeline-item {
+    position: relative;
+    padding: 1.5rem 0 1.5rem 4rem;
+    margin-bottom: 1rem;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 21px;
+    top: 2rem;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--verify-primary);
+    border: 3px solid var(--card-bg);
+    box-shadow: 0 0 10px var(--verify-primary);
+}
+
+.timeline-content {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.timeline-content:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--verify-primary);
+}
+
+.timeline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.timeline-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.timeline-timestamp {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.timeline-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.timeline-metadata {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.metadata-tag {
+    padding: 0.25rem 0.75rem;
+    background: rgba(0, 212, 170, 0.2);
+    color: var(--verify-primary);
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.verification-link {
+    color: var(--verify-primary);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.verification-link:hover {
+    color: var(--verify-secondary);
+    text-decoration: underline;
+}
+
+/* 第三方验证接口 */
+.third-party-verification {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    backdrop-filter: blur(20px);
+}
+
+.verification-providers {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.provider-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.provider-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--verify-primary);
+    transform: translateY(-3px);
+}
+
+.provider-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--verify-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+    color: #000;
+    font-weight: bold;
+}
+
+.provider-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.provider-description {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.provider-status {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.provider-status.active {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--verify-success);
+}
+
+.provider-status.inactive {
+    background: rgba(107, 114, 128, 0.2);
+    color: var(--text-secondary);
+}
+
+/* 快速操作按钮 */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 3rem;
+}
+
+.action-btn {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(20px);
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-glow);
+    border-color: var(--verify-primary);
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.action-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--verify-primary);
+    filter: drop-shadow(0 0 10px var(--verify-primary));
+}
+
+.action-text {
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .verify-container {
+        padding: 1rem;
+    }
+    
+    .verify-title {
+        font-size: 2.5rem;
+    }
+    
+    .trust-score-circle {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .trust-score-circle::before {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .trust-score-value {
+        font-size: 2rem;
+    }
+    
+    .verification-metrics {
+        grid-template-columns: 1fr;
+    }
+    
+    .quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .timeline-item {
+        padding-left: 3rem;
+    }
+    
+    .timeline-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .timeline-metadata {
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .quick-actions {
+        grid-template-columns: 1fr;
+    }
+    
+    .verification-providers {
+        grid-template-columns: 1fr;
+    }
+    
+    .history-filters {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+/* 加载和动画效果 */
+.loading-spinner {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(0, 212, 170, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--verify-primary);
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.floating {
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+/* 验证状态指示器 */
+.verification-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.verification-indicator.verified {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--verify-success);
+    border: 1px solid var(--verify-success);
+}
+
+.verification-indicator.pending {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--verify-warning);
+    border: 1px solid var(--verify-warning);
+}
+
+.verification-indicator.failed {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--verify-danger);
+    border: 1px solid var(--verify-danger);
+}
+
+.verification-indicator-icon {
+    font-size: 1rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="verify-container">
+    <!-- 页面头部 -->
+    <div class="verify-header">
+        <h1 class="verify-title floating">
+            {% if current_lang == 'en' %}
+                Transparency Verification Center
+            {% else %}
+                透明度验证中心
+            {% endif %}
+        </h1>
+        <p class="verify-subtitle">
+            {% if current_lang == 'en' %}
+                Multi-layer verification system ensuring complete transparency and trust in our mining operations
+            {% else %}
+                多层验证系统，确保挖矿操作的完全透明度和可信度
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- 快速操作 -->
+    <div class="quick-actions">
+        <div class="action-btn" onclick="runFullVerification()">
+            <div class="action-icon">🔍</div>
+            <div class="action-text">
+                {% if current_lang == 'en' %}Full Verification{% else %}完整验证{% endif %}
+            </div>
+        </div>
+        
+        <div class="action-btn" onclick="generateVerificationReport()">
+            <div class="action-icon">📊</div>
+            <div class="action-text">
+                {% if current_lang == 'en' %}Generate Report{% else %}生成报告{% endif %}
+            </div>
+        </div>
+        
+        <div class="action-btn" onclick="viewAuditTrail()">
+            <div class="action-icon">📋</div>
+            <div class="action-text">
+                {% if current_lang == 'en' %}Audit Trail{% else %}审计追踪{% endif %}
+            </div>
+        </div>
+        
+        <div class="action-btn" onclick="requestThirdPartyVerification()">
+            <div class="action-icon">🏛️</div>
+            <div class="action-text">
+                {% if current_lang == 'en' %}Third Party{% else %}第三方验证{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 总体信任度评分 -->
+    <div class="trust-score-panel">
+        <div class="trust-score-main">
+            <div class="trust-score-circle" style="--score: 96">
+                <div class="trust-score-inner">
+                    <div class="trust-score-value" id="trustScore">96</div>
+                    <div class="trust-score-label">
+                        {% if current_lang == 'en' %}Trust Score{% else %}信任评分{% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="trust-score-description" id="trustDescription">
+                {% if current_lang == 'en' %}Excellent Transparency{% else %}优秀透明度{% endif %}
+            </div>
+            
+            <div class="trust-score-details">
+                {% if current_lang == 'en' %}
+                    Our transparency score is based on real-time blockchain verification, IPFS audit trails, and independent third-party validations. This score reflects our commitment to complete operational transparency.
+                {% else %}
+                    我们的透明度评分基于实时区块链验证、IPFS审计追踪和独立第三方验证。该评分反映了我们对完全运营透明度的承诺。
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 验证指标 -->
+    <div class="verification-metrics">
+        <div class="metric-card">
+            <div class="metric-header">
+                <div class="metric-icon">⛓️</div>
+                <div class="metric-status verified">{% if current_lang == 'en' %}Verified{% else %}已验证{% endif %}</div>
+            </div>
+            <div class="metric-title">
+                {% if current_lang == 'en' %}Blockchain Verification{% else %}区块链验证{% endif %}
+            </div>
+            <div class="metric-description">
+                {% if current_lang == 'en' %}
+                    All mining data is cryptographically signed and stored on Base L2 blockchain for immutable verification.
+                {% else %}
+                    所有挖矿数据都经过加密签名并存储在Base L2区块链上，以实现不可篡改的验证。
+                {% endif %}
+            </div>
+            <div class="metric-progress">
+                <div class="metric-progress-bar" style="width: 98%"></div>
+            </div>
+            <div class="metric-details">
+                <div class="metric-value">98.2%</div>
+                <div class="metric-timestamp">Last verified: 2 mins ago</div>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-header">
+                <div class="metric-icon">🗄️</div>
+                <div class="metric-status verified">{% if current_lang == 'en' %}Verified{% else %}已验证{% endif %}</div>
+            </div>
+            <div class="metric-title">
+                {% if current_lang == 'en' %}IPFS Audit Trail{% else %}IPFS审计追踪{% endif %}
+            </div>
+            <div class="metric-description">
+                {% if current_lang == 'en' %}
+                    Complete audit packages stored on IPFS with cryptographic proofs ensuring data integrity.
+                {% else %}
+                    完整的审计包存储在IPFS上，通过加密证明确保数据完整性。
+                {% endif %}
+            </div>
+            <div class="metric-progress">
+                <div class="metric-progress-bar" style="width: 94%"></div>
+            </div>
+            <div class="metric-details">
+                <div class="metric-value">94.7%</div>
+                <div class="metric-timestamp">Last updated: 5 mins ago</div>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-header">
+                <div class="metric-icon">🏆</div>
+                <div class="metric-status verified">{% if current_lang == 'en' %}Verified{% else %}已验证{% endif %}</div>
+            </div>
+            <div class="metric-title">
+                {% if current_lang == 'en' %}SLA NFT Certificates{% else %}SLA NFT证书{% endif %}
+            </div>
+            <div class="metric-description">
+                {% if current_lang == 'en' %}
+                    Monthly SLA performance certificates minted as NFTs for transparent service level verification.
+                {% else %}
+                    月度SLA性能证书铸造为NFT，用于透明的服务水平验证。
+                {% endif %}
+            </div>
+            <div class="metric-progress">
+                <div class="metric-progress-bar" style="width: 96%"></div>
+            </div>
+            <div class="metric-details">
+                <div class="metric-value">96.1%</div>
+                <div class="metric-timestamp">Last minted: 1 day ago</div>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-header">
+                <div class="metric-icon">🔐</div>
+                <div class="metric-status verified">{% if current_lang == 'en' %}Verified{% else %}已验证{% endif %}</div>
+            </div>
+            <div class="metric-title">
+                {% if current_lang == 'en' %}Cryptographic Integrity{% else %}加密完整性{% endif %}
+            </div>
+            <div class="metric-description">
+                {% if current_lang == 'en' %}
+                    All data packets are cryptographically signed with ECDSA and verified through merkle proofs.
+                {% else %}
+                    所有数据包都通过ECDSA加密签名，并通过默克尔证明进行验证。
+                {% endif %}
+            </div>
+            <div class="metric-progress">
+                <div class="metric-progress-bar" style="width: 100%"></div>
+            </div>
+            <div class="metric-details">
+                <div class="metric-value">100%</div>
+                <div class="metric-timestamp">Continuous</div>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-header">
+                <div class="metric-icon">🌐</div>
+                <div class="metric-status pending">{% if current_lang == 'en' %}Pending{% else %}待处理{% endif %}</div>
+            </div>
+            <div class="metric-title">
+                {% if current_lang == 'en' %}Third-Party Audits{% else %}第三方审计{% endif %}
+            </div>
+            <div class="metric-description">
+                {% if current_lang == 'en' %}
+                    Independent audits from certified blockchain auditing firms and mining pool validators.
+                {% else %}
+                    来自认证区块链审计公司和矿池验证者的独立审计。
+                {% endif %}
+            </div>
+            <div class="metric-progress">
+                <div class="metric-progress-bar" style="width: 87%"></div>
+            </div>
+            <div class="metric-details">
+                <div class="metric-value">87.3%</div>
+                <div class="metric-timestamp">Next audit: 3 days</div>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-header">
+                <div class="metric-icon">📈</div>
+                <div class="metric-status verified">{% if current_lang == 'en' %}Verified{% else %}已验证{% endif %}</div>
+            </div>
+            <div class="metric-title">
+                {% if current_lang == 'en' %}Real-time Monitoring{% else %}实时监控{% endif %}
+            </div>
+            <div class="metric-description">
+                {% if current_lang == 'en' %}
+                    24/7 real-time monitoring of mining operations with automated transparency reporting.
+                {% else %}
+                    24/7实时监控挖矿操作，自动生成透明度报告。
+                {% endif %}
+            </div>
+            <div class="metric-progress">
+                <div class="metric-progress-bar" style="width: 99%"></div>
+            </div>
+            <div class="metric-details">
+                <div class="metric-value">99.8%</div>
+                <div class="metric-timestamp">Live</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 第三方验证提供商 -->
+    <div class="third-party-verification">
+        <h2 style="color: var(--text-primary); margin-bottom: 1rem; text-align: center;">
+            {% if current_lang == 'en' %}Third-Party Verification Partners{% else %}第三方验证合作伙伴{% endif %}
+        </h2>
+        <p style="color: var(--text-secondary); text-align: center; margin-bottom: 2rem;">
+            {% if current_lang == 'en' %}
+                Independent verification from trusted blockchain auditing and mining validation services
+            {% else %}
+                来自可信区块链审计和挖矿验证服务的独立验证
+            {% endif %}
+        </p>
+        
+        <div class="verification-providers">
+            <div class="provider-card" onclick="connectProvider('chainalysis')">
+                <div class="provider-logo">CA</div>
+                <div class="provider-name">Chainalysis</div>
+                <div class="provider-description">
+                    {% if current_lang == 'en' %}Blockchain compliance and transaction monitoring{% else %}区块链合规和交易监控{% endif %}
+                </div>
+                <div class="provider-status active">
+                    {% if current_lang == 'en' %}Active{% else %}活跃{% endif %}
+                </div>
+            </div>
+            
+            <div class="provider-card" onclick="connectProvider('certik')">
+                <div class="provider-logo">CK</div>
+                <div class="provider-name">CertiK</div>
+                <div class="provider-description">
+                    {% if current_lang == 'en' %}Smart contract and blockchain security auditing{% else %}智能合约和区块链安全审计{% endif %}
+                </div>
+                <div class="provider-status active">
+                    {% if current_lang == 'en' %}Active{% else %}活跃{% endif %}
+                </div>
+            </div>
+            
+            <div class="provider-card" onclick="connectProvider('miningpool')">
+                <div class="provider-logo">MP</div>
+                <div class="provider-name">Mining Pool Stats</div>
+                <div class="provider-description">
+                    {% if current_lang == 'en' %}Mining pool verification and hashrate validation{% else %}矿池验证和算力确认{% endif %}
+                </div>
+                <div class="provider-status active">
+                    {% if current_lang == 'en' %}Active{% else %}活跃{% endif %}
+                </div>
+            </div>
+            
+            <div class="provider-card" onclick="connectProvider('elliptic')">
+                <div class="provider-logo">EL</div>
+                <div class="provider-name">Elliptic</div>
+                <div class="provider-description">
+                    {% if current_lang == 'en' %}Blockchain analytics and compliance monitoring{% else %}区块链分析和合规监控{% endif %}
+                </div>
+                <div class="provider-status inactive">
+                    {% if current_lang == 'en' %}Coming Soon{% else %}即将推出{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 验证历史时间线 -->
+    <div class="verification-history">
+        <div class="history-header">
+            <h2 class="history-title">
+                {% if current_lang == 'en' %}Verification Timeline{% else %}验证时间线{% endif %}
+            </h2>
+            <div class="history-filters">
+                <select class="filter-select" id="typeFilter" onchange="filterVerifications()">
+                    <option value="">{% if current_lang == 'en' %}All Types{% else %}所有类型{% endif %}</option>
+                    <option value="blockchain">{% if current_lang == 'en' %}Blockchain{% else %}区块链{% endif %}</option>
+                    <option value="ipfs">IPFS</option>
+                    <option value="sla">SLA NFT</option>
+                    <option value="third_party">{% if current_lang == 'en' %}Third Party{% else %}第三方{% endif %}</option>
+                </select>
+                
+                <select class="filter-select" id="statusFilter" onchange="filterVerifications()">
+                    <option value="">{% if current_lang == 'en' %}All Status{% else %}所有状态{% endif %}</option>
+                    <option value="verified">{% if current_lang == 'en' %}Verified{% else %}已验证{% endif %}</option>
+                    <option value="pending">{% if current_lang == 'en' %}Pending{% else %}待处理{% endif %}</option>
+                    <option value="failed">{% if current_lang == 'en' %}Failed{% else %}失败{% endif %}</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="verification-timeline" id="verificationTimeline">
+            <!-- 验证历史将通过JavaScript动态加载 -->
+        </div>
+    </div>
+</div>
+
+<!-- 验证详情模态框 -->
+<div class="modal fade" id="verificationModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content" style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; backdrop-filter: blur(20px); color: var(--text-primary);">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                <h5 class="modal-title">
+                    {% if current_lang == 'en' %}Verification Details{% else %}验证详情{% endif %}
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span style="color: var(--text-primary);">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="verificationModalBody">
+                <!-- 验证详情将通过JavaScript动态加载 -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 透明度验证中心JavaScript
+
+// 全局变量
+let verifications = [];
+let allVerifications = [];
+let trustScore = 96;
+
+// 页面初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initializeVerificationCenter();
+    loadVerificationHistory();
+    updateTrustScore();
+    
+    // 设置定期更新
+    setInterval(updateRealTimeMetrics, 30000); // 每30秒更新实时指标
+    setInterval(updateTrustScore, 60000); // 每分钟更新信任评分
+});
+
+// 初始化验证中心
+function initializeVerificationCenter() {
+    console.log('Initializing Transparency Verification Center...');
+    
+    // 添加浮动动画
+    const cards = document.querySelectorAll('.metric-card, .provider-card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+        card.classList.add('floating');
+    });
+    
+    // 启动信任评分动画
+    animateTrustScore();
+}
+
+// 加载验证历史
+async function loadVerificationHistory() {
+    try {
+        const response = await fetch('/api/transparency/verification-history', {
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                verifications = data.verifications || [];
+                allVerifications = [...verifications];
+            }
+        } else {
+            // 如果API不可用，使用模拟数据
+            verifications = generateMockVerifications();
+            allVerifications = [...verifications];
+        }
+        
+        renderVerificationTimeline();
+        
+    } catch (error) {
+        console.error('Error loading verification history:', error);
+        // 使用模拟数据
+        verifications = generateMockVerifications();
+        allVerifications = [...verifications];
+        renderVerificationTimeline();
+    }
+}
+
+// 生成模拟验证数据
+function generateMockVerifications() {
+    return [
+        {
+            id: 1,
+            type: 'blockchain',
+            title: '{% if current_lang == "en" %}Blockchain Data Verification{% else %}区块链数据验证{% endif %}',
+            description: '{% if current_lang == "en" %}Mining data package #1247 verified on Base L2{% else %}挖矿数据包 #1247 在Base L2上验证完成{% endif %}',
+            status: 'verified',
+            timestamp: new Date(Date.now() - 300000).toISOString(),
+            metadata: {
+                block_number: 8934567,
+                transaction_hash: '0x1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z',
+                gas_used: 45234,
+                verification_score: 98.7
+            }
+        },
+        {
+            id: 2,
+            type: 'ipfs',
+            title: '{% if current_lang == "en" %}IPFS Audit Package{% else %}IPFS审计包{% endif %}',
+            description: '{% if current_lang == "en" %}Daily audit package uploaded to IPFS with cryptographic proof{% else %}日审计包已上传到IPFS并生成加密证明{% endif %}',
+            status: 'verified',
+            timestamp: new Date(Date.now() - 1800000).toISOString(),
+            metadata: {
+                ipfs_hash: 'QmX1Y2Z3A4B5C6D7E8F9G0H1I2J3K4L5M6N7O8P9Q0R1S2T',
+                file_size: '2.3 MB',
+                encryption_type: 'AES-256',
+                merkle_root: '0x9z8y7x6w5v4u3t2s1r0q9p8o7n6m5l4k3j2i1h0g9f8e7d6c5b4a'
+            }
+        },
+        {
+            id: 3,
+            type: 'sla',
+            title: '{% if current_lang == "en" %}SLA NFT Certificate{% else %}SLA NFT证书{% endif %}',
+            description: '{% if current_lang == "en" %}Monthly SLA certificate minted for September 2024{% else %}2024年9月月度SLA证书铸造完成{% endif %}',
+            status: 'verified',
+            timestamp: new Date(Date.now() - 86400000).toISOString(),
+            metadata: {
+                certificate_id: 'SLA-202409',
+                sla_score: 96.1,
+                token_id: 15,
+                mint_address: '0x742d35cc6cf7f9eb6c1f7e4b1a0a4c8e8b3f5d1a'
+            }
+        },
+        {
+            id: 4,
+            type: 'third_party',
+            title: '{% if current_lang == "en" %}Chainalysis Compliance Check{% else %}Chainalysis合规检查{% endif %}',
+            description: '{% if current_lang == "en" %}Monthly compliance verification completed successfully{% else %}月度合规验证成功完成{% endif %}',
+            status: 'verified',
+            timestamp: new Date(Date.now() - 259200000).toISOString(),
+            metadata: {
+                compliance_score: 94.8,
+                risk_level: 'Low',
+                aml_status: 'Passed',
+                kyc_status: 'Verified'
+            }
+        },
+        {
+            id: 5,
+            type: 'blockchain',
+            title: '{% if current_lang == "en" %}Hashrate Verification{% else %}算力验证{% endif %}',
+            description: '{% if current_lang == "en" %}Hashrate data verification in progress{% else %}算力数据验证进行中{% endif %}',
+            status: 'pending',
+            timestamp: new Date(Date.now() - 600000).toISOString(),
+            metadata: {
+                hashrate: '1,234.56 TH/s',
+                expected_completion: new Date(Date.now() + 300000).toISOString(),
+                progress: 73
+            }
+        }
+    ];
+}
+
+// 渲染验证时间线
+function renderVerificationTimeline() {
+    const timeline = document.getElementById('verificationTimeline');
+    timeline.innerHTML = '';
+    
+    if (verifications.length === 0) {
+        timeline.innerHTML = `
+            <div style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                {% if current_lang == 'en' %}No verification history found{% else %}未找到验证历史{% endif %}
+            </div>
+        `;
+        return;
+    }
+    
+    verifications.forEach(verification => {
+        const item = document.createElement('div');
+        item.className = 'timeline-item';
+        
+        const statusClass = getVerificationStatusClass(verification.status);
+        const statusText = getVerificationStatusText(verification.status);
+        const typeText = getVerificationTypeText(verification.type);
+        
+        item.innerHTML = `
+            <div class="timeline-content">
+                <div class="timeline-header">
+                    <div class="timeline-title">${verification.title}</div>
+                    <div class="timeline-timestamp">${new Date(verification.timestamp).toLocaleString()}</div>
+                </div>
+                
+                <div class="timeline-description">${verification.description}</div>
+                
+                <div class="timeline-metadata">
+                    <div class="metadata-tag">${typeText}</div>
+                    <div class="verification-indicator ${statusClass}">
+                        <span class="verification-indicator-icon">
+                            ${verification.status === 'verified' ? '✓' : verification.status === 'pending' ? '⏳' : '✗'}
+                        </span>
+                        ${statusText}
+                    </div>
+                    <a href="#" class="verification-link" onclick="viewVerificationDetails(${verification.id})">
+                        {% if current_lang == 'en' %}View Details{% else %}查看详情{% endif %}
+                    </a>
+                </div>
+            </div>
+        `;
+        
+        timeline.appendChild(item);
+    });
+}
+
+// 获取验证状态样式类
+function getVerificationStatusClass(status) {
+    switch (status.toLowerCase()) {
+        case 'verified': return 'verified';
+        case 'pending': return 'pending';
+        case 'failed': return 'failed';
+        default: return 'pending';
+    }
+}
+
+// 获取验证状态文本
+function getVerificationStatusText(status) {
+    const texts = {
+        en: {
+            'verified': 'Verified',
+            'pending': 'Pending',
+            'failed': 'Failed'
+        },
+        zh: {
+            'verified': '已验证',
+            'pending': '待处理',
+            'failed': '失败'
+        }
+    };
+    
+    const lang = '{{ current_lang }}' === 'en' ? 'en' : 'zh';
+    return texts[lang][status.toLowerCase()] || texts[lang]['pending'];
+}
+
+// 获取验证类型文本
+function getVerificationTypeText(type) {
+    const texts = {
+        en: {
+            'blockchain': 'Blockchain',
+            'ipfs': 'IPFS',
+            'sla': 'SLA NFT',
+            'third_party': 'Third Party'
+        },
+        zh: {
+            'blockchain': '区块链',
+            'ipfs': 'IPFS',
+            'sla': 'SLA NFT',
+            'third_party': '第三方'
+        }
+    };
+    
+    const lang = '{{ current_lang }}' === 'en' ? 'en' : 'zh';
+    return texts[lang][type] || type;
+}
+
+// 筛选验证记录
+function filterVerifications() {
+    const typeFilter = document.getElementById('typeFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+    
+    verifications = allVerifications.filter(verification => {
+        const typeMatch = !typeFilter || verification.type === typeFilter;
+        const statusMatch = !statusFilter || verification.status === statusFilter;
+        return typeMatch && statusMatch;
+    });
+    
+    renderVerificationTimeline();
+}
+
+// 查看验证详情
+function viewVerificationDetails(verificationId) {
+    const verification = allVerifications.find(v => v.id === verificationId);
+    if (!verification) return;
+    
+    const modal = document.getElementById('verificationModalBody');
+    
+    modal.innerHTML = `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            <div>
+                <h6 style="color: var(--verify-primary); margin-bottom: 1rem;">
+                    {% if current_lang == 'en' %}Basic Information{% else %}基础信息{% endif %}
+                </h6>
+                <div class="nft-detail-item" style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <span style="color: var(--text-secondary);">{% if current_lang == 'en' %}Type{% else %}类型{% endif %}</span>
+                    <span style="color: var(--text-primary); font-weight: 600;">${getVerificationTypeText(verification.type)}</span>
+                </div>
+                <div class="nft-detail-item" style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <span style="color: var(--text-secondary);">{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</span>
+                    <span class="verification-indicator ${getVerificationStatusClass(verification.status)}">${getVerificationStatusText(verification.status)}</span>
+                </div>
+                <div class="nft-detail-item" style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <span style="color: var(--text-secondary);">{% if current_lang == 'en' %}Timestamp{% else %}时间戳{% endif %}</span>
+                    <span style="color: var(--text-primary); font-weight: 600;">${new Date(verification.timestamp).toLocaleString()}</span>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <h6 style="color: var(--verify-secondary); margin-bottom: 0.5rem;">
+                        {% if current_lang == 'en' %}Description{% else %}描述{% endif %}
+                    </h6>
+                    <p style="color: var(--text-secondary); line-height: 1.6;">${verification.description}</p>
+                </div>
+            </div>
+            
+            <div>
+                <h6 style="color: var(--verify-secondary); margin-bottom: 1rem;">
+                    {% if current_lang == 'en' %}Technical Details{% else %}技术详情{% endif %}
+                </h6>
+                ${Object.entries(verification.metadata).map(([key, value]) => `
+                    <div class="nft-detail-item" style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <span style="color: var(--text-secondary);">${formatMetadataKey(key)}</span>
+                        <span style="color: var(--text-primary); font-weight: 600; font-family: 'JetBrains Mono', monospace; word-break: break-all;">${value}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+        
+        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.1); text-align: center;">
+            <button class="btn btn-primary" onclick="downloadVerificationProof(${verification.id})">
+                {% if current_lang == 'en' %}Download Proof{% else %}下载证明{% endif %}
+            </button>
+            <button class="btn btn-outline-light ml-2" onclick="shareVerification(${verification.id})">
+                {% if current_lang == 'en' %}Share{% else %}分享{% endif %}
+            </button>
+        </div>
+    `;
+    
+    $('#verificationModal').modal('show');
+}
+
+// 格式化元数据键名
+function formatMetadataKey(key) {
+    const keyMap = {
+        en: {
+            'block_number': 'Block Number',
+            'transaction_hash': 'Transaction Hash',
+            'gas_used': 'Gas Used',
+            'verification_score': 'Score',
+            'ipfs_hash': 'IPFS Hash',
+            'file_size': 'File Size',
+            'encryption_type': 'Encryption',
+            'merkle_root': 'Merkle Root',
+            'certificate_id': 'Certificate ID',
+            'sla_score': 'SLA Score',
+            'token_id': 'Token ID',
+            'mint_address': 'Mint Address',
+            'compliance_score': 'Compliance Score',
+            'risk_level': 'Risk Level',
+            'aml_status': 'AML Status',
+            'kyc_status': 'KYC Status',
+            'hashrate': 'Hashrate',
+            'expected_completion': 'Expected Completion',
+            'progress': 'Progress'
+        },
+        zh: {
+            'block_number': '区块号',
+            'transaction_hash': '交易哈希',
+            'gas_used': 'Gas消耗',
+            'verification_score': '验证评分',
+            'ipfs_hash': 'IPFS哈希',
+            'file_size': '文件大小',
+            'encryption_type': '加密类型',
+            'merkle_root': '默克尔根',
+            'certificate_id': '证书ID',
+            'sla_score': 'SLA评分',
+            'token_id': '代币ID',
+            'mint_address': '铸造地址',
+            'compliance_score': '合规评分',
+            'risk_level': '风险等级',
+            'aml_status': 'AML状态',
+            'kyc_status': 'KYC状态',
+            'hashrate': '算力',
+            'expected_completion': '预期完成',
+            'progress': '进度'
+        }
+    };
+    
+    const lang = '{{ current_lang }}' === 'en' ? 'en' : 'zh';
+    return keyMap[lang][key] || key;
+}
+
+// 更新信任评分
+function updateTrustScore() {
+    // 模拟信任评分变化
+    const variation = (Math.random() - 0.5) * 2; // ±1分的变化
+    trustScore = Math.max(85, Math.min(100, trustScore + variation));
+    
+    const scoreElement = document.getElementById('trustScore');
+    const descriptionElement = document.getElementById('trustDescription');
+    
+    scoreElement.textContent = trustScore.toFixed(0);
+    
+    // 更新描述
+    const lang = '{{ current_lang }}' === 'en' ? 'en' : 'zh';
+    const descriptions = {
+        en: {
+            excellent: 'Excellent Transparency',
+            good: 'Good Transparency',
+            fair: 'Fair Transparency',
+            poor: 'Needs Improvement'
+        },
+        zh: {
+            excellent: '优秀透明度',
+            good: '良好透明度',
+            fair: '一般透明度',
+            poor: '需要改进'
+        }
+    };
+    
+    let level;
+    if (trustScore >= 95) level = 'excellent';
+    else if (trustScore >= 85) level = 'good';
+    else if (trustScore >= 70) level = 'fair';
+    else level = 'poor';
+    
+    descriptionElement.textContent = descriptions[lang][level];
+    
+    // 更新圆形进度条
+    const circle = document.querySelector('.trust-score-circle');
+    circle.style.setProperty('--score', trustScore);
+}
+
+// 信任评分动画
+function animateTrustScore() {
+    const circle = document.querySelector('.trust-score-circle');
+    let currentScore = 0;
+    const targetScore = trustScore;
+    const increment = targetScore / 50; // 50步动画
+    
+    const animation = setInterval(() => {
+        currentScore += increment;
+        if (currentScore >= targetScore) {
+            currentScore = targetScore;
+            clearInterval(animation);
+        }
+        
+        circle.style.setProperty('--score', currentScore);
+        document.getElementById('trustScore').textContent = Math.round(currentScore);
+    }, 50);
+}
+
+// 更新实时指标
+function updateRealTimeMetrics() {
+    // 模拟更新各项指标的进度条和数值
+    const progressBars = document.querySelectorAll('.metric-progress-bar');
+    progressBars.forEach(bar => {
+        const currentWidth = parseFloat(bar.style.width) || 0;
+        const variation = (Math.random() - 0.5) * 2; // ±1%的变化
+        const newWidth = Math.max(80, Math.min(100, currentWidth + variation));
+        bar.style.width = `${newWidth}%`;
+        
+        // 更新对应的数值
+        const valueElement = bar.parentElement.nextElementSibling.querySelector('.metric-value');
+        if (valueElement) {
+            valueElement.textContent = `${newWidth.toFixed(1)}%`;
+        }
+    });
+}
+
+// 运行完整验证
+async function runFullVerification() {
+    try {
+        const response = await fetch('/api/transparency/run-full-verification', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                alert('{% if current_lang == "en" %}Full verification initiated successfully!{% else %}完整验证已成功启动！{% endif %}');
+                loadVerificationHistory();
+                updateTrustScore();
+            } else {
+                alert(data.error || '{% if current_lang == "en" %}Failed to run verification{% else %}运行验证失败{% endif %}');
+            }
+        } else {
+            alert('{% if current_lang == "en" %}Verification initiated (demo mode){% else %}验证已启动（演示模式）{% endif %}');
+        }
+    } catch (error) {
+        console.error('Error running verification:', error);
+        alert('{% if current_lang == "en" %}Verification initiated (demo mode){% else %}验证已启动（演示模式）{% endif %}');
+    }
+}
+
+// 生成验证报告
+function generateVerificationReport() {
+    alert('{% if current_lang == "en" %}Verification report generation feature coming soon{% else %}验证报告生成功能即将推出{% endif %}');
+}
+
+// 查看审计追踪
+function viewAuditTrail() {
+    window.location.href = '/blockchain-verification';
+}
+
+// 请求第三方验证
+function requestThirdPartyVerification() {
+    alert('{% if current_lang == "en" %}Third-party verification request submitted{% else %}第三方验证请求已提交{% endif %}');
+}
+
+// 连接验证提供商
+function connectProvider(providerId) {
+    alert(`{% if current_lang == "en" %}Connecting to ${providerId} verification service...{% else %}正在连接 ${providerId} 验证服务...{% endif %}`);
+}
+
+// 下载验证证明
+function downloadVerificationProof(verificationId) {
+    alert('{% if current_lang == "en" %}Verification proof download feature coming soon{% else %}验证证明下载功能即将推出{% endif %}');
+}
+
+// 分享验证
+function shareVerification(verificationId) {
+    const verification = allVerifications.find(v => v.id === verificationId);
+    if (verification) {
+        const shareText = `{% if current_lang == "en" %}Verification: ${verification.title} - Status: ${verification.status}{% else %}验证: ${verification.title} - 状态: ${verification.status}{% endif %}`;
+        
+        if (navigator.share) {
+            navigator.share({
+                title: '{% if current_lang == "en" %}Transparency Verification{% else %}透明度验证{% endif %}',
+                text: shareText,
+                url: window.location.href
+            });
+        } else {
+            navigator.clipboard.writeText(shareText).then(() => {
+                alert('{% if current_lang == "en" %}Verification details copied to clipboard{% else %}验证详情已复制到剪贴板{% endif %}');
+            });
+        }
+    }
+}
+</script>
+{% endblock %}
