@@ -9,16 +9,69 @@ import time
 from datetime import datetime
 from flask import current_app
 
-# 区块链验证和IPFS存储集成
-try:
-    from blockchain_integration import get_blockchain_integration, quick_register_mining_data
-    from models import BlockchainRecord, BlockchainVerificationStatus
-    from db import db
-    BLOCKCHAIN_ENABLED = True
-    logging.info("区块链验证功能已启用")
-except ImportError as e:
-    BLOCKCHAIN_ENABLED = False
-    logging.warning(f"区块链验证功能未启用: {e}")
+# 🔧 CRITICAL FIX: 强化区块链验证和IPFS存储集成导入门控
+def _initialize_blockchain_features():
+    """
+    延迟初始化区块链功能 - 安全门控方式
+    
+    只有在明确启用且配置完整时才初始化区块链功能
+    """
+    try:
+        # 首先检查是否启用区块链功能
+        blockchain_enabled = os.environ.get('BLOCKCHAIN_ENABLED', 'false').lower() == 'true'
+        
+        if not blockchain_enabled:
+            logging.info("区块链功能未启用 (BLOCKCHAIN_ENABLED=false)")
+            return False, None, None, None, None
+        
+        # 检查关键配置是否存在
+        required_configs = [
+            'BLOCKCHAIN_PRIVATE_KEY',
+            'MINING_REGISTRY_CONTRACT_ADDRESS'
+        ]
+        
+        missing_configs = [config for config in required_configs if not os.environ.get(config)]
+        
+        if missing_configs:
+            logging.warning(
+                f"区块链功能部分配置缺失: {', '.join(missing_configs)}\n"
+                "区块链功能将在受限模式下运行（仅本地记录）"
+            )
+            # 在配置不完整时仍然允许基本功能，但记录警告
+        
+        # 尝试导入区块链模块
+        from blockchain_integration import get_blockchain_integration, quick_register_mining_data
+        from models import BlockchainRecord, BlockchainVerificationStatus
+        from db import db
+        
+        logging.info("✅ 区块链验证功能已启用并配置完成")
+        return True, get_blockchain_integration, quick_register_mining_data, BlockchainRecord, BlockchainVerificationStatus
+        
+    except ImportError as e:
+        logging.warning(f"区块链模块导入失败: {e}")
+        logging.info("系统将继续运行，但区块链验证功能不可用")
+        return False, None, None, None, None
+    except Exception as e:
+        logging.error(f"区块链功能初始化失败: {e}")
+        logging.info("系统将继续运行，但区块链验证功能不可用")
+        return False, None, None, None, None
+
+# 延迟初始化区块链功能
+BLOCKCHAIN_ENABLED = False
+get_blockchain_integration = None
+quick_register_mining_data = None
+BlockchainRecord = None
+BlockchainVerificationStatus = None
+
+def ensure_blockchain_features():
+    """确保区块链功能已初始化"""
+    global BLOCKCHAIN_ENABLED, get_blockchain_integration, quick_register_mining_data
+    global BlockchainRecord, BlockchainVerificationStatus
+    
+    if not BLOCKCHAIN_ENABLED and os.environ.get('BLOCKCHAIN_ENABLED', 'false').lower() == 'true':
+        BLOCKCHAIN_ENABLED, get_blockchain_integration, quick_register_mining_data, BlockchainRecord, BlockchainVerificationStatus = _initialize_blockchain_features()
+    
+    return BLOCKCHAIN_ENABLED
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -100,23 +153,52 @@ MINER_DATA = {
 }
 
 def calculate_mining_profit(miner_model, miner_count, site_power_mw, use_real_time=True):
-    """简化的挖矿收益计算函数（用于回归测试）"""
+    """
+    简化的挖矿收益计算函数（用于回归测试）
+    
+    🔧 CRITICAL FIX: 增强错误处理和配置验证
+    """
     try:
-        from mining_calculator import calculate_mining_profitability
+        # 验证输入参数
+        if not miner_model or miner_model not in MINER_DATA:
+            raise ValueError(f"无效的矿机型号: {miner_model}")
+        
+        if miner_count <= 0:
+            raise ValueError(f"矿机数量必须大于0: {miner_count}")
+        
+        # 调用主计算函数
         result = calculate_mining_profitability(
             miner_model=miner_model,
             miner_count=miner_count,
             site_power_mw=site_power_mw,
             use_real_time_data=use_real_time
         )
+        
+        # 验证返回结果
+        if not isinstance(result, dict):
+            raise ValueError("计算函数返回格式无效")
+            
         return result
+        
+    except ValueError as e:
+        logging.error(f"Mining profit calculation parameter error: {e}")
+        # 返回安全的错误结果
+        return {
+            'daily_btc': 0.0,
+            'daily_profit': 0.0,
+            'monthly_profit': 0.0,
+            'annual_profit': 0.0,
+            'error': str(e)
+        }
     except Exception as e:
         logging.error(f"Mining profit calculation failed: {e}")
+        # 返回安全的默认结果
         return {
             'daily_btc': 0.001,
             'daily_profit': 100.0,
             'monthly_profit': 3000.0,
-            'annual_profit': 36000.0
+            'annual_profit': 36000.0,
+            'warning': 'Using fallback values due to calculation error'
         }
 
 def calculate_enhanced_roi(investment, yearly_profit, monthly_profit, btc_price, difficulty, 

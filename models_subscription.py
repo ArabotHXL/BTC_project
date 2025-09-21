@@ -44,6 +44,21 @@ class PaymentStatus(enum.Enum):
     FAILED = "failed"
     REFUNDED = "refunded"
     CANCELLED = "cancelled"
+    CONFIRMING = "confirming"  # 等待区块链确认
+    EXPIRED = "expired"  # 支付超时过期
+
+class PaymentMethodType(enum.Enum):
+    """支付方式类型"""
+    STRIPE = "stripe"
+    CRYPTO = "crypto"
+    BANK_TRANSFER = "bank_transfer"
+    
+class CryptoCurrency(enum.Enum):
+    """支持的加密货币"""
+    BTC = "BTC"
+    ETH = "ETH" 
+    USDC = "USDC"
+    USDT = "USDT"
 
 class SubscriptionPlan(Base):
     """订阅计划模型"""
@@ -153,7 +168,7 @@ class UserSubscription(Base):
         }
 
 class Payment(Base):
-    """支付记录模型"""
+    """支付记录模型 - 支持加密货币和传统支付"""
     __tablename__ = 'payments'
     
     id = Column(Integer, primary_key=True)
@@ -161,17 +176,48 @@ class Payment(Base):
     
     # 支付信息
     amount = Column(Float, nullable=False)
-    currency = Column(String(3), nullable=False, default='USD')
+    currency = Column(String(10), nullable=False, default='USD')  # 扩展长度以支持USDC等
     status = Column(Enum(PaymentStatus), nullable=False, default=PaymentStatus.PENDING)
     
-    # 移除了Stripe集成 - 使用其他支付方案
+    # 支付方式类型
+    payment_method_type = Column(Enum(PaymentMethodType), nullable=False, default=PaymentMethodType.STRIPE)
+    
+    # 加密货币支付字段
+    crypto_currency = Column(Enum(CryptoCurrency), nullable=True)  # BTC, ETH, USDC等
+    wallet_address = Column(String(200), nullable=True)  # 收款钱包地址
+    payment_address = Column(String(200), nullable=True)  # 生成的支付地址（用户发送到此地址）
+    transaction_hash = Column(String(200), nullable=True)  # 区块链交易哈希
+    blockchain_network = Column(String(50), nullable=True)  # bitcoin, ethereum, polygon等
+    confirmations = Column(Integer, nullable=True, default=0)  # 区块确认数
+    required_confirmations = Column(Integer, nullable=True, default=3)  # 所需确认数
+    block_number = Column(Integer, nullable=True)  # 交易所在区块号
+    gas_price = Column(Float, nullable=True)  # Gas价格 (仅以太坊)
+    gas_used = Column(Integer, nullable=True)  # 使用的Gas数量
+    
+    # 传统支付字段（保留向后兼容）
+    stripe_payment_intent_id = Column(String(100), nullable=True)
+    stripe_customer_id = Column(String(100), nullable=True)
     
     # 发票信息
     invoice_number = Column(String(100))
     invoice_url = Column(String(500))
     
+    # 支付超时和重试
+    expires_at = Column(DateTime, nullable=True)  # 支付超时时间
+    retry_count = Column(Integer, default=0)  # 重试次数
+    
+    # 🔧 CRITICAL FIX: 审计和合规字段增强
+    aml_status = Column(String(50), nullable=True)  # AML检查状态
+    kyc_status = Column(String(50), nullable=True)  # KYC验证状态
+    risk_score = Column(Float, nullable=True)  # 风险评分
+    compliance_score = Column(Float, nullable=True)  # 综合合规分数
+    compliance_notes = Column(Text, nullable=True)  # 合规备注
+    compliance_checked_at = Column(DateTime, nullable=True)  # 合规检查时间
+    manual_review_required = Column(Boolean, default=False)  # 是否需要人工审核
+    
     # 时间戳
     payment_date = Column(DateTime)
+    confirmed_at = Column(DateTime, nullable=True)  # 支付确认时间
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -189,11 +235,54 @@ class Payment(Base):
             'amount': self.amount,
             'currency': self.currency,
             'status': self.status.value,
+            'payment_method_type': self.payment_method_type.value,
+            
+            # 加密货币相关字段
+            'crypto_currency': self.crypto_currency.value if self.crypto_currency else None,
+            'wallet_address': self.wallet_address,
+            'payment_address': self.payment_address,
+            'transaction_hash': self.transaction_hash,
+            'blockchain_network': self.blockchain_network,
+            'confirmations': self.confirmations,
+            'required_confirmations': self.required_confirmations,
+            'block_number': self.block_number,
+            
+            # 时间戳
             'payment_date': self.payment_date.isoformat() if self.payment_date else None,
+            'confirmed_at': self.confirmed_at.isoformat() if self.confirmed_at else None,
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'created_at': self.created_at.isoformat(),
+            
+            # 发票信息
             'invoice_number': self.invoice_number,
             'invoice_url': self.invoice_url,
-            'created_at': self.created_at.isoformat()
+            
+            # 合规信息
+            'aml_status': self.aml_status,
+            'kyc_status': self.kyc_status,
+            'risk_score': self.risk_score
         }
+        
+    @property
+    def is_crypto_payment(self):
+        """检查是否为加密货币支付"""
+        return self.payment_method_type == PaymentMethodType.CRYPTO
+    
+    @property
+    def is_confirmed(self):
+        """检查支付是否已确认"""
+        if self.is_crypto_payment:
+            return (self.confirmations is not None and 
+                   self.required_confirmations is not None and
+                   self.confirmations >= self.required_confirmations)
+        return self.status == PaymentStatus.COMPLETED
+    
+    @property
+    def is_expired(self):
+        """检查支付是否已过期"""
+        if self.expires_at:
+            return datetime.utcnow() > self.expires_at
+        return False
 
 class ApiUsage(Base):
     """API使用统计模型"""

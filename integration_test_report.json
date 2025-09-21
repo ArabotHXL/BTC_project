@@ -1,0 +1,171 @@
+{
+  "timestamp": "2025-09-21T17:13:58.513235+00:00",
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "warnings": 2,
+    "details": [
+      {
+        "test": "Application Health Check",
+        "result": {
+          "status": "passed",
+          "details": {
+            "main_page_status": 200,
+            "login_page_status": 200,
+            "response_time_ms": 5.805000000000001
+          }
+        }
+      },
+      {
+        "test": "Database Connectivity",
+        "result": {
+          "status": "passed",
+          "details": {
+            "models_imported": true,
+            "database_configured": true,
+            "database_type": "postgresql"
+          }
+        }
+      },
+      {
+        "test": "SLA Data Collection",
+        "result": {
+          "status": "passed",
+          "details": {
+            "collector_available": true,
+            "expected_metrics": [
+              "uptime",
+              "response_time",
+              "accuracy",
+              "availability",
+              "transparency_score",
+              "blockchain_verifications",
+              "composite_sla_score"
+            ],
+            "timestamp": "2025-09-21T17:13:58.350368+00:00"
+          }
+        }
+      },
+      {
+        "test": "NFT Metadata Generation",
+        "result": {
+          "status": "passed",
+          "details": {
+            "generator_available": true,
+            "metadata_template": {
+              "name": "SLA Certificate - Test",
+              "description": "Test SLA certificate",
+              "attributes": []
+            },
+            "test_data_valid": true
+          }
+        }
+      },
+      {
+        "test": "API Endpoints Structure",
+        "result": {
+          "status": "warning",
+          "details": {
+            "endpoints_tested": 3,
+            "all_properly_protected": false,
+            "endpoint_results": {
+              "/api/sla/status": {
+                "status_code": 200,
+                "requires_auth": false,
+                "accessible": true
+              },
+              "/api/sla/certificates": {
+                "status_code": 200,
+                "requires_auth": false,
+                "accessible": true
+              },
+              "/api/sla/reports": {
+                "status_code": 200,
+                "requires_auth": false,
+                "accessible": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "test": "Dashboard Interface",
+        "result": {
+          "status": "passed",
+          "details": {
+            "dashboard_protected": false,
+            "template_exists": true,
+            "sla_nft_section_added": true,
+            "response_status": 200
+          }
+        }
+      },
+      {
+        "test": "Frontend JavaScript",
+        "result": {
+          "status": "passed",
+          "details": {
+            "template_exists": true,
+            "js_functions_added": true,
+            "css_styles_added": true,
+            "interactive_components": true
+          }
+        }
+      },
+      {
+        "test": "System Architecture",
+        "result": {
+          "status": "passed",
+          "details": {
+            "total_files": 8,
+            "existing_files": 8,
+            "missing_files": [],
+            "sla_routes_registered": true,
+            "architecture_complete": true
+          }
+        }
+      },
+      {
+        "test": "Security and Permissions",
+        "result": {
+          "status": "warning",
+          "details": {
+            "endpoints_tested": 3,
+            "all_properly_protected": false,
+            "security_results": {
+              "/api/sla/status": {
+                "status_code": 200,
+                "properly_protected": false,
+                "redirects_to_login": true
+              },
+              "/api/sla/certificates": {
+                "status_code": 200,
+                "properly_protected": false,
+                "redirects_to_login": true
+              },
+              "/dashboard": {
+                "status_code": 200,
+                "properly_protected": false,
+                "redirects_to_login": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "test": "Performance Metrics",
+        "result": {
+          "status": "passed",
+          "details": {
+            "single_request_time": 0.008647918701171875,
+            "concurrent_requests": 5,
+            "successful_requests": 5,
+            "average_response_time": 0.023065614700317382,
+            "performance_acceptable": true
+          }
+        }
+      }
+    ]
+  },
+  "system_status": "ready"
+}

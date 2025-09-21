@@ -32,6 +32,554 @@ class DealStatus(enum.Enum):
     COMPLETED = "已完成"
     CANCELED = "已取消"
 
+class SLAStatus(enum.Enum):
+    """SLA状态"""
+    EXCELLENT = "优秀"    # 95%+
+    GOOD = "良好"         # 90-95%
+    ACCEPTABLE = "合格"   # 85-90%
+    POOR = "不足"        # 80-85%
+    FAILED = "失败"      # <80%
+
+class NFTMintStatus(enum.Enum):
+    """NFT铸造状态"""
+    PENDING = "待铸造"
+    MINTING = "铸造中"
+    MINTED = "已铸造"
+    FAILED = "铸造失败"
+    VERIFIED = "已验证"
+
+class SchedulerLock(db.Model):
+    """
+    🔧 CRITICAL FIX: 调度器领导者锁模型
+    Scheduler Leader Lock Model for Single Instance Enforcement
+    
+    确保在Gunicorn多worker环境下只有一个调度器实例运行
+    Ensures only one scheduler instance runs in multi-worker Gunicorn environment
+    """
+    __tablename__ = 'scheduler_leader_lock'
+    
+    lock_key = db.Column(db.String(255), primary_key=True, nullable=False)
+    process_id = db.Column(db.Integer, nullable=False)
+    hostname = db.Column(db.String(255), nullable=False)
+    acquired_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    last_heartbeat = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
+    # 附加验证字段
+    worker_info = db.Column(db.Text, nullable=True)  # 存储worker详细信息(JSON)
+    lock_version = db.Column(db.Integer, nullable=False, default=1)  # 乐观锁版本
+    
+    def __init__(self, lock_key, process_id, hostname, expires_at, **kwargs):
+        self.lock_key = lock_key
+        self.process_id = process_id
+        self.hostname = hostname
+        self.expires_at = expires_at
+        self.worker_info = kwargs.get('worker_info')
+        
+    def __repr__(self):
+        return f"<SchedulerLock {self.lock_key}: PID={self.process_id}@{self.hostname}>"
+        
+    def is_expired(self) -> bool:
+        """检查锁是否已过期"""
+        return datetime.utcnow() > self.expires_at
+        
+    def refresh_lock(self, timeout_seconds: int = 300):
+        """刷新锁的过期时间和心跳"""
+        self.expires_at = datetime.utcnow() + timedelta(seconds=timeout_seconds)
+        self.last_heartbeat = datetime.utcnow()
+        self.lock_version += 1  # 增加版本号用于乐观锁
+        
+    def to_dict(self) -> dict:
+        """转换为字典格式用于日志记录"""
+        return {
+            'lock_key': self.lock_key,
+            'process_id': self.process_id,
+            'hostname': self.hostname,
+            'acquired_at': self.acquired_at.isoformat() if self.acquired_at else None,
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'last_heartbeat': self.last_heartbeat.isoformat() if self.last_heartbeat else None,
+            'is_expired': self.is_expired(),
+            'lock_version': self.lock_version
+        }
+        
+    @classmethod
+    def cleanup_expired_locks(cls):
+        """清理所有过期的锁"""
+        current_time = datetime.utcnow()
+        expired_locks = cls.query.filter(cls.expires_at < current_time).all()
+        
+        for lock in expired_locks:
+            db.session.delete(lock)
+            logging.info(f"🧹 清理过期锁: {lock}")
+            
+        db.session.commit()
+        return len(expired_locks)
+        
+    @classmethod
+    def get_active_lock(cls, lock_key: str):
+        """获取指定key的活跃锁"""
+        return cls.query.filter_by(lock_key=lock_key).filter(
+            cls.expires_at > datetime.utcnow()
+        ).first()
+        
+    @classmethod
+    def acquire_lock(cls, lock_key: str, process_id: int, hostname: str, 
+                    timeout_seconds: int = 300, worker_info: str = None) -> bool:
+        """
+        🔧 CRITICAL FIX: 原子性锁获取机制
+        Atomic lock acquisition mechanism
+        """
+        try:
+            # 清理过期锁
+            cls.cleanup_expired_locks()
+            
+            # 检查是否已有活跃锁
+            existing_lock = cls.get_active_lock(lock_key)
+            if existing_lock:
+                if existing_lock.process_id == process_id:
+                    # 同一进程刷新锁
+                    existing_lock.refresh_lock(timeout_seconds)
+                    db.session.commit()
+                    logging.info(f"🔄 刷新现有锁: {existing_lock}")
+                    return True
+                else:
+                    logging.info(f"⏳ 锁被其他进程持有: {existing_lock}")
+                    return False
+            
+            # 创建新锁
+            expires_at = datetime.utcnow() + timedelta(seconds=timeout_seconds)
+            new_lock = cls(
+                lock_key=lock_key,
+                process_id=process_id,
+                hostname=hostname,
+                expires_at=expires_at,
+                worker_info=worker_info
+            )
+            
+            db.session.add(new_lock)
+            db.session.commit()
+            
+            logging.info(f"🔒 获取新锁: {new_lock}")
+            return True
+            
+        except Exception as e:
+            db.session.rollback()
+            logging.error(f"获取锁失败: {e}")
+            return False
+            
+    @classmethod
+    def release_lock(cls, lock_key: str, process_id: int) -> bool:
+        """释放指定进程的锁"""
+        try:
+            lock = cls.query.filter_by(
+                lock_key=lock_key, 
+                process_id=process_id
+            ).first()
+            
+            if lock:
+                db.session.delete(lock)
+                db.session.commit()
+                logging.info(f"🔓 释放锁: {lock}")
+                return True
+            else:
+                logging.warning(f"⚠️ 未找到要释放的锁: key={lock_key}, pid={process_id}")
+                return False
+                
+        except Exception as e:
+            db.session.rollback()
+            logging.error(f"释放锁失败: {e}")
+            return False
+
+# ============================================================================
+# SLA证明NFT系统数据模型
+# SLA Proof NFT System Data Models
+# ============================================================================
+
+class SLAMetrics(db.Model):
+    """
+    SLA指标数据表
+    存储系统运行指标和性能数据，用于生成月度SLA证书
+    """
+    __tablename__ = 'sla_metrics'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 时间信息
+    recorded_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+    month_year = db.Column(db.Integer, nullable=False, index=True)  # YYYYMM格式，如202509
+    
+    # 系统可用性指标 (百分比，精确到小数点后2位)
+    uptime_percentage = db.Column(db.Numeric(5,2), nullable=False)  # 运行时间百分比
+    availability_percentage = db.Column(db.Numeric(5,2), nullable=False)  # 服务可用性
+    
+    # 响应性能指标
+    avg_response_time_ms = db.Column(db.Integer, nullable=False)  # 平均响应时间(毫秒)
+    max_response_time_ms = db.Column(db.Integer, nullable=False)  # 最大响应时间
+    min_response_time_ms = db.Column(db.Integer, nullable=False)  # 最小响应时间
+    
+    # 数据准确性指标
+    data_accuracy_percentage = db.Column(db.Numeric(5,2), nullable=False)  # 数据准确性
+    api_success_rate = db.Column(db.Numeric(5,2), nullable=False)  # API调用成功率
+    
+    # 透明度指标
+    blockchain_verifications = db.Column(db.Integer, default=0)  # 区块链验证次数
+    ipfs_uploads = db.Column(db.Integer, default=0)  # IPFS上传次数
+    transparency_score = db.Column(db.Numeric(5,2), nullable=False)  # 透明度评分
+    
+    # 系统错误指标
+    error_count = db.Column(db.Integer, default=0)  # 错误总数
+    critical_error_count = db.Column(db.Integer, default=0)  # 严重错误数
+    downtime_minutes = db.Column(db.Integer, default=0)  # 停机时间(分钟)
+    
+    # 用户体验指标
+    user_satisfaction_score = db.Column(db.Numeric(3,2), nullable=True)  # 用户满意度(1-5分)
+    feature_completion_rate = db.Column(db.Numeric(5,2), nullable=False)  # 功能完成率
+    
+    # 综合评分
+    composite_sla_score = db.Column(db.Numeric(6,2), nullable=False)  # 综合SLA评分(0-100)
+    sla_status = db.Column(db.Enum(SLAStatus), nullable=False)  # SLA状态等级
+    
+    # 元数据
+    data_source = db.Column(db.String(50), default='system_monitor')  # 数据源
+    verified_by_blockchain = db.Column(db.Boolean, default=False)  # 是否已区块链验证
+    ipfs_hash = db.Column(db.String(100), nullable=True)  # IPFS哈希
+    
+    # 索引优化
+    __table_args__ = (
+        db.Index('idx_sla_metrics_month', 'month_year'),
+        db.Index('idx_sla_metrics_score', 'composite_sla_score'),
+        db.Index('idx_sla_metrics_time', 'recorded_at'),
+    )
+    
+    def __init__(self, month_year, uptime_percentage, availability_percentage, 
+                 avg_response_time_ms, data_accuracy_percentage, api_success_rate,
+                 transparency_score, **kwargs):
+        self.month_year = month_year
+        self.uptime_percentage = uptime_percentage
+        self.availability_percentage = availability_percentage
+        self.avg_response_time_ms = avg_response_time_ms
+        self.data_accuracy_percentage = data_accuracy_percentage
+        self.api_success_rate = api_success_rate
+        self.transparency_score = transparency_score
+        
+        # 处理其他可选参数
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+        
+        # 自动计算综合评分和状态
+        self._calculate_composite_score()
+    
+    def _calculate_composite_score(self):
+        """计算综合SLA评分"""
+        # 权重分配 (总和100%)
+        weights = {
+            'uptime': 0.25,        # 运行时间权重25%
+            'availability': 0.20,   # 可用性权重20%
+            'response': 0.15,       # 响应时间权重15%
+            'accuracy': 0.20,       # 数据准确性权重20%
+            'api_success': 0.10,    # API成功率权重10%
+            'transparency': 0.10    # 透明度权重10%
+        }
+        
+        # 响应时间评分转换 (越低越好，超过1000ms开始扣分)
+        response_score = max(0, 100 - (self.avg_response_time_ms - 200) / 10)
+        response_score = min(100, response_score)
+        
+        # 综合评分计算
+        composite = (
+            float(self.uptime_percentage) * weights['uptime'] +
+            float(self.availability_percentage) * weights['availability'] +
+            response_score * weights['response'] +
+            float(self.data_accuracy_percentage) * weights['accuracy'] +
+            float(self.api_success_rate) * weights['api_success'] +
+            float(self.transparency_score) * weights['transparency']
+        )
+        
+        self.composite_sla_score = round(composite, 2)
+        
+        # 根据评分确定SLA状态
+        if composite >= 95:
+            self.sla_status = SLAStatus.EXCELLENT
+        elif composite >= 90:
+            self.sla_status = SLAStatus.GOOD
+        elif composite >= 85:
+            self.sla_status = SLAStatus.ACCEPTABLE
+        elif composite >= 80:
+            self.sla_status = SLAStatus.POOR
+        else:
+            self.sla_status = SLAStatus.FAILED
+    
+    def to_dict(self):
+        """转换为字典格式"""
+        return {
+            'id': self.id,
+            'recorded_at': self.recorded_at.isoformat() if self.recorded_at else None,
+            'month_year': self.month_year,
+            'uptime_percentage': float(self.uptime_percentage),
+            'availability_percentage': float(self.availability_percentage),
+            'avg_response_time_ms': self.avg_response_time_ms,
+            'data_accuracy_percentage': float(self.data_accuracy_percentage),
+            'api_success_rate': float(self.api_success_rate),
+            'transparency_score': float(self.transparency_score),
+            'composite_sla_score': float(self.composite_sla_score),
+            'sla_status': self.sla_status.value,
+            'verified_by_blockchain': self.verified_by_blockchain,
+            'ipfs_hash': self.ipfs_hash
+        }
+    
+    def __repr__(self):
+        return f"<SLAMetrics {self.month_year}: {self.composite_sla_score}% ({self.sla_status.value})>"
+
+class SLACertificateRecord(db.Model):
+    """
+    SLA证书记录表
+    存储已铸造的NFT证书信息和链上数据
+    """
+    __tablename__ = 'sla_certificate_records'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 证书基本信息
+    month_year = db.Column(db.Integer, nullable=False, index=True)  # YYYYMM格式
+    recipient_address = db.Column(db.String(42), nullable=False, index=True)  # 以太坊地址
+    
+    # NFT相关信息
+    token_id = db.Column(db.String(20), nullable=True, unique=True)  # NFT Token ID
+    contract_address = db.Column(db.String(42), nullable=True)  # 合约地址
+    transaction_hash = db.Column(db.String(66), nullable=True, unique=True)  # 交易哈希
+    block_number = db.Column(db.BigInteger, nullable=True)  # 区块号
+    
+    # 铸造状态和时间
+    mint_status = db.Column(db.Enum(NFTMintStatus), default=NFTMintStatus.PENDING)
+    requested_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    minted_at = db.Column(db.DateTime, nullable=True)
+    
+    # SLA数据关联
+    sla_metrics_id = db.Column(db.Integer, db.ForeignKey('sla_metrics.id'), nullable=True)
+    sla_metrics = db.relationship('SLAMetrics', backref='certificates')
+    
+    # NFT元数据
+    metadata_ipfs_hash = db.Column(db.String(100), nullable=True)  # 元数据IPFS哈希
+    image_ipfs_hash = db.Column(db.String(100), nullable=True)  # SVG图像IPFS哈希
+    report_ipfs_hash = db.Column(db.String(100), nullable=True)  # 详细报告IPFS哈希
+    
+    # 验证信息
+    is_verified = db.Column(db.Boolean, default=False)  # 是否已验证
+    verified_by = db.Column(db.String(42), nullable=True)  # 验证者地址
+    verified_at = db.Column(db.DateTime, nullable=True)  # 验证时间
+    verification_note = db.Column(db.Text, nullable=True)  # 验证备注
+    
+    # 错误信息
+    error_message = db.Column(db.Text, nullable=True)  # 错误消息
+    retry_count = db.Column(db.Integer, default=0)  # 重试次数
+    
+    # 索引优化
+    __table_args__ = (
+        db.Index('idx_certificate_month', 'month_year'),
+        db.Index('idx_certificate_recipient', 'recipient_address'),
+        db.Index('idx_certificate_status', 'mint_status'),
+    )
+    
+    def __init__(self, month_year, recipient_address, **kwargs):
+        self.month_year = month_year
+        self.recipient_address = recipient_address
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def update_mint_status(self, status: NFTMintStatus, **kwargs):
+        """更新铸造状态"""
+        self.mint_status = status
+        
+        if status == NFTMintStatus.MINTED:
+            self.minted_at = datetime.utcnow()
+        
+        # 更新其他相关字段
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        """转换为字典格式"""
+        return {
+            'id': self.id,
+            'month_year': self.month_year,
+            'recipient_address': self.recipient_address,
+            'token_id': self.token_id,
+            'contract_address': self.contract_address,
+            'transaction_hash': self.transaction_hash,
+            'mint_status': self.mint_status.value,
+            'requested_at': self.requested_at.isoformat() if self.requested_at else None,
+            'minted_at': self.minted_at.isoformat() if self.minted_at else None,
+            'metadata_ipfs_hash': self.metadata_ipfs_hash,
+            'is_verified': self.is_verified,
+            'verified_by': self.verified_by,
+            'verified_at': self.verified_at.isoformat() if self.verified_at else None
+        }
+    
+    def __repr__(self):
+        return f"<SLACertificate {self.month_year} for {self.recipient_address[:8]}...: {self.mint_status.value}>"
+
+class SystemPerformanceLog(db.Model):
+    """
+    系统性能日志表
+    实时记录系统性能数据，用于SLA指标计算
+    """
+    __tablename__ = 'system_performance_logs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 时间戳
+    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+    
+    # 系统资源使用
+    cpu_usage_percent = db.Column(db.Numeric(5,2), nullable=False)  # CPU使用率
+    memory_usage_percent = db.Column(db.Numeric(5,2), nullable=False)  # 内存使用率
+    disk_usage_percent = db.Column(db.Numeric(5,2), nullable=False)  # 磁盘使用率
+    
+    # 网络指标
+    network_latency_ms = db.Column(db.Integer, nullable=False)  # 网络延迟
+    bandwidth_utilization = db.Column(db.Numeric(5,2), nullable=False)  # 带宽利用率
+    
+    # 应用性能
+    active_connections = db.Column(db.Integer, default=0)  # 活跃连接数
+    requests_per_second = db.Column(db.Numeric(8,2), default=0)  # 每秒请求数
+    error_rate = db.Column(db.Numeric(5,2), default=0)  # 错误率
+    
+    # 数据库性能
+    db_connection_count = db.Column(db.Integer, default=0)  # 数据库连接数
+    db_query_avg_time_ms = db.Column(db.Integer, default=0)  # 数据库查询平均时间
+    
+    # API服务状态
+    api_endpoints_healthy = db.Column(db.Integer, default=0)  # 健康API端点数
+    api_endpoints_unhealthy = db.Column(db.Integer, default=0)  # 不健康API端点数
+    
+    # 外部服务状态
+    external_api_status = db.Column(db.Text, nullable=True)  # 外部API状态(JSON)
+    blockchain_sync_status = db.Column(db.Boolean, default=True)  # 区块链同步状态
+    ipfs_service_status = db.Column(db.Boolean, default=True)  # IPFS服务状态
+    
+    # 索引优化
+    __table_args__ = (
+        db.Index('idx_performance_timestamp', 'timestamp'),
+    )
+    
+    def __init__(self, cpu_usage_percent, memory_usage_percent, disk_usage_percent,
+                 network_latency_ms, bandwidth_utilization, **kwargs):
+        self.cpu_usage_percent = cpu_usage_percent
+        self.memory_usage_percent = memory_usage_percent
+        self.disk_usage_percent = disk_usage_percent
+        self.network_latency_ms = network_latency_ms
+        self.bandwidth_utilization = bandwidth_utilization
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        """转换为字典格式"""
+        return {
+            'id': self.id,
+            'timestamp': self.timestamp.isoformat() if self.timestamp else None,
+            'cpu_usage_percent': float(self.cpu_usage_percent),
+            'memory_usage_percent': float(self.memory_usage_percent),
+            'disk_usage_percent': float(self.disk_usage_percent),
+            'network_latency_ms': self.network_latency_ms,
+            'bandwidth_utilization': float(self.bandwidth_utilization),
+            'active_connections': self.active_connections,
+            'requests_per_second': float(self.requests_per_second),
+            'error_rate': float(self.error_rate)
+        }
+    
+    def __repr__(self):
+        return f"<PerformanceLog {self.timestamp}: CPU={self.cpu_usage_percent}% MEM={self.memory_usage_percent}%>"
+
+class MonthlyReport(db.Model):
+    """
+    月度报告表
+    存储月度SLA综合报告和分析数据
+    """
+    __tablename__ = 'monthly_reports'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 报告基本信息
+    month_year = db.Column(db.Integer, nullable=False, unique=True, index=True)  # YYYYMM
+    generated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
+    # 综合统计
+    total_certificates_issued = db.Column(db.Integer, default=0)  # 发出证书数
+    average_sla_score = db.Column(db.Numeric(6,2), nullable=False)  # 平均SLA分数
+    highest_sla_score = db.Column(db.Numeric(6,2), nullable=False)  # 最高SLA分数
+    lowest_sla_score = db.Column(db.Numeric(6,2), nullable=False)  # 最低SLA分数
+    
+    # 性能统计
+    total_uptime_hours = db.Column(db.Integer, nullable=False)  # 总运行时间
+    total_downtime_minutes = db.Column(db.Integer, default=0)  # 总停机时间
+    average_response_time_ms = db.Column(db.Integer, nullable=False)  # 平均响应时间
+    
+    # 错误统计
+    total_errors = db.Column(db.Integer, default=0)  # 总错误数
+    critical_errors = db.Column(db.Integer, default=0)  # 严重错误数
+    resolved_errors = db.Column(db.Integer, default=0)  # 已解决错误数
+    
+    # 透明度统计
+    blockchain_verifications = db.Column(db.Integer, default=0)  # 区块链验证数
+    ipfs_uploads = db.Column(db.Integer, default=0)  # IPFS上传数
+    transparency_audit_score = db.Column(db.Numeric(5,2), nullable=False)  # 透明度审计分数
+    
+    # 报告文件存储
+    report_ipfs_hash = db.Column(db.String(100), nullable=True)  # 完整报告IPFS哈希
+    summary_ipfs_hash = db.Column(db.String(100), nullable=True)  # 报告摘要IPFS哈希
+    charts_ipfs_hash = db.Column(db.String(100), nullable=True)  # 图表数据IPFS哈希
+    
+    # 区块链记录
+    blockchain_recorded = db.Column(db.Boolean, default=False)  # 是否已记录到区块链
+    blockchain_tx_hash = db.Column(db.String(66), nullable=True)  # 区块链交易哈希
+    
+    # 审计和验证
+    audited_by = db.Column(db.String(42), nullable=True)  # 审计者地址
+    audit_timestamp = db.Column(db.DateTime, nullable=True)  # 审计时间
+    audit_result = db.Column(db.Boolean, nullable=True)  # 审计结果
+    audit_notes = db.Column(db.Text, nullable=True)  # 审计备注
+    
+    def __init__(self, month_year, average_sla_score, highest_sla_score, lowest_sla_score,
+                 total_uptime_hours, average_response_time_ms, transparency_audit_score, **kwargs):
+        self.month_year = month_year
+        self.average_sla_score = average_sla_score
+        self.highest_sla_score = highest_sla_score
+        self.lowest_sla_score = lowest_sla_score
+        self.total_uptime_hours = total_uptime_hours
+        self.average_response_time_ms = average_response_time_ms
+        self.transparency_audit_score = transparency_audit_score
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        """转换为字典格式"""
+        return {
+            'id': self.id,
+            'month_year': self.month_year,
+            'generated_at': self.generated_at.isoformat() if self.generated_at else None,
+            'total_certificates_issued': self.total_certificates_issued,
+            'average_sla_score': float(self.average_sla_score),
+            'highest_sla_score': float(self.highest_sla_score),
+            'lowest_sla_score': float(self.lowest_sla_score),
+            'total_uptime_hours': self.total_uptime_hours,
+            'average_response_time_ms': self.average_response_time_ms,
+            'transparency_audit_score': float(self.transparency_audit_score),
+            'blockchain_recorded': self.blockchain_recorded,
+            'audited_by': self.audited_by,
+            'audit_result': self.audit_result
+        }
+    
+    def __repr__(self):
+        return f"<MonthlyReport {self.month_year}: Avg={self.average_sla_score}% Certs={self.total_certificates_issued}>"
+
 class MinerModel(db.Model):
     """矿机型号信息数据库模型"""
     __tablename__ = 'miner_models'
@@ -1302,114 +1850,3 @@ class HostingUsageItem(db.Model):
     miner = db.relationship('HostingMiner', foreign_keys=[miner_id])
 
 
-class BlockchainRecord(db.Model):
-    """区块链数据记录模型 - 存储链上记录和IPFS数据"""
-    __tablename__ = 'blockchain_records'
-
-    id = db.Column(db.Integer, primary_key=True)
-    
-    # 数据标识
-    data_hash = db.Column(db.String(66), unique=True, nullable=False, index=True)  # 0x + 64位十六进制
-    ipfs_cid = db.Column(db.String(100), nullable=False, index=True)  # IPFS内容标识符
-    
-    # 站点信息
-    site_id = db.Column(db.String(100), nullable=False, index=True)  # 矿场站点ID
-    site_name = db.Column(db.String(200), nullable=True)  # 站点名称
-    
-    # 区块链信息
-    blockchain_network = db.Column(db.String(50), default='Base L2', nullable=False)  # 区块链网络
-    contract_address = db.Column(db.String(42), nullable=True)  # 智能合约地址
-    transaction_hash = db.Column(db.String(66), nullable=True, index=True)  # 交易哈希
-    block_number = db.Column(db.BigInteger, nullable=True)  # 区块号
-    gas_used = db.Column(db.Integer, nullable=True)  # 使用的gas
-    gas_price = db.Column(db.BigInteger, nullable=True)  # gas价格
-    
-    # 数据内容摘要
-    mining_data_summary = db.Column(db.Text, nullable=True)  # 挖矿数据摘要（JSON格式）
-    hashrate_th = db.Column(db.Float, nullable=True)  # 算力 (TH/s)
-    power_consumption_w = db.Column(db.Float, nullable=True)  # 功耗 (W)
-    daily_btc_production = db.Column(db.Float, nullable=True)  # 日产BTC
-    daily_revenue_usd = db.Column(db.Float, nullable=True)  # 日收入 (USD)
-    
-    # 验证状态
-    verification_status = db.Column(
-        db.Enum(BlockchainVerificationStatus), 
-        default=BlockchainVerificationStatus.PENDING, 
-        nullable=False
-    )
-    verification_count = db.Column(db.Integer, default=0, nullable=False)  # 验证次数
-    last_verified_at = db.Column(db.DateTime, nullable=True)  # 最后验证时间
-    
-    # 数据完整性
-    data_version = db.Column(db.String(10), default='1.0', nullable=False)  # 数据版本
-    encryption_enabled = db.Column(db.Boolean, default=True, nullable=False)  # 是否加密
-    data_integrity_hash = db.Column(db.String(64), nullable=True)  # 数据完整性哈希
-    
-    # 关联信息
-    user_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True, index=True)  # 关联用户
-    created_by = db.Column(db.String(100), default='system', nullable=False)  # 创建者
-    
-    # 时间戳
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    blockchain_timestamp = db.Column(db.DateTime, nullable=True)  # 区块链时间戳
-    data_timestamp = db.Column(db.DateTime, nullable=False)  # 数据生成时间戳
-    
-    # 元数据
-    record_metadata = db.Column(db.Text, nullable=True)  # 额外元数据（JSON格式）
-    notes = db.Column(db.Text, nullable=True)  # 备注
-    
-    # 关联关系
-    user = db.relationship('UserAccess', foreign_keys=[user_id], backref='blockchain_records')
-    
-    def __init__(self, data_hash, ipfs_cid, site_id, **kwargs):
-        """初始化区块链记录"""
-        self.data_hash = data_hash
-        self.ipfs_cid = ipfs_cid
-        self.site_id = site_id
-        self.data_timestamp = kwargs.get('data_timestamp', datetime.utcnow())
-        
-        # 处理其他可选参数
-        for key, value in kwargs.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
-    
-    def __repr__(self):
-        return f"<BlockchainRecord {self.data_hash[:16]}... Site: {self.site_id}>"
-    
-    def to_dict(self):
-        """转换为字典格式，便于JSON序列化"""
-        return {
-            'id': self.id,
-            'data_hash': self.data_hash,
-            'ipfs_cid': self.ipfs_cid,
-            'site_id': self.site_id,
-            'site_name': self.site_name,
-            'blockchain_network': self.blockchain_network,
-            'contract_address': self.contract_address,
-            'transaction_hash': self.transaction_hash,
-            'block_number': self.block_number,
-            'verification_status': self.verification_status.value if self.verification_status else None,
-            'verification_count': self.verification_count,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'data_timestamp': self.data_timestamp.isoformat() if self.data_timestamp else None
-        }
-    
-    @classmethod
-    def get_by_data_hash(cls, data_hash):
-        """根据数据哈希获取记录"""
-        return cls.query.filter_by(data_hash=data_hash).first()
-    
-    @classmethod
-    def get_by_site(cls, site_id, limit=None):
-        """根据站点ID获取记录"""
-        query = cls.query.filter_by(site_id=site_id).order_by(cls.created_at.desc())
-        if limit:
-            query = query.limit(limit)
-        return query.all()
-    
-    def update_verification_status(self, status):
-        """更新验证状态"""
-        self.verification_status = status
-        self.verification_count += 1
-        self.last_verified_at = datetime.utcnow()

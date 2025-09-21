@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if current_lang == 'en' %}Manage Subscription - BTC Mining Calculator{% else %}管理订阅 - BTC挖矿计算器{% endif %}</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #f7931e;
+            --primary-gradient: linear-gradient(45deg, #f7931e, #ffad33);
+            --secondary-color: #1a1a1a;
+            --accent-color: #f7931e;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border-color: #333333;
+            --card-bg: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .page-header {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .subscription-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .subscription-card:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        .subscription-card.active {
+            border-color: var(--accent-color);
+            background: linear-gradient(135deg, rgba(247, 147, 30, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        .status-active {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            border: 1px solid #28a745;
+        }
+
+        .status-pending {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 1px solid #ffc107;
+        }
+
+        .status-cancelled {
+            background: rgba(108, 117, 125, 0.2);
+            color: #6c757d;
+            border: 1px solid #6c757d;
+        }
+
+        .status-expired {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+            border: 1px solid #dc3545;
+        }
+
+        .payment-table {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .table-dark {
+            background: transparent;
+        }
+
+        .table-dark th {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .table-dark td {
+            border-color: var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .table-dark tbody tr:hover {
+            background: rgba(247, 147, 30, 0.1);
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(247, 147, 30, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .btn-danger {
+            background: rgba(220, 53, 69, 0.2);
+            border: 2px solid #dc3545;
+            color: #dc3545;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger:hover {
+            background: rgba(220, 53, 69, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .feature-list li i {
+            color: var(--accent-color);
+            margin-right: 0.5rem;
+        }
+
+        .progress-container {
+            background: var(--border-color);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-bar {
+            background: var(--primary-gradient);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .modal-content {
+            background: var(--secondary-color);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--border-color);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            .page-header, .subscription-card {
+                padding: 1.5rem;
+            }
+            .table-responsive {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 页面头部 -->
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div>
+                    <h2>{% if current_lang == 'en' %}Subscription Management{% else %}订阅管理{% endif %}</h2>
+                    <p class="text-secondary mb-0">
+                        {% if current_lang == 'en' %}
+                            Manage your subscription plans and payment history
+                        {% else %}
+                            管理您的订阅计划和支付历史
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <a href="{{ url_for('billing.plans') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        {% if current_lang == 'en' %}Upgrade Plan{% else %}升级计划{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 当前订阅 -->
+        <div class="row">
+            <div class="col-12">
+                <h4 class="mb-3">{% if current_lang == 'en' %}Current Subscriptions{% else %}当前订阅{% endif %}</h4>
+                
+                {% if subscriptions %}
+                    {% for subscription in subscriptions %}
+                    <div class="subscription-card {% if subscription.status == 'active' %}active{% endif %}">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <div class="d-flex align-items-center mb-2">
+                                    <h5 class="mb-0 me-3">{{ subscription.plan.name if subscription.plan else 'Unknown Plan' }}</h5>
+                                    <span class="status-badge status-{{ subscription.status }}">
+                                        {{ subscription.status }}
+                                    </span>
+                                </div>
+                                
+                                {% if subscription.plan %}
+                                <p class="text-secondary mb-2">{{ subscription.plan.description }}</p>
+                                
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <small class="text-secondary">{% if current_lang == 'en' %}Started{% else %}开始时间{% endif %}</small>
+                                        <div>{{ subscription.started_at.strftime('%Y-%m-%d') if subscription.started_at else 'N/A' }}</div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <small class="text-secondary">{% if current_lang == 'en' %}Expires{% else %}到期时间{% endif %}</small>
+                                        <div>{{ subscription.expires_at.strftime('%Y-%m-%d') if subscription.expires_at else 'N/A' }}</div>
+                                    </div>
+                                </div>
+                                
+                                {% if subscription.is_active and subscription.days_remaining %}
+                                <div class="mt-2">
+                                    <small class="text-secondary">
+                                        {% if current_lang == 'en' %}{{ subscription.days_remaining }} days remaining{% else %}剩余 {{ subscription.days_remaining }} 天{% endif %}
+                                    </small>
+                                    <div class="progress-container">
+                                        {% set total_days = (subscription.expires_at - subscription.started_at).days if subscription.expires_at and subscription.started_at else 30 %}
+                                        {% set progress = (subscription.days_remaining / total_days * 100) if total_days > 0 else 0 %}
+                                        <div class="progress-bar" style="width: {{ progress }}%"></div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 text-md-end">
+                                {% if subscription.plan %}
+                                <div class="h5 mb-2">
+                                    ${{ subscription.plan.price_monthly }}/{% if current_lang == 'en' %}month{% else %}月{% endif %}
+                                </div>
+                                {% endif %}
+                                
+                                <div class="d-flex flex-column gap-2">
+                                    {% if subscription.status == 'active' %}
+                                    <button class="btn btn-danger btn-sm" onclick="cancelSubscription({{ subscription.id }})">
+                                        <i class="bi bi-x-circle me-2"></i>
+                                        {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                                    </button>
+                                    {% elif subscription.status == 'cancelled' %}
+                                    <a href="{{ url_for('billing.plans') }}" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-arrow-repeat me-2"></i>
+                                        {% if current_lang == 'en' %}Reactivate{% else %}重新激活{% endif %}
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if subscription.plan %}
+                        <hr class="my-3">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h6>{% if current_lang == 'en' %}Plan Features{% else %}计划功能{% endif %}</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <ul class="feature-list">
+                                            <li>
+                                                <i class="bi bi-cpu"></i>
+                                                {% if current_lang == 'en' %}
+                                                    {{ subscription.plan.max_miners if subscription.plan.max_miners > 0 else 'Unlimited' }} miners
+                                                {% else %}
+                                                    {{ subscription.plan.max_miners if subscription.plan.max_miners > 0 else '无限' }} 台矿机
+                                                {% endif %}
+                                            </li>
+                                            <li>
+                                                <i class="bi bi-graph-up"></i>
+                                                {% if current_lang == 'en' %}
+                                                    {{ subscription.plan.max_api_calls_per_day if subscription.plan.max_api_calls_per_day > 0 else 'Unlimited' }} API calls/day
+                                                {% else %}
+                                                    每日 {{ subscription.plan.max_api_calls_per_day if subscription.plan.max_api_calls_per_day > 0 else '无限' }} 次API调用
+                                                {% endif %}
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <ul class="feature-list">
+                                            {% if subscription.plan.has_advanced_analytics %}
+                                            <li><i class="bi bi-check-circle"></i>{% if current_lang == 'en' %}Advanced Analytics{% else %}高级分析{% endif %}</li>
+                                            {% endif %}
+                                            {% if subscription.plan.has_export_features %}
+                                            <li><i class="bi bi-check-circle"></i>{% if current_lang == 'en' %}Export Features{% else %}导出功能{% endif %}</li>
+                                            {% endif %}
+                                            {% if subscription.plan.has_priority_support %}
+                                            <li><i class="bi bi-check-circle"></i>{% if current_lang == 'en' %}Priority Support{% else %}优先支持{% endif %}</li>
+                                            {% endif %}
+                                            {% if subscription.plan.has_api_access %}
+                                            <li><i class="bi bi-check-circle"></i>{% if current_lang == 'en' %}API Access{% else %}API访问{% endif %}</li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="subscription-card">
+                        <div class="empty-state">
+                            <i class="bi bi-inbox"></i>
+                            <h5>{% if current_lang == 'en' %}No Active Subscriptions{% else %}无活跃订阅{% endif %}</h5>
+                            <p>{% if current_lang == 'en' %}You don't have any active subscriptions.{% else %}您目前没有任何活跃的订阅。{% endif %}</p>
+                            <a href="{{ url_for('billing.plans') }}" class="btn btn-primary">
+                                {% if current_lang == 'en' %}Choose a Plan{% else %}选择计划{% endif %}
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 支付历史 -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <h4 class="mb-3">{% if current_lang == 'en' %}Payment History{% else %}支付历史{% endif %}</h4>
+                
+                <div class="payment-table">
+                    {% if payments %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>{% if current_lang == 'en' %}Payment ID{% else %}支付ID{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Amount{% else %}金额{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Currency{% else %}货币{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Date{% else %}日期{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in payments %}
+                                <tr>
+                                    <td>#{{ payment.id }}</td>
+                                    <td>{{ payment.amount }}</td>
+                                    <td>
+                                        {% if payment.is_crypto_payment %}
+                                        <span class="badge bg-warning">{{ payment.currency }}</span>
+                                        {% else %}
+                                        {{ payment.currency }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-{{ payment.status }}">
+                                            {{ payment.status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ payment.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <div class="d-flex gap-2">
+                                            <a href="{{ url_for('billing.payment_details', payment_id=payment.id) }}" 
+                                               class="btn btn-sm btn-secondary">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            {% if payment.status == 'completed' %}
+                                            <a href="{{ url_for('billing.invoice', payment_id=payment.id) }}" 
+                                               class="btn btn-sm btn-primary">
+                                                <i class="bi bi-receipt"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-credit-card"></i>
+                        <h5>{% if current_lang == 'en' %}No Payment History{% else %}无支付历史{% endif %}</h5>
+                        <p>{% if current_lang == 'en' %}You haven't made any payments yet.{% else %}您还没有任何支付记录。{% endif %}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 取消订阅确认模态框 -->
+    <div class="modal fade" id="cancelModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{% if current_lang == 'en' %}Cancel Subscription{% else %}取消订阅{% endif %}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>{% if current_lang == 'en' %}Are you sure you want to cancel your subscription? This action cannot be undone.{% else %}确定要取消您的订阅吗？此操作无法撤销。{% endif %}</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmCancel">
+                        {% if current_lang == 'en' %}Confirm Cancellation{% else %}确认取消{% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let cancellingSubscriptionId = null;
+
+        function cancelSubscription(subscriptionId) {
+            cancellingSubscriptionId = subscriptionId;
+            const modal = new bootstrap.Modal(document.getElementById('cancelModal'));
+            modal.show();
+        }
+
+        document.getElementById('confirmCancel').addEventListener('click', function() {
+            if (!cancellingSubscriptionId) return;
+
+            const btn = this;
+            const originalText = btn.textContent;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{% if current_lang == "en" %}Cancelling...{% else %}取消中...{% endif %}';
+
+            fetch(`/billing/cancel-subscription/${cancellingSubscriptionId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('{% if current_lang == "en" %}Subscription cancelled successfully{% else %}订阅已成功取消{% endif %}', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(data.error || '{% if current_lang == "en" %}Cancellation failed{% else %}取消失败{% endif %}', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('{% if current_lang == "en" %}Network error{% else %}网络错误{% endif %}', 'error');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = originalText;
+                bootstrap.Modal.getInstance(document.getElementById('cancelModal')).hide();
+            });
+        });
+
+        // Toast通知功能
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--card-bg);
+                color: var(--text-primary);
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                border: 1px solid ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : 'var(--border-color)'};
+                backdrop-filter: blur(10px);
+                z-index: 9999;
+                animation: slideIn 0.3s ease;
+                max-width: 300px;
+            `;
+            
+            const icon = type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'info-circle';
+            toast.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-${icon} me-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (document.body.contains(toast)) {
+                        document.body.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // CSS动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

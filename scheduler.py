@@ -18,14 +18,18 @@ import logging
 import threading
 import time
 import schedule
+import os
+import psutil
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 import json
 import traceback
+from sqlalchemy import text, create_engine
+from sqlalchemy.exc import OperationalError
 
 # 导入项目模块 Import project modules
 from app import app, db
-from models import BlockchainRecord, BlockchainVerificationStatus
+from models import BlockchainRecord, BlockchainVerificationStatus, SchedulerLock
 try:
     from blockchain_integration import (
         quick_register_mining_data, 
@@ -61,6 +65,11 @@ class BlockchainScheduler:
     def __init__(self):
         self.is_running = False
         self.scheduler_thread = None
+        self.leader_lock_acquired = False
+        self.process_id = os.getpid()
+        self.lock_key = 'blockchain_scheduler_leader'
+        self.lock_timeout = 300  # 5分钟超时
+        self.hostname = os.uname().nodename
         self.stats = {
             'tasks_executed': 0,
             'successful_records': 0,
@@ -102,11 +111,227 @@ class BlockchainScheduler:
         }
         
         logger.info("区块链调度器已初始化 Blockchain Scheduler initialized")
+        
+        # 🔧 CRITICAL FIX: 使用SchedulerLock模型验证单实例机制
+        self._verify_scheduler_lock_integration()
+    
+    def _verify_scheduler_lock_integration(self):
+        """
+        🔧 CRITICAL FIX: 验证SchedulerLock模型集成
+        Verify SchedulerLock model integration
+        """
+        try:
+            with app.app_context():
+                # 验证SchedulerLock表是否存在
+                db.create_all()  # 确保表已创建
+                
+                # 测试SchedulerLock功能
+                test_result = self._test_scheduler_lock_functionality()
+                if test_result:
+                    logger.info("✅ SchedulerLock模型集成验证成功 SchedulerLock model integration verified")
+                else:
+                    logger.error("❌ SchedulerLock模型集成验证失败 SchedulerLock model integration failed")
+                    raise Exception("SchedulerLock integration test failed")
+                    
+        except Exception as e:
+            logger.error(f"SchedulerLock集成验证失败 SchedulerLock integration verification failed: {e}")
+            raise
+            
+    def _test_scheduler_lock_functionality(self) -> bool:
+        """测试SchedulerLock功能"""
+        try:
+            test_key = f"test_lock_{self.process_id}"
+            
+            # 测试获取锁
+            success = SchedulerLock.acquire_lock(
+                lock_key=test_key,
+                process_id=self.process_id,
+                hostname=self.hostname,
+                timeout_seconds=60,
+                worker_info=f"test_worker_{self.process_id}"
+            )
+            
+            if not success:
+                logger.warning("⚠️ 测试锁获取失败，可能已被其他进程持有")
+                return True  # 这是预期行为
+            
+            # 测试锁状态查询
+            active_lock = SchedulerLock.get_active_lock(test_key)
+            if not active_lock:
+                logger.error("❌ 获取活跃锁失败")
+                return False
+                
+            # 测试锁释放
+            release_success = SchedulerLock.release_lock(test_key, self.process_id)
+            if not release_success:
+                logger.error("❌ 释放测试锁失败")
+                return False
+                
+            logger.info(f"✅ SchedulerLock功能测试通过: {active_lock.to_dict()}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"SchedulerLock功能测试失败: {e}")
+            return False
+    
+    def _acquire_leader_lock(self) -> bool:
+        """
+        🔧 CRITICAL FIX: 获取leader锁（使用SchedulerLock模型）
+        Acquire leader lock using SchedulerLock model
+        """
+        try:
+            with app.app_context():
+                # 生成worker信息
+                worker_info = json.dumps({
+                    'pid': self.process_id,
+                    'hostname': self.hostname,
+                    'start_time': datetime.utcnow().isoformat(),
+                    'scheduler_type': 'BlockchainScheduler'
+                })
+                
+                # 使用SchedulerLock模型获取锁
+                success = SchedulerLock.acquire_lock(
+                    lock_key=self.lock_key,
+                    process_id=self.process_id,
+                    hostname=self.hostname,
+                    timeout_seconds=self.lock_timeout,
+                    worker_info=worker_info
+                )
+                
+                if success:
+                    self.leader_lock_acquired = True
+                    logger.info(f"🔒 Leader锁已获取 Leader lock acquired: PID={self.process_id}@{self.hostname}")
+                    
+                    # 记录锁状态用于监控
+                    active_lock = SchedulerLock.get_active_lock(self.lock_key)
+                    if active_lock:
+                        logger.info(f"🔍 锁状态详情: {active_lock.to_dict()}")
+                    
+                    return True
+                else:
+                    # 检查现有锁状态
+                    existing_lock = SchedulerLock.get_active_lock(self.lock_key)
+                    if existing_lock:
+                        logger.info(f"⏳ Leader锁被其他进程持有: {existing_lock.to_dict()}")
+                    return False
+                    
+        except Exception as e:
+            logger.error(f"获取leader锁失败 Failed to acquire leader lock: {e}")
+            return False
+    
+    def _release_leader_lock(self):
+        """
+        🔧 CRITICAL FIX: 释放leader锁（使用SchedulerLock模型）
+        Release leader lock using SchedulerLock model
+        """
+        if not self.leader_lock_acquired:
+            return
+            
+        try:
+            with app.app_context():
+                success = SchedulerLock.release_lock(
+                    lock_key=self.lock_key,
+                    process_id=self.process_id
+                )
+                
+                if success:
+                    logger.info(f"🔓 Leader锁已释放 Leader lock released: PID={self.process_id}@{self.hostname}")
+                else:
+                    logger.warning(f"⚠️ Leader锁释放失败（可能已被清理） Leader lock release failed (may have been cleaned up): PID={self.process_id}")
+                    
+                self.leader_lock_acquired = False
+                
+        except Exception as e:
+            logger.error(f"释放leader锁失败 Failed to release leader lock: {e}")
+    
+    def _refresh_lock(self):
+        """
+        🔧 CRITICAL FIX: 刷新锁的过期时间（使用SchedulerLock模型）
+        Refresh lock expiration using SchedulerLock model
+        """
+        try:
+            with app.app_context():
+                # 获取当前锁
+                current_lock = SchedulerLock.get_active_lock(self.lock_key)
+                if current_lock and current_lock.process_id == self.process_id:
+                    # 刷新锁
+                    current_lock.refresh_lock(self.lock_timeout)
+                    db.session.commit()
+                    
+                    logger.debug(f"🔄 锁已刷新 Lock refreshed: {current_lock.to_dict()}")
+                else:
+                    logger.warning(f"⚠️ 无法刷新锁 - 锁不存在或不属于当前进程 Cannot refresh lock - not owned by current process")
+                    self.leader_lock_acquired = False
+                
+        except Exception as e:
+            logger.error(f"刷新锁失败 Failed to refresh lock: {e}")
+            self.leader_lock_acquired = False
+    
+    def _cleanup_expired_locks(self):
+        """清理过期的锁 Cleanup expired locks"""
+        try:
+            current_time = datetime.utcnow()
+            delete_sql = f"""
+            DELETE FROM {self.lock_table_name} 
+            WHERE expires_at < %(current_time)s
+            """
+            
+            result = db.session.execute(text(delete_sql), {
+                'current_time': current_time
+            })
+            
+            if result.rowcount > 0:
+                logger.info(f"🧹 清理了 {result.rowcount} 个过期锁 Cleaned up {result.rowcount} expired locks")
+                
+        except Exception as e:
+            logger.error(f"清理过期锁失败 Failed to cleanup expired locks: {e}")
+    
+    def _get_existing_lock(self) -> Optional[Dict[str, Any]]:
+        """获取现有锁信息 Get existing lock info"""
+        try:
+            select_sql = f"""
+            SELECT lock_key, process_id, hostname, acquired_at, expires_at, last_heartbeat
+            FROM {self.lock_table_name}
+            WHERE lock_key = %(lock_key)s
+            """
+            
+            result = db.session.execute(text(select_sql), {
+                'lock_key': self.lock_key
+            }).fetchone()
+            
+            if result:
+                return {
+                    'lock_key': result[0],
+                    'process_id': result[1],
+                    'hostname': result[2],
+                    'acquired_at': result[3],
+                    'expires_at': result[4],
+                    'last_heartbeat': result[5]
+                }
+            return None
+            
+        except Exception as e:
+            logger.error(f"获取现有锁信息失败 Failed to get existing lock info: {e}")
+            return None
+    
+    def _is_process_alive(self, pid: int) -> bool:
+        """检查进程是否存活 Check if process is alive"""
+        try:
+            return psutil.pid_exists(pid)
+        except Exception:
+            return False
     
     def start(self):
         """启动调度器 Start scheduler"""
         if self.is_running:
             logger.warning("调度器已在运行中 Scheduler already running")
+            return
+        
+        # 🔧 CRITICAL FIX: Leader选举机制防止多worker重复执行
+        logger.info(f"🗳️ 尝试获取leader锁 Attempting to acquire leader lock: PID={self.process_id}")
+        
+        if not self._acquire_leader_lock():
+            logger.info(f"⏳ 未能获取leader锁，此worker将不运行调度器 Failed to acquire leader lock, this worker will not run scheduler: PID={self.process_id}")
             return
         
         try:
@@ -118,11 +343,12 @@ class BlockchainScheduler:
             self.scheduler_thread = threading.Thread(target=self._run_scheduler, daemon=True)
             self.scheduler_thread.start()
             
-            logger.info("区块链调度器已启动 Blockchain Scheduler started")
+            logger.info(f"🚀 区块链调度器已启动 Blockchain Scheduler started as LEADER: PID={self.process_id}")
             
         except Exception as e:
             logger.error(f"启动调度器失败 Failed to start scheduler: {e}")
             self.is_running = False
+            self._release_leader_lock()  # 释放锁
     
     def stop(self):
         """停止调度器 Stop scheduler"""
@@ -135,7 +361,11 @@ class BlockchainScheduler:
             self.scheduler_thread.join(timeout=5)
         
         schedule.clear()
-        logger.info("区块链调度器已停止 Blockchain Scheduler stopped")
+        
+        # 🔧 CRITICAL FIX: 释放leader锁
+        self._release_leader_lock()
+        
+        logger.info(f"🛑 区块链调度器已停止 Blockchain Scheduler stopped: PID={self.process_id}")
     
     def _register_tasks(self):
         """注册定时任务 Register scheduled tasks"""
@@ -181,14 +411,29 @@ class BlockchainScheduler:
         """运行调度器主循环 Run scheduler main loop"""
         logger.info("调度器主循环已启动 Scheduler main loop started")
         
+        last_heartbeat = datetime.utcnow()
+        heartbeat_interval = 60  # 每60秒刷新一次锁
+        
         while self.is_running:
             try:
+                # 🔧 CRITICAL FIX: 定期刷新leader锁以保持活跃状态
+                current_time = datetime.utcnow()
+                if (current_time - last_heartbeat).total_seconds() >= heartbeat_interval:
+                    if self.leader_lock_acquired:
+                        self._refresh_lock()
+                        last_heartbeat = current_time
+                    else:
+                        logger.warning("Leader锁已丢失，停止调度器 Leader lock lost, stopping scheduler")
+                        break
+                
                 schedule.run_pending()
                 time.sleep(30)  # 检查间隔30秒 Check every 30 seconds
                 
             except Exception as e:
                 logger.error(f"调度器主循环错误 Scheduler main loop error: {e}")
                 time.sleep(60)  # 错误后等待1分钟 Wait 1 minute after error
+        
+        logger.info("调度器主循环已退出 Scheduler main loop exited")
     
     def _execute_with_retry(self, task_func, task_name: str):
         """执行任务并支持重试 Execute task with retry support"""

@@ -27,10 +27,12 @@ def create_app():
     ]
 
     if missing_vars:
-        logging.warning(f"Missing environment variables: {missing_vars}")
-        # 设置默认值以避免应用崩溃
-        if not os.environ.get("SESSION_SECRET"):
-            os.environ["SESSION_SECRET"] = "bitcoin_mining_calculator_secret"
+        logging.error(f"Missing critical environment variables: {missing_vars}")
+        # 🔧 CRITICAL SECURITY FIX: 绝对不允许硬编码的session secret
+        if "SESSION_SECRET" in missing_vars:
+            raise SystemExit("CRITICAL SECURITY ERROR: SESSION_SECRET environment variable must be set. Cannot proceed without secure session key.")
+        if "DATABASE_URL" in missing_vars:
+            raise SystemExit("CRITICAL ERROR: DATABASE_URL environment variable must be set.")
 
     # 快速启动模式 - 为部署优化跳过数据库健康检查
     skip_db_check = os.environ.get("SKIP_DATABASE_HEALTH_CHECK", "1").lower() in ("1", "true", "yes")  # 默认启用快速启动
@@ -68,12 +70,53 @@ def create_app():
     elif skip_db_check:
         logging.info("Database health check skipped for fast startup")
 
+    # 🔧 CRITICAL FIX: 生产就绪度检查
+    try:
+        # 检查是否在生产模式或启用严格检查
+        production_mode = os.environ.get('FLASK_ENV') == 'production' or os.environ.get('ENABLE_PRODUCTION_CHECKS', 'false').lower() == 'true'
+        
+        if production_mode or not skip_db_check:
+            logging.info("🚀 运行生产就绪度检查...")
+            
+            from production_readiness_checker import ProductionReadinessChecker
+            
+            # 创建检查器实例
+            checker = ProductionReadinessChecker()
+            
+            # 运行启动检查 - 在生产模式下fail_fast，开发模式下不中断
+            fail_fast = production_mode
+            readiness_report = checker.run_startup_checks(fail_fast=fail_fast)
+            
+            # 记录检查结果
+            if checker.production_ready:
+                logging.info("✅ 生产就绪度检查通过")
+            else:
+                if fail_fast:
+                    logging.error("❌ 生产就绪度检查失败，停止启动")
+                    raise SystemExit("Production readiness check failed")
+                else:
+                    logging.warning("⚠️ 生产就绪度检查发现问题，但允许继续启动")
+                    for warning in checker.warnings:
+                        logging.warning(f"  - {warning}")
+                        
+    except ImportError as e:
+        logging.warning(f"生产就绪度检查器不可用: {e}")
+        logging.info("系统将继续启动，但建议修复生产就绪度检查器")
+    except Exception as e:
+        # 在开发模式下不因检查失败而阻止启动
+        if os.environ.get('FLASK_ENV') == 'production':
+            logging.error(f"生产就绪度检查失败: {e}")
+            raise SystemExit(f"Production readiness check failed: {e}")
+        else:
+            logging.warning(f"生产就绪度检查出现问题，但允许启动: {e}")
+
     from app import app
     # db已在app模块中初始化
 
-    # 配置应用密钥
-    app.secret_key = os.environ.get("SESSION_SECRET",
-                                    "bitcoin_mining_calculator_secret")
+    # 🔧 CRITICAL SECURITY FIX: 严格要求SESSION_SECRET环境变量
+    app.secret_key = os.environ.get("SESSION_SECRET")
+    if not app.secret_key:
+        raise SystemExit("CRITICAL SECURITY ERROR: SESSION_SECRET environment variable must be set. This should have been caught earlier - check environment setup.")
 
     # 数据库已在app模块中初始化
     logging.info("Database initialized successfully")

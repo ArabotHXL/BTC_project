@@ -57,11 +57,20 @@ class Config:
     ENABLE_BACKGROUND_SERVICES = os.environ.get('ENABLE_BACKGROUND_SERVICES', '0') == '1'
     USAGE_TRACKING_ENABLED = False  # DISABLED: Gold flow module - hosting transparency only
     MINING_BROKER_ENABLED = False  # DISABLED: Gold flow module
-    SUBSCRIPTION_ENABLED = False  # DISABLED: Gold flow module
+    SUBSCRIPTION_ENABLED = True  # ENABLED: 启用订阅系统支持加密货币支付
     BATCH_CALCULATOR_ENABLED = True
     
-    # 彻底禁用支付相关功能以避免Stripe询问
-    PAYMENT_PROCESSING_DISABLED = True
+    # 启用加密货币支付处理
+    PAYMENT_PROCESSING_DISABLED = False  # ENABLED: 支持加密货币支付
+    CRYPTO_PAYMENT_ENABLED = True  # 新增：启用加密货币支付
+    
+    # 加密货币支付配置
+    SUPPORTED_CRYPTOCURRENCIES = ['BTC', 'ETH', 'USDC']
+    CRYPTO_NETWORKS = {
+        'BTC': 'bitcoin',
+        'ETH': 'ethereum',
+        'USDC': 'ethereum'  # USDC运行在以太坊网络
+    }
     
     # 安全配置 - 托管透明性平台
     # CSRF 保护 (使用环境变量或SESSION_SECRET)

@@ -268,6 +268,55 @@ body {
     background: linear-gradient(45deg, #fd7e14, #f39c12);
 }
 
+.sla-nft-item {
+    background: linear-gradient(135deg, rgba(106, 13, 173, 0.15), rgba(142, 68, 173, 0.1));
+}
+
+.sla-nft-item::after {
+    background: linear-gradient(45deg, #6a0dad, #8e44ad, #9b59b6);
+}
+
+.sla-nft-badge {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: rgba(106, 13, 173, 0.3);
+    padding: 0.3rem 0.8rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #9b59b6;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.dashboard-card:hover .sla-nft-badge {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.sla-status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+}
+
+.sla-status-excellent { background: #28a745; }
+.sla-status-good { background: #17a2b8; }
+.sla-status-acceptable { background: #ffc107; }
+.sla-status-poor { background: #fd7e14; }
+.sla-status-failed { background: #dc3545; }
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
 /* Enhanced responsive design */
 @media (max-width: 1200px) {
     .dashboard-grid {
@@ -741,6 +790,29 @@ body {
             </div>
         </div>
         {% endif %}
+
+        <!-- SLA NFT证书管理 -->
+        {% if session.email %}
+        <div class="dashboard-card sla-nft-item" onclick="openSLANFTModal()">
+            <div class="card-stats">Blockchain</div>
+            <div class="sla-nft-badge" id="sla-nft-count">Loading...</div>
+            <div class="card-content">
+                <i class="bi bi-award card-icon" style="color: #9b59b6;"></i>
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}SLA NFT Certificates{% else %}SLA NFT证书{% endif %}
+                </h3>
+                <p class="card-description">
+                    {% if current_lang == 'en' %}
+                        <span class="sla-status-indicator sla-status-excellent" id="sla-status-indicator"></span>
+                        Blockchain-verified service level agreement certificates and monthly performance reports
+                    {% else %}
+                        <span class="sla-status-indicator sla-status-excellent" id="sla-status-indicator"></span>
+                        区块链验证的服务等级协议证书和月度性能报告
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 
@@ -792,7 +864,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Real-time data updates
     updateRealTimeStats();
+    updateSLANFTStatus();
     setInterval(updateRealTimeStats, 30000); // Update every 30 seconds
+    setInterval(updateSLANFTStatus, 60000); // Update SLA status every minute
 });
 
 // Real-time statistics updates
@@ -830,6 +904,334 @@ function animateValue(element) {
         element.style.transform = 'scale(1)';
         element.style.color = '';
     }, 300);
+}
+
+// SLA NFT Modal and Management Functions
+function openSLANFTModal() {
+    // Create and show SLA NFT modal
+    const modal = createSLANFTModal();
+    document.body.appendChild(modal);
+    
+    // Initialize modal with Bootstrap
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    
+    // Load SLA NFT data
+    loadSLANFTData();
+    
+    // Clean up when modal is hidden
+    modal.addEventListener('hidden.bs.modal', function () {
+        modal.remove();
+    });
+}
+
+function createSLANFTModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = 'slaNFTModal';
+    modal.setAttribute('tabindex', '-1');
+    
+    const currentLang = document.documentElement.lang === 'zh-CN' ? 'zh' : 'en';
+    
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content" style="background: rgba(26, 26, 46, 0.95); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 20px;">
+                <div class="modal-header border-bottom border-warning">
+                    <h5 class="modal-title text-warning">
+                        <i class="bi bi-award me-2"></i>
+                        ${currentLang === 'en' ? 'SLA NFT Certificates' : 'SLA NFT证书管理'}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- SLA Status Overview -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-dark border-success">
+                                <div class="card-body text-center">
+                                    <h6 class="text-success">${currentLang === 'en' ? 'Current SLA Status' : '当前SLA状态'}</h6>
+                                    <div class="display-6 text-success" id="current-sla-score">Loading...</div>
+                                    <small class="text-muted" id="current-sla-status">Loading...</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-dark border-info">
+                                <div class="card-body text-center">
+                                    <h6 class="text-info">${currentLang === 'en' ? 'Total Certificates' : '证书总数'}</h6>
+                                    <div class="display-6 text-info" id="total-certificates">Loading...</div>
+                                    <small class="text-muted">${currentLang === 'en' ? 'Blockchain Verified' : '区块链验证'}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Certificates List -->
+                    <div class="mb-3">
+                        <h6 class="text-warning">${currentLang === 'en' ? 'Certificate History' : '证书历史'}</h6>
+                        <div id="certificates-list" class="mt-3">
+                            <div class="text-center">
+                                <div class="spinner-border text-warning" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Monthly Reports -->
+                    <div>
+                        <h6 class="text-warning">${currentLang === 'en' ? 'Monthly Reports' : '月度报告'}</h6>
+                        <div id="monthly-reports-list" class="mt-3">
+                            <div class="text-center">
+                                <div class="spinner-border text-warning" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-warning">
+                    <button type="button" class="btn btn-outline-warning" onclick="refreshSLAData()">
+                        <i class="bi bi-arrow-clockwise me-2"></i>
+                        ${currentLang === 'en' ? 'Refresh' : '刷新'}
+                    </button>
+                    <button type="button" class="btn btn-warning" onclick="requestNewCertificate()">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        ${currentLang === 'en' ? 'Request Certificate' : '申请证书'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return modal;
+}
+
+async function loadSLANFTData() {
+    try {
+        // Load SLA status
+        const statusResponse = await fetch('/api/sla/status');
+        const statusData = await statusResponse.json();
+        
+        if (statusData.success) {
+            updateSLAStatusDisplay(statusData.data);
+        }
+        
+        // Load certificates
+        const certResponse = await fetch('/api/sla/certificates');
+        const certData = await certResponse.json();
+        
+        if (certData.success) {
+            displayCertificates(certData.data.certificates);
+        }
+        
+        // Load monthly reports
+        const reportsResponse = await fetch('/api/sla/reports');
+        const reportsData = await reportsResponse.json();
+        
+        if (reportsData.success) {
+            displayMonthlyReports(reportsData.data.reports);
+        }
+        
+    } catch (error) {
+        console.error('Failed to load SLA NFT data:', error);
+        showErrorMessage('Failed to load SLA data');
+    }
+}
+
+function updateSLAStatusDisplay(data) {
+    const scoreElement = document.getElementById('current-sla-score');
+    const statusElement = document.getElementById('current-sla-status');
+    const totalElement = document.getElementById('total-certificates');
+    
+    if (scoreElement && data.current_status.latest_sla_score) {
+        scoreElement.textContent = data.current_status.latest_sla_score.toFixed(1) + '%';
+    }
+    
+    if (statusElement && data.current_status.latest_sla_status) {
+        statusElement.textContent = data.current_status.latest_sla_status;
+    }
+    
+    if (totalElement && data.statistics.total_certificates) {
+        totalElement.textContent = data.statistics.total_certificates;
+    }
+}
+
+function displayCertificates(certificates) {
+    const container = document.getElementById('certificates-list');
+    const currentLang = document.documentElement.lang === 'zh-CN' ? 'zh' : 'en';
+    
+    if (!certificates || certificates.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted py-3">
+                <i class="bi bi-inbox display-4 d-block mb-2"></i>
+                ${currentLang === 'en' ? 'No certificates found' : '未找到证书'}
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = certificates.map(cert => {
+        const statusClass = getStatusClass(cert.mint_status);
+        const year = Math.floor(cert.month_year / 100);
+        const month = cert.month_year % 100;
+        const monthName = getMonthName(month, currentLang);
+        
+        return `
+            <div class="card bg-dark border-secondary mb-2">
+                <div class="card-body py-2">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <strong class="text-light">${monthName} ${year}</strong>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="badge ${statusClass}">${cert.mint_status}</span>
+                        </div>
+                        <div class="col-md-3">
+                            ${cert.sla_metrics ? 
+                                `<span class="text-success">${cert.sla_metrics.composite_sla_score}%</span>` : 
+                                '<span class="text-muted">N/A</span>'
+                            }
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <button class="btn btn-sm btn-outline-info" onclick="viewCertificateDetails('${cert.id}')">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            ${cert.mint_status === 'MINTED' ? 
+                                `<button class="btn btn-sm btn-outline-success ms-1" onclick="verifyCertificate('${cert.id}')">
+                                    <i class="bi bi-shield-check"></i>
+                                </button>` : 
+                                ''
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function displayMonthlyReports(reports) {
+    const container = document.getElementById('monthly-reports-list');
+    const currentLang = document.documentElement.lang === 'zh-CN' ? 'zh' : 'en';
+    
+    if (!reports || reports.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted py-3">
+                <i class="bi bi-file-earmark-text display-4 d-block mb-2"></i>
+                ${currentLang === 'en' ? 'No reports available' : '暂无报告'}
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = reports.map(report => {
+        return `
+            <div class="card bg-dark border-secondary mb-2">
+                <div class="card-body py-2">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <strong class="text-light">${report.display_name}</strong>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="text-info">${report.average_sla_score.toFixed(1)}%</span>
+                        </div>
+                        <div class="col-md-2">
+                            <span class="badge ${report.audit_status === 'audited' ? 'bg-success' : 'bg-warning'}">${report.audit_status}</span>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <button class="btn btn-sm btn-outline-warning" onclick="downloadReport('${report.month_year}')">
+                                <i class="bi bi-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Update SLA NFT status on dashboard
+async function updateSLANFTStatus() {
+    try {
+        const response = await fetch('/api/sla/status');
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update NFT count badge
+            const countBadge = document.getElementById('sla-nft-count');
+            if (countBadge) {
+                countBadge.textContent = `${data.data.statistics.total_certificates} NFTs`;
+            }
+            
+            // Update status indicator
+            const statusIndicator = document.getElementById('sla-status-indicator');
+            if (statusIndicator && data.data.current_status.latest_sla_status) {
+                const status = data.data.current_status.latest_sla_status.toLowerCase();
+                statusIndicator.className = `sla-status-indicator sla-status-${status}`;
+            }
+        }
+    } catch (error) {
+        console.log('SLA status update failed:', error);
+    }
+}
+
+// Helper functions
+function getStatusClass(status) {
+    const statusMap = {
+        'PENDING': 'bg-warning',
+        'MINTING': 'bg-info',
+        'MINTED': 'bg-success',
+        'FAILED': 'bg-danger',
+        'VERIFIED': 'bg-primary'
+    };
+    return statusMap[status] || 'bg-secondary';
+}
+
+function getMonthName(month, lang) {
+    const monthsEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthsZh = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+    return lang === 'zh' ? monthsZh[month - 1] : monthsEn[month - 1];
+}
+
+function showErrorMessage(message) {
+    // Create toast notification
+    const toast = document.createElement('div');
+    toast.className = 'toast align-items-center text-white bg-danger border-0 position-fixed';
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 11000;';
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    setTimeout(() => toast.remove(), 5000);
+}
+
+// Placeholder functions for future implementation
+function refreshSLAData() {
+    loadSLANFTData();
+}
+
+function requestNewCertificate() {
+    alert('Certificate request functionality coming soon!');
+}
+
+function viewCertificateDetails(certId) {
+    alert(`Certificate details for ID: ${certId} - Coming soon!`);
+}
+
+function verifyCertificate(certId) {
+    alert(`Certificate verification for ID: ${certId} - Coming soon!`);
+}
+
+function downloadReport(monthYear) {
+    window.open(`/api/sla/reports/${monthYear}`, '_blank');
 }
 
 // Add ripple animation keyframes

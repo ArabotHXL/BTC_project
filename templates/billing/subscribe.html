@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if current_lang == 'en' %}Subscribe to {{ plan.name }} - BTC Mining Calculator{% else %}订阅 {{ plan.name }} - BTC挖矿计算器{% endif %}</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #f7931e;
+            --primary-gradient: linear-gradient(45deg, #f7931e, #ffad33);
+            --secondary-color: #1a1a1a;
+            --accent-color: #f7931e;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border-color: #333333;
+            --card-bg: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .plan-summary {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .payment-options {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .crypto-option {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .crypto-option:hover {
+            border-color: var(--accent-color);
+            background: rgba(247, 147, 30, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .crypto-option.selected {
+            border-color: var(--accent-color);
+            background: rgba(247, 147, 30, 0.2);
+        }
+
+        .crypto-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .billing-cycle-option {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .billing-cycle-option:hover {
+            border-color: var(--accent-color);
+        }
+
+        .billing-cycle-option.selected {
+            border-color: var(--accent-color);
+            background: rgba(247, 147, 30, 0.1);
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(247, 147, 30, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .loading-spinner {
+            display: none;
+        }
+
+        .payment-modal {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-content {
+            background: var(--secondary-color);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+        }
+
+        .qr-code-container {
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            margin: 1rem 0;
+        }
+
+        .payment-address {
+            font-family: 'Courier New', monospace;
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            word-break: break-all;
+            font-size: 0.9rem;
+        }
+
+        .payment-timer {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+
+        .status-pending { background: #ffc107; }
+        .status-confirming { background: #17a2b8; }
+        .status-completed { background: #28a745; }
+        .status-failed { background: #dc3545; }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            .plan-summary, .payment-options {
+                padding: 1.5rem;
+            }
+            .crypto-option {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 计划摘要 -->
+        <div class="plan-summary">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2>{{ plan.name }} {% if current_lang == 'en' %}Plan{% else %}计划{% endif %}</h2>
+                    <p class="text-secondary mb-0">{{ plan.description }}</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="h4 mb-0" id="plan-price">
+                        ${{ plan.price_monthly }}/{% if current_lang == 'en' %}month{% else %}月{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 支付选项 -->
+        <div class="payment-options">
+            <h3 class="mb-4">{% if current_lang == 'en' %}Choose Payment Method{% else %}选择支付方式{% endif %}</h3>
+
+            <!-- 计费周期选择 -->
+            <div class="mb-4">
+                <h5>{% if current_lang == 'en' %}Billing Cycle{% else %}计费周期{% endif %}</h5>
+                <div class="billing-cycle-option" data-cycle="monthly">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{% if current_lang == 'en' %}Monthly{% else %}按月{% endif %}</strong>
+                            <small class="d-block text-secondary">{% if current_lang == 'en' %}Pay monthly{% else %}每月付费{% endif %}</small>
+                        </div>
+                        <div class="h5 mb-0">${{ plan.price_monthly }}/{% if current_lang == 'en' %}month{% else %}月{% endif %}</div>
+                    </div>
+                </div>
+                <div class="billing-cycle-option" data-cycle="yearly">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{% if current_lang == 'en' %}Yearly{% else %}按年{% endif %}</strong>
+                            <small class="d-block text-secondary">
+                                {% if current_lang == 'en' %}
+                                    Save ${{ (plan.price_monthly * 12 - plan.price_yearly) | round(2) }}/year
+                                {% else %}
+                                    每年节省 ${{ (plan.price_monthly * 12 - plan.price_yearly) | round(2) }}
+                                {% endif %}
+                            </small>
+                        </div>
+                        <div class="h5 mb-0">${{ plan.price_yearly }}/{% if current_lang == 'en' %}year{% else %}年{% endif %}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 加密货币支付选项 -->
+            <div class="mb-4">
+                <h5>{% if current_lang == 'en' %}Cryptocurrency Payment{% else %}加密货币支付{% endif %}</h5>
+                {% for crypto in supported_cryptos %}
+                <div class="crypto-option" data-crypto="{{ crypto.code }}">
+                    <div class="d-flex align-items-center">
+                        <div class="crypto-icon">{{ crypto.symbol }}</div>
+                        <div class="ms-3">
+                            <strong>{{ crypto.name }} ({{ crypto.code }})</strong>
+                            <small class="d-block text-secondary">
+                                {% if current_lang == 'en' %}
+                                    Secure blockchain payment
+                                {% else %}
+                                    安全的区块链支付
+                                {% endif %}
+                            </small>
+                        </div>
+                        <div class="ms-auto">
+                            <i class="bi bi-check-circle text-success" style="display: none;"></i>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- 支付按钮 -->
+            <div class="d-flex gap-3 justify-content-center">
+                <a href="{{ url_for('billing.plans') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>
+                    {% if current_lang == 'en' %}Back{% else %}返回{% endif %}
+                </a>
+                <button type="button" class="btn btn-primary" id="process-payment" disabled>
+                    <span class="loading-spinner spinner-border spinner-border-sm me-2" role="status"></span>
+                    {% if current_lang == 'en' %}Process Payment{% else %}处理支付{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 支付模态框 -->
+    <div class="modal fade payment-modal" id="paymentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        {% if current_lang == 'en' %}Complete Your Payment{% else %}完成支付{% endif %}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="payment-content">
+                    <!-- 支付内容将通过JavaScript动态加载 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let selectedCrypto = null;
+        let selectedCycle = 'monthly';
+        let paymentCheckInterval = null;
+
+        // 计费周期选择
+        document.querySelectorAll('.billing-cycle-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.billing-cycle-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedCycle = this.dataset.cycle;
+                
+                // 更新价格显示
+                const price = selectedCycle === 'yearly' ? {{ plan.price_yearly }} : {{ plan.price_monthly }};
+                const period = selectedCycle === 'yearly' ? 
+                    '{% if current_lang == "en" %}year{% else %}年{% endif %}' : 
+                    '{% if current_lang == "en" %}month{% else %}月{% endif %}';
+                document.getElementById('plan-price').textContent = `$${price}/${period}`;
+                
+                updatePaymentButton();
+            });
+        });
+
+        // 加密货币选择
+        document.querySelectorAll('.crypto-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.crypto-option').forEach(o => {
+                    o.classList.remove('selected');
+                    o.querySelector('.bi-check-circle').style.display = 'none';
+                });
+                this.classList.add('selected');
+                this.querySelector('.bi-check-circle').style.display = 'block';
+                selectedCrypto = this.dataset.crypto;
+                updatePaymentButton();
+            });
+        });
+
+        // 默认选择月付
+        document.querySelector('.billing-cycle-option[data-cycle="monthly"]').click();
+
+        function updatePaymentButton() {
+            const btn = document.getElementById('process-payment');
+            btn.disabled = !selectedCrypto || !selectedCycle;
+        }
+
+        // 处理支付
+        document.getElementById('process-payment').addEventListener('click', function() {
+            if (!selectedCrypto || !selectedCycle) return;
+
+            const btn = this;
+            const spinner = btn.querySelector('.loading-spinner');
+            
+            btn.disabled = true;
+            spinner.style.display = 'inline-block';
+
+            fetch('/billing/process-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    plan_id: {{ plan.id }},
+                    payment_method: selectedCrypto,
+                    billing_cycle: selectedCycle
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showPaymentModal(data);
+                } else {
+                    alert('{% if current_lang == "en" %}Payment creation failed: {% else %}支付创建失败：{% endif %}' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('{% if current_lang == "en" %}Network error, please try again{% else %}网络错误，请重试{% endif %}');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                spinner.style.display = 'none';
+            });
+        });
+
+        function showPaymentModal(paymentData) {
+            const content = document.getElementById('payment-content');
+            
+            // 计算剩余时间
+            const expiresAt = new Date(paymentData.expires_at);
+            const now = new Date();
+            const timeLeft = Math.max(0, Math.floor((expiresAt - now) / 1000));
+
+            content.innerHTML = `
+                <div class="text-center mb-4">
+                    <h6>{% if current_lang == 'en' %}Send exactly{% else %}请准确发送{% endif %}</h6>
+                    <div class="h3 text-warning">${paymentData.amount} ${paymentData.currency}</div>
+                </div>
+
+                <div class="payment-timer">
+                    <i class="bi bi-clock me-2"></i>
+                    <span id="timer-display">${formatTime(timeLeft)}</span>
+                    {% if current_lang == 'en' %}remaining{% else %}剩余{% endif %}
+                </div>
+
+                <div class="qr-code-container">
+                    <img src="data:image/png;base64,${paymentData.qr_code}" alt="Payment QR Code" style="max-width: 200px;">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">{% if current_lang == 'en' %}Payment Address{% else %}支付地址{% endif %}</label>
+                    <div class="payment-address" onclick="copyToClipboard(this.textContent)">
+                        ${paymentData.payment_address}
+                    </div>
+                    <small class="text-secondary">{% if current_lang == 'en' %}Click to copy{% else %}点击复制{% endif %}</small>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex align-items-center">
+                        <span class="status-indicator status-pending"></span>
+                        <span>{% if current_lang == 'en' %}Waiting for payment...{% else %}等待支付中...{% endif %}</span>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    {% if current_lang == 'en' %}
+                        Payment requires {{ paymentData.required_confirmations }} network confirmations
+                    {% else %}
+                        支付需要 {{ paymentData.required_confirmations }} 个网络确认
+                    {% endif %}
+                </div>
+            `;
+
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+            modal.show();
+
+            // 开始支付状态检查
+            startPaymentCheck(paymentData.payment_id, timeLeft);
+        }
+
+        function startPaymentCheck(paymentId, timeLeft) {
+            let countdown = timeLeft;
+            
+            // 更新倒计时
+            const timerInterval = setInterval(() => {
+                countdown--;
+                if (countdown <= 0) {
+                    clearInterval(timerInterval);
+                    document.getElementById('timer-display').textContent = '{% if current_lang == "en" %}Expired{% else %}已过期{% endif %}';
+                    return;
+                }
+                document.getElementById('timer-display').textContent = formatTime(countdown);
+            }, 1000);
+
+            // 检查支付状态
+            paymentCheckInterval = setInterval(() => {
+                fetch(`/billing/payment-status/${paymentId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const payment = data.payment;
+                        updatePaymentStatus(payment);
+                        
+                        if (payment.status === 'completed') {
+                            clearInterval(paymentCheckInterval);
+                            clearInterval(timerInterval);
+                            showPaymentSuccess();
+                        } else if (payment.status === 'failed' || payment.status === 'expired') {
+                            clearInterval(paymentCheckInterval);
+                            clearInterval(timerInterval);
+                            showPaymentFailed(payment.status);
+                        }
+                    }
+                })
+                .catch(error => console.error('Payment check error:', error));
+            }, 10000); // 每10秒检查一次
+        }
+
+        function updatePaymentStatus(payment) {
+            // 更新状态显示逻辑
+            console.log('Payment status updated:', payment);
+        }
+
+        function showPaymentSuccess() {
+            const content = document.getElementById('payment-content');
+            content.innerHTML = `
+                <div class="text-center">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3">{% if current_lang == 'en' %}Payment Successful!{% else %}支付成功！{% endif %}</h4>
+                    <p>{% if current_lang == 'en' %}Your subscription has been activated{% else %}您的订阅已激活{% endif %}</p>
+                    <a href="/billing/manage" class="btn btn-primary">
+                        {% if current_lang == 'en' %}View Subscription{% else %}查看订阅{% endif %}
+                    </a>
+                </div>
+            `;
+        }
+
+        function showPaymentFailed(status) {
+            const content = document.getElementById('payment-content');
+            const message = status === 'expired' ? 
+                '{% if current_lang == "en" %}Payment expired{% else %}支付已过期{% endif %}' : 
+                '{% if current_lang == "en" %}Payment failed{% else %}支付失败{% endif %}';
+            
+            content.innerHTML = `
+                <div class="text-center">
+                    <i class="bi bi-x-circle-fill text-danger" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3">${message}</h4>
+                    <p>{% if current_lang == 'en' %}Please try again or contact support{% else %}请重试或联系客服{% endif %}</p>
+                    <button class="btn btn-primary" onclick="location.reload()">
+                        {% if current_lang == 'en' %}Try Again{% else %}重试{% endif %}
+                    </button>
+                </div>
+            `;
+        }
+
+        function formatTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                // 可以添加复制成功的提示
+                console.log('Address copied to clipboard');
+            });
+        }
+
+        // 清理定时器
+        window.addEventListener('beforeunload', () => {
+            if (paymentCheckInterval) {
+                clearInterval(paymentCheckInterval);
+            }
+        });
+    </script>
+</body>
+</html>

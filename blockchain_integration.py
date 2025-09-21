@@ -41,7 +41,9 @@ class BlockchainIntegration:
         self.encryption_key = None
         self.pinata_jwt = None
         self.pinata_api_url = "https://api.pinata.cloud"
-        self.base_rpc_url = "https://mainnet.base.org"  # Base L2 主网RPC
+        
+        # 🔧 CRITICAL FIX: 默认使用测试网，只有明确启用主网时才使用主网
+        self._initialize_network_config()
         
         # 智能合约信息 (部署后需要更新)
         self.contract_address = os.environ.get('MINING_REGISTRY_CONTRACT_ADDRESS')
@@ -50,6 +52,56 @@ class BlockchainIntegration:
         self._initialize_web3()
         self._initialize_encryption()
         self._initialize_pinata()
+    
+    def _initialize_network_config(self):
+        """
+        初始化网络配置 - 安全优先方法
+        
+        🔧 CRITICAL FIX: 默认使用测试网，防止意外的主网写入
+        """
+        try:
+            # 🔒 SECURITY: 检查是否明确启用主网写入
+            mainnet_writes_enabled = os.environ.get('BLOCKCHAIN_ENABLE_MAINNET_WRITES', '').lower() == 'true'
+            
+            if mainnet_writes_enabled:
+                # 主网写入已启用，验证所有必需的安全配置
+                required_mainnet_vars = [
+                    'BLOCKCHAIN_PRIVATE_KEY',
+                    'MINING_REGISTRY_CONTRACT_ADDRESS',
+                    'ENCRYPTION_PASSWORD',
+                    'ENCRYPTION_SALT',
+                    'PINATA_JWT'
+                ]
+                
+                missing_vars = [var for var in required_mainnet_vars if not os.environ.get(var)]
+                
+                if missing_vars:
+                    raise ValueError(
+                        f"主网写入已启用但缺少必需的安全配置：{', '.join(missing_vars)}\n"
+                        "主网模式需要所有安全配置完整。请设置所有必需的环境变量。"
+                    )
+                
+                self.base_rpc_url = "https://mainnet.base.org"  # Base L2 主网RPC
+                self.is_mainnet_mode = True
+                logger.warning("🚨 主网写入模式已启用 - 将连接到Base L2主网")
+                
+            else:
+                # 🔧 CRITICAL FIX: 默认使用Base Sepolia测试网 - 安全模式
+                self.base_rpc_url = "https://sepolia.base.org"  # Base Sepolia测试网RPC
+                self.is_mainnet_mode = False
+                logger.info("🛡️ 默认安全模式：使用Base Sepolia测试网")
+                
+                # 在测试网模式下，允许部分配置缺失（用于开发测试）
+                if not os.environ.get('BLOCKCHAIN_PRIVATE_KEY'):
+                    logger.warning("⚠️ 测试网模式：BLOCKCHAIN_PRIVATE_KEY未设置，区块链功能将受限")
+                
+        except Exception as e:
+            logger.error(f"网络配置初始化失败: {e}")
+            # 🔧 CRITICAL FIX: 在配置失败时，强制使用最安全的Base Sepolia设置
+            self.base_rpc_url = "https://sepolia.base.org"
+            self.is_mainnet_mode = False
+            logger.info("🛡️ 配置失败，强制使用安全的Base Sepolia测试网模式")
+            raise
     
     def _initialize_web3(self):
         """初始化Web3连接到Base L2"""
@@ -817,9 +869,16 @@ class BlockchainIntegration:
         }
     
     def _calculate_data_checksum(self, data: Dict[str, Any]) -> str:
-        """计算数据校验和"""
-        data_str = json.dumps(data, sort_keys=True)
-        return hashlib.sha256(data_str.encode()).hexdigest()
+        """
+        计算数据校验和 
+        
+        🔧 CRITICAL FIX: 使用keccak256保持与区块链哈希算法一致性
+        """
+        data_str = json.dumps(data, sort_keys=True, separators=(',', ':'))
+        data_bytes = data_str.encode('utf-8')
+        # 使用keccak256保持与区块链一致性
+        hash_object = Web3.keccak(data_bytes)
+        return hash_object.hex()
     
     def _check_required_fields(self, data: Dict[str, Any]) -> bool:
         """检查必要字段是否存在"""
@@ -828,9 +887,9 @@ class BlockchainIntegration:
     
     def _validate_mainnet_write_permissions(self):
         """
-        验证主网写入权限 - 安全保护机制
+        验证主网写入权限 - 增强的安全保护机制
         
-        防止意外的主网交易，确保只有明确授权的操作才能写入主网
+        🔧 CRITICAL FIX: 加强主网写入保护，防止意外的主网交易
         """
         try:
             # 检查当前网络ID
@@ -842,17 +901,30 @@ class BlockchainIntegration:
             
             logger.info(f"当前连接的网络Chain ID: {network_id}")
             
-            # 如果是主网，需要额外验证
+            # 🔧 CRITICAL FIX: 双重检查主网写入保护
             if network_id == BASE_MAINNET_CHAIN_ID:
-                # SECURITY CHECK: 主网写入必须明确启用
-                mainnet_enabled = os.environ.get('BLOCKCHAIN_ENABLE_MAINNET_WRITES')
+                # 第一层检查：环境变量必须明确设置为true
+                mainnet_enabled = os.environ.get('BLOCKCHAIN_ENABLE_MAINNET_WRITES', '').lower()
                 
-                if not mainnet_enabled or mainnet_enabled.lower() != 'true':
+                if mainnet_enabled != 'true':
                     raise ValueError(
-                        "主网写入被禁止。这是一个安全保护机制。\n"
-                        "如果您确实需要在Base L2主网上写入数据，请设置环境变量：\n"
-                        "BLOCKCHAIN_ENABLE_MAINNET_WRITES=true\n"
-                        "警告：主网交易将消耗真实的ETH作为gas费用。"
+                        "🚨 主网写入被严格禁止！\n"
+                        "这是一个关键安全保护机制，防止意外的主网交易。\n\n"
+                        "如果您确实需要在Base L2主网上写入数据，必须：\n"
+                        "1. 设置环境变量：BLOCKCHAIN_ENABLE_MAINNET_WRITES=true\n"
+                        "2. 确保账户有足够的ETH支付gas费用\n"
+                        "3. 验证智能合约地址正确\n\n"
+                        "⚠️  警告：主网交易将消耗真实的ETH作为gas费用！\n"
+                        "⚠️  警告：主网交易不可逆转！\n"
+                        "⚠️  请在测试网充分测试后再启用主网写入！"
+                    )
+                
+                # 第二层检查：验证当前实例是否正确配置为主网模式
+                if not getattr(self, 'is_mainnet_mode', False):
+                    raise ValueError(
+                        "🚨 网络配置不一致！\n"
+                        "检测到主网Chain ID但实例未配置为主网模式。\n"
+                        "这可能表示配置错误或安全风险。请重新初始化区块链集成。"
                     )
                 
                 # 验证账户余额是否足够支付gas费用
@@ -908,6 +980,451 @@ class BlockchainIntegration:
         except Exception as e:
             logger.error(f"主网权限验证失败: {e}")
             raise ValueError(f"无法验证网络权限: {e}")
+    
+    # ============================================================================
+    # SLA证明NFT系统扩展功能
+    # SLA Proof NFT System Extensions
+    # ============================================================================
+    
+    def initialize_sla_nft_contract(self, contract_address: str = None) -> bool:
+        """
+        初始化SLA NFT合约
+        
+        Args:
+            contract_address: SLA NFT合约地址
+            
+        Returns:
+            是否初始化成功
+        """
+        try:
+            if not self.w3:
+                logger.error("Web3连接未初始化")
+                return False
+            
+            # 使用提供的地址或环境变量
+            self.sla_nft_contract_address = contract_address or os.environ.get('SLA_NFT_CONTRACT_ADDRESS')
+            
+            if not self.sla_nft_contract_address:
+                logger.warning("SLA NFT合约地址未配置")
+                return False
+            
+            # 加载SLA NFT合约ABI
+            self.sla_nft_contract_abi = self._load_sla_nft_contract_abi()
+            
+            # 创建合约实例
+            self.sla_nft_contract = self.w3.eth.contract(
+                address=self.sla_nft_contract_address,
+                abi=self.sla_nft_contract_abi
+            )
+            
+            logger.info(f"SLA NFT合约初始化成功: {self.sla_nft_contract_address}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"SLA NFT合约初始化失败: {e}")
+            return False
+    
+    def _load_sla_nft_contract_abi(self) -> List:
+        """加载SLA NFT合约ABI"""
+        return [
+            {
+                "inputs": [
+                    {"name": "to", "type": "address"},
+                    {"name": "monthYear", "type": "uint256"},
+                    {"name": "slaData", "type": "uint256[11]"},
+                    {"name": "tokenURI", "type": "string"}
+                ],
+                "name": "mintSLACertificate",
+                "outputs": [{"name": "", "type": "uint256"}],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [{"name": "tokenId", "type": "uint256"}],
+                "name": "getSLAData",
+                "outputs": [
+                    {
+                        "components": [
+                            {"name": "monthYear", "type": "uint256"},
+                            {"name": "slaScore", "type": "uint256"},
+                            {"name": "uptime", "type": "uint256"},
+                            {"name": "availability", "type": "uint256"},
+                            {"name": "avgResponseTime", "type": "uint256"},
+                            {"name": "dataAccuracy", "type": "uint256"},
+                            {"name": "apiSuccessRate", "type": "uint256"},
+                            {"name": "transparencyScore", "type": "uint256"},
+                            {"name": "blockchainVerifications", "type": "uint256"},
+                            {"name": "ipfsUploads", "type": "uint256"},
+                            {"name": "errorCount", "type": "uint256"},
+                            {"name": "downtimeMinutes", "type": "uint256"},
+                            {"name": "issuedAt", "type": "uint256"}
+                        ],
+                        "name": "",
+                        "type": "tuple"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{"name": "tokenId", "type": "uint256"}],
+                "name": "verifySLACertificate",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [{"name": "owner", "type": "address"}],
+                "name": "getOwnerTokens",
+                "outputs": [{"name": "", "type": "uint256[]"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{"name": "monthYear", "type": "uint256"}],
+                "name": "getTokensByMonth",
+                "outputs": [{"name": "", "type": "uint256[]"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "anonymous": False,
+                "inputs": [
+                    {"indexed": True, "name": "to", "type": "address"},
+                    {"indexed": True, "name": "tokenId", "type": "uint256"},
+                    {"indexed": True, "name": "monthYear", "type": "uint256"},
+                    {"indexed": False, "name": "slaScore", "type": "uint256"},
+                    {"indexed": False, "name": "tokenURI", "type": "string"}
+                ],
+                "name": "SLACertificateMinted",
+                "type": "event"
+            },
+            {
+                "inputs": [],
+                "name": "totalSupply",
+                "outputs": [{"name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{"name": "tokenId", "type": "uint256"}],
+                "name": "tokenURI",
+                "outputs": [{"name": "", "type": "string"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{"name": "tokenId", "type": "uint256"}],
+                "name": "ownerOf",
+                "outputs": [{"name": "", "type": "address"}],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ]
+    
+    def upload_sla_metadata_to_ipfs(self, metadata: Dict[str, Any], filename: str = None) -> Dict[str, Any]:
+        """
+        上传SLA NFT元数据到IPFS
+        
+        Args:
+            metadata: NFT元数据
+            filename: 文件名
+            
+        Returns:
+            IPFS上传结果
+        """
+        try:
+            if not self.pinata_jwt:
+                raise ValueError("Pinata JWT未配置")
+            
+            # 准备上传数据
+            upload_filename = filename or f"sla_nft_metadata_{int(time.time())}.json"
+            
+            # 如果是字节数据，直接上传
+            if isinstance(metadata, (bytes, bytearray)):
+                return self.upload_to_ipfs(metadata, upload_filename)
+            
+            # 使用pinJSONToIPFS端点
+            headers = {
+                'Authorization': f'Bearer {self.pinata_jwt}',
+                'Content-Type': 'application/json'
+            }
+            
+            pinata_data = {
+                'pinataContent': metadata,
+                'pinataOptions': {
+                    'cidVersion': 1,
+                },
+                'pinataMetadata': {
+                    'name': upload_filename,
+                    'keyvalues': {
+                        'type': 'sla_nft_metadata',
+                        'created_at': datetime.utcnow().isoformat(),
+                        'version': '1.0'
+                    }
+                }
+            }
+            
+            response = requests.post(
+                f"{self.pinata_api_url}/pinning/pinJSONToIPFS",
+                headers=headers,
+                json=pinata_data,
+                timeout=60
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                ipfs_hash = result['IpfsHash']
+                
+                logger.info(f"SLA NFT元数据已上传到IPFS: {ipfs_hash}")
+                
+                return {
+                    'success': True,
+                    'IpfsHash': ipfs_hash,
+                    'PinSize': result.get('PinSize', 0),
+                    'Timestamp': result.get('Timestamp', ''),
+                    'ipfs_url': f"https://gateway.pinata.cloud/ipfs/{ipfs_hash}"
+                }
+            else:
+                raise Exception(f"IPFS上传失败: {response.status_code} - {response.text}")
+                
+        except Exception as e:
+            logger.error(f"SLA NFT元数据IPFS上传失败: {e}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def mint_sla_nft_on_blockchain(self, recipient_address: str, month_year: int, 
+                                  sla_data: List[int], token_uri: str, 
+                                  gas_price_multiplier: float = 1.2) -> Dict[str, Any]:
+        """
+        在区块链上铸造SLA NFT
+        
+        Args:
+            recipient_address: 接收者地址
+            month_year: 月年份
+            sla_data: SLA数据数组 (11个元素)
+            token_uri: Token URI
+            gas_price_multiplier: Gas价格倍数
+            
+        Returns:
+            铸造结果
+        """
+        try:
+            if not hasattr(self, 'sla_nft_contract') or not self.sla_nft_contract:
+                if not self.initialize_sla_nft_contract():
+                    raise ValueError("SLA NFT合约未初始化")
+            
+            if not self.account:
+                raise ValueError("区块链账户未初始化")
+            
+            # 验证SLA数据格式
+            if len(sla_data) != 11:
+                raise ValueError(f"SLA数据必须包含11个元素，当前有{len(sla_data)}个")
+            
+            # 验证地址格式
+            if not Web3.is_address(recipient_address):
+                raise ValueError("无效的接收者地址格式")
+            
+            # 获取当前nonce
+            nonce = self.w3.eth.get_transaction_count(self.account.address)
+            
+            # 估算gas
+            try:
+                gas_estimate = self.sla_nft_contract.functions.mintSLACertificate(
+                    recipient_address,
+                    month_year,
+                    sla_data,
+                    token_uri
+                ).estimate_gas({'from': self.account.address})
+                
+                # 添加20%的gas缓冲
+                gas_limit = int(gas_estimate * 1.2)
+                
+            except Exception as e:
+                logger.warning(f"Gas估算失败，使用默认值: {e}")
+                gas_limit = 500000  # 默认gas限制
+            
+            # 获取当前gas价格
+            current_gas_price = self.w3.eth.gas_price
+            adjusted_gas_price = int(current_gas_price * gas_price_multiplier)
+            
+            # 构建交易
+            transaction = self.sla_nft_contract.functions.mintSLACertificate(
+                recipient_address,
+                month_year,
+                sla_data,
+                token_uri
+            ).build_transaction({
+                'from': self.account.address,
+                'gas': gas_limit,
+                'gasPrice': adjusted_gas_price,
+                'nonce': nonce,
+            })
+            
+            logger.info(f"准备铸造SLA NFT: recipient={recipient_address}, month_year={month_year}, gas={gas_limit}")
+            
+            # 签名交易
+            signed_txn = self.w3.eth.account.sign_transaction(transaction, self.account.key)
+            
+            # 发送交易
+            tx_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            logger.info(f"SLA NFT铸造交易已发送: {tx_hash.hex()}")
+            
+            # 等待交易确认
+            tx_receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=300)
+            
+            if tx_receipt.status == 1:
+                # 解析事件获取Token ID
+                token_id = None
+                try:
+                    # 处理SLACertificateMinted事件
+                    certificate_events = self.sla_nft_contract.events.SLACertificateMinted().process_receipt(tx_receipt)
+                    if certificate_events:
+                        token_id = certificate_events[0]['args']['tokenId']
+                        logger.info(f"从事件中获取Token ID: {token_id}")
+                except Exception as e:
+                    logger.warning(f"事件解析失败: {e}")
+                    # 尝试通过合约调用获取
+                    try:
+                        token_id = self.sla_nft_contract.functions.totalSupply().call() - 1
+                    except:
+                        token_id = None
+                
+                logger.info(f"SLA NFT铸造成功: Token ID {token_id}, 交易哈希: {tx_hash.hex()}")
+                
+                return {
+                    'success': True,
+                    'transaction_hash': tx_hash.hex(),
+                    'block_number': tx_receipt['blockNumber'],
+                    'token_id': str(token_id) if token_id is not None else None,
+                    'gas_used': tx_receipt['gasUsed'],
+                    'effective_gas_price': tx_receipt.get('effectiveGasPrice', adjusted_gas_price),
+                    'contract_address': self.sla_nft_contract_address
+                }
+            else:
+                raise Exception(f"交易失败，状态码: {tx_receipt.status}")
+                
+        except Exception as e:
+            logger.error(f"SLA NFT区块链铸造失败: {e}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def verify_sla_nft_on_blockchain(self, token_id: int) -> Dict[str, Any]:
+        """
+        在区块链上验证SLA NFT
+        
+        Args:
+            token_id: NFT Token ID
+            
+        Returns:
+            验证结果
+        """
+        try:
+            if not hasattr(self, 'sla_nft_contract') or not self.sla_nft_contract:
+                if not self.initialize_sla_nft_contract():
+                    raise ValueError("SLA NFT合约未初始化")
+            
+            # 检查token是否存在
+            try:
+                owner = self.sla_nft_contract.functions.ownerOf(token_id).call()
+            except Exception:
+                return {
+                    'exists': False,
+                    'error': f'Token ID {token_id} 不存在'
+                }
+            
+            # 获取SLA数据
+            sla_data = self.sla_nft_contract.functions.getSLAData(token_id).call()
+            
+            # 获取Token URI
+            token_uri = self.sla_nft_contract.functions.tokenURI(token_id).call()
+            
+            # 解析SLA数据
+            sla_info = {
+                'monthYear': sla_data[0],
+                'slaScore': sla_data[1] / 100,  # 转换回百分比
+                'uptime': sla_data[2] / 100,
+                'availability': sla_data[3] / 100,
+                'avgResponseTime': sla_data[4],
+                'dataAccuracy': sla_data[5] / 100,
+                'apiSuccessRate': sla_data[6] / 100,
+                'transparencyScore': sla_data[7] / 100,
+                'blockchainVerifications': sla_data[8],
+                'ipfsUploads': sla_data[9],
+                'errorCount': sla_data[10],
+                'downtimeMinutes': sla_data[11],
+                'issuedAt': sla_data[12]
+            }
+            
+            return {
+                'exists': True,
+                'owner': owner,
+                'token_uri': token_uri,
+                'sla_data': sla_info,
+                'verification_timestamp': datetime.utcnow().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"SLA NFT区块链验证失败: {e}")
+            return {
+                'exists': False,
+                'error': str(e)
+            }
+    
+    def get_user_sla_nfts(self, user_address: str) -> Dict[str, Any]:
+        """
+        获取用户拥有的SLA NFT
+        
+        Args:
+            user_address: 用户地址
+            
+        Returns:
+            用户NFT列表
+        """
+        try:
+            if not hasattr(self, 'sla_nft_contract') or not self.sla_nft_contract:
+                if not self.initialize_sla_nft_contract():
+                    raise ValueError("SLA NFT合约未初始化")
+            
+            if not Web3.is_address(user_address):
+                raise ValueError("无效的用户地址格式")
+            
+            # 获取用户拥有的Token ID
+            token_ids = self.sla_nft_contract.functions.getOwnerTokens(user_address).call()
+            
+            nfts = []
+            for token_id in token_ids:
+                try:
+                    # 获取每个NFT的详细信息
+                    verification_result = self.verify_sla_nft_on_blockchain(token_id)
+                    if verification_result['exists']:
+                        nfts.append({
+                            'token_id': token_id,
+                            'owner': verification_result['owner'],
+                            'token_uri': verification_result['token_uri'],
+                            'sla_data': verification_result['sla_data']
+                        })
+                except Exception as e:
+                    logger.warning(f"获取Token {token_id} 信息失败: {e}")
+                    continue
+            
+            return {
+                'success': True,
+                'user_address': user_address,
+                'total_nfts': len(nfts),
+                'nfts': nfts
+            }
+            
+        except Exception as e:
+            logger.error(f"获取用户SLA NFT失败: {e}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
 
 
 # 全局实例
@@ -955,3 +1472,61 @@ def quick_verify_mining_data(data_hash: str) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"快速验证失败: {e}")
         return {"valid": False, "error": str(e)}
+
+
+# ============================================================================
+# SLA NFT系统便捷函数
+# SLA NFT System Convenience Functions
+# ============================================================================
+
+def initialize_sla_nft_system() -> bool:
+    """初始化SLA NFT系统"""
+    try:
+        integration = get_blockchain_integration()
+        return integration.initialize_sla_nft_contract()
+    except Exception as e:
+        logger.error(f"SLA NFT系统初始化失败: {e}")
+        return False
+
+
+def mint_sla_certificate(recipient_address: str, month_year: int, sla_data: List[int], 
+                        token_uri: str) -> Dict[str, Any]:
+    """便捷的SLA证书铸造函数"""
+    try:
+        integration = get_blockchain_integration()
+        return integration.mint_sla_nft_on_blockchain(
+            recipient_address, month_year, sla_data, token_uri
+        )
+    except Exception as e:
+        logger.error(f"SLA证书铸造失败: {e}")
+        return {'success': False, 'error': str(e)}
+
+
+def verify_sla_certificate(token_id: int) -> Dict[str, Any]:
+    """便捷的SLA证书验证函数"""
+    try:
+        integration = get_blockchain_integration()
+        return integration.verify_sla_nft_on_blockchain(token_id)
+    except Exception as e:
+        logger.error(f"SLA证书验证失败: {e}")
+        return {'exists': False, 'error': str(e)}
+
+
+def get_user_sla_certificates(user_address: str) -> Dict[str, Any]:
+    """便捷的用户SLA证书查询函数"""
+    try:
+        integration = get_blockchain_integration()
+        return integration.get_user_sla_nfts(user_address)
+    except Exception as e:
+        logger.error(f"用户SLA证书查询失败: {e}")
+        return {'success': False, 'error': str(e)}
+
+
+def upload_sla_metadata(metadata: Dict[str, Any], filename: str = None) -> Dict[str, Any]:
+    """便捷的SLA元数据上传函数"""
+    try:
+        integration = get_blockchain_integration()
+        return integration.upload_sla_metadata_to_ipfs(metadata, filename)
+    except Exception as e:
+        logger.error(f"SLA元数据上传失败: {e}")
+        return {'success': False, 'error': str(e)}

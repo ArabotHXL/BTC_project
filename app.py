@@ -351,19 +351,19 @@ def initialize_database():
             
             # Import models after database connection is verified
             from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot, MinerModel
-            # DISABLED: Gold flow module - import models_subscription  # noqa: F401
+            # 🔧 CRITICAL FIX: Enable models_subscription import for payment system
+            import models_subscription  # noqa: F401
             
             db.create_all()
             logging.info("Database tables created successfully")
             
-            # DISABLED: Gold flow module - subscription plans initialization
-            # try:
-            #     from models_subscription import initialize_default_plans
-            #     initialize_default_plans()
-            #     logging.info("Subscription plans initialized successfully")
-            # except Exception as e:
-            #     logging.warning(f"Failed to initialize subscription plans: {e}")
-            logging.info("Subscription plans initialization disabled (gold flow module)")
+            # 🔧 CRITICAL FIX: Enable subscription plans initialization
+            try:
+                from billing_routes import create_default_plans
+                create_default_plans()
+                logging.info("Subscription plans initialized successfully")
+            except Exception as e:
+                logging.warning(f"Failed to initialize subscription plans: {e}")
             
             return True
             
@@ -408,7 +408,8 @@ if initialize_database_result:
 # Import models at module level for global access
 from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot, MinerModel, User
 import models
-# DISABLED: Gold flow module - import models_subscription  # noqa: F401
+# 🔧 CRITICAL FIX: Enable models_subscription import for payment system
+import models_subscription  # noqa: F401
 logging.info("Models imported successfully at module level")
 
 # 初始化投资组合管理系统
@@ -5163,15 +5164,15 @@ def legal_terms():
     return render_template('legal.html')
 
 # 注册蓝图
-# Register billing blueprint if available
-# DISABLED: Gold flow module - billing routes registration
-# try:
-#     if BILLING_ENABLED:
-#         from billing_routes import billing_bp
-#         app.register_blueprint(billing_bp, url_prefix="/billing")
-#         logging.info("Stripe billing routes registered successfully")
-# except Exception as e:
-#     logging.warning(f"Billing routes not available: {e}")
+# Register billing blueprint - ENABLED for crypto payments
+try:
+    from config import Config
+    if getattr(Config, 'SUBSCRIPTION_ENABLED', False):
+        from billing_routes import billing_bp
+        app.register_blueprint(billing_bp, url_prefix="/billing")
+        logging.info("Crypto billing routes registered successfully")
+except Exception as e:
+    logging.warning(f"Billing routes not available: {e}")
 
 # Register batch calculator blueprint
 try:
@@ -5206,6 +5207,16 @@ try:
     logging.info("Deribit analysis routes registered successfully")
 except ImportError as e:
     logging.warning(f"Deribit routes not available: {e}")
+
+# Register SLA NFT blueprint
+try:
+    from sla_nft_routes import sla_nft_bp
+    app.register_blueprint(sla_nft_bp)
+    logging.info("SLA NFT routes registered successfully")
+except ImportError as e:
+    logging.warning(f"SLA NFT routes not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register SLA NFT routes: {e}")
 
 # Register calculator module blueprint for modular architecture
 try:
@@ -6245,8 +6256,46 @@ def test_modules_page():
     """模块功能测试页面"""
     return render_template('test_modules.html')
 
+# 🔧 CRITICAL FIX: 初始化支付监控服务 - 使用SchedulerLock机制防止多worker重复启动
+def init_payment_monitor():
+    """安全初始化支付监控服务 - 只有获得锁的worker才会启动"""
+    try:
+        from payment_monitor_service import payment_monitor
+        from config import Config
+        
+        if getattr(Config, 'SUBSCRIPTION_ENABLED', False):
+            # SchedulerLock机制确保只有一个worker实例启动监控服务
+            payment_monitor.start_monitoring()
+            logging.info("支付监控服务初始化完成 (SchedulerLock机制)")
+        else:
+            logging.info("订阅功能未启用，跳过支付监控服务")
+    except Exception as e:
+        logging.warning(f"支付监控服务初始化失败: {e}")
+
+# 在worker启动后延迟初始化支付监控
+try:
+    init_payment_monitor()
+except Exception as e:
+    logging.error(f"支付监控初始化异常: {e}")
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+# 支付监控管理API路由
+@app.route('/api/payment-monitor/status')
+@login_required
+def payment_monitor_status():
+    """获取支付监控服务状态"""
+    try:
+        from payment_monitor_service import payment_monitor
+        if has_role(['owner', 'manager']):
+            status = payment_monitor.get_network_status()
+            return jsonify({'success': True, 'status': status})
+        else:
+            return jsonify({'success': False, 'error': '权限不足'}), 403
+    except Exception as e:
+        logging.error(f"获取支付监控状态失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route("/download")
 def download_redirect():
     """重定向到下载页面"""

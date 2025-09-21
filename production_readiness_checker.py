@@ -100,7 +100,11 @@ class ProductionReadinessChecker:
         return self.generate_readiness_report()
     
     def check_critical_env_vars(self) -> Dict[str, Any]:
-        """检查关键环境变量"""
+        """
+        检查关键环境变量
+        
+        🔧 CRITICAL FIX: 增强依赖检查和配置验证
+        """
         required_vars = {
             'DATABASE_URL': '数据库连接字符串',
             'SESSION_SECRET': 'Flask会话密钥',
@@ -115,9 +119,27 @@ class ProductionReadinessChecker:
             'MINING_REGISTRY_CONTRACT_ADDRESS': '智能合约地址',
         }
         
+        # 🔧 CRITICAL FIX: 依赖安装检查
+        required_packages = [
+            'flask', 'gunicorn', 'psycopg2-binary', 'web3', 'requests',
+            'pandas', 'numpy', 'cryptography', 'schedule'
+        ]
+        
         missing_required = []
         missing_production = []
         weak_configs = []
+        missing_packages = []
+        
+        # 🔧 CRITICAL FIX: 检查Python包依赖
+        try:
+            import importlib
+            for package in required_packages:
+                try:
+                    importlib.import_module(package.replace('-', '_'))
+                except ImportError:
+                    missing_packages.append(package)
+        except Exception as e:
+            logger.warning(f"无法验证包依赖: {e}")
         
         # 检查必需变量
         for var, description in required_vars.items():
@@ -148,12 +170,22 @@ class ProductionReadinessChecker:
                 'environment': env_type
             }
         
+        # 🔧 CRITICAL FIX: 包含依赖包检查结果
+        has_critical_issues = len(missing_required) > 0 or len(missing_packages) > 0
+        error_parts = []
+        
+        if missing_required:
+            error_parts.append(f'{len(missing_required)} 个必需配置')
+        if missing_packages:
+            error_parts.append(f'{len(missing_packages)} 个必需依赖包')
+            
         return {
-            'passed': len(missing_required) == 0,
-            'critical': len(missing_required) > 0,
-            'error': f'缺少 {len(missing_required)} 个必需配置' if missing_required else None,
+            'passed': not has_critical_issues,
+            'critical': has_critical_issues,
+            'error': f'缺少 {", ".join(error_parts)}' if error_parts else None,
             'missing_required': missing_required,
             'missing_production': missing_production,
+            'missing_packages': missing_packages,
             'weak_configs': weak_configs,
             'environment': env_type,
             'production_mode': is_production
