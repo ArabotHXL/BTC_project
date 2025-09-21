@@ -341,13 +341,18 @@ class UserAccess(db.Model):
     last_login = db.Column(db.DateTime, nullable=True)
     role = db.Column(db.String(20), default="guest", nullable=False)
     subscription_plan = db.Column(db.String(20), default="free", nullable=False)  # 订阅计划: free, basic, pro
+    
+    # Web3钱包认证支持
+    wallet_address = db.Column(db.String(42), nullable=True, unique=True, index=True)  # 以太坊钱包地址
+    wallet_verified = db.Column(db.Boolean, default=False, nullable=False)  # 钱包验证状态
+    wallet_nonce = db.Column(db.String(100), nullable=True)  # 钱包签名随机数
 
     # 创建者关联（矿场主可以创建客户）
     created_by_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
     created_by = db.relationship('UserAccess', foreign_keys=[created_by_id], backref='managed_users', remote_side=[id])
 
     def __init__(self, name, email, access_days=30, company=None, position=None, notes=None, role="guest", 
-                 username=None, password_hash=None, subscription_plan="free"):
+                 username=None, password_hash=None, subscription_plan="free", wallet_address=None):
         self.name = name
         self.email = email
         self.username = username
@@ -359,6 +364,7 @@ class UserAccess(db.Model):
         self.notes = notes
         self.role = role
         self.subscription_plan = subscription_plan
+        self.wallet_address = wallet_address
 
     @property
     def has_access(self):
@@ -428,6 +434,53 @@ class UserAccess(db.Model):
     def calculate_expiry(self):
         """重新计算到期时间（基于access_days）"""
         self.expires_at = self.created_at + timedelta(days=self.access_days)
+
+    def generate_wallet_nonce(self):
+        """生成钱包签名随机数"""
+        import secrets
+        import time
+        timestamp = str(int(time.time()))
+        random_string = secrets.token_urlsafe(16)
+        self.wallet_nonce = f"{timestamp}_{random_string}"
+        return self.wallet_nonce
+
+    def verify_wallet_signature(self, signature, message):
+        """验证钱包签名"""
+        if not self.wallet_address or not signature:
+            return False
+        
+        try:
+            from eth_account.messages import encode_defunct
+            from eth_account import Account
+            
+            # 编码消息
+            message_hash = encode_defunct(text=message)
+            
+            # 恢复签名者地址
+            recovered_address = Account.recover_message(message_hash, signature=signature)
+            
+            # 比较地址（不区分大小写）
+            return recovered_address.lower() == self.wallet_address.lower()
+        except Exception as e:
+            logging.error(f"钱包签名验证失败: {e}")
+            return False
+
+    def set_wallet_address(self, wallet_address):
+        """设置钱包地址"""
+        if wallet_address:
+            # 标准化地址格式
+            wallet_address = wallet_address.lower()
+            # 验证地址格式
+            if len(wallet_address) == 42 and wallet_address.startswith('0x'):
+                self.wallet_address = wallet_address
+                self.wallet_verified = False  # 重置验证状态
+                return True
+        return False
+
+    def verify_wallet(self):
+        """标记钱包为已验证"""
+        self.wallet_verified = True
+        self.wallet_nonce = None  # 清除使用过的nonce
 
     def __repr__(self):
         return f"<UserAccess {self.name} ({self.email}) - {self.access_status}>"

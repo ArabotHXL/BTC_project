@@ -43,4 +43,6 @@ dependencies = [
     "google-api-python-client>=2.179.0",
     "google-auth>=2.40.3",
     "google-auth-oauthlib>=1.2.2",
+    "web3>=7.13.0",
+    "eth-account>=0.13.7",
 ]

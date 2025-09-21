@@ -1,11 +1,15 @@
 import hashlib
 import os
 import logging
+import secrets
+import time
 from datetime import datetime
 from flask import request, redirect, url_for, session
 from functools import wraps
 from models import UserAccess
 from db import db
+from eth_account.messages import encode_defunct
+from eth_account import Account
 
 # 设置日志 - 生产环境使用INFO级别
 log_level = logging.INFO if os.environ.get('FLASK_ENV') == 'production' else logging.DEBUG
@@ -197,6 +201,176 @@ def get_user_role(email=None):
     
     # 默认返回guest角色
     return 'guest'
+
+def generate_wallet_login_message(wallet_address, nonce):
+    """生成钱包登录签名消息"""
+    message = f"Welcome to HashInsight BTC Mining Calculator!\n\nSign this message to login with your wallet.\n\nWallet: {wallet_address}\nNonce: {nonce}\nTimestamp: {int(time.time())}"
+    return message
+
+def verify_wallet_signature(wallet_address, signature, message):
+    """验证钱包签名"""
+    try:
+        # 编码消息
+        message_hash = encode_defunct(text=message)
+        
+        # 恢复签名者地址
+        recovered_address = Account.recover_message(message_hash, signature=signature)
+        
+        # 比较地址（不区分大小写）
+        return recovered_address.lower() == wallet_address.lower()
+    except Exception as e:
+        logging.error(f"钱包签名验证失败: {e}")
+        return False
+
+def create_or_get_user_by_wallet(wallet_address):
+    """根据钱包地址创建或获取用户"""
+    if not wallet_address:
+        return None
+    
+    # 标准化地址格式
+    wallet_address = wallet_address.lower()
+    
+    # 查找现有用户
+    user = UserAccess.query.filter_by(wallet_address=wallet_address).first()
+    
+    if user:
+        logging.info(f"找到现有钱包用户: {wallet_address}")
+        return user
+    
+    # 创建新用户
+    try:
+        # 生成用户名（基于钱包地址）
+        username = f"wallet_{wallet_address[:8]}"
+        
+        # 检查用户名是否已存在，如果存在则添加数字后缀
+        counter = 1
+        original_username = username
+        while UserAccess.query.filter_by(username=username).first():
+            username = f"{original_username}_{counter}"
+            counter += 1
+        
+        new_user = UserAccess(
+            name=f"Wallet User {wallet_address[:8]}",
+            email=f"wallet_{wallet_address[:8]}@wallet.local",  # 虚拟邮箱
+            username=username,
+            wallet_address=wallet_address,
+            access_days=90,  # 默认90天访问权限
+            role="guest",
+            subscription_plan="free",
+            notes="通过Web3钱包创建的用户"
+        )
+        
+        # 标记钱包和邮箱为已验证
+        new_user.wallet_verified = True
+        new_user.is_email_verified = True
+        
+        db.session.add(new_user)
+        db.session.commit()
+        
+        logging.info(f"创建新钱包用户: {wallet_address}")
+        return new_user
+        
+    except Exception as e:
+        logging.error(f"创建钱包用户失败: {e}")
+        db.session.rollback()
+        return None
+
+def verify_wallet_login(wallet_address, signature, nonce):
+    """验证钱包登录 - 增强nonce安全验证"""
+    if not wallet_address or not signature or not nonce:
+        logging.warning("钱包登录验证失败: 缺少必要参数")
+        return None
+    
+    # 标准化地址格式
+    wallet_address = wallet_address.lower()
+    
+    # CRITICAL FIX: 严格的nonce验证和过期检查
+    user = UserAccess.query.filter_by(wallet_address=wallet_address).first()
+    
+    # 验证nonce是否存在且匹配（存储的或session中的）
+    stored_nonce = None
+    if user and user.wallet_nonce:
+        stored_nonce = user.wallet_nonce
+    else:
+        # 检查session中的临时nonce
+        from flask import session
+        session_nonce_key = f'wallet_nonce_{wallet_address}'
+        stored_nonce = session.get(session_nonce_key)
+    
+    if not stored_nonce:
+        logging.warning(f"钱包登录验证失败: 未找到有效nonce - {wallet_address}")
+        return None
+    
+    if stored_nonce != nonce:
+        logging.warning(f"钱包登录验证失败: nonce不匹配 - {wallet_address}")
+        return None
+    
+    # CRITICAL FIX: nonce过期验证 (5分钟TTL)
+    try:
+        nonce_parts = nonce.split('_')
+        if len(nonce_parts) < 2:
+            logging.warning(f"钱包登录验证失败: nonce格式无效 - {wallet_address}")
+            return None
+        
+        nonce_timestamp = int(nonce_parts[0])
+        current_timestamp = int(time.time())
+        nonce_age = current_timestamp - nonce_timestamp
+        
+        # 5分钟TTL (300秒)
+        if nonce_age > 300:
+            logging.warning(f"钱包登录验证失败: nonce已过期 (age: {nonce_age}s) - {wallet_address}")
+            # 立即清除过期的nonce
+            if user:
+                user.wallet_nonce = None
+                db.session.commit()
+            from flask import session
+            session_nonce_key = f'wallet_nonce_{wallet_address}'
+            if session_nonce_key in session:
+                del session[session_nonce_key]
+            return None
+        
+        logging.debug(f"Nonce验证通过: age={nonce_age}s (TTL=300s) - {wallet_address}")
+        
+    except (ValueError, IndexError) as e:
+        logging.warning(f"钱包登录验证失败: nonce时间戳解析错误 - {wallet_address}: {e}")
+        return None
+    
+    # 生成预期的消息
+    message = generate_wallet_login_message(wallet_address, nonce)
+    
+    # 验证签名
+    if not verify_wallet_signature(wallet_address, signature, message):
+        logging.warning(f"钱包签名验证失败: {wallet_address}")
+        return None
+    
+    # CRITICAL FIX: 立即清除使用过的nonce，防止重放攻击
+    if user:
+        user.wallet_nonce = None
+    from flask import session
+    session_nonce_key = f'wallet_nonce_{wallet_address}'
+    if session_nonce_key in session:
+        del session[session_nonce_key]
+    
+    # 查找或创建用户
+    if not user:
+        user = create_or_get_user_by_wallet(wallet_address)
+    
+    if not user:
+        logging.warning(f"无法创建或查找钱包用户: {wallet_address}")
+        return None
+    
+    # 检查访问权限
+    if not user.has_access:
+        logging.warning(f"钱包用户访问权限已过期: {wallet_address}")
+        return None
+    
+    # 更新最后登录时间
+    user.last_login = datetime.utcnow()
+    
+    db.session.commit()
+    
+    logging.info(f"钱包用户 {wallet_address} 登录成功，nonce已清除")
+    return user
 
 def login_required(view_function):
     """装饰器：要求用户登录才能访问特定路由"""

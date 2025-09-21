@@ -20,6 +20,7 @@ from auth import verify_email, login_required
 from translations import get_translation
 from rate_limiting import rate_limit
 from security_enhancements import SecurityManager
+from models import UserAccess, LoginRecord
 
 # 延迟导入，避免循环导入 - 统一Flask应用实例
 app = Flask(__name__, static_folder='static', static_url_path='/static')
@@ -30,14 +31,18 @@ try:
     config_class = get_config()
     app.config.from_object(config_class)
     
-    # 🔧 FIX: 确保SECRET_KEY稳定 - 避免gunicorn workers间会话丢失
-    app.secret_key = os.environ.get('SESSION_SECRET') or app.config.get('SECRET_KEY', 'dev-fallback-key-12345')
+    # SECURITY FIX: 强制使用环境变量，移除硬编码fallback
+    app.secret_key = os.environ.get('SESSION_SECRET') or app.config.get('SECRET_KEY')
+    if not app.secret_key:
+        raise ValueError("CRITICAL SECURITY ERROR: SESSION_SECRET environment variable must be set in production")
     
     logging.info("Security configuration loaded for hosting transparency platform")
 except Exception as e:
-    logging.warning(f"Failed to load security configuration: {e}")
-    # 紧急fallback - 确保至少有一个密钥
-    app.secret_key = 'emergency-fallback-key-67890'
+    logging.error(f"Failed to load security configuration: {e}")
+    # SECURITY FIX: 强制环境变量配置，移除硬编码fallback
+    app.secret_key = os.environ.get('SESSION_SECRET')
+    if not app.secret_key:
+        raise ValueError("CRITICAL SECURITY ERROR: SESSION_SECRET environment variable must be set. Cannot proceed without secure session key.")
 
 # Initialize database with app
 from db import db
@@ -101,8 +106,9 @@ def inject_csrf_token():
         flask_session['_init'] = True
         
     token = SecurityManager.generate_csrf_token()
-    session_info = f"keys={list(session.keys())}, permanent={session.permanent}"
-    logging.warning(f"🔧 Context processor: csrf_token='{token}', session_info=[{session_info}]")
+    # SECURITY FIX: 移除CSRF token日志泄露 - 敏感数据不应记录到日志
+    session_info = f"keys_count={len(session.keys())}, permanent={session.permanent}"
+    logging.debug(f"Context processor initialized: {session_info}")
     return dict(csrf_token=token)
 
 # Apply security headers middleware for hosting transparency
@@ -843,6 +849,141 @@ def login():
     
     # 显示登录表单
     return render_template('login.html')
+
+# Web3钱包认证API端点
+@app.route('/api/wallet/nonce', methods=['POST'])
+@rate_limit(max_requests=5, window_minutes=15, feature_name="wallet_nonce")
+@SecurityManager.csrf_protect
+def wallet_nonce():
+    """生成钱包登录签名的nonce"""
+    try:
+        data = request.get_json()
+        wallet_address = data.get('wallet_address')
+        
+        if not wallet_address:
+            return jsonify({'success': False, 'error': 'Missing wallet address'}), 400
+        
+        # 验证钱包地址格式
+        if len(wallet_address) != 42 or not wallet_address.startswith('0x'):
+            return jsonify({'success': False, 'error': 'Invalid wallet address format'}), 400
+        
+        # 标准化地址格式
+        wallet_address = wallet_address.lower()
+        
+        # 生成nonce
+        from auth import generate_wallet_login_message
+        import secrets
+        import time
+        
+        # 生成随机nonce
+        timestamp = str(int(time.time()))
+        random_string = secrets.token_urlsafe(16)
+        nonce = f"{timestamp}_{random_string}"
+        
+        # 生成签名消息
+        message = generate_wallet_login_message(wallet_address, nonce)
+        
+        # 如果用户存在，更新其nonce；否则暂时存储在session中
+        user = UserAccess.query.filter_by(wallet_address=wallet_address).first()
+        if user:
+            user.wallet_nonce = nonce
+            db.session.commit()
+        else:
+            # 暂时存储在session中，用于后续验证
+            session[f'wallet_nonce_{wallet_address}'] = nonce
+        
+        logging.info(f"为钱包地址 {wallet_address} 生成了nonce")
+        
+        return jsonify({
+            'success': True,
+            'nonce': nonce,
+            'message': message,
+            'wallet_address': wallet_address
+        })
+        
+    except Exception as e:
+        logging.error(f"生成钱包nonce失败: {e}")
+        return jsonify({'success': False, 'error': 'Failed to generate nonce'}), 500
+
+@app.route('/api/wallet/login', methods=['POST'])
+@rate_limit(max_requests=3, window_minutes=15, feature_name="wallet_login")
+@SecurityManager.csrf_protect
+def wallet_login():
+    """验证钱包签名并登录用户"""
+    try:
+        data = request.get_json()
+        wallet_address = data.get('wallet_address')
+        signature = data.get('signature')
+        nonce = data.get('nonce')
+        
+        if not all([wallet_address, signature, nonce]):
+            return jsonify({'success': False, 'error': 'Missing required parameters'}), 400
+        
+        # 验证钱包登录
+        from auth import verify_wallet_login
+        user = verify_wallet_login(wallet_address, signature, nonce)
+        
+        if not user:
+            return jsonify({'success': False, 'error': 'Wallet authentication failed'}), 401
+        
+        # 清除session中的临时nonce
+        session_nonce_key = f'wallet_nonce_{wallet_address.lower()}'
+        if session_nonce_key in session:
+            del session[session_nonce_key]
+        
+        # 设置登录会话 - 与传统登录保持一致
+        session.permanent = True
+        session['authenticated'] = True
+        session['email'] = user.email
+        session['role'] = user.role
+        session['user_id'] = user.id
+        session['login_method'] = 'wallet'
+        session['wallet_address'] = user.wallet_address
+        
+        # 记录登录成功的日志
+        logging.info(f"钱包用户 {user.wallet_address} 登录成功，用户ID: {user.id}")
+        
+        # 创建登录记录
+        try:
+            client_ip = request.headers.get('X-Forwarded-For') or \
+                       request.headers.get('X-Real-IP') or \
+                       request.remote_addr
+            
+            if client_ip and ',' in client_ip:
+                client_ip = client_ip.split(',')[0].strip()
+            
+            login_record = LoginRecord(
+                email=user.email,
+                successful=True,
+                ip_address=client_ip,
+                login_location="Web3钱包登录"
+            )
+            db.session.add(login_record)
+            db.session.commit()
+        except Exception as e:
+            logging.error(f"保存钱包登录记录失败: {e}")
+        
+        # 确定重定向URL
+        redirect_url = session.get('next_url', url_for('index'))
+        if 'next_url' in session:
+            del session['next_url']
+        
+        return jsonify({
+            'success': True,
+            'message': 'Wallet login successful',
+            'redirect_url': redirect_url,
+            'user': {
+                'id': user.id,
+                'name': user.name,
+                'email': user.email,
+                'wallet_address': user.wallet_address,
+                'role': user.role
+            }
+        })
+        
+    except Exception as e:
+        logging.error(f"钱包登录失败: {e}")
+        return jsonify({'success': False, 'error': 'Wallet login failed'}), 500
 
 @app.route('/unauthorized')
 def unauthorized():
