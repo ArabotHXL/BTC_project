@@ -9,6 +9,17 @@ import time
 from datetime import datetime
 from flask import current_app
 
+# 区块链验证和IPFS存储集成
+try:
+    from blockchain_integration import get_blockchain_integration, quick_register_mining_data
+    from models import BlockchainRecord, BlockchainVerificationStatus
+    from db import db
+    BLOCKCHAIN_ENABLED = True
+    logging.info("区块链验证功能已启用")
+except ImportError as e:
+    BLOCKCHAIN_ENABLED = False
+    logging.warning(f"区块链验证功能未启用: {e}")
+
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
@@ -500,7 +511,7 @@ def get_real_time_btc_hashrate():
 def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electricity_cost=0.05, client_electricity_cost=None, 
                              btc_price=None, difficulty=None, block_reward=None, use_real_time_data=True, miner_model=None, miner_count=1, site_power_mw=None, curtailment=0.0, 
                              shutdown_strategy="efficiency", host_investment=0.0, client_investment=0.0, maintenance_fee=0.0, manual_network_hashrate=None, manual_network_difficulty=None, 
-                             _batch_mode=False, pool_fee=None, consider_difficulty_adjustment=True):
+                             _batch_mode=False, pool_fee=None, consider_difficulty_adjustment=True, enable_blockchain_recording=False, site_id=None, record_to_blockchain=False):
     """
     Calculate Bitcoin mining profitability with enhanced algorithms per expert recommendations
     
@@ -1018,6 +1029,107 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
                 'client': client_roi_data
             }
         }
+        
+        # 区块链数据验证和IPFS存储集成
+        blockchain_verification = None
+        if BLOCKCHAIN_ENABLED and (enable_blockchain_recording or record_to_blockchain):
+            try:
+                logging.info("开始区块链数据记录流程...")
+                
+                # 准备挖矿数据用于区块链记录
+                mining_data_for_blockchain = {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "site_id": site_id or f"site_{int(time.time())}",
+                    "miner_model": miner_model,
+                    "miner_count": miner_count,
+                    "hashrate": total_hashrate,
+                    "power_consumption": total_power_consumption,
+                    "efficiency": total_power_consumption / total_hashrate if total_hashrate > 0 else 0,
+                    "daily_btc": daily_btc,
+                    "daily_revenue": daily_revenue,
+                    "daily_profit": daily_profit,
+                    "btc_price": current_btc_price,
+                    "network_hashrate": current_network_hashrate,
+                    "network_difficulty": current_difficulty,
+                    "block_reward": current_block_reward,
+                    "electricity_cost": electricity_cost,
+                    "pool_fee": pool_fee_rate,
+                    "calculation_method": "enhanced_profitability",
+                    "data_source": "real_time" if use_real_time_data else "manual",
+                    "recorded_by": "mining_calculator_v2.0"
+                }
+                
+                # 快速区块链注册
+                blockchain_result = quick_register_mining_data(mining_data_for_blockchain)
+                
+                if blockchain_result:
+                    # 保存到数据库
+                    try:
+                        blockchain_record = BlockchainRecord(
+                            data_hash=blockchain_result['data_hash'],
+                            ipfs_cid=blockchain_result['ipfs_cid'],
+                            site_id=blockchain_result['site_id'],
+                            transaction_hash=blockchain_result.get('blockchain_tx_hash'),
+                            verification_status=BlockchainVerificationStatus.REGISTERED,
+                            hashrate_th=total_hashrate,
+                            power_consumption_w=total_power_consumption,
+                            daily_btc_production=daily_btc,
+                            daily_revenue_usd=daily_revenue,
+                            mining_data_summary=json.dumps(mining_data_for_blockchain),
+                            data_timestamp=datetime.utcnow(),
+                            created_by="mining_calculator"
+                        )
+                        
+                        db.session.add(blockchain_record)
+                        db.session.commit()
+                        
+                        logging.info(f"区块链记录已保存到数据库: {blockchain_result['data_hash'][:16]}...")
+                        
+                    except Exception as db_error:
+                        logging.error(f"保存区块链记录到数据库失败: {db_error}")
+                        db.session.rollback()
+                    
+                    # 添加区块链验证信息到结果
+                    blockchain_verification = {
+                        "enabled": True,
+                        "recorded": True,
+                        "data_hash": blockchain_result['data_hash'],
+                        "ipfs_cid": blockchain_result['ipfs_cid'],
+                        "blockchain_tx_hash": blockchain_result.get('blockchain_tx_hash'),
+                        "site_id": blockchain_result['site_id'],
+                        "timestamp": blockchain_result['timestamp'],
+                        "verification_url": f"/verify/{blockchain_result['data_hash']}",
+                        "ipfs_url": f"https://gateway.pinata.cloud/ipfs/{blockchain_result['ipfs_cid']}",
+                        "status": "registered"
+                    }
+                    
+                    logging.info(f"挖矿数据已成功记录到区块链: {blockchain_result['data_hash'][:16]}...")
+                else:
+                    logging.warning("区块链数据记录失败")
+                    blockchain_verification = {
+                        "enabled": True,
+                        "recorded": False,
+                        "error": "区块链记录失败",
+                        "status": "failed"
+                    }
+                    
+            except Exception as blockchain_error:
+                logging.error(f"区块链集成错误: {blockchain_error}")
+                blockchain_verification = {
+                    "enabled": True,
+                    "recorded": False,
+                    "error": str(blockchain_error),
+                    "status": "error"
+                }
+        else:
+            blockchain_verification = {
+                "enabled": False,
+                "recorded": False,
+                "status": "disabled"
+            }
+        
+        # 添加区块链验证信息到结果
+        result['blockchain_verification'] = blockchain_verification
         
         return result
         

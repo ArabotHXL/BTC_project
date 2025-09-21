@@ -374,6 +374,37 @@ def initialize_database():
 # Initialize database
 initialize_database_result = initialize_database()
 
+# Initialize blockchain scheduler after database setup
+def initialize_blockchain_scheduler():
+    """Initialize blockchain scheduler for automated data recording"""
+    try:
+        # Import blockchain modules after database is ready
+        import blockchain_integration  # noqa: F401
+        from scheduler import start_blockchain_scheduler
+        
+        # Check if blockchain is enabled
+        blockchain_enabled = os.environ.get('BLOCKCHAIN_ENABLED', 'false').lower() == 'true'
+        
+        if blockchain_enabled:
+            scheduler = start_blockchain_scheduler()
+            logging.info("Blockchain scheduler initialized and started")
+            return scheduler
+        else:
+            logging.info("Blockchain scheduler disabled (BLOCKCHAIN_ENABLED=false)")
+            return None
+            
+    except ImportError as e:
+        logging.warning(f"Blockchain modules not available: {e}")
+        return None
+    except Exception as e:
+        logging.error(f"Failed to initialize blockchain scheduler: {e}")
+        return None
+
+# Initialize blockchain scheduler if database initialization was successful
+blockchain_scheduler = None
+if initialize_database_result:
+    blockchain_scheduler = initialize_blockchain_scheduler()
+
 # Import models at module level for global access
 from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot, MinerModel, User
 import models

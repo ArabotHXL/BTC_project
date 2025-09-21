@@ -6,6 +6,14 @@ import logging
 # 本地模块导入
 from db import db
 
+class BlockchainVerificationStatus(enum.Enum):
+    """区块链验证状态"""
+    PENDING = "待验证"
+    REGISTERED = "已注册"
+    VERIFIED = "已验证"
+    FAILED = "验证失败"
+    EXPIRED = "已过期"
+
 class LeadStatus(enum.Enum):
     """潜在客户状态"""
     NEW = "新建"
@@ -1088,6 +1096,119 @@ class HostingBillItem(db.Model):
     miner_id = db.Column(db.Integer, db.ForeignKey('hosting_miners.id'), nullable=True)
     miner = db.relationship('HostingMiner', foreign_keys=[miner_id])
 
+
+class BlockchainRecord(db.Model):
+    """区块链数据记录模型 - 存储链上记录和IPFS数据"""
+    __tablename__ = 'blockchain_records'
+
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 数据标识
+    data_hash = db.Column(db.String(66), unique=True, nullable=False, index=True)  # 0x + 64位十六进制
+    ipfs_cid = db.Column(db.String(100), nullable=False, index=True)  # IPFS内容标识符
+    
+    # 站点信息
+    site_id = db.Column(db.String(100), nullable=False, index=True)  # 矿场站点ID
+    site_name = db.Column(db.String(200), nullable=True)  # 站点名称
+    
+    # 区块链信息
+    blockchain_network = db.Column(db.String(50), default='Base L2', nullable=False)  # 区块链网络
+    contract_address = db.Column(db.String(42), nullable=True)  # 智能合约地址
+    transaction_hash = db.Column(db.String(66), nullable=True, index=True)  # 交易哈希
+    block_number = db.Column(db.BigInteger, nullable=True)  # 区块号
+    gas_used = db.Column(db.Integer, nullable=True)  # 使用的gas
+    gas_price = db.Column(db.BigInteger, nullable=True)  # gas价格
+    
+    # 数据内容摘要
+    mining_data_summary = db.Column(db.Text, nullable=True)  # 挖矿数据摘要（JSON格式）
+    hashrate_th = db.Column(db.Float, nullable=True)  # 算力 (TH/s)
+    power_consumption_w = db.Column(db.Float, nullable=True)  # 功耗 (W)
+    daily_btc_production = db.Column(db.Float, nullable=True)  # 日产BTC
+    daily_revenue_usd = db.Column(db.Float, nullable=True)  # 日收入 (USD)
+    
+    # 验证状态
+    verification_status = db.Column(
+        db.Enum(BlockchainVerificationStatus), 
+        default=BlockchainVerificationStatus.PENDING, 
+        nullable=False
+    )
+    verification_count = db.Column(db.Integer, default=0, nullable=False)  # 验证次数
+    last_verified_at = db.Column(db.DateTime, nullable=True)  # 最后验证时间
+    
+    # 数据完整性
+    data_version = db.Column(db.String(10), default='1.0', nullable=False)  # 数据版本
+    encryption_enabled = db.Column(db.Boolean, default=True, nullable=False)  # 是否加密
+    data_integrity_hash = db.Column(db.String(64), nullable=True)  # 数据完整性哈希
+    
+    # 关联信息
+    user_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True, index=True)  # 关联用户
+    created_by = db.Column(db.String(100), default='system', nullable=False)  # 创建者
+    
+    # 时间戳
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    blockchain_timestamp = db.Column(db.DateTime, nullable=True)  # 区块链时间戳
+    data_timestamp = db.Column(db.DateTime, nullable=False)  # 数据生成时间戳
+    
+    # 元数据
+    record_metadata = db.Column(db.Text, nullable=True)  # 额外元数据（JSON格式）
+    notes = db.Column(db.Text, nullable=True)  # 备注
+    
+    # 关联关系
+    user = db.relationship('UserAccess', foreign_keys=[user_id], backref='blockchain_records')
+    
+    def __init__(self, data_hash, ipfs_cid, site_id, **kwargs):
+        """初始化区块链记录"""
+        self.data_hash = data_hash
+        self.ipfs_cid = ipfs_cid
+        self.site_id = site_id
+        self.data_timestamp = kwargs.get('data_timestamp', datetime.utcnow())
+        
+        # 处理其他可选参数
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def __repr__(self):
+        return f"<BlockchainRecord {self.data_hash[:16]}... Site: {self.site_id}>"
+    
+    def to_dict(self):
+        """转换为字典格式，便于JSON序列化"""
+        return {
+            'id': self.id,
+            'data_hash': self.data_hash,
+            'ipfs_cid': self.ipfs_cid,
+            'site_id': self.site_id,
+            'site_name': self.site_name,
+            'blockchain_network': self.blockchain_network,
+            'contract_address': self.contract_address,
+            'transaction_hash': self.transaction_hash,
+            'block_number': self.block_number,
+            'verification_status': self.verification_status.value if self.verification_status else None,
+            'verification_count': self.verification_count,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'data_timestamp': self.data_timestamp.isoformat() if self.data_timestamp else None
+        }
+    
+    @classmethod
+    def get_by_data_hash(cls, data_hash):
+        """根据数据哈希获取记录"""
+        return cls.query.filter_by(data_hash=data_hash).first()
+    
+    @classmethod
+    def get_by_site(cls, site_id, limit=None):
+        """根据站点ID获取记录"""
+        query = cls.query.filter_by(site_id=site_id).order_by(cls.created_at.desc())
+        if limit:
+            query = query.limit(limit)
+        return query.all()
+    
+    def update_verification_status(self, status):
+        """更新验证状态"""
+        self.verification_status = status
+        self.verification_count += 1
+        self.last_verified_at = datetime.utcnow()
+
 class HostingAuditLog(db.Model):
     """审计日志"""
     __tablename__ = 'hosting_audit_logs'
@@ -1179,3 +1300,116 @@ class HostingUsageItem(db.Model):
     # 关联矿机（可选）
     miner_id = db.Column(db.Integer, db.ForeignKey('hosting_miners.id'), nullable=True)
     miner = db.relationship('HostingMiner', foreign_keys=[miner_id])
+
+
+class BlockchainRecord(db.Model):
+    """区块链数据记录模型 - 存储链上记录和IPFS数据"""
+    __tablename__ = 'blockchain_records'
+
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 数据标识
+    data_hash = db.Column(db.String(66), unique=True, nullable=False, index=True)  # 0x + 64位十六进制
+    ipfs_cid = db.Column(db.String(100), nullable=False, index=True)  # IPFS内容标识符
+    
+    # 站点信息
+    site_id = db.Column(db.String(100), nullable=False, index=True)  # 矿场站点ID
+    site_name = db.Column(db.String(200), nullable=True)  # 站点名称
+    
+    # 区块链信息
+    blockchain_network = db.Column(db.String(50), default='Base L2', nullable=False)  # 区块链网络
+    contract_address = db.Column(db.String(42), nullable=True)  # 智能合约地址
+    transaction_hash = db.Column(db.String(66), nullable=True, index=True)  # 交易哈希
+    block_number = db.Column(db.BigInteger, nullable=True)  # 区块号
+    gas_used = db.Column(db.Integer, nullable=True)  # 使用的gas
+    gas_price = db.Column(db.BigInteger, nullable=True)  # gas价格
+    
+    # 数据内容摘要
+    mining_data_summary = db.Column(db.Text, nullable=True)  # 挖矿数据摘要（JSON格式）
+    hashrate_th = db.Column(db.Float, nullable=True)  # 算力 (TH/s)
+    power_consumption_w = db.Column(db.Float, nullable=True)  # 功耗 (W)
+    daily_btc_production = db.Column(db.Float, nullable=True)  # 日产BTC
+    daily_revenue_usd = db.Column(db.Float, nullable=True)  # 日收入 (USD)
+    
+    # 验证状态
+    verification_status = db.Column(
+        db.Enum(BlockchainVerificationStatus), 
+        default=BlockchainVerificationStatus.PENDING, 
+        nullable=False
+    )
+    verification_count = db.Column(db.Integer, default=0, nullable=False)  # 验证次数
+    last_verified_at = db.Column(db.DateTime, nullable=True)  # 最后验证时间
+    
+    # 数据完整性
+    data_version = db.Column(db.String(10), default='1.0', nullable=False)  # 数据版本
+    encryption_enabled = db.Column(db.Boolean, default=True, nullable=False)  # 是否加密
+    data_integrity_hash = db.Column(db.String(64), nullable=True)  # 数据完整性哈希
+    
+    # 关联信息
+    user_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True, index=True)  # 关联用户
+    created_by = db.Column(db.String(100), default='system', nullable=False)  # 创建者
+    
+    # 时间戳
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    blockchain_timestamp = db.Column(db.DateTime, nullable=True)  # 区块链时间戳
+    data_timestamp = db.Column(db.DateTime, nullable=False)  # 数据生成时间戳
+    
+    # 元数据
+    record_metadata = db.Column(db.Text, nullable=True)  # 额外元数据（JSON格式）
+    notes = db.Column(db.Text, nullable=True)  # 备注
+    
+    # 关联关系
+    user = db.relationship('UserAccess', foreign_keys=[user_id], backref='blockchain_records')
+    
+    def __init__(self, data_hash, ipfs_cid, site_id, **kwargs):
+        """初始化区块链记录"""
+        self.data_hash = data_hash
+        self.ipfs_cid = ipfs_cid
+        self.site_id = site_id
+        self.data_timestamp = kwargs.get('data_timestamp', datetime.utcnow())
+        
+        # 处理其他可选参数
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def __repr__(self):
+        return f"<BlockchainRecord {self.data_hash[:16]}... Site: {self.site_id}>"
+    
+    def to_dict(self):
+        """转换为字典格式，便于JSON序列化"""
+        return {
+            'id': self.id,
+            'data_hash': self.data_hash,
+            'ipfs_cid': self.ipfs_cid,
+            'site_id': self.site_id,
+            'site_name': self.site_name,
+            'blockchain_network': self.blockchain_network,
+            'contract_address': self.contract_address,
+            'transaction_hash': self.transaction_hash,
+            'block_number': self.block_number,
+            'verification_status': self.verification_status.value if self.verification_status else None,
+            'verification_count': self.verification_count,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'data_timestamp': self.data_timestamp.isoformat() if self.data_timestamp else None
+        }
+    
+    @classmethod
+    def get_by_data_hash(cls, data_hash):
+        """根据数据哈希获取记录"""
+        return cls.query.filter_by(data_hash=data_hash).first()
+    
+    @classmethod
+    def get_by_site(cls, site_id, limit=None):
+        """根据站点ID获取记录"""
+        query = cls.query.filter_by(site_id=site_id).order_by(cls.created_at.desc())
+        if limit:
+            query = query.limit(limit)
+        return query.all()
+    
+    def update_verification_status(self, status):
+        """更新验证状态"""
+        self.verification_status = status
+        self.verification_count += 1
+        self.last_verified_at = datetime.utcnow()

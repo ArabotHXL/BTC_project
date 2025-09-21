@@ -5,9 +5,9 @@
 """
 from flask import Blueprint
 
-# 创建托管模块蓝图
+# 创建托管模块蓝图 - 使用唯一名称避免冲突
 hosting_bp = Blueprint(
-    'hosting',
+    'hosting_service_bp',  # 使用更具体的名称避免冲突
     __name__,
     template_folder='templates',
     static_folder='static',
