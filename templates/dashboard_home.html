@@ -745,7 +745,7 @@ body {
 
         <!-- 托管管理 -->
         {% if session.role in ['owner', 'admin', 'mining_site'] %}
-        <div class="dashboard-card hosting-item" onclick="location.href='{{ url_for('hosting.dashboard') }}'">
+        <div class="dashboard-card hosting-item" onclick="location.href='{{ url_for('hosting_service_bp.dashboard') }}'">
             <div class="card-stats">Professional</div>
             <div class="card-content">
                 <i class="bi bi-building card-icon"></i>
