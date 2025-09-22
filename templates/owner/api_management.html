@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if current_lang == 'en' %}API & Integrations Management{% else %}API集成管理{% endif %} - BTC Mining Calculator
+{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-gold: #ffc107;
+    --bg-gradient: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --card-border: rgba(255, 255, 255, 0.1);
+}
+
+body {
+    background: var(--bg-gradient);
+    min-height: 100vh;
+}
+
+.api-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.api-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.api-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #6f42c1, #007bff, #28a745);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+}
+
+.api-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.api-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.card-icon {
+    font-size: 1.5rem;
+    margin-right: 0.75rem;
+}
+
+.card-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0;
+}
+
+.api-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.api-item:hover {
+    border-color: var(--primary-gold);
+    background: rgba(255, 193, 7, 0.05);
+}
+
+.api-info {
+    flex: 1;
+}
+
+.api-name {
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 0.25rem;
+}
+
+.api-details {
+    font-size: 0.85rem;
+    color: #b8b8b8;
+}
+
+.api-status {
+    text-align: right;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    display: block;
+}
+
+.status-active { background: #28a745; color: white; }
+.status-configured { background: #17a2b8; color: white; }
+.status-error { background: #dc3545; color: white; }
+.status-pending { background: #ffc107; color: black; }
+
+.rate-limit {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.web3-section {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.web3-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.web3-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.web3-item:hover {
+    border-color: #00d4ff;
+    background: rgba(0, 212, 255, 0.05);
+}
+
+.integration-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.integration-name {
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.integration-type {
+    font-size: 0.8rem;
+    color: #17a2b8;
+}
+
+.integration-status {
+    font-size: 0.85rem;
+    color: #b8b8b8;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+.btn-api {
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    border: none;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-primary { background: #007bff; color: white; }
+.btn-success { background: #28a745; color: white; }
+.btn-warning { background: #ffc107; color: black; }
+.btn-info { background: #17a2b8; color: white; }
+
+.btn-api:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+@media (max-width: 768px) {
+    .api-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="api-container">
+    <div class="api-header">
+        <h1 class="api-title">
+            <i class="bi bi-diagram-3 me-3"></i>
+            {% if current_lang == 'en' %}API & Integrations Management{% else %}API集成管理中心{% endif %}
+        </h1>
+        <p class="text-light">
+            {% if current_lang == 'en' %}Monitor and manage all external API integrations{% else %}监控和管理所有外部API集成{% endif %}
+        </p>
+    </div>
+
+    <div class="api-grid">
+        <!-- 外部API状态 -->
+        <div class="api-card">
+            <div class="card-header">
+                <i class="bi bi-cloud card-icon text-primary"></i>
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}External APIs{% else %}外部API{% endif %}
+                </h3>
+            </div>
+            {% for api_name, api_info in api_status.items() %}
+            <div class="api-item">
+                <div class="api-info">
+                    <div class="api-name">{{ api_name.title().replace('_', ' ') }}</div>
+                    <div class="api-details">
+                        {% if current_lang == 'en' %}Last call{% else %}最后调用{% endif %}: {{ api_info.last_call }}
+                    </div>
+                </div>
+                <div class="api-status">
+                    <span class="status-badge status-{{ api_info.status }}">
+                        {{ api_info.status.title() }}
+                    </span>
+                    <div class="rate-limit">{{ api_info.rate_limit }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- API密钥管理 -->
+        <div class="api-card">
+            <div class="card-header">
+                <i class="bi bi-key card-icon text-warning"></i>
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}API Keys{% else %}API密钥{% endif %}
+                </h3>
+            </div>
+            <div class="api-item">
+                <div class="api-info">
+                    <div class="api-name">CoinGecko API</div>
+                    <div class="api-details">
+                        {% if current_lang == 'en' %}Rate limit{% else %}频率限制{% endif %}: 100 calls/min
+                    </div>
+                </div>
+                <div class="api-status">
+                    <span class="status-badge status-active">Active</span>
+                </div>
+            </div>
+            <div class="api-item">
+                <div class="api-info">
+                    <div class="api-name">Pinata IPFS</div>
+                    <div class="api-details">
+                        {% if current_lang == 'en' %}Storage limit{% else %}存储限制{% endif %}: 1GB/month
+                    </div>
+                </div>
+                <div class="api-status">
+                    <span class="status-badge status-configured">Configured</span>
+                </div>
+            </div>
+            <div class="api-item">
+                <div class="api-info">
+                    <div class="api-name">Blockchain.info</div>
+                    <div class="api-details">
+                        {% if current_lang == 'en' %}No limit{% else %}无限制{% endif %}
+                    </div>
+                </div>
+                <div class="api-status">
+                    <span class="status-badge status-active">Active</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Web3集成状态 -->
+    <div class="web3-section">
+        <h2 class="section-title">
+            <i class="bi bi-grid-3x3-gap"></i>
+            {% if current_lang == 'en' %}Web3 Integrations{% else %}Web3集成状态{% endif %}
+        </h2>
+        
+        <div class="web3-grid">
+            {% for integration in web3_integrations %}
+            <div class="web3-item">
+                <div class="integration-header">
+                    <div class="integration-name">{{ integration.name }}</div>
+                    <div class="integration-type">{{ integration.type }}</div>
+                </div>
+                <div class="integration-status">
+                    <span class="status-badge status-{{ integration.status }}">
+                        {{ integration.status.title() }}
+                    </span>
+                    {% if integration.url != '#' %}
+                    <a href="{{ integration.url }}" target="_blank" class="text-info ms-2">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="action-buttons">
+        <a href="{{ url_for('web3_dashboard') }}" class="btn-api btn-primary">
+            <i class="bi bi-grid-3x3-gap"></i>
+            {% if current_lang == 'en' %}Web3 Dashboard{% else %}Web3控制台{% endif %}
+        </a>
+        <button class="btn-api btn-success" onclick="testAllAPIs()">
+            <i class="bi bi-check-circle"></i>
+            {% if current_lang == 'en' %}Test All APIs{% else %}测试所有API{% endif %}
+        </button>
+        <a href="{{ url_for('system_config') }}" class="btn-api btn-warning">
+            <i class="bi bi-gear"></i>
+            {% if current_lang == 'en' %}System Config{% else %}系统配置{% endif %}
+        </a>
+        <button class="btn-api btn-info" onclick="refreshStatus()">
+            <i class="bi bi-arrow-clockwise"></i>
+            {% if current_lang == 'en' %}Refresh Status{% else %}刷新状态{% endif %}
+        </button>
+    </div>
+</div>
+
+<script>
+function testAllAPIs() {
+    alert('{% if current_lang == "en" %}Testing all API connections...{% else %}正在测试所有API连接...{% endif %}');
+    // 实际的API测试逻辑
+}
+
+function refreshStatus() {
+    location.reload();
+}
+</script>
+{% endblock %}

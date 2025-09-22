@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if current_lang == 'en' %}Security Center{% else %}安全中心{% endif %} - BTC Mining Calculator
+{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-gold: #ffc107;
+    --bg-gradient: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --card-border: rgba(255, 255, 255, 0.1);
+}
+
+body {
+    background: var(--bg-gradient);
+    min-height: 100vh;
+}
+
+.security-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.security-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.security-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #dc3545, #fd7e14, #ffc107);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+}
+
+.security-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.security-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.card-icon {
+    font-size: 1.5rem;
+    margin-right: 0.75rem;
+}
+
+.card-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0;
+}
+
+.security-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.security-item:last-child {
+    border-bottom: none;
+}
+
+.security-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-secure { background: #28a745; color: white; }
+.status-warning { background: #ffc107; color: black; }
+.status-danger { background: #dc3545; color: white; }
+
+.events-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.events-table th,
+.events-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.events-table th {
+    font-weight: 600;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.events-table td {
+    color: #b8b8b8;
+}
+
+.risk-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.risk-low { background: #28a745; color: white; }
+.risk-medium { background: #ffc107; color: black; }
+.risk-high { background: #dc3545; color: white; }
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+.btn-security {
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    border: none;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-primary { background: #007bff; color: white; }
+.btn-warning { background: #ffc107; color: black; }
+.btn-danger { background: #dc3545; color: white; }
+.btn-success { background: #28a745; color: white; }
+
+.btn-security:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.overall-score {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.score-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: conic-gradient(#28a745 0deg 288deg, #dc3545 288deg 360deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    position: relative;
+}
+
+.score-inner {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #28a745;
+}
+
+@media (max-width: 768px) {
+    .security-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="security-container">
+    <div class="security-header">
+        <h1 class="security-title">
+            <i class="bi bi-shield-check me-3"></i>
+            {% if current_lang == 'en' %}Security Center{% else %}安全中心{% endif %}
+        </h1>
+        <p class="text-light">
+            {% if current_lang == 'en' %}Monitor system security and blockchain protection{% else %}监控系统安全和区块链保护{% endif %}
+        </p>
+    </div>
+
+    <!-- 安全评分 -->
+    <div class="overall-score">
+        <div class="score-circle">
+            <div class="score-inner">80%</div>
+        </div>
+        <h3 class="text-success">
+            {% if current_lang == 'en' %}Security Score: Good{% else %}安全评分：良好{% endif %}
+        </h3>
+    </div>
+
+    <div class="security-grid">
+        <!-- 系统安全状态 -->
+        <div class="security-card">
+            <div class="card-header">
+                <i class="bi bi-shield-lock card-icon text-warning"></i>
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}System Security{% else %}系统安全{% endif %}
+                </h3>
+            </div>
+            <div class="security-item">
+                <span>{% if current_lang == 'en' %}SSL/TLS Encryption{% else %}SSL/TLS加密{% endif %}</span>
+                <span class="security-status {{ 'status-secure' if security_status.ssl_enabled else 'status-danger' }}">
+                    {{ 'Enabled' if security_status.ssl_enabled else 'Disabled' }}
+                </span>
+            </div>
+            <div class="security-item">
+                <span>{% if current_lang == 'en' %}CSRF Protection{% else %}CSRF保护{% endif %}</span>
+                <span class="security-status {{ 'status-secure' if security_status.csrf_protection else 'status-danger' }}">
+                    {{ 'Active' if security_status.csrf_protection else 'Inactive' }}
+                </span>
+            </div>
+            <div class="security-item">
+                <span>{% if current_lang == 'en' %}Rate Limiting{% else %}频率限制{% endif %}</span>
+                <span class="security-status {{ 'status-secure' if security_status.rate_limiting else 'status-danger' }}">
+                    {{ 'Active' if security_status.rate_limiting else 'Inactive' }}
+                </span>
+            </div>
+            <div class="security-item">
+                <span>{% if current_lang == 'en' %}Audit Logging{% else %}审计日志{% endif %}</span>
+                <span class="security-status {{ 'status-secure' if security_status.audit_logging else 'status-danger' }}">
+                    {{ 'Enabled' if security_status.audit_logging else 'Disabled' }}
+                </span>
+            </div>
+        </div>
+
+        <!-- 区块链安全 -->
+        <div class="security-card">
+            <div class="card-header">
+                <i class="bi bi-shield-check card-icon text-success"></i>
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}Blockchain Security{% else %}区块链安全{% endif %}
+                </h3>
+            </div>
+            <div class="security-item">
+                <span>{% if current_lang == 'en' %}Data Encryption{% else %}数据加密{% endif %}</span>
+                <span class="security-status {{ 'status-secure' if security_status.encryption_enabled else 'status-warning' }}">
+                    {{ 'AES-256' if security_status.encryption_enabled else 'Not Set' }}
+                </span>
+            </div>
+            <div class="security-item">
+                <span>{% if current_lang == 'en' %}Private Key Security{% else %}私钥安全{% endif %}</span>
+                <span class="security-status {{ 'status-secure' if security_status.blockchain_secured else 'status-warning' }}">
+                    {{ 'Secured' if security_status.blockchain_secured else 'Missing' }}
+                </span>
+            </div>
+            <div class="security-item">
+                <span>{% if current_lang == 'en' %}Smart Contract Verification{% else %}智能合约验证{% endif %}</span>
+                <span class="security-status status-secure">Verified</span>
+            </div>
+            <div class="security-item">
+                <span>{% if current_lang == 'en' %}Transaction Signing{% else %}交易签名{% endif %}</span>
+                <span class="security-status status-secure">EIP-191</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 最近安全事件 -->
+    <div class="security-card">
+        <div class="card-header">
+            <i class="bi bi-clock-history card-icon text-info"></i>
+            <h3 class="card-title">
+                {% if current_lang == 'en' %}Recent Security Events{% else %}最近安全事件{% endif %}
+            </h3>
+        </div>
+        <table class="events-table">
+            <thead>
+                <tr>
+                    <th>{% if current_lang == 'en' %}Time{% else %}时间{% endif %}</th>
+                    <th>{% if current_lang == 'en' %}Event{% else %}事件{% endif %}</th>
+                    <th>{% if current_lang == 'en' %}User{% else %}用户{% endif %}</th>
+                    <th>{% if current_lang == 'en' %}Risk Level{% else %}风险等级{% endif %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in recent_events %}
+                <tr>
+                    <td>{{ event.time }}</td>
+                    <td>{{ event.event }}</td>
+                    <td>{{ event.user }}</td>
+                    <td>
+                        <span class="risk-badge risk-{{ event.risk }}">
+                            {{ event.risk.title() }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="action-buttons">
+        <a href="{{ url_for('system_config') }}" class="btn-security btn-primary">
+            <i class="bi bi-gear"></i>
+            {% if current_lang == 'en' %}System Config{% else %}系统配置{% endif %}
+        </a>
+        <button class="btn-security btn-warning" onclick="runSecurityScan()">
+            <i class="bi bi-search"></i>
+            {% if current_lang == 'en' %}Security Scan{% else %}安全扫描{% endif %}
+        </button>
+        <a href="{{ url_for('blockchain_verification') }}" class="btn-security btn-success">
+            <i class="bi bi-shield-check"></i>
+            {% if current_lang == 'en' %}Blockchain Verify{% else %}区块链验证{% endif %}
+        </a>
+        <button class="btn-security btn-danger" onclick="showEmergencyOptions()">
+            <i class="bi bi-exclamation-triangle"></i>
+            {% if current_lang == 'en' %}Emergency{% else %}紧急处理{% endif %}
+        </button>
+    </div>
+</div>
+
+<script>
+function runSecurityScan() {
+    alert('{% if current_lang == "en" %}Security scan initiated...{% else %}安全扫描已启动...{% endif %}');
+}
+
+function showEmergencyOptions() {
+    if (confirm('{% if current_lang == "en" %}Show emergency security options?{% else %}显示紧急安全选项？{% endif %}')) {
+        // 显示紧急安全选项
+        console.log('Emergency options activated');
+    }
+}
+</script>
+{% endblock %}

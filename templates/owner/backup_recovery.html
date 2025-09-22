@@ -1,0 +1,435 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if current_lang == 'en' %}Backup & Recovery{% else %}备份恢复{% endif %} - BTC Mining Calculator
+{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-gold: #ffc107;
+    --bg-gradient: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --card-border: rgba(255, 255, 255, 0.1);
+}
+
+body {
+    background: var(--bg-gradient);
+    min-height: 100vh;
+}
+
+.backup-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.backup-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.backup-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #fd7e14, #ffc107, #28a745);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+}
+
+.backup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.backup-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.card-icon {
+    font-size: 1.5rem;
+    margin-right: 0.75rem;
+}
+
+.card-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0;
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.status-item:last-child {
+    border-bottom: none;
+}
+
+.status-value {
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.backup-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.backup-btn {
+    padding: 1rem;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.btn-create {
+    background: #28a745;
+    color: white;
+}
+
+.btn-restore {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-download {
+    background: #6f42c1;
+    color: white;
+}
+
+.btn-schedule {
+    background: #ffc107;
+    color: black;
+}
+
+.backup-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.history-section {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.progress-section {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(0, 123, 255, 0.1);
+    border: 1px solid #007bff;
+    border-radius: 12px;
+    display: none;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 1rem 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #007bff, #28a745);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.storage-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.storage-item {
+    text-align: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+}
+
+.storage-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #28a745;
+    display: block;
+}
+
+.storage-label {
+    font-size: 0.9rem;
+    color: #b8b8b8;
+    margin-top: 0.25rem;
+}
+
+@media (max-width: 768px) {
+    .backup-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="backup-container">
+    <div class="backup-header">
+        <h1 class="backup-title">
+            <i class="bi bi-cloud-upload me-3"></i>
+            {% if current_lang == 'en' %}Backup & Recovery Center{% else %}备份恢复中心{% endif %}
+        </h1>
+        <p class="text-light">
+            {% if current_lang == 'en' %}Protect your data with automated backups and recovery{% else %}通过自动备份和恢复保护您的数据{% endif %}
+        </p>
+    </div>
+
+    <div class="backup-grid">
+        <!-- 备份状态 -->
+        <div class="backup-card">
+            <div class="card-header">
+                <i class="bi bi-shield-check card-icon text-success"></i>
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}Backup Status{% else %}备份状态{% endif %}
+                </h3>
+            </div>
+            <div class="status-item">
+                <span>{% if current_lang == 'en' %}Last Backup{% else %}最后备份{% endif %}</span>
+                <span class="status-value">{{ backup_status.last_backup }}</span>
+            </div>
+            <div class="status-item">
+                <span>{% if current_lang == 'en' %}Backup Size{% else %}备份大小{% endif %}</span>
+                <span class="status-value">{{ backup_status.backup_size }}</span>
+            </div>
+            <div class="status-item">
+                <span>{% if current_lang == 'en' %}Auto Backup{% else %}自动备份{% endif %}</span>
+                <span class="status-value">
+                    {{ 'Enabled' if backup_status.auto_backup_enabled else 'Disabled' }}
+                </span>
+            </div>
+            <div class="status-item">
+                <span>{% if current_lang == 'en' %}Retention{% else %}保留期{% endif %}</span>
+                <span class="status-value">{{ backup_status.retention_days }} {% if current_lang == 'en' %}days{% else %}天{% endif %}</span>
+            </div>
+            
+            <div class="backup-actions">
+                <button class="backup-btn btn-create" onclick="createBackup()">
+                    <i class="bi bi-plus-circle"></i>
+                    {% if current_lang == 'en' %}Create Backup{% else %}创建备份{% endif %}
+                </button>
+                <button class="backup-btn btn-schedule" onclick="scheduleBackup()">
+                    <i class="bi bi-clock"></i>
+                    {% if current_lang == 'en' %}Schedule{% else %}计划备份{% endif %}
+                </button>
+            </div>
+        </div>
+
+        <!-- 恢复选项 -->
+        <div class="backup-card">
+            <div class="card-header">
+                <i class="bi bi-arrow-clockwise card-icon text-info"></i>
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}Recovery Options{% else %}恢复选项{% endif %}
+                </h3>
+            </div>
+            <div class="status-item">
+                <span>{% if current_lang == 'en' %}Storage Location{% else %}存储位置{% endif %}</span>
+                <span class="status-value">{{ backup_status.backup_location }}</span>
+            </div>
+            <div class="status-item">
+                <span>{% if current_lang == 'en' %}Available Backups{% else %}可用备份{% endif %}</span>
+                <span class="status-value">{{ backup_history|length }}</span>
+            </div>
+            <div class="status-item">
+                <span>{% if current_lang == 'en' %}Recovery Time{% else %}恢复时间{% endif %}</span>
+                <span class="status-value">~5 min</span>
+            </div>
+            <div class="status-item">
+                <span>{% if current_lang == 'en' %}Point-in-Time{% else %}时间点恢复{% endif %}</span>
+                <span class="status-value">Available</span>
+            </div>
+            
+            <div class="backup-actions">
+                <button class="backup-btn btn-restore" onclick="restoreData()">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    {% if current_lang == 'en' %}Restore{% else %}恢复数据{% endif %}
+                </button>
+                <button class="backup-btn btn-download" onclick="downloadBackup()">
+                    <i class="bi bi-download"></i>
+                    {% if current_lang == 'en' %}Download{% else %}下载备份{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 存储信息 -->
+    <div class="backup-card">
+        <div class="card-header">
+            <i class="bi bi-hdd card-icon text-warning"></i>
+            <h3 class="card-title">
+                {% if current_lang == 'en' %}Storage Information{% else %}存储信息{% endif %}
+            </h3>
+        </div>
+        <div class="storage-info">
+            <div class="storage-item">
+                <span class="storage-value">85%</span>
+                <div class="storage-label">
+                    {% if current_lang == 'en' %}Storage Used{% else %}存储使用率{% endif %}
+                </div>
+            </div>
+            <div class="storage-item">
+                <span class="storage-value">2.4GB</span>
+                <div class="storage-label">
+                    {% if current_lang == 'en' %}Total Size{% else %}总大小{% endif %}
+                </div>
+            </div>
+            <div class="storage-item">
+                <span class="storage-value">500MB</span>
+                <div class="storage-label">
+                    {% if current_lang == 'en' %}Available{% else %}可用空间{% endif %}
+                </div>
+            </div>
+            <div class="storage-item">
+                <span class="storage-value">12</span>
+                <div class="storage-label">
+                    {% if current_lang == 'en' %}Backup Files{% else %}备份文件{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 备份历史 -->
+    <div class="history-section">
+        <h2 class="section-title">
+            <i class="bi bi-clock-history"></i>
+            {% if current_lang == 'en' %}Backup History{% else %}备份历史{% endif %}
+        </h2>
+        
+        {% if backup_history %}
+        <!-- 这里显示备份历史列表 -->
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-archive empty-icon"></i>
+            <h4>{% if current_lang == 'en' %}No Backup History{% else %}无备份历史{% endif %}</h4>
+            <p>{% if current_lang == 'en' %}Create your first backup to get started{% else %}创建您的第一个备份开始使用{% endif %}</p>
+            <button class="backup-btn btn-create" onclick="createBackup()">
+                <i class="bi bi-plus-circle"></i>
+                {% if current_lang == 'en' %}Create First Backup{% else %}创建首个备份{% endif %}
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 备份进度 -->
+    <div class="progress-section" id="backupProgress">
+        <h4>{% if current_lang == 'en' %}Backup in Progress{% else %}备份进行中{% endif %}</h4>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="text-center">
+            <span id="progressText">0%</span>
+        </div>
+    </div>
+</div>
+
+<script>
+function createBackup() {
+    if (confirm('{% if current_lang == "en" %}Create a new backup? This may take several minutes.{% else %}创建新备份？这可能需要几分钟时间。{% endif %}')) {
+        showProgress();
+        simulateBackup();
+    }
+}
+
+function restoreData() {
+    if (confirm('{% if current_lang == "en" %}Restore from backup? This will overwrite current data.{% else %}从备份恢复？这将覆盖当前数据。{% endif %}')) {
+        alert('{% if current_lang == "en" %}Restore initiated...{% else %}恢复已启动...{% endif %}');
+    }
+}
+
+function downloadBackup() {
+    alert('{% if current_lang == "en" %}Preparing backup download...{% else %}准备备份下载...{% endif %}');
+}
+
+function scheduleBackup() {
+    alert('{% if current_lang == "en" %}Opening backup schedule settings...{% else %}打开备份计划设置...{% endif %}');
+}
+
+function showProgress() {
+    document.getElementById('backupProgress').style.display = 'block';
+}
+
+function simulateBackup() {
+    let progress = 0;
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    
+    const interval = setInterval(() => {
+        progress += Math.random() * 10;
+        if (progress >= 100) {
+            progress = 100;
+            clearInterval(interval);
+            setTimeout(() => {
+                document.getElementById('backupProgress').style.display = 'none';
+                alert('{% if current_lang == "en" %}Backup completed successfully!{% else %}备份完成成功！{% endif %}');
+                location.reload();
+            }, 1000);
+        }
+        progressFill.style.width = progress + '%';
+        progressText.textContent = Math.round(progress) + '%';
+    }, 500);
+}
+</script>
+{% endblock %}
