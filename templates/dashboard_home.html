@@ -791,6 +791,95 @@ body {
         </div>
         {% endif %}
 
+        <!-- Owner专用功能区域 -->
+        {% if session.role == 'owner' %}
+        
+        <!-- Web3 Dashboard -->
+        <div class="dashboard-card web3-item" onclick="location.href='{{ url_for('web3_dashboard') }}'">
+            <div class="card-stats">Web3</div>
+            <div class="card-content">
+                <i class="bi bi-grid-3x3-gap card-icon" style="color: #00d4ff;"></i>
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}Web3 Dashboard{% else %}Web3控制台{% endif %}
+                </h3>
+                <p class="card-description">
+                    {% if current_lang == 'en' %}Blockchain verification, NFT management, and cryptocurrency payment systems{% else %}区块链验证、NFT管理和加密货币支付系统{% endif %}
+                </p>
+            </div>
+        </div>
+
+        <!-- 系统配置中心 -->
+        <div class="dashboard-card config-item" onclick="location.href='/system-config'">
+            <div class="card-stats">System</div>
+            <div class="card-content">
+                <i class="bi bi-gear-wide-connected card-icon" style="color: #17a2b8;"></i>
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}System Configuration{% else %}系统配置中心{% endif %}
+                </h3>
+                <p class="card-description">
+                    {% if current_lang == 'en' %}Advanced system settings, environment variables, and platform configuration{% else %}高级系统设置、环境变量和平台配置管理{% endif %}
+                </p>
+            </div>
+        </div>
+
+        <!-- 数据库管理 -->
+        <div class="dashboard-card database-item" onclick="location.href='/database-admin'">
+            <div class="card-stats">Database</div>
+            <div class="card-content">
+                <i class="bi bi-server card-icon" style="color: #28a745;"></i>
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}Database Management{% else %}数据库管理{% endif %}
+                </h3>
+                <p class="card-description">
+                    {% if current_lang == 'en' %}Database monitoring, backup, optimization, and schema management{% else %}数据库监控、备份、优化和结构管理{% endif %}
+                </p>
+            </div>
+        </div>
+
+        <!-- API集成管理 -->
+        <div class="dashboard-card api-item" onclick="location.href='/api-management'">
+            <div class="card-stats">Integration</div>
+            <div class="card-content">
+                <i class="bi bi-diagram-3 card-icon" style="color: #6f42c1;"></i>
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}API & Integrations{% else %}API集成管理{% endif %}
+                </h3>
+                <p class="card-description">
+                    {% if current_lang == 'en' %}External API management, webhook configuration, and third-party integrations{% else %}外部API管理、Webhook配置和第三方集成{% endif %}
+                </p>
+            </div>
+        </div>
+
+        <!-- 安全中心 -->
+        <div class="dashboard-card security-item" onclick="location.href='/security-center'">
+            <div class="card-stats">Security</div>
+            <div class="card-content">
+                <i class="bi bi-shield-check card-icon" style="color: #dc3545;"></i>
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}Security Center{% else %}安全中心{% endif %}
+                </h3>
+                <p class="card-description">
+                    {% if current_lang == 'en' %}Access logs, security alerts, audit trails, and encryption management{% else %}访问日志、安全警报、审计轨迹和加密管理{% endif %}
+                </p>
+            </div>
+        </div>
+
+        <!-- 备份恢复 -->
+        <div class="dashboard-card backup-item" onclick="location.href='/backup-recovery'">
+            <div class="card-stats">Backup</div>
+            <div class="card-content">
+                <i class="bi bi-cloud-upload card-icon" style="color: #fd7e14;"></i>
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}Backup & Recovery{% else %}备份恢复{% endif %}
+                </h3>
+                <p class="card-description">
+                    {% if current_lang == 'en' %}Automated backups, system snapshots, and disaster recovery management{% else %}自动备份、系统快照和灾难恢复管理{% endif %}
+                </p>
+            </div>
+        </div>
+
+        {% endif %}
+
         <!-- SLA NFT证书管理 -->
         {% if session.email %}
         <div class="dashboard-card sla-nft-item" onclick="openSLANFTModal()">
