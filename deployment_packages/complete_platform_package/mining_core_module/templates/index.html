@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Mining Core Module - Bitcoin Mining Calculator{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Hero Section -->
+        <div class="card bg-gradient mb-4" style="background: linear-gradient(135deg, #f7931e 0%, #ffc107 100%);">
+            <div class="card-body text-center text-dark py-5">
+                <h1 class="display-4 fw-bold mb-3">
+                    <i class="bi bi-calculator me-3"></i>
+                    Mining Core Module
+                </h1>
+                <p class="lead mb-4">
+                    Independent Bitcoin mining calculation and data analysis system
+                </p>
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <p class="mb-4">
+                            Advanced mining profitability calculator with real-time data, 
+                            technical analysis, and comprehensive reporting capabilities.
+                        </p>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <a href="{{ url_for('calculator.index') }}" class="btn btn-dark btn-lg">
+                        <i class="bi bi-calculator me-2"></i>
+                        Start Calculating
+                    </a>
+                    <a href="{{ url_for('batch.index') }}" class="btn btn-outline-dark btn-lg">
+                        <i class="bi bi-grid-3x3-gap me-2"></i>
+                        Batch Calculator
+                    </a>
+                    <a href="{{ url_for('analytics.index') }}" class="btn btn-outline-dark btn-lg">
+                        <i class="bi bi-graph-up me-2"></i>
+                        Analytics Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Feature Overview -->
+<div class="row g-4 mb-5">
+    <div class="col-lg-4">
+        <div class="card h-100 border-warning">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-calculator text-warning" style="font-size: 2.5rem;"></i>
+                </div>
+                <h5 class="card-title">Mining Calculator</h5>
+                <p class="card-text">
+                    Calculate mining profitability with real-time Bitcoin network data, 
+                    customizable miner specifications, and electricity costs.
+                </p>
+                <a href="{{ url_for('calculator.index') }}" class="btn btn-warning">
+                    <i class="bi bi-arrow-right me-1"></i>Use Calculator
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card h-100 border-info">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-grid-3x3-gap text-info" style="font-size: 2.5rem;"></i>
+                </div>
+                <h5 class="card-title">Batch Processing</h5>
+                <p class="card-text">
+                    Process multiple miners simultaneously, import CSV data, 
+                    and export comprehensive reports for large-scale operations.
+                </p>
+                <a href="{{ url_for('batch.index') }}" class="btn btn-info">
+                    <i class="bi bi-arrow-right me-1"></i>Batch Calculate
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card h-100 border-success">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-graph-up text-success" style="font-size: 2.5rem;"></i>
+                </div>
+                <h5 class="card-title">Data Analytics</h5>
+                <p class="card-text">
+                    Advanced technical analysis, market metrics, historical data trends, 
+                    and comprehensive mining intelligence reports.
+                </p>
+                <a href="{{ url_for('analytics.index') }}" class="btn btn-success">
+                    <i class="bi bi-arrow-right me-1"></i>View Analytics
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Network Status Section -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-wifi me-2"></i>
+                    Bitcoin Network Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="text-warning h4 mb-1">
+                                <i class="bi bi-currency-bitcoin"></i>
+                            </div>
+                            <div class="small text-muted">BTC Price</div>
+                            <div class="fw-bold" id="btc-price">Loading...</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="text-info h4 mb-1">
+                                <i class="bi bi-speedometer2"></i>
+                            </div>
+                            <div class="small text-muted">Network Hashrate</div>
+                            <div class="fw-bold" id="network-hashrate">Loading...</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="text-success h4 mb-1">
+                                <i class="bi bi-puzzle"></i>
+                            </div>
+                            <div class="small text-muted">Difficulty</div>
+                            <div class="fw-bold" id="network-difficulty">Loading...</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="text-danger h4 mb-1">
+                                <i class="bi bi-award"></i>
+                            </div>
+                            <div class="small text-muted">Block Reward</div>
+                            <div class="fw-bold" id="block-reward">3.125 BTC</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- API Status -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-secondary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">System Status</h6>
+                        <small class="text-muted">Independent mining calculation system</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle me-1"></i>
+                            Online
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Load network status on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Load network data
+    fetch('/calculator/api/network-data')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data) {
+                const networkData = data.data;
+                
+                // Update BTC price
+                const btcPriceEl = document.getElementById('btc-price');
+                if (btcPriceEl && networkData.btc_price) {
+                    btcPriceEl.textContent = '$' + Math.round(networkData.btc_price).toLocaleString();
+                }
+                
+                // Update network hashrate
+                const hashrateEl = document.getElementById('network-hashrate');
+                if (hashrateEl && networkData.network_hashrate) {
+                    hashrateEl.textContent = networkData.network_hashrate.toFixed(1) + ' EH/s';
+                }
+                
+                // Update difficulty
+                const difficultyEl = document.getElementById('network-difficulty');
+                if (difficultyEl && networkData.network_difficulty) {
+                    const difficulty = networkData.network_difficulty / 1e12; // Convert to T
+                    difficultyEl.textContent = difficulty.toFixed(1) + 'T';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Failed to load network data:', error);
+            // Set default values on error
+            document.getElementById('btc-price').textContent = '$43,000';
+            document.getElementById('network-hashrate').textContent = '650 EH/s';
+            document.getElementById('network-difficulty').textContent = '83.1T';
+        });
+});
+</script>
+{% endblock %}

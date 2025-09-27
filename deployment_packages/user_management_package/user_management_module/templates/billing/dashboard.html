@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}订阅计费仪表盘 - 用户管理系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-credit-card"></i> 订阅计费仪表盘</h2>
+            <p class="text-muted">订阅管理和财务概览</p>
+        </div>
+    </div>
+
+    <!-- 收入统计卡片 -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stats-card" style="background: linear-gradient(135deg, var(--success-color), #229954);">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">月度收入</div>
+                            <div class="stats-number">${{ stats.monthly_revenue or 0 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stats-card" style="background: linear-gradient(135deg, var(--primary-color), var(--accent-color));">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">活跃订阅</div>
+                            <div class="stats-number">{{ stats.active_subscriptions or 0 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stats-card" style="background: linear-gradient(135deg, var(--warning-color), #e67e22);">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">待处理支付</div>
+                            <div class="stats-number">{{ stats.pending_payments or 0 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stats-card" style="background: linear-gradient(135deg, var(--danger-color), #c0392b);">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">流失率</div>
+                            <div class="stats-number">{{ stats.churn_rate or 0 }}%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 订阅计划概览 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list-alt"></i> 订阅计划概览</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="plan-card">
+                                <div class="plan-header bg-secondary">
+                                    <h6 class="text-white mb-0">免费版</h6>
+                                </div>
+                                <div class="plan-body">
+                                    <div class="plan-price">$0</div>
+                                    <div class="plan-users">{{ plan_stats.free or 0 }} 用户</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="plan-card">
+                                <div class="plan-header bg-primary">
+                                    <h6 class="text-white mb-0">基础版</h6>
+                                </div>
+                                <div class="plan-body">
+                                    <div class="plan-price">$29</div>
+                                    <div class="plan-users">{{ plan_stats.basic or 0 }} 用户</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="plan-card">
+                                <div class="plan-header bg-success">
+                                    <h6 class="text-white mb-0">专业版</h6>
+                                </div>
+                                <div class="plan-body">
+                                    <div class="plan-price">$99</div>
+                                    <div class="plan-users">{{ plan_stats.professional or 0 }} 用户</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="plan-card">
+                                <div class="plan-header bg-warning">
+                                    <h6 class="text-white mb-0">企业版</h6>
+                                </div>
+                                <div class="plan-body">
+                                    <div class="plan-price">$299</div>
+                                    <div class="plan-users">{{ plan_stats.enterprise or 0 }} 用户</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 最新交易和操作 -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-list"></i> 最新支付记录</h5>
+                    <a href="{{ url_for('billing.payments') }}" class="btn btn-sm btn-outline-primary">
+                        查看全部
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>用户</th>
+                                    <th>计划</th>
+                                    <th>金额</th>
+                                    <th>状态</th>
+                                    <th>支付时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in recent_payments[:5] %}
+                                <tr>
+                                    <td>{{ payment.user.email if payment.user else '-' }}</td>
+                                    <td>{{ payment.subscription_plan.name if payment.subscription_plan else '-' }}</td>
+                                    <td>${{ payment.amount }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if payment.status == 'completed' else 'warning' if payment.status == 'pending' else 'danger' }}">
+                                            {{ payment.status.value if payment.status else '-' }}
+                                        </span>
+                                    </td>
+                                    <td>{{ payment.created_at.strftime('%Y-%m-%d %H:%M') if payment.created_at else '-' }}</td>
+                                    <td>
+                                        <a href="{{ url_for('billing.payment_detail', id=payment.id) }}" 
+                                           class="btn btn-sm btn-outline-info">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">暂无支付记录</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> 快速操作</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('billing.create_subscription') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> 创建订阅
+                        </a>
+                        <a href="{{ url_for('billing.payment_methods') }}" class="btn btn-success">
+                            <i class="fas fa-credit-card"></i> 支付方式
+                        </a>
+                        <a href="{{ url_for('billing.reports') }}" class="btn btn-info">
+                            <i class="fas fa-chart-bar"></i> 财务报告
+                        </a>
+                        <a href="{{ url_for('billing.settings') }}" class="btn btn-secondary">
+                            <i class="fas fa-cog"></i> 计费设置
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 月度收入趋势 -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> 月度趋势</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stats-card {
+    border-radius: 10px;
+    border: none;
+    transition: transform 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+}
+
+.stats-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: white;
+}
+
+.text-xs {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.8);
+}
+
+.plan-card {
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+}
+
+.plan-header {
+    padding: 15px;
+    text-align: center;
+}
+
+.plan-body {
+    padding: 20px;
+    text-align: center;
+}
+
+.plan-price {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-light);
+}
+
+.plan-users {
+    color: var(--text-light);
+    opacity: 0.7;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 收入趋势图表
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    const revenueChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+            datasets: [{
+                label: '月度收入',
+                data: [1200, 1900, 3000, 5000, 2000, 3000],
+                borderColor: 'rgb(52, 152, 219)',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: 'white'
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: {
+                        color: 'white'
+                    },
+                    grid: {
+                        color: 'rgba(255,255,255,0.1)'
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: 'white'
+                    },
+                    grid: {
+                        color: 'rgba(255,255,255,0.1)'
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

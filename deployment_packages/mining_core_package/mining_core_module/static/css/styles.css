@@ -1,0 +1,366 @@
+/* Mining Core Module - Unified Design System */
+
+/* Design System Variables */
+:root {
+    --primary-gradient: linear-gradient(135deg, #f7931e 0%, #ffc107 100%);
+    --secondary-gradient: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    --accent-color: #f7931e;
+    --accent-secondary: #ffc107;
+    --text-primary: #ffffff;
+    --text-secondary: #adb5bd;
+    --bg-primary: #212529;
+    --bg-secondary: #1a1a1a;
+    --bg-card: rgba(255, 255, 255, 0.05);
+    --border-color: #333;
+    --border-accent: #ffc107;
+    --shadow-color: rgba(255, 193, 7, 0.2);
+    --transition-default: all 0.3s ease;
+    --border-radius-card: 15px;
+    --border-radius-button: 8px;
+}
+
+/* Global Body Styling */
+body {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d3748 100%);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text-primary);
+}
+
+/* Unified Card System */
+.unified-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-card);
+    padding: 2rem;
+    transition: var(--transition-default);
+    position: relative;
+    overflow: hidden;
+}
+
+.unified-card:hover {
+    border-color: var(--border-accent);
+    box-shadow: 0 10px 25px var(--shadow-color);
+    transform: translateY(-2px);
+}
+
+.unified-card-header {
+    background: var(--primary-gradient);
+    color: #000;
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    margin: -2rem -2rem 2rem;
+    border-radius: var(--border-radius-card) var(--border-radius-card) 0 0;
+}
+
+/* Unified Button System */
+.btn-unified-primary {
+    background: var(--primary-gradient);
+    border: none;
+    color: #000;
+    font-weight: 600;
+    border-radius: var(--border-radius-button);
+    padding: 0.75rem 1.5rem;
+    transition: var(--transition-default);
+}
+
+.btn-unified-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px var(--shadow-color);
+    color: #000;
+}
+
+.btn-unified-secondary {
+    background: transparent;
+    border: 2px solid var(--border-accent);
+    color: var(--border-accent);
+    font-weight: 600;
+    border-radius: var(--border-radius-button);
+    padding: 0.75rem 1.5rem;
+    transition: var(--transition-default);
+}
+
+.btn-unified-secondary:hover {
+    background: var(--border-accent);
+    color: #000;
+    transform: translateY(-2px);
+}
+
+/* Status Indicators */
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+.status-online {
+    background-color: #28a745;
+    box-shadow: 0 0 8px rgba(40, 167, 69, 0.6);
+}
+
+.status-offline {
+    background-color: #dc3545;
+    box-shadow: 0 0 8px rgba(220, 53, 69, 0.6);
+}
+
+.status-warning {
+    background-color: #ffc107;
+    box-shadow: 0 0 8px rgba(255, 193, 7, 0.6);
+}
+
+/* Form Elements */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--border-accent);
+    box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+}
+
+/* Data Tables */
+.table-dark {
+    --bs-table-bg: rgba(255, 255, 255, 0.02);
+}
+
+.table-dark th {
+    border-color: var(--border-color);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.table-dark td {
+    border-color: var(--border-color);
+}
+
+/* Network Stats Cards */
+.network-stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-button);
+    padding: 1rem;
+    text-align: center;
+    transition: var(--transition-default);
+}
+
+.network-stat-card:hover {
+    border-color: var(--border-accent);
+    transform: translateY(-2px);
+}
+
+.network-stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--accent-secondary);
+}
+
+.network-stat-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+/* Loading Animations */
+.loading-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: .5;
+    }
+}
+
+/* Spinner */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Alert Enhancements */
+.alert {
+    border-radius: var(--border-radius-button);
+    border: none;
+}
+
+.alert-success {
+    background-color: rgba(40, 167, 69, 0.15);
+    color: #d4edda;
+    border-left: 4px solid #28a745;
+}
+
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.15);
+    color: #f8d7da;
+    border-left: 4px solid #dc3545;
+}
+
+.alert-warning {
+    background-color: rgba(255, 193, 7, 0.15);
+    color: #fff3cd;
+    border-left: 4px solid #ffc107;
+}
+
+.alert-info {
+    background-color: rgba(13, 202, 240, 0.15);
+    color: #d1ecf1;
+    border-left: 4px solid #0dcaf0;
+}
+
+/* Calculator Specific Styles */
+.calculator-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.calculator-input {
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    color: #ffffff;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.calculator-input:focus {
+    border-color: #FFD700;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+.result-card {
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    border: 1px solid #333;
+}
+
+.result-label {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.result-value {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .calculator-container {
+        padding: 10px;
+    }
+    
+    .unified-card {
+        padding: 1rem;
+    }
+    
+    .result-value {
+        font-size: 18px;
+    }
+    
+    .network-stat-value {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .btn-unified-primary,
+    .btn-unified-secondary {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .result-value {
+        font-size: 16px;
+    }
+}
+
+/* Batch Calculator Styles */
+.batch-calculator-container {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0.5rem;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--border-radius-button);
+}
+
+#minersTable {
+    min-width: 1000px;
+    width: 100%;
+}
+
+#minersTable th,
+#minersTable td {
+    white-space: nowrap;
+    min-width: fit-content;
+    padding: 0.5rem;
+}
+
+/* Analytics Dashboard Styles */
+.analytics-dashboard {
+    max-width: 100%;
+}
+
+.metric-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-button);
+    padding: 1.5rem;
+    text-align: center;
+    height: 100%;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.metric-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+/* Footer Styles */
+footer {
+    margin-top: auto;
+    background: var(--bg-secondary) !important;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Navigation Enhancements */
+.navbar-dark .navbar-brand {
+    color: var(--accent-secondary) !important;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    color: var(--text-secondary) !important;
+    transition: var(--transition-default);
+}
+
+.navbar-dark .navbar-nav .nav-link:hover {
+    color: var(--accent-secondary) !important;
+}
+
+/* Utility Classes */
+.text-bitcoin {
+    color: var(--accent-color) !important;
+}
+
+.bg-bitcoin {
+    background-color: var(--accent-color) !important;
+}
+
+.border-bitcoin {
+    border-color: var(--accent-color) !important;
+}

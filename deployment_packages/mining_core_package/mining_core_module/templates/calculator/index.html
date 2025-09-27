@@ -1,0 +1,412 @@
+{% extends "base.html" %}
+
+{% block title %}Mining Calculator - Mining Core Module{% endblock %}
+
+{% block extra_css %}
+<style>
+.calculator-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.calculator-header {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #1a1a1a;
+    padding: 30px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
+
+.calculator-form {
+    background: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 10px;
+    padding: 25px;
+}
+
+.calculator-input {
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    color: #ffffff;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.calculator-input:focus {
+    border-color: #FFD700;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+.calculator-button {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #1a1a1a;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.calculator-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(255, 215, 0, 0.3);
+}
+
+.calculator-results {
+    background: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 10px;
+    padding: 25px;
+    margin-top: 30px;
+}
+
+.result-card {
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+}
+
+.result-label {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.result-value {
+    color: #FFD700;
+    font-size: 24px;
+    font-weight: bold;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="calculator-container">
+    <!-- Header -->
+    <div class="calculator-header text-center">
+        <h1 class="mb-3">
+            <i class="bi bi-calculator me-3"></i>
+            Bitcoin Mining Calculator
+        </h1>
+        <p class="lead mb-0">Calculate mining profitability with real-time network data</p>
+    </div>
+
+    <!-- Calculator Form -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-gear me-2"></i>
+                        Mining Configuration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="mining-calculator-form">
+                        <!-- Miner Model Selection -->
+                        <div class="mb-3">
+                            <label for="miner-model" class="form-label">Miner Model</label>
+                            <select class="form-select calculator-input" id="miner-model" name="miner_model">
+                                <option value="">Select a miner model...</option>
+                                {% for miner in miners %}
+                                <option value="{{ miner.model_name }}" 
+                                        data-hashrate="{{ miner.reference_hashrate }}"
+                                        data-power="{{ miner.reference_power }}"
+                                        data-price="{{ miner.reference_price or 2500 }}">
+                                    {{ miner.model_name }} ({{ miner.reference_hashrate }}TH/s, {{ miner.reference_power }}W)
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Miner Count -->
+                        <div class="mb-3">
+                            <label for="miner-count" class="form-label">Number of Miners</label>
+                            <input type="number" class="form-control calculator-input" id="miner-count" 
+                                   name="miner_count" value="1" min="1" max="10000">
+                        </div>
+
+                        <!-- Custom Hashrate -->
+                        <div class="mb-3">
+                            <label for="custom-hashrate" class="form-label">Custom Hashrate (TH/s)</label>
+                            <input type="number" class="form-control calculator-input" id="custom-hashrate" 
+                                   name="custom_hashrate" step="0.1" placeholder="Leave empty to use model default">
+                        </div>
+
+                        <!-- Custom Power -->
+                        <div class="mb-3">
+                            <label for="custom-power" class="form-label">Custom Power (W)</label>
+                            <input type="number" class="form-control calculator-input" id="custom-power" 
+                                   name="custom_power" placeholder="Leave empty to use model default">
+                        </div>
+
+                        <!-- Electricity Cost -->
+                        <div class="mb-3">
+                            <label for="electricity-cost" class="form-label">Electricity Cost ($/kWh)</label>
+                            <input type="number" class="form-control calculator-input" id="electricity-cost" 
+                                   name="electricity_cost" value="0.06" step="0.001" min="0" max="1">
+                        </div>
+
+                        <!-- Pool Fee -->
+                        <div class="mb-3">
+                            <label for="pool-fee" class="form-label">Pool Fee (%)</label>
+                            <input type="number" class="form-control calculator-input" id="pool-fee" 
+                                   name="pool_fee" value="2.5" step="0.1" min="0" max="10">
+                        </div>
+
+                        <!-- Custom BTC Price -->
+                        <div class="mb-3">
+                            <label for="custom-btc-price" class="form-label">Custom BTC Price ($)</label>
+                            <input type="number" class="form-control calculator-input" id="custom-btc-price" 
+                                   name="custom_btc_price" placeholder="Leave empty for real-time price">
+                        </div>
+
+                        <!-- Use Real-time Data -->
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="use-real-time" 
+                                   name="use_real_time_data" checked>
+                            <label class="form-check-label" for="use-real-time">
+                                Use real-time network data
+                            </label>
+                        </div>
+
+                        <!-- Calculate Button -->
+                        <button type="submit" class="btn calculator-button w-100">
+                            <i class="bi bi-calculator me-2"></i>
+                            Calculate Profitability
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <!-- Network Data Card -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-wifi me-2"></i>
+                        Network Data
+                    </h6>
+                    <button class="btn btn-sm btn-outline-primary" id="refresh-data-btn">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="text-center">
+                                <div class="small text-muted">BTC Price</div>
+                                <div class="fw-bold text-warning" id="current-btc-price">Loading...</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <div class="small text-muted">Network Hashrate</div>
+                                <div class="fw-bold text-info" id="current-hashrate">Loading...</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <div class="small text-muted">Difficulty</div>
+                                <div class="fw-bold text-success" id="current-difficulty">Loading...</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <div class="small text-muted">Block Reward</div>
+                                <div class="fw-bold text-danger" id="current-block-reward">3.125 BTC</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Card -->
+            <div class="card d-none" id="results-card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-bar-chart me-2"></i>
+                        Calculation Results
+                    </h6>
+                </div>
+                <div class="card-body" id="results-content">
+                    <!-- Results will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('mining-calculator-form');
+    const resultsCard = document.getElementById('results-card');
+    const resultsContent = document.getElementById('results-content');
+    const refreshBtn = document.getElementById('refresh-data-btn');
+    
+    // Load network data
+    function loadNetworkData() {
+        fetch('/calculator/api/network-data')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    const networkData = data.data;
+                    
+                    document.getElementById('current-btc-price').textContent = 
+                        '$' + Math.round(networkData.btc_price || 43000).toLocaleString();
+                    document.getElementById('current-hashrate').textContent = 
+                        (networkData.network_hashrate || 650).toFixed(1) + ' EH/s';
+                    document.getElementById('current-difficulty').textContent = 
+                        ((networkData.network_difficulty || 83148355189239) / 1e12).toFixed(1) + 'T';
+                    document.getElementById('current-block-reward').textContent = 
+                        (networkData.block_reward || 3.125) + ' BTC';
+                }
+            })
+            .catch(error => {
+                console.error('Failed to load network data:', error);
+            });
+    }
+
+    // Handle form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+        
+        // Convert checkbox value
+        data.use_real_time_data = document.getElementById('use-real-time').checked;
+        
+        // Show loading state
+        resultsContent.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div></div>';
+        resultsCard.classList.remove('d-none');
+        
+        fetch('/calculator/api/calculate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayResults(data.result);
+            } else {
+                resultsContent.innerHTML = `
+                    <div class="alert alert-danger">
+                        <strong>Error:</strong> ${data.error || 'Calculation failed'}
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Calculation error:', error);
+            resultsContent.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>Error:</strong> Failed to calculate profitability
+                </div>
+            `;
+        });
+    });
+
+    // Display calculation results
+    function displayResults(result) {
+        const html = `
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="result-card">
+                        <div class="result-label">Daily Profit</div>
+                        <div class="result-value ${result.daily_profit >= 0 ? 'text-success' : 'text-danger'}">
+                            $${(result.daily_profit || 0).toFixed(2)}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="result-card">
+                        <div class="result-label">Monthly Profit</div>
+                        <div class="result-value ${(result.daily_profit * 30) >= 0 ? 'text-success' : 'text-danger'}">
+                            $${((result.daily_profit || 0) * 30).toFixed(2)}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="result-card">
+                        <div class="result-label">Daily Revenue</div>
+                        <div class="result-value text-info">
+                            $${(result.daily_revenue || 0).toFixed(2)}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="result-card">
+                        <div class="result-label">Daily Cost</div>
+                        <div class="result-value text-warning">
+                            $${(result.daily_cost || 0).toFixed(2)}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="result-card">
+                        <div class="result-label">Daily BTC</div>
+                        <div class="result-value text-primary">
+                            ${(result.daily_btc || 0).toFixed(8)} BTC
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="result-card">
+                        <div class="result-label">Total Hashrate</div>
+                        <div class="result-value text-secondary">
+                            ${(result.hashrate || 0).toFixed(1)} TH/s
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        resultsContent.innerHTML = html;
+    }
+
+    // Refresh button handler
+    refreshBtn.addEventListener('click', function() {
+        const icon = this.querySelector('i');
+        icon.classList.add('fa-spin');
+        
+        fetch('/calculator/api/refresh-data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadNetworkData();
+            }
+        })
+        .finally(() => {
+            icon.classList.remove('fa-spin');
+        });
+    });
+
+    // Miner model change handler
+    document.getElementById('miner-model').addEventListener('change', function() {
+        const option = this.options[this.selectedIndex];
+        if (option.value) {
+            document.getElementById('custom-hashrate').value = option.dataset.hashrate || '';
+            document.getElementById('custom-power').value = option.dataset.power || '';
+        }
+    });
+
+    // Load initial network data
+    loadNetworkData();
+});
+</script>
+{% endblock %}

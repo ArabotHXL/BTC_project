@@ -1,0 +1,212 @@
+# User Management Module Docker Compose Configuration
+# 用户管理模块Docker Compose配置
+
+version: '3.8'
+
+services:
+  # User Management Application
+  user-management:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: user-management-app
+    restart: unless-stopped
+    ports:
+      - "5003:5003"
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://user_mgmt_user:user_mgmt_password@postgres:5432/user_management_db
+      - SESSION_SECRET=${SESSION_SECRET:-default-user-mgmt-secret-change-in-production}
+      - SMTP_SERVER=${SMTP_SERVER:-smtp.gmail.com}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - REDIS_URL=redis://redis:6379/3
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-jwt-secret-change-in-production}
+    volumes:
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+      - ./exports:/app/exports
+      - ./backups:/app/backups
+      - user_static:/app/user_management_module/static/uploads
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - user-mgmt-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: user-mgmt-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: user_management_db
+      POSTGRES_USER: user_mgmt_user
+      POSTGRES_PASSWORD: user_mgmt_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+      - ./database/backups:/backups
+    ports:
+      - "5434:5432"
+    networks:
+      - user-mgmt-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user_mgmt_user -d user_management_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache & Session Store
+  redis:
+    image: redis:7-alpine
+    container_name: user-mgmt-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6381:6379"
+    networks:
+      - user-mgmt-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Celery Worker (for background tasks)
+  celery-worker:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: user-mgmt-celery-worker
+    restart: unless-stopped
+    command: celery -A user_management_module.app:celery worker --loglevel=info
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://user_mgmt_user:user_mgmt_password@postgres:5432/user_management_db
+      - REDIS_URL=redis://redis:6379/3
+      - SMTP_SERVER=${SMTP_SERVER}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+    volumes:
+      - ./logs:/app/logs
+      - ./exports:/app/exports
+      - ./backups:/app/backups
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - user-mgmt-network
+    profiles:
+      - with-worker
+
+  # Celery Beat (for scheduled tasks)
+  celery-beat:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: user-mgmt-celery-beat
+    restart: unless-stopped
+    command: celery -A user_management_module.app:celery beat --loglevel=info
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://user_mgmt_user:user_mgmt_password@postgres:5432/user_management_db
+      - REDIS_URL=redis://redis:6379/3
+    volumes:
+      - ./logs:/app/logs
+      - ./backups:/app/backups
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - user-mgmt-network
+    profiles:
+      - with-scheduler
+
+  # pgAdmin (Database Admin Interface)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: user-mgmt-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@hashinsight.net
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - user-mgmt-network
+    profiles:
+      - with-admin
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    container_name: user-mgmt-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/logs:/var/log/nginx
+      - user_static:/usr/share/nginx/html/static
+    depends_on:
+      - user-management
+    networks:
+      - user-mgmt-network
+    profiles:
+      - with-nginx
+
+  # Mailhog (Email Testing)
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: user-mgmt-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"   # SMTP port
+      - "8025:8025"   # Web UI port
+    networks:
+      - user-mgmt-network
+    profiles:
+      - development
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  user_static:
+    driver: local
+
+networks:
+  user-mgmt-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
+
+# 生产环境配置示例
+# Production configuration example
+# 
+# 使用方法 / Usage:
+# docker-compose up -d                    # 基础服务
+# docker-compose --profile with-worker up -d    # 包含后台任务
+# docker-compose --profile with-admin up -d     # 包含管理界面
+# docker-compose --profile development up -d    # 开发环境

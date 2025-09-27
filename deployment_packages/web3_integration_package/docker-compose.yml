@@ -1,0 +1,218 @@
+# Web3 Integration Module Docker Compose Configuration
+# Web3集成模块Docker Compose配置
+
+version: '3.8'
+
+services:
+  # Web3 Integration Application
+  web3-integration:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: web3-integration-app
+    restart: unless-stopped
+    ports:
+      - "5002:5002"
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://web3_user:web3_password@postgres:5432/web3_integration_db
+      - SESSION_SECRET=${SESSION_SECRET:-default-web3-secret-change-in-production}
+      - ETHEREUM_RPC_URL=${ETHEREUM_RPC_URL:-https://mainnet.infura.io/v3/your-project-id}
+      - PRIVATE_KEY=${PRIVATE_KEY}
+      - INFURA_PROJECT_ID=${INFURA_PROJECT_ID}
+      - ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY}
+      - REDIS_URL=redis://redis:6379/1
+    volumes:
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+      - ./contracts:/app/web3_integration_module/contracts
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - web3-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: web3-integration-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: web3_integration_db
+      POSTGRES_USER: web3_user
+      POSTGRES_PASSWORD: web3_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5433:5432"
+    networks:
+      - web3-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U web3_user -d web3_integration_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache & Message Broker
+  redis:
+    image: redis:7-alpine
+    container_name: web3-integration-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - web3-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Celery Worker (for background blockchain tasks)
+  celery-worker:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: web3-celery-worker
+    restart: unless-stopped
+    command: celery -A web3_integration_module.app:celery worker --loglevel=info
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://web3_user:web3_password@postgres:5432/web3_integration_db
+      - REDIS_URL=redis://redis:6379/1
+      - ETHEREUM_RPC_URL=${ETHEREUM_RPC_URL}
+      - PRIVATE_KEY=${PRIVATE_KEY}
+    volumes:
+      - ./logs:/app/logs
+      - ./contracts:/app/web3_integration_module/contracts
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - web3-network
+    profiles:
+      - with-worker
+
+  # Celery Beat (for scheduled blockchain tasks)
+  celery-beat:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: web3-celery-beat
+    restart: unless-stopped
+    command: celery -A web3_integration_module.app:celery beat --loglevel=info
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://web3_user:web3_password@postgres:5432/web3_integration_db
+      - REDIS_URL=redis://redis:6379/1
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - web3-network
+    profiles:
+      - with-scheduler
+
+  # Ganache (Local Ethereum Blockchain for Development)
+  ganache:
+    image: trufflesuite/ganache-cli:latest
+    container_name: web3-ganache
+    restart: unless-stopped
+    ports:
+      - "8545:8545"
+    command: >
+      --host 0.0.0.0
+      --port 8545
+      --networkId 1337
+      --accounts 10
+      --deterministic
+      --mnemonic "test test test test test test test test test test test junk"
+      --gasLimit 10000000
+      --gasPrice 20000000000
+    networks:
+      - web3-network
+    profiles:
+      - development
+
+  # IPFS Node (for NFT metadata storage)
+  ipfs:
+    image: ipfs/go-ipfs:latest
+    container_name: web3-ipfs
+    restart: unless-stopped
+    ports:
+      - "4001:4001"    # P2P port
+      - "5001:5001"    # API port
+      - "8080:8080"    # Gateway port
+    volumes:
+      - ipfs_data:/data/ipfs
+    networks:
+      - web3-network
+    profiles:
+      - with-ipfs
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    container_name: web3-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/logs:/var/log/nginx
+    depends_on:
+      - web3-integration
+    networks:
+      - web3-network
+    profiles:
+      - with-nginx
+
+  # Blockchain Explorer (Optional)
+  blockscout:
+    image: blockscout/blockscout:latest
+    container_name: web3-explorer
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      - ETHEREUM_JSONRPC_VARIANT=ganache
+      - ETHEREUM_JSONRPC_HTTP_URL=http://ganache:8545
+      - DATABASE_URL=postgresql://web3_user:web3_password@postgres:5432/blockscout_db
+    depends_on:
+      - postgres
+      - ganache
+    networks:
+      - web3-network
+    profiles:
+      - development
+      - with-explorer
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  ipfs_data:
+    driver: local
+
+networks:
+  web3-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
