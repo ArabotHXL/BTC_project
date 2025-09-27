@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}管理员仪表盘 - 用户管理系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-tachometer-alt"></i> 管理员仪表盘</h2>
+            <p class="text-muted">系统概况和关键指标</p>
+        </div>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">总用户数</div>
+                            <div class="stats-number">{{ stats.total_users or 0 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stats-card" style="background: linear-gradient(135deg, var(--success-color), #229954);">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">活跃用户</div>
+                            <div class="stats-number">{{ stats.active_users or 0 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-check fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stats-card" style="background: linear-gradient(135deg, var(--warning-color), #e67e22);">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">本月新增</div>
+                            <div class="stats-number">{{ stats.recent_users or 0 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-plus fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stats-card" style="background: linear-gradient(135deg, var(--danger-color), #c0392b);">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">管理员数</div>
+                            <div class="stats-number">{{ (stats.owner_count or 0) + (stats.admin_count or 0) }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-shield fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 角色分布 -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> 用户角色分布</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="text-center p-3">
+                                <h4 class="text-danger">{{ stats.owner_count or 0 }}</h4>
+                                <p class="mb-0">系统拥有者</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center p-3">
+                                <h4 class="text-warning">{{ stats.admin_count or 0 }}</h4>
+                                <p class="mb-0">管理员</p>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="text-center p-3">
+                                <h4 class="text-info">{{ stats.guest_count or 0 }}</h4>
+                                <p class="mb-0">普通用户</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-tasks"></i> 快捷操作</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="/admin/users/create" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> 创建新用户
+                        </a>
+                        <a href="/admin/users" class="btn btn-outline-primary">
+                            <i class="fas fa-users"></i> 管理用户
+                        </a>
+                        <a href="/admin/system-info" class="btn btn-outline-info">
+                            <i class="fas fa-info-circle"></i> 系统信息
+                        </a>
+                        <a href="/billing/admin/subscriptions" class="btn btn-outline-success">
+                            <i class="fas fa-chart-line"></i> 订阅统计
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 最近活动 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history"></i> 最近活动</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-info-circle fa-2x mb-3"></i>
+                        <p>活动日志功能正在开发中...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 自动刷新数据
+setInterval(function() {
+    // 这里可以添加AJAX调用来刷新统计数据
+}, 30000); // 每30秒刷新一次
+</script>
+{% endblock %}
