@@ -112,6 +112,26 @@ def create_app():
 
     from app import app
     # db已在app模块中初始化
+    
+    # 🔧 CRITICAL FIX: 集成服务发现和注册
+    enable_service_discovery = os.environ.get('ENABLE_SERVICE_DISCOVERY', 'true').lower() == 'true'
+    deployment_mode = os.environ.get('DEPLOYMENT_MODE', 'standalone')
+    
+    if enable_service_discovery and deployment_mode in ['combined', 'gateway']:
+        try:
+            from service_integration import init_service_integration
+            service_reg, gateway_router = init_service_integration(
+                app, 
+                enable_registration=True, 
+                enable_heartbeat=True
+            )
+            logging.info(f"Service discovery initialized for {deployment_mode} mode")
+        except ImportError as e:
+            logging.warning(f"Service integration not available: {e}")
+        except Exception as e:
+            logging.error(f"Service integration failed: {e}")
+    else:
+        logging.info(f"Service discovery disabled for {deployment_mode} mode")
 
     # 🔧 CRITICAL SECURITY FIX: 严格要求SESSION_SECRET环境变量
     app.secret_key = os.environ.get("SESSION_SECRET")

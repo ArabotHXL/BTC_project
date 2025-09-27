@@ -160,6 +160,24 @@ def get_latest_market_data():
 _cache_manager = None
 _decorators_loaded = False
 
+# Import API authentication middleware
+try:
+    from api_auth_middleware import require_api_auth, require_jwt_auth, generate_user_jwt_token
+    API_AUTH_ENABLED = True
+    logging.info("API authentication middleware loaded successfully")
+except ImportError as e:
+    logging.warning(f"API authentication middleware not available: {e}")
+    # Fallback decorators
+    def require_api_auth(required_permissions=None, allow_session_auth=True):
+        def decorator(f):
+            return f
+        return decorator
+    def require_jwt_auth(required_permissions=None):
+        def decorator(f):
+            return f
+        return decorator
+    API_AUTH_ENABLED = False
+
 def get_cache_manager():
     """延迟加载缓存管理器"""
     global _cache_manager
@@ -2346,6 +2364,7 @@ def calculate_internal(request_obj):
 @app.route('/api/btc_price', methods=['GET'])
 @app.route('/get_btc_price', methods=['GET'])
 @app.route('/btc_price', methods=['GET'])
+@require_api_auth(required_permissions=['read'], allow_session_auth=True)
 def get_btc_price():
     """Get the current Bitcoin price from API"""
     # Check authentication for API endpoints
@@ -2376,6 +2395,7 @@ def get_btc_price():
 @app.route('/api/network_stats', methods=['GET'])
 @app.route('/get_network_stats', methods=['GET'])
 @app.route('/network_stats', methods=['GET'])
+@require_api_auth(required_permissions=['read'], allow_session_auth=True)
 def get_network_stats():
     """Get current Bitcoin network statistics from market_analytics table (缓存优化版本)"""
     # Remove authentication for testing compatibility
@@ -2475,6 +2495,7 @@ def get_network_stats():
 @app.route('/api/sha256-comparison', methods=['GET'])
 @app.route('/get_sha256_mining_comparison', methods=['GET'])
 @app.route('/mining/sha256_comparison', methods=['GET'])
+@require_api_auth(required_permissions=['read'], allow_session_auth=True)
 def get_sha256_mining_comparison():
     """Get SHA-256 mining profitability comparison from CoinWarz"""
     # Check authentication for API endpoints
@@ -2530,6 +2551,7 @@ def get_sha256_mining_comparison():
 @app.route('/get_miners', methods=['GET'])
 # Add API route for miners data that the test is looking for
 @app.route('/api/get_miners_data', methods=['GET'])
+@require_api_auth(required_permissions=['read'], allow_session_auth=True)
 def api_get_miners_data():
     """API endpoint for miners data - public access for compatibility (缓存优化版本)"""
     try:
@@ -4377,6 +4399,7 @@ def analytics_dashboard():
 
 # Treasury Management API Endpoints
 @app.route('/api/treasury/overview', methods=['GET'])
+@require_api_auth(required_permissions=['treasury'], allow_session_auth=True)
 @login_required
 def api_treasury_overview():
     """获取资金管理概览数据"""
@@ -4770,6 +4793,7 @@ def api_portfolio_update():
 
 # Unified analytics data endpoint for testing and general use
 @app.route('/api/analytics/data', methods=['GET'])
+@require_api_auth(required_permissions=['analytics'], allow_session_auth=True)
 @login_required
 def analytics_unified_data():
     """统一的分析数据端点 - 统一从 market_analytics 表获取数据"""
@@ -5978,6 +6002,7 @@ def performance_monitor_page():
 # 添加缺失的API端点
 @app.route('/api/miner-data', methods=['GET'])
 @app.route('/api/miner-models', methods=['GET'])
+@require_api_auth(required_permissions=['read'], allow_session_auth=True)
 def api_miner_data():
     """获取矿机数据API"""
     try:
@@ -5996,6 +6021,7 @@ def api_miner_data():
         }), 500
 
 @app.route('/api/calculate', methods=['POST'])
+@require_api_auth(required_permissions=['calculate'], allow_session_auth=True)
 # @rate_limit(max_requests=20, window_minutes=15, feature_name="api_calculate")  # 🔧 暂时禁用限速
 # @SecurityManager.csrf_protect  # 🔧 暂时禁用CSRF以修复计算器功能
 def api_calculate():

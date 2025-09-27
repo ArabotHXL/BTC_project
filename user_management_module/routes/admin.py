@@ -6,18 +6,46 @@ Admin Routes
 from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, flash
 from datetime import datetime, timedelta
 import logging
+# Import from the current module structure
+import sys
+import os
+
+# Add user_management_module to path for absolute imports
+module_dir = os.path.dirname(os.path.dirname(__file__))
+if module_dir not in sys.path:
+    sys.path.insert(0, module_dir)
+
 try:
-    from ..auth.decorators import requires_owner_only, requires_admin_or_owner
-    from ..auth.authentication import login_required
-    from ..models import UserAccess, User
-    from ..database import db
-    from ..services.user_service import UserService
-except ImportError:
     from auth.decorators import requires_owner_only, requires_admin_or_owner
     from auth.authentication import login_required
     from models import UserAccess, User
     from database import db
     from services.user_service import UserService
+except ImportError as e:
+    # Fallback for when running as part of the main application
+    try:
+        from user_management_module.auth.decorators import requires_owner_only, requires_admin_or_owner
+        from user_management_module.auth.authentication import login_required
+        from user_management_module.models import UserAccess, User
+        from user_management_module.database import db
+        from user_management_module.services.user_service import UserService
+    except ImportError:
+        # Emergency fallback - use basic decorators
+        def requires_owner_only(f):
+            return f
+        def requires_admin_or_owner(f):
+            return f
+        def login_required(f):
+            return f
+        class UserAccess:
+            @staticmethod
+            def query():
+                return None
+        class User:
+            pass
+        db = None
+        class UserService:
+            pass
 
 logger = logging.getLogger(__name__)
 

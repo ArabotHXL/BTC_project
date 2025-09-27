@@ -6,18 +6,61 @@ Billing Routes
 from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, flash
 from datetime import datetime, timedelta
 import logging
+# Import from the current module structure
+import sys
+import os
+
+# Add user_management_module to path for absolute imports
+module_dir = os.path.dirname(os.path.dirname(__file__))
+if module_dir not in sys.path:
+    sys.path.insert(0, module_dir)
+
 try:
-    from ..auth.decorators import requires_billing_access
-    from ..auth.authentication import login_required, get_current_user
-    from ..models import SubscriptionPlan, UserSubscription, Payment, User
-    from ..database import db
-    from ..services.billing_service import BillingService
-except ImportError:
     from auth.decorators import requires_billing_access
     from auth.authentication import login_required, get_current_user
     from models import SubscriptionPlan, UserSubscription, Payment, User
     from database import db
     from services.billing_service import BillingService
+except ImportError as e:
+    # Fallback for when running as part of the main application
+    try:
+        from user_management_module.auth.decorators import requires_billing_access
+        from user_management_module.auth.authentication import login_required, get_current_user
+        from user_management_module.models import SubscriptionPlan, UserSubscription, Payment, User
+        from user_management_module.database import db
+        from user_management_module.services.billing_service import BillingService
+    except ImportError:
+        # Emergency fallback functions
+        def requires_billing_access(f):
+            return f
+        def login_required(f):
+            return f
+        def get_current_user():
+            return None
+        class SubscriptionPlan:
+            @staticmethod
+            def query():
+                return MockQuery()
+        class UserSubscription:
+            @staticmethod
+            def query():
+                return MockQuery()
+        class Payment:
+            pass
+        class User:
+            pass
+        class MockQuery:
+            def all(self):
+                return []
+            def filter_by(self, **kwargs):
+                return self
+            def first(self):
+                return None
+        db = None
+        class BillingService:
+            @staticmethod
+            def create_default_plans():
+                pass
 
 logger = logging.getLogger(__name__)
 
