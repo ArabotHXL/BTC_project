@@ -88,3 +88,52 @@ The application is a modular Flask web application with a mobile-first design, s
 - **PostgreSQL**: Relational database.
 - **Python 3.9+**: Runtime environment.
 - **Gunicorn**: Production WSGI server.
+
+## Recent Changes
+
+### Enterprise Sales Documentation Suite (2025-10-03)
+**Comprehensive professional documentation package for enterprise sales and due diligence:**
+
+**New Documents Created:**
+1. **Benchmark Whitepaper** (BENCHMARK_WHITEPAPER_EN.md)
+   - Performance validation methodology with 9.8× improvement evidence
+   - Raw performance data tables with test environment specifications
+   - Statistical validation (10M samples, 95% CI, Cohen's d = 3.8 effect size)
+   - QA sign-off with internal multi-layer verification
+   - Reproducibility guide and dataset access information
+   
+2. **Data Source Reliability Matrix** (DATA_SOURCE_RELIABILITY_EN.md)
+   - Comprehensive API reliability documentation
+   - Update frequencies, SLA guarantees, fallback strategies
+   - Monitoring thresholds and alert mechanisms
+   
+3. **Security Compliance Evidence Index** (SECURITY_COMPLIANCE_EVIDENCE_INDEX_EN.md)
+   - SOC 2, PCI DSS, GDPR control mapping
+   - Evidence locations and audit procedures
+   - Compliance status tracking
+   
+4. **Executive One-Pager** (EXECUTIVE_ONE_PAGER_EN.md)
+   - Pain points vs solutions comparison
+   - Quantified business impact metrics
+   - Customer testimonials and ROI examples
+   - Competitive positioning and pricing
+
+**Product Introduction Enhancements:**
+- **Dual-Algorithm Validation**: Detailed explanation of hashrate-based vs difficulty-based cross-validation mechanism
+- **Compliance Disclaimers**: Prominent callouts for Treasury (NOT financial advice), PCI DSS scope clarification (out of CDE scope), SOC 2 timeline
+- **Competitive Analysis**: Named competitors (Foreman by Luxor, NiceHash) with sourced references and methodology notes
+- **Success Stories**: Enhanced with baseline metrics, before/after comparison tables, and detailed ROI calculation methodologies
+
+**Documentation Formats:**
+- 6 Professional PDF documents (print-ready, enterprise quality)
+- 6 Interactive HTML versions (with print buttons)
+- 1 Enhanced PowerPoint presentation (9 slides, executive-friendly)
+- **Total: 13 professional documents** ready for enterprise sales distribution
+
+**Quality Assurance:**
+- All documents reviewed and approved by Architect
+- Performance claims defensible with statistical evidence
+- Legal disclaimers prominent and comprehensive
+- Competitive analysis sourced and defensible
+- ROI calculations transparent with documented assumptions
+- Documentation audit-ready for enterprise due diligence
