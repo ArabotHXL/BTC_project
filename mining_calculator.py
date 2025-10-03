@@ -8,6 +8,9 @@ import os
 import time
 from datetime import datetime
 from flask import current_app
+from functools import wraps
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+import hashlib
 
 # 🔧 CRITICAL FIX: 强化区块链验证和IPFS存储集成导入门控
 def _initialize_blockchain_features():
@@ -1814,3 +1817,330 @@ class MiningCalculator:
                 'daily_profit': 0,
                 'monthly_profit': 0
             }
+
+
+# ============================================================================
+# 性能优化模块 - Phase 2 Enterprise Optimization
+# Performance Optimization Module
+# ============================================================================
+
+def performance_monitor(func):
+    """
+    性能监控装饰器
+    Performance monitoring decorator
+    
+    Tracks execution time, memory usage, and logs performance metrics
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        import psutil
+        import gc
+        
+        # 强制垃圾回收获取准确的内存基准
+        gc.collect()
+        
+        # 获取开始时的性能指标
+        start_time = time.time()
+        process = psutil.Process(os.getpid())
+        start_memory = process.memory_info().rss / 1024 / 1024  # MB
+        
+        try:
+            # 执行函数
+            result = func(*args, **kwargs)
+            
+            # 计算性能指标
+            end_time = time.time()
+            execution_time = end_time - start_time
+            end_memory = process.memory_info().rss / 1024 / 1024  # MB
+            memory_delta = end_memory - start_memory
+            
+            # 记录性能日志
+            logging.info(
+                f"Performance [{func.__name__}]: "
+                f"Time={execution_time:.3f}s, "
+                f"Memory={start_memory:.1f}MB -> {end_memory:.1f}MB "
+                f"(Δ{memory_delta:+.1f}MB)"
+            )
+            
+            # 如果返回值是字典，添加性能指标
+            if isinstance(result, dict):
+                result['_performance'] = {
+                    'execution_time_seconds': round(execution_time, 3),
+                    'memory_mb': round(end_memory, 1),
+                    'memory_delta_mb': round(memory_delta, 1),
+                    'function_name': func.__name__
+                }
+            
+            return result
+            
+        except Exception as e:
+            end_time = time.time()
+            logging.error(
+                f"Performance [{func.__name__}] FAILED: "
+                f"Time={end_time - start_time:.3f}s, Error={str(e)}"
+            )
+            raise
+    
+    return wrapper
+
+
+@performance_monitor
+def batch_calculate_mining_profit_vectorized(miners_df, use_real_time=True, 
+                                             electricity_cost=None, pool_fee=0.025):
+    """
+    批量计算挖矿收益 - NumPy向量化优化版本
+    Batch mining profit calculation with NumPy vectorization
+    
+    目标：5000台矿机批量计算 ≤20秒
+    Target: 5000 miners calculation in ≤20 seconds
+    
+    Parameters:
+    -----------
+    miners_df : pd.DataFrame
+        矿机数据DataFrame，必需列：
+        - miner_model: 矿机型号
+        - miner_count: 矿机数量
+        - site_power_mw: 站点功率(可选)
+    use_real_time : bool
+        是否使用实时数据
+    electricity_cost : float
+        电费成本（$/kWh），如果为None则使用默认值
+    pool_fee : float
+        矿池费率
+        
+    Returns:
+    --------
+    pd.DataFrame : 包含计算结果的DataFrame
+    """
+    start_total = time.time()
+    logging.info(f"开始批量计算：{len(miners_df)} 条记录")
+    
+    # 1. 数据预处理和验证（向量化）
+    if electricity_cost is None:
+        electricity_cost = get_default_electricity_cost()
+    
+    # 获取实时网络数据（一次性获取，避免重复API调用）
+    if use_real_time:
+        btc_price = get_real_time_btc_price()
+        difficulty = get_real_time_difficulty()
+        block_reward = get_real_time_block_reward()
+        network_hashrate = get_real_time_btc_hashrate()
+    else:
+        btc_price = get_default_btc_price()
+        difficulty = get_default_network_difficulty()
+        block_reward = get_default_block_reward()
+        network_hashrate = get_default_network_hashrate()
+    
+    logging.info(f"网络参数：BTC=${btc_price:.2f}, 难度={difficulty/1e12:.2f}T, 奖励={block_reward}BTC")
+    
+    # 2. 提取矿机规格（向量化查找）
+    # 创建矿机规格映射
+    miner_specs = {}
+    for model, specs in MINER_DATA.items():
+        miner_specs[model] = specs
+    
+    # 向量化提取算力和功耗
+    def get_specs(model):
+        if model in miner_specs:
+            return miner_specs[model]['hashrate'], miner_specs[model]['power_watt']
+        else:
+            logging.warning(f"未知矿机型号: {model}, 使用默认值")
+            return 100, 3000  # 默认值
+    
+    miners_df = miners_df.copy()
+    specs_data = miners_df['miner_model'].apply(get_specs)
+    miners_df['hashrate_per_unit'] = specs_data.apply(lambda x: x[0])
+    miners_df['power_per_unit'] = specs_data.apply(lambda x: x[1])
+    
+    # 3. NumPy向量化计算
+    # 转换为numpy数组进行高效计算
+    miner_counts = miners_df['miner_count'].values.astype(np.float64)
+    hashrate_per_unit = miners_df['hashrate_per_unit'].values.astype(np.float64)
+    power_per_unit = miners_df['power_per_unit'].values.astype(np.float64)
+    
+    # 批量计算总算力和功耗
+    total_hashrate = miner_counts * hashrate_per_unit  # TH/s
+    total_power = miner_counts * power_per_unit  # Watts
+    
+    # 4. 核心挖矿收益计算（完全向量化）
+    # 每TH每秒的BTC产出
+    btc_per_th_per_second = (block_reward * 1e12) / (difficulty * (2**32) / BLOCKS_PER_DAY / 86400)
+    
+    # 日BTC产出
+    daily_btc = total_hashrate * btc_per_th_per_second * 86400
+    
+    # 应用矿池费率
+    daily_btc_after_pool_fee = daily_btc * (1 - pool_fee)
+    
+    # 日收入
+    daily_revenue = daily_btc_after_pool_fee * btc_price
+    
+    # 日电费
+    daily_power_kwh = total_power * 24 / 1000  # kWh
+    daily_electricity_cost = daily_power_kwh * electricity_cost
+    
+    # 日利润
+    daily_profit = daily_revenue - daily_electricity_cost
+    
+    # 月度和年度指标
+    monthly_btc = daily_btc_after_pool_fee * 30.5
+    monthly_revenue = daily_revenue * 30.5
+    monthly_electricity_cost = daily_electricity_cost * 30.5
+    monthly_profit = daily_profit * 30.5
+    
+    yearly_profit = monthly_profit * 12
+    
+    # 5. 构建结果DataFrame
+    results_df = pd.DataFrame({
+        'miner_model': miners_df['miner_model'],
+        'miner_count': miners_df['miner_count'],
+        'total_hashrate_th': total_hashrate,
+        'total_power_w': total_power,
+        'daily_btc': daily_btc_after_pool_fee,
+        'daily_revenue_usd': daily_revenue,
+        'daily_electricity_cost_usd': daily_electricity_cost,
+        'daily_profit_usd': daily_profit,
+        'monthly_btc': monthly_btc,
+        'monthly_revenue_usd': monthly_revenue,
+        'monthly_profit_usd': monthly_profit,
+        'yearly_profit_usd': yearly_profit,
+        'btc_price': btc_price,
+        'network_difficulty_t': difficulty / 1e12,
+        'electricity_cost_per_kwh': electricity_cost,
+        'pool_fee_rate': pool_fee
+    })
+    
+    # 添加原始数据的其他列
+    for col in miners_df.columns:
+        if col not in results_df.columns:
+            results_df[col] = miners_df[col]
+    
+    elapsed = time.time() - start_total
+    logging.info(
+        f"批量计算完成：{len(results_df)} 条记录，"
+        f"耗时 {elapsed:.2f}秒，"
+        f"平均 {elapsed/len(results_df)*1000:.1f}ms/条"
+    )
+    
+    return results_df
+
+
+@performance_monitor
+def batch_calculate_with_concurrency(miners_data_list, use_real_time=True, 
+                                     max_workers=4, chunk_size=1000):
+    """
+    并发批量计算 - 使用concurrent.futures提升性能
+    Concurrent batch calculation using ThreadPoolExecutor
+    
+    Parameters:
+    -----------
+    miners_data_list : list of dict
+        矿机数据列表
+    use_real_time : bool
+        是否使用实时数据
+    max_workers : int
+        最大并发worker数
+    chunk_size : int
+        分块大小
+        
+    Returns:
+    --------
+    list : 计算结果列表
+    """
+    logging.info(f"并发批量计算开始：{len(miners_data_list)} 条数据，{max_workers} workers")
+    
+    # 将数据分块
+    chunks = [miners_data_list[i:i + chunk_size] 
+              for i in range(0, len(miners_data_list), chunk_size)]
+    
+    logging.info(f"数据已分为 {len(chunks)} 个块，每块 ≤{chunk_size} 条")
+    
+    # 并发处理每个块
+    all_results = []
+    
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        # 提交所有任务
+        future_to_chunk = {
+            executor.submit(_process_chunk_vectorized, chunk, use_real_time): i 
+            for i, chunk in enumerate(chunks)
+        }
+        
+        # 收集结果
+        for future in future_to_chunk:
+            chunk_idx = future_to_chunk[future]
+            try:
+                chunk_results = future.result()
+                all_results.extend(chunk_results)
+                logging.info(f"块 {chunk_idx + 1}/{len(chunks)} 完成")
+            except Exception as e:
+                logging.error(f"块 {chunk_idx} 处理失败: {e}")
+    
+    logging.info(f"并发批量计算完成：共 {len(all_results)} 条结果")
+    return all_results
+
+
+def _process_chunk_vectorized(chunk_data, use_real_time=True):
+    """
+    处理数据块的内部函数（向量化）
+    Internal function to process data chunk with vectorization
+    """
+    # 转换为DataFrame进行向量化处理
+    df = pd.DataFrame(chunk_data)
+    
+    # 使用向量化批量计算
+    results_df = batch_calculate_mining_profit_vectorized(
+        df, 
+        use_real_time=use_real_time
+    )
+    
+    # 转回字典列表
+    return results_df.to_dict('records')
+
+
+def generate_calculation_cache_key(miner_model, miner_count, electricity_cost, 
+                                   btc_price, difficulty):
+    """
+    生成计算结果缓存键
+    Generate cache key for calculation results
+    
+    用于缓存系统，基于参数生成唯一哈希
+    """
+    params_str = f"{miner_model}_{miner_count}_{electricity_cost}_{btc_price}_{difficulty}"
+    cache_key = hashlib.md5(params_str.encode()).hexdigest()
+    return f"mining_calc:{cache_key}"
+
+
+# 内存优化：使用生成器处理大数据集
+def generate_profit_calculations(miners_iterator, use_real_time=True):
+    """
+    生成器版本的批量计算 - 内存优化
+    Generator-based batch calculation for memory optimization
+    
+    适用于超大数据集（10000+记录），避免内存溢出
+    Suitable for very large datasets (10000+ records), prevents memory overflow
+    """
+    # 获取一次性网络数据
+    if use_real_time:
+        btc_price = get_real_time_btc_price()
+        difficulty = get_real_time_difficulty()
+        block_reward = get_real_time_block_reward()
+    else:
+        btc_price = get_default_btc_price()
+        difficulty = get_default_network_difficulty()
+        block_reward = get_default_block_reward()
+    
+    # 逐条处理并yield结果（不存储在内存中）
+    for miner_data in miners_iterator:
+        try:
+            result = calculate_mining_profitability(
+                miner_model=miner_data['miner_model'],
+                miner_count=miner_data.get('miner_count', 1),
+                use_real_time_data=False,
+                btc_price=btc_price,
+                difficulty=difficulty,
+                block_reward=block_reward
+            )
+            yield result
+        except Exception as e:
+            logging.error(f"计算失败: {miner_data}, 错误: {e}")
+            yield {'error': str(e), 'miner_data': miner_data}

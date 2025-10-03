@@ -1,0 +1,204 @@
+# ============================================================================
+# HashInsight 缓存系统配置
+# Cache System Configuration
+# ============================================================================
+
+# 缓存后端类型：memory, redis, multi
+# Backend type: memory (dev), redis (prod), multi (hybrid)
+backend: ${CACHE_BACKEND:-memory}
+
+# ============================================================================
+# Redis配置
+# Redis Configuration
+# ============================================================================
+redis:
+  host: ${REDIS_HOST:-localhost}
+  port: ${REDIS_PORT:-6379}
+  db: ${REDIS_DB:-0}
+  password: ${REDIS_PASSWORD:-null}
+  key_prefix: "hashinsight:"
+  
+  # 连接池配置
+  connection_pool:
+    max_connections: 50
+    timeout: 5
+    retry_on_timeout: true
+
+# ============================================================================
+# 内存缓存配置
+# Memory Cache Configuration
+# ============================================================================
+memory:
+  default_ttl: 300  # 默认5分钟
+  max_size: 10000   # 最大条目数
+  cleanup_interval: 60  # 清理间隔（秒）
+
+# ============================================================================
+# TTL策略配置
+# TTL Strategy Configuration
+# ============================================================================
+ttl_strategy:
+  # 实时市场数据（高频更新）
+  btc_price: 5  # 5秒 - BTC价格
+  network_hashrate: 600  # 10分钟 - 网络算力
+  network_difficulty: 600  # 10分钟 - 网络难度
+  block_reward: 3600  # 1小时 - 区块奖励
+  
+  # 矿机数据（相对稳定）
+  miner_specs: 3600  # 1小时 - 矿机规格
+  miner_models: 3600  # 1小时 - 矿机型号列表
+  
+  # 计算结果
+  calculation_results: 300  # 5分钟 - 挖矿收益计算结果
+  
+  # 分析数据
+  fear_greed: 3600  # 1小时 - 恐惧贪婪指数
+  technical_indicators: 300  # 5分钟 - 技术指标
+  
+  # 用户数据
+  user_plan: 1800  # 30分钟 - 用户套餐
+  user_stats: 300  # 5分钟 - 用户统计
+  
+  # 默认TTL
+  default: 300  # 5分钟
+
+# ============================================================================
+# 缓存预热配置
+# Cache Warmup Configuration
+# ============================================================================
+warmup:
+  enabled: true
+  
+  # 预热数据源
+  sources:
+    - name: "miner_models"
+      type: "database"
+      query: "SELECT * FROM miner_models WHERE is_active = true"
+      key_pattern: "miners:model:{model_name}"
+      ttl: 3600
+    
+    - name: "btc_price"
+      type: "api"
+      url: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
+      key: "market:btc_price"
+      ttl: 5
+    
+    - name: "network_stats"
+      type: "api"
+      url: "https://blockchain.info/stats"
+      key: "market:network_stats"
+      ttl: 600
+
+# ============================================================================
+# 缓存失效策略
+# Cache Invalidation Strategy
+# ============================================================================
+invalidation:
+  # 主动失效事件
+  events:
+    - event: "miner_model_updated"
+      invalidate_pattern: "miners:*"
+    
+    - event: "btc_price_update"
+      invalidate_pattern: "market:btc_price"
+    
+    - event: "calculation_completed"
+      invalidate_pattern: "calc:result:*"
+    
+    - event: "user_plan_changed"
+      invalidate_pattern: "user:plan:*"
+  
+  # 定时失效任务
+  scheduled:
+    - name: "cleanup_expired"
+      cron: "*/5 * * * *"  # 每5分钟
+      action: "cleanup"
+    
+    - name: "refresh_market_data"
+      cron: "*/1 * * * *"  # 每1分钟
+      action: "refresh"
+      keys:
+        - "market:btc_price"
+        - "market:network_hashrate"
+        - "market:network_difficulty"
+
+# ============================================================================
+# 监控和指标导出
+# Monitoring and Metrics Export
+# ============================================================================
+monitoring:
+  enabled: true
+  
+  # 指标导出间隔（秒）
+  export_interval: 60
+  
+  # Prometheus指标
+  prometheus:
+    enabled: true
+    port: 9090
+    path: "/metrics"
+  
+  # 指标列表
+  metrics:
+    - name: "cache_hits_total"
+      type: "counter"
+      help: "Total cache hits"
+    
+    - name: "cache_misses_total"
+      type: "counter"
+      help: "Total cache misses"
+    
+    - name: "cache_hit_rate"
+      type: "gauge"
+      help: "Cache hit rate percentage"
+    
+    - name: "cache_size"
+      type: "gauge"
+      help: "Current cache size"
+    
+    - name: "cache_l1_hits_total"
+      type: "counter"
+      help: "L1 cache hits"
+    
+    - name: "cache_l2_hits_total"
+      type: "counter"
+      help: "L2 cache hits"
+
+# ============================================================================
+# 性能优化配置
+# Performance Optimization
+# ============================================================================
+performance:
+  # 批量操作
+  batch_operations:
+    enabled: true
+    max_batch_size: 100
+  
+  # 压缩
+  compression:
+    enabled: true
+    threshold_bytes: 1024  # 超过1KB的值进行压缩
+    algorithm: "gzip"
+  
+  # 连接复用
+  connection_pooling:
+    enabled: true
+    pool_size: 20
+    max_overflow: 10
+
+# ============================================================================
+# 开发/测试配置
+# Development/Testing Configuration
+# ============================================================================
+development:
+  # 开发模式下的特殊配置
+  debug_logging: true
+  disable_ttl: false
+  mock_redis: false
+
+# 测试模式
+testing:
+  # 测试时使用内存缓存
+  force_memory_backend: true
+  disable_warmup: true
+  short_ttl: true  # 所有TTL缩短为1秒便于测试
