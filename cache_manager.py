@@ -630,5 +630,386 @@ class CacheKeys:
         return f'calc:result:{params_hash}'
 
 
+# ============================================================================
+# 请求合并/去重 (Request Coalescing)
+# ============================================================================
+
+import threading
+from collections import defaultdict
+
+class _CoalescerResult:
+    """请求合并器结果包装器 - 区分正常结果和异常"""
+    def __init__(self, value=None, exception=None):
+        self.value = value
+        self.exception = exception
+        self.is_exception = exception is not None
+
+
+class RequestCoalescer:
+    """
+    请求合并器 - 防止并发重复请求
+    Request Coalescer - Prevent duplicate concurrent requests
+    
+    当多个并发请求访问同一资源时，只执行一次后端调用，
+    其他请求等待并共享结果（包括异常）。
+    
+    设计：
+    1. 使用全局锁保护所有状态
+    2. 使用Event通知等待者
+    3. 使用引用计数确保结果在所有等待者读取完之前不被删除
+    4. 正确传播异常给所有等待者
+    """
+    
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._in_progress = set()  # 正在进行的key
+        self._events = {}  # key -> Event
+        self._results = {}  # key -> _CoalescerResult
+        self._waiters = defaultdict(int)  # key -> 等待者数量
+    
+    def coalesce(self, key: str, func: Callable, *args, **kwargs) -> Any:
+        """
+        合并请求执行
+        
+        Parameters:
+        -----------
+        key : str
+            请求唯一标识
+        func : Callable
+            要执行的函数
+        *args, **kwargs
+            函数参数
+            
+        Returns:
+        --------
+        Any : 函数执行结果（如果主执行者抛异常，等待者也会抛出相同异常）
+        """
+        # 在锁保护下决定是主执行者还是等待者
+        with self._lock:
+            if key in self._in_progress:
+                # 已有进行中的请求，我是等待者
+                if key not in self._events:
+                    self._events[key] = threading.Event()
+                event = self._events[key]
+                self._waiters[key] += 1
+                is_primary = False
+            else:
+                # 没有进行中的请求，我是主执行者
+                self._in_progress.add(key)
+                self._events[key] = threading.Event()
+                self._waiters[key] = 0
+                event = self._events[key]
+                is_primary = True
+        
+        if is_primary:
+            # 主执行者路径
+            try:
+                logger.debug(f"请求合并：主执行者开始 {key}")
+                result = func(*args, **kwargs)
+                
+                # 存储结果并通知等待者
+                with self._lock:
+                    self._results[key] = _CoalescerResult(value=result)
+                    event.set()
+                
+                return result
+            except Exception as e:
+                # 存储异常并通知等待者
+                with self._lock:
+                    self._results[key] = _CoalescerResult(exception=e)
+                    event.set()
+                raise
+            finally:
+                # 主执行者完成后，如果没有等待者则立即清理
+                # 否则，最后一个等待者负责清理_in_progress
+                with self._lock:
+                    if self._waiters[key] == 0:
+                        # 没有等待者，立即清理所有资源
+                        self._in_progress.discard(key)
+                        self._events.pop(key, None)
+                        self._results.pop(key, None)
+                        self._waiters.pop(key, None)
+                    # 否则，保留_in_progress防止新请求成为主执行者
+        else:
+            # 等待者路径
+            logger.debug(f"请求合并：等待者等待 {key}")
+            
+            # 释放锁并等待结果
+            if not event.wait(timeout=30):
+                with self._lock:
+                    self._waiters[key] -= 1
+                    if self._waiters[key] == 0:
+                        # 我是最后一个超时的等待者，清理所有资源
+                        self._in_progress.discard(key)
+                        self._events.pop(key, None)
+                        self._results.pop(key, None)
+                        self._waiters.pop(key, None)
+                raise TimeoutError(f"Request coalescing timeout for key: {key}")
+            
+            # 读取结果
+            with self._lock:
+                result_wrapper = self._results.get(key)
+                self._waiters[key] -= 1
+                
+                # 如果我是最后一个等待者，清理所有资源（包括_in_progress）
+                if self._waiters[key] == 0:
+                    self._in_progress.discard(key)
+                    self._events.pop(key, None)
+                    self._results.pop(key, None)
+                    self._waiters.pop(key, None)
+            
+            # 检查并返回结果
+            if result_wrapper is None:
+                raise RuntimeError(f"Result lost for key: {key}")
+            
+            if result_wrapper.is_exception:
+                raise result_wrapper.exception
+            
+            return result_wrapper.value
+
+
+# 全局请求合并器实例
+request_coalescer = RequestCoalescer()
+
+
+# ============================================================================
+# 响应压缩工具 (Gzip Compression)
+# ============================================================================
+
+import gzip
+import io
+
+class CompressionUtils:
+    """响应压缩工具类"""
+    
+    @staticmethod
+    def gzip_compress(data: bytes, compression_level: int = 6) -> bytes:
+        """
+        Gzip压缩数据
+        
+        Parameters:
+        -----------
+        data : bytes
+            原始数据
+        compression_level : int
+            压缩级别 (1-9, 1最快9最小)
+            
+        Returns:
+        --------
+        bytes : 压缩后的数据
+        """
+        buf = io.BytesIO()
+        with gzip.GzipFile(fileobj=buf, mode='wb', compresslevel=compression_level) as f:
+            f.write(data)
+        return buf.getvalue()
+    
+    @staticmethod
+    def gzip_decompress(data: bytes) -> bytes:
+        """
+        Gzip解压数据
+        
+        Parameters:
+        -----------
+        data : bytes
+            压缩数据
+            
+        Returns:
+        --------
+        bytes : 解压后的数据
+        """
+        buf = io.BytesIO(data)
+        with gzip.GzipFile(fileobj=buf, mode='rb') as f:
+            return f.read()
+    
+    @staticmethod
+    def should_compress(content_type: str, size_bytes: int, min_size: int = 1024) -> bool:
+        """
+        判断是否应该压缩响应
+        
+        Parameters:
+        -----------
+        content_type : str
+            内容类型
+        size_bytes : int
+            内容大小（字节）
+        min_size : int
+            最小压缩大小（字节）
+            
+        Returns:
+        --------
+        bool : 是否应该压缩
+        """
+        # 小于最小大小，不压缩
+        if size_bytes < min_size:
+            return False
+        
+        # 可压缩的内容类型
+        compressible_types = [
+            'text/', 'application/json', 'application/javascript',
+            'application/xml', 'application/x-javascript'
+        ]
+        
+        return any(content_type.startswith(ct) for ct in compressible_types)
+
+
+# ============================================================================
+# 流式响应工具 (Streaming Response)
+# ============================================================================
+
+class StreamingCache:
+    """
+    流式缓存
+    Streaming Cache for Large Datasets
+    
+    用于大数据集的流式处理和缓存
+    """
+    
+    @staticmethod
+    def stream_json_array(items: list, chunk_size: int = 100):
+        """
+        流式生成JSON数组
+        
+        Parameters:
+        -----------
+        items : list
+            数据项列表
+        chunk_size : int
+            每批大小
+            
+        Yields:
+        -------
+        str : JSON片段
+        """
+        yield '['
+        
+        for i, item in enumerate(items):
+            if i > 0:
+                yield ','
+            yield json.dumps(item)
+            
+            # 定期刷新缓冲
+            if (i + 1) % chunk_size == 0:
+                logger.debug(f"流式输出：已处理 {i + 1} 项")
+        
+        yield ']'
+    
+    @staticmethod
+    def stream_csv_rows(rows: list, headers: list = None):
+        """
+        流式生成CSV
+        
+        Parameters:
+        -----------
+        rows : list
+            数据行列表
+        headers : list
+            表头
+            
+        Yields:
+        -------
+        str : CSV行
+        """
+        import csv
+        import io
+        
+        # 输出表头
+        if headers:
+            buf = io.StringIO()
+            writer = csv.writer(buf)
+            writer.writerow(headers)
+            yield buf.getvalue()
+        
+        # 逐行输出数据
+        for row in rows:
+            buf = io.StringIO()
+            writer = csv.writer(buf)
+            writer.writerow(row)
+            yield buf.getvalue()
+
+
+# ============================================================================
+# 企业级缓存装饰器
+# Enterprise Cache Decorators
+# ============================================================================
+
+def coalesced_cached(ttl: Optional[int] = None, key_prefix: str = ''):
+    """
+    带请求合并的缓存装饰器
+    Cache decorator with request coalescing
+    
+    防止并发重复请求，提升性能
+    """
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # 生成缓存键
+            args_str = str(args) + str(kwargs)
+            args_hash = hashlib.md5(args_str.encode()).hexdigest()[:8]
+            cache_key = f"{key_prefix}:{func.__name__}:{args_hash}"
+            
+            # 尝试从缓存获取
+            cached_value = cache.get(cache_key)
+            if cached_value is not None:
+                logger.debug(f"缓存命中: {func.__name__}")
+                return cached_value
+            
+            # 使用请求合并执行函数
+            def execute_func():
+                result = func(*args, **kwargs)
+                cache.set(cache_key, result, ttl)
+                return result
+            
+            result = request_coalescer.coalesce(cache_key, execute_func)
+            return result
+        
+        return wrapper
+    return decorator
+
+
+# ============================================================================
+# Flask响应压缩中间件
+# Flask Response Compression Middleware
+# ============================================================================
+
+def compress_response(response, min_size: int = 1024):
+    """
+    压缩Flask响应
+    
+    Parameters:
+    -----------
+    response : Flask Response
+        Flask响应对象
+    min_size : int
+        最小压缩大小
+        
+    Returns:
+    --------
+    Flask Response : 压缩后的响应
+    """
+    try:
+        # 检查是否应该压缩
+        content_type = response.headers.get('Content-Type', '')
+        content_length = len(response.get_data())
+        
+        if not CompressionUtils.should_compress(content_type, content_length, min_size):
+            return response
+        
+        # 压缩响应数据
+        compressed_data = CompressionUtils.gzip_compress(response.get_data())
+        
+        # 只有在压缩效果明显时才使用压缩版本（至少减少10%）
+        if len(compressed_data) < content_length * 0.9:
+            response.set_data(compressed_data)
+            response.headers['Content-Encoding'] = 'gzip'
+            response.headers['Content-Length'] = len(compressed_data)
+            logger.debug(f"响应已压缩: {content_length} -> {len(compressed_data)} 字节 "
+                        f"({(1 - len(compressed_data)/content_length)*100:.1f}% 减少)")
+        
+        return response
+    except Exception as e:
+        logger.error(f"响应压缩失败: {e}")
+        return response
+
+
 # 向后兼容：保留原有的CacheManager类（别名）
 CacheManager = MemoryCacheBackend

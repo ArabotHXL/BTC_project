@@ -5856,6 +5856,30 @@ try:
     logging.info("SLA NFT routes registered successfully")
 except ImportError as e:
     logging.warning(f"SLA NFT routes not available: {e}")
+
+# 批量导入路由
+try:
+    from routes.batch_import_routes import batch_import_bp
+    app.register_blueprint(batch_import_bp)
+    logging.info("Batch import routes registered successfully")
+except ImportError as e:
+    logging.warning(f"Batch import routes not available: {e}")
+
+# 分析路由
+try:
+    from routes.analytics_routes import analytics_bp
+    app.register_blueprint(analytics_bp)
+    logging.info("Analytics routes registered successfully")
+except ImportError as e:
+    logging.warning(f"Analytics routes not available: {e}")
+
+# Trust路由
+try:
+    from routes.trust_routes import trust_bp
+    app.register_blueprint(trust_bp)
+    logging.info("Trust routes registered successfully")
+except ImportError as e:
+    logging.warning(f"SLA NFT routes not available: {e}")
 except Exception as e:
     logging.error(f"Failed to register SLA NFT routes: {e}")
 
