@@ -1,0 +1,3149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HashInsight 平台运维手册</title>
+    <style>
+        @media print {
+            @page {
+                size: A4;
+                margin: 2cm;
+            }
+            body {
+                font-size: 10pt;
+            }
+            h1 {
+                page-break-before: always;
+            }
+            h1:first-of-type {
+                page-break-before: auto;
+            }
+            table {
+                page-break-inside: avoid;
+            }
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans CJK SC", 
+                         "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif;
+            line-height: 1.8;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background-color: #f9f9f9;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            border-bottom: 4px solid #f39c12;
+            padding-bottom: 12px;
+            margin-top: 40px;
+            margin-bottom: 25px;
+            font-size: 2.5em;
+        }
+        
+        h1:first-of-type {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            margin: -40px -20px 30px -20px;
+            border-bottom: none;
+            text-align: center;
+            border-radius: 0;
+        }
+        
+        h2 {
+            color: #34495e;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 35px;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+        
+        h3 {
+            color: #555;
+            margin-top: 28px;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            border-left: 5px solid #f39c12;
+            padding-left: 15px;
+        }
+        
+        h4 {
+            color: #666;
+            margin-top: 22px;
+            margin-bottom: 12px;
+            font-size: 1.25em;
+        }
+        
+        p {
+            margin: 12px 0;
+            text-align: justify;
+        }
+        
+        code {
+            background-color: #f5f5f5;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: "Consolas", "Monaco", "Courier New", monospace;
+            font-size: 0.9em;
+            color: #e74c3c;
+            border: 1px solid #e0e0e0;
+        }
+        
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-left: 4px solid #f39c12;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+            border-radius: 5px;
+        }
+        
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            border: none;
+            color: #333;
+            font-size: 0.9em;
+        }
+        
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 25px 0;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: bold;
+        }
+        
+        table td {
+            border: 1px solid #e0e0e0;
+            padding: 12px;
+            vertical-align: top;
+        }
+        
+        table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        table tr:hover {
+            background-color: #f0f0f0;
+        }
+        
+        blockquote {
+            border-left: 5px solid #3498db;
+            padding: 15px 20px;
+            margin: 20px 0;
+            color: #555;
+            background-color: #ecf0f1;
+            border-radius: 5px;
+        }
+        
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 35px;
+        }
+        
+        li {
+            margin: 8px 0;
+            line-height: 1.7;
+        }
+        
+        a {
+            color: #3498db;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        a:hover {
+            color: #2980b9;
+            text-decoration: underline;
+        }
+        
+        strong {
+            color: #2c3e50;
+            font-weight: 700;
+        }
+        
+        hr {
+            border: none;
+            border-top: 2px solid #ecf0f1;
+            margin: 40px 0;
+        }
+        
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            transition: transform 0.2s;
+        }
+        
+        .print-button:hover {
+            transform: scale(1.05);
+        }
+        
+        @media print {
+            .print-button {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-button" onclick="window.print()">🖨️ 打印/导出PDF</button>
+    <h1 id="hashinsight">HashInsight 平台运维手册</h1>
+<h2 id="operations-manual-for-hashinsight-platform">Operations Manual for HashInsight Platform</h2>
+<p><strong>文档版本:</strong> v2.0<br />
+<strong>更新日期:</strong> 2025-10-03<br />
+<strong>维护团队:</strong> HashInsight Platform Operations Team<br />
+<strong>分类:</strong> INTERNAL - CONFIDENTIAL</p>
+<hr />
+<h2 id="_1">📋 目录</h2>
+<ol>
+<li><a href="#第1章系统架构概览">系统架构概览</a></li>
+<li><a href="#第2章环境配置清单">环境配置清单</a></li>
+<li><a href="#第3章部署运维指南">部署运维指南</a></li>
+<li><a href="#第4章监控与告警">监控与告警</a></li>
+<li><a href="#第5章备份与恢复">备份与恢复</a></li>
+<li><a href="#第6章安全运维规范">安全运维规范</a></li>
+<li><a href="#第7章故障排查手册">故障排查手册</a></li>
+<li><a href="#第8章日常运维操作">日常运维操作</a></li>
+<li><a href="#第9章性能优化指南">性能优化指南</a></li>
+<li><a href="#第10章应急响应手册">应急响应手册</a></li>
+<li><a href="#附录">附录</a></li>
+</ol>
+<hr />
+<h2 id="1">第1章：系统架构概览</h2>
+<h3 id="11">1.1 技术栈</h3>
+<p>HashInsight 是一个企业级比特币挖矿管理平台，采用现代化技术栈：</p>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>技术</th>
+<th>版本</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Web框架</strong></td>
+<td>Flask</td>
+<td>3.0+</td>
+<td>Python Web应用框架</td>
+</tr>
+<tr>
+<td><strong>WSGI服务器</strong></td>
+<td>Gunicorn</td>
+<td>21.0+</td>
+<td>生产级HTTP服务器</td>
+</tr>
+<tr>
+<td><strong>数据库</strong></td>
+<td>PostgreSQL</td>
+<td>15+</td>
+<td>主数据存储 (Neon托管)</td>
+</tr>
+<tr>
+<td><strong>缓存</strong></td>
+<td>Redis / 内存缓存</td>
+<td>7.0+</td>
+<td>性能优化缓存层</td>
+</tr>
+<tr>
+<td><strong>区块链</strong></td>
+<td>Web3.py + Base L2</td>
+<td>-</td>
+<td>区块链集成</td>
+</tr>
+<tr>
+<td><strong>加密</strong></td>
+<td>Cryptography</td>
+<td>41.0+</td>
+<td>企业级加密</td>
+</tr>
+</tbody>
+</table>
+<h3 id="12">1.2 模块架构</h3>
+<p>系统采用<strong>完全页面隔离架构</strong>，各模块独立部署：</p>
+<div class="codehilite"><pre><span></span><code>HashInsight Platform
+├── Core Application (main.py + app.py)
+│   ├── Authentication &amp; Authorization
+│   ├── Session Management
+│   └── Security Middleware
+│
+├── Mining Management Module
+│   ├── Miner Dashboard
+│   ├── Batch Calculator
+│   └── Analytics Engine
+│
+├── CRM &amp; Client Module
+│   ├── Customer Management
+│   ├── Billing System
+│   └── Subscription Management
+│
+├── Blockchain Integration Module
+│   ├── SLA NFT Management
+│   ├── Verifiable Computing
+│   └── Trust Reconciliation
+│
+└── Admin &amp; Analytics Module
+    ├── Market Data Analysis
+    ├── Performance Monitoring
+    └── Reporting System
+</code></pre></div>
+
+<h3 id="13">1.3 企业级改造成果</h3>
+<h4 id="_2">🔐 安全增强</h4>
+<ul>
+<li><strong>KMS密钥管理</strong>: 支持 AWS KMS、GCP KMS、Azure Key Vault</li>
+<li><strong>mTLS双向认证</strong>: 客户端证书验证、CRL/OCSP检查</li>
+<li><strong>API密钥系统</strong>: 基于 <code>hsi_dev_key_*</code> 格式的安全密钥</li>
+<li><strong>WireGuard VPN</strong>: 企业级专网隔离</li>
+<li><strong>审计日志</strong>: SOC 2 / PCI DSS / GDPR 合规</li>
+</ul>
+<h4 id="slo">📊 SLO监控</h4>
+<ul>
+<li><strong>可用性</strong>: ≥99.95% (错误预算 ≤21.6分钟/月)</li>
+<li><strong>延迟</strong>: p95 ≤250ms</li>
+<li><strong>错误率</strong>: ≤0.1%</li>
+<li><strong>Prometheus指标</strong>: 全方位性能监控</li>
+<li><strong>熔断器</strong>: 防止级联故障</li>
+</ul>
+<h4 id="_3">⚡ 性能优化</h4>
+<ul>
+<li><strong>Request Coalescing</strong>: 9.8倍性能提升</li>
+<li><strong>多级缓存</strong>: Redis + 内存缓存</li>
+<li><strong>连接池</strong>: PostgreSQL连接优化</li>
+<li><strong>批量处理</strong>: 支持5000+矿机并发导入</li>
+</ul>
+<h3 id="14">1.4 部署拓扑</h3>
+<div class="codehilite"><pre><span></span><code>┌─────────────────────────────────────────────────────────┐
+│                    Load Balancer                        │
+│                  (Replit/Cloud Provider)                │
+└──────────────────────┬──────────────────────────────────┘
+                       │
+        ┌──────────────┴──────────────┐
+        │                             │
+┌───────▼─────────┐         ┌─────────▼────────┐
+│  Gunicorn       │         │  Gunicorn        │
+│  Worker 1       │         │  Worker 2        │
+│  Port 5000      │         │  Port 5000       │
+└───────┬─────────┘         └─────────┬────────┘
+        │                             │
+        └──────────────┬──────────────┘
+                       │
+        ┌──────────────┴──────────────┐
+        │                             │
+┌───────▼─────────┐         ┌─────────▼────────┐
+│  PostgreSQL     │         │  Redis Cache     │
+│  (Neon Hosted)  │         │  (Optional)      │
+└─────────────────┘         └──────────────────┘
+</code></pre></div>
+
+<hr />
+<h2 id="2">第2章：环境配置清单</h2>
+<h3 id="21">2.1 必需环境变量</h3>
+<p>这些环境变量<strong>必须</strong>设置，否则系统无法启动：</p>
+<table>
+<thead>
+<tr>
+<th>变量名</th>
+<th>类型</th>
+<th>说明</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DATABASE_URL</code></td>
+<td>String</td>
+<td>PostgreSQL连接字符串</td>
+<td><code>postgresql://user:pass@host:5432/db</code></td>
+</tr>
+<tr>
+<td><code>SESSION_SECRET</code></td>
+<td>String</td>
+<td>Flask会话密钥 (≥32字符)</td>
+<td><code>your-secure-random-secret-key-here</code></td>
+</tr>
+<tr>
+<td><code>ENCRYPTION_PASSWORD</code></td>
+<td>String</td>
+<td>数据加密主密钥 (≥32字符)</td>
+<td><code>encryption-master-key-32-chars-min</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="_4">配置示例</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># .env 文件示例</span>
+<span class="nv">DATABASE_URL</span><span class="o">=</span>postgresql://hashinsight_user:secure_password@neon-host.us-east-1.aws.neon.tech:5432/hashinsight_db
+<span class="nv">SESSION_SECRET</span><span class="o">=</span>generate_with_python_secrets_token_urlsafe_32
+<span class="nv">ENCRYPTION_PASSWORD</span><span class="o">=</span>generate_with_python_secrets_token_urlsafe_32
+</code></pre></div>
+
+<h4 id="_5">生成安全密钥</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 使用Python生成安全随机密钥</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SESSION_SECRET=</span><span class="si">{</span><span class="n">secrets</span><span class="o">.</span><span class="n">token_urlsafe</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ENCRYPTION_PASSWORD=</span><span class="si">{</span><span class="n">secrets</span><span class="o">.</span><span class="n">token_urlsafe</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<h3 id="22">2.2 区块链集成配置</h3>
+<table>
+<thead>
+<tr>
+<th>变量名</th>
+<th>类型</th>
+<th>默认值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BLOCKCHAIN_ENABLED</code></td>
+<td>Boolean</td>
+<td><code>false</code></td>
+<td>启用区块链功能</td>
+</tr>
+<tr>
+<td><code>BLOCKCHAIN_PRIVATE_KEY</code></td>
+<td>String</td>
+<td>-</td>
+<td>以太坊私钥 (0x开头)</td>
+</tr>
+<tr>
+<td><code>BLOCKCHAIN_NETWORK</code></td>
+<td>String</td>
+<td><code>base-sepolia</code></td>
+<td>区块链网络</td>
+</tr>
+<tr>
+<td><code>BASE_RPC_URL</code></td>
+<td>String</td>
+<td><code>https://sepolia.base.org</code></td>
+<td>Base L2 RPC端点</td>
+</tr>
+</tbody>
+</table>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 区块链配置示例</span>
+<span class="nv">BLOCKCHAIN_ENABLED</span><span class="o">=</span><span class="nb">true</span>
+<span class="nv">BLOCKCHAIN_PRIVATE_KEY</span><span class="o">=</span>0x1234567890abcdef...
+<span class="nv">BLOCKCHAIN_NETWORK</span><span class="o">=</span>base-sepolia
+</code></pre></div>
+
+<h3 id="23">2.3 备份系统配置</h3>
+<table>
+<thead>
+<tr>
+<th>变量名</th>
+<th>类型</th>
+<th>默认值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BACKUP_DIR</code></td>
+<td>String</td>
+<td><code>/tmp/backups</code></td>
+<td>备份存储目录</td>
+</tr>
+<tr>
+<td><code>BACKUP_ENCRYPTION_KEY</code></td>
+<td>String</td>
+<td>-</td>
+<td>备份加密密钥</td>
+</tr>
+<tr>
+<td><code>BACKUP_RETENTION_DAYS</code></td>
+<td>Integer</td>
+<td><code>30</code></td>
+<td>备份保留天数</td>
+</tr>
+<tr>
+<td><code>BACKUP_STORAGE_TYPE</code></td>
+<td>String</td>
+<td><code>local</code></td>
+<td>远程存储类型 (s3/azure/gcs)</td>
+</tr>
+<tr>
+<td><code>BACKUP_STORAGE_BUCKET</code></td>
+<td>String</td>
+<td>-</td>
+<td>远程存储桶名称</td>
+</tr>
+</tbody>
+</table>
+<div class="codehilite"><pre><span></span><code><span class="c1"># AWS S3 备份配置</span>
+<span class="nv">BACKUP_DIR</span><span class="o">=</span>/var/backups/hashinsight
+<span class="nv">BACKUP_ENCRYPTION_KEY</span><span class="o">=</span>backup-encryption-key-32-chars
+<span class="nv">BACKUP_RETENTION_DAYS</span><span class="o">=</span><span class="m">30</span>
+<span class="nv">BACKUP_STORAGE_TYPE</span><span class="o">=</span>s3
+<span class="nv">BACKUP_STORAGE_BUCKET</span><span class="o">=</span>hashinsight-backups
+<span class="nv">BACKUP_STORAGE_REGION</span><span class="o">=</span>us-east-1
+<span class="nv">AWS_ACCESS_KEY_ID</span><span class="o">=</span>AKIAXXXXXXXX
+<span class="nv">AWS_SECRET_ACCESS_KEY</span><span class="o">=</span>xxxxxxxxxx
+</code></pre></div>
+
+<h3 id="24-kms">2.4 KMS密钥管理配置</h3>
+<h4 id="aws-kms">AWS KMS</h4>
+<div class="codehilite"><pre><span></span><code><span class="nv">AWS_KMS_KEY_ID</span><span class="o">=</span>arn:aws:kms:us-east-1:123456789:key/xxxxx
+<span class="nv">AWS_KMS_REGION</span><span class="o">=</span>us-east-1
+<span class="nv">AWS_ACCESS_KEY_ID</span><span class="o">=</span>AKIAXXXXXXXX
+<span class="nv">AWS_SECRET_ACCESS_KEY</span><span class="o">=</span>xxxxxxxxxx
+</code></pre></div>
+
+<h4 id="gcp-kms">GCP KMS</h4>
+<div class="codehilite"><pre><span></span><code><span class="nv">GCP_KMS_PROJECT_ID</span><span class="o">=</span>hashinsight-prod
+<span class="nv">GCP_KMS_LOCATION</span><span class="o">=</span>us-east1
+<span class="nv">GCP_KMS_KEYRING</span><span class="o">=</span>hashinsight-keyring
+<span class="nv">GCP_KMS_KEY_ID</span><span class="o">=</span>encryption-key
+<span class="nv">GOOGLE_APPLICATION_CREDENTIALS</span><span class="o">=</span>/path/to/service-account.json
+</code></pre></div>
+
+<h4 id="azure-key-vault">Azure Key Vault</h4>
+<div class="codehilite"><pre><span></span><code><span class="nv">AZURE_KEY_VAULT_URL</span><span class="o">=</span>https://hashinsight-vault.vault.azure.net/
+<span class="nv">AZURE_TENANT_ID</span><span class="o">=</span>xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+<span class="nv">AZURE_CLIENT_ID</span><span class="o">=</span>xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+<span class="nv">AZURE_CLIENT_SECRET</span><span class="o">=</span>xxxxxxxxxx
+</code></pre></div>
+
+<h3 id="25">2.5 监控和性能配置</h3>
+<table>
+<thead>
+<tr>
+<th>变量名</th>
+<th>类型</th>
+<th>默认值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ENABLE_BACKGROUND_SERVICES</code></td>
+<td>Boolean</td>
+<td><code>false</code></td>
+<td>启用后台数据采集（需显式设置为'1'才启用）</td>
+</tr>
+<tr>
+<td><code>PROMETHEUS_PORT</code></td>
+<td>Integer</td>
+<td><code>9090</code></td>
+<td>Prometheus导出端口</td>
+</tr>
+<tr>
+<td><code>SLO_MEASUREMENT_WINDOW</code></td>
+<td>Integer</td>
+<td><code>30</code></td>
+<td>SLO测量窗口(分钟)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>注意</strong>: <code>FAST_STARTUP</code> 模式在 <code>main.py</code> 中硬编码实现，不通过环境变量配置。详见第3.4节。</p>
+<h3 id="26-api">2.6 外部API配置</h3>
+<table>
+<thead>
+<tr>
+<th>变量名</th>
+<th>说明</th>
+<th>获取方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>COINWARZ_API_KEY</code></td>
+<td>CoinWarz挖矿数据API</td>
+<td>https://www.coinwarz.com/api</td>
+</tr>
+<tr>
+<td><code>COINGECKO_API_KEY</code></td>
+<td>CoinGecko价格API</td>
+<td>https://www.coingecko.com/api</td>
+</tr>
+<tr>
+<td><code>SENDGRID_API_KEY</code></td>
+<td>SendGrid邮件服务</td>
+<td>https://sendgrid.com</td>
+</tr>
+</tbody>
+</table>
+<h3 id="27">2.7 配置文件位置</h3>
+<div class="codehilite"><pre><span></span><code>HashInsight/
+├── config.py                    # 主配置文件 (单一数据源)
+├── .env                         # 环境变量 (不提交到Git)
+├── .env.example                 # 环境变量模板
+└── replit.md                   # 系统架构文档
+</code></pre></div>
+
+<h3 id="28">2.8 配置验证</h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 检查必需环境变量</span>
+python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+<span class="s2">import os</span>
+<span class="s2">required = [&#39;DATABASE_URL&#39;, &#39;SESSION_SECRET&#39;, &#39;ENCRYPTION_PASSWORD&#39;]</span>
+<span class="s2">missing = [v for v in required if not os.getenv(v)]</span>
+<span class="s2">if missing:</span>
+<span class="s2">    print(f&#39;❌ Missing: {missing}&#39;)</span>
+<span class="s2">    exit(1)</span>
+<span class="s2">print(&#39;✅ All required variables set&#39;)</span>
+<span class="s2">&quot;</span>
+</code></pre></div>
+
+<hr />
+<h2 id="3">第3章：部署运维指南</h2>
+<h3 id="31">3.1 启动命令</h3>
+<h4 id="_6">标准启动 (生产环境)</h4>
+<div class="codehilite"><pre><span></span><code>gunicorn<span class="w"> </span>--bind<span class="w"> </span><span class="m">0</span>.0.0.0:5000<span class="w"> </span>--reuse-port<span class="w"> </span>--reload<span class="w"> </span>main:app
+</code></pre></div>
+
+<h4 id="_7">参数说明</h4>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--bind 0.0.0.0:5000</code></td>
+<td>绑定所有网络接口，端口5000 (Replit必需)</td>
+</tr>
+<tr>
+<td><code>--reuse-port</code></td>
+<td>允许多个worker绑定同一端口</td>
+</tr>
+<tr>
+<td><code>--reload</code></td>
+<td>代码变更时自动重载 (开发环境)</td>
+</tr>
+<tr>
+<td><code>--workers 4</code></td>
+<td>Worker进程数 (CPU核心数×2+1)</td>
+</tr>
+<tr>
+<td><code>--timeout 120</code></td>
+<td>Worker超时时间(秒)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="_8">生产环境完整启动</h4>
+<div class="codehilite"><pre><span></span><code>gunicorn<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--bind<span class="w"> </span><span class="m">0</span>.0.0.0:5000<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--workers<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--threads<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--worker-class<span class="w"> </span>gthread<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--timeout<span class="w"> </span><span class="m">120</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--max-requests<span class="w"> </span><span class="m">1000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--max-requests-jitter<span class="w"> </span><span class="m">50</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--access-logfile<span class="w"> </span>-<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--error-logfile<span class="w"> </span>-<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--log-level<span class="w"> </span>info<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--preload<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>main:app
+</code></pre></div>
+
+<h3 id="32">3.2 端口配置</h3>
+<p><strong>⚠️ 重要</strong>: 前端应用<strong>必须</strong>绑定到端口 5000</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 检查端口占用</span>
+lsof<span class="w"> </span>-i<span class="w"> </span>:5000
+
+<span class="c1"># 强制杀死占用进程</span>
+<span class="nb">kill</span><span class="w"> </span>-9<span class="w"> </span><span class="k">$(</span>lsof<span class="w"> </span>-t<span class="w"> </span>-i:5000<span class="k">)</span>
+</code></pre></div>
+
+<h3 id="33">3.3 健康检查</h3>
+<p>系统提供健康检查端点用于监控：</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 基本健康检查</span>
+curl<span class="w"> </span>http://localhost:5000/health
+
+<span class="c1"># 详细健康检查 (包含数据库状态)</span>
+curl<span class="w"> </span>http://localhost:5000/health/detailed
+
+<span class="c1"># 预期响应</span>
+<span class="o">{</span>
+<span class="w">  </span><span class="s2">&quot;status&quot;</span>:<span class="w"> </span><span class="s2">&quot;healthy&quot;</span>,
+<span class="w">  </span><span class="s2">&quot;timestamp&quot;</span>:<span class="w"> </span><span class="s2">&quot;2025-10-03T12:00:00Z&quot;</span>,
+<span class="w">  </span><span class="s2">&quot;database&quot;</span>:<span class="w"> </span><span class="s2">&quot;connected&quot;</span>,
+<span class="w">  </span><span class="s2">&quot;cache&quot;</span>:<span class="w"> </span><span class="s2">&quot;available&quot;</span>,
+<span class="w">  </span><span class="s2">&quot;version&quot;</span>:<span class="w"> </span><span class="s2">&quot;2.0.0&quot;</span>
+<span class="o">}</span>
+</code></pre></div>
+
+<h3 id="34-fast-startup">3.4 Fast Startup 模式</h3>
+<p>HashInsight 的快速启动模式是在 <strong><code>main.py</code> 中硬编码实现的内置行为</strong>，不通过 <code>config.py</code> 配置管理。</p>
+<h4 id="_9">实现位置</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># main.py 中的硬编码实现</span>
+<span class="n">fast_startup</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;FAST_STARTUP&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">)</span>  <span class="c1"># 默认启用</span>
+<span class="n">skip_db_check</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;SKIP_DATABASE_HEALTH_CHECK&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">)</span>  <span class="c1"># 默认启用</span>
+</code></pre></div>
+
+<h4 id="_10">控制方式（可选环境变量）</h4>
+<p>虽然这些变量不在 <code>config.py</code> 中定义，但可以通过环境变量临时调整：</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 启用快速启动 (默认行为，无需设置)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">FAST_STARTUP</span><span class="o">=</span><span class="m">1</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">SKIP_DATABASE_HEALTH_CHECK</span><span class="o">=</span><span class="m">1</span>
+
+<span class="c1"># 禁用快速启动 (完整初始化)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">FAST_STARTUP</span><span class="o">=</span><span class="m">0</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">SKIP_DATABASE_HEALTH_CHECK</span><span class="o">=</span><span class="m">0</span>
+</code></pre></div>
+
+<p><strong>⚠️ 重要说明</strong>：
+- 这些变量<strong>不在 <code>config.py</code> 单一数据源</strong>中定义
+- 它们是 <code>main.py</code> 启动脚本的临时控制开关
+- 生产环境配置应通过 <code>config.py</code> 管理</p>
+<h4 id="fast-startup">Fast Startup 行为</h4>
+<p>当启用时（默认）：
+1. 主应用立即启动 (2-3秒)
+2. 后台服务延迟5秒启动（如果 <code>ENABLE_BACKGROUND_SERVICES=1</code>）
+3. 数据库健康检查跳过
+4. 适合CI/CD快速部署</p>
+<p>当禁用时：
+1. 完整数据库健康检查
+2. 同步启动所有服务
+3. 启动时间较长（10-15秒）
+4. 适合生产环境初次部署</p>
+<h3 id="35">3.5 数据库迁移</h3>
+<p><strong>⚠️ 重要</strong>: 系统使用ORM自动迁移，<strong>避免手动SQL操作</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 数据库会在应用启动时自动创建表</span>
+<span class="c1"># 参见 app.py 中的 db.create_all()</span>
+
+<span class="c1"># 如需手动触发迁移</span>
+python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;from app import app, db; app.app_context().push(); db.create_all()&quot;</span>
+</code></pre></div>
+
+<h3 id="36">3.6 滚动发布策略</h3>
+<h4 id="_11">灰度发布流程</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Step 1: 部署新版本到Canary实例</span>
+<span class="c1"># 仅1个worker运行新版本</span>
+gunicorn<span class="w"> </span>--bind<span class="w"> </span><span class="m">0</span>.0.0.0:5001<span class="w"> </span>--workers<span class="w"> </span><span class="m">1</span><span class="w"> </span>main:app
+
+<span class="c1"># Step 2: 监控Canary实例 (5-10分钟)</span>
+watch<span class="w"> </span>-n<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="s1">&#39;curl -s http://localhost:5001/health | jq&#39;</span>
+
+<span class="c1"># Step 3: 逐步切换流量</span>
+<span class="c1"># 使用负载均衡器调整权重: old(90%) -&gt; new(10%)</span>
+<span class="c1"># 观察错误率和延迟</span>
+
+<span class="c1"># Step 4: 全量切换</span>
+<span class="c1"># old(0%) -&gt; new(100%)</span>
+killall<span class="w"> </span>-9<span class="w"> </span>gunicorn<span class="w">  </span><span class="c1"># 停止旧版本</span>
+gunicorn<span class="w"> </span>--bind<span class="w"> </span><span class="m">0</span>.0.0.0:5000<span class="w"> </span>--workers<span class="w"> </span><span class="m">4</span><span class="w"> </span>main:app<span class="w">  </span><span class="c1"># 启动新版本</span>
+</code></pre></div>
+
+<h3 id="37">3.7 优雅停机</h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 发送SIGTERM信号 (优雅停机)</span>
+<span class="nb">kill</span><span class="w"> </span>-TERM<span class="w"> </span><span class="k">$(</span>cat<span class="w"> </span>/var/run/gunicorn.pid<span class="k">)</span>
+
+<span class="c1"># 等待30秒处理现有请求</span>
+sleep<span class="w"> </span><span class="m">30</span>
+
+<span class="c1"># 强制停止 (如果仍在运行)</span>
+<span class="nb">kill</span><span class="w"> </span>-KILL<span class="w"> </span><span class="k">$(</span>cat<span class="w"> </span>/var/run/gunicorn.pid<span class="k">)</span>
+</code></pre></div>
+
+<h3 id="38">3.8 日志管理</h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 启动时启用结构化日志</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">LOG_LEVEL</span><span class="o">=</span>INFO
+<span class="nb">export</span><span class="w"> </span><span class="nv">LOG_FORMAT</span><span class="o">=</span>json
+
+<span class="c1"># 查看实时日志</span>
+tail<span class="w"> </span>-f<span class="w"> </span>/var/log/hashinsight/app.log
+
+<span class="c1"># 查看错误日志</span>
+grep<span class="w"> </span>ERROR<span class="w"> </span>/var/log/hashinsight/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-20
+
+<span class="c1"># Replit环境日志</span>
+<span class="c1"># 日志输出到标准输出，通过Replit Console查看</span>
+</code></pre></div>
+
+<h3 id="39">3.9 部署检查清单</h3>
+<ul>
+<li>[ ] 环境变量已配置 (DATABASE_URL, SESSION_SECRET, ENCRYPTION_PASSWORD)</li>
+<li>[ ] 数据库连接正常</li>
+<li>[ ] 端口5000可用</li>
+<li>[ ] 健康检查端点返回200</li>
+<li>[ ] 审计日志目录可写 (<code>logs/audit.jsonl</code>)</li>
+<li>[ ] 备份目录已创建</li>
+<li>[ ] SSL证书有效 (如启用mTLS)</li>
+<li>[ ] KMS密钥可访问 (如启用)</li>
+<li>[ ] Prometheus指标可访问 (<code>:9090/metrics</code>)</li>
+</ul>
+<hr />
+<h2 id="4">第4章：监控与告警</h2>
+<h3 id="41-slo">4.1 SLO定义</h3>
+<p>HashInsight 遵循严格的SLO标准：</p>
+<h4 id="slo_1">可用性 SLO</h4>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>目标</th>
+<th>错误预算</th>
+<th>测量周期</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>可用性</td>
+<td>≥99.95%</td>
+<td>≤21.6分钟/月</td>
+<td>30天滚动</td>
+</tr>
+<tr>
+<td>成功率</td>
+<td>≥99.9%</td>
+<td>≤43.2分钟/月</td>
+<td>30天滚动</td>
+</tr>
+</tbody>
+</table>
+<h4 id="slo_2">延迟 SLO</h4>
+<table>
+<thead>
+<tr>
+<th>百分位</th>
+<th>目标</th>
+<th>测量窗口</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P50</td>
+<td>≤100ms</td>
+<td>5分钟</td>
+</tr>
+<tr>
+<td>P95</td>
+<td>≤250ms</td>
+<td>5分钟</td>
+</tr>
+<tr>
+<td>P99</td>
+<td>≤500ms</td>
+<td>5分钟</td>
+</tr>
+</tbody>
+</table>
+<h4 id="slo_3">错误率 SLO</h4>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>目标</th>
+<th>阈值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4xx错误</td>
+<td>≤1%</td>
+<td>警告</td>
+</tr>
+<tr>
+<td>5xx错误</td>
+<td>≤0.1%</td>
+<td>严重</td>
+</tr>
+</tbody>
+</table>
+<h3 id="42-prometheus">4.2 Prometheus 指标</h3>
+<h4 id="_12">系统指标导出</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># monitoring/prometheus_exporter.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">prometheus_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span><span class="p">,</span> <span class="n">Histogram</span><span class="p">,</span> <span class="n">Gauge</span>
+
+<span class="c1"># 请求计数</span>
+<span class="n">request_count</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span>
+    <span class="s1">&#39;hashinsight_requests_total&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Total request count&#39;</span><span class="p">,</span>
+    <span class="p">[</span><span class="s1">&#39;method&#39;</span><span class="p">,</span> <span class="s1">&#39;endpoint&#39;</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># 请求延迟</span>
+<span class="n">request_latency</span> <span class="o">=</span> <span class="n">Histogram</span><span class="p">(</span>
+    <span class="s1">&#39;hashinsight_request_latency_seconds&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Request latency&#39;</span><span class="p">,</span>
+    <span class="p">[</span><span class="s1">&#39;method&#39;</span><span class="p">,</span> <span class="s1">&#39;endpoint&#39;</span><span class="p">],</span>
+    <span class="n">buckets</span><span class="o">=</span><span class="p">[</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># 缓存命中率</span>
+<span class="n">cache_hit_rate</span> <span class="o">=</span> <span class="n">Gauge</span><span class="p">(</span>
+    <span class="s1">&#39;hashinsight_cache_hit_rate&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Cache hit rate percentage&#39;</span>
+<span class="p">)</span>
+
+<span class="c1"># 数据库查询时间</span>
+<span class="n">db_query_duration</span> <span class="o">=</span> <span class="n">Histogram</span><span class="p">(</span>
+    <span class="s1">&#39;hashinsight_db_query_duration_seconds&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Database query duration&#39;</span><span class="p">,</span>
+    <span class="p">[</span><span class="s1">&#39;query_type&#39;</span><span class="p">],</span>
+    <span class="n">buckets</span><span class="o">=</span><span class="p">[</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># SLO合规性</span>
+<span class="n">slo_compliance</span> <span class="o">=</span> <span class="n">Gauge</span><span class="p">(</span>
+    <span class="s1">&#39;hashinsight_slo_compliance&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SLO compliance percentage&#39;</span><span class="p">,</span>
+    <span class="p">[</span><span class="s1">&#39;slo_type&#39;</span><span class="p">]</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<h4 id="_13">指标访问</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 查看Prometheus指标</span>
+curl<span class="w"> </span>http://localhost:9090/metrics
+
+<span class="c1"># 示例输出</span>
+<span class="c1"># HELP hashinsight_requests_total Total request count</span>
+<span class="c1"># TYPE hashinsight_requests_total counter</span>
+hashinsight_requests_total<span class="o">{</span><span class="nv">method</span><span class="o">=</span><span class="s2">&quot;GET&quot;</span>,endpoint<span class="o">=</span><span class="s2">&quot;/dashboard&quot;</span>,status<span class="o">=</span><span class="s2">&quot;200&quot;</span><span class="o">}</span><span class="w"> </span><span class="m">1234</span>
+
+<span class="c1"># HELP hashinsight_request_latency_seconds Request latency</span>
+<span class="c1"># TYPE hashinsight_request_latency_seconds histogram</span>
+hashinsight_request_latency_seconds_bucket<span class="o">{</span><span class="nv">method</span><span class="o">=</span><span class="s2">&quot;GET&quot;</span>,endpoint<span class="o">=</span><span class="s2">&quot;/api/miners&quot;</span>,le<span class="o">=</span><span class="s2">&quot;0.1&quot;</span><span class="o">}</span><span class="w"> </span><span class="m">450</span>
+hashinsight_request_latency_seconds_bucket<span class="o">{</span><span class="nv">method</span><span class="o">=</span><span class="s2">&quot;GET&quot;</span>,endpoint<span class="o">=</span><span class="s2">&quot;/api/miners&quot;</span>,le<span class="o">=</span><span class="s2">&quot;0.25&quot;</span><span class="o">}</span><span class="w"> </span><span class="m">480</span>
+</code></pre></div>
+
+<h3 id="43-grafana">4.3 Grafana 仪表板</h3>
+<h4 id="_14">核心监控面板</h4>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;dashboard&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;HashInsight Production Monitoring&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;panels&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Request Rate&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;targets&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span>
+<span class="w">          </span><span class="nt">&quot;expr&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;rate(hashinsight_requests_total[5m])&quot;</span>
+<span class="w">        </span><span class="p">}]</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;P95 Latency&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;targets&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span>
+<span class="w">          </span><span class="nt">&quot;expr&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;histogram_quantile(0.95, rate(hashinsight_request_latency_seconds_bucket[5m]))&quot;</span>
+<span class="w">        </span><span class="p">}]</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Error Rate&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;targets&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span>
+<span class="w">          </span><span class="nt">&quot;expr&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;rate(hashinsight_requests_total{status=~\&quot;5..\&quot;}[5m]) / rate(hashinsight_requests_total[5m])&quot;</span>
+<span class="w">        </span><span class="p">}]</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;SLO Compliance&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;targets&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span>
+<span class="w">          </span><span class="nt">&quot;expr&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;hashinsight_slo_compliance&quot;</span>
+<span class="w">        </span><span class="p">}]</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="44">4.4 告警规则</h3>
+<h4 id="prometheus">Prometheus 告警规则</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># prometheus/alerts.yml</span>
+<span class="nt">groups</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hashinsight_alerts</span>
+<span class="w">    </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30s</span>
+<span class="w">    </span><span class="nt">rules</span><span class="p">:</span>
+<span class="w">      </span><span class="c1"># 可用性告警</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">HighErrorRate</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">rate(hashinsight_requests_total{status=~&quot;5..&quot;}[5m]) </span>
+<span class="w">          </span><span class="no">/ rate(hashinsight_requests_total[5m]) &gt; 0.01</span>
+<span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5m</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">critical</span>
+<span class="w">        </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;High</span><span class="nv"> </span><span class="s">5xx</span><span class="nv"> </span><span class="s">error</span><span class="nv"> </span><span class="s">rate</span><span class="nv"> </span><span class="s">detected&quot;</span>
+<span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Error</span><span class="nv"> </span><span class="s">rate</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">$value</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">humanizePercentage</span><span class="nv"> </span><span class="s">}}&quot;</span>
+
+<span class="w">      </span><span class="c1"># 延迟告警</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">HighLatency</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">histogram_quantile(0.95, </span>
+<span class="w">            </span><span class="no">rate(hashinsight_request_latency_seconds_bucket[5m])</span>
+<span class="w">          </span><span class="no">) &gt; 0.25</span>
+<span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10m</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">warning</span>
+<span class="w">        </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;P95</span><span class="nv"> </span><span class="s">latency</span><span class="nv"> </span><span class="s">exceeds</span><span class="nv"> </span><span class="s">SLO&quot;</span>
+<span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;P95</span><span class="nv"> </span><span class="s">latency</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">$value</span><span class="nv"> </span><span class="s">}}s</span><span class="nv"> </span><span class="s">(SLO:</span><span class="nv"> </span><span class="s">0.25s)&quot;</span>
+
+<span class="w">      </span><span class="c1"># SLO错误预算告警</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ErrorBudgetExhausted</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hashinsight_slo_error_budget_remaining &lt; 0.1</span>
+<span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5m</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">critical</span>
+<span class="w">        </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;SLO</span><span class="nv"> </span><span class="s">error</span><span class="nv"> </span><span class="s">budget</span><span class="nv"> </span><span class="s">nearly</span><span class="nv"> </span><span class="s">exhausted&quot;</span>
+<span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Only</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">$value</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">humanizePercentage</span><span class="nv"> </span><span class="s">}}</span><span class="nv"> </span><span class="s">budget</span><span class="nv"> </span><span class="s">remaining&quot;</span>
+
+<span class="w">      </span><span class="c1"># 数据库连接告警</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DatabaseConnectionFailure</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hashinsight_db_connection_status == 0</span>
+<span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2m</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">critical</span>
+<span class="w">        </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Database</span><span class="nv"> </span><span class="s">connection</span><span class="nv"> </span><span class="s">failure&quot;</span>
+<span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Unable</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">connect</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">PostgreSQL&quot;</span>
+
+<span class="w">      </span><span class="c1"># 缓存命中率告警</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LowCacheHitRate</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hashinsight_cache_hit_rate &lt; 50</span>
+<span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15m</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">warning</span>
+<span class="w">        </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Low</span><span class="nv"> </span><span class="s">cache</span><span class="nv"> </span><span class="s">hit</span><span class="nv"> </span><span class="s">rate&quot;</span>
+<span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Cache</span><span class="nv"> </span><span class="s">hit</span><span class="nv"> </span><span class="s">rate</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">$value</span><span class="nv"> </span><span class="s">}}%&quot;</span>
+</code></pre></div>
+
+<h3 id="45">4.5 熔断器配置</h3>
+<p>HashInsight使用熔断器模式防止级联故障：</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># monitoring/circuit_breaker.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">monitoring.circuit_breaker</span><span class="w"> </span><span class="kn">import</span> <span class="n">CircuitBreaker</span><span class="p">,</span> <span class="n">circuit_breaker</span>
+
+<span class="c1"># 数据库查询熔断器</span>
+<span class="n">db_breaker</span> <span class="o">=</span> <span class="n">CircuitBreaker</span><span class="p">(</span>
+    <span class="n">failure_threshold</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>      <span class="c1"># 连续失败5次触发</span>
+    <span class="n">recovery_timeout</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>      <span class="c1"># 60秒后尝试恢复</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;database_queries&quot;</span>
+<span class="p">)</span>
+
+<span class="c1"># API调用熔断器</span>
+<span class="nd">@circuit_breaker</span><span class="p">(</span>
+    <span class="n">failure_threshold</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">recovery_timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;external_api&quot;</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">call_external_api</span><span class="p">():</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;https://api.coinwarz.com/...&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+</code></pre></div>
+
+<h4 id="_15">熔断器状态监控</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 查看熔断器状态</span>
+curl<span class="w"> </span>http://localhost:5000/api/circuit-breakers
+
+<span class="c1"># 响应示例</span>
+<span class="o">{</span>
+<span class="w">  </span><span class="s2">&quot;database_queries&quot;</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="s2">&quot;state&quot;</span>:<span class="w"> </span><span class="s2">&quot;closed&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;failure_count&quot;</span>:<span class="w"> </span><span class="m">0</span>,
+<span class="w">    </span><span class="s2">&quot;total_calls&quot;</span>:<span class="w"> </span><span class="m">1234</span>,
+<span class="w">    </span><span class="s2">&quot;success_rate&quot;</span>:<span class="w"> </span><span class="s2">&quot;99.8%&quot;</span>
+<span class="w">  </span><span class="o">}</span>,
+<span class="w">  </span><span class="s2">&quot;external_api&quot;</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="s2">&quot;state&quot;</span>:<span class="w"> </span><span class="s2">&quot;half_open&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;failure_count&quot;</span>:<span class="w"> </span><span class="m">3</span>,
+<span class="w">    </span><span class="s2">&quot;total_calls&quot;</span>:<span class="w"> </span><span class="m">456</span>,
+<span class="w">    </span><span class="s2">&quot;success_rate&quot;</span>:<span class="w"> </span><span class="s2">&quot;95.2%&quot;</span>
+<span class="w">  </span><span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div>
+
+<h3 id="46">4.6 告警通知</h3>
+<h4 id="slack">Slack 集成</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 环境变量配置</span>
+<span class="nv">SLACK_WEBHOOK_URL</span><span class="o">=</span>https://hooks.slack.com/services/T00/B00/xxxxx
+<span class="nv">ALERT_SLACK_CHANNEL</span><span class="o">=</span><span class="c1">#hashinsight-alerts</span>
+</code></pre></div>
+
+<h4 id="pagerduty">PagerDuty 集成</h4>
+<div class="codehilite"><pre><span></span><code><span class="nv">PAGERDUTY_API_KEY</span><span class="o">=</span>xxxxx
+<span class="nv">PAGERDUTY_SERVICE_KEY</span><span class="o">=</span>xxxxx
+</code></pre></div>
+
+<h3 id="47">4.7 监控检查清单</h3>
+<ul>
+<li>[ ] Prometheus正在抓取指标 (<code>:9090/targets</code>)</li>
+<li>[ ] Grafana仪表板显示数据</li>
+<li>[ ] 告警规则已加载</li>
+<li>[ ] Slack/PagerDuty通知正常</li>
+<li>[ ] SLO监控面板显示绿色</li>
+<li>[ ] 熔断器状态正常</li>
+</ul>
+<hr />
+<h2 id="5">第5章：备份与恢复</h2>
+<h3 id="51">5.1 自动备份策略</h3>
+<p>HashInsight 使用 <code>backup/backup_manager.py</code> 进行自动化备份：</p>
+<h4 id="_16">备份特性</h4>
+<ul>
+<li>✅ <strong>PostgreSQL完整备份</strong> (pg_dump)</li>
+<li>✅ <strong>AES-256加密</strong> (备份文件加密)</li>
+<li>✅ <strong>gzip压缩</strong> (节省存储空间)</li>
+<li>✅ <strong>远程存储</strong> (S3/Azure/GCS支持)</li>
+<li>✅ <strong>完整性验证</strong> (SHA256校验和)</li>
+</ul>
+<h4 id="_17">备份调度</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 通过cron配置自动备份</span>
+<span class="c1"># /etc/cron.d/hashinsight-backup</span>
+
+<span class="c1"># 每天凌晨2点执行完整备份</span>
+<span class="m">0</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>/usr/bin/python3<span class="w"> </span>/app/backup/backup_manager.py<span class="w"> </span>--type<span class="w"> </span>full
+
+<span class="c1"># 每4小时执行增量备份</span>
+<span class="m">0</span><span class="w"> </span>*/4<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>/usr/bin/python3<span class="w"> </span>/app/backup/backup_manager.py<span class="w"> </span>--type<span class="w"> </span>incremental
+
+<span class="c1"># 每周日凌晨3点上传到远程存储</span>
+<span class="m">0</span><span class="w"> </span><span class="m">3</span><span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span><span class="m">0</span><span class="w"> </span>/usr/bin/python3<span class="w"> </span>/app/backup/backup_manager.py<span class="w"> </span>--upload
+</code></pre></div>
+
+<h3 id="52">5.2 手动备份</h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 执行完整备份</span>
+python<span class="w"> </span>backup/backup_manager.py
+
+<span class="c1"># 备份输出示例</span>
+✅<span class="w"> </span>备份创建成功:<span class="w"> </span>hashinsight_backup_20251003_140000.sql.gz.enc
+📦<span class="w"> </span>大小:<span class="w"> </span><span class="m">245</span>.3<span class="w"> </span>MB
+🔐<span class="w"> </span>已加密:<span class="w"> </span>AES-256
+✅<span class="w"> </span>校验和:<span class="w"> </span>e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+⏱️<span class="w">  </span>耗时:<span class="w"> </span><span class="m">45</span>.2s
+</code></pre></div>
+
+<h3 id="53">5.3 备份保留策略</h3>
+<table>
+<thead>
+<tr>
+<th>备份类型</th>
+<th>保留时间</th>
+<th>频率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>完整备份</td>
+<td>30天</td>
+<td>每日</td>
+</tr>
+<tr>
+<td>增量备份</td>
+<td>7天</td>
+<td>每4小时</td>
+</tr>
+<tr>
+<td>周备份</td>
+<td>12周</td>
+<td>每周日</td>
+</tr>
+<tr>
+<td>月备份</td>
+<td>12个月</td>
+<td>每月1日</td>
+</tr>
+</tbody>
+</table>
+<h4 id="_18">自动清理旧备份</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 清理30天前的备份</span>
+python<span class="w"> </span>backup/backup_manager.py<span class="w"> </span>--cleanup<span class="w"> </span>--days<span class="w"> </span><span class="m">30</span>
+
+<span class="c1"># 输出</span>
+🗑️<span class="w">  </span>删除旧备份:<span class="w"> </span>hashinsight_backup_20250903_*.sql.gz.enc
+✅<span class="w"> </span>清理完成:<span class="w"> </span>释放<span class="w"> </span><span class="m">2</span>.1<span class="w"> </span>GB
+</code></pre></div>
+
+<h3 id="54-rtorpo">5.4 RTO/RPO 目标</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>目标</th>
+<th>实际</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>RTO</strong> (恢复时间目标)</td>
+<td>≤4小时</td>
+<td>~2小时</td>
+</tr>
+<tr>
+<td><strong>RPO</strong> (恢复点目标)</td>
+<td>≤15分钟</td>
+<td>~4小时</td>
+</tr>
+</tbody>
+</table>
+<h3 id="55">5.5 备份恢复流程</h3>
+<h4 id="step-1">Step 1: 列出可用备份</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 列出本地备份</span>
+ls<span class="w"> </span>-lh<span class="w"> </span>/tmp/backups/
+
+<span class="c1"># 列出远程备份 (S3)</span>
+aws<span class="w"> </span>s3<span class="w"> </span>ls<span class="w"> </span>s3://hashinsight-backups/
+</code></pre></div>
+
+<h4 id="step-2">Step 2: 下载备份 (如果在远程)</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 从S3下载</span>
+aws<span class="w"> </span>s3<span class="w"> </span>cp<span class="w"> </span>s3://hashinsight-backups/hashinsight_backup_20251003_020000.sql.gz.enc<span class="w"> </span>/tmp/restore/
+
+<span class="c1"># 从Azure下载</span>
+az<span class="w"> </span>storage<span class="w"> </span>blob<span class="w"> </span>download<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--account-name<span class="w"> </span>hashinsight<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--container-name<span class="w"> </span>backups<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--name<span class="w"> </span>hashinsight_backup_20251003_020000.sql.gz.enc<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--file<span class="w"> </span>/tmp/restore/backup.sql.gz.enc
+</code></pre></div>
+
+<h4 id="step-3">Step 3: 解密备份</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 使用backup_manager解密</span>
+python<span class="w"> </span>backup/backup_manager.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--decrypt<span class="w"> </span>/tmp/restore/hashinsight_backup_20251003_020000.sql.gz.enc<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>/tmp/restore/backup.sql.gz
+
+<span class="c1"># 手动解密 (如果需要)</span>
+openssl<span class="w"> </span>enc<span class="w"> </span>-d<span class="w"> </span>-aes-256-cbc<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-in<span class="w"> </span>hashinsight_backup_20251003_020000.sql.gz.enc<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-out<span class="w"> </span>backup.sql.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-pass<span class="w"> </span>env:BACKUP_ENCRYPTION_KEY
+</code></pre></div>
+
+<h4 id="step-4">Step 4: 解压备份</h4>
+<div class="codehilite"><pre><span></span><code>gunzip<span class="w"> </span>/tmp/restore/backup.sql.gz
+<span class="c1"># 输出: backup.sql</span>
+</code></pre></div>
+
+<h4 id="step-5">Step 5: 恢复数据库</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># ⚠️ 警告: 这将覆盖现有数据库!</span>
+<span class="c1"># 建议先备份当前数据库</span>
+
+<span class="c1"># 恢复到PostgreSQL</span>
+psql<span class="w"> </span><span class="nv">$DATABASE_URL</span><span class="w"> </span>&lt;<span class="w"> </span>/tmp/restore/backup.sql
+
+<span class="c1"># 验证恢复</span>
+psql<span class="w"> </span><span class="nv">$DATABASE_URL</span><span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) FROM users;&quot;</span>
+psql<span class="w"> </span><span class="nv">$DATABASE_URL</span><span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) FROM miners;&quot;</span>
+</code></pre></div>
+
+<h4 id="step-6">Step 6: 验证应用</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 重启应用</span>
+systemctl<span class="w"> </span>restart<span class="w"> </span>hashinsight
+
+<span class="c1"># 检查健康状态</span>
+curl<span class="w"> </span>http://localhost:5000/health
+
+<span class="c1"># 验证关键功能</span>
+curl<span class="w"> </span>http://localhost:5000/api/miners<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">&#39;.count&#39;</span>
+</code></pre></div>
+
+<h3 id="56">5.6 灾难恢复演练</h3>
+<p><strong>建议频率</strong>: 每季度一次</p>
+<h4 id="_19">演练步骤</h4>
+<ol>
+<li><strong>准备演练环境</strong></li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 创建独立的演练数据库</span>
+createdb<span class="w"> </span>hashinsight_dr_test
+<span class="nb">export</span><span class="w"> </span><span class="nv">DATABASE_URL</span><span class="o">=</span>postgresql://localhost/hashinsight_dr_test
+</code></pre></div>
+
+<ol start="2">
+<li><strong>模拟数据丢失</strong></li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 删除演练数据库内容</span>
+psql<span class="w"> </span><span class="nv">$DATABASE_URL</span><span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;DROP SCHEMA public CASCADE; CREATE SCHEMA public;&quot;</span>
+</code></pre></div>
+
+<ol start="3">
+<li>
+<p><strong>执行恢复</strong> (按5.5流程)</p>
+</li>
+<li>
+<p><strong>验证恢复完整性</strong></p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 运行数据完整性检查</span>
+python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+<span class="s2">from app import app, db</span>
+<span class="s2">from models import User, Miner</span>
+<span class="s2">with app.app_context():</span>
+<span class="s2">    assert db.session.query(User).count() &gt; 0</span>
+<span class="s2">    assert db.session.query(Miner).count() &gt; 0</span>
+<span class="s2">    print(&#39;✅ 恢复验证通过&#39;)</span>
+<span class="s2">&quot;</span>
+</code></pre></div>
+
+<ol start="5">
+<li><strong>记录演练结果</strong>
+   - 恢复耗时
+   - 数据完整性
+   - 发现的问题
+   - 改进建议</li>
+</ol>
+<h3 id="57">5.7 备份监控</h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 检查最近备份时间</span>
+stat<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;%y&#39;</span><span class="w"> </span>/tmp/backups/hashinsight_backup_*.sql.gz.enc<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-1
+
+<span class="c1"># 备份文件大小趋势</span>
+du<span class="w"> </span>-h<span class="w"> </span>/tmp/backups/hashinsight_backup_*.sql.gz.enc
+
+<span class="c1"># 备份完整性验证</span>
+python<span class="w"> </span>backup/backup_manager.py<span class="w"> </span>--verify<span class="w"> </span>/tmp/backups/hashinsight_backup_20251003_020000.sql.gz.enc
+</code></pre></div>
+
+<hr />
+<h2 id="6">第6章：安全运维规范</h2>
+<h3 id="61-kms">6.1 KMS密钥管理</h3>
+<p>HashInsight 支持企业级KMS集成 (<code>common/crypto/envelope.py</code>)：</p>
+<h4 id="_20">信封加密原理</h4>
+<div class="codehilite"><pre><span></span><code>┌─────────────────────────────────────────────────┐
+│  1. 应用请求加密数据                              │
+│  2. KMS生成数据加密密钥(DEK)                      │
+│  3. 使用DEK加密数据                               │
+│  4. 使用KMS主密钥(CMK)加密DEK                     │
+│  5. 存储: 加密数据 + 加密的DEK                    │
+└─────────────────────────────────────────────────┘
+    ▲
+    │ 密钥永不离开KMS
+    ▼
+┌─────────────────────────────────────────────────┐
+│  解密流程:                                        │
+│  1. 从存储获取加密数据 + 加密DEK                  │
+│  2. 调用KMS解密DEK                                │
+│  3. 使用解密后的DEK解密数据                       │
+└─────────────────────────────────────────────────┘
+</code></pre></div>
+
+<h4 id="kms">支持的KMS提供商</h4>
+<h5 id="aws-kms_1">AWS KMS</h5>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 配置AWS KMS</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">common.crypto.envelope</span><span class="w"> </span><span class="kn">import</span> <span class="n">KMSClient</span><span class="p">,</span> <span class="n">KMSProvider</span><span class="p">,</span> <span class="n">EncryptionContext</span>
+
+<span class="n">kms_config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;key_id&#39;</span><span class="p">:</span> <span class="s1">&#39;arn:aws:kms:us-east-1:123456789:key/xxxxx&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;region&#39;</span><span class="p">:</span> <span class="s1">&#39;us-east-1&#39;</span>
+<span class="p">}</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">KMSClient</span><span class="p">(</span><span class="n">KMSProvider</span><span class="o">.</span><span class="n">AWS_KMS</span><span class="p">,</span> <span class="n">kms_config</span><span class="p">)</span>
+
+<span class="c1"># 加密敏感数据</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">EncryptionContext</span><span class="p">(</span>
+    <span class="n">purpose</span><span class="o">=</span><span class="s2">&quot;user_data_encryption&quot;</span><span class="p">,</span>
+    <span class="n">tenant_id</span><span class="o">=</span><span class="s2">&quot;tenant_123&quot;</span>
+<span class="p">)</span>
+
+<span class="n">ciphertext</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">encrypt_secret</span><span class="p">(</span>
+    <span class="n">plaintext</span><span class="o">=</span><span class="s2">&quot;sensitive data&quot;</span><span class="p">,</span>
+    <span class="n">key_id</span><span class="o">=</span><span class="n">kms_config</span><span class="p">[</span><span class="s1">&#39;key_id&#39;</span><span class="p">],</span>
+    <span class="n">context</span><span class="o">=</span><span class="n">context</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<h5 id="gcp-kms_1">GCP KMS</h5>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 配置GCP KMS</span>
+<span class="n">kms_config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;project_id&#39;</span><span class="p">:</span> <span class="s1">&#39;hashinsight-prod&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;location&#39;</span><span class="p">:</span> <span class="s1">&#39;us-east1&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;keyring&#39;</span><span class="p">:</span> <span class="s1">&#39;hashinsight-keyring&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;key_id&#39;</span><span class="p">:</span> <span class="s1">&#39;encryption-key&#39;</span>
+<span class="p">}</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">KMSClient</span><span class="p">(</span><span class="n">KMSProvider</span><span class="o">.</span><span class="n">GCP_KMS</span><span class="p">,</span> <span class="n">kms_config</span><span class="p">)</span>
+</code></pre></div>
+
+<h5 id="azure-key-vault_1">Azure Key Vault</h5>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 配置Azure Key Vault</span>
+<span class="n">kms_config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;vault_url&#39;</span><span class="p">:</span> <span class="s1">&#39;https://hashinsight-vault.vault.azure.net/&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;key_name&#39;</span><span class="p">:</span> <span class="s1">&#39;encryption-key&#39;</span>
+<span class="p">}</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">KMSClient</span><span class="p">(</span><span class="n">KMSProvider</span><span class="o">.</span><span class="n">AZURE_KEY_VAULT</span><span class="p">,</span> <span class="n">kms_config</span><span class="p">)</span>
+</code></pre></div>
+
+<h4 id="_21">密钥轮换流程</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 1. 在KMS中创建新密钥版本</span>
+aws<span class="w"> </span>kms<span class="w"> </span>create-key<span class="w"> </span>--description<span class="w"> </span><span class="s2">&quot;HashInsight Master Key v2&quot;</span>
+
+<span class="c1"># 2. 更新应用配置</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">AWS_KMS_KEY_ID</span><span class="o">=</span>arn:aws:kms:us-east-1:123456789:key/new-key-id
+
+<span class="c1"># 3. 重新加密现有数据 (后台任务)</span>
+python<span class="w"> </span>scripts/rotate_encryption_keys.py<span class="w"> </span>--old-key<span class="w"> </span>OLD_KEY_ID<span class="w"> </span>--new-key<span class="w"> </span>NEW_KEY_ID
+
+<span class="c1"># 4. 验证新密钥</span>
+python<span class="w"> </span>scripts/verify_encryption.py<span class="w"> </span>--key-id<span class="w"> </span>NEW_KEY_ID
+
+<span class="c1"># 5. 停用旧密钥 (保留90天)</span>
+aws<span class="w"> </span>kms<span class="w"> </span>disable-key<span class="w"> </span>--key-id<span class="w"> </span>OLD_KEY_ID
+</code></pre></div>
+
+<h3 id="62-mtls">6.2 mTLS双向认证</h3>
+<h4 id="_22">证书生成</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 1. 生成CA证书</span>
+openssl<span class="w"> </span>genrsa<span class="w"> </span>-out<span class="w"> </span>ca.key<span class="w"> </span><span class="m">4096</span>
+openssl<span class="w"> </span>req<span class="w"> </span>-new<span class="w"> </span>-x509<span class="w"> </span>-days<span class="w"> </span><span class="m">3650</span><span class="w"> </span>-key<span class="w"> </span>ca.key<span class="w"> </span>-out<span class="w"> </span>ca.crt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-subj<span class="w"> </span><span class="s2">&quot;/C=US/O=HashInsight/CN=HashInsight Root CA&quot;</span>
+
+<span class="c1"># 2. 生成服务器证书</span>
+openssl<span class="w"> </span>genrsa<span class="w"> </span>-out<span class="w"> </span>server.key<span class="w"> </span><span class="m">4096</span>
+openssl<span class="w"> </span>req<span class="w"> </span>-new<span class="w"> </span>-key<span class="w"> </span>server.key<span class="w"> </span>-out<span class="w"> </span>server.csr<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-subj<span class="w"> </span><span class="s2">&quot;/C=US/O=HashInsight/CN=*.hashinsight.net&quot;</span>
+openssl<span class="w"> </span>x509<span class="w"> </span>-req<span class="w"> </span>-days<span class="w"> </span><span class="m">365</span><span class="w"> </span>-in<span class="w"> </span>server.csr<span class="w"> </span>-CA<span class="w"> </span>ca.crt<span class="w"> </span>-CAkey<span class="w"> </span>ca.key<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-CAcreateserial<span class="w"> </span>-out<span class="w"> </span>server.crt
+
+<span class="c1"># 3. 生成客户端证书</span>
+openssl<span class="w"> </span>genrsa<span class="w"> </span>-out<span class="w"> </span>client.key<span class="w"> </span><span class="m">4096</span>
+openssl<span class="w"> </span>req<span class="w"> </span>-new<span class="w"> </span>-key<span class="w"> </span>client.key<span class="w"> </span>-out<span class="w"> </span>client.csr<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-subj<span class="w"> </span><span class="s2">&quot;/C=US/O=HashInsight/CN=client.hashinsight.net&quot;</span>
+openssl<span class="w"> </span>x509<span class="w"> </span>-req<span class="w"> </span>-days<span class="w"> </span><span class="m">365</span><span class="w"> </span>-in<span class="w"> </span>client.csr<span class="w"> </span>-CA<span class="w"> </span>ca.crt<span class="w"> </span>-CAkey<span class="w"> </span>ca.key<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-CAcreateserial<span class="w"> </span>-out<span class="w"> </span>client.crt
+</code></pre></div>
+
+<h4 id="mtls">mTLS配置</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 环境变量配置</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">MTLS_ENABLED</span><span class="o">=</span><span class="nb">true</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">MTLS_CA_CERT_PATH</span><span class="o">=</span>/app/certs/ca.crt
+<span class="nb">export</span><span class="w"> </span><span class="nv">MTLS_SERVER_CERT_PATH</span><span class="o">=</span>/app/certs/server.crt
+<span class="nb">export</span><span class="w"> </span><span class="nv">MTLS_SERVER_KEY_PATH</span><span class="o">=</span>/app/certs/server.key
+<span class="nb">export</span><span class="w"> </span><span class="nv">MTLS_VERIFY_CLIENT</span><span class="o">=</span><span class="nb">true</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">MTLS_ALLOWED_DN_PATTERNS</span><span class="o">=</span><span class="s2">&quot;CN=*.hashinsight.net,O=HashInsight,C=US&quot;</span>
+</code></pre></div>
+
+<h4 id="mtls_1">使用mTLS认证</h4>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">common.mtls_auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">require_mtls</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/admin/sensitive&#39;</span><span class="p">)</span>
+<span class="nd">@require_mtls</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sensitive_endpoint</span><span class="p">():</span>
+    <span class="c1"># 仅允许持有有效客户端证书的请求</span>
+    <span class="n">client_dn</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">client_cert_subject</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Authenticated as </span><span class="si">{</span><span class="n">client_dn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">})</span>
+</code></pre></div>
+
+<h3 id="63-api">6.3 API密钥管理</h3>
+<h4 id="_23">密钥格式</h4>
+<p>HashInsight API密钥格式: <code>hsi_{env}_key_{random}</code></p>
+<p>示例:
+- 生产: <code>hsi_prod_key_a1b2c3d4e5f6g7h8</code>
+- 开发: <code>hsi_dev_key_x9y8z7w6v5u4t3s2</code></p>
+<h4 id="api">创建API密钥</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 使用管理工具创建</span>
+python<span class="w"> </span>scripts/create_api_key.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--user-id<span class="w"> </span><span class="m">123</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--permissions<span class="w"> </span><span class="s2">&quot;miners:read,miners:write&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--expires-in<span class="w"> </span><span class="m">90</span>
+
+<span class="c1"># 输出</span>
+✅<span class="w"> </span>API密钥已创建
+密钥:<span class="w"> </span>hsi_prod_key_a1b2c3d4e5f6g7h8
+用户ID:<span class="w"> </span><span class="m">123</span>
+权限:<span class="w"> </span>miners:read,miners:write
+过期时间:<span class="w"> </span><span class="m">2025</span>-12-31T23:59:59Z
+⚠️<span class="w">  </span>请妥善保管此密钥，它不会再次显示
+</code></pre></div>
+
+<h4 id="api_1">API密钥轮换</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 1. 创建新密钥</span>
+<span class="nv">new_key</span><span class="o">=</span><span class="k">$(</span>python<span class="w"> </span>scripts/create_api_key.py<span class="w"> </span>--user-id<span class="w"> </span><span class="m">123</span><span class="w"> </span>--copy-from<span class="w"> </span>old_key_id<span class="k">)</span>
+
+<span class="c1"># 2. 更新客户端配置 (双密钥并存期7天)</span>
+<span class="c1"># 新旧密钥同时有效</span>
+
+<span class="c1"># 3. 验证新密钥</span>
+curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$new_key</span><span class="s2">&quot;</span><span class="w"> </span>http://localhost:5000/api/miners
+
+<span class="c1"># 4. 吊销旧密钥</span>
+python<span class="w"> </span>scripts/revoke_api_key.py<span class="w"> </span>--key-id<span class="w"> </span>old_key_id
+</code></pre></div>
+
+<h3 id="64-wireguard">6.4 WireGuard企业专网</h3>
+<h4 id="hub">Hub服务器部署</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 1. 运行Hub安装脚本</span>
+sudo<span class="w"> </span>bash<span class="w"> </span>wireguard/hub_setup.sh
+
+<span class="c1"># 2. 配置防火墙</span>
+sudo<span class="w"> </span>ufw<span class="w"> </span>allow<span class="w"> </span><span class="m">51820</span>/udp
+sudo<span class="w"> </span>ufw<span class="w"> </span><span class="nb">enable</span>
+
+<span class="c1"># 3. 启动WireGuard</span>
+sudo<span class="w"> </span>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>wg-quick@wg0
+sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w"> </span>wg-quick@wg0
+
+<span class="c1"># 4. 查看状态</span>
+sudo<span class="w"> </span>wg<span class="w"> </span>show
+</code></pre></div>
+
+<h4 id="_24">站点网关配置</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 1. 生成站点密钥</span>
+<span class="nb">cd</span><span class="w"> </span>wireguard/site-gateway
+python<span class="w"> </span>key_manager.py<span class="w"> </span>--generate-keys<span class="w"> </span>--site<span class="w"> </span>beijing-dc1
+
+<span class="c1"># 2. 添加到Hub配置</span>
+sudo<span class="w"> </span>nano<span class="w"> </span>/etc/wireguard/wg0.conf
+
+<span class="c1"># 添加Peer配置</span>
+<span class="o">[</span>Peer<span class="o">]</span>
+<span class="nv">PublicKey</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>site_public_key
+<span class="nv">AllowedIPs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">10</span>.8.1.0/24
+<span class="nv">Endpoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>beijing-gateway.hashinsight.net:51820
+
+<span class="c1"># 3. 重载配置</span>
+sudo<span class="w"> </span>wg-quick<span class="w"> </span>down<span class="w"> </span>wg0
+sudo<span class="w"> </span>wg-quick<span class="w"> </span>up<span class="w"> </span>wg0
+</code></pre></div>
+
+<h3 id="65">6.5 审计日志</h3>
+<p>HashInsight 记录所有关键操作到审计日志 (<code>audit/audit_logger.py</code>)：</p>
+<h4 id="_25">审计事件类型</h4>
+<ul>
+<li>✅ 认证 (登录/登出/失败)</li>
+<li>✅ 数据访问 (CRUD操作)</li>
+<li>✅ 配置变更</li>
+<li>✅ 权限变更</li>
+<li>✅ 加密操作</li>
+<li>✅ API密钥管理</li>
+<li>✅ 可疑活动</li>
+</ul>
+<h4 id="_26">审计日志格式</h4>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-10-03T12:00:00.000Z&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;event_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;a1b2c3d4e5f6g7h8&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;category&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;authentication&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;login&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;user_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;123&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;user_email&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user@example.com&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;user_role&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;admin&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;ip_address&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;192.168.1.100&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;details&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;login_method&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;password&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;two_factor&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h4 id="_27">查询审计日志</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 查看最近100条审计日志</span>
+tail<span class="w"> </span>-100<span class="w"> </span>logs/audit.jsonl
+
+<span class="c1"># 查询特定用户的操作</span>
+jq<span class="w"> </span><span class="s1">&#39;select(.user_email == &quot;admin@hashinsight.net&quot;)&#39;</span><span class="w"> </span>logs/audit.jsonl
+
+<span class="c1"># 查询失败的登录尝试</span>
+jq<span class="w"> </span><span class="s1">&#39;select(.action == &quot;login_failed&quot;)&#39;</span><span class="w"> </span>logs/audit.jsonl
+
+<span class="c1"># 查询过去24小时的安全事件</span>
+jq<span class="w"> </span>--arg<span class="w"> </span>date<span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>date<span class="w"> </span>-d<span class="w"> </span><span class="s1">&#39;24 hours ago&#39;</span><span class="w"> </span>-Iseconds<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s1">&#39;select(.timestamp &gt; $date and .level == &quot;SECURITY&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>logs/audit.jsonl
+</code></pre></div>
+
+<h3 id="66">6.6 合规要求</h3>
+<p>HashInsight 遵循以下合规标准：</p>
+<h4 id="soc-2-type-ii">SOC 2 Type II</h4>
+<ul>
+<li>✅ 访问控制</li>
+<li>✅ 加密传输 (TLS 1.3)</li>
+<li>✅ 加密存储 (AES-256)</li>
+<li>✅ 审计日志 (不可篡改)</li>
+<li>✅ 变更管理</li>
+<li>✅ 灾难恢复</li>
+</ul>
+<h4 id="pci-dss">PCI DSS (如处理支付)</h4>
+<ul>
+<li>✅ 敏感数据脱敏</li>
+<li>✅ 密钥管理 (KMS)</li>
+<li>✅ 网络隔离 (WireGuard)</li>
+<li>✅ 定期渗透测试</li>
+</ul>
+<h4 id="gdpr">GDPR</h4>
+<ul>
+<li>✅ 数据最小化</li>
+<li>✅ 用户数据导出</li>
+<li>✅ 数据删除 (被遗忘权)</li>
+<li>✅ 数据处理记录</li>
+</ul>
+<h3 id="67">6.7 安全检查清单</h3>
+<ul>
+<li>[ ] 所有密钥存储在KMS中 (不在代码/配置文件)</li>
+<li>[ ] 启用mTLS (生产环境)</li>
+<li>[ ] API密钥定期轮换 (90天)</li>
+<li>[ ] SSL/TLS证书有效且未过期</li>
+<li>[ ] 审计日志正常写入</li>
+<li>[ ] 无敏感信息泄露到日志</li>
+<li>[ ] 数据库连接加密 (SSL)</li>
+<li>[ ] 会话密钥强度 ≥256位</li>
+<li>[ ] 定期安全扫描 (每季度)</li>
+<li>[ ] 渗透测试报告 (每年)</li>
+</ul>
+<hr />
+<h2 id="7">第7章：故障排查手册</h2>
+<h3 id="71">7.1 应用无法启动</h3>
+<h4 id="_28">症状</h4>
+<div class="codehilite"><pre><span></span><code><span class="err">$</span><span class="w"> </span><span class="n">gunicorn</span><span class="w"> </span><span class="nl">main</span><span class="p">:</span><span class="n">app</span>
+<span class="o">[</span><span class="n">ERROR</span><span class="o">]</span><span class="w"> </span><span class="n">Application</span><span class="w"> </span><span class="n">failed</span><span class="w"> </span><span class="k">to</span><span class="w"> </span><span class="k">start</span>
+</code></pre></div>
+
+<h4 id="_29">诊断步骤</h4>
+<p><strong>1. 检查端口占用</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 查看端口5000占用情况</span>
+lsof<span class="w"> </span>-i<span class="w"> </span>:5000
+
+<span class="c1"># 如果被占用，杀死进程</span>
+<span class="nb">kill</span><span class="w"> </span>-9<span class="w"> </span><span class="k">$(</span>lsof<span class="w"> </span>-t<span class="w"> </span>-i:5000<span class="k">)</span>
+</code></pre></div>
+
+<p><strong>2. 检查环境变量</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 验证必需变量</span>
+python3<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
+<span class="s">import os</span>
+<span class="s">required = [&#39;DATABASE_URL&#39;, &#39;SESSION_SECRET&#39;, &#39;ENCRYPTION_PASSWORD&#39;]</span>
+<span class="s">for var in required:</span>
+<span class="s">    value = os.getenv(var)</span>
+<span class="s">    if not value:</span>
+<span class="s">        print(f&quot;❌ Missing: {var}&quot;)</span>
+<span class="s">    else:</span>
+<span class="s">        print(f&quot;✅ {var}: {&#39;*&#39; * 8} (set)&quot;)</span>
+<span class="s">EOF</span>
+</code></pre></div>
+
+<p><strong>3. 检查数据库连接</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 测试PostgreSQL连接</span>
+psql<span class="w"> </span><span class="nv">$DATABASE_URL</span><span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;SELECT version();&quot;</span>
+
+<span class="c1"># 如果失败，检查Neon端点状态</span>
+<span class="c1"># 访问 https://console.neon.tech</span>
+</code></pre></div>
+
+<p><strong>4. 检查Python依赖</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 验证关键库</span>
+python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+<span class="s2">import flask</span>
+<span class="s2">import gunicorn</span>
+<span class="s2">import psycopg2</span>
+<span class="s2">import sqlalchemy</span>
+<span class="s2">print(&#39;✅ All dependencies OK&#39;)</span>
+<span class="s2">&quot;</span>
+</code></pre></div>
+
+<p><strong>5. 查看详细错误</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 启用调试模式</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">FLASK_DEBUG</span><span class="o">=</span><span class="m">1</span>
+python3<span class="w"> </span>main.py
+
+<span class="c1"># 查看完整堆栈跟踪</span>
+</code></pre></div>
+
+<h4 id="_30">常见错误及解决方案</h4>
+<table>
+<thead>
+<tr>
+<th>错误</th>
+<th>原因</th>
+<th>解决方案</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ModuleNotFoundError: No module named 'flask'</code></td>
+<td>依赖未安装</td>
+<td><code>pip install -r requirements.txt</code></td>
+</tr>
+<tr>
+<td><code>OperationalError: could not connect to server</code></td>
+<td>数据库连接失败</td>
+<td>检查 DATABASE_URL，验证Neon端点</td>
+</tr>
+<tr>
+<td><code>ValueError: SECRET_KEY must be set</code></td>
+<td>SESSION_SECRET未设置</td>
+<td><code>export SESSION_SECRET=$(python -c 'import secrets; print(secrets.token_urlsafe(32))')</code></td>
+</tr>
+<tr>
+<td><code>Address already in use</code></td>
+<td>端口被占用</td>
+<td><code>kill -9 $(lsof -t -i:5000)</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="72">7.2 数据库连接失败</h3>
+<h4 id="_31">症状</h4>
+<div class="codehilite"><pre><span></span><code><span class="nv">sqlalchemy</span>.<span class="nv">exc</span>.<span class="nv">OperationalError</span>:<span class="w"> </span><span class="ss">(</span><span class="nv">psycopg2</span>.<span class="nv">OperationalError</span><span class="ss">)</span><span class="w"> </span>
+<span class="nv">could</span><span class="w"> </span><span class="nv">not</span><span class="w"> </span><span class="k">connect</span><span class="w"> </span><span class="nv">to</span><span class="w"> </span><span class="nv">server</span>:<span class="w"> </span><span class="nv">Connection</span><span class="w"> </span><span class="nv">timed</span><span class="w"> </span><span class="nv">out</span>
+</code></pre></div>
+
+<h4 id="_32">诊断步骤</h4>
+<p><strong>1. 验证连接字符串</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 解析DATABASE_URL</span>
+python3<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
+<span class="s">import os</span>
+<span class="s">from urllib.parse import urlparse</span>
+<span class="s">url = os.getenv(&#39;DATABASE_URL&#39;)</span>
+<span class="s">parsed = urlparse(url)</span>
+<span class="s">print(f&quot;Host: {parsed.hostname}&quot;)</span>
+<span class="s">print(f&quot;Port: {parsed.port}&quot;)</span>
+<span class="s">print(f&quot;Database: {parsed.path[1:]}&quot;)</span>
+<span class="s">print(f&quot;User: {parsed.username}&quot;)</span>
+<span class="s">EOF</span>
+</code></pre></div>
+
+<p><strong>2. 测试网络连通性</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 提取host和port</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">DB_HOST</span><span class="o">=</span><span class="k">$(</span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;from urllib.parse import urlparse; import os; print(urlparse(os.getenv(&#39;DATABASE_URL&#39;)).hostname)&quot;</span><span class="k">)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">DB_PORT</span><span class="o">=</span><span class="k">$(</span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;from urllib.parse import urlparse; import os; print(urlparse(os.getenv(&#39;DATABASE_URL&#39;)).port or 5432)&quot;</span><span class="k">)</span>
+
+<span class="c1"># 测试TCP连接</span>
+nc<span class="w"> </span>-zv<span class="w"> </span><span class="nv">$DB_HOST</span><span class="w"> </span><span class="nv">$DB_PORT</span>
+</code></pre></div>
+
+<p><strong>3. 检查连接池</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 连接池配置 (config.py)</span>
+<span class="n">SQLALCHEMY_ENGINE_OPTIONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;pool_size&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>           <span class="c1"># 默认10个连接</span>
+    <span class="s1">&#39;pool_recycle&#39;</span><span class="p">:</span> <span class="mi">300</span><span class="p">,</span>       <span class="c1"># 5分钟回收</span>
+    <span class="s1">&#39;pool_pre_ping&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>     <span class="c1"># 使用前测试连接</span>
+    <span class="s1">&#39;pool_timeout&#39;</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>        <span class="c1"># 30秒超时</span>
+    <span class="s1">&#39;max_overflow&#39;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>        <span class="c1"># 最多溢出20个</span>
+    <span class="s1">&#39;connect_args&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;connect_timeout&#39;</span><span class="p">:</span> <span class="mi">15</span>  <span class="c1"># 15秒连接超时</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p><strong>4. 检查Neon端点状态</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 访问Neon控制台</span>
+<span class="c1"># https://console.neon.tech/app/projects</span>
+
+<span class="c1"># 检查端点状态:</span>
+<span class="c1"># - Active (绿色) - 正常</span>
+<span class="c1"># - Idle (黄色) - 需要唤醒</span>
+<span class="c1"># - Suspended (灰色) - 已暂停</span>
+</code></pre></div>
+
+<p><strong>5. 启用连接重试</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 在app.py中添加重试逻辑</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">event</span><span class="p">,</span> <span class="n">exc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.pool</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pool</span>
+
+<span class="nd">@event</span><span class="o">.</span><span class="n">listens_for</span><span class="p">(</span><span class="n">Pool</span><span class="p">,</span> <span class="s2">&quot;connect&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">receive_connect</span><span class="p">(</span><span class="n">dbapi_conn</span><span class="p">,</span> <span class="n">connection_record</span><span class="p">):</span>
+    <span class="n">connection_record</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;pid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span>
+
+<span class="nd">@event</span><span class="o">.</span><span class="n">listens_for</span><span class="p">(</span><span class="n">Pool</span><span class="p">,</span> <span class="s2">&quot;checkout&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">receive_checkout</span><span class="p">(</span><span class="n">dbapi_conn</span><span class="p">,</span> <span class="n">connection_record</span><span class="p">,</span> <span class="n">connection_proxy</span><span class="p">):</span>
+    <span class="n">pid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">connection_record</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;pid&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">pid</span><span class="p">:</span>
+        <span class="n">connection_record</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="n">connection_proxy</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">raise</span> <span class="n">exc</span><span class="o">.</span><span class="n">DisconnectionError</span><span class="p">(</span>
+            <span class="s2">&quot;Connection record belongs to pid </span><span class="si">%s</span><span class="s2">, &quot;</span>
+            <span class="s2">&quot;attempting to check out in pid </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span>
+            <span class="p">(</span><span class="n">connection_record</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;pid&#39;</span><span class="p">],</span> <span class="n">pid</span><span class="p">)</span>
+        <span class="p">)</span>
+</code></pre></div>
+
+<h3 id="73">7.3 缓存问题</h3>
+<h4 id="_33">症状</h4>
+<ul>
+<li>响应时间显著增加</li>
+<li>缓存命中率低于50%</li>
+<li>Redis连接错误</li>
+</ul>
+<h4 id="_34">诊断步骤</h4>
+<p><strong>1. 检查Redis连接</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 测试Redis</span>
+redis-cli<span class="w"> </span>ping
+<span class="c1"># 预期: PONG</span>
+
+<span class="c1"># 检查Redis内存</span>
+redis-cli<span class="w"> </span>info<span class="w"> </span>memory
+
+<span class="c1"># 检查键数量</span>
+redis-cli<span class="w"> </span>dbsize
+</code></pre></div>
+
+<p><strong>2. 查看缓存命中率</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 通过API查询</span>
+<span class="n">curl</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">5000</span><span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">cache</span><span class="o">/</span><span class="n">stats</span>
+
+<span class="c1"># 预期响应</span>
+<span class="p">{</span>
+  <span class="s2">&quot;cache_type&quot;</span><span class="p">:</span> <span class="s2">&quot;redis&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;hit_rate&quot;</span><span class="p">:</span> <span class="mf">75.5</span><span class="p">,</span>
+  <span class="s2">&quot;total_requests&quot;</span><span class="p">:</span> <span class="mi">10000</span><span class="p">,</span>
+  <span class="s2">&quot;hits&quot;</span><span class="p">:</span> <span class="mi">7550</span><span class="p">,</span>
+  <span class="s2">&quot;misses&quot;</span><span class="p">:</span> <span class="mi">2450</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p><strong>3. 缓存回退机制</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># cache_manager.py 自动回退</span>
+<span class="k">if</span> <span class="n">redis_available</span><span class="p">:</span>
+    <span class="n">cache_backend</span> <span class="o">=</span> <span class="n">RedisCache</span><span class="p">()</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Redis unavailable, falling back to memory cache&quot;</span><span class="p">)</span>
+    <span class="n">cache_backend</span> <span class="o">=</span> <span class="n">MemoryCache</span><span class="p">()</span>
+</code></pre></div>
+
+<p><strong>4. 清理缓存</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 清理所有缓存</span>
+redis-cli<span class="w"> </span>FLUSHDB
+
+<span class="c1"># 清理特定前缀</span>
+redis-cli<span class="w"> </span>--scan<span class="w"> </span>--pattern<span class="w"> </span><span class="s1">&#39;hashinsight:*&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>redis-cli<span class="w"> </span>DEL
+</code></pre></div>
+
+<h3 id="74">7.4 性能下降</h3>
+<h4 id="_35">症状</h4>
+<ul>
+<li>API响应时间 p95 &gt; 250ms</li>
+<li>数据库查询缓慢</li>
+<li>CPU/内存使用率高</li>
+</ul>
+<h4 id="_36">诊断步骤</h4>
+<p><strong>1. 检查Request Coalescing状态</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 查看请求合并统计</span>
+curl<span class="w"> </span>http://localhost:5000/api/performance/coalescing-stats
+
+<span class="c1"># 预期响应</span>
+<span class="o">{</span>
+<span class="w">  </span><span class="s2">&quot;enabled&quot;</span>:<span class="w"> </span>true,
+<span class="w">  </span><span class="s2">&quot;performance_improvement&quot;</span>:<span class="w"> </span><span class="s2">&quot;9.8x&quot;</span>,
+<span class="w">  </span><span class="s2">&quot;deduplicated_requests&quot;</span>:<span class="w"> </span><span class="m">5432</span>,
+<span class="w">  </span><span class="s2">&quot;total_requests&quot;</span>:<span class="w"> </span><span class="m">53210</span>
+<span class="o">}</span>
+</code></pre></div>
+
+<p><strong>2. 分析慢查询</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1">-- 启用慢查询日志 (PostgreSQL)</span>
+<span class="k">ALTER</span><span class="w"> </span><span class="k">DATABASE</span><span class="w"> </span><span class="n">hashinsight_db</span><span class="w"> </span><span class="k">SET</span><span class="w"> </span><span class="n">log_min_duration_statement</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1000</span><span class="p">;</span>
+
+<span class="c1">-- 查询慢查询</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="n">calls</span><span class="p">,</span><span class="w"> </span><span class="n">total_time</span><span class="p">,</span><span class="w"> </span><span class="n">mean_time</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">pg_stat_statements</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">mean_time</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1000</span>
+<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">mean_time</span><span class="w"> </span><span class="k">DESC</span>
+<span class="k">LIMIT</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
+</code></pre></div>
+
+<p><strong>3. 检查数据库索引</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 运行索引优化</span>
+python<span class="w"> </span>database/optimize_indexes.py<span class="w"> </span>--analyze
+
+<span class="c1"># 查看缺失索引</span>
+python<span class="w"> </span>database/optimize_indexes.py<span class="w"> </span>--suggest
+</code></pre></div>
+
+<p><strong>4. 监控系统资源</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># CPU使用率</span>
+top<span class="w"> </span>-b<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>gunicorn
+
+<span class="c1"># 内存使用</span>
+ps<span class="w"> </span>aux<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>gunicorn<span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span><span class="s1">&#39;{sum+=$6} END {print sum/1024 &quot; MB&quot;}&#39;</span>
+
+<span class="c1"># 数据库连接数</span>
+psql<span class="w"> </span><span class="nv">$DATABASE_URL</span><span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;SELECT count(*) FROM pg_stat_activity WHERE datname = &#39;hashinsight_db&#39;;&quot;</span>
+</code></pre></div>
+
+<p><strong>5. 启用性能分析</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 添加到需要分析的路由</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">werkzeug.middleware.profiler</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProfilerMiddleware</span>
+
+<span class="n">app</span><span class="o">.</span><span class="n">wsgi_app</span> <span class="o">=</span> <span class="n">ProfilerMiddleware</span><span class="p">(</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">wsgi_app</span><span class="p">,</span>
+    <span class="n">restrictions</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span>
+    <span class="n">profile_dir</span><span class="o">=</span><span class="s1">&#39;./profiles&#39;</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<h3 id="75">7.5 区块链集成错误</h3>
+<h4 id="_37">症状</h4>
+<div class="codehilite"><pre><span></span><code><span class="n">ERROR</span><span class="o">:</span><span class="n">blockchain_integration</span><span class="o">:</span><span class="w"> </span><span class="err">加密配置错误</span><span class="o">:</span><span class="w"> </span><span class="n">ENCRYPTION_PASSWORD环境变量必须设置</span>
+<span class="n">ERROR</span><span class="o">:</span><span class="n">sla_nft_routes</span><span class="o">:</span><span class="w"> </span><span class="err">获取</span><span class="n">SLA状态失败</span>
+</code></pre></div>
+
+<h4 id="_38">诊断步骤</h4>
+<p><strong>1. 检查ENCRYPTION_PASSWORD</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 验证环境变量</span>
+<span class="nb">echo</span><span class="w"> </span><span class="nv">$ENCRYPTION_PASSWORD</span>
+
+<span class="c1"># 如果未设置</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">ENCRYPTION_PASSWORD</span><span class="o">=</span><span class="k">$(</span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;import secrets; print(secrets.token_urlsafe(32))&#39;</span><span class="k">)</span>
+</code></pre></div>
+
+<p><strong>2. 检查区块链配置</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 验证区块链环境变量</span>
+python3<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
+<span class="s">import os</span>
+<span class="s">config = {</span>
+<span class="s">    &#39;BLOCKCHAIN_ENABLED&#39;: os.getenv(&#39;BLOCKCHAIN_ENABLED&#39;),</span>
+<span class="s">    &#39;BLOCKCHAIN_PRIVATE_KEY&#39;: &#39;***&#39; if os.getenv(&#39;BLOCKCHAIN_PRIVATE_KEY&#39;) else None,</span>
+<span class="s">    &#39;BLOCKCHAIN_NETWORK&#39;: os.getenv(&#39;BLOCKCHAIN_NETWORK&#39;, &#39;base-sepolia&#39;),</span>
+<span class="s">    &#39;BASE_RPC_URL&#39;: os.getenv(&#39;BASE_RPC_URL&#39;, &#39;https://sepolia.base.org&#39;)</span>
+<span class="s">}</span>
+<span class="s">for k, v in config.items():</span>
+<span class="s">    status = &#39;✅&#39; if v else &#39;❌&#39;</span>
+<span class="s">    print(f&quot;{status} {k}: {v}&quot;)</span>
+<span class="s">EOF</span>
+</code></pre></div>
+
+<p><strong>3. 测试Web3连接</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="n">python3</span> <span class="o">&lt;&lt;</span> <span class="s1">&#39;EOF&#39;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">web3</span><span class="w"> </span><span class="kn">import</span> <span class="n">Web3</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="n">rpc_url</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;BASE_RPC_URL&#39;</span><span class="p">,</span> <span class="s1">&#39;https://sepolia.base.org&#39;</span><span class="p">)</span>
+<span class="n">w3</span> <span class="o">=</span> <span class="n">Web3</span><span class="p">(</span><span class="n">Web3</span><span class="o">.</span><span class="n">HTTPProvider</span><span class="p">(</span><span class="n">rpc_url</span><span class="p">))</span>
+
+<span class="k">if</span> <span class="n">w3</span><span class="o">.</span><span class="n">is_connected</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✅ Web3 connected to </span><span class="si">{</span><span class="n">rpc_url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Block number: </span><span class="si">{</span><span class="n">w3</span><span class="o">.</span><span class="n">eth</span><span class="o">.</span><span class="n">block_number</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;❌ Web3 connection failed&quot;</span><span class="p">)</span>
+<span class="n">EOF</span>
+</code></pre></div>
+
+<p><strong>4. 验证私钥格式</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 私钥应以0x开头，64个十六进制字符</span>
+python3<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
+<span class="s">import os</span>
+<span class="s">import re</span>
+
+<span class="s">private_key = os.getenv(&#39;BLOCKCHAIN_PRIVATE_KEY&#39;, &#39;&#39;)</span>
+<span class="s">if re.match(r&#39;^0x[0-9a-fA-F]{64}$&#39;, private_key):</span>
+<span class="s">    print(&quot;✅ Private key format valid&quot;)</span>
+<span class="s">else:</span>
+<span class="s">    print(&quot;❌ Invalid private key format&quot;)</span>
+<span class="s">    print(&quot;Expected: 0x + 64 hex characters&quot;)</span>
+<span class="s">EOF</span>
+</code></pre></div>
+
+<h3 id="76">7.6 日志位置</h3>
+<table>
+<thead>
+<tr>
+<th>日志类型</th>
+<th>路径</th>
+<th>格式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>应用日志</td>
+<td>标准输出 (stdout)</td>
+<td>文本</td>
+</tr>
+<tr>
+<td>审计日志</td>
+<td><code>logs/audit.jsonl</code></td>
+<td>JSON Lines</td>
+</tr>
+<tr>
+<td>错误日志</td>
+<td>标准错误 (stderr)</td>
+<td>文本</td>
+</tr>
+<tr>
+<td>Gunicorn日志</td>
+<td><code>/var/log/gunicorn/</code></td>
+<td>文本</td>
+</tr>
+<tr>
+<td>PostgreSQL日志</td>
+<td>Neon Console</td>
+<td>文本</td>
+</tr>
+<tr>
+<td>Workflow日志</td>
+<td><code>/tmp/logs/</code></td>
+<td>文本</td>
+</tr>
+</tbody>
+</table>
+<h4 id="_39">查看日志</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 实时查看应用日志</span>
+tail<span class="w"> </span>-f<span class="w"> </span>/var/log/hashinsight/app.log
+
+<span class="c1"># 查看错误日志</span>
+grep<span class="w"> </span>ERROR<span class="w"> </span>/var/log/hashinsight/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-50
+
+<span class="c1"># 查看审计日志</span>
+tail<span class="w"> </span>-f<span class="w"> </span>logs/audit.jsonl<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">&#39;.&#39;</span>
+
+<span class="c1"># 查看Gunicorn访问日志</span>
+tail<span class="w"> </span>-f<span class="w"> </span>/var/log/gunicorn/access.log
+</code></pre></div>
+
+<hr />
+<h2 id="8">第8章：日常运维操作</h2>
+<h3 id="81">8.1 数据库维护</h3>
+<h4 id="811">8.1.1 索引优化</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 自动优化索引</span>
+python<span class="w"> </span>database/optimize_indexes.py<span class="w"> </span>--auto
+
+<span class="c1"># 分析并建议索引</span>
+python<span class="w"> </span>database/optimize_indexes.py<span class="w"> </span>--analyze<span class="w"> </span>--suggest
+
+<span class="c1"># 输出示例:</span>
+<span class="c1"># ✅ 现有索引: 45个</span>
+<span class="c1"># 🔍 扫描慢查询...</span>
+<span class="c1"># 💡 建议创建索引:</span>
+<span class="c1">#   - CREATE INDEX idx_miners_user_id ON miners(user_id)</span>
+<span class="c1">#   - CREATE INDEX idx_market_data_timestamp ON market_analytics(created_at DESC)</span>
+</code></pre></div>
+
+<h4 id="812">8.1.2 连接池监控</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1">-- 查看当前连接</span>
+<span class="k">SELECT</span><span class="w"> </span>
+<span class="w">    </span><span class="n">pid</span><span class="p">,</span>
+<span class="w">    </span><span class="n">usename</span><span class="p">,</span>
+<span class="w">    </span><span class="n">application_name</span><span class="p">,</span>
+<span class="w">    </span><span class="n">client_addr</span><span class="p">,</span>
+<span class="w">    </span><span class="k">state</span><span class="p">,</span>
+<span class="w">    </span><span class="n">query_start</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">pg_stat_activity</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">datname</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;hashinsight_db&#39;</span>
+<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">query_start</span><span class="p">;</span>
+
+<span class="c1">-- 杀死空闲连接</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">pg_terminate_backend</span><span class="p">(</span><span class="n">pid</span><span class="p">)</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">pg_stat_activity</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">datname</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;hashinsight_db&#39;</span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="k">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;idle&#39;</span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">state_change</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">INTERVAL</span><span class="w"> </span><span class="s1">&#39;30 minutes&#39;</span><span class="p">;</span>
+</code></pre></div>
+
+<h4 id="813">8.1.3 慢查询分析</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1">-- 启用pg_stat_statements</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="n">EXTENSION</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">pg_stat_statements</span><span class="p">;</span>
+
+<span class="c1">-- 查看Top 10慢查询</span>
+<span class="k">SELECT</span><span class="w"> </span>
+<span class="w">    </span><span class="k">substring</span><span class="p">(</span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">short_query</span><span class="p">,</span>
+<span class="w">    </span><span class="n">calls</span><span class="p">,</span>
+<span class="w">    </span><span class="n">total_time</span><span class="p">,</span>
+<span class="w">    </span><span class="n">mean_time</span><span class="p">,</span>
+<span class="w">    </span><span class="n">max_time</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">pg_stat_statements</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">query</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">&#39;%pg_stat_statements%&#39;</span>
+<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">mean_time</span><span class="w"> </span><span class="k">DESC</span>
+<span class="k">LIMIT</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
+
+<span class="c1">-- 重置统计</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">pg_stat_statements_reset</span><span class="p">();</span>
+</code></pre></div>
+
+<h4 id="814">8.1.4 数据库清理</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 清理旧数据 (保留90天)</span>
+python<span class="w"> </span>scripts/cleanup_old_data.py<span class="w"> </span>--days<span class="w"> </span><span class="m">90</span>
+
+<span class="c1"># 清理示例:</span>
+<span class="c1"># ✅ 删除90天前的market_analytics: 12,543条</span>
+<span class="c1"># ✅ 删除90天前的audit日志: 45,123条</span>
+<span class="c1"># ✅ 清理完成，释放空间: 2.3 GB</span>
+</code></pre></div>
+
+<h3 id="82">8.2 缓存管理</h3>
+<h4 id="821-redis">8.2.1 Redis缓存清理</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 清理所有HashInsight缓存</span>
+redis-cli<span class="w"> </span>--scan<span class="w"> </span>--pattern<span class="w"> </span><span class="s1">&#39;hashinsight:*&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>redis-cli<span class="w"> </span>DEL
+
+<span class="c1"># 清理特定模块缓存</span>
+redis-cli<span class="w"> </span>--scan<span class="w"> </span>--pattern<span class="w"> </span><span class="s1">&#39;hashinsight:miners:*&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>redis-cli<span class="w"> </span>DEL
+
+<span class="c1"># 清理过期键 (Redis自动，手动触发)</span>
+redis-cli<span class="w"> </span>--scan<span class="w"> </span>--pattern<span class="w"> </span><span class="s1">&#39;hashinsight:*&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="nb">read</span><span class="w"> </span>key<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">    </span>redis-cli<span class="w"> </span>TTL<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$key</span><span class="s2">&quot;</span>
+<span class="k">done</span>
+</code></pre></div>
+
+<h4 id="822">8.2.2 内存缓存监控</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 通过API查询内存缓存状态</span>
+<span class="n">curl</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">5000</span><span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">cache</span><span class="o">/</span><span class="n">memory</span><span class="o">-</span><span class="n">stats</span>
+
+<span class="c1"># 响应</span>
+<span class="p">{</span>
+  <span class="s2">&quot;cache_type&quot;</span><span class="p">:</span> <span class="s2">&quot;memory&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;size_mb&quot;</span><span class="p">:</span> <span class="mf">124.5</span><span class="p">,</span>
+  <span class="s2">&quot;entries&quot;</span><span class="p">:</span> <span class="mi">5432</span><span class="p">,</span>
+  <span class="s2">&quot;hit_rate&quot;</span><span class="p">:</span> <span class="mf">82.3</span><span class="p">,</span>
+  <span class="s2">&quot;evictions&quot;</span><span class="p">:</span> <span class="mi">234</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h4 id="823-request-coalescer">8.2.3 Request Coalescer状态</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 查看请求合并统计</span>
+curl<span class="w"> </span>http://localhost:5000/api/performance/coalescing-stats<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq
+
+<span class="c1"># 手动清理合并缓存</span>
+curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:5000/api/performance/clear-coalescing-cache
+</code></pre></div>
+
+<h3 id="83">8.3 批量任务</h3>
+<h4 id="831">8.3.1 批量导入矿机</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 准备CSV文件 (最多5000台)</span>
+<span class="c1"># 格式: name,model,hashrate_th,power_w,efficiency</span>
+
+<span class="c1"># 执行批量导入</span>
+python<span class="w"> </span>batch/batch_import_manager.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--file<span class="w"> </span>miners_upload_5000.csv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--user-id<span class="w"> </span><span class="m">123</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--validate
+
+<span class="c1"># 输出:</span>
+<span class="c1"># ✅ 文件验证通过</span>
+<span class="c1"># 📊 记录数: 5000</span>
+<span class="c1"># ⚙️  处理中...</span>
+<span class="c1"># [████████████████████████████████] 100%</span>
+<span class="c1"># ✅ 导入完成: 5000台矿机 (耗时: 45.2s)</span>
+</code></pre></div>
+
+<h4 id="832">8.3.2 数据收集任务</h4>
+<p>HashInsight 每15分钟自动收集市场数据：</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 手动触发数据收集</span>
+python<span class="w"> </span>modules/analytics/engines/analytics_engine.py<span class="w"> </span>--collect-now
+
+<span class="c1"># 查看收集状态</span>
+curl<span class="w"> </span>http://localhost:5000/api/analytics/collection-status
+
+<span class="c1"># 响应</span>
+<span class="o">{</span>
+<span class="w">  </span><span class="s2">&quot;last_collection&quot;</span>:<span class="w"> </span><span class="s2">&quot;2025-10-03T12:15:00Z&quot;</span>,
+<span class="w">  </span><span class="s2">&quot;next_collection&quot;</span>:<span class="w"> </span><span class="s2">&quot;2025-10-03T12:30:00Z&quot;</span>,
+<span class="w">  </span><span class="s2">&quot;status&quot;</span>:<span class="w"> </span><span class="s2">&quot;healthy&quot;</span>,
+<span class="w">  </span><span class="s2">&quot;data_points_today&quot;</span>:<span class="w"> </span><span class="m">8</span>
+<span class="o">}</span>
+</code></pre></div>
+
+<h4 id="833">8.3.3 数据收集调度</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 配置数据收集频率 (config.py)</span>
+<span class="n">ANALYTICS_COLLECTION_INTERVAL</span> <span class="o">=</span> <span class="mi">15</span>  <span class="c1"># 分钟</span>
+<span class="n">ANALYTICS_MAX_DATA_POINTS_PER_DAY</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1"># 每日限制</span>
+
+<span class="c1"># 启用/禁用后台服务（默认：禁用，即 0）</span>
+<span class="n">export</span> <span class="n">ENABLE_BACKGROUND_SERVICES</span><span class="o">=</span><span class="mi">1</span>  <span class="c1"># 启用后台数据采集</span>
+<span class="n">export</span> <span class="n">ENABLE_BACKGROUND_SERVICES</span><span class="o">=</span><span class="mi">0</span>  <span class="c1"># 禁用后台数据采集（默认行为）</span>
+</code></pre></div>
+
+<h3 id="84">8.4 用户管理</h3>
+<h4 id="841">8.4.1 创建用户</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 通过管理界面创建</span>
+<span class="c1"># 访问: http://localhost:5000/admin/users/create</span>
+
+<span class="c1"># 通过命令行创建</span>
+python<span class="w"> </span>scripts/create_user.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--email<span class="w"> </span>admin@hashinsight.net<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--username<span class="w"> </span>admin<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--role<span class="w"> </span>owner<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--password-prompt
+
+<span class="c1"># 输出:</span>
+<span class="c1"># 请输入密码: ********</span>
+<span class="c1"># ✅ 用户已创建</span>
+<span class="c1"># ID: 123</span>
+<span class="c1"># Email: admin@hashinsight.net</span>
+<span class="c1"># Role: owner</span>
+</code></pre></div>
+
+<h4 id="842">8.4.2 角色分配</h4>
+<table>
+<thead>
+<tr>
+<th>角色</th>
+<th>权限</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>owner</code></td>
+<td>全部权限</td>
+<td>系统所有者</td>
+</tr>
+<tr>
+<td><code>admin</code></td>
+<td>管理权限</td>
+<td>系统管理员</td>
+</tr>
+<tr>
+<td><code>broker</code></td>
+<td>经纪人权限</td>
+<td>客户管理、订单</td>
+</tr>
+<tr>
+<td><code>client</code></td>
+<td>客户权限</td>
+<td>查看自己的数据</td>
+</tr>
+</tbody>
+</table>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 修改用户角色</span>
+python<span class="w"> </span>scripts/change_user_role.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--user-id<span class="w"> </span><span class="m">123</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--new-role<span class="w"> </span>admin
+
+<span class="c1"># 批量导入用户</span>
+python<span class="w"> </span>scripts/bulk_import_users.py<span class="w"> </span>--file<span class="w"> </span>users.csv
+</code></pre></div>
+
+<h4 id="843">8.4.3 权限管理</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 检查用户权限</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">has_permission</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/miners/delete/&lt;int:miner_id&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;DELETE&#39;</span><span class="p">])</span>
+<span class="nd">@login_required</span>
+<span class="nd">@requires_permission</span><span class="p">(</span><span class="s1">&#39;miners:delete&#39;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">delete_miner</span><span class="p">(</span><span class="n">miner_id</span><span class="p">):</span>
+    <span class="c1"># 仅允许有miners:delete权限的用户</span>
+    <span class="k">pass</span>
+</code></pre></div>
+
+<h3 id="85">8.5 数据清理</h3>
+<h4 id="851">8.5.1 每日数据点限制</h4>
+<p>为控制存储成本，HashInsight限制每日数据点数量：</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># config.py</span>
+<span class="n">ANALYTICS_MAX_DATA_POINTS_PER_DAY</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1"># 每日最多10个数据点</span>
+</code></pre></div>
+
+<h4 id="852">8.5.2 历史数据归档</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 归档90天前的数据到冷存储</span>
+python<span class="w"> </span>scripts/archive_historical_data.py<span class="w"> </span>--days<span class="w"> </span><span class="m">90</span><span class="w"> </span>--storage<span class="w"> </span>s3
+
+<span class="c1"># 输出:</span>
+<span class="c1"># 📦 扫描需归档数据...</span>
+<span class="c1"># 📊 market_analytics: 123,456条</span>
+<span class="c1"># 📊 calculation_history: 45,678条</span>
+<span class="c1"># ⬆️  上传到 s3://hashinsight-archive/...</span>
+<span class="c1"># 🗑️  从主数据库删除</span>
+<span class="c1"># ✅ 归档完成: 释放 5.2 GB</span>
+</code></pre></div>
+
+<h4 id="853">8.5.3 审计日志归档</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 归档6个月前的审计日志</span>
+python<span class="w"> </span>scripts/archive_audit_logs.py<span class="w"> </span>--months<span class="w"> </span><span class="m">6</span>
+
+<span class="c1"># 日志轮转 (自动)</span>
+<span class="c1"># audit/audit_logger.py 自动轮转100MB日志文件</span>
+</code></pre></div>
+
+<hr />
+<h2 id="9">第9章：性能优化指南</h2>
+<h3 id="91-request-coalescing">9.1 Request Coalescing</h3>
+<p>HashInsight 使用 Request Coalescing 实现<strong>9.8倍性能提升</strong>：</p>
+<h4 id="_40">原理</h4>
+<div class="codehilite"><pre><span></span><code><span class="err">传统模式</span><span class="o">:</span>
+<span class="n">Request</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">API</span><span class="w"> </span><span class="n">Call</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">Response</span><span class="w"> </span><span class="mi">1</span>
+<span class="n">Request</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">API</span><span class="w"> </span><span class="n">Call</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">Response</span><span class="w"> </span><span class="mi">2</span>
+<span class="n">Request</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">API</span><span class="w"> </span><span class="n">Call</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">Response</span><span class="w"> </span><span class="mi">3</span>
+<span class="o">(</span><span class="mi">3</span><span class="err">个</span><span class="n">API调用</span><span class="o">)</span>
+
+<span class="n">Request</span><span class="w"> </span><span class="n">Coalescing</span><span class="o">:</span>
+<span class="n">Request</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="err">┐</span>
+<span class="n">Request</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="err">├→</span><span class="w"> </span><span class="n">Single</span><span class="w"> </span><span class="n">API</span><span class="w"> </span><span class="n">Call</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">Response</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">Shared</span><span class="w"> </span><span class="n">Result</span>
+<span class="n">Request</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="err">┘</span>
+<span class="o">(</span><span class="mi">1</span><span class="err">个</span><span class="n">API调用</span><span class="err">，节省</span><span class="mi">67</span><span class="o">%</span><span class="err">请求</span><span class="o">)</span>
+</code></pre></div>
+
+<h4 id="_41">配置</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># cache_manager.py</span>
+<span class="n">REQUEST_COALESCING_ENABLED</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">COALESCING_TIMEOUT</span> <span class="o">=</span> <span class="mi">100</span>  <span class="c1"># 100ms内的重复请求合并</span>
+<span class="n">COALESCING_MAX_WAIT</span> <span class="o">=</span> <span class="mi">500</span>  <span class="c1"># 最多等待500ms</span>
+</code></pre></div>
+
+<h4 id="_42">监控</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 查看Request Coalescing统计</span>
+curl<span class="w"> </span>http://localhost:5000/api/performance/coalescing-stats<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq
+
+<span class="c1"># 响应</span>
+<span class="o">{</span>
+<span class="w">  </span><span class="s2">&quot;enabled&quot;</span>:<span class="w"> </span>true,
+<span class="w">  </span><span class="s2">&quot;total_requests&quot;</span>:<span class="w"> </span><span class="m">98234</span>,
+<span class="w">  </span><span class="s2">&quot;deduplicated_requests&quot;</span>:<span class="w"> </span><span class="m">85432</span>,
+<span class="w">  </span><span class="s2">&quot;api_calls_saved&quot;</span>:<span class="w"> </span><span class="m">85432</span>,
+<span class="w">  </span><span class="s2">&quot;performance_improvement&quot;</span>:<span class="w"> </span><span class="s2">&quot;9.8x&quot;</span>,
+<span class="w">  </span><span class="s2">&quot;average_wait_time_ms&quot;</span>:<span class="w"> </span><span class="m">45</span>
+<span class="o">}</span>
+</code></pre></div>
+
+<h3 id="92">9.2 数据库优化</h3>
+<h4 id="921">9.2.1 索引策略</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1">-- 高频查询字段索引</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_miners_user_id</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">miners</span><span class="p">(</span><span class="n">user_id</span><span class="p">);</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_market_data_timestamp</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">market_analytics</span><span class="p">(</span><span class="n">created_at</span><span class="w"> </span><span class="k">DESC</span><span class="p">);</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_calculations_user_created</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">calculations</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span><span class="w"> </span><span class="n">created_at</span><span class="p">);</span>
+
+<span class="c1">-- 复合索引 (常同时查询的字段)</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_miners_user_model</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">miners</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span><span class="w"> </span><span class="n">model</span><span class="p">);</span>
+
+<span class="c1">-- 部分索引 (仅索引活跃数据)</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_active_miners</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">miners</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;active&#39;</span><span class="p">;</span>
+</code></pre></div>
+
+<h4 id="922">9.2.2 查询优化</h4>
+<p><strong>使用EXPLAIN分析查询</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="k">EXPLAIN</span><span class="w"> </span><span class="k">ANALYZE</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">m</span><span class="p">.</span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="n">u</span><span class="p">.</span><span class="n">username</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">miners</span><span class="w"> </span><span class="n">m</span>
+<span class="k">JOIN</span><span class="w"> </span><span class="n">users</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">m</span><span class="p">.</span><span class="n">user_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">u</span><span class="p">.</span><span class="n">id</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">m</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;active&#39;</span>
+<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">m</span><span class="p">.</span><span class="n">created_at</span><span class="w"> </span><span class="k">DESC</span>
+<span class="k">LIMIT</span><span class="w"> </span><span class="mi">100</span><span class="p">;</span>
+
+<span class="c1">-- 查看执行计划，优化慢查询</span>
+</code></pre></div>
+
+<p><strong>避免N+1查询</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># ❌ 不好 - N+1查询</span>
+<span class="n">miners</span> <span class="o">=</span> <span class="n">Miner</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">miner</span> <span class="ow">in</span> <span class="n">miners</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">miner</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">)</span>  <span class="c1"># 每次循环一次查询</span>
+
+<span class="c1"># ✅ 好 - 使用JOIN</span>
+<span class="n">miners</span> <span class="o">=</span> <span class="n">Miner</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Miner</span><span class="o">.</span><span class="n">user_id</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">miner</span> <span class="ow">in</span> <span class="n">miners</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">miner</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">)</span>  <span class="c1"># 一次查询</span>
+</code></pre></div>
+
+<h4 id="923">9.2.3 连接池调优</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># config.py</span>
+<span class="n">SQLALCHEMY_ENGINE_OPTIONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;pool_size&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>           <span class="c1"># 根据并发量调整 (worker数 × 2)</span>
+    <span class="s1">&#39;pool_recycle&#39;</span><span class="p">:</span> <span class="mi">300</span><span class="p">,</span>       <span class="c1"># 5分钟回收连接</span>
+    <span class="s1">&#39;pool_pre_ping&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>     <span class="c1"># 使用前测试连接 (Neon必需)</span>
+    <span class="s1">&#39;pool_timeout&#39;</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>        <span class="c1"># 30秒超时</span>
+    <span class="s1">&#39;max_overflow&#39;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>        <span class="c1"># 最多溢出20个</span>
+    <span class="s1">&#39;connect_args&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;connect_timeout&#39;</span><span class="p">:</span> <span class="mi">15</span><span class="p">,</span>         <span class="c1"># 连接超时</span>
+        <span class="s1">&#39;application_name&#39;</span><span class="p">:</span> <span class="s1">&#39;hashinsight&#39;</span><span class="p">,</span>  <span class="c1"># 便于监控</span>
+        <span class="s1">&#39;options&#39;</span><span class="p">:</span> <span class="s1">&#39;-c statement_timeout=30000&#39;</span>  <span class="c1"># 查询超时30秒</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="93">9.3 缓存策略</h3>
+<h4 id="931">9.3.1 多级缓存</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 三级缓存架构</span>
+<span class="n">L1</span><span class="p">:</span> <span class="n">内存缓存</span> <span class="p">(</span><span class="n">最快</span><span class="err">，</span><span class="n">容量小</span><span class="p">)</span>
+    <span class="err">↓</span> <span class="n">miss</span>
+<span class="n">L2</span><span class="p">:</span> <span class="n">Redis缓存</span> <span class="p">(</span><span class="n">快</span><span class="err">，</span><span class="n">容量中</span><span class="p">)</span>
+    <span class="err">↓</span> <span class="n">miss</span>
+<span class="n">L3</span><span class="p">:</span> <span class="n">数据库</span> <span class="p">(</span><span class="n">慢</span><span class="err">，</span><span class="n">容量大</span><span class="p">)</span>
+
+<span class="c1"># 实现</span>
+<span class="nd">@cache_manager</span><span class="o">.</span><span class="n">cached</span><span class="p">(</span><span class="n">ttl</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;L1&#39;</span><span class="p">)</span>  <span class="c1"># 5分钟</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_user_profile</span><span class="p">(</span><span class="n">user_id</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+
+<span class="nd">@cache_manager</span><span class="o">.</span><span class="n">cached</span><span class="p">(</span><span class="n">ttl</span><span class="o">=</span><span class="mi">3600</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;L2&#39;</span><span class="p">)</span>  <span class="c1"># 1小时</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_market_data</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">fetch_from_api</span><span class="p">()</span>
+</code></pre></div>
+
+<h4 id="932-ttl">9.3.2 TTL配置</h4>
+<table>
+<thead>
+<tr>
+<th>数据类型</th>
+<th>TTL</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>用户信息</td>
+<td>5分钟</td>
+<td>可能变更</td>
+</tr>
+<tr>
+<td>市场数据</td>
+<td>5分钟</td>
+<td>实时性要求</td>
+</tr>
+<tr>
+<td>矿机列表</td>
+<td>1小时</td>
+<td>变更频率低</td>
+</tr>
+<tr>
+<td>统计数据</td>
+<td>10分钟</td>
+<td>计算密集</td>
+</tr>
+<tr>
+<td>静态内容</td>
+<td>24小时</td>
+<td>几乎不变</td>
+</tr>
+</tbody>
+</table>
+<h4 id="933">9.3.3 缓存预热</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 启动时预热关键缓存</span>
+python<span class="w"> </span>scripts/warmup_cache.py
+
+<span class="c1"># 脚本内容</span>
+<span class="c1"># 1. 加载热门用户数据</span>
+<span class="c1"># 2. 加载当前市场数据</span>
+<span class="c1"># 3. 预计算统计数据</span>
+<span class="c1"># 4. 加载配置数据</span>
+
+<span class="c1"># 输出:</span>
+<span class="c1"># ✅ 预热用户缓存: 1,234个</span>
+<span class="c1"># ✅ 预热市场数据: 当前价格+算力</span>
+<span class="c1"># ✅ 预热统计数据: 10个仪表板</span>
+<span class="c1"># ⏱️  耗时: 12.3s</span>
+</code></pre></div>
+
+<h3 id="94">9.4 批量处理优化</h3>
+<h4 id="941">9.4.1 向量化计算</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># ❌ 不好 - 逐条计算</span>
+<span class="k">for</span> <span class="n">miner</span> <span class="ow">in</span> <span class="n">miners</span><span class="p">:</span>
+    <span class="n">daily_revenue</span> <span class="o">=</span> <span class="n">calculate_revenue</span><span class="p">(</span>
+        <span class="n">miner</span><span class="o">.</span><span class="n">hashrate</span><span class="p">,</span> 
+        <span class="n">btc_price</span><span class="p">,</span> 
+        <span class="n">network_difficulty</span>
+    <span class="p">)</span>
+<span class="c1"># 耗时: 5000台 × 10ms = 50秒</span>
+
+<span class="c1"># ✅ 好 - 向量化计算</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">hashrates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">m</span><span class="o">.</span><span class="n">hashrate</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">miners</span><span class="p">])</span>
+<span class="n">revenues</span> <span class="o">=</span> <span class="n">calculate_revenue_vectorized</span><span class="p">(</span>
+    <span class="n">hashrates</span><span class="p">,</span> 
+    <span class="n">btc_price</span><span class="p">,</span> 
+    <span class="n">network_difficulty</span>
+<span class="p">)</span>
+<span class="c1"># 耗时: ~500ms (100倍提升)</span>
+</code></pre></div>
+
+<h4 id="942">9.4.2 并发处理</h4>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
+
+<span class="c1"># 并发处理批量任务</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_miner_batch</span><span class="p">(</span><span class="n">miners</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+        <span class="n">futures</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">miners</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">):</span>
+            <span class="n">batch</span> <span class="o">=</span> <span class="n">miners</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">batch_size</span><span class="p">]</span>
+            <span class="n">future</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">process_batch</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+            <span class="n">futures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">result</span><span class="p">()</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">futures</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">results</span>
+</code></pre></div>
+
+<h4 id="943">9.4.3 内存优化</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 批量插入 (避免ORM开销)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">insert</span>
+
+<span class="c1"># ❌ 不好 - 逐条插入</span>
+<span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">large_dataset</span><span class="p">:</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Model</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">))</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>  <span class="c1"># 每次提交</span>
+
+<span class="c1"># ✅ 好 - 批量插入</span>
+<span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">bulk_insert_mappings</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="n">large_dataset</span><span class="p">)</span>
+<span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>  <span class="c1"># 一次提交</span>
+
+<span class="c1"># ✅ 更好 - 使用bulk insert</span>
+<span class="n">stmt</span> <span class="o">=</span> <span class="n">insert</span><span class="p">(</span><span class="n">Model</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">large_dataset</span><span class="p">)</span>
+<span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
+<span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</code></pre></div>
+
+<h3 id="95">9.5 性能监控</h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 定期运行性能基准测试</span>
+python<span class="w"> </span>scripts/performance_benchmark.py
+
+<span class="c1"># 输出:</span>
+<span class="c1"># 📊 API响应时间:</span>
+<span class="c1">#   - /api/miners: p50=45ms, p95=120ms, p99=250ms ✅</span>
+<span class="c1">#   - /api/dashboard: p50=80ms, p95=200ms, p99=400ms ✅</span>
+<span class="c1"># 📊 数据库查询:</span>
+<span class="c1">#   - 平均查询时间: 15ms ✅</span>
+<span class="c1">#   - 慢查询 (&gt;1s): 0个 ✅</span>
+<span class="c1"># 📊 缓存性能:</span>
+<span class="c1">#   - 命中率: 78.5% ✅</span>
+<span class="c1">#   - Request Coalescing: 9.8x提升 ✅</span>
+</code></pre></div>
+
+<hr />
+<h2 id="10">第10章：应急响应手册</h2>
+<h3 id="101-on-call">10.1 On-Call值班制度</h3>
+<h4 id="_43">值班排班</h4>
+<table>
+<thead>
+<tr>
+<th>时段</th>
+<th>主值班</th>
+<th>备份值班</th>
+<th>升级联系人</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>工作日 09:00-18:00</td>
+<td>DevOps工程师</td>
+<td>后端工程师</td>
+<td>技术总监</td>
+</tr>
+<tr>
+<td>工作日 18:00-09:00</td>
+<td>轮值工程师</td>
+<td>备份工程师</td>
+<td>On-Call Manager</td>
+</tr>
+<tr>
+<td>周末/节假日</td>
+<td>轮值工程师</td>
+<td>备份工程师</td>
+<td>On-Call Manager</td>
+</tr>
+</tbody>
+</table>
+<h4 id="_44">值班工具</h4>
+<ul>
+<li>📱 <strong>PagerDuty</strong>: 告警通知</li>
+<li>💬 <strong>Slack</strong>: #incident-response频道</li>
+<li>📊 <strong>Grafana</strong>: 实时监控</li>
+<li>📝 <strong>Incident.io</strong>: 事故管理</li>
+</ul>
+<h3 id="102">10.2 事故分级</h3>
+<table>
+<thead>
+<tr>
+<th>级别</th>
+<th>影响</th>
+<th>响应时间</th>
+<th>升级时间</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>P0</strong></td>
+<td>完全服务中断</td>
+<td>15分钟</td>
+<td>30分钟</td>
+<td>数据库宕机、应用无法访问</td>
+</tr>
+<tr>
+<td><strong>P1</strong></td>
+<td>核心功能降级</td>
+<td>30分钟</td>
+<td>1小时</td>
+<td>API延迟&gt;5s、错误率&gt;5%</td>
+</tr>
+<tr>
+<td><strong>P2</strong></td>
+<td>部分功能故障</td>
+<td>2小时</td>
+<td>4小时</td>
+<td>单个功能无法使用</td>
+</tr>
+<tr>
+<td><strong>P3</strong></td>
+<td>性能下降</td>
+<td>4小时</td>
+<td>8小时</td>
+<td>响应变慢但可用</td>
+</tr>
+<tr>
+<td><strong>P4</strong></td>
+<td>非紧急问题</td>
+<td>1工作日</td>
+<td>2工作日</td>
+<td>UI显示问题、小bug</td>
+</tr>
+</tbody>
+</table>
+<h3 id="103">10.3 响应流程</h3>
+<h4 id="p0p1">P0/P1 紧急事故流程</h4>
+<div class="codehilite"><pre><span></span><code><span class="mf">1.</span><span class="w"> </span><span class="err">[</span><span class="mf">0</span><span class="o">-</span><span class="mf">5</span><span class="n">分钟</span><span class="err">]</span><span class="w"> </span><span class="n">告警触发</span>
+<span class="w">   </span><span class="err">├→</span><span class="w"> </span><span class="n">PagerDuty通知主值班</span>
+<span class="w">   </span><span class="err">├→</span><span class="w"> </span><span class="n">自动创建Slack事故频道</span>
+<span class="w">   </span><span class="err">└→</span><span class="w"> </span><span class="n">自动通知备份值班</span>
+
+<span class="mf">2.</span><span class="w"> </span><span class="err">[</span><span class="mf">5</span><span class="o">-</span><span class="mf">15</span><span class="n">分钟</span><span class="err">]</span><span class="w"> </span><span class="n">初步响应</span>
+<span class="w">   </span><span class="err">├→</span><span class="w"> </span><span class="n">确认事故</span><span class="w"> </span><span class="p">(</span><span class="n">ACK告警</span><span class="p">)</span>
+<span class="w">   </span><span class="err">├→</span><span class="w"> </span><span class="n">发布初步通告</span>
+<span class="w">   </span><span class="err">├→</span><span class="w"> </span><span class="n">开始故障排查</span>
+<span class="w">   </span><span class="err">└→</span><span class="w"> </span><span class="n">记录时间线</span>
+
+<span class="mf">3.</span><span class="w"> </span><span class="err">[</span><span class="mf">15</span><span class="o">-</span><span class="mf">30</span><span class="n">分钟</span><span class="err">]</span><span class="w"> </span><span class="n">应急处置</span>
+<span class="w">   </span><span class="err">├→</span><span class="w"> </span><span class="n">实施临时缓解措施</span>
+<span class="w">   </span><span class="err">├→</span><span class="w"> </span><span class="n">评估影响范围</span>
+<span class="w">   </span><span class="err">├→</span><span class="w"> </span><span class="n">决定是否升级</span>
+<span class="w">   </span><span class="err">└→</span><span class="w"> </span><span class="n">更新事故状态</span>
+
+<span class="mf">4.</span><span class="w"> </span><span class="err">[</span><span class="mf">30</span><span class="n">分钟</span><span class="o">+</span><span class="err">]</span><span class="w"> </span><span class="n">完全解决</span>
+<span class="w">   </span><span class="err">├→</span><span class="w"> </span><span class="n">实施永久修复</span>
+<span class="w">   </span><span class="err">├→</span><span class="w"> </span><span class="n">验证服务恢复</span>
+<span class="w">   </span><span class="err">├→</span><span class="w"> </span><span class="n">发布恢复通告</span>
+<span class="w">   </span><span class="err">└→</span><span class="w"> </span><span class="n">开始事后分析</span>
+</code></pre></div>
+
+<h3 id="104">10.4 常见紧急场景</h3>
+<h4 id="1_1">场景1: 数据库连接池耗尽</h4>
+<p><strong>症状</strong></p>
+<div class="codehilite"><pre><span></span><code>sqlalchemy.exc.TimeoutError: QueuePool limit of size 10 overflow 20 reached
+</code></pre></div>
+
+<p><strong>应急响应</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 1. 立即杀死长时间空闲连接</span>
+psql<span class="w"> </span><span class="nv">$DATABASE_URL</span><span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+<span class="s2">SELECT pg_terminate_backend(pid)</span>
+<span class="s2">FROM pg_stat_activity</span>
+<span class="s2">WHERE state = &#39;idle&#39; </span>
+<span class="s2">  AND state_change &lt; NOW() - INTERVAL &#39;10 minutes&#39;;</span>
+<span class="s2">&quot;</span>
+
+<span class="c1"># 2. 增加连接池限制 (临时)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">SQLALCHEMY_POOL_SIZE</span><span class="o">=</span><span class="m">20</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">SQLALCHEMY_MAX_OVERFLOW</span><span class="o">=</span><span class="m">40</span>
+
+<span class="c1"># 3. 重启应用</span>
+systemctl<span class="w"> </span>restart<span class="w"> </span>hashinsight
+
+<span class="c1"># 4. 监控连接数</span>
+watch<span class="w"> </span>-n<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="s2">&quot;psql </span><span class="nv">$DATABASE_URL</span><span class="s2"> -c &#39;SELECT count(*) FROM pg_stat_activity;&#39;&quot;</span>
+</code></pre></div>
+
+<h4 id="2-oom">场景2: 内存泄漏导致OOM</h4>
+<p><strong>症状</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="n">MemoryError</span><span class="o">:</span><span class="w"> </span><span class="n">Unable</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">allocate</span><span class="w"> </span><span class="n">array</span>
+<span class="n">Killed</span><span class="w"> </span><span class="o">(</span><span class="n">OOM</span><span class="o">)</span>
+</code></pre></div>
+
+<p><strong>应急响应</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 1. 立即重启受影响的worker</span>
+<span class="nb">kill</span><span class="w"> </span>-HUP<span class="w"> </span><span class="k">$(</span>cat<span class="w"> </span>/var/run/gunicorn.pid<span class="k">)</span>
+
+<span class="c1"># 2. 清理缓存释放内存</span>
+redis-cli<span class="w"> </span>FLUSHDB
+
+<span class="c1"># 3. 限制worker数量 (临时)</span>
+gunicorn<span class="w"> </span>--workers<span class="w"> </span><span class="m">2</span><span class="w"> </span>--max-requests<span class="w"> </span><span class="m">500</span><span class="w"> </span>main:app
+
+<span class="c1"># 4. 监控内存使用</span>
+watch<span class="w"> </span>-n<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="s1">&#39;free -h&#39;</span>
+</code></pre></div>
+
+<h4 id="3_1">场景3: 恶意流量攻击</h4>
+<p><strong>症状</strong>
+- 异常高的请求量
+- 大量401/403错误
+- 特定IP段的可疑请求</p>
+<p><strong>应急响应</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 1. 启用速率限制</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">RATE_LIMIT_ENABLED</span><span class="o">=</span><span class="nb">true</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">RATE_LIMIT_REQUESTS_PER_MINUTE</span><span class="o">=</span><span class="m">10</span>
+
+<span class="c1"># 2. 封禁恶意IP (通过防火墙)</span>
+ufw<span class="w"> </span>deny<span class="w"> </span>from<span class="w"> </span><span class="m">192</span>.168.1.0/24
+
+<span class="c1"># 3. 启用Cloudflare防护 (如使用)</span>
+<span class="c1"># 访问Cloudflare Dashboard -&gt; Security -&gt; DDoS</span>
+
+<span class="c1"># 4. 分析攻击模式</span>
+tail<span class="w"> </span>-1000<span class="w"> </span>/var/log/gunicorn/access.log<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>awk<span class="w"> </span><span class="s1">&#39;{print $1}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span><span class="p">|</span><span class="w"> </span>uniq<span class="w"> </span>-c<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span>-rn<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-20
+</code></pre></div>
+
+<h3 id="105">10.5 回滚流程</h3>
+<h4 id="_45">代码回滚</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 1. 确定回滚版本</span>
+git<span class="w"> </span>log<span class="w"> </span>--oneline<span class="w"> </span>-10
+
+<span class="c1"># 2. 回滚到上一个稳定版本</span>
+git<span class="w"> </span>revert<span class="w"> </span>HEAD<span class="w"> </span>--no-edit
+<span class="c1"># 或</span>
+git<span class="w"> </span>checkout<span class="w"> </span>v1.9.5
+
+<span class="c1"># 3. 重新部署</span>
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>main
+
+<span class="c1"># 4. 验证回滚成功</span>
+curl<span class="w"> </span>http://localhost:5000/health<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">&#39;.version&#39;</span>
+
+<span class="c1"># 5. 通知团队</span>
+<span class="c1"># Slack: &quot;已回滚到v1.9.5，服务恢复正常&quot;</span>
+</code></pre></div>
+
+<h4 id="_46">数据库回滚</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># ⚠️ 警告: 数据库回滚风险高，必须先备份!</span>
+
+<span class="c1"># 1. 创建当前状态备份</span>
+python<span class="w"> </span>backup/backup_manager.py<span class="w"> </span>--type<span class="w"> </span>emergency
+
+<span class="c1"># 2. 恢复到回滚点</span>
+psql<span class="w"> </span><span class="nv">$DATABASE_URL</span><span class="w"> </span>&lt;<span class="w"> </span>/tmp/backups/hashinsight_backup_20251003_020000.sql
+
+<span class="c1"># 3. 验证数据完整性</span>
+python<span class="w"> </span>scripts/verify_database_integrity.py
+
+<span class="c1"># 4. 重启应用</span>
+systemctl<span class="w"> </span>restart<span class="w"> </span>hashinsight
+</code></pre></div>
+
+<h3 id="106">10.6 沟通模板</h3>
+<h4 id="_47">初始事故通告</h4>
+<div class="codehilite"><pre><span></span><code><span class="err">📢</span><span class="w"> </span><span class="o">[</span><span class="n">P0 事故</span><span class="o">]</span><span class="w"> </span><span class="n">HashInsight</span><span class="w"> </span><span class="n">服务中断</span>
+
+<span class="nl">时间</span><span class="p">:</span><span class="w"> </span><span class="mi">2025</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">03</span><span class="w"> </span><span class="mi">14</span><span class="err">:</span><span class="mi">23</span><span class="w"> </span><span class="n">UTC</span>
+<span class="nl">影响</span><span class="p">:</span><span class="w"> </span><span class="n">所有用户无法访问主应用</span>
+<span class="nl">状态</span><span class="p">:</span><span class="w"> </span><span class="n">正在调查</span>
+
+<span class="n">我们已确认服务中断问题</span><span class="err">，</span><span class="n">团队正在紧急排查</span><span class="err">。</span>
+<span class="n">预计在30分钟内提供更新</span><span class="err">。</span>
+
+<span class="nl">事故频道</span><span class="p">:</span><span class="w"> </span><span class="n">#incident</span><span class="o">-</span><span class="mi">2025</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="n">db</span><span class="o">-</span><span class="n">outage</span>
+<span class="nl">值班工程师</span><span class="p">:</span><span class="w"> </span><span class="nv">@john</span><span class="p">.</span><span class="n">doe</span>
+</code></pre></div>
+
+<h4 id="_48">进度更新</h4>
+<div class="codehilite"><pre><span></span><code>🔄 [更新] HashInsight 事故进展
+
+时间: 2025-10-03 14:45 UTC
+根本原因: 数据库连接池耗尽
+缓解措施: 已重启数据库连接池
+当前状态: 服务部分恢复，监控中
+
+下次更新: 15:00 UTC 或有重大进展时
+</code></pre></div>
+
+<h4 id="_49">恢复通告</h4>
+<div class="codehilite"><pre><span></span><code>✅ [已解决] HashInsight 服务已恢复
+
+时间: 2025-10-03 15:12 UTC
+持续时间: 49分钟
+根本原因: PostgreSQL连接池配置不当
+解决方案: 已增加连接池限制并优化慢查询
+
+所有服务现已完全恢复正常。
+事后分析报告将在24小时内发布。
+
+感谢您的耐心等待。
+</code></pre></div>
+
+<h3 id="107-postmortem">10.7 事后分析 (Postmortem)</h3>
+<h4 id="_50">模板</h4>
+<div class="codehilite"><pre><span></span><code><span class="gh"># HashInsight 事故报告 - 2025-10-03 数据库中断</span>
+
+<span class="gu">## 概要</span>
+<span class="k">-</span><span class="w"> </span><span class="gs">**事故编号**</span>: INC-2025-1003-001
+<span class="k">-</span><span class="w"> </span><span class="gs">**严重程度**</span>: P0
+<span class="k">-</span><span class="w"> </span><span class="gs">**发生时间**</span>: 2025-10-03 14:23 UTC
+<span class="k">-</span><span class="w"> </span><span class="gs">**恢复时间**</span>: 2025-10-03 15:12 UTC
+<span class="k">-</span><span class="w"> </span><span class="gs">**持续时间**</span>: 49分钟
+<span class="k">-</span><span class="w"> </span><span class="gs">**影响用户**</span>: 100% (所有用户)
+
+<span class="gu">## 时间线</span>
+<span class="k">-</span><span class="w"> </span>14:23 - Prometheus告警: 数据库连接失败
+<span class="k">-</span><span class="w"> </span>14:25 - 值班工程师确认事故
+<span class="k">-</span><span class="w"> </span>14:30 - 发现连接池耗尽
+<span class="k">-</span><span class="w"> </span>14:35 - 实施临时缓解 (杀死空闲连接)
+<span class="k">-</span><span class="w"> </span>14:45 - 服务部分恢复
+<span class="k">-</span><span class="w"> </span>15:00 - 实施永久修复 (增加连接池)
+<span class="k">-</span><span class="w"> </span>15:12 - 服务完全恢复
+
+<span class="gu">## 根本原因</span>
+PostgreSQL连接池大小配置为10，但实际并发需求达到30+，
+导致连接等待超时。
+
+<span class="gu">## 解决方案</span>
+<span class="k">1.</span> 临时: 杀死空闲连接，释放连接池
+<span class="k">2.</span> 永久: 增加连接池大小至20，溢出至40
+<span class="k">3.</span> 优化: 识别并优化3个慢查询
+
+<span class="gu">## 预防措施</span>
+<span class="k">- [ ]</span> 设置连接池告警 (使用率&gt;80%)
+<span class="k">- [ ]</span> 定期审查慢查询
+<span class="k">- [ ]</span> 增加容量规划流程
+<span class="k">- [ ]</span> 添加连接池监控仪表板
+
+<span class="gu">## 经验教训</span>
+✅ 快速响应和沟通良好
+❌ 缺少连接池监控
+❌ 容量规划不足
+</code></pre></div>
+
+<hr />
+<h2 id="_51">附录</h2>
+<h3 id="a">附录A: 常用命令速查表</h3>
+<h4 id="_52">应用管理</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 启动应用</span>
+gunicorn<span class="w"> </span>--bind<span class="w"> </span><span class="m">0</span>.0.0.0:5000<span class="w"> </span>--workers<span class="w"> </span><span class="m">4</span><span class="w"> </span>main:app
+
+<span class="c1"># 优雅重启</span>
+<span class="nb">kill</span><span class="w"> </span>-HUP<span class="w"> </span><span class="k">$(</span>cat<span class="w"> </span>/var/run/gunicorn.pid<span class="k">)</span>
+
+<span class="c1"># 停止应用</span>
+<span class="nb">kill</span><span class="w"> </span>-TERM<span class="w"> </span><span class="k">$(</span>cat<span class="w"> </span>/var/run/gunicorn.pid<span class="k">)</span>
+
+<span class="c1"># 查看进程</span>
+ps<span class="w"> </span>aux<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>gunicorn
+
+<span class="c1"># 查看日志</span>
+tail<span class="w"> </span>-f<span class="w"> </span>/var/log/hashinsight/app.log
+</code></pre></div>
+
+<h4 id="_53">数据库</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 连接数据库</span>
+psql<span class="w"> </span><span class="nv">$DATABASE_URL</span>
+
+<span class="c1"># 查看表</span>
+<span class="se">\d</span>t
+
+<span class="c1"># 查看连接数</span>
+SELECT<span class="w"> </span>count<span class="o">(</span>*<span class="o">)</span><span class="w"> </span>FROM<span class="w"> </span>pg_stat_activity<span class="p">;</span>
+
+<span class="c1"># 备份数据库</span>
+pg_dump<span class="w"> </span><span class="nv">$DATABASE_URL</span><span class="w"> </span>&gt;<span class="w"> </span>backup.sql
+
+<span class="c1"># 恢复数据库</span>
+psql<span class="w"> </span><span class="nv">$DATABASE_URL</span><span class="w"> </span>&lt;<span class="w"> </span>backup.sql
+</code></pre></div>
+
+<h4 id="_54">缓存</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Redis连接</span>
+redis-cli
+
+<span class="c1"># 查看所有键</span>
+redis-cli<span class="w"> </span>KEYS<span class="w"> </span><span class="s1">&#39;hashinsight:*&#39;</span>
+
+<span class="c1"># 清空缓存</span>
+redis-cli<span class="w"> </span>FLUSHDB
+
+<span class="c1"># 查看内存使用</span>
+redis-cli<span class="w"> </span>INFO<span class="w"> </span>memory
+</code></pre></div>
+
+<h4 id="_55">监控</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 查看健康状态</span>
+curl<span class="w"> </span>http://localhost:5000/health<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq
+
+<span class="c1"># 查看Prometheus指标</span>
+curl<span class="w"> </span>http://localhost:9090/metrics
+
+<span class="c1"># 查看SLO状态</span>
+curl<span class="w"> </span>http://localhost:5000/api/slo/status<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq
+</code></pre></div>
+
+<h3 id="b">附录B: 配置文件示例</h3>
+<h4 id="env">.env 示例</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 必需配置</span>
+<span class="nv">DATABASE_URL</span><span class="o">=</span>postgresql://user:pass@host:5432/hashinsight_db
+<span class="nv">SESSION_SECRET</span><span class="o">=</span>your-secret-key-min-32-chars
+<span class="nv">ENCRYPTION_PASSWORD</span><span class="o">=</span>encryption-key-min-32-chars
+
+<span class="c1"># 区块链配置</span>
+<span class="nv">BLOCKCHAIN_ENABLED</span><span class="o">=</span><span class="nb">true</span>
+<span class="nv">BLOCKCHAIN_PRIVATE_KEY</span><span class="o">=</span>0x1234567890abcdef...
+<span class="nv">BLOCKCHAIN_NETWORK</span><span class="o">=</span>base-sepolia
+<span class="nv">BASE_RPC_URL</span><span class="o">=</span>https://sepolia.base.org
+
+<span class="c1"># 备份配置</span>
+<span class="nv">BACKUP_DIR</span><span class="o">=</span>/var/backups/hashinsight
+<span class="nv">BACKUP_ENCRYPTION_KEY</span><span class="o">=</span>backup-encryption-key
+<span class="nv">BACKUP_RETENTION_DAYS</span><span class="o">=</span><span class="m">30</span>
+<span class="nv">BACKUP_STORAGE_TYPE</span><span class="o">=</span>s3
+<span class="nv">BACKUP_STORAGE_BUCKET</span><span class="o">=</span>hashinsight-backups
+
+<span class="c1"># KMS配置 (AWS)</span>
+<span class="nv">AWS_KMS_KEY_ID</span><span class="o">=</span>arn:aws:kms:us-east-1:123456789:key/xxxxx
+<span class="nv">AWS_KMS_REGION</span><span class="o">=</span>us-east-1
+<span class="nv">AWS_ACCESS_KEY_ID</span><span class="o">=</span>AKIAXXXXXXXX
+<span class="nv">AWS_SECRET_ACCESS_KEY</span><span class="o">=</span>xxxxxxxxxx
+
+<span class="c1"># 监控配置</span>
+<span class="nv">ENABLE_BACKGROUND_SERVICES</span><span class="o">=</span><span class="m">0</span><span class="w">  </span><span class="c1"># 默认禁用；设为 1 启用后台数据采集</span>
+<span class="nv">PROMETHEUS_PORT</span><span class="o">=</span><span class="m">9090</span>
+<span class="nv">SLO_MEASUREMENT_WINDOW</span><span class="o">=</span><span class="m">30</span>
+
+<span class="c1"># API配置</span>
+<span class="nv">COINWARZ_API_KEY</span><span class="o">=</span>your-coinwarz-api-key
+<span class="nv">COINGECKO_API_KEY</span><span class="o">=</span>your-coingecko-api-key
+</code></pre></div>
+
+<h4 id="systemd">systemd服务文件示例</h4>
+<div class="codehilite"><pre><span></span><code><span class="c1"># /etc/systemd/system/hashinsight.service</span>
+
+<span class="k">[Unit]</span>
+<span class="na">Description</span><span class="o">=</span><span class="s">HashInsight Platform</span>
+<span class="na">After</span><span class="o">=</span><span class="s">network.target postgresql.service</span>
+
+<span class="k">[Service]</span>
+<span class="na">Type</span><span class="o">=</span><span class="s">notify</span>
+<span class="na">User</span><span class="o">=</span><span class="s">hashinsight</span>
+<span class="na">Group</span><span class="o">=</span><span class="s">hashinsight</span>
+<span class="na">WorkingDirectory</span><span class="o">=</span><span class="s">/opt/hashinsight</span>
+<span class="na">EnvironmentFile</span><span class="o">=</span><span class="s">/opt/hashinsight/.env</span>
+
+<span class="na">ExecStart</span><span class="o">=</span><span class="s">/opt/hashinsight/venv/bin/gunicorn </span>\
+<span class="w">  </span><span class="s">--bind 0.0.0.0:5000 </span>\
+<span class="w">  </span><span class="s">--workers 4 </span>\
+<span class="w">  </span><span class="s">--threads 2 </span>\
+<span class="w">  </span><span class="s">--worker-class gthread </span>\
+<span class="w">  </span><span class="s">--timeout 120 </span>\
+<span class="w">  </span><span class="s">--max-requests 1000 </span>\
+<span class="w">  </span><span class="s">--access-logfile /var/log/hashinsight/access.log </span>\
+<span class="w">  </span><span class="s">--error-logfile /var/log/hashinsight/error.log </span>\
+<span class="w">  </span><span class="s">--pid /var/run/gunicorn.pid </span>\
+<span class="w">  </span><span class="s">main:app</span>
+
+<span class="na">ExecReload</span><span class="o">=</span><span class="s">/bin/kill -s HUP $MAINPID</span>
+<span class="na">KillMode</span><span class="o">=</span><span class="s">mixed</span>
+<span class="na">KillSignal</span><span class="o">=</span><span class="s">SIGTERM</span>
+<span class="na">TimeoutStopSec</span><span class="o">=</span><span class="s">30</span>
+
+<span class="na">Restart</span><span class="o">=</span><span class="s">on-failure</span>
+<span class="na">RestartSec</span><span class="o">=</span><span class="s">10</span>
+
+<span class="k">[Install]</span>
+<span class="na">WantedBy</span><span class="o">=</span><span class="s">multi-user.target</span>
+</code></pre></div>
+
+<h3 id="c">附录C: 监控指标参考</h3>
+<h4 id="prometheus_1">Prometheus指标列表</h4>
+<table>
+<thead>
+<tr>
+<th>指标名称</th>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hashinsight_requests_total</code></td>
+<td>Counter</td>
+<td>总请求数</td>
+</tr>
+<tr>
+<td><code>hashinsight_request_latency_seconds</code></td>
+<td>Histogram</td>
+<td>请求延迟</td>
+</tr>
+<tr>
+<td><code>hashinsight_error_rate</code></td>
+<td>Gauge</td>
+<td>错误率</td>
+</tr>
+<tr>
+<td><code>hashinsight_cache_hit_rate</code></td>
+<td>Gauge</td>
+<td>缓存命中率</td>
+</tr>
+<tr>
+<td><code>hashinsight_db_query_duration_seconds</code></td>
+<td>Histogram</td>
+<td>数据库查询时间</td>
+</tr>
+<tr>
+<td><code>hashinsight_db_connection_pool_size</code></td>
+<td>Gauge</td>
+<td>数据库连接池大小</td>
+</tr>
+<tr>
+<td><code>hashinsight_db_connection_pool_active</code></td>
+<td>Gauge</td>
+<td>活跃连接数</td>
+</tr>
+<tr>
+<td><code>hashinsight_slo_compliance</code></td>
+<td>Gauge</td>
+<td>SLO合规性</td>
+</tr>
+<tr>
+<td><code>hashinsight_slo_error_budget_remaining</code></td>
+<td>Gauge</td>
+<td>错误预算剩余</td>
+</tr>
+<tr>
+<td><code>hashinsight_circuit_breaker_state</code></td>
+<td>Gauge</td>
+<td>熔断器状态</td>
+</tr>
+</tbody>
+</table>
+<h4 id="slo_4">SLO阈值</h4>
+<table>
+<thead>
+<tr>
+<th>SLO类型</th>
+<th>目标</th>
+<th>警告阈值</th>
+<th>严重阈值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>可用性</td>
+<td>99.95%</td>
+<td>&lt;99.9%</td>
+<td>&lt;99.5%</td>
+</tr>
+<tr>
+<td>P95延迟</td>
+<td>≤250ms</td>
+<td>&gt;200ms</td>
+<td>&gt;300ms</td>
+</tr>
+<tr>
+<td>错误率</td>
+<td>≤0.1%</td>
+<td>&gt;0.5%</td>
+<td>&gt;1%</td>
+</tr>
+<tr>
+<td>错误预算</td>
+<td>21.6min/月</td>
+<td>&lt;20%</td>
+<td>&lt;10%</td>
+</tr>
+</tbody>
+</table>
+<h3 id="d">附录D: 错误代码对照表</h3>
+<table>
+<thead>
+<tr>
+<th>错误代码</th>
+<th>HTTP状态</th>
+<th>说明</th>
+<th>解决方案</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AUTH_001</code></td>
+<td>401</td>
+<td>未登录</td>
+<td>重新登录</td>
+</tr>
+<tr>
+<td><code>AUTH_002</code></td>
+<td>403</td>
+<td>权限不足</td>
+<td>联系管理员</td>
+</tr>
+<tr>
+<td><code>AUTH_003</code></td>
+<td>401</td>
+<td>Session过期</td>
+<td>重新登录</td>
+</tr>
+<tr>
+<td><code>DB_001</code></td>
+<td>500</td>
+<td>数据库连接失败</td>
+<td>检查DATABASE_URL</td>
+</tr>
+<tr>
+<td><code>DB_002</code></td>
+<td>500</td>
+<td>查询超时</td>
+<td>优化查询或增加超时</td>
+</tr>
+<tr>
+<td><code>CACHE_001</code></td>
+<td>503</td>
+<td>Redis不可用</td>
+<td>检查Redis服务</td>
+</tr>
+<tr>
+<td><code>API_001</code></td>
+<td>429</td>
+<td>请求过于频繁</td>
+<td>降低请求频率</td>
+</tr>
+<tr>
+<td><code>API_002</code></td>
+<td>500</td>
+<td>外部API失败</td>
+<td>稍后重试</td>
+</tr>
+<tr>
+<td><code>BLOCKCHAIN_001</code></td>
+<td>500</td>
+<td>私钥未配置</td>
+<td>设置BLOCKCHAIN_PRIVATE_KEY</td>
+</tr>
+<tr>
+<td><code>ENCRYPTION_001</code></td>
+<td>500</td>
+<td>加密密钥未配置</td>
+<td>设置ENCRYPTION_PASSWORD</td>
+</tr>
+</tbody>
+</table>
+<h3 id="e">附录E: 更新历史</h3>
+<table>
+<thead>
+<tr>
+<th>版本</th>
+<th>日期</th>
+<th>作者</th>
+<th>变更内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>v2.0</td>
+<td>2025-10-03</td>
+<td>HashInsight Ops Team</td>
+<td>完整运维手册首次发布</td>
+</tr>
+<tr>
+<td>v1.9</td>
+<td>2025-09-15</td>
+<td>DevOps Team</td>
+<td>添加Request Coalescing优化</td>
+</tr>
+<tr>
+<td>v1.8</td>
+<td>2025-08-20</td>
+<td>Security Team</td>
+<td>增强KMS和mTLS文档</td>
+</tr>
+<tr>
+<td>v1.7</td>
+<td>2025-07-10</td>
+<td>Platform Team</td>
+<td>添加SLO监控章节</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_56">文档维护</h2>
+<p><strong>维护责任</strong>: HashInsight Platform Operations Team<br />
+<strong>审核周期</strong>: 每季度<br />
+<strong>反馈渠道</strong>: ops@hashinsight.net<br />
+<strong>文档仓库</strong>: https://github.com/hashinsight/operations-manual</p>
+<p><strong>最后更新</strong>: 2025-10-03<br />
+<strong>下次审核</strong>: 2026-01-03</p>
+<hr />
+<p><strong>© 2025 HashInsight Platform. All Rights Reserved.</strong><br />
+<strong>Confidential - Internal Use Only</strong></p>
+</body>
+</html>
