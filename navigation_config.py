@@ -126,18 +126,49 @@ NAVIGATION_MENU = [
             'zh': '数据分析中心',
             'en': 'Analytics Center'
         },
+        'url': '/operations/analytics',
         'icon': 'bi-bar-chart-line',
         'min_role': 'mining_site',
         'order': 4,
         'children': [
             {
-                'id': 'analytics_dashboard',
+                'id': 'technical_analysis',
                 'name': {
-                    'zh': '分析仪表盘',
-                    'en': 'Analytics Dashboard'
+                    'zh': '技术指标分析',
+                    'en': 'Technical Analysis'
                 },
-                'url': '/analytics',
+                'url': '/operations/analytics#technical',
                 'icon': 'bi-graph-up-arrow',
+                'min_role': 'mining_site'
+            },
+            {
+                'id': 'market_analysis',
+                'name': {
+                    'zh': '市场数据分析',
+                    'en': 'Market Data'
+                },
+                'url': '/operations/analytics#market',
+                'icon': 'bi-currency-bitcoin',
+                'min_role': 'mining_site'
+            },
+            {
+                'id': 'network_history',
+                'name': {
+                    'zh': '网络历史数据',
+                    'en': 'Network History'
+                },
+                'url': '/operations/analytics#network',
+                'icon': 'bi-graph-up',
+                'min_role': 'mining_site'
+            },
+            {
+                'id': 'roi_heatmap',
+                'name': {
+                    'zh': 'ROI热力图',
+                    'en': 'ROI Heatmap'
+                },
+                'url': '/operations/analytics#roi',
+                'icon': 'bi-grid-fill',
                 'min_role': 'mining_site'
             },
             {
@@ -148,26 +179,6 @@ NAVIGATION_MENU = [
                 },
                 'url': '/algorithm-test',
                 'icon': 'bi-cpu-fill',
-                'min_role': 'mining_site'
-            },
-            {
-                'id': 'roi_heatmap',
-                'name': {
-                    'zh': 'ROI热力图',
-                    'en': 'ROI Heatmap'
-                },
-                'url': '/analytics#roi-heatmap',
-                'icon': 'bi-grid-fill',
-                'min_role': 'mining_site'
-            },
-            {
-                'id': 'market_analysis',
-                'name': {
-                    'zh': '市场数据分析',
-                    'en': 'Market Analysis'
-                },
-                'url': '/analytics#market',
-                'icon': 'bi-currency-bitcoin',
                 'min_role': 'mining_site'
             }
         ]

@@ -5915,6 +5915,16 @@ except ImportError as e:
 except Exception as e:
     logging.error(f"Failed to register Mining Operations Center routes: {e}")
 
+# Data Analytics Center 路由
+try:
+    from analytics_center_routes import analytics_center_bp
+    app.register_blueprint(analytics_center_bp)
+    logging.info("Data Analytics Center routes registered successfully")
+except ImportError as e:
+    logging.warning(f"Data Analytics Center routes not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register Data Analytics Center routes: {e}")
+
 # Register calculator module blueprint for modular architecture
 try:
     from modules.config import register_modules
