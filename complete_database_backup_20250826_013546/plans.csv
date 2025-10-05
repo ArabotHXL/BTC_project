@@ -1,4 +1,0 @@
-id,name,price,max_miners,coins,history_days,allow_api,allow_scenarios,allow_advanced_analytics,created_at
-1,Free,0,10,,,False,False,,
-2,Basic,2900,100,,,True,True,,
-3,Pro,9900,1000,,,True,True,,

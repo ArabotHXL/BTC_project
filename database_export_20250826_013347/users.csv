@@ -1,5 +1,0 @@
-id,email,username,password_hash,is_active,is_verified,created_at,last_login,role
-1,test_free@test.com,Test Free User,scrypt:32768:8:1$jEsH5a7xpKlYXszT$a469d2405178ec76ac8464b076a06bc64237737c11fa5e98dc2a381ae32aa87c4980e34fb76ca1caa4f0e3ae17f2f4a71416efddca3f714970c9568d903982f5,True,True,2025-08-13 03:42:33.941385,,guest
-2,test_basic@test.com,Test Basic User,scrypt:32768:8:1$CpA1WhhPst0Xkxp8$3d234f5bb96703327ba27da98cda848bee29a8060f80e80487b1ec089895de12dd243f2d630bae26e130ff31de9692345e99266c305000de1cd1ae94942aab02,True,True,2025-08-13 03:42:33.941385,,guest
-3,test_pro@test.com,Test Pro User,scrypt:32768:8:1$BDjMHp8sHGggv2gz$c6d3a1c14f2efef3e251a41f0527afa07d9962e409051fa03311c4e3c8cb1e53aa2c5660b9c359d65a9667d337e194ba5d5a0b52443a8fec0ce18b90e8e40687,True,True,2025-08-13 03:42:33.941385,,guest
-4,test@test.com,,pbkdf2:sha256:600000$salt$hash,True,,,,owner

@@ -1,3 +1,0 @@
-id,customer_id,lead_id,title,status,value,currency,created_at,updated_at,expected_close_date,closed_date,assigned_to,description,mining_capacity,electricity_cost,contract_term,created_by_id,assigned_to_id,commission_type,commission_rate,commission_amount,mining_farm_name,mining_farm_location,client_investment,monthly_profit_estimate
-1,3,2.0,计算器授权访问,DRAFT,0.0,USD,2025-05-07 00:15:21.414567,2025-05-07 00:15:21.414570,,,hxl2022hao@gmail.com,,,,,,,percentage,,,,,,
-2,3,,PA Towanda  5MW矿场,PENDING,0.0,USD,2025-06-02 23:46:19.503286,2025-07-03 01:36:51.310056,2025-06-30,,hxl2022hao@gmail.com,5个MW的矿场大概的矿场净收益在3万左， 5% 的话每个月3千 暂定,5.0,,24.0,2.0,2.0,percentage,5.0,,None,,,
