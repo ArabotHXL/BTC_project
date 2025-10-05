@@ -5905,6 +5905,16 @@ except ImportError as e:
 except Exception as e:
     logging.error(f"Failed to register SLA NFT routes: {e}")
 
+# Mining Operations Center 路由
+try:
+    from operations_routes import operations_bp
+    app.register_blueprint(operations_bp)
+    logging.info("Mining Operations Center routes registered successfully")
+except ImportError as e:
+    logging.warning(f"Mining Operations Center routes not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register Mining Operations Center routes: {e}")
+
 # Register calculator module blueprint for modular architecture
 try:
     from modules.config import register_modules

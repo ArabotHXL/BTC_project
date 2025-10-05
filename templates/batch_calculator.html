@@ -901,6 +901,52 @@
                 }
             }, 30000);
         });
+        
+        // FIX: postMessage listener to receive miners from Mining Operations Center
+        window.addEventListener('message', function(event) {
+            console.log('Batch calculator received message:', event.data);
+            
+            // Validate message
+            if (!event.data || event.data.type !== 'LOAD_MINERS') {
+                return;
+            }
+            
+            const miners = event.data.miners;
+            if (!miners || !Array.isArray(miners) || miners.length === 0) {
+                console.warn('No miners data received or invalid format');
+                return;
+            }
+            
+            console.log(`Loading ${miners.length} miners from Operations Center...`);
+            
+            // Clear existing table
+            const tbody = document.getElementById('minersTableBody');
+            tbody.innerHTML = '';
+            minerRowCount = 0;
+            
+            // Load each miner into the table
+            miners.forEach(miner => {
+                addMinerRowFromDataOptimized({
+                    model: miner.model_name || miner.model,
+                    quantity: 1, // Each miner is treated as quantity 1
+                    power: miner.power_consumption || 0,
+                    price: miner.price_usd || 0,
+                    electricity: 0.08, // Default electricity cost
+                    hashrate: miner.hashrate || 0,
+                    decayRate: 0 // Default decay rate
+                });
+            });
+            
+            // Update UI
+            updateEmptyState();
+            updateTotalCount();
+            
+            // Show success notification
+            const message = '{% if current_lang == "en" %}Loaded miners from Operations Center{% else %}已从运营中心加载矿机{% endif %}';
+            showAutoSaveNotification(true, `${message}: ${miners.length}`);
+            
+            console.log('✅ Miners loaded successfully from Operations Center');
+        });
 
         // Update quota display in the header
         function updateQuotaDisplay() {

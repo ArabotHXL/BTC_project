@@ -51,8 +51,9 @@ NAVIGATION_MENU = [
             'zh': '挖矿运营中心',
             'en': 'Mining Operations'
         },
+        'url': '/operations/mining',
         'icon': 'bi-minecart',
-        'min_role': 'user',
+        'min_role': 'mining_site',
         'order': 3,
         'children': [
             {
@@ -61,9 +62,9 @@ NAVIGATION_MENU = [
                     'zh': '基础计算器',
                     'en': 'Basic Calculator'
                 },
-                'url': '/calculator',
+                'url': '/operations/mining#calculator',
                 'icon': 'bi-calculator',
-                'min_role': 'user'
+                'min_role': 'mining_site'
             },
             {
                 'id': 'batch_calculator',
@@ -71,8 +72,28 @@ NAVIGATION_MENU = [
                     'zh': '批量计算器',
                     'en': 'Batch Calculator'
                 },
-                'url': '/batch-calculator',
+                'url': '/operations/mining#batch',
                 'icon': 'bi-grid-3x3',
+                'min_role': 'mining_site'
+            },
+            {
+                'id': 'miner_list',
+                'name': {
+                    'zh': '矿机列表',
+                    'en': 'Miner List'
+                },
+                'url': '/operations/mining#miners',
+                'icon': 'bi-cpu',
+                'min_role': 'mining_site'
+            },
+            {
+                'id': 'batch_import',
+                'name': {
+                    'zh': '批量导入',
+                    'en': 'Batch Import'
+                },
+                'url': '/operations/mining#import',
+                'icon': 'bi-cloud-upload',
                 'min_role': 'mining_site'
             },
             {
@@ -83,16 +104,6 @@ NAVIGATION_MENU = [
                 },
                 'url': '/curtailment-calculator',
                 'icon': 'bi-lightning',
-                'min_role': 'mining_site'
-            },
-            {
-                'id': 'miner_management',
-                'name': {
-                    'zh': '矿机管理',
-                    'en': 'Miner Management'
-                },
-                'url': '/miners',
-                'icon': 'bi-cpu',
                 'min_role': 'mining_site'
             },
             {

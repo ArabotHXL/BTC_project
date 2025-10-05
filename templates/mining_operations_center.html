@@ -1,0 +1,948 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if current_lang == 'zh' %}挖矿运营中心{% else %}Mining Operations Center{% endif %} - BTC Mining Calculator
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Mining Operations Center Styles - Dark Theme with Gold Accents */
+.operations-center-container {
+    max-width: 100%;
+    padding: 1rem;
+}
+
+/* Tab Navigation Styling */
+.nav-tabs-vertical {
+    border-bottom: none;
+    border-right: 2px solid #ffc107;
+}
+
+.nav-tabs-vertical .nav-link {
+    color: #adb5bd;
+    border: none;
+    border-right: 3px solid transparent;
+    border-radius: 0;
+    padding: 1rem 1.5rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+    background: rgba(255, 193, 7, 0.05);
+}
+
+.nav-tabs-vertical .nav-link:hover {
+    background: rgba(255, 193, 7, 0.15);
+    border-right-color: #ffc107;
+    color: #ffc107;
+}
+
+.nav-tabs-vertical .nav-link.active {
+    background: linear-gradient(90deg, rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.05));
+    border-right-color: #ffc107;
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.nav-tabs-vertical .nav-link i {
+    margin-right: 0.75rem;
+    font-size: 1.2rem;
+}
+
+/* Tab Content Styling */
+.tab-content {
+    padding: 2rem;
+    background: #1a1a1a;
+    border-radius: 10px;
+    min-height: 600px;
+}
+
+/* Mobile Accordion Styling */
+.accordion-mobile {
+    display: none;
+}
+
+.accordion-mobile .accordion-item {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    margin-bottom: 0.5rem;
+}
+
+.accordion-mobile .accordion-button {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.accordion-mobile .accordion-button:not(.collapsed) {
+    background: linear-gradient(90deg, rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.1));
+    color: #ffc107;
+}
+
+.accordion-mobile .accordion-body {
+    background: #1a1a1a;
+    padding: 1.5rem;
+}
+
+/* Header Styling */
+.operations-header {
+    background: linear-gradient(135deg, #2c3e50, #1a252f);
+    border: 2px solid #ffc107;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.operations-header h1 {
+    color: #ffc107;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.operations-header p {
+    color: #adb5bd;
+    margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 991px) {
+    .nav-tabs-desktop {
+        display: none;
+    }
+    
+    .accordion-mobile {
+        display: block;
+    }
+    
+    .tab-content {
+        padding: 1rem;
+    }
+}
+
+@media (min-width: 992px) {
+    .accordion-mobile {
+        display: none;
+    }
+}
+
+/* Iframe Container for Embedded Content */
+.iframe-container {
+    width: 100%;
+    min-height: 800px;
+    border: none;
+    background: transparent;
+}
+
+/* Tab Content Loader */
+.tab-loader {
+    text-align: center;
+    padding: 3rem;
+    color: #ffc107;
+}
+
+.tab-loader .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    border-width: 0.3em;
+}
+
+/* Error State */
+.iframe-error {
+    text-align: center;
+    padding: 2rem;
+    color: #dc3545;
+}
+
+.iframe-error .btn {
+    margin-top: 1rem;
+}
+
+/* Miner Selection Styles */
+.miner-selection-toolbar {
+    background: rgba(255, 193, 7, 0.1);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.miner-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.selected-row {
+    background: rgba(255, 193, 7, 0.15) !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="operations-center-container">
+    <!-- Header -->
+    <div class="operations-header">
+        <h1>
+            <i class="bi bi-minecart-loaded"></i>
+            {% if current_lang == 'zh' %}挖矿运营中心{% else %}Mining Operations Center{% endif %}
+        </h1>
+        <p>
+            {% if current_lang == 'zh' %}
+                统一管理您的挖矿业务 - 计算、批量处理、矿机管理、数据导入
+            {% else %}
+                Unified Mining Operations Management - Calculate, Batch Process, Manage Miners, Import Data
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- Desktop: Vertical Tab Navigation -->
+    <div class="row nav-tabs-desktop">
+        <div class="col-lg-2">
+            <nav class="nav flex-column nav-tabs-vertical" id="operations-tabs" role="tablist">
+                <button class="nav-link active" id="calculator-tab" data-bs-toggle="tab" 
+                        data-bs-target="#calculator" type="button" role="tab">
+                    <i class="bi bi-calculator"></i>
+                    <span>{% if current_lang == 'zh' %}基础计算器{% else %}Basic Calculator{% endif %}</span>
+                </button>
+                <button class="nav-link" id="batch-tab" data-bs-toggle="tab" 
+                        data-bs-target="#batch" type="button" role="tab">
+                    <i class="bi bi-grid-3x3"></i>
+                    <span>{% if current_lang == 'zh' %}批量计算器{% else %}Batch Calculator{% endif %}</span>
+                </button>
+                <button class="nav-link" id="miners-tab" data-bs-toggle="tab" 
+                        data-bs-target="#miners" type="button" role="tab">
+                    <i class="bi bi-cpu"></i>
+                    <span>{% if current_lang == 'zh' %}矿机列表{% else %}Miner List{% endif %}</span>
+                </button>
+                <button class="nav-link" id="import-tab" data-bs-toggle="tab" 
+                        data-bs-target="#import" type="button" role="tab">
+                    <i class="bi bi-cloud-upload"></i>
+                    <span>{% if current_lang == 'zh' %}批量导入{% else %}Batch Import{% endif %}</span>
+                </button>
+            </nav>
+        </div>
+        <div class="col-lg-10">
+            <div class="tab-content" id="operations-tab-content">
+                <!-- Tab 1: Basic Calculator -->
+                <div class="tab-pane fade show active" id="calculator" role="tabpanel">
+                    <div class="tab-loader" id="calculator-loader">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
+                    </div>
+                    <iframe id="calculator-frame" class="iframe-container" style="display:none;"></iframe>
+                </div>
+                
+                <!-- Tab 2: Batch Calculator -->
+                <div class="tab-pane fade" id="batch" role="tabpanel">
+                    <div class="tab-loader" id="batch-loader">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
+                    </div>
+                    <iframe id="batch-frame" class="iframe-container" style="display:none;"></iframe>
+                </div>
+                
+                <!-- Tab 3: Miner List -->
+                <div class="tab-pane fade" id="miners" role="tabpanel">
+                    <h3 class="text-warning mb-4">
+                        <i class="bi bi-cpu"></i>
+                        {% if current_lang == 'zh' %}矿机列表管理{% else %}Miner List Management{% endif %}
+                    </h3>
+                    <div id="miners-content">
+                        <div class="tab-loader">
+                            <div class="spinner-border text-warning" role="status"></div>
+                            <p class="mt-3">{% if current_lang == 'zh' %}加载矿机列表...{% else %}Loading miner list...{% endif %}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tab 4: Batch Import -->
+                <div class="tab-pane fade" id="import" role="tabpanel">
+                    <div class="tab-loader" id="import-loader">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
+                    </div>
+                    <iframe id="import-frame" class="iframe-container" style="display:none;"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile: Accordion Navigation -->
+    <div class="accordion accordion-mobile" id="operations-accordion">
+        <!-- Accordion Item 1: Calculator -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading-calculator">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#collapse-calculator">
+                    <i class="bi bi-calculator me-2"></i>
+                    {% if current_lang == 'zh' %}基础计算器{% else %}Basic Calculator{% endif %}
+                </button>
+            </h2>
+            <div id="collapse-calculator" class="accordion-collapse collapse show" 
+                 data-bs-parent="#operations-accordion">
+                <div class="accordion-body" data-iframe-url="/calculator">
+                    <div class="tab-loader">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accordion Item 2: Batch Calculator -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading-batch">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#collapse-batch">
+                    <i class="bi bi-grid-3x3 me-2"></i>
+                    {% if current_lang == 'zh' %}批量计算器{% else %}Batch Calculator{% endif %}
+                </button>
+            </h2>
+            <div id="collapse-batch" class="accordion-collapse collapse" 
+                 data-bs-parent="#operations-accordion">
+                <div class="accordion-body" data-iframe-url="/batch-calculator">
+                    <div class="tab-loader">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accordion Item 3: Miner List -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading-miners">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#collapse-miners">
+                    <i class="bi bi-cpu me-2"></i>
+                    {% if current_lang == 'zh' %}矿机列表{% else %}Miner List{% endif %}
+                </button>
+            </h2>
+            <div id="collapse-miners" class="accordion-collapse collapse" 
+                 data-bs-parent="#operations-accordion">
+                <div class="accordion-body" id="miners-mobile-content">
+                    <div class="tab-loader">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p class="mt-3">{% if current_lang == 'zh' %}加载矿机列表...{% else %}Loading...{% endif %}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accordion Item 4: Batch Import -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading-import">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#collapse-import">
+                    <i class="bi bi-cloud-upload me-2"></i>
+                    {% if current_lang == 'zh' %}批量导入{% else %}Batch Import{% endif %}
+                </button>
+            </h2>
+            <div id="collapse-import" class="accordion-collapse collapse" 
+                 data-bs-parent="#operations-accordion">
+                <div class="accordion-body" data-iframe-url="/api/miners/page">
+                    <div class="tab-loader">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Mining Operations Center JavaScript - Complete Implementation
+(function() {
+    'use strict';
+    
+    const currentLang = '{{ current_lang }}';
+    const isMobile = window.innerWidth < 992;
+    const loadedTabs = new Set();
+    const loadedAccordions = new Set();
+    let selectedMiners = [];
+    
+    // ========================================
+    // 1. HASH NAVIGATION - Enable direct linking
+    // ========================================
+    function handleHashNavigation() {
+        const hash = window.location.hash.substring(1);
+        console.log('Hash navigation:', hash);
+        
+        if (!hash) return;
+        
+        if (isMobile) {
+            // Mobile: Open accordion
+            const collapseElement = document.getElementById(`collapse-${hash}`);
+            if (collapseElement) {
+                const accordion = new bootstrap.Collapse(collapseElement, { show: true });
+            }
+        } else {
+            // Desktop: Activate tab
+            const tabButton = document.querySelector(`button[data-bs-target="#${hash}"]`);
+            if (tabButton) {
+                const tab = new bootstrap.Tab(tabButton);
+                tab.show();
+            }
+        }
+    }
+    
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashNavigation);
+    
+    // ========================================
+    // 2. DESKTOP TAB LAZY LOADING
+    // ========================================
+    const tabTriggers = document.querySelectorAll('#operations-tabs button[data-bs-toggle="tab"]');
+    
+    tabTriggers.forEach(trigger => {
+        trigger.addEventListener('show.bs.tab', function(event) {
+            const targetId = event.target.getAttribute('data-bs-target').substring(1);
+            loadDesktopTabContent(targetId);
+            
+            // Update hash without triggering hashchange
+            if (window.location.hash !== '#' + targetId) {
+                history.replaceState(null, null, '#' + targetId);
+            }
+        });
+    });
+    
+    function loadDesktopTabContent(tabId) {
+        // Prevent duplicate loading
+        if (loadedTabs.has(tabId)) {
+            console.log('Tab already loaded:', tabId);
+            return;
+        }
+        
+        console.log('Loading desktop tab:', tabId);
+        
+        if (tabId === 'miners') {
+            loadMiners();
+            loadedTabs.add(tabId);
+            return;
+        }
+        
+        let frameId, loaderElem, url;
+        
+        switch(tabId) {
+            case 'calculator':
+                frameId = 'calculator-frame';
+                loaderElem = document.getElementById('calculator-loader');
+                url = '/calculator';
+                break;
+            case 'batch':
+                frameId = 'batch-frame';
+                loaderElem = document.getElementById('batch-loader');
+                url = '/batch-calculator';
+                break;
+            case 'import':
+                frameId = 'import-frame';
+                loaderElem = document.getElementById('import-loader');
+                url = '/api/miners/page';
+                break;
+            default:
+                console.warn('Unknown tab ID:', tabId);
+                return;
+        }
+        
+        const frame = document.getElementById(frameId);
+        if (!frame) {
+            console.error('Frame not found:', frameId);
+            return;
+        }
+        
+        // Set iframe src
+        frame.src = url;
+        
+        // Handle load success
+        frame.onload = function() {
+            console.log('Iframe loaded successfully:', frameId);
+            loaderElem.style.display = 'none';
+            frame.style.display = 'block';
+            loadedTabs.add(tabId);
+        };
+        
+        // Handle load error
+        frame.onerror = function() {
+            console.error('Iframe load error:', frameId);
+            showIframeError(loaderElem, url, tabId);
+        };
+        
+        // Timeout fallback (10 seconds)
+        setTimeout(() => {
+            if (!loadedTabs.has(tabId) && frame.src) {
+                console.warn('Iframe load timeout:', frameId);
+                loaderElem.style.display = 'none';
+                frame.style.display = 'block';
+                loadedTabs.add(tabId);
+            }
+        }, 10000);
+    }
+    
+    // ========================================
+    // 3. MOBILE ACCORDION LAZY LOADING
+    // ========================================
+    const accordionItems = document.querySelectorAll('.accordion-mobile .accordion-collapse');
+    
+    accordionItems.forEach(item => {
+        item.addEventListener('show.bs.collapse', function(event) {
+            const targetId = event.target.id.replace('collapse-', '');
+            loadMobileAccordionContent(targetId, event.target);
+        });
+    });
+    
+    function loadMobileAccordionContent(accordionId, collapseElement) {
+        // Prevent duplicate loading
+        if (loadedAccordions.has(accordionId)) {
+            console.log('Accordion already loaded:', accordionId);
+            return;
+        }
+        
+        console.log('Loading mobile accordion:', accordionId);
+        
+        const accordionBody = collapseElement.querySelector('.accordion-body');
+        
+        if (accordionId === 'miners') {
+            loadMinersMobile();
+            loadedAccordions.add(accordionId);
+            return;
+        }
+        
+        const iframeUrl = accordionBody.getAttribute('data-iframe-url');
+        if (!iframeUrl) {
+            console.warn('No iframe URL for accordion:', accordionId);
+            return;
+        }
+        
+        // Create iframe
+        const iframe = document.createElement('iframe');
+        iframe.className = 'iframe-container';
+        iframe.src = iframeUrl;
+        iframe.setAttribute('loading', 'lazy');
+        
+        const loader = accordionBody.querySelector('.tab-loader');
+        
+        iframe.onload = function() {
+            console.log('Mobile iframe loaded:', accordionId);
+            if (loader) loader.style.display = 'none';
+            loadedAccordions.add(accordionId);
+        };
+        
+        iframe.onerror = function() {
+            console.error('Mobile iframe error:', accordionId);
+            showIframeError(accordionBody, iframeUrl, accordionId);
+        };
+        
+        accordionBody.appendChild(iframe);
+        
+        // Timeout fallback
+        setTimeout(() => {
+            if (!loadedAccordions.has(accordionId)) {
+                if (loader) loader.style.display = 'none';
+                loadedAccordions.add(accordionId);
+            }
+        }, 10000);
+    }
+    
+    // ========================================
+    // 4. ERROR HANDLING - FIX: Use event delegation instead of inline onclick
+    // ========================================
+    function showIframeError(container, url, tabId) {
+        const errorMsg = currentLang === 'zh' ? '加载失败' : 'Failed to load';
+        const retryText = currentLang === 'zh' ? '重试' : 'Retry';
+        
+        container.innerHTML = `
+            <div class="iframe-error">
+                <i class="bi bi-exclamation-triangle" style="font-size: 3rem;"></i>
+                <p class="mt-3">${errorMsg}: ${url}</p>
+                <button class="btn btn-warning retry-btn" data-tab-id="${tabId}">
+                    <i class="bi bi-arrow-clockwise"></i> ${retryText}
+                </button>
+            </div>
+        `;
+    }
+    
+    // Event delegation for retry buttons - ensures proper scope
+    document.addEventListener('click', function(e) {
+        const retryBtn = e.target.closest('.retry-btn');
+        if (retryBtn) {
+            const tabId = retryBtn.getAttribute('data-tab-id');
+            console.log('Retry button clicked for tab:', tabId);
+            
+            if (isMobile) {
+                // Mobile: reload accordion
+                const collapseElement = document.getElementById(`collapse-${tabId}`);
+                if (collapseElement) {
+                    loadedAccordions.delete(tabId);
+                    loadMobileAccordionContent(tabId, collapseElement);
+                }
+            } else {
+                // Desktop: reload tab
+                loadedTabs.delete(tabId);
+                loadDesktopTabContent(tabId);
+            }
+        }
+    });
+    
+    // ========================================
+    // 5. MINER LIST LOADING WITH SELECTION
+    // ========================================
+    async function loadMiners() {
+        const container = document.getElementById('miners-content');
+        if (!container) return;
+        
+        try {
+            const response = await fetch('/admin/miners/api/list?active_only=true');
+            const data = await response.json();
+            
+            if (data.success) {
+                // Load previously selected miners from sessionStorage
+                const savedSelection = sessionStorage.getItem('selectedMiners');
+                if (savedSelection) {
+                    selectedMiners = JSON.parse(savedSelection);
+                }
+                
+                const minersHtml = renderMinersList(data.miners);
+                container.innerHTML = minersHtml;
+                
+                // Attach event listeners
+                attachMinerSelectionListeners();
+            } else {
+                throw new Error(data.error || 'Failed to load miners');
+            }
+        } catch (error) {
+            console.error('Error loading miners:', error);
+            const errorMsg = currentLang === 'zh' ? '加载矿机列表失败' : 'Failed to load miner list';
+            const retryText = currentLang === 'zh' ? '重试' : 'Retry';
+            container.innerHTML = `
+                <div class="alert alert-danger">
+                    ${errorMsg}: ${error.message}
+                    <button class="btn btn-sm btn-outline-danger mt-2" onclick="location.reload()">
+                        ${retryText}
+                    </button>
+                </div>
+            `;
+        }
+    }
+    
+    async function loadMinersMobile() {
+        const container = document.getElementById('miners-mobile-content');
+        if (!container) return;
+        
+        try {
+            const response = await fetch('/admin/miners/api/list?active_only=true');
+            const data = await response.json();
+            
+            if (data.success) {
+                const minersHtml = renderMinersList(data.miners);
+                container.innerHTML = minersHtml;
+                attachMinerSelectionListeners();
+            } else {
+                throw new Error(data.error || 'Failed to load miners');
+            }
+        } catch (error) {
+            console.error('Error loading miners:', error);
+            const errorMsg = currentLang === 'zh' ? '加载矿机列表失败' : 'Failed to load miner list';
+            container.innerHTML = `<div class="alert alert-danger">${errorMsg}</div>`;
+        }
+    }
+    
+    function renderMinersList(miners) {
+        if (!miners || miners.length === 0) {
+            return `<p class="text-muted">${currentLang === 'zh' ? '暂无矿机数据' : 'No miner data available'}</p>`;
+        }
+        
+        const selectAllText = currentLang === 'zh' ? '全选' : 'Select All';
+        const clearText = currentLang === 'zh' ? '清除' : 'Clear';
+        const sendToBatchText = currentLang === 'zh' ? '发送到批量计算器' : 'Send to Batch Calculator';
+        const selectedCountText = currentLang === 'zh' ? '已选择' : 'Selected';
+        
+        let html = `
+            <div class="miner-selection-toolbar">
+                <div>
+                    <button class="btn btn-sm btn-outline-warning" id="select-all-miners">${selectAllText}</button>
+                    <button class="btn btn-sm btn-outline-secondary ms-2" id="clear-selection">${clearText}</button>
+                </div>
+                <div>
+                    <span class="text-warning me-3">
+                        <strong id="selected-count">${selectedMiners.length}</strong> ${selectedCountText}
+                    </span>
+                    <button class="btn btn-sm btn-warning" id="send-to-batch" ${selectedMiners.length === 0 ? 'disabled' : ''}>
+                        <i class="bi bi-send"></i> ${sendToBatchText}
+                    </button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover" id="miners-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" class="miner-checkbox" id="checkbox-all"></th>
+                            <th>${currentLang === 'zh' ? '型号' : 'Model'}</th>
+                            <th>${currentLang === 'zh' ? '制造商' : 'Manufacturer'}</th>
+                            <th>${currentLang === 'zh' ? '算力 (TH/s)' : 'Hashrate (TH/s)'}</th>
+                            <th>${currentLang === 'zh' ? '功耗 (W)' : 'Power (W)'}</th>
+                            <th>${currentLang === 'zh' ? '能效比 (W/TH)' : 'Efficiency (W/TH)'}</th>
+                            <th>${currentLang === 'zh' ? '价格 (USD)' : 'Price (USD)'}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        miners.forEach(miner => {
+            const isSelected = selectedMiners.some(m => m.id === miner.id);
+            const rowClass = isSelected ? 'selected-row' : '';
+            
+            html += `
+                <tr class="${rowClass}" data-miner-id="${miner.id}">
+                    <td><input type="checkbox" class="miner-checkbox row-checkbox" data-miner-id="${miner.id}" ${isSelected ? 'checked' : ''}></td>
+                    <td><strong>${miner.model_name}</strong></td>
+                    <td><span class="badge bg-secondary">${miner.manufacturer}</span></td>
+                    <td>${miner.hashrate.toFixed(1)}</td>
+                    <td>${miner.power_consumption}</td>
+                    <td>${miner.efficiency ? miner.efficiency.toFixed(2) : 'N/A'}</td>
+                    <td>${miner.price_usd ? '$' + miner.price_usd.toLocaleString() : 'N/A'}</td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        return html;
+    }
+    
+    // ========================================
+    // 6. MINER SELECTION & STATE SHARING
+    // ========================================
+    function attachMinerSelectionListeners() {
+        // Individual checkbox
+        document.querySelectorAll('.row-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const minerId = parseInt(this.getAttribute('data-miner-id'));
+                const row = this.closest('tr');
+                
+                if (this.checked) {
+                    row.classList.add('selected-row');
+                    if (!selectedMiners.find(m => m.id === minerId)) {
+                        // Get miner data from row
+                        const cells = row.querySelectorAll('td');
+                        selectedMiners.push({
+                            id: minerId,
+                            model_name: cells[1].textContent.trim(),
+                            manufacturer: cells[2].textContent.trim(),
+                            hashrate: parseFloat(cells[3].textContent),
+                            power_consumption: parseFloat(cells[4].textContent),
+                            efficiency: cells[5].textContent !== 'N/A' ? parseFloat(cells[5].textContent) : null,
+                            price_usd: cells[6].textContent !== 'N/A' ? parseFloat(cells[6].textContent.replace('$', '').replace(',', '')) : null
+                        });
+                    }
+                } else {
+                    row.classList.remove('selected-row');
+                    selectedMiners = selectedMiners.filter(m => m.id !== minerId);
+                }
+                
+                updateSelectionUI();
+                saveSelectedMiners();
+            });
+        });
+        
+        // Select all checkbox
+        const selectAllCheckbox = document.getElementById('checkbox-all');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('.row-checkbox');
+                checkboxes.forEach(cb => {
+                    cb.checked = this.checked;
+                    cb.dispatchEvent(new Event('change'));
+                });
+            });
+        }
+        
+        // Select all button
+        const selectAllBtn = document.getElementById('select-all-miners');
+        if (selectAllBtn) {
+            selectAllBtn.addEventListener('click', function() {
+                const checkboxes = document.querySelectorAll('.row-checkbox');
+                checkboxes.forEach(cb => {
+                    if (!cb.checked) {
+                        cb.checked = true;
+                        cb.dispatchEvent(new Event('change'));
+                    }
+                });
+            });
+        }
+        
+        // Clear selection button
+        const clearBtn = document.getElementById('clear-selection');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function() {
+                selectedMiners = [];
+                document.querySelectorAll('.row-checkbox').forEach(cb => {
+                    cb.checked = false;
+                });
+                document.querySelectorAll('.selected-row').forEach(row => {
+                    row.classList.remove('selected-row');
+                });
+                updateSelectionUI();
+                saveSelectedMiners();
+            });
+        }
+        
+        // Send to batch button - FIX: Add postMessage bridge
+        const sendBtn = document.getElementById('send-to-batch');
+        if (sendBtn) {
+            sendBtn.addEventListener('click', function() {
+                saveSelectedMiners();
+                
+                // Switch to batch calculator tab
+                if (isMobile) {
+                    const batchCollapse = document.getElementById('collapse-batch');
+                    const accordion = new bootstrap.Collapse(batchCollapse, { show: true });
+                    
+                    // Send data to iframe after collapse is shown
+                    setTimeout(() => {
+                        sendMinersToBatchCalculator();
+                    }, 600);
+                } else {
+                    const batchTab = document.querySelector('button[data-bs-target="#batch"]');
+                    if (batchTab) {
+                        const tab = new bootstrap.Tab(batchTab);
+                        tab.show();
+                        
+                        // Send data to iframe after tab is shown
+                        setTimeout(() => {
+                            sendMinersToBatchCalculator();
+                        }, 600);
+                    }
+                }
+                
+                // Show notification
+                const msg = currentLang === 'zh' 
+                    ? `已发送 ${selectedMiners.length} 台矿机到批量计算器` 
+                    : `Sent ${selectedMiners.length} miners to batch calculator`;
+                showNotification(msg, 'success');
+            });
+        }
+    }
+    
+    // FIX: postMessage bridge to send selected miners to batch calculator iframe
+    function sendMinersToBatchCalculator() {
+        console.log('Sending miners to batch calculator iframe...');
+        
+        const iframe = isMobile 
+            ? document.querySelector('#collapse-batch iframe')
+            : document.getElementById('batch-frame');
+        
+        if (!iframe || !iframe.contentWindow) {
+            console.warn('Batch calculator iframe not found or not loaded');
+            return;
+        }
+        
+        // Send postMessage with selected miners
+        try {
+            iframe.contentWindow.postMessage({
+                type: 'LOAD_MINERS',
+                miners: selectedMiners,
+                source: 'mining-operations-center'
+            }, '*');
+            console.log(`Sent ${selectedMiners.length} miners to batch calculator`);
+        } catch (error) {
+            console.error('Error sending postMessage:', error);
+        }
+    }
+    
+    function updateSelectionUI() {
+        const countElem = document.getElementById('selected-count');
+        const sendBtn = document.getElementById('send-to-batch');
+        
+        if (countElem) {
+            countElem.textContent = selectedMiners.length;
+        }
+        
+        if (sendBtn) {
+            sendBtn.disabled = selectedMiners.length === 0;
+        }
+    }
+    
+    function saveSelectedMiners() {
+        sessionStorage.setItem('selectedMiners', JSON.stringify(selectedMiners));
+        console.log('Saved selected miners:', selectedMiners.length);
+    }
+    
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} position-fixed top-0 start-50 translate-middle-x mt-3`;
+        notification.style.zIndex = '9999';
+        notification.innerHTML = `
+            <i class="bi bi-check-circle me-2"></i> ${message}
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+    
+    // ========================================
+    // 7. INITIALIZATION - FIX: Explicit first tab loading
+    // ========================================
+    function initialize() {
+        console.log('Initializing Mining Operations Center...');
+        console.log('Mobile mode:', isMobile);
+        
+        // Handle initial hash navigation
+        if (window.location.hash) {
+            handleHashNavigation();
+        } else {
+            // FIX: Explicitly load first tab to prevent spinner stuck
+            // Use setTimeout to ensure DOM is fully ready
+            setTimeout(() => {
+                if (!isMobile) {
+                    console.log('Explicitly loading first tab: calculator');
+                    loadDesktopTabContent('calculator');
+                } else {
+                    // On mobile, load first accordion if shown
+                    const firstCollapse = document.getElementById('collapse-calculator');
+                    if (firstCollapse && firstCollapse.classList.contains('show')) {
+                        console.log('Loading first mobile accordion: calculator');
+                        loadMobileAccordionContent('calculator', firstCollapse);
+                    }
+                }
+            }, 100);
+        }
+        
+        console.log('Mining Operations Center initialized');
+    }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initialize);
+    } else {
+        initialize();
+    }
+    
+    // Event: Import success -> Refresh miners list
+    document.addEventListener('minerImportSuccess', function() {
+        loadMiners();
+        loadMinersMobile();
+    });
+    
+    // Expose functions for debugging
+    window.miningOpsCenter = {
+        loadMiners,
+        selectedMiners: () => selectedMiners,
+        clearSelection: () => {
+            selectedMiners = [];
+            sessionStorage.removeItem('selectedMiners');
+        }
+    };
+    
+})();
+</script>
+{% endblock %}
