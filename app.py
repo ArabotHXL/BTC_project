@@ -5925,6 +5925,16 @@ except ImportError as e:
 except Exception as e:
     logging.error(f"Failed to register Data Analytics Center routes: {e}")
 
+# Web3 Center 路由
+try:
+    from web3_center_routes import web3_center_bp
+    app.register_blueprint(web3_center_bp)
+    logging.info("Web3 Center routes registered successfully")
+except ImportError as e:
+    logging.warning(f"Web3 Center routes not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register Web3 Center routes: {e}")
+
 # Register calculator module blueprint for modular architecture
 try:
     from modules.config import register_modules

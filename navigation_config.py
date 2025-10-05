@@ -238,13 +238,14 @@ NAVIGATION_MENU = [
         ]
     },
     
-    # ========== Web3仪表盘 ==========
+    # ========== Web3中心 ==========
     {
         'id': 'web3_dashboard',
         'name': {
-            'zh': 'Web3仪表盘',
-            'en': 'Web3 Dashboard'
+            'zh': 'Web3中心',
+            'en': 'Web3 Center'
         },
+        'url': '/operations/web3',
         'icon': 'bi-diagram-3',
         'min_role': 'mining_site',
         'order': 6,
@@ -255,7 +256,7 @@ NAVIGATION_MENU = [
                     'zh': 'Web3概览',
                     'en': 'Web3 Overview'
                 },
-                'url': '/web3-dashboard',
+                'url': '/operations/web3#overview',
                 'icon': 'bi-grid-3x2',
                 'min_role': 'mining_site'
             },
@@ -265,7 +266,7 @@ NAVIGATION_MENU = [
                     'zh': '区块链验证',
                     'en': 'Blockchain Verification'
                 },
-                'url': '/blockchain-verification',
+                'url': '/operations/web3#verification',
                 'icon': 'bi-shield-check',
                 'min_role': 'mining_site'
             },
@@ -275,7 +276,7 @@ NAVIGATION_MENU = [
                     'zh': 'SLA NFT管理',
                     'en': 'SLA NFT Manager'
                 },
-                'url': '/sla-nft-manager',
+                'url': '/operations/web3#sla',
                 'icon': 'bi-award',
                 'min_role': 'mining_site'
             },
@@ -285,7 +286,7 @@ NAVIGATION_MENU = [
                     'zh': '透明度验证中心',
                     'en': 'Transparency Center'
                 },
-                'url': '/transparency-verification-center',
+                'url': '/operations/web3#transparency',
                 'icon': 'bi-eye',
                 'min_role': 'mining_site'
             },
@@ -295,7 +296,7 @@ NAVIGATION_MENU = [
                     'zh': '加密支付管理',
                     'en': 'Crypto Payment'
                 },
-                'url': '/crypto-payment-dashboard',
+                'url': '/operations/web3#payment',
                 'icon': 'bi-wallet',
                 'min_role': 'admin'
             }

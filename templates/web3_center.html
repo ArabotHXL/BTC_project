@@ -1,0 +1,688 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if current_lang == 'zh' %}Web3中心{% else %}Web3 Center{% endif %} - BTC Mining Calculator
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Web3 Center Styles - Dark Theme with Gold Accents */
+.web3-center-container {
+    max-width: 100%;
+    padding: 1rem;
+}
+
+/* Tab Navigation Styling */
+.nav-tabs-vertical {
+    border-bottom: none;
+    border-right: 2px solid #ffc107;
+}
+
+.nav-tabs-vertical .nav-link {
+    color: #adb5bd;
+    border: none;
+    border-right: 3px solid transparent;
+    border-radius: 0;
+    padding: 1rem 1.5rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+    background: rgba(255, 193, 7, 0.05);
+}
+
+.nav-tabs-vertical .nav-link:hover {
+    background: rgba(255, 193, 7, 0.15);
+    border-right-color: #ffc107;
+    color: #ffc107;
+}
+
+.nav-tabs-vertical .nav-link.active {
+    background: linear-gradient(90deg, rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.05));
+    border-right-color: #ffc107;
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.nav-tabs-vertical .nav-link i {
+    margin-right: 0.75rem;
+    font-size: 1.2rem;
+}
+
+/* Tab Content Styling */
+.tab-content {
+    padding: 2rem;
+    background: #1a1a1a;
+    border-radius: 10px;
+    min-height: 600px;
+}
+
+/* Mobile Accordion Styling */
+.accordion-mobile {
+    display: none;
+}
+
+.accordion-mobile .accordion-item {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    margin-bottom: 0.5rem;
+}
+
+.accordion-mobile .accordion-button {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.accordion-mobile .accordion-button:not(.collapsed) {
+    background: linear-gradient(90deg, rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.1));
+    color: #ffc107;
+}
+
+.accordion-mobile .accordion-body {
+    background: #1a1a1a;
+    padding: 1.5rem;
+}
+
+/* Header Styling */
+.web3-header {
+    background: linear-gradient(135deg, #2c3e50, #1a252f);
+    border: 2px solid #ffc107;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.web3-header h1 {
+    color: #ffc107;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.web3-header p {
+    color: #adb5bd;
+    margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 991px) {
+    .nav-tabs-desktop {
+        display: none;
+    }
+    
+    .accordion-mobile {
+        display: block;
+    }
+    
+    .tab-content {
+        padding: 1rem;
+    }
+}
+
+@media (min-width: 992px) {
+    .accordion-mobile {
+        display: none;
+    }
+}
+
+/* Iframe Container for Embedded Content */
+.iframe-container {
+    width: 100%;
+    min-height: 800px;
+    border: none;
+    background: transparent;
+}
+
+/* Tab Content Loader */
+.tab-loader {
+    text-align: center;
+    padding: 3rem;
+    color: #ffc107;
+}
+
+.tab-loader .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    border-width: 0.3em;
+}
+
+/* Error State */
+.iframe-error {
+    text-align: center;
+    padding: 2rem;
+    color: #dc3545;
+}
+
+.iframe-error .btn {
+    margin-top: 1rem;
+}
+
+/* Admin-only badge */
+.admin-badge {
+    font-size: 0.7rem;
+    margin-left: 0.5rem;
+    padding: 0.2rem 0.5rem;
+    background: #dc3545;
+    color: white;
+    border-radius: 4px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="web3-center-container">
+    <!-- Header -->
+    <div class="web3-header">
+        <h1>
+            <i class="bi bi-diagram-3"></i>
+            {% if current_lang == 'zh' %}Web3中心{% else %}Web3 Center{% endif %}
+        </h1>
+        <p>
+            {% if current_lang == 'zh' %}
+                统一Web3平台 - 区块链验证、SLA NFT、透明度中心、加密支付
+            {% else %}
+                Unified Web3 Platform - Blockchain Verification, SLA NFT, Transparency, Crypto Payment
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- Desktop: Vertical Tab Navigation -->
+    <div class="row nav-tabs-desktop">
+        <div class="col-lg-2">
+            <nav class="nav flex-column nav-tabs-vertical" id="web3-tabs" role="tablist">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" 
+                        data-bs-target="#overview" type="button" role="tab">
+                    <i class="bi bi-grid-3x2"></i>
+                    <span>{% if current_lang == 'zh' %}Web3概览{% else %}Overview{% endif %}</span>
+                </button>
+                <button class="nav-link" id="verification-tab" data-bs-toggle="tab" 
+                        data-bs-target="#verification" type="button" role="tab">
+                    <i class="bi bi-shield-check"></i>
+                    <span>{% if current_lang == 'zh' %}区块链验证{% else %}Verification{% endif %}</span>
+                </button>
+                <button class="nav-link" id="sla-tab" data-bs-toggle="tab" 
+                        data-bs-target="#sla" type="button" role="tab">
+                    <i class="bi bi-award"></i>
+                    <span>{% if current_lang == 'zh' %}SLA NFT管理{% else %}SLA NFT{% endif %}</span>
+                </button>
+                <button class="nav-link" id="transparency-tab" data-bs-toggle="tab" 
+                        data-bs-target="#transparency" type="button" role="tab">
+                    <i class="bi bi-eye"></i>
+                    <span>{% if current_lang == 'zh' %}透明度中心{% else %}Transparency{% endif %}</span>
+                </button>
+                {% if user_role in ['admin', 'owner'] %}
+                <button class="nav-link" id="payment-tab" data-bs-toggle="tab" 
+                        data-bs-target="#payment" type="button" role="tab">
+                    <i class="bi bi-wallet"></i>
+                    <span>{% if current_lang == 'zh' %}加密支付{% else %}Crypto Payment{% endif %}</span>
+                    <span class="admin-badge">ADMIN</span>
+                </button>
+                {% endif %}
+            </nav>
+        </div>
+        <div class="col-lg-10">
+            <div class="tab-content" id="web3-tab-content">
+                <!-- Tab 1: Web3 Overview -->
+                <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                    <div class="tab-loader" id="overview-loader">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
+                    </div>
+                    <iframe id="overview-frame" class="iframe-container" style="display:none;"></iframe>
+                </div>
+                
+                <!-- Tab 2: Blockchain Verification -->
+                <div class="tab-pane fade" id="verification" role="tabpanel">
+                    <div class="tab-loader" id="verification-loader">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
+                    </div>
+                    <iframe id="verification-frame" class="iframe-container" style="display:none;"></iframe>
+                </div>
+                
+                <!-- Tab 3: SLA NFT Manager -->
+                <div class="tab-pane fade" id="sla" role="tabpanel">
+                    <div class="tab-loader" id="sla-loader">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
+                    </div>
+                    <iframe id="sla-frame" class="iframe-container" style="display:none;"></iframe>
+                </div>
+                
+                <!-- Tab 4: Transparency Center -->
+                <div class="tab-pane fade" id="transparency" role="tabpanel">
+                    <div class="tab-loader" id="transparency-loader">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
+                    </div>
+                    <iframe id="transparency-frame" class="iframe-container" style="display:none;"></iframe>
+                </div>
+                
+                <!-- Tab 5: Crypto Payment (Admin Only) -->
+                {% if user_role in ['admin', 'owner'] %}
+                <div class="tab-pane fade" id="payment" role="tabpanel">
+                    <div class="tab-loader" id="payment-loader">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
+                    </div>
+                    <iframe id="payment-frame" class="iframe-container" style="display:none;"></iframe>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile: Accordion Navigation -->
+    <div class="accordion accordion-mobile" id="web3-accordion">
+        <!-- Accordion Item 1: Web3 Overview -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading-overview">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#collapse-overview">
+                    <i class="bi bi-grid-3x2 me-2"></i>
+                    {% if current_lang == 'zh' %}Web3概览{% else %}Web3 Overview{% endif %}
+                </button>
+            </h2>
+            <div id="collapse-overview" class="accordion-collapse collapse show" 
+                 data-bs-parent="#web3-accordion">
+                <div class="accordion-body" data-iframe-url="/web3-dashboard">
+                    <div class="tab-loader">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accordion Item 2: Blockchain Verification -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading-verification">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#collapse-verification">
+                    <i class="bi bi-shield-check me-2"></i>
+                    {% if current_lang == 'zh' %}区块链验证{% else %}Blockchain Verification{% endif %}
+                </button>
+            </h2>
+            <div id="collapse-verification" class="accordion-collapse collapse" 
+                 data-bs-parent="#web3-accordion">
+                <div class="accordion-body" data-iframe-url="/blockchain-verification">
+                    <div class="tab-loader">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accordion Item 3: SLA NFT Manager -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading-sla">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#collapse-sla">
+                    <i class="bi bi-award me-2"></i>
+                    {% if current_lang == 'zh' %}SLA NFT管理{% else %}SLA NFT Manager{% endif %}
+                </button>
+            </h2>
+            <div id="collapse-sla" class="accordion-collapse collapse" 
+                 data-bs-parent="#web3-accordion">
+                <div class="accordion-body" data-iframe-url="/sla-nft-manager">
+                    <div class="tab-loader">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accordion Item 4: Transparency Center -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading-transparency">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#collapse-transparency">
+                    <i class="bi bi-eye me-2"></i>
+                    {% if current_lang == 'zh' %}透明度验证中心{% else %}Transparency Center{% endif %}
+                </button>
+            </h2>
+            <div id="collapse-transparency" class="accordion-collapse collapse" 
+                 data-bs-parent="#web3-accordion">
+                <div class="accordion-body" data-iframe-url="/transparency-verification-center">
+                    <div class="tab-loader">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accordion Item 5: Crypto Payment (Admin Only) -->
+        {% if user_role in ['admin', 'owner'] %}
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading-payment">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#collapse-payment">
+                    <i class="bi bi-wallet me-2"></i>
+                    {% if current_lang == 'zh' %}加密支付管理{% else %}Crypto Payment{% endif %}
+                    <span class="admin-badge ms-2">ADMIN</span>
+                </button>
+            </h2>
+            <div id="collapse-payment" class="accordion-collapse collapse" 
+                 data-bs-parent="#web3-accordion">
+                <div class="accordion-body" data-iframe-url="/crypto-payment-dashboard">
+                    <div class="tab-loader">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Web3 Center JavaScript - Complete Implementation
+(function() {
+    'use strict';
+    
+    const currentLang = '{{ current_lang }}';
+    const userRole = '{{ user_role }}';
+    const isMobile = window.innerWidth < 992;
+    const loadedTabs = new Set();
+    const loadedAccordions = new Set();
+    
+    // ========================================
+    // 1. HASH NAVIGATION - Enable direct linking
+    // ========================================
+    function handleHashNavigation() {
+        const hash = window.location.hash.substring(1);
+        console.log('Hash navigation:', hash);
+        
+        if (!hash) return;
+        
+        if (isMobile) {
+            // Mobile: Open accordion
+            const collapseElement = document.getElementById(`collapse-${hash}`);
+            if (collapseElement) {
+                const accordion = new bootstrap.Collapse(collapseElement, { show: true });
+            }
+        } else {
+            // Desktop: Activate tab
+            const tabButton = document.querySelector(`button[data-bs-target="#${hash}"]`);
+            if (tabButton) {
+                const tab = new bootstrap.Tab(tabButton);
+                tab.show();
+            }
+        }
+    }
+    
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashNavigation);
+    
+    // ========================================
+    // 2. DESKTOP TAB LAZY LOADING + HASH SYNC
+    // ========================================
+    const tabTriggers = document.querySelectorAll('#web3-tabs button[data-bs-toggle="tab"]');
+    
+    tabTriggers.forEach(trigger => {
+        trigger.addEventListener('show.bs.tab', function(event) {
+            const targetId = event.target.getAttribute('data-bs-target').substring(1);
+            loadDesktopTabContent(targetId);
+        });
+    });
+    
+    document.querySelectorAll('.nav-link[data-bs-toggle="tab"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(e) {
+            const targetId = e.target.getAttribute('data-bs-target');
+            const hash = targetId.substring(1);
+            if (window.location.hash !== targetId) {
+                history.replaceState(null, null, targetId);
+                console.log('Desktop tab hash updated to:', hash);
+            }
+        });
+    });
+    
+    function loadDesktopTabContent(tabId) {
+        // Prevent duplicate loading
+        if (loadedTabs.has(tabId)) {
+            console.log('Tab already loaded:', tabId);
+            return;
+        }
+        
+        console.log('Loading desktop tab:', tabId);
+        
+        let frameId, loaderElem, url;
+        
+        switch(tabId) {
+            case 'overview':
+                frameId = 'overview-frame';
+                loaderElem = document.getElementById('overview-loader');
+                url = '/web3-dashboard';
+                break;
+            case 'verification':
+                frameId = 'verification-frame';
+                loaderElem = document.getElementById('verification-loader');
+                url = '/blockchain-verification';
+                break;
+            case 'sla':
+                frameId = 'sla-frame';
+                loaderElem = document.getElementById('sla-loader');
+                url = '/sla-nft-manager';
+                break;
+            case 'transparency':
+                frameId = 'transparency-frame';
+                loaderElem = document.getElementById('transparency-loader');
+                url = '/transparency-verification-center';
+                break;
+            case 'payment':
+                frameId = 'payment-frame';
+                loaderElem = document.getElementById('payment-loader');
+                url = '/crypto-payment-dashboard';
+                break;
+            default:
+                console.warn('Unknown tab ID:', tabId);
+                return;
+        }
+        
+        const frame = document.getElementById(frameId);
+        if (!frame) {
+            console.error('Frame not found:', frameId);
+            return;
+        }
+        
+        // Set iframe src
+        frame.src = url;
+        
+        // Handle load success
+        frame.onload = function() {
+            console.log('Iframe loaded successfully:', frameId);
+            loaderElem.style.display = 'none';
+            frame.style.display = 'block';
+            loadedTabs.add(tabId);
+        };
+        
+        // Handle load error
+        frame.onerror = function() {
+            console.error('Iframe load error:', frameId);
+            showIframeError(loaderElem, url, tabId);
+        };
+        
+        // Timeout fallback (10 seconds)
+        setTimeout(() => {
+            if (!loadedTabs.has(tabId) && frame.src) {
+                console.warn('Iframe load timeout:', frameId);
+                loaderElem.style.display = 'none';
+                frame.style.display = 'block';
+                loadedTabs.add(tabId);
+            }
+        }, 10000);
+    }
+    
+    // ========================================
+    // 3. MOBILE ACCORDION LAZY LOADING + HASH SYNC
+    // ========================================
+    const accordionItems = document.querySelectorAll('.accordion-mobile .accordion-collapse');
+    
+    accordionItems.forEach(item => {
+        item.addEventListener('show.bs.collapse', function(event) {
+            const targetId = event.target.id.replace('collapse-', '');
+            loadMobileAccordionContent(targetId, event.target);
+        });
+    });
+    
+    document.querySelectorAll('.accordion-button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-bs-target');
+            const hash = targetId.replace('#collapse-', '');
+            history.replaceState(null, null, '#' + hash);
+            console.log('Mobile accordion hash updated to:', hash);
+        });
+    });
+    
+    function loadMobileAccordionContent(accordionId, collapseElement) {
+        // Prevent duplicate loading
+        if (loadedAccordions.has(accordionId)) {
+            console.log('Accordion already loaded:', accordionId);
+            return;
+        }
+        
+        console.log('Loading mobile accordion:', accordionId);
+        
+        const accordionBody = collapseElement.querySelector('.accordion-body');
+        const iframeUrl = accordionBody.getAttribute('data-iframe-url');
+        
+        if (!iframeUrl) {
+            console.warn('No iframe URL for accordion:', accordionId);
+            return;
+        }
+        
+        // Create iframe
+        const iframe = document.createElement('iframe');
+        iframe.className = 'iframe-container';
+        iframe.src = iframeUrl;
+        iframe.setAttribute('loading', 'lazy');
+        
+        const loader = accordionBody.querySelector('.tab-loader');
+        
+        iframe.onload = function() {
+            console.log('Mobile iframe loaded:', accordionId);
+            if (loader) loader.style.display = 'none';
+            loadedAccordions.add(accordionId);
+        };
+        
+        iframe.onerror = function() {
+            console.error('Mobile iframe error:', accordionId);
+            showIframeError(accordionBody, iframeUrl, accordionId);
+        };
+        
+        accordionBody.appendChild(iframe);
+        
+        // Timeout fallback
+        setTimeout(() => {
+            if (!loadedAccordions.has(accordionId)) {
+                if (loader) loader.style.display = 'none';
+                loadedAccordions.add(accordionId);
+            }
+        }, 10000);
+    }
+    
+    // ========================================
+    // 4. ERROR HANDLING - Use event delegation
+    // ========================================
+    function showIframeError(container, url, tabId) {
+        const errorMsg = currentLang === 'zh' ? '加载失败' : 'Failed to load';
+        const retryText = currentLang === 'zh' ? '重试' : 'Retry';
+        
+        container.innerHTML = `
+            <div class="iframe-error">
+                <i class="bi bi-exclamation-triangle" style="font-size: 3rem;"></i>
+                <p class="mt-3">${errorMsg}: ${url}</p>
+                <button class="btn btn-warning retry-btn" data-tab-id="${tabId}">
+                    <i class="bi bi-arrow-clockwise"></i> ${retryText}
+                </button>
+            </div>
+        `;
+    }
+    
+    // Event delegation for retry buttons
+    document.addEventListener('click', function(e) {
+        const retryBtn = e.target.closest('.retry-btn');
+        if (retryBtn) {
+            const tabId = retryBtn.getAttribute('data-tab-id');
+            console.log('Retry button clicked for tab:', tabId);
+            
+            if (isMobile) {
+                // Mobile: reload accordion
+                const collapseElement = document.getElementById(`collapse-${tabId}`);
+                if (collapseElement) {
+                    loadedAccordions.delete(tabId);
+                    loadMobileAccordionContent(tabId, collapseElement);
+                }
+            } else {
+                // Desktop: reload tab
+                loadedTabs.delete(tabId);
+                loadDesktopTabContent(tabId);
+            }
+        }
+    });
+    
+    // ========================================
+    // 5. INITIALIZATION - Explicit first tab loading
+    // ========================================
+    function initialize() {
+        console.log('Initializing Web3 Center...');
+        console.log('Mobile mode:', isMobile);
+        console.log('User role:', userRole);
+        
+        // Handle initial hash navigation
+        if (window.location.hash) {
+            handleHashNavigation();
+        } else {
+            // Explicitly load first tab to prevent spinner stuck
+            setTimeout(() => {
+                if (!isMobile) {
+                    console.log('Explicitly loading first tab: overview');
+                    loadDesktopTabContent('overview');
+                } else {
+                    // On mobile, load first accordion if shown
+                    const firstCollapse = document.getElementById('collapse-overview');
+                    if (firstCollapse && firstCollapse.classList.contains('show')) {
+                        console.log('Loading first mobile accordion: overview');
+                        loadMobileAccordionContent('overview', firstCollapse);
+                    }
+                }
+            }, 100);
+        }
+        
+        console.log('Web3 Center initialized');
+    }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initialize);
+    } else {
+        initialize();
+    }
+    
+    // Expose functions for debugging
+    window.web3Center = {
+        reload: function(tabId) {
+            if (isMobile) {
+                loadedAccordions.delete(tabId);
+                const collapseElement = document.getElementById(`collapse-${tabId}`);
+                if (collapseElement) {
+                    loadMobileAccordionContent(tabId, collapseElement);
+                }
+            } else {
+                loadedTabs.delete(tabId);
+                loadDesktopTabContent(tabId);
+            }
+        },
+        status: function() {
+            console.log('Loaded tabs:', Array.from(loadedTabs));
+            console.log('Loaded accordions:', Array.from(loadedAccordions));
+        }
+    };
+})();
+</script>
+{% endblock %}
