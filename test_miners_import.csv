@@ -1,0 +1,11 @@
+miner_id,model,ip,port,api,username,password,note
+S21-192.168.1.45,Antminer S21,192.168.1.45,4028,bmminer,root,,Rack A-03 Top
+M50-192.168.1.55,Whatsminer M50,192.168.1.55,22333,http,admin,,Rack B-02 Middle
+S19Pro-192.168.1.60,Antminer S19 Pro,192.168.1.60,4028,bmminer,root,,Rack A-05 Bottom
+M30S-192.168.1.75,Whatsminer M30S+,192.168.1.75,22333,http,admin,,Rack C-01 Top
+S21-192.168.1.80,Antminer S21,192.168.1.80,4028,bmminer,root,,Rack A-10 Middle
+T21-192.168.1.90,Antminer T21,192.168.1.90,4028,bmminer,root,,Rack D-03 Bottom
+M50S-192.168.1.100,Whatsminer M50S,192.168.1.100,22333,http,admin,,Rack B-08 Top
+S19XP-192.168.1.110,Antminer S19 XP,192.168.1.110,4028,bmminer,root,,Rack E-02 Middle
+M60-192.168.1.120,Whatsminer M60,192.168.1.120,22333,http,admin,,Rack C-05 Top
+S21Pro-192.168.1.130,Antminer S21 Pro,192.168.1.130,4028,bmminer,root,,Rack A-15 Bottom
