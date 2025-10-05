@@ -304,12 +304,13 @@
                                 <th>{{ t('ip_address') }}</th>
                                 <th>{{ t('port') }}</th>
                                 <th>{{ t('api') }}</th>
+                                <th>{{ t('status') }}</th>
                                 <th>{{ t('note') }}</th>
                             </tr>
                         </thead>
                         <tbody id="previewTableBody">
                             <tr>
-                                <td colspan="6" class="text-center text-muted">
+                                <td colspan="7" class="text-center text-muted">
                                     {{ t('no_data_yet') }}
                                 </td>
                             </tr>
@@ -484,6 +485,25 @@ importBtn.addEventListener('click', async () => {
     }
 });
 
+// Get status badge HTML with color
+function getStatusBadge(status) {
+    const statusMap = {
+        'online': { color: 'success', icon: 'check-circle-fill', text_zh: '在线', text_en: 'Online' },
+        'offline': { color: 'danger', icon: 'x-circle-fill', text_zh: '离线', text_en: 'Offline' },
+        'error': { color: 'warning', icon: 'exclamation-triangle-fill', text_zh: '故障', text_en: 'Error' },
+        'maintenance': { color: 'info', icon: 'tools', text_zh: '维护中', text_en: 'Maintenance' },
+        'unknown': { color: 'secondary', icon: 'question-circle', text_zh: '未知', text_en: 'Unknown' }
+    };
+    
+    const lang = document.documentElement.lang === 'zh-CN' ? 'zh' : 'en';
+    const statusInfo = statusMap[status] || statusMap['unknown'];
+    const text = lang === 'zh' ? statusInfo.text_zh : statusInfo.text_en;
+    
+    return `<span class="badge bg-${statusInfo.color}">
+        <i class="bi bi-${statusInfo.icon}"></i> ${text}
+    </span>`;
+}
+
 // Display results
 function displayResults(result) {
     const stats = result.statistics;
@@ -520,12 +540,13 @@ function displayResults(result) {
                 <td>${miner.ip || '-'}</td>
                 <td>${miner.port || '-'}</td>
                 <td>${miner.api || '-'}</td>
+                <td>${getStatusBadge(miner.status || 'unknown')}</td>
                 <td>${miner.note || '-'}</td>
             `;
             tbody.appendChild(row);
         });
     } else {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No data</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No data</td></tr>';
     }
     
     // Show results section
