@@ -1849,4 +1849,176 @@ class HostingUsageItem(db.Model):
     miner_id = db.Column(db.Integer, db.ForeignKey('hosting_miners.id'), nullable=True)
     miner = db.relationship('HostingMiner', foreign_keys=[miner_id])
 
+# ============================================================================
+# 矿机批量导入功能数据模型
+# Miner Batch Import Data Models
+# ============================================================================
+
+class Miner(db.Model):
+    """
+    矿机基本信息表
+    存储矿机的基本配置和连接信息
+    """
+    __tablename__ = 'miners'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 矿机唯一标识
+    miner_id = db.Column(db.String(100), unique=True, nullable=False, index=True)
+    
+    # 多租户隔离
+    site_id = db.Column(db.String(50), nullable=False, index=True)
+    
+    # 矿机基本信息
+    model = db.Column(db.String(100), nullable=True)  # 矿机型号
+    
+    # 网络配置
+    ip = db.Column(db.String(45), nullable=False, index=True)  # IP地址 (支持IPv4/IPv6)
+    port = db.Column(db.String(10), nullable=True)  # 端口号
+    api = db.Column(db.String(50), nullable=True)  # API类型
+    
+    # 认证信息
+    username = db.Column(db.String(100), nullable=True)  # 登录用户名
+    password = db.Column(db.String(256), nullable=True)  # 登录密码（加密存储）
+    
+    # 附加信息
+    note = db.Column(db.Text, nullable=True)  # 备注信息
+    status = db.Column(db.String(50), default='unknown', nullable=False)  # 状态
+    source = db.Column(db.String(20), default='import', nullable=False)  # 来源
+    
+    # 时间戳
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # 用户关联
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
+    user = db.relationship('User', backref='miners')
+    
+    # 索引优化
+    __table_args__ = (
+        db.Index('idx_miner_miner_id', 'miner_id'),
+        db.Index('idx_miner_site_id', 'site_id'),
+        db.Index('idx_miner_ip', 'ip'),
+        db.Index('idx_miner_site_ip', 'site_id', 'ip'),
+    )
+    
+    def __init__(self, miner_id, site_id, ip, **kwargs):
+        self.miner_id = miner_id
+        self.site_id = site_id
+        self.ip = ip
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def __repr__(self):
+        return f"<Miner {self.miner_id} ({self.model}): {self.ip}>"
+    
+    def to_dict(self):
+        """转换为字典格式"""
+        return {
+            'id': self.id,
+            'miner_id': self.miner_id,
+            'site_id': self.site_id,
+            'model': self.model,
+            'ip': self.ip,
+            'port': self.port,
+            'api': self.api,
+            'username': self.username,
+            'note': self.note,
+            'status': self.status,
+            'source': self.source,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'user_id': self.user_id
+        }
+
+class MinerImportJob(db.Model):
+    """
+    导入任务记录表
+    存储矿机批量导入任务的执行记录和统计信息
+    """
+    __tablename__ = 'miner_import_jobs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 任务唯一标识
+    job_id = db.Column(db.String(100), unique=True, nullable=False, index=True)
+    
+    # 多租户隔离
+    site_id = db.Column(db.String(50), nullable=False, index=True)
+    
+    # 用户关联
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    user = db.relationship('User', backref='import_jobs')
+    
+    # 文件信息
+    filename = db.Column(db.String(255), nullable=False)
+    file_type = db.Column(db.String(20), nullable=False)  # csv, excel, json
+    
+    # 去重策略
+    dedup_strategy = db.Column(db.String(50), nullable=False)  # prefer_import, prefer_existing, reject_conflict
+    
+    # 统计信息
+    total_rows = db.Column(db.Integer, default=0, nullable=False)  # 总行数
+    parsed_rows = db.Column(db.Integer, default=0, nullable=False)  # 成功解析行数
+    invalid_rows = db.Column(db.Integer, default=0, nullable=False)  # 无效行数
+    inserted = db.Column(db.Integer, default=0, nullable=False)  # 新插入数量
+    updated = db.Column(db.Integer, default=0, nullable=False)  # 更新数量
+    deduped = db.Column(db.Integer, default=0, nullable=False)  # 去重后总数
+    
+    # 错误信息
+    error_csv_path = db.Column(db.String(500), nullable=True)  # 错误CSV文件路径
+    
+    # 任务状态
+    status = db.Column(db.String(20), default='pending', nullable=False)  # pending, processing, completed, failed
+    
+    # 时间戳
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    
+    # 索引优化
+    __table_args__ = (
+        db.Index('idx_import_job_id', 'job_id'),
+        db.Index('idx_import_site_id', 'site_id'),
+        db.Index('idx_import_user_id', 'user_id'),
+    )
+    
+    def __init__(self, job_id, site_id, user_id, filename, file_type, dedup_strategy, **kwargs):
+        self.job_id = job_id
+        self.site_id = site_id
+        self.user_id = user_id
+        self.filename = filename
+        self.file_type = file_type
+        self.dedup_strategy = dedup_strategy
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def __repr__(self):
+        return f"<MinerImportJob {self.job_id}: {self.status} ({self.inserted} inserted, {self.updated} updated)>"
+    
+    def to_dict(self):
+        """转换为字典格式"""
+        return {
+            'id': self.id,
+            'job_id': self.job_id,
+            'site_id': self.site_id,
+            'user_id': self.user_id,
+            'filename': self.filename,
+            'file_type': self.file_type,
+            'dedup_strategy': self.dedup_strategy,
+            'total_rows': self.total_rows,
+            'parsed_rows': self.parsed_rows,
+            'invalid_rows': self.invalid_rows,
+            'inserted': self.inserted,
+            'updated': self.updated,
+            'deduped': self.deduped,
+            'error_csv_path': self.error_csv_path,
+            'status': self.status,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None
+        }
+
 
