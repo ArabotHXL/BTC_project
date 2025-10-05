@@ -5865,6 +5865,14 @@ try:
 except ImportError as e:
     logging.warning(f"Batch import routes not available: {e}")
 
+# 矿机批量导入路由
+try:
+    from routes.miner_import_routes import miner_import_bp
+    app.register_blueprint(miner_import_bp)
+    logging.info("Miner import routes registered successfully")
+except ImportError as e:
+    logging.warning(f"Miner import routes not available: {e}")
+
 # 分析路由
 try:
     from routes.analytics_routes import analytics_bp
