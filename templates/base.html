@@ -24,10 +24,12 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body>
+    {% set current_lang = session.get('language', 'zh') %}
+    
+    {% include 'components/navbar.html' %}
+    
     <div class="container-fluid">
-        <!-- Header navigation removed -->
-
-        <main class="container mb-5">
+        <main class="container mb-5" style="margin-top: 2rem;">
             <!-- Flash messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}

@@ -111,6 +111,20 @@ def inject_csrf_token():
     logging.debug(f"Context processor initialized: {session_info}")
     return dict(csrf_token=token)
 
+# Make navigation menu available to all templates
+@app.context_processor
+def inject_navigation():
+    """Inject navigation menu data into all templates"""
+    from navigation_config import get_user_navigation, get_user_menu
+    
+    current_role = session.get('role', 'guest')
+    current_lang = session.get('language', 'zh')
+    
+    return dict(
+        navigation_menu=get_user_navigation(current_role, current_lang),
+        user_menu=get_user_menu(current_role, current_lang)
+    )
+
 # Apply security headers middleware for hosting transparency
 @app.after_request
 def apply_security_headers(response):
