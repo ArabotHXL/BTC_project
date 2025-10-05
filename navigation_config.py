@@ -310,6 +310,7 @@ NAVIGATION_MENU = [
             'zh': '客户管理中心',
             'en': 'CRM Center'
         },
+        'url': '/operations/crm',
         'icon': 'bi-people',
         'min_role': 'admin',
         'order': 7,
@@ -320,7 +321,7 @@ NAVIGATION_MENU = [
                     'zh': 'CRM仪表盘',
                     'en': 'CRM Dashboard'
                 },
-                'url': '/crm',
+                'url': '/operations/crm#dashboard',
                 'icon': 'bi-speedometer',
                 'min_role': 'admin'
             },
@@ -330,7 +331,7 @@ NAVIGATION_MENU = [
                     'zh': '客户管理',
                     'en': 'Customer Management'
                 },
-                'url': '/crm/customers',
+                'url': '/operations/crm#customers',
                 'icon': 'bi-person-lines-fill',
                 'min_role': 'admin'
             },
@@ -340,7 +341,7 @@ NAVIGATION_MENU = [
                     'zh': '矿场客户',
                     'en': 'Mining Customers'
                 },
-                'url': '/mine/customers',
+                'url': '/operations/crm#mining',
                 'icon': 'bi-building',
                 'min_role': 'admin'
             },
@@ -350,7 +351,7 @@ NAVIGATION_MENU = [
                     'zh': '用户权限管理',
                     'en': 'User Access'
                 },
-                'url': '/user-access',
+                'url': '/operations/crm#access',
                 'icon': 'bi-key',
                 'min_role': 'admin'
             },
@@ -360,7 +361,7 @@ NAVIGATION_MENU = [
                     'zh': '登录记录',
                     'en': 'Login Records'
                 },
-                'url': '/login-records',
+                'url': '/operations/crm#records',
                 'icon': 'bi-clock-history',
                 'min_role': 'admin'
             }

@@ -5935,6 +5935,16 @@ except ImportError as e:
 except Exception as e:
     logging.error(f"Failed to register Web3 Center routes: {e}")
 
+# CRM Center 路由
+try:
+    from crm_center_routes import crm_center_bp
+    app.register_blueprint(crm_center_bp)
+    logging.info("CRM Center routes registered successfully")
+except ImportError as e:
+    logging.warning(f"CRM Center routes not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register CRM Center routes: {e}")
+
 # Register calculator module blueprint for modular architecture
 try:
     from modules.config import register_modules
