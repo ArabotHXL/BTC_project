@@ -344,9 +344,9 @@
 
             <div class="d-flex align-items-center gap-3">
                 <div class="language-toggle d-none d-lg-flex">
-                    <a href="{{ url_for(request.endpoint, **request.view_args, lang='zh') if request.endpoint else '/?lang=zh' }}" 
+                    <a href="{{ url_with_lang('zh') }}" 
                        class="btn {% if current_lang == 'zh' %}active{% endif %}">中文</a>
-                    <a href="{{ url_for(request.endpoint, **request.view_args, lang='en') if request.endpoint else '/?lang=en' }}" 
+                    <a href="{{ url_with_lang('en') }}" 
                        class="btn {% if current_lang == 'en' %}active{% endif %}">EN</a>
                 </div>
 
@@ -382,9 +382,9 @@
                 {% endif %}
 
                 <div class="language-toggle d-flex d-lg-none">
-                    <a href="{{ url_for(request.endpoint, **request.view_args, lang='zh') if request.endpoint else '/?lang=zh' }}" 
+                    <a href="{{ url_with_lang('zh') }}" 
                        class="btn {% if current_lang == 'zh' %}active{% endif %}">中文</a>
-                    <a href="{{ url_for(request.endpoint, **request.view_args, lang='en') if request.endpoint else '/?lang=en' }}" 
+                    <a href="{{ url_with_lang('en') }}" 
                        class="btn {% if current_lang == 'en' %}active{% endif %}">EN</a>
                 </div>
             </div>

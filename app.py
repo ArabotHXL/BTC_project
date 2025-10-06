@@ -125,6 +125,24 @@ def inject_navigation():
         user_menu=get_user_menu(current_role, current_lang)
     )
 
+# Make language-aware URL builder available to all templates
+@app.context_processor
+def inject_url_helpers():
+    """Inject helper functions for building URLs"""
+    from urllib.parse import urlencode
+    
+    def url_with_lang(lang):
+        """Build URL with language parameter while preserving all query parameters including multi-valued ones"""
+        # Get all query parameters as lists to preserve multi-valued parameters
+        args = request.args.to_dict(flat=False)
+        # Set or update the language parameter
+        args['lang'] = [lang]
+        # Use doseq=True to handle multi-valued parameters correctly
+        query_string = urlencode(args, doseq=True)
+        return f"{request.path}?{query_string}"
+    
+    return dict(url_with_lang=url_with_lang)
+
 # Apply security headers middleware for hosting transparency
 @app.after_request
 def apply_security_headers(response):

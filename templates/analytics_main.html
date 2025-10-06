@@ -433,8 +433,8 @@
             <div class="d-flex align-items-center">
                 <!-- 语言切换 / Language Switcher -->
                 <div class="btn-group btn-group-sm me-2 d-none d-md-flex" role="group">
-                    <a href="{{ url_for(request.endpoint, lang='zh', **request.view_args) }}" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
-                    <a href="{{ url_for(request.endpoint, lang='en', **request.view_args) }}" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}">English</a>
+                    <a href="{{ url_with_lang('zh') }}" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
+                    <a href="{{ url_with_lang('en') }}" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}">English</a>
                 </div>
                 
                 <span class="status-indicator status-online d-none d-md-inline" id="connectionStatus"></span>
