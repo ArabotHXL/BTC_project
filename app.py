@@ -3110,7 +3110,7 @@ def migrate_to_crm():
 
 @app.route('/api/profit-chart-data', methods=['POST'])
 @app.route('/profit_chart_data', methods=['POST'])
-@rate_limit(max_requests=3, window_minutes=60, feature_name="热力图")
+@rate_limit(max_requests=50, window_minutes=60, feature_name="热力图")
 def get_profit_chart_data():
     """Generate profit chart data for visualization"""
     try:
