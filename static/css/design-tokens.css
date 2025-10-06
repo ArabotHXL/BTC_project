@@ -156,9 +156,12 @@
     
     /* Colored shadows - 彩色阴影 */
     --shadow-primary: 0 5px 15px rgba(247, 147, 30, 0.3);
+    --shadow-secondary: 0 5px 15px rgba(108, 117, 125, 0.3);
     --shadow-accent: 0 10px 25px rgba(255, 193, 7, 0.2);
     --shadow-success: 0 5px 15px rgba(40, 167, 69, 0.3);
     --shadow-danger: 0 5px 15px rgba(220, 53, 69, 0.3);
+    --shadow-info: 0 5px 15px rgba(23, 162, 184, 0.3);
+    --shadow-warning: 0 5px 15px rgba(255, 193, 7, 0.3);
     
     /* ============================================
        RESPONSIVE BREAKPOINTS - 响应式断点

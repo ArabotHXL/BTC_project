@@ -4,9 +4,145 @@
 
 This directory contains reusable UI components for the HashInsight platform. All components support bilingual functionality (Chinese/English) and follow the design system standards.
 
+## Design System
+
+All components use CSS custom properties (design tokens) defined in `static/css/design-tokens.css` and follow BEM naming conventions defined in `static/css/components.css`.
+
 ## Available Components
 
-### 1. Navbar Component (`navbar.html`)
+### 1. Card Components
+
+The card component system provides a unified, consistent way to display content cards across the application. All cards use BEM naming conventions for better maintainability and consistency.
+
+#### Basic Card Structure
+
+```html
+<!-- Basic Card -->
+<div class="card">
+    <div class="card__header">
+        <h5>Card Title</h5>
+    </div>
+    <div class="card__body">
+        <p>Card content goes here</p>
+    </div>
+    <div class="card__footer">
+        <button>Action</button>
+    </div>
+</div>
+```
+
+#### Card Color Modifiers
+
+```html
+<!-- Primary Card (Gold theme) -->
+<div class="card card--primary">
+    <div class="card__header">Primary Card</div>
+    <div class="card__body">Content</div>
+</div>
+
+<!-- Success Card (Green theme) -->
+<div class="card card--success">
+    <div class="card__header">Success Card</div>
+    <div class="card__body">Content</div>
+</div>
+
+<!-- Info Card (Blue theme) -->
+<div class="card card--info">
+    <div class="card__header">Info Card</div>
+    <div class="card__body">Content</div>
+</div>
+
+<!-- Warning Card (Yellow theme) -->
+<div class="card card--warning">
+    <div class="card__header">Warning Card</div>
+    <div class="card__body">Content</div>
+</div>
+
+<!-- Danger Card (Red theme) -->
+<div class="card card--danger">
+    <div class="card__header">Danger Card</div>
+    <div class="card__body">Content</div>
+</div>
+
+<!-- Secondary Card (Gray theme) -->
+<div class="card card--secondary">
+    <div class="card__header">Secondary Card</div>
+    <div class="card__body">Content</div>
+</div>
+```
+
+#### Card Shadow Modifiers
+
+```html
+<div class="card card--shadow-sm">Small shadow</div>
+<div class="card card--shadow-md">Medium shadow</div>
+<div class="card card--shadow-lg">Large shadow</div>
+<div class="card card--shadow-xl">Extra large shadow</div>
+```
+
+#### Card Effect Modifiers
+
+```html
+<!-- Glow effect on hover -->
+<div class="card card--glow">
+    <div class="card__body">Glows on hover</div>
+</div>
+
+<!-- Enhanced hover lift -->
+<div class="card card--hover">
+    <div class="card__body">Lifts on hover</div>
+</div>
+```
+
+#### Combining Modifiers
+
+```html
+<!-- Primary card with glow and shadow -->
+<div class="card card--primary card--glow card--shadow-lg">
+    <div class="card__header">
+        <h5>Featured Card</h5>
+    </div>
+    <div class="card__body">
+        <p>Multiple modifiers for emphasis</p>
+    </div>
+</div>
+```
+
+#### Body Size Modifiers
+
+```html
+<!-- Compact padding -->
+<div class="card">
+    <div class="card__body card__body--compact">
+        Reduced padding
+    </div>
+</div>
+
+<!-- Spacious padding -->
+<div class="card">
+    <div class="card__body card__body--spacious">
+        Extra padding
+    </div>
+</div>
+```
+
+#### Design Specifications
+
+- **Border**: 2px solid with color variant
+- **Border Radius**: 16px (var(--radius-lg))
+- **Padding**: 24px (var(--spacing-lg))
+- **Shadows**: Multiple levels (sm, md, lg, xl)
+- **Transitions**: 0.3s ease-in-out
+- **Hover Effects**: Automatic lift and enhanced shadow
+
+#### Responsive Behavior
+
+Cards automatically adjust for different screen sizes:
+- **Mobile (320px-767px)**: Full width, stacked layout
+- **Tablet (768px-1023px)**: Flexible grid
+- **Desktop (1024px+)**: Multi-column layouts
+
+### 2. Navbar Component (`navbar.html`)
 
 The `navbar.html` component is a professional, responsive navigation bar for the HashInsight platform. It provides:
 

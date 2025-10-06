@@ -1,8 +1,8 @@
-<div class="card shadow">
-    <div class="card-header bg-primary bg-opacity-10">
+<div class="card card--primary card--shadow-md">
+    <div class="card__header">
         <h5 class="mb-0"><i class="bi bi-gear me-1"></i>{% if current_lang == 'en' %}Miner Settings{% else %}矿机设置{% endif %}</h5>
     </div>
-    <div class="card-body">
+    <div class="card__body">
         <form id="mining-calculator-form">
             <div class="mb-3">
                 <label for="miner-model" class="form-label">{% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %}</label>

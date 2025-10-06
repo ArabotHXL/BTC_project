@@ -123,6 +123,94 @@
     left: 100%;
 }
 
+/* Card color modifiers - 卡片颜色修饰符 */
+.card--primary {
+    border-color: var(--color-primary);
+    background: rgba(247, 147, 30, 0.05);
+}
+
+.card--primary:hover {
+    border-color: var(--color-primary-light);
+    box-shadow: var(--shadow-primary);
+}
+
+.card--secondary {
+    border-color: var(--color-border-secondary);
+    background: rgba(108, 117, 125, 0.05);
+}
+
+.card--secondary:hover {
+    border-color: var(--color-text-secondary);
+    box-shadow: var(--shadow-md);
+}
+
+.card--success {
+    border-color: var(--color-success);
+    background: rgba(40, 167, 69, 0.05);
+}
+
+.card--success:hover {
+    border-color: var(--color-success-light);
+    box-shadow: var(--shadow-success);
+}
+
+.card--danger {
+    border-color: var(--color-danger);
+    background: rgba(220, 53, 69, 0.05);
+}
+
+.card--danger:hover {
+    border-color: var(--color-danger-light);
+    box-shadow: var(--shadow-danger);
+}
+
+.card--info {
+    border-color: var(--color-info);
+    background: rgba(23, 162, 184, 0.05);
+}
+
+.card--info:hover {
+    border-color: var(--color-info-light);
+    box-shadow: var(--shadow-info);
+}
+
+.card--warning {
+    border-color: var(--color-warning);
+    background: rgba(255, 193, 7, 0.05);
+}
+
+.card--warning:hover {
+    border-color: var(--color-warning-light);
+    box-shadow: var(--shadow-warning);
+}
+
+/* Card hover enhancement modifier - 悬停增强修饰符 */
+.card--hover {
+    transition: var(--transition-default);
+}
+
+.card--hover:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+}
+
+/* Card with shadow modifier - 阴影卡片修饰符 */
+.card--shadow-sm {
+    box-shadow: var(--shadow-sm);
+}
+
+.card--shadow-md {
+    box-shadow: var(--shadow-md);
+}
+
+.card--shadow-lg {
+    box-shadow: var(--shadow-lg);
+}
+
+.card--shadow-xl {
+    box-shadow: var(--shadow-xl);
+}
+
 /* ============================================
    BUTTON COMPONENTS - 按钮组件
    Block: .btn-unified
@@ -685,6 +773,77 @@
 
 .progress-unified--lg {
     height: 12px;
+}
+
+/* ============================================
+   BACKGROUND HELPER CLASSES - 背景辅助类
+   Block: .bg--{modifier}
+   ============================================ */
+
+/* Background color helpers with opacity - 带透明度的背景色辅助类 */
+.bg--primary-subtle {
+    background: rgba(247, 147, 30, 0.1) !important;
+}
+
+.bg--secondary-subtle {
+    background: rgba(108, 117, 125, 0.1) !important;
+}
+
+.bg--success-subtle {
+    background: rgba(40, 167, 69, 0.1) !important;
+}
+
+.bg--danger-subtle {
+    background: rgba(220, 53, 69, 0.1) !important;
+}
+
+.bg--warning-subtle {
+    background: rgba(255, 193, 7, 0.1) !important;
+}
+
+.bg--info-subtle {
+    background: rgba(23, 162, 184, 0.1) !important;
+}
+
+.bg--dark-subtle {
+    background: rgba(0, 0, 0, 0.1) !important;
+}
+
+.bg--light-subtle {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Additional opacity variants - 额外的透明度变体 */
+.bg--primary-subtle-20 {
+    background: rgba(247, 147, 30, 0.2) !important;
+}
+
+.bg--info-subtle-20 {
+    background: rgba(23, 162, 184, 0.2) !important;
+}
+
+.bg--success-subtle-20 {
+    background: rgba(40, 167, 69, 0.2) !important;
+}
+
+.bg--warning-subtle-20 {
+    background: rgba(255, 193, 7, 0.2) !important;
+}
+
+.bg--dark-subtle-20 {
+    background: rgba(0, 0, 0, 0.2) !important;
+}
+
+.bg--dark-subtle-30 {
+    background: rgba(0, 0, 0, 0.3) !important;
+}
+
+.bg--success-subtle-25 {
+    background: rgba(40, 167, 69, 0.25) !important;
+}
+
+.bg--danger-subtle-25 {
+    background: rgba(220, 53, 69, 0.25) !important;
 }
 
 /* ============================================
