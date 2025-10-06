@@ -329,8 +329,8 @@
          * Show iframe error with retry button
          */
         showIframeError(container, url, tabId) {
-            const errorMsg = this.currentLang === 'zh' ? '加载失败' : 'Failed to load';
-            const retryText = this.currentLang === 'zh' ? '重试' : 'Retry';
+            const errorMsg = i18n.t('operations.failedToLoad');
+            const retryText = i18n.t('operations.retry');
             
             container.innerHTML = `
                 <div class="operations-center__error">
@@ -349,7 +349,7 @@
          * Show general error
          */
         showError(container, message) {
-            const errorMsg = this.currentLang === 'zh' ? '错误' : 'Error';
+            const errorMsg = i18n.t('operations.error');
             container.innerHTML = `
                 <div class="operations-center__error">
                     <i class="bi bi-exclamation-triangle" style="font-size: 3rem;"></i>
@@ -380,13 +380,13 @@
          * Render miners list (Mining Operations specific)
          */
         renderMinersList(miners) {
-            const selectedCount = this.currentLang === 'zh' ? '已选择' : 'Selected';
-            const sendToBatchText = this.currentLang === 'zh' ? '发送到批量计算器' : 'Send to Batch Calculator';
-            const modelText = this.currentLang === 'zh' ? '型号' : 'Model';
-            const hashrateText = this.currentLang === 'zh' ? '算力' : 'Hashrate';
-            const powerText = this.currentLang === 'zh' ? '功耗' : 'Power';
-            const statusText = this.currentLang === 'zh' ? '状态' : 'Status';
-            const selectText = this.currentLang === 'zh' ? '选择' : 'Select';
+            const selectedCount = i18n.t('operations.minerSelected');
+            const sendToBatchText = i18n.t('operations.sendToBatch');
+            const modelText = i18n.t('operations.model');
+            const hashrateText = i18n.t('operations.hashrate');
+            const powerText = i18n.t('operations.power');
+            const statusText = i18n.t('operations.status');
+            const selectText = i18n.t('operations.select');
             
             let html = `
                 <div class="miner-selection-toolbar">

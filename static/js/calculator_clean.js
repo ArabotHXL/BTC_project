@@ -299,11 +299,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     percent = '0.00';
                 }
-                if (currentLang === 'en') {
-                    diffElement.textContent = 'Difference: ' + percent + '%';
-                } else {
-                    diffElement.textContent = '差异: ' + percent + '%';
-                }
+                diffElement.textContent = i18n.t('calculator.difference') + ': ' + percent + '%';
             }
         }
         
@@ -442,12 +438,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (clientROI && clientROI.payback_period_months !== null && clientROI.payback_period_months !== undefined && isFinite(clientROI.payback_period_months) && clientROI.payback_period_months > 0) {
                 var months = clientROI.payback_period_months;
                 console.log('[CALCULATOR] Client payback months:', months);
-                clientPaybackMonths.textContent = months.toFixed(0) + ' months';
+                clientPaybackMonths.textContent = months.toFixed(0) + ' ' + i18n.t('time.months');
             } else if (data.inputs && data.inputs.client_investment > 0) {
                 // Calculate payback manually if not provided
                 if (data.client_profit && data.client_profit.monthly && data.client_profit.monthly > 0) {
                     var manualMonths = data.inputs.client_investment / data.client_profit.monthly;
-                    clientPaybackMonths.textContent = manualMonths.toFixed(0) + ' months';
+                    clientPaybackMonths.textContent = manualMonths.toFixed(0) + ' ' + i18n.t('time.months');
                 } else {
                     clientPaybackMonths.textContent = 'N/A';
                 }
@@ -467,12 +463,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (clientROI && clientROI.payback_period_years !== null && clientROI.payback_period_years !== undefined && isFinite(clientROI.payback_period_years) && clientROI.payback_period_years > 0) {
                 var years = clientROI.payback_period_years;
                 console.log('[CALCULATOR] Client payback years:', years);
-                clientPaybackYears.textContent = years.toFixed(2) + ' years';
+                clientPaybackYears.textContent = years.toFixed(2) + ' ' + i18n.t('time.years');
             } else if (data.inputs && data.inputs.client_investment > 0) {
                 // Calculate payback manually if not provided
                 if (data.client_profit && data.client_profit.yearly && data.client_profit.yearly > 0) {
                     var manualYears = data.inputs.client_investment / data.client_profit.yearly;
-                    clientPaybackYears.textContent = manualYears.toFixed(2) + ' years';
+                    clientPaybackYears.textContent = manualYears.toFixed(2) + ' ' + i18n.t('time.years');
                 } else {
                     clientPaybackYears.textContent = 'N/A';
                 }
@@ -493,9 +489,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (clientBreakevenMonth && data.roi && data.roi.client && data.roi.client.forecast) {
             var breakeven = data.roi.client.forecast.find(point => point.break_even === true);
             if (breakeven) {
-                clientBreakevenMonth.textContent = 'Month ' + breakeven.month;
+                clientBreakevenMonth.textContent = i18n.t('charts.month') + ' ' + breakeven.month;
             } else {
-                clientBreakevenMonth.textContent = 'Month ' + Math.ceil(data.roi.client.payback_period_months || 0);
+                clientBreakevenMonth.textContent = i18n.t('charts.month') + ' ' + Math.ceil(data.roi.client.payback_period_months || 0);
             }
         }
 
@@ -517,9 +513,9 @@ document.addEventListener('DOMContentLoaded', function() {
             var breakevenMonthDisplay = document.getElementById('breakeven-month-display');
             if (breakevenMonthDisplay) {
                 if (breakeven) {
-                    breakevenMonthDisplay.textContent = 'Month ' + breakeven.month;
+                    breakevenMonthDisplay.textContent = i18n.t('charts.month') + ' ' + breakeven.month;
                 } else if (paybackMonths && paybackMonths !== Infinity) {
-                    breakevenMonthDisplay.textContent = 'Month ' + Math.ceil(paybackMonths);
+                    breakevenMonthDisplay.textContent = i18n.t('charts.month') + ' ' + Math.ceil(paybackMonths);
                 } else {
                     breakevenMonthDisplay.textContent = 'N/A';
                 }
@@ -556,7 +552,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var breakevenTimeDisplay = document.getElementById('breakeven-time-display');
             if (breakevenTimeDisplay) {
                 if (paybackYears && paybackYears !== Infinity) {
-                    breakevenTimeDisplay.textContent = paybackYears.toFixed(1) + ' years';
+                    breakevenTimeDisplay.textContent = paybackYears.toFixed(1) + ' ' + i18n.t('time.years');
                 } else {
                     breakevenTimeDisplay.textContent = 'N/A';
                 }
@@ -957,15 +953,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Use enhanced heatmap if available
             if (window.createEnhancedHeatmap && typeof window.createEnhancedHeatmap === 'function') {
                 chartContainer.innerHTML = '';
-                // Get current language from page
-                const currentLang = document.documentElement.lang === 'en' || document.querySelector('meta[name="language"]')?.content === 'en' ? 'en' : 'zh';
-                var title = currentLang === 'en' ? 
-                    (clientElectricityCost > 0 ? 'Customer Profitability Heatmap' : 'Mining Site Profitability Heatmap') :
-                    (clientElectricityCost > 0 ? '客户收益热力图' : '矿场主收益热力图');
+                // Use i18n for heatmap title
+                var title = i18n.t('charts.profitabilityHeatmap');
                 
                 window.createEnhancedHeatmap(chartContainer, data.profit_data, {
                     title: title,
-                    language: currentLang
+                    language: i18n.getCurrentLanguage()
                 });
                 console.log('[CALCULATOR] 增强热力图生成成功');
             } else {
