@@ -11,7 +11,9 @@ Flask-Caching based caching system for the intelligence layer with:
 Cache Key Patterns:
 - user_portfolio:{id}
 - forecast:{id}
-- optimize:{id}:{date}
+- ops_schedule:{id}:{date}
+- user_forecasts:{id}
+- user_ops_schedules:{id}
 """
 
 import logging
@@ -116,22 +118,22 @@ class IntelligenceCacheManager:
         return f"forecast:{forecast_id}"
     
     @staticmethod
-    def optimize_key(optimization_id: int, date: str) -> str:
+    def ops_schedule_key(ops_schedule_id: int, date: str) -> str:
         """
-        Generate cache key for optimization result
+        Generate cache key for ops schedule
         
         Parameters:
         -----------
-        optimization_id : int
-            Optimization ID
+        ops_schedule_id : int
+            Operations Schedule ID
         date : str
             Date string (YYYY-MM-DD format)
             
         Returns:
         --------
-        str : Cache key in format optimize:{id}:{date}
+        str : Cache key in format ops_schedule:{id}:{date}
         """
-        return f"optimize:{optimization_id}:{date}"
+        return f"ops_schedule:{ops_schedule_id}:{date}"
     
     @staticmethod
     def user_forecasts_key(user_id: int) -> str:
@@ -150,9 +152,9 @@ class IntelligenceCacheManager:
         return f"user_forecasts:{user_id}"
     
     @staticmethod
-    def user_optimizations_key(user_id: int) -> str:
+    def user_ops_schedules_key(user_id: int) -> str:
         """
-        Generate cache key for all user optimizations
+        Generate cache key for all user ops schedules
         
         Parameters:
         -----------
@@ -161,9 +163,9 @@ class IntelligenceCacheManager:
             
         Returns:
         --------
-        str : Cache key in format user_optimizations:{id}
+        str : Cache key in format user_ops_schedules:{id}
         """
-        return f"user_optimizations:{user_id}"
+        return f"user_ops_schedules:{user_id}"
     
     # ========================================================================
     # Cache Operations
@@ -334,9 +336,9 @@ class IntelligenceCacheManager:
         logger.info(f"Invalidating user forecasts cache: user_id={user_id}")
         return self.delete(key)
     
-    def invalidate_user_optimizations(self, user_id: int) -> bool:
+    def invalidate_user_ops_schedules(self, user_id: int) -> bool:
         """
-        Invalidate all user optimization caches
+        Invalidate all user ops schedules caches
         
         Parameters:
         -----------
@@ -347,8 +349,8 @@ class IntelligenceCacheManager:
         --------
         bool : True if successful
         """
-        key = self.user_optimizations_key(user_id)
-        logger.info(f"Invalidating user optimizations cache: user_id={user_id}")
+        key = self.user_ops_schedules_key(user_id)
+        logger.info(f"Invalidating user ops schedules cache: user_id={user_id}")
         return self.delete(key)
     
     def invalidate_forecast(self, forecast_id: int) -> bool:
@@ -368,14 +370,14 @@ class IntelligenceCacheManager:
         logger.info(f"Invalidating forecast cache: forecast_id={forecast_id}")
         return self.delete(key)
     
-    def invalidate_optimization(self, optimization_id: int, date: Optional[str] = None) -> bool:
+    def invalidate_ops_schedule(self, ops_schedule_id: int, date: Optional[str] = None) -> bool:
         """
-        Invalidate optimization cache
+        Invalidate ops schedule cache
         
         Parameters:
         -----------
-        optimization_id : int
-            Optimization ID
+        ops_schedule_id : int
+            Operations Schedule ID
         date : Optional[str]
             Specific date to invalidate (None invalidates all dates)
             
@@ -384,11 +386,11 @@ class IntelligenceCacheManager:
         bool : True if successful
         """
         if date:
-            key = self.optimize_key(optimization_id, date)
-            logger.info(f"Invalidating optimization cache: optimization_id={optimization_id}, date={date}")
+            key = self.ops_schedule_key(ops_schedule_id, date)
+            logger.info(f"Invalidating ops schedule cache: ops_schedule_id={ops_schedule_id}, date={date}")
             return self.delete(key)
         else:
-            logger.info(f"Invalidating all optimization caches for optimization_id={optimization_id}")
+            logger.info(f"Invalidating all ops schedule caches for ops_schedule_id={ops_schedule_id}")
             return True
     
     def invalidate_all_user_data(self, user_id: int) -> bool:
@@ -409,7 +411,7 @@ class IntelligenceCacheManager:
         keys_to_delete = [
             self.user_portfolio_key(user_id),
             self.user_forecasts_key(user_id),
-            self.user_optimizations_key(user_id)
+            self.user_ops_schedules_key(user_id)
         ]
         
         return self.delete_many(*keys_to_delete)
