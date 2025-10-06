@@ -7012,7 +7012,9 @@ def init_payment_monitor():
         
         if getattr(Config, 'SUBSCRIPTION_ENABLED', False):
             # SchedulerLock机制确保只有一个worker实例启动监控服务
-            payment_monitor.start_monitoring()
+            # 使用app context确保数据库操作正常
+            with app.app_context():
+                payment_monitor.start_monitoring()
             logging.info("支付监控服务初始化完成 (SchedulerLock机制)")
         else:
             logging.info("订阅功能未启用，跳过支付监控服务")
