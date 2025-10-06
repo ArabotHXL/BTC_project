@@ -1,0 +1,51 @@
+<nav class="navbar navbar-expand-lg mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; padding: 1rem 1.5rem;">
+    <div class="container-fluid">
+        <div class="navbar-brand mb-0">
+            <a href="/main" class="btn btn-light btn-lg shadow-sm d-flex align-items-center text-decoration-none" 
+               style="border-radius: 12px; padding: 0.75rem 1.5rem; transition: all 0.3s ease; background: rgba(255,255,255,0.95);">
+                <i class="bi bi-house-door-fill me-2 text-primary" style="font-size: 1.2rem;"></i>
+                <span class="fw-bold text-dark">{{ t('home') }}</span>
+            </a>
+        </div>
+        
+        <div class="navbar-nav mx-auto d-flex flex-row gap-3">
+            <div class="d-flex align-items-center">
+                <h4 class="mb-0 text-white fw-bold d-flex align-items-center me-4">
+                    <i class="bi bi-cpu me-2"></i>
+                    {% if current_lang == 'en' %}Mining Calculator{% else %}挖矿计算器{% endif %}
+                </h4>
+            </div>
+        </div>
+        
+        <div class="navbar-nav">
+            <div class="btn-group shadow-sm" role="group">
+                <button type="button" class="btn btn-light dropdown-toggle d-flex align-items-center" 
+                        data-bs-toggle="dropdown" aria-expanded="false"
+                        style="border-radius: 12px; padding: 0.75rem 1.25rem; background: rgba(255,255,255,0.95); border: none;">
+                    <i class="bi bi-globe me-2 text-primary"></i>
+                    <span class="fw-semibold text-dark">{{ t('language') }}</span>
+                    <span class="ms-2 badge bg-primary">{{ 'CN' if current_lang == 'zh' else 'EN' }}</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-lg" style="border-radius: 12px; border: none; min-width: 180px;">
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center py-2 {{ 'active bg-primary text-white' if current_lang == 'zh' else '' }}" 
+                           href="/mining-calculator?lang=zh" style="border-radius: 8px; margin: 4px;">
+                            <i class="bi bi-translate me-3"></i>
+                            <span class="fw-semibold">中文 (简体)</span>
+                            {% if current_lang == 'zh' %}<i class="bi bi-check-lg ms-auto"></i>{% endif %}
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center py-2 {{ 'active bg-primary text-white' if current_lang == 'en' else '' }}" 
+                           href="/mining-calculator?lang=en" style="border-radius: 8px; margin: 4px;">
+                            <i class="bi bi-globe-americas me-3"></i>
+                            <span class="fw-semibold">English</span>
+                            {% if current_lang == 'en' %}<i class="bi bi-check-lg ms-auto"></i>{% endif %}
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
