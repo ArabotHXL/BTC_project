@@ -1,633 +1,68 @@
 {% extends "base.html" %}
+{% from 'components/operations_center_layout.html' import operations_center %}
 
 {% block title %}
     {% if current_lang == 'zh' %}数据分析中心{% else %}Data Analytics Center{% endif %} - BTC Mining Calculator
 {% endblock %}
 
-{% block extra_css %}
-<style>
-/* Data Analytics Center Styles - Dark Theme with Gold Accents */
-.analytics-center-container {
-    max-width: 100%;
-    padding: 1rem;
-}
-
-/* Tab Navigation Styling */
-.nav-tabs-vertical {
-    border-bottom: none;
-    border-right: 2px solid #ffc107;
-}
-
-.nav-tabs-vertical .nav-link {
-    color: #adb5bd;
-    border: none;
-    border-right: 3px solid transparent;
-    border-radius: 0;
-    padding: 1rem 1.5rem;
-    margin-bottom: 0.5rem;
-    transition: all 0.3s ease;
-    background: rgba(255, 193, 7, 0.05);
-}
-
-.nav-tabs-vertical .nav-link:hover {
-    background: rgba(255, 193, 7, 0.15);
-    border-right-color: #ffc107;
-    color: #ffc107;
-}
-
-.nav-tabs-vertical .nav-link.active {
-    background: linear-gradient(90deg, rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.05));
-    border-right-color: #ffc107;
-    color: #ffc107;
-    font-weight: bold;
-}
-
-.nav-tabs-vertical .nav-link i {
-    margin-right: 0.75rem;
-    font-size: 1.2rem;
-}
-
-/* Tab Content Styling */
-.tab-content {
-    padding: 2rem;
-    background: #1a1a1a;
-    border-radius: 10px;
-    min-height: 600px;
-}
-
-/* Mobile Accordion Styling */
-.accordion-mobile {
-    display: none;
-}
-
-.accordion-mobile .accordion-item {
-    background: #1a1a1a;
-    border: 1px solid #333;
-    margin-bottom: 0.5rem;
-}
-
-.accordion-mobile .accordion-button {
-    background: rgba(255, 193, 7, 0.1);
-    color: #ffc107;
-    font-weight: bold;
-}
-
-.accordion-mobile .accordion-button:not(.collapsed) {
-    background: linear-gradient(90deg, rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.1));
-    color: #ffc107;
-}
-
-.accordion-mobile .accordion-body {
-    background: #1a1a1a;
-    padding: 1.5rem;
-}
-
-/* Header Styling */
-.analytics-header {
-    background: linear-gradient(135deg, #2c3e50, #1a252f);
-    border: 2px solid #ffc107;
-    border-radius: 15px;
-    padding: 2rem;
-    margin-bottom: 2rem;
-    text-align: center;
-}
-
-.analytics-header h1 {
-    color: #ffc107;
-    font-weight: bold;
-    margin-bottom: 0.5rem;
-}
-
-.analytics-header p {
-    color: #adb5bd;
-    margin: 0;
-}
-
-/* Responsive Design */
-@media (max-width: 991px) {
-    .nav-tabs-desktop {
-        display: none;
-    }
-    
-    .accordion-mobile {
-        display: block;
-    }
-    
-    .tab-content {
-        padding: 1rem;
-    }
-}
-
-@media (min-width: 992px) {
-    .accordion-mobile {
-        display: none;
-    }
-}
-
-/* Iframe Container for Embedded Content */
-.iframe-container {
-    width: 100%;
-    min-height: 800px;
-    border: none;
-    background: transparent;
-}
-
-/* Tab Content Loader */
-.tab-loader {
-    text-align: center;
-    padding: 3rem;
-    color: #ffc107;
-}
-
-.tab-loader .spinner-border {
-    width: 3rem;
-    height: 3rem;
-    border-width: 0.3em;
-}
-
-/* Error State */
-.iframe-error {
-    text-align: center;
-    padding: 2rem;
-    color: #dc3545;
-}
-
-.iframe-error .btn {
-    margin-top: 1rem;
-}
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="analytics-center-container">
-    <!-- Header -->
-    <div class="analytics-header">
-        <h1>
-            <i class="bi bi-bar-chart-line"></i>
-            {% if current_lang == 'zh' %}数据分析中心{% else %}Data Analytics Center{% endif %}
-        </h1>
-        <p>
-            {% if current_lang == 'zh' %}
-                统一数据分析平台 - 技术分析、市场数据、网络历史、ROI热力图
-            {% else %}
-                Unified Analytics Platform - Technical Analysis, Market Data, Network History, ROI Heatmap
-            {% endif %}
-        </p>
-    </div>
+{# Configure the Data Analytics Center #}
+{% set config = {
+    "id": "analytics",
+    "title_zh": "数据分析中心",
+    "title_en": "Data Analytics Center",
+    "description_zh": "统一数据分析平台 - 技术分析、市场数据、网络历史、ROI热力图",
+    "description_en": "Unified Analytics Platform - Technical Analysis, Market Data, Network History, ROI Heatmap",
+    "icon": "bi-bar-chart-line",
+    "tabs": [
+        {
+            "id": "technical",
+            "label_zh": "技术指标分析",
+            "label_en": "Technical Analysis",
+            "icon": "bi-graph-up-arrow",
+            "url": "/analytics",
+            "role_required": null,
+            "badge": null,
+            "custom_load": null
+        },
+        {
+            "id": "market",
+            "label_zh": "市场数据分析",
+            "label_en": "Market Data",
+            "icon": "bi-currency-bitcoin",
+            "url": "/analytics#market",
+            "role_required": null,
+            "badge": null,
+            "custom_load": null
+        },
+        {
+            "id": "network",
+            "label_zh": "网络历史数据",
+            "label_en": "Network History",
+            "icon": "bi-graph-up",
+            "url": "/network-history",
+            "role_required": null,
+            "badge": null,
+            "custom_load": null
+        },
+        {
+            "id": "roi",
+            "label_zh": "ROI热力图",
+            "label_en": "ROI Heatmap",
+            "icon": "bi-grid-fill",
+            "url": "/analytics#roi-heatmap",
+            "role_required": null,
+            "badge": null,
+            "custom_load": null
+        }
+    ]
+} %}
 
-    <!-- Desktop: Vertical Tab Navigation -->
-    <div class="row nav-tabs-desktop">
-        <div class="col-lg-2">
-            <nav class="nav flex-column nav-tabs-vertical" id="analytics-tabs" role="tablist">
-                <button class="nav-link active" id="technical-tab" data-bs-toggle="tab" 
-                        data-bs-target="#technical" type="button" role="tab">
-                    <i class="bi bi-graph-up-arrow"></i>
-                    <span>{% if current_lang == 'zh' %}技术指标分析{% else %}Technical Analysis{% endif %}</span>
-                </button>
-                <button class="nav-link" id="market-tab" data-bs-toggle="tab" 
-                        data-bs-target="#market" type="button" role="tab">
-                    <i class="bi bi-currency-bitcoin"></i>
-                    <span>{% if current_lang == 'zh' %}市场数据分析{% else %}Market Data{% endif %}</span>
-                </button>
-                <button class="nav-link" id="network-tab" data-bs-toggle="tab" 
-                        data-bs-target="#network" type="button" role="tab">
-                    <i class="bi bi-graph-up"></i>
-                    <span>{% if current_lang == 'zh' %}网络历史数据{% else %}Network History{% endif %}</span>
-                </button>
-                <button class="nav-link" id="roi-tab" data-bs-toggle="tab" 
-                        data-bs-target="#roi" type="button" role="tab">
-                    <i class="bi bi-grid-fill"></i>
-                    <span>{% if current_lang == 'zh' %}ROI热力图{% else %}ROI Heatmap{% endif %}</span>
-                </button>
-            </nav>
-        </div>
-        <div class="col-lg-10">
-            <div class="tab-content" id="analytics-tab-content">
-                <!-- Tab 1: Technical Analysis -->
-                <div class="tab-pane fade show active" id="technical" role="tabpanel">
-                    <div class="tab-loader" id="technical-loader">
-                        <div class="spinner-border text-warning" role="status"></div>
-                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
-                    </div>
-                    <iframe id="technical-frame" class="iframe-container" style="display:none;"></iframe>
-                </div>
-                
-                <!-- Tab 2: Market Data -->
-                <div class="tab-pane fade" id="market" role="tabpanel">
-                    <div class="tab-loader" id="market-loader">
-                        <div class="spinner-border text-warning" role="status"></div>
-                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
-                    </div>
-                    <iframe id="market-frame" class="iframe-container" style="display:none;"></iframe>
-                </div>
-                
-                <!-- Tab 3: Network History -->
-                <div class="tab-pane fade" id="network" role="tabpanel">
-                    <div class="tab-loader" id="network-loader">
-                        <div class="spinner-border text-warning" role="status"></div>
-                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
-                    </div>
-                    <iframe id="network-frame" class="iframe-container" style="display:none;"></iframe>
-                </div>
-                
-                <!-- Tab 4: ROI Heatmap -->
-                <div class="tab-pane fade" id="roi" role="tabpanel">
-                    <div class="tab-loader" id="roi-loader">
-                        <div class="spinner-border text-warning" role="status"></div>
-                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
-                    </div>
-                    <iframe id="roi-frame" class="iframe-container" style="display:none;"></iframe>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Mobile: Accordion Navigation -->
-    <div class="accordion accordion-mobile" id="analytics-accordion">
-        <!-- Accordion Item 1: Technical Analysis -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="heading-technical">
-                <button class="accordion-button" type="button" data-bs-toggle="collapse" 
-                        data-bs-target="#collapse-technical">
-                    <i class="bi bi-graph-up-arrow me-2"></i>
-                    {% if current_lang == 'zh' %}技术指标分析{% else %}Technical Analysis{% endif %}
-                </button>
-            </h2>
-            <div id="collapse-technical" class="accordion-collapse collapse show" 
-                 data-bs-parent="#analytics-accordion">
-                <div class="accordion-body" data-iframe-url="/analytics">
-                    <div class="tab-loader">
-                        <div class="spinner-border text-warning" role="status"></div>
-                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Accordion Item 2: Market Data -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="heading-market">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
-                        data-bs-target="#collapse-market">
-                    <i class="bi bi-currency-bitcoin me-2"></i>
-                    {% if current_lang == 'zh' %}市场数据分析{% else %}Market Data{% endif %}
-                </button>
-            </h2>
-            <div id="collapse-market" class="accordion-collapse collapse" 
-                 data-bs-parent="#analytics-accordion">
-                <div class="accordion-body" data-iframe-url="/analytics#market">
-                    <div class="tab-loader">
-                        <div class="spinner-border text-warning" role="status"></div>
-                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Accordion Item 3: Network History -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="heading-network">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
-                        data-bs-target="#collapse-network">
-                    <i class="bi bi-graph-up me-2"></i>
-                    {% if current_lang == 'zh' %}网络历史数据{% else %}Network History{% endif %}
-                </button>
-            </h2>
-            <div id="collapse-network" class="accordion-collapse collapse" 
-                 data-bs-parent="#analytics-accordion">
-                <div class="accordion-body" data-iframe-url="/network-history">
-                    <div class="tab-loader">
-                        <div class="spinner-border text-warning" role="status"></div>
-                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Accordion Item 4: ROI Heatmap -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="heading-roi">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
-                        data-bs-target="#collapse-roi">
-                    <i class="bi bi-grid-fill me-2"></i>
-                    {% if current_lang == 'zh' %}ROI热力图{% else %}ROI Heatmap{% endif %}
-                </button>
-            </h2>
-            <div id="collapse-roi" class="accordion-collapse collapse" 
-                 data-bs-parent="#analytics-accordion">
-                <div class="accordion-body" data-iframe-url="/analytics#roi-heatmap">
-                    <div class="tab-loader">
-                        <div class="spinner-border text-warning" role="status"></div>
-                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{# Render the operations center using the shared template #}
+{{ operations_center(config) }}
 {% endblock %}
 
 {% block scripts %}
-<script>
-// Data Analytics Center JavaScript - Complete Implementation
-(function() {
-    'use strict';
-    
-    const currentLang = '{{ current_lang }}';
-    const isMobile = window.innerWidth < 992;
-    const loadedTabs = new Set();
-    const loadedAccordions = new Set();
-    
-    // ========================================
-    // 1. HASH NAVIGATION - Enable direct linking
-    // ========================================
-    function handleHashNavigation() {
-        const hash = window.location.hash.substring(1);
-        console.log('Hash navigation:', hash);
-        
-        if (!hash) return;
-        
-        if (isMobile) {
-            // Mobile: Open accordion
-            const collapseElement = document.getElementById(`collapse-${hash}`);
-            if (collapseElement) {
-                const accordion = new bootstrap.Collapse(collapseElement, { show: true });
-            }
-        } else {
-            // Desktop: Activate tab
-            const tabButton = document.querySelector(`button[data-bs-target="#${hash}"]`);
-            if (tabButton) {
-                const tab = new bootstrap.Tab(tabButton);
-                tab.show();
-            }
-        }
-    }
-    
-    // Listen for hash changes
-    window.addEventListener('hashchange', handleHashNavigation);
-    
-    // ========================================
-    // 2. DESKTOP TAB LAZY LOADING + HASH SYNC
-    // ========================================
-    const tabTriggers = document.querySelectorAll('#analytics-tabs button[data-bs-toggle="tab"]');
-    
-    tabTriggers.forEach(trigger => {
-        trigger.addEventListener('show.bs.tab', function(event) {
-            const targetId = event.target.getAttribute('data-bs-target').substring(1);
-            loadDesktopTabContent(targetId);
-        });
-    });
-    
-    document.querySelectorAll('.nav-link[data-bs-toggle="tab"]').forEach(tab => {
-        tab.addEventListener('shown.bs.tab', function(e) {
-            const targetId = e.target.getAttribute('data-bs-target');
-            const hash = targetId.substring(1);
-            if (window.location.hash !== targetId) {
-                history.replaceState(null, null, targetId);
-                console.log('Desktop tab hash updated to:', hash);
-            }
-        });
-    });
-    
-    function loadDesktopTabContent(tabId) {
-        // Prevent duplicate loading
-        if (loadedTabs.has(tabId)) {
-            console.log('Tab already loaded:', tabId);
-            return;
-        }
-        
-        console.log('Loading desktop tab:', tabId);
-        
-        let frameId, loaderElem, url;
-        
-        switch(tabId) {
-            case 'technical':
-                frameId = 'technical-frame';
-                loaderElem = document.getElementById('technical-loader');
-                url = '/analytics';
-                break;
-            case 'market':
-                frameId = 'market-frame';
-                loaderElem = document.getElementById('market-loader');
-                url = '/analytics#market';
-                break;
-            case 'network':
-                frameId = 'network-frame';
-                loaderElem = document.getElementById('network-loader');
-                url = '/network-history';
-                break;
-            case 'roi':
-                frameId = 'roi-frame';
-                loaderElem = document.getElementById('roi-loader');
-                url = '/analytics#roi-heatmap';
-                break;
-            default:
-                console.warn('Unknown tab ID:', tabId);
-                return;
-        }
-        
-        const frame = document.getElementById(frameId);
-        if (!frame) {
-            console.error('Frame not found:', frameId);
-            return;
-        }
-        
-        // Set iframe src
-        frame.src = url;
-        
-        // Handle load success
-        frame.onload = function() {
-            console.log('Iframe loaded successfully:', frameId);
-            loaderElem.style.display = 'none';
-            frame.style.display = 'block';
-            loadedTabs.add(tabId);
-        };
-        
-        // Handle load error
-        frame.onerror = function() {
-            console.error('Iframe load error:', frameId);
-            showIframeError(loaderElem, url, tabId);
-        };
-        
-        // Timeout fallback (10 seconds)
-        setTimeout(() => {
-            if (!loadedTabs.has(tabId) && frame.src) {
-                console.warn('Iframe load timeout:', frameId);
-                loaderElem.style.display = 'none';
-                frame.style.display = 'block';
-                loadedTabs.add(tabId);
-            }
-        }, 10000);
-    }
-    
-    // ========================================
-    // 3. MOBILE ACCORDION LAZY LOADING + HASH SYNC
-    // ========================================
-    const accordionItems = document.querySelectorAll('.accordion-mobile .accordion-collapse');
-    
-    accordionItems.forEach(item => {
-        item.addEventListener('show.bs.collapse', function(event) {
-            const targetId = event.target.id.replace('collapse-', '');
-            loadMobileAccordionContent(targetId, event.target);
-        });
-    });
-    
-    document.querySelectorAll('.accordion-button').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const targetId = this.getAttribute('data-bs-target');
-            const hash = targetId.replace('#collapse-', '');
-            history.replaceState(null, null, '#' + hash);
-            console.log('Mobile accordion hash updated to:', hash);
-        });
-    });
-    
-    function loadMobileAccordionContent(accordionId, collapseElement) {
-        // Prevent duplicate loading
-        if (loadedAccordions.has(accordionId)) {
-            console.log('Accordion already loaded:', accordionId);
-            return;
-        }
-        
-        console.log('Loading mobile accordion:', accordionId);
-        
-        const accordionBody = collapseElement.querySelector('.accordion-body');
-        const iframeUrl = accordionBody.getAttribute('data-iframe-url');
-        
-        if (!iframeUrl) {
-            console.warn('No iframe URL for accordion:', accordionId);
-            return;
-        }
-        
-        // Create iframe
-        const iframe = document.createElement('iframe');
-        iframe.className = 'iframe-container';
-        iframe.src = iframeUrl;
-        iframe.setAttribute('loading', 'lazy');
-        
-        const loader = accordionBody.querySelector('.tab-loader');
-        
-        iframe.onload = function() {
-            console.log('Mobile iframe loaded:', accordionId);
-            if (loader) loader.style.display = 'none';
-            loadedAccordions.add(accordionId);
-        };
-        
-        iframe.onerror = function() {
-            console.error('Mobile iframe error:', accordionId);
-            showIframeError(accordionBody, iframeUrl, accordionId);
-        };
-        
-        accordionBody.appendChild(iframe);
-        
-        // Timeout fallback
-        setTimeout(() => {
-            if (!loadedAccordions.has(accordionId)) {
-                if (loader) loader.style.display = 'none';
-                loadedAccordions.add(accordionId);
-            }
-        }, 10000);
-    }
-    
-    // ========================================
-    // 4. ERROR HANDLING - Use event delegation
-    // ========================================
-    function showIframeError(container, url, tabId) {
-        const errorMsg = currentLang === 'zh' ? '加载失败' : 'Failed to load';
-        const retryText = currentLang === 'zh' ? '重试' : 'Retry';
-        
-        container.innerHTML = `
-            <div class="iframe-error">
-                <i class="bi bi-exclamation-triangle" style="font-size: 3rem;"></i>
-                <p class="mt-3">${errorMsg}: ${url}</p>
-                <button class="btn btn-warning retry-btn" data-tab-id="${tabId}">
-                    <i class="bi bi-arrow-clockwise"></i> ${retryText}
-                </button>
-            </div>
-        `;
-    }
-    
-    // Event delegation for retry buttons
-    document.addEventListener('click', function(e) {
-        const retryBtn = e.target.closest('.retry-btn');
-        if (retryBtn) {
-            const tabId = retryBtn.getAttribute('data-tab-id');
-            console.log('Retry button clicked for tab:', tabId);
-            
-            if (isMobile) {
-                // Mobile: reload accordion
-                const collapseElement = document.getElementById(`collapse-${tabId}`);
-                if (collapseElement) {
-                    loadedAccordions.delete(tabId);
-                    loadMobileAccordionContent(tabId, collapseElement);
-                }
-            } else {
-                // Desktop: reload tab
-                loadedTabs.delete(tabId);
-                loadDesktopTabContent(tabId);
-            }
-        }
-    });
-    
-    // ========================================
-    // 5. INITIALIZATION - Explicit first tab loading
-    // ========================================
-    function initialize() {
-        console.log('Initializing Data Analytics Center...');
-        console.log('Mobile mode:', isMobile);
-        
-        // Handle initial hash navigation
-        if (window.location.hash) {
-            handleHashNavigation();
-        } else {
-            // Explicitly load first tab to prevent spinner stuck
-            setTimeout(() => {
-                if (!isMobile) {
-                    console.log('Explicitly loading first tab: technical');
-                    loadDesktopTabContent('technical');
-                } else {
-                    // On mobile, load first accordion if shown
-                    const firstCollapse = document.getElementById('collapse-technical');
-                    if (firstCollapse && firstCollapse.classList.contains('show')) {
-                        console.log('Loading first mobile accordion: technical');
-                        loadMobileAccordionContent('technical', firstCollapse);
-                    }
-                }
-            }, 100);
-        }
-        
-        console.log('Data Analytics Center initialized');
-    }
-    
-    // Initialize when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initialize);
-    } else {
-        initialize();
-    }
-    
-    // Expose functions for debugging
-    window.analyticsCenter = {
-        reload: function(tabId) {
-            if (isMobile) {
-                loadedAccordions.delete(tabId);
-                const collapseElement = document.getElementById(`collapse-${tabId}`);
-                if (collapseElement) {
-                    loadMobileAccordionContent(tabId, collapseElement);
-                }
-            } else {
-                loadedTabs.delete(tabId);
-                loadDesktopTabContent(tabId);
-            }
-        },
-        status: function() {
-            return {
-                loadedTabs: Array.from(loadedTabs),
-                loadedAccordions: Array.from(loadedAccordions),
-                isMobile: isMobile
-            };
-        }
-    };
-    
-})();
-</script>
+{# Load the shared operations center JavaScript #}
+<script src="/static/js/operations_center.js"></script>
 {% endblock %}

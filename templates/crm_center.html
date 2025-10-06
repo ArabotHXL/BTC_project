@@ -1,659 +1,78 @@
 {% extends "base.html" %}
+{% from 'components/operations_center_layout.html' import operations_center %}
 
 {% block title %}
     {% if current_lang == 'zh' %}客户管理中心{% else %}CRM Center{% endif %} - BTC Mining Calculator
 {% endblock %}
 
-{% block extra_css %}
-<style>
-/* CRM Center Styles - Dark Theme with Gold Accents */
-.crm-center-container {
-    max-width: 100%;
-    padding: 1rem;
-}
-
-/* Tab Navigation Styling */
-.nav-tabs-vertical {
-    border-bottom: none;
-    border-right: 2px solid #ffc107;
-}
-
-.nav-tabs-vertical .nav-link {
-    color: #adb5bd;
-    border: none;
-    border-right: 3px solid transparent;
-    border-radius: 0;
-    padding: 1rem 1.5rem;
-    margin-bottom: 0.5rem;
-    transition: all 0.3s ease;
-    background: rgba(255, 193, 7, 0.05);
-}
-
-.nav-tabs-vertical .nav-link:hover {
-    background: rgba(255, 193, 7, 0.15);
-    border-right-color: #ffc107;
-    color: #ffc107;
-}
-
-.nav-tabs-vertical .nav-link.active {
-    background: linear-gradient(90deg, rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.05));
-    border-right-color: #ffc107;
-    color: #ffc107;
-    font-weight: bold;
-}
-
-.nav-tabs-vertical .nav-link i {
-    margin-right: 0.75rem;
-    font-size: 1.2rem;
-}
-
-/* Tab Content Styling */
-.tab-content {
-    padding: 2rem;
-    background: #1a1a1a;
-    border-radius: 10px;
-    min-height: 600px;
-}
-
-/* Mobile Accordion Styling */
-.accordion-mobile {
-    display: none;
-}
-
-.accordion-mobile .accordion-item {
-    background: #1a1a1a;
-    border: 1px solid #333;
-    margin-bottom: 0.5rem;
-}
-
-.accordion-mobile .accordion-button {
-    background: rgba(255, 193, 7, 0.1);
-    color: #ffc107;
-    font-weight: bold;
-}
-
-.accordion-mobile .accordion-button:not(.collapsed) {
-    background: linear-gradient(90deg, rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.1));
-    color: #ffc107;
-}
-
-.accordion-mobile .accordion-body {
-    background: #1a1a1a;
-    padding: 1.5rem;
-}
-
-/* Header Styling */
-.crm-header {
-    background: linear-gradient(135deg, #2c3e50, #1a252f);
-    border: 2px solid #ffc107;
-    border-radius: 15px;
-    padding: 2rem;
-    margin-bottom: 2rem;
-    text-align: center;
-}
-
-.crm-header h1 {
-    color: #ffc107;
-    font-weight: bold;
-    margin-bottom: 0.5rem;
-}
-
-.crm-header p {
-    color: #adb5bd;
-    margin: 0;
-}
-
-/* Responsive Design */
-@media (max-width: 991px) {
-    .nav-tabs-desktop {
-        display: none;
-    }
-    
-    .accordion-mobile {
-        display: block;
-    }
-    
-    .tab-content {
-        padding: 1rem;
-    }
-}
-
-@media (min-width: 992px) {
-    .accordion-mobile {
-        display: none;
-    }
-}
-
-/* Iframe Container for Embedded Content */
-.iframe-container {
-    width: 100%;
-    min-height: 800px;
-    border: none;
-    background: transparent;
-}
-
-/* Tab Content Loader */
-.tab-loader {
-    text-align: center;
-    padding: 3rem;
-    color: #ffc107;
-}
-
-.tab-loader .spinner-border {
-    width: 3rem;
-    height: 3rem;
-    border-width: 0.3em;
-}
-
-/* Error State */
-.iframe-error {
-    text-align: center;
-    padding: 2rem;
-    color: #dc3545;
-}
-
-.iframe-error .btn {
-    margin-top: 1rem;
-}
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="crm-center-container">
-    <!-- Header -->
-    <div class="crm-header">
-        <h1>
-            <i class="bi bi-people"></i>
-            {% if current_lang == 'zh' %}客户管理中心{% else %}CRM Center{% endif %}
-        </h1>
-        <p>
-            {% if current_lang == 'zh' %}
-                统一CRM平台 - 客户管理、矿场客户、用户权限、登录记录
-            {% else %}
-                Unified CRM Platform - Customer Management, Mining Customers, User Access, Login Records
-            {% endif %}
-        </p>
-    </div>
+{# Configure the CRM Center #}
+{% set config = {
+    "id": "crm",
+    "title_zh": "客户管理中心",
+    "title_en": "CRM Center",
+    "description_zh": "统一CRM平台 - 客户管理、矿场客户、用户权限、登录记录",
+    "description_en": "Unified CRM Platform - Customer Management, Mining Customers, User Access, Login Records",
+    "icon": "bi-people",
+    "tabs": [
+        {
+            "id": "dashboard",
+            "label_zh": "CRM仪表盘",
+            "label_en": "Dashboard",
+            "icon": "bi-speedometer",
+            "url": "/crm",
+            "role_required": "admin,owner",
+            "badge": null,
+            "custom_load": null
+        },
+        {
+            "id": "customers",
+            "label_zh": "客户管理",
+            "label_en": "Customers",
+            "icon": "bi-person-lines-fill",
+            "url": "/crm/customers",
+            "role_required": "admin,owner",
+            "badge": null,
+            "custom_load": null
+        },
+        {
+            "id": "mining",
+            "label_zh": "矿场客户",
+            "label_en": "Mining",
+            "icon": "bi-building",
+            "url": "/mine/customers",
+            "role_required": "admin,owner",
+            "badge": null,
+            "custom_load": null
+        },
+        {
+            "id": "access",
+            "label_zh": "用户权限管理",
+            "label_en": "User Access",
+            "icon": "bi-key",
+            "url": "/user-access",
+            "role_required": "admin,owner",
+            "badge": null,
+            "custom_load": null
+        },
+        {
+            "id": "records",
+            "label_zh": "登录记录",
+            "label_en": "Login Records",
+            "icon": "bi-clock-history",
+            "url": "/login-records",
+            "role_required": "admin,owner",
+            "badge": null,
+            "custom_load": null
+        }
+    ]
+} %}
 
-    <!-- Desktop: Vertical Tab Navigation -->
-    <div class="row nav-tabs-desktop">
-        <div class="col-lg-2">
-            <nav class="nav flex-column nav-tabs-vertical" id="crm-tabs" role="tablist">
-                <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" 
-                        data-bs-target="#tab-dashboard-content" type="button" role="tab">
-                    <i class="bi bi-speedometer"></i>
-                    <span>{% if current_lang == 'zh' %}CRM仪表盘{% else %}Dashboard{% endif %}</span>
-                </button>
-                <button class="nav-link" id="customers-tab" data-bs-toggle="tab" 
-                        data-bs-target="#tab-customers-content" type="button" role="tab">
-                    <i class="bi bi-person-lines-fill"></i>
-                    <span>{% if current_lang == 'zh' %}客户管理{% else %}Customers{% endif %}</span>
-                </button>
-                <button class="nav-link" id="mining-tab" data-bs-toggle="tab" 
-                        data-bs-target="#tab-mining-content" type="button" role="tab">
-                    <i class="bi bi-building"></i>
-                    <span>{% if current_lang == 'zh' %}矿场客户{% else %}Mining{% endif %}</span>
-                </button>
-                <button class="nav-link" id="access-tab" data-bs-toggle="tab" 
-                        data-bs-target="#tab-access-content" type="button" role="tab">
-                    <i class="bi bi-key"></i>
-                    <span>{% if current_lang == 'zh' %}用户权限管理{% else %}User Access{% endif %}</span>
-                </button>
-                <button class="nav-link" id="records-tab" data-bs-toggle="tab" 
-                        data-bs-target="#tab-records-content" type="button" role="tab">
-                    <i class="bi bi-clock-history"></i>
-                    <span>{% if current_lang == 'zh' %}登录记录{% else %}Login Records{% endif %}</span>
-                </button>
-            </nav>
-        </div>
-        <div class="col-lg-10">
-            <div class="tab-content" id="crm-tab-content">
-                <!-- Tab 1: CRM Dashboard -->
-                <div class="tab-pane fade show active" id="tab-dashboard-content" role="tabpanel">
-                    <div class="spinner-container">
-                        <div class="tab-loader" id="dashboard-loader">
-                            <div class="spinner-border text-warning" role="status"></div>
-                            <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
-                        </div>
-                    </div>
-                    <iframe id="dashboard-frame" class="iframe-container" style="display:none;" data-url="/crm"></iframe>
-                </div>
-                
-                <!-- Tab 2: Customer Management -->
-                <div class="tab-pane fade" id="tab-customers-content" role="tabpanel">
-                    <div class="spinner-container">
-                        <div class="tab-loader" id="customers-loader">
-                            <div class="spinner-border text-warning" role="status"></div>
-                            <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
-                        </div>
-                    </div>
-                    <iframe id="customers-frame" class="iframe-container" style="display:none;" data-url="/crm/customers"></iframe>
-                </div>
-                
-                <!-- Tab 3: Mining Customers -->
-                <div class="tab-pane fade" id="tab-mining-content" role="tabpanel">
-                    <div class="spinner-container">
-                        <div class="tab-loader" id="mining-loader">
-                            <div class="spinner-border text-warning" role="status"></div>
-                            <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
-                        </div>
-                    </div>
-                    <iframe id="mining-frame" class="iframe-container" style="display:none;" data-url="/mine/customers"></iframe>
-                </div>
-                
-                <!-- Tab 4: User Access Management -->
-                <div class="tab-pane fade" id="tab-access-content" role="tabpanel">
-                    <div class="spinner-container">
-                        <div class="tab-loader" id="access-loader">
-                            <div class="spinner-border text-warning" role="status"></div>
-                            <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
-                        </div>
-                    </div>
-                    <iframe id="access-frame" class="iframe-container" style="display:none;" data-url="/user-access"></iframe>
-                </div>
-                
-                <!-- Tab 5: Login Records -->
-                <div class="tab-pane fade" id="tab-records-content" role="tabpanel">
-                    <div class="spinner-container">
-                        <div class="tab-loader" id="records-loader">
-                            <div class="spinner-border text-warning" role="status"></div>
-                            <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
-                        </div>
-                    </div>
-                    <iframe id="records-frame" class="iframe-container" style="display:none;" data-url="/login-records"></iframe>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Mobile: Accordion Navigation -->
-    <div class="accordion accordion-mobile" id="crm-accordion">
-        <!-- Accordion Item 1: CRM Dashboard -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="heading-dashboard">
-                <button class="accordion-button" type="button" data-bs-toggle="collapse" 
-                        data-bs-target="#collapse-dashboard">
-                    <i class="bi bi-speedometer me-2"></i>
-                    {% if current_lang == 'zh' %}CRM仪表盘{% else %}CRM Dashboard{% endif %}
-                </button>
-            </h2>
-            <div id="collapse-dashboard" class="accordion-collapse collapse show" 
-                 data-bs-parent="#crm-accordion">
-                <div class="accordion-body" data-iframe-url="/crm">
-                    <div class="tab-loader">
-                        <div class="spinner-border text-warning" role="status"></div>
-                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Accordion Item 2: Customer Management -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="heading-customers">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
-                        data-bs-target="#collapse-customers">
-                    <i class="bi bi-person-lines-fill me-2"></i>
-                    {% if current_lang == 'zh' %}客户管理{% else %}Customer Management{% endif %}
-                </button>
-            </h2>
-            <div id="collapse-customers" class="accordion-collapse collapse" 
-                 data-bs-parent="#crm-accordion">
-                <div class="accordion-body" data-iframe-url="/crm/customers">
-                    <div class="tab-loader">
-                        <div class="spinner-border text-warning" role="status"></div>
-                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Accordion Item 3: Mining Customers -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="heading-mining">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
-                        data-bs-target="#collapse-mining">
-                    <i class="bi bi-building me-2"></i>
-                    {% if current_lang == 'zh' %}矿场客户{% else %}Mining Customers{% endif %}
-                </button>
-            </h2>
-            <div id="collapse-mining" class="accordion-collapse collapse" 
-                 data-bs-parent="#crm-accordion">
-                <div class="accordion-body" data-iframe-url="/mine/customers">
-                    <div class="tab-loader">
-                        <div class="spinner-border text-warning" role="status"></div>
-                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Accordion Item 4: User Access Management -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="heading-access">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
-                        data-bs-target="#collapse-access">
-                    <i class="bi bi-key me-2"></i>
-                    {% if current_lang == 'zh' %}用户权限管理{% else %}User Access Management{% endif %}
-                </button>
-            </h2>
-            <div id="collapse-access" class="accordion-collapse collapse" 
-                 data-bs-parent="#crm-accordion">
-                <div class="accordion-body" data-iframe-url="/user-access">
-                    <div class="tab-loader">
-                        <div class="spinner-border text-warning" role="status"></div>
-                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Accordion Item 5: Login Records -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="heading-records">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
-                        data-bs-target="#collapse-records">
-                    <i class="bi bi-clock-history me-2"></i>
-                    {% if current_lang == 'zh' %}登录记录{% else %}Login Records{% endif %}
-                </button>
-            </h2>
-            <div id="collapse-records" class="accordion-collapse collapse" 
-                 data-bs-parent="#crm-accordion">
-                <div class="accordion-body" data-iframe-url="/login-records">
-                    <div class="tab-loader">
-                        <div class="spinner-border text-warning" role="status"></div>
-                        <p class="mt-3">{% if current_lang == 'zh' %}加载中...{% else %}Loading...{% endif %}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{# Render the operations center using the shared template #}
+{{ operations_center(config) }}
 {% endblock %}
 
 {% block scripts %}
-<script>
-// CRM Center JavaScript - Complete Implementation
-(function() {
-    'use strict';
-    
-    const currentLang = '{{ current_lang }}';
-    const userRole = '{{ user_role }}';
-    const isMobile = window.innerWidth < 992;
-    const loadedTabs = new Set();
-    const loadedAccordions = new Set();
-    
-    // ========================================
-    // 1. HASH NAVIGATION - Enable direct linking
-    // ========================================
-    function handleHashNavigation() {
-        const hash = window.location.hash.substring(1);
-        console.log('Hash navigation:', hash);
-        
-        if (!hash) return;
-        
-        if (isMobile) {
-            const collapseElement = document.getElementById(`collapse-${hash}`);
-            if (collapseElement) {
-                const accordion = new bootstrap.Collapse(collapseElement, { show: true });
-            }
-        } else {
-            const tabButton = document.querySelector(`button[data-bs-target="#tab-${hash}-content"]`);
-            if (tabButton) {
-                const tab = new bootstrap.Tab(tabButton);
-                tab.show();
-            }
-        }
-    }
-    
-    // Listen for hash changes
-    window.addEventListener('hashchange', handleHashNavigation);
-    
-    // ========================================
-    // 2. DESKTOP TAB LAZY LOADING + HASH SYNC
-    // ========================================
-    const tabTriggers = document.querySelectorAll('#crm-tabs button[data-bs-toggle="tab"]');
-    
-    tabTriggers.forEach(trigger => {
-        trigger.addEventListener('show.bs.tab', function(event) {
-            const targetId = event.target.getAttribute('data-bs-target');
-            const tabId = targetId.replace('#tab-', '').replace('-content', '');
-            loadDesktopTabContent(tabId);
-        });
-    });
-    
-    document.querySelectorAll('.nav-link[data-bs-toggle="tab"]').forEach(tab => {
-        tab.addEventListener('shown.bs.tab', function(e) {
-            const targetId = e.target.getAttribute('data-bs-target');
-            const tabId = targetId.replace('#tab-', '').replace('-content', '');
-            const hash = '#' + tabId;
-            if (window.location.hash !== hash) {
-                history.replaceState(null, null, hash);
-                console.log('Desktop tab hash updated to:', tabId);
-            }
-        });
-    });
-    
-    function loadDesktopTabContent(tabId) {
-        if (loadedTabs.has(tabId)) {
-            console.log('Tab already loaded:', tabId);
-            return;
-        }
-        
-        console.log('Loading desktop tab:', tabId);
-        
-        const container = document.getElementById(`tab-${tabId}-content`);
-        if (!container) {
-            console.error('Container not found:', `tab-${tabId}-content`);
-            return;
-        }
-        
-        const iframe = container.querySelector('iframe');
-        const loader = container.querySelector('.spinner-container');
-        
-        if (!iframe) {
-            console.error('Iframe not found in container:', tabId);
-            return;
-        }
-        
-        const targetUrl = iframe.dataset.url;
-        if (!targetUrl) {
-            console.error('No data-url attribute on iframe:', tabId);
-            return;
-        }
-        
-        iframe.src = targetUrl;
-        
-        iframe.onload = function() {
-            console.log('Iframe loaded successfully:', tabId);
-            if (loader) loader.style.display = 'none';
-            iframe.style.display = 'block';
-            loadedTabs.add(tabId);
-        };
-        
-        iframe.onerror = function() {
-            console.error('Iframe load error:', tabId);
-            if (loader) {
-                showIframeError(loader, targetUrl, tabId);
-            }
-        };
-        
-        setTimeout(() => {
-            if (!loadedTabs.has(tabId) && iframe.src) {
-                console.warn('Iframe load timeout:', tabId);
-                if (loader) loader.style.display = 'none';
-                iframe.style.display = 'block';
-                loadedTabs.add(tabId);
-            }
-        }, 10000);
-    }
-    
-    // ========================================
-    // 3. MOBILE ACCORDION LAZY LOADING + HASH SYNC
-    // ========================================
-    const accordionItems = document.querySelectorAll('.accordion-mobile .accordion-collapse');
-    
-    accordionItems.forEach(item => {
-        item.addEventListener('show.bs.collapse', function(event) {
-            const targetId = event.target.id.replace('collapse-', '');
-            loadMobileAccordionContent(targetId, event.target);
-        });
-    });
-    
-    document.querySelectorAll('.accordion-button').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const targetId = this.getAttribute('data-bs-target');
-            const hash = targetId.replace('#collapse-', '');
-            history.replaceState(null, null, '#' + hash);
-            console.log('Mobile accordion hash updated to:', hash);
-        });
-    });
-    
-    function loadMobileAccordionContent(accordionId, collapseElement) {
-        if (loadedAccordions.has(accordionId)) {
-            console.log('Accordion already loaded:', accordionId);
-            return;
-        }
-        
-        console.log('Loading mobile accordion:', accordionId);
-        
-        const accordionBody = collapseElement.querySelector('.accordion-body');
-        if (!accordionBody) {
-            console.error('Accordion body not found:', accordionId);
-            return;
-        }
-        
-        const iframeUrl = accordionBody.getAttribute('data-iframe-url');
-        if (!iframeUrl) {
-            console.warn('No iframe URL for accordion:', accordionId);
-            return;
-        }
-        
-        const loader = accordionBody.querySelector('.tab-loader');
-        
-        const iframe = document.createElement('iframe');
-        iframe.className = 'iframe-container';
-        iframe.src = iframeUrl;
-        iframe.setAttribute('loading', 'lazy');
-        
-        iframe.onload = function() {
-            console.log('Mobile iframe loaded:', accordionId);
-            if (loader) loader.style.display = 'none';
-            loadedAccordions.add(accordionId);
-        };
-        
-        iframe.onerror = function() {
-            console.error('Mobile iframe error:', accordionId);
-            showIframeError(accordionBody, iframeUrl, accordionId);
-        };
-        
-        accordionBody.appendChild(iframe);
-        
-        setTimeout(() => {
-            if (!loadedAccordions.has(accordionId)) {
-                if (loader) loader.style.display = 'none';
-                loadedAccordions.add(accordionId);
-            }
-        }, 10000);
-    }
-    
-    // ========================================
-    // 4. ERROR HANDLING - Use event delegation
-    // ========================================
-    function showIframeError(container, url, tabId) {
-        const errorMsg = currentLang === 'zh' ? '加载失败' : 'Failed to load';
-        const retryText = currentLang === 'zh' ? '重试' : 'Retry';
-        
-        container.innerHTML = `
-            <div class="iframe-error">
-                <i class="bi bi-exclamation-triangle" style="font-size: 3rem;"></i>
-                <p class="mt-3">${errorMsg}: ${url}</p>
-                <button class="btn btn-warning retry-btn" data-tab-id="${tabId}">
-                    <i class="bi bi-arrow-clockwise"></i> ${retryText}
-                </button>
-            </div>
-        `;
-    }
-    
-    // Event delegation for retry buttons
-    document.addEventListener('click', function(e) {
-        const retryBtn = e.target.closest('.retry-btn');
-        if (retryBtn) {
-            const tabId = retryBtn.getAttribute('data-tab-id');
-            console.log('Retry button clicked for tab:', tabId);
-            
-            if (isMobile) {
-                // Mobile: reload accordion
-                const collapseElement = document.getElementById(`collapse-${tabId}`);
-                if (collapseElement) {
-                    loadedAccordions.delete(tabId);
-                    loadMobileAccordionContent(tabId, collapseElement);
-                }
-            } else {
-                // Desktop: reload tab
-                loadedTabs.delete(tabId);
-                loadDesktopTabContent(tabId);
-            }
-        }
-    });
-    
-    // ========================================
-    // 5. INITIALIZATION - Explicit first tab loading
-    // ========================================
-    function initialize() {
-        console.log('Initializing CRM Center...');
-        console.log('Mobile mode:', isMobile);
-        console.log('User role:', userRole);
-        
-        // Handle initial hash navigation
-        if (window.location.hash) {
-            handleHashNavigation();
-        } else {
-            // Explicitly load first tab to prevent spinner stuck
-            setTimeout(() => {
-                if (!isMobile) {
-                    console.log('Explicitly loading first tab: dashboard');
-                    loadDesktopTabContent('dashboard');
-                } else {
-                    // On mobile, load first accordion if shown
-                    const firstCollapse = document.getElementById('collapse-dashboard');
-                    if (firstCollapse && firstCollapse.classList.contains('show')) {
-                        console.log('Loading first mobile accordion: dashboard');
-                        loadMobileAccordionContent('dashboard', firstCollapse);
-                    }
-                }
-            }, 100);
-        }
-        
-        console.log('CRM Center initialized');
-    }
-    
-    // Initialize when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initialize);
-    } else {
-        initialize();
-    }
-    
-    // Expose functions for debugging
-    window.crmCenter = {
-        reload: function(tabId) {
-            if (isMobile) {
-                loadedAccordions.delete(tabId);
-                const collapseElement = document.getElementById(`collapse-${tabId}`);
-                if (collapseElement) {
-                    loadMobileAccordionContent(tabId, collapseElement);
-                }
-            } else {
-                loadedTabs.delete(tabId);
-                loadDesktopTabContent(tabId);
-            }
-        },
-        status: function() {
-            console.log('Loaded tabs:', Array.from(loadedTabs));
-            console.log('Loaded accordions:', Array.from(loadedAccordions));
-        }
-    };
-})();
-</script>
+{# Load the shared operations center JavaScript #}
+<script src="/static/js/operations_center.js"></script>
 {% endblock %}

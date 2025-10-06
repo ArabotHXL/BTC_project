@@ -1418,3 +1418,200 @@
 .divider-unified__text::after {
     margin-left: var(--spacing-md);
 }
+
+/* ============================================
+   OPERATIONS CENTER COMPONENTS - 运营中心组件
+   Block: .operations-center
+   ============================================ */
+
+/* Base operations center block - 基础运营中心块 */
+.operations-center {
+    max-width: 100%;
+    padding: var(--spacing-md);
+}
+
+/* Operations center header - 运营中心头部 */
+.operations-center__header {
+    background: linear-gradient(135deg, #2c3e50, #1a252f);
+    border: 2px solid var(--color-primary);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    text-align: center;
+}
+
+.operations-center__title {
+    color: var(--color-primary);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-2xl);
+}
+
+.operations-center__description {
+    color: var(--color-text-secondary);
+    margin: 0;
+    font-size: var(--font-size-base);
+}
+
+/* Desktop tab navigation - 桌面标签导航 */
+.operations-center__desktop {
+    display: flex;
+}
+
+.operations-center__tabs {
+    border-bottom: none;
+    border-right: 2px solid var(--color-primary);
+}
+
+.operations-center__tab {
+    color: var(--color-text-secondary);
+    border: none;
+    border-right: 3px solid transparent;
+    border-radius: 0;
+    padding: var(--spacing-md) var(--spacing-lg);
+    margin-bottom: var(--spacing-sm);
+    transition: var(--transition-default);
+    background: rgba(255, 193, 7, 0.05);
+    display: flex;
+    align-items: center;
+    text-align: left;
+}
+
+.operations-center__tab:hover {
+    background: rgba(255, 193, 7, 0.15);
+    border-right-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.operations-center__tab.active {
+    background: linear-gradient(90deg, rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.05));
+    border-right-color: var(--color-primary);
+    color: var(--color-primary);
+    font-weight: var(--font-weight-bold);
+}
+
+.operations-center__tab i {
+    margin-right: var(--spacing-sm);
+    font-size: var(--font-size-lg);
+}
+
+/* Tab content area - 标签内容区域 */
+.operations-center__tab-content {
+    padding: var(--spacing-xl);
+    background: var(--card-bg);
+    border-radius: var(--border-radius-md);
+    min-height: 600px;
+}
+
+/* Iframe container - iframe容器 */
+.operations-center__iframe {
+    width: 100%;
+    min-height: 800px;
+    border: none;
+    background: transparent;
+}
+
+/* Loader - 加载器 */
+.operations-center__loader {
+    text-align: center;
+    padding: var(--spacing-2xl);
+    color: var(--color-primary);
+}
+
+.operations-center__loader .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    border-width: 0.3em;
+}
+
+/* Error state - 错误状态 */
+.operations-center__error {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--color-danger);
+}
+
+.operations-center__error .btn {
+    margin-top: var(--spacing-md);
+}
+
+/* Badge for admin-only tabs - 管理员专用标签徽章 */
+.operations-center__badge {
+    font-size: var(--font-size-xs);
+    margin-left: var(--spacing-sm);
+    padding: 0.2rem var(--spacing-sm);
+    background: var(--color-danger);
+    color: white;
+    border-radius: var(--border-radius-sm);
+    font-weight: var(--font-weight-bold);
+}
+
+/* Mobile accordion navigation - 移动手风琴导航 */
+.operations-center__accordion {
+    display: none;
+}
+
+.operations-center__accordion-item {
+    background: var(--card-bg);
+    border: 1px solid var(--color-border-light);
+    margin-bottom: var(--spacing-sm);
+}
+
+.operations-center__accordion-button {
+    background: rgba(255, 193, 7, 0.1);
+    color: var(--color-primary);
+    font-weight: var(--font-weight-bold);
+}
+
+.operations-center__accordion-button:not(.collapsed) {
+    background: linear-gradient(90deg, rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.1));
+    color: var(--color-primary);
+}
+
+.operations-center__accordion-body {
+    background: var(--card-bg);
+    padding: var(--spacing-lg);
+}
+
+/* Custom content container - 自定义内容容器 */
+.operations-center__custom-content {
+    min-height: 600px;
+}
+
+/* Responsive behavior - 响应式行为 */
+@media (max-width: 991px) {
+    .operations-center__desktop {
+        display: none;
+    }
+    
+    .operations-center__accordion {
+        display: block;
+    }
+    
+    .operations-center__tab-content {
+        padding: var(--spacing-md);
+    }
+}
+
+@media (min-width: 992px) {
+    .operations-center__accordion {
+        display: none;
+    }
+}
+
+/* Modifiers for specific centers - 特定中心的修饰符 */
+.operations-center--mining-operations {
+    /* Mining-specific styles if needed */
+}
+
+.operations-center--analytics {
+    /* Analytics-specific styles if needed */
+}
+
+.operations-center--web3 {
+    /* Web3-specific styles if needed */
+}
+
+.operations-center--crm {
+    /* CRM-specific styles if needed */
+}
