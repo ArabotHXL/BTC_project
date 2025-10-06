@@ -1,0 +1,737 @@
+/**
+ * HashInsight Design System - Components
+ * 
+ * This file defines reusable component styles using BEM naming convention.
+ * All components use design tokens from design-tokens.css
+ * 
+ * BEM 命名规范说明 (BEM Naming Convention):
+ * ============================================
+ * Block（块）: 独立的组件 - .block
+ * Element（元素）: 块的组成部分 - .block__element
+ * Modifier（修饰符）: 块或元素的变体 - .block--modifier 或 .block__element--modifier
+ * 
+ * 示例 (Examples):
+ * .card                    - Block 块
+ * .card__header            - Element 元素
+ * .card--glow              - Modifier 修饰符
+ * .card__header--large     - Element with Modifier 元素修饰符
+ * 
+ * @version 2.0.0
+ * @lastModified 2025-10-06
+ */
+
+/* ============================================
+   CARD COMPONENTS - 卡片组件
+   Block: .card
+   ============================================ */
+
+/* Base card block - 基础卡片块 */
+.card {
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    border: 2px solid var(--card-border);
+    border-radius: var(--card-radius);
+    padding: var(--card-padding);
+    transition: var(--transition-default);
+    position: relative;
+    overflow: hidden;
+}
+
+.card:hover {
+    border-color: var(--card-border-hover);
+    box-shadow: var(--card-shadow-hover);
+    transform: translateY(-2px);
+}
+
+/* Card header element - 卡片头部元素 */
+.card__header {
+    background: var(--gradient-primary);
+    color: var(--color-text-inverse);
+    font-weight: var(--font-weight-semibold);
+    padding: var(--spacing-md) var(--spacing-lg);
+    margin: calc(var(--card-padding) * -1) calc(var(--card-padding) * -1) var(--spacing-lg);
+    border-radius: var(--card-radius) var(--card-radius) 0 0;
+}
+
+/* Card header modifiers - 卡片头部修饰符 */
+.card__header--secondary {
+    background: var(--gradient-secondary);
+}
+
+.card__header--dark {
+    background: var(--gradient-dark);
+    color: var(--color-text-primary);
+}
+
+/* Card body element - 卡片主体元素 */
+.card__body {
+    padding: var(--spacing-lg);
+}
+
+/* Card body modifiers - 卡片主体修饰符 */
+.card__body--compact {
+    padding: var(--spacing-md);
+}
+
+.card__body--spacious {
+    padding: var(--spacing-xl);
+}
+
+/* Card footer element - 卡片底部元素 */
+.card__footer {
+    padding: var(--spacing-md) var(--spacing-lg);
+    margin: var(--spacing-lg) calc(var(--card-padding) * -1) calc(var(--card-padding) * -1);
+    border-top: 1px solid var(--color-border-light);
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* Card modifiers - 卡片修饰符 */
+.card--bordered {
+    border-width: 2px;
+    border-style: solid;
+}
+
+.card--shadow {
+    box-shadow: var(--shadow-lg);
+}
+
+.card--hover-lift {
+    transition: var(--transition-default);
+}
+
+.card--hover-lift:hover {
+    transform: translateY(-5px);
+}
+
+.card--compact {
+    padding: var(--spacing-md);
+}
+
+/* Card with glow effect - 发光效果卡片 */
+.card--glow::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 193, 7, 0.1), transparent);
+    transition: left var(--duration-slow) ease;
+}
+
+.card--glow:hover::before {
+    left: 100%;
+}
+
+/* ============================================
+   BUTTON COMPONENTS - 按钮组件
+   Block: .btn-unified
+   ============================================ */
+
+/* Base button block - 基础按钮块 */
+.btn-unified {
+    font-weight: var(--button-font-weight);
+    border-radius: var(--button-radius);
+    padding: var(--button-padding-y) var(--button-padding-x);
+    transition: var(--button-transition);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+    border: none;
+}
+
+.btn-unified:active {
+    transform: translateY(0);
+}
+
+.btn-unified:disabled {
+    opacity: var(--opacity-50);
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Button primary modifier - 主按钮修饰符 */
+.btn-unified--primary {
+    background: var(--gradient-primary);
+    border: none;
+    color: var(--color-text-inverse);
+}
+
+.btn-unified--primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-primary);
+    color: var(--color-text-inverse);
+}
+
+/* Button secondary modifier - 次按钮修饰符 */
+.btn-unified--secondary {
+    background: transparent;
+    border: 2px solid var(--color-border-accent);
+    color: var(--color-accent);
+    padding: calc(var(--button-padding-y) - 2px) calc(var(--button-padding-x) - 2px);
+}
+
+.btn-unified--secondary:hover {
+    background: var(--color-accent);
+    color: var(--color-text-inverse);
+    transform: translateY(-2px);
+}
+
+/* Button size modifiers - 按钮尺寸修饰符 */
+.btn-unified--sm {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-sm);
+}
+
+.btn-unified--lg {
+    padding: var(--spacing-md) var(--spacing-xl);
+    font-size: var(--font-size-lg);
+}
+
+.btn-unified--block {
+    display: flex;
+    width: 100%;
+}
+
+/* Button icon element - 按钮图标元素 */
+.btn-unified__icon {
+    margin-right: var(--spacing-sm);
+}
+
+.btn-unified__icon--right {
+    margin-right: 0;
+    margin-left: var(--spacing-sm);
+}
+
+/* Button text element - 按钮文本元素 */
+.btn-unified__text {
+    display: inline-block;
+}
+
+/* ============================================
+   FORM COMPONENTS - 表单组件
+   Block: .form-control-unified, .form-select-unified, etc.
+   ============================================ */
+
+/* Form control block - 表单控件块 */
+.form-control-unified {
+    background: var(--input-bg);
+    border: 2px solid var(--input-border);
+    color: var(--color-text-primary);
+    border-radius: var(--input-radius);
+    padding: var(--input-padding-y) var(--input-padding-x);
+    transition: var(--transition-default);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+    width: 100%;
+    font-family: var(--font-family-primary);
+}
+
+.form-control-unified:focus {
+    background: var(--input-bg-focus);
+    border-color: var(--input-border-focus);
+    box-shadow: 0 0 0 0.25rem var(--shadow-accent);
+    color: var(--color-text-primary);
+    outline: none;
+}
+
+.form-control-unified:disabled {
+    opacity: var(--opacity-60);
+    cursor: not-allowed;
+}
+
+.form-control-unified::placeholder {
+    color: var(--color-text-muted);
+    opacity: var(--opacity-70);
+}
+
+/* Form control modifiers - 表单控件修饰符 */
+.form-control-unified--error {
+    border-color: var(--color-danger);
+}
+
+.form-control-unified--success {
+    border-color: var(--color-success);
+}
+
+/* Form select block - 下拉选择块 */
+.form-select-unified {
+    background: var(--input-bg);
+    border: 2px solid var(--input-border);
+    color: var(--color-text-primary);
+    border-radius: var(--input-radius);
+    padding: var(--input-padding-y) var(--input-padding-x);
+    transition: var(--transition-default);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+    width: 100%;
+    font-family: var(--font-family-primary);
+    cursor: pointer;
+}
+
+.form-select-unified:focus {
+    background: var(--input-bg-focus);
+    border-color: var(--input-border-focus);
+    box-shadow: 0 0 0 0.25rem var(--shadow-accent);
+    color: var(--color-text-primary);
+    outline: none;
+}
+
+.form-select-unified:disabled {
+    opacity: var(--opacity-60);
+    cursor: not-allowed;
+}
+
+/* Form label block - 表单标签块 */
+.form-label-unified {
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+}
+
+.form-label-unified--required::after {
+    content: " *";
+    color: var(--color-danger);
+}
+
+/* Form group block - 表单组块 */
+.form-group-unified {
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-group-unified--inline {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+/* Form help text block - 帮助文本块 */
+.form-help-unified {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+}
+
+/* Form error block - 错误信息块 */
+.form-error-unified {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-xs);
+    color: var(--color-danger);
+}
+
+/* ============================================
+   TABLE COMPONENTS - 表格组件
+   Block: .table-unified
+   ============================================ */
+
+/* Base table block - 基础表格块 */
+.table-unified {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+}
+
+/* Table header element - 表格头部元素 */
+.table-unified__header {
+    background: var(--gradient-primary);
+    color: var(--color-text-inverse);
+    padding: var(--spacing-md);
+    text-align: left;
+    font-weight: var(--font-weight-semibold);
+    border-bottom: 2px solid var(--table-border);
+}
+
+/* Table body element - 表格主体元素 */
+.table-unified__body {
+    background: transparent;
+}
+
+/* Table row element - 表格行元素 */
+.table-unified__row {
+    transition: var(--transition-background);
+}
+
+.table-unified__row:hover {
+    background: var(--table-row-hover);
+}
+
+/* Table cell element - 表格单元格元素 */
+.table-unified__cell {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--table-border);
+}
+
+/* Legacy support - 保留对传统HTML结构的支持 */
+.table-unified thead {
+    background: var(--gradient-primary);
+    color: var(--color-text-inverse);
+}
+
+.table-unified th {
+    padding: var(--spacing-md);
+    text-align: left;
+    font-weight: var(--font-weight-semibold);
+    border-bottom: 2px solid var(--table-border);
+}
+
+.table-unified td {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--table-border);
+}
+
+.table-unified tbody tr {
+    transition: var(--transition-background);
+}
+
+.table-unified tbody tr:hover {
+    background: var(--table-row-hover);
+}
+
+/* Table modifiers - 表格修饰符 */
+.table-unified--striped tbody tr:nth-child(odd),
+.table-unified--striped .table-unified__row:nth-child(odd) {
+    background: var(--table-stripe-bg);
+}
+
+.table-unified--bordered {
+    border: 1px solid var(--table-border);
+}
+
+.table-unified--bordered th,
+.table-unified--bordered td,
+.table-unified--bordered .table-unified__header,
+.table-unified--bordered .table-unified__cell {
+    border: 1px solid var(--table-border);
+}
+
+.table-unified--compact th,
+.table-unified--compact td,
+.table-unified--compact .table-unified__header,
+.table-unified--compact .table-unified__cell {
+    padding: var(--spacing-sm);
+}
+
+/* Responsive table wrapper */
+.table-wrapper-unified {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--table-border);
+}
+
+/* ============================================
+   BADGE & LABEL COMPONENTS - 徽章和标签组件
+   Block: .badge-unified
+   ============================================ */
+
+/* Base badge block - 基础徽章块 */
+.badge-unified {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-badge);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Badge modifiers - 徽章修饰符 */
+.badge-unified--primary {
+    background: var(--gradient-primary);
+    color: var(--color-text-inverse);
+}
+
+.badge-unified--secondary {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+}
+
+.badge-unified--success {
+    background: var(--color-success);
+    color: var(--color-text-primary);
+}
+
+.badge-unified--danger {
+    background: var(--color-danger);
+    color: var(--color-text-primary);
+}
+
+.badge-unified--warning {
+    background: var(--color-warning);
+    color: var(--color-text-inverse);
+}
+
+.badge-unified--info {
+    background: var(--color-info);
+    color: var(--color-text-primary);
+}
+
+/* Outlined badge modifier - 轮廓徽章修饰符 */
+.badge-unified--outline {
+    background: transparent;
+    border: 1px solid currentColor;
+}
+
+.badge-unified--outline.badge-unified--primary {
+    color: var(--color-primary);
+}
+
+.badge-unified--outline.badge-unified--success {
+    color: var(--color-success);
+}
+
+.badge-unified--outline.badge-unified--danger {
+    color: var(--color-danger);
+}
+
+.badge-unified--outline.badge-unified--warning {
+    color: var(--color-warning);
+}
+
+.badge-unified--outline.badge-unified--info {
+    color: var(--color-info);
+}
+
+/* Badge icon element - 徽章图标元素 */
+.badge-unified__icon {
+    margin-right: var(--spacing-xs);
+}
+
+/* ============================================
+   ALERT COMPONENTS - 警告框组件
+   Block: .alert-unified
+   ============================================ */
+
+/* Base alert block - 基础警告框块 */
+.alert-unified {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-md);
+    border-left: 4px solid;
+    margin-bottom: var(--spacing-lg);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+}
+
+/* Alert modifiers - 警告框修饰符 */
+.alert-unified--success {
+    background: rgba(40, 167, 69, 0.1);
+    border-color: var(--color-success);
+    color: var(--color-success-light);
+}
+
+.alert-unified--danger {
+    background: rgba(220, 53, 69, 0.1);
+    border-color: var(--color-danger);
+    color: var(--color-danger-light);
+}
+
+.alert-unified--warning {
+    background: rgba(255, 193, 7, 0.1);
+    border-color: var(--color-warning);
+    color: var(--color-warning);
+}
+
+.alert-unified--info {
+    background: rgba(23, 162, 184, 0.1);
+    border-color: var(--color-info);
+    color: var(--color-info-light);
+}
+
+/* Alert icon element - 警告框图标元素 */
+.alert-unified__icon {
+    flex-shrink: 0;
+    font-size: var(--font-size-lg);
+}
+
+/* Alert content element - 警告框内容元素 */
+.alert-unified__content {
+    flex: 1;
+}
+
+/* Alert title element - 警告框标题元素 */
+.alert-unified__title {
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-xs);
+}
+
+/* ============================================
+   LOADING COMPONENTS - 加载组件
+   Block: .spinner-unified
+   ============================================ */
+
+/* Base spinner block - 基础加载动画块 */
+.spinner-unified {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-full);
+    border-top-color: var(--color-accent);
+    animation: spin-unified 1s linear infinite;
+}
+
+/* Spinner modifiers - 加载动画修饰符 */
+.spinner-unified--sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 2px;
+}
+
+.spinner-unified--lg {
+    width: 3rem;
+    height: 3rem;
+    border-width: 4px;
+}
+
+@keyframes spin-unified {
+    to { transform: rotate(360deg); }
+}
+
+/* Loading overlay block - 加载遮罩块 */
+.loading-overlay-unified {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--color-bg-overlay);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: var(--z-index-modal);
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition-opacity);
+}
+
+.loading-overlay-unified--show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ============================================
+   TOOLTIP COMPONENTS - 工具提示组件
+   Block: .tooltip-unified
+   ============================================ */
+
+/* Base tooltip block - 基础工具提示块 */
+.tooltip-unified {
+    position: relative;
+    display: inline-block;
+}
+
+/* Tooltip content element - 工具提示内容元素 */
+.tooltip-unified__content {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition-opacity);
+    pointer-events: none;
+    z-index: var(--z-index-tooltip);
+    box-shadow: var(--shadow-md);
+}
+
+.tooltip-unified:hover .tooltip-unified__content {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ============================================
+   PROGRESS COMPONENTS - 进度条组件
+   Block: .progress-unified
+   ============================================ */
+
+/* Base progress block - 基础进度条块 */
+.progress-unified {
+    width: 100%;
+    height: 8px;
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+/* Progress bar element - 进度条元素 */
+.progress-unified__bar {
+    height: 100%;
+    background: var(--gradient-primary);
+    transition: width var(--duration-normal) ease;
+}
+
+/* Progress modifiers - 进度条修饰符 */
+.progress-unified--sm {
+    height: 4px;
+}
+
+.progress-unified--lg {
+    height: 12px;
+}
+
+/* ============================================
+   DIVIDER COMPONENTS - 分隔线组件
+   Block: .divider-unified
+   ============================================ */
+
+/* Base divider block - 基础分隔线块 */
+.divider-unified {
+    height: 1px;
+    background: var(--color-border-light);
+    margin: var(--spacing-lg) 0;
+    border: none;
+}
+
+/* Divider modifiers - 分隔线修饰符 */
+.divider-unified--thick {
+    height: 2px;
+}
+
+.divider-unified--accent {
+    background: var(--gradient-primary);
+    height: 2px;
+}
+
+/* Divider text element - 分隔线文本元素 */
+.divider-unified__text {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    margin: var(--spacing-lg) 0;
+}
+
+.divider-unified__text::before,
+.divider-unified__text::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--color-border-light);
+}
+
+.divider-unified__text::before {
+    margin-right: var(--spacing-md);
+}
+
+.divider-unified__text::after {
+    margin-left: var(--spacing-md);
+}
