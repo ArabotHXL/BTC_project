@@ -91,6 +91,65 @@ The application is a modular Flask web application with a mobile-first design, s
 
 ## Recent Changes
 
+### Intelligence Layer Implementation (2025-10-06)
+**Complete event-driven smart layer for mining operations automation and predictive analytics:**
+
+**Core Architecture:**
+1. **Event-Driven System (Outbox Pattern)**
+   - EventOutbox model for atomic event publishing with database transactions
+   - Event publishers with correlation/causation tracking for distributed tracing
+   - Automatic event generation via SQLAlchemy hooks on miner changes
+   - Retry mechanism with exponential backoff (2^n minutes)
+   
+2. **Task Queue System (Redis Queue)**
+   - RQ-based asynchronous task processing with priority queues (high, intelligence, default, low)
+   - Idempotent worker tasks with comprehensive error handling
+   - Separate worker process configured in Procfile.replit
+   - Task timeout support (180-900 seconds)
+
+3. **Intelligence Modules**
+   - **Forecast Module** (`intelligence/forecast.py`): ARIMA-based BTC price & difficulty prediction with 95% confidence intervals, RMSE/MAE metrics
+   - **Anomaly Detection** (`intelligence/anomaly.py`): MAD-based hashrate/power outlier detection with severity classification (low/medium/high/critical)
+   - **Power Optimizer** (`intelligence/optimizer.py`): PuLP linear programming for electricity cost minimization with curtailment scheduling
+   - **ROI Explainer** (`intelligence/explain.py`): Factor decomposition analysis (BTC price, difficulty, uptime, electricity cost) with actionable recommendations
+
+4. **Cache Management**
+   - Flask-Caching with Redis backend and fallback to simple cache
+   - Stale-while-revalidate pattern for async cache refresh
+   - Key naming convention: `user_portfolio:{id}`, `forecast:{id}`, `optimize:{id}:{date}`
+   - Cache invalidation functions for user data synchronization
+
+5. **API Layer** (RESTful JSON endpoints with JWT authentication)
+   - GET `/api/intelligence/forecast/<user_id>` - Retrieve predictions with configurable horizon
+   - POST `/api/intelligence/optimize/curtailment` - Submit optimization request with electricity prices
+   - GET `/api/intelligence/explain/roi/<user_id>` - Get ROI factor breakdown and recommendations
+   - GET `/api/intelligence/health` - System health metrics (outbox backlog, failures, latency)
+
+**Database Models Added:**
+- `EventOutbox`: Event persistence with status tracking (PENDING/PROCESSING/COMPLETED/FAILED/RETRYING)
+- `EventFailure`: Failure analysis and resolution tracking
+- `ForecastDaily`: Time series predictions with confidence bounds and model metrics
+- `OpsSchedule`: Hourly curtailment schedules with cost/power savings
+
+**Integration Points:**
+- Database signal hooks automatically publish events on miner add/update/delete
+- All intelligence tables created via SQLAlchemy models
+- Procfile configured for concurrent web (Gunicorn) and worker (RQ) processes
+- API blueprints registered with main Flask application
+
+**Technology Stack:**
+- RQ (Redis Queue) for task distribution
+- Statsmodels ARIMA for time series forecasting (Prophet alternative for Replit compatibility)
+- PuLP for linear programming optimization
+- XGBoost for advanced ML predictions
+- Flask-Caching for performance optimization
+
+**Deployment Ready:**
+- Health checks with database/Redis connection validation
+- Comprehensive error handling and logging throughout
+- Idempotent task execution for safe retries
+- Production-ready Procfile configuration
+
 ### Enterprise Sales Documentation Suite (2025-10-03)
 **Comprehensive professional documentation package for enterprise sales and due diligence:**
 

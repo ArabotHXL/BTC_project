@@ -383,6 +383,14 @@ def initialize_database():
             except Exception as e:
                 logging.warning(f"Failed to initialize subscription plans: {e}")
             
+            # Initialize intelligence database hooks for event-driven architecture
+            try:
+                from intelligence.db_hooks import setup_intelligence_hooks
+                setup_intelligence_hooks()
+                logging.info("Intelligence database hooks initialized successfully")
+            except Exception as e:
+                logging.warning(f"Failed to initialize intelligence hooks: {e}")
+            
             return True
             
     except Exception as e:
@@ -5890,6 +5898,24 @@ except ImportError as e:
     logging.warning(f"SLA NFT routes not available: {e}")
 except Exception as e:
     logging.error(f"Failed to register SLA NFT routes: {e}")
+
+# Intelligence Layer API blueprints
+try:
+    from intelligence.api.forecast_api import forecast_bp
+    from intelligence.api.optimize_api import optimize_bp
+    from intelligence.api.explain_api import explain_bp
+    from intelligence.api.health_api import health_bp
+    
+    app.register_blueprint(forecast_bp)
+    app.register_blueprint(optimize_bp)
+    app.register_blueprint(explain_bp)
+    app.register_blueprint(health_bp)
+    
+    logging.info("Intelligence Layer API blueprints registered successfully")
+except ImportError as e:
+    logging.warning(f"Intelligence Layer API blueprints not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register Intelligence Layer API blueprints: {e}")
 
 # Register calculator module blueprint for modular architecture
 try:
