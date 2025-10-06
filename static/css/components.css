@@ -1898,3 +1898,29 @@
         margin-bottom: var(--hierarchy-spacing-section-tertiary);
     }
 }
+
+/* ============================================
+   DROPDOWN COMPONENTS - 下拉菜单组件
+   Block: .dropdown-submenu
+   ============================================ */
+
+/* Dropdown submenu support - 下拉子菜单支持 */
+.dropdown-submenu {
+    position: relative;
+}
+
+.dropdown-submenu .dropdown-menu {
+    top: 0;
+    left: 100%;
+    margin-top: -1px;
+}
+
+.dropdown-submenu:hover > .dropdown-menu {
+    display: block;
+}
+
+.dropdown-item:active,
+.dropdown-item:focus,
+.dropdown-item:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.2);
+}

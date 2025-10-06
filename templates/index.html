@@ -28,8 +28,18 @@
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
     <link rel="stylesheet" href="/static/css/design-tokens.css">
     <link rel="stylesheet" href="/static/css/responsive.css">
-    <link rel="stylesheet" href="/static/css/calculator-page.css">
-    <link rel="stylesheet" href="/static/css/mining-calculator-enhanced.css">
+    
+    <!-- Performance Optimization: Async Load Non-Critical CSS (Safari Compatible) -->
+    <link rel="stylesheet" href="/static/css/layouts.css" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="/static/css/components.css" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="/static/css/styles.css" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="/static/css/animations.css" media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="/static/css/layouts.css">
+        <link rel="stylesheet" href="/static/css/components.css">
+        <link rel="stylesheet" href="/static/css/styles.css">
+        <link rel="stylesheet" href="/static/css/animations.css">
+    </noscript>
     
     <!-- Performance Optimization: Async Load Icon Font (Safari Compatible) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" media="print" onload="this.media='all'">
