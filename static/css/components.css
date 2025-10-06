@@ -300,6 +300,95 @@
     display: inline-block;
 }
 
+/* Button loading modifier - 按钮加载状态修饰符 */
+.btn-unified--loading {
+    position: relative;
+    color: transparent;
+    pointer-events: none;
+}
+
+.btn-unified--loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-full);
+    border-top-color: #fff;
+    animation: spin-unified 0.6s linear infinite;
+}
+
+/* Button color modifiers - 按钮颜色修饰符 */
+.btn-unified--success {
+    background: var(--color-success);
+    color: var(--color-text-primary);
+}
+
+.btn-unified--success:hover {
+    background: var(--color-success-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-success);
+}
+
+.btn-unified--danger {
+    background: var(--color-danger);
+    color: var(--color-text-primary);
+}
+
+.btn-unified--danger:hover {
+    background: var(--color-danger-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-danger);
+}
+
+.btn-unified--warning {
+    background: var(--color-warning);
+    color: var(--color-text-inverse);
+}
+
+.btn-unified--warning:hover {
+    background: var(--color-warning-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-warning);
+}
+
+.btn-unified--info {
+    background: var(--color-info);
+    color: var(--color-text-primary);
+}
+
+.btn-unified--info:hover {
+    background: var(--color-info-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-info);
+}
+
+.btn-unified--outline {
+    background: transparent;
+    border: 2px solid currentColor;
+    padding: calc(var(--button-padding-y) - 2px) calc(var(--button-padding-x) - 2px);
+}
+
+.btn-unified--outline.btn-unified--primary {
+    color: var(--color-primary);
+}
+
+.btn-unified--outline.btn-unified--primary:hover {
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+}
+
+/* Icon-only button modifier - 仅图标按钮修饰符 */
+.btn-unified--icon-only {
+    padding: var(--button-padding-y);
+    aspect-ratio: 1;
+    min-width: 44px;
+}
+
 /* ============================================
    FORM COMPONENTS - 表单组件
    Block: .form-control-unified, .form-select-unified, etc.
@@ -413,6 +502,441 @@
     margin-top: var(--spacing-xs);
     font-size: var(--font-size-xs);
     color: var(--color-danger);
+}
+
+/* Form textarea block - 文本域块 */
+.form-textarea-unified {
+    background: var(--input-bg);
+    border: 2px solid var(--input-border);
+    color: var(--color-text-primary);
+    border-radius: var(--input-radius);
+    padding: var(--input-padding-y) var(--input-padding-x);
+    transition: var(--transition-default);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+    width: 100%;
+    font-family: var(--font-family-primary);
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-textarea-unified:focus {
+    background: var(--input-bg-focus);
+    border-color: var(--input-border-focus);
+    box-shadow: 0 0 0 0.25rem var(--shadow-accent);
+    color: var(--color-text-primary);
+    outline: none;
+}
+
+.form-textarea-unified:disabled {
+    opacity: var(--opacity-60);
+    cursor: not-allowed;
+    resize: none;
+}
+
+.form-textarea-unified::placeholder {
+    color: var(--color-text-muted);
+    opacity: var(--opacity-70);
+}
+
+/* Form check block - 复选框容器块 */
+.form-check-unified {
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+    min-height: 44px;
+}
+
+/* Form check input element - 复选框输入元素 */
+.form-check-unified__input {
+    width: 20px;
+    height: 20px;
+    margin-right: var(--spacing-sm);
+    border: 2px solid var(--input-border);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg);
+    cursor: pointer;
+    transition: var(--transition-default);
+    flex-shrink: 0;
+}
+
+.form-check-unified__input:checked {
+    background: var(--gradient-primary);
+    border-color: var(--color-primary);
+}
+
+.form-check-unified__input:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.25rem var(--shadow-accent);
+    border-color: var(--input-border-focus);
+}
+
+.form-check-unified__input:disabled {
+    opacity: var(--opacity-60);
+    cursor: not-allowed;
+}
+
+/* Form check label element - 复选框标签元素 */
+.form-check-unified__label {
+    color: var(--color-text-primary);
+    cursor: pointer;
+    user-select: none;
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+}
+
+.form-check-unified__input:disabled ~ .form-check-unified__label {
+    opacity: var(--opacity-60);
+    cursor: not-allowed;
+}
+
+/* Form radio block - 单选按钮块 */
+.form-radio-unified {
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+    min-height: 44px;
+}
+
+/* Form radio input element - 单选按钮输入元素 */
+.form-radio-unified__input {
+    width: 20px;
+    height: 20px;
+    margin-right: var(--spacing-sm);
+    border: 2px solid var(--input-border);
+    border-radius: var(--radius-full);
+    background: var(--input-bg);
+    cursor: pointer;
+    transition: var(--transition-default);
+    flex-shrink: 0;
+}
+
+.form-radio-unified__input:checked {
+    background: var(--gradient-primary);
+    border-color: var(--color-primary);
+}
+
+.form-radio-unified__input:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.25rem var(--shadow-accent);
+    border-color: var(--input-border-focus);
+}
+
+.form-radio-unified__input:disabled {
+    opacity: var(--opacity-60);
+    cursor: not-allowed;
+}
+
+/* Form radio label element - 单选按钮标签元素 */
+.form-radio-unified__label {
+    color: var(--color-text-primary);
+    cursor: pointer;
+    user-select: none;
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+}
+
+.form-radio-unified__input:disabled ~ .form-radio-unified__label {
+    opacity: var(--opacity-60);
+    cursor: not-allowed;
+}
+
+/* Form floating label block - 浮动标签块 */
+.form-floating-unified {
+    position: relative;
+}
+
+.form-floating-unified__input {
+    background: var(--input-bg);
+    border: 2px solid var(--input-border);
+    color: var(--color-text-primary);
+    border-radius: var(--input-radius);
+    padding: 1.5rem var(--input-padding-x) 0.5rem;
+    transition: var(--transition-default);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+    width: 100%;
+    font-family: var(--font-family-primary);
+    min-height: 58px;
+}
+
+.form-floating-unified__input:focus {
+    background: var(--input-bg-focus);
+    border-color: var(--input-border-focus);
+    box-shadow: 0 0 0 0.25rem var(--shadow-accent);
+    color: var(--color-text-primary);
+    outline: none;
+}
+
+.form-floating-unified__label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    padding: var(--input-padding-y) var(--input-padding-x);
+    pointer-events: none;
+    border: 2px solid transparent;
+    transform-origin: 0 0;
+    transition: var(--transition-default);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-base);
+}
+
+.form-floating-unified__input:focus ~ .form-floating-unified__label,
+.form-floating-unified__input:not(:placeholder-shown) ~ .form-floating-unified__label {
+    opacity: 0.65;
+    transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+    color: var(--color-text-secondary);
+}
+
+/* Additional validation state modifiers - 额外的验证状态修饰符 */
+.form-control-unified--valid,
+.form-select-unified--valid,
+.form-textarea-unified--valid {
+    border-color: var(--color-success);
+}
+
+.form-control-unified--valid:focus,
+.form-select-unified--valid:focus,
+.form-textarea-unified--valid:focus {
+    box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
+}
+
+.form-control-unified--invalid,
+.form-select-unified--invalid,
+.form-textarea-unified--invalid {
+    border-color: var(--color-danger);
+}
+
+.form-control-unified--invalid:focus,
+.form-select-unified--invalid:focus,
+.form-textarea-unified--invalid:focus {
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+}
+
+.form-control-unified--warning,
+.form-select-unified--warning,
+.form-textarea-unified--warning {
+    border-color: var(--color-warning);
+}
+
+.form-control-unified--warning:focus,
+.form-select-unified--warning:focus,
+.form-textarea-unified--warning:focus {
+    box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+}
+
+.form-control-unified--readonly,
+.form-select-unified--readonly,
+.form-textarea-unified--readonly {
+    background: var(--color-bg-tertiary);
+    cursor: default;
+}
+
+/* Form validation message blocks - 表单验证消息块 */
+.form-valid-unified {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-xs);
+    color: var(--color-success);
+}
+
+.form-invalid-unified {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-xs);
+    color: var(--color-danger);
+}
+
+.form-warning-unified {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-xs);
+    color: var(--color-warning);
+}
+
+/* Touch-friendly sizing for mobile - 移动端触摸友好尺寸 */
+@media (max-width: 768px) {
+    .form-control-unified,
+    .form-select-unified,
+    .form-textarea-unified,
+    .form-floating-unified__input {
+        min-height: 44px;
+        font-size: 16px;
+    }
+    
+    .btn-unified {
+        min-height: 44px;
+        padding: 12px 16px;
+        font-size: 16px;
+    }
+    
+    .btn-unified--block {
+        width: 100%;
+    }
+}
+
+/* ============================================
+   INPUT GROUP COMPONENTS - 输入组组件
+   Block: .input-group-unified
+   ============================================ */
+
+/* Input group block - 输入组块 */
+.input-group-unified {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    position: relative;
+}
+
+/* Input group input element - 输入组输入元素 */
+.input-group-unified .form-control-unified {
+    position: relative;
+    flex: 1 1 auto;
+    width: 1%;
+    min-width: 0;
+}
+
+/* Input group text element - 输入组文本元素 */
+.input-group-unified__text {
+    display: flex;
+    align-items: center;
+    padding: var(--input-padding-y) var(--input-padding-x);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-normal);
+    line-height: var(--line-height-normal);
+    color: var(--color-text-primary);
+    text-align: center;
+    white-space: nowrap;
+    background: rgba(255, 193, 7, 0.1);
+    border: 2px solid var(--input-border);
+    border-radius: var(--input-radius);
+    transition: var(--transition-default);
+}
+
+/* Input group prepend modifier - 前置元素修饰符 */
+.input-group-unified__text--prepend {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: 0;
+}
+
+.input-group-unified__text--prepend + .form-control-unified {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* Input group append modifier - 后置元素修饰符 */
+.input-group-unified__text--append {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: 0;
+}
+
+.input-group-unified .form-control-unified + .input-group-unified__text--append {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.input-group-unified .form-control-unified:not(:first-child) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.input-group-unified .form-control-unified:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+/* Input group focus state - 焦点状态 */
+.input-group-unified .form-control-unified:focus {
+    z-index: 3;
+}
+
+/* Input group color modifiers - 颜色修饰符 */
+.input-group-unified__text--primary {
+    background: rgba(247, 147, 30, 0.15);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.input-group-unified__text--success {
+    background: rgba(40, 167, 69, 0.15);
+    border-color: var(--color-success);
+    color: var(--color-success);
+}
+
+.input-group-unified__text--danger {
+    background: rgba(220, 53, 69, 0.15);
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+
+.input-group-unified__text--warning {
+    background: rgba(255, 193, 7, 0.15);
+    border-color: var(--color-warning);
+    color: var(--color-warning);
+}
+
+.input-group-unified__text--info {
+    background: rgba(23, 162, 184, 0.15);
+    border-color: var(--color-info);
+    color: var(--color-info);
+}
+
+/* Backward compatibility - 向后兼容性 */
+.input-group {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+}
+
+.input-group .form-control-unified {
+    position: relative;
+    flex: 1 1 auto;
+    width: 1%;
+    min-width: 0;
+}
+
+.input-group-text {
+    display: flex;
+    align-items: center;
+    padding: var(--input-padding-y) var(--input-padding-x);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-normal);
+    line-height: var(--line-height-normal);
+    color: var(--color-text-primary);
+    text-align: center;
+    white-space: nowrap;
+    background: rgba(255, 193, 7, 0.1);
+    border: 2px solid var(--input-border);
+    border-radius: var(--input-radius);
+}
+
+.input-group > .form-control-unified:not(:first-child) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.input-group > .form-control-unified:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group > .input-group-text:first-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: 0;
+}
+
+.input-group > .input-group-text:last-child {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: 0;
+}
+
+.input-group .form-control-unified:focus {
+    z-index: 3;
 }
 
 /* ============================================

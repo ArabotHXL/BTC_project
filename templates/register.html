@@ -158,19 +158,19 @@ body::before {
 }
 
 /* Form Styling */
-.form-label {
+.form-label-unified {
     color: var(--text-primary);
     font-weight: 600;
     margin-bottom: 0.75rem;
     font-size: 0.95rem;
 }
 
-.form-label i {
+.form-label-unified i {
     color: var(--primary-gold);
     margin-right: 0.5rem;
 }
 
-.form-control {
+.form-control-unified {
     background: rgba(255, 255, 255, 0.05);
     border: 2px solid rgba(255, 193, 7, 0.2);
     border-radius: 16px;
@@ -181,7 +181,7 @@ body::before {
     backdrop-filter: blur(10px);
 }
 
-.form-control:focus {
+.form-control-unified:focus {
     background: rgba(255, 255, 255, 0.08);
     border-color: var(--primary-gold);
     box-shadow: 
@@ -191,13 +191,13 @@ body::before {
     transform: translateY(-2px);
 }
 
-.form-control::placeholder {
+.form-control-unified::placeholder {
     color: var(--text-secondary);
     opacity: 0.7;
 }
 
 /* Primary Button */
-.btn-primary {
+.btn-unified--primary {
     background: linear-gradient(135deg, var(--primary-gold), #e67e22);
     border: none;
     border-radius: 16px;
@@ -211,7 +211,7 @@ body::before {
     box-shadow: 0 10px 30px rgba(255, 193, 7, 0.3);
 }
 
-.btn-primary::before {
+.btn-unified--primary::before {
     content: '';
     position: absolute;
     top: 0;
@@ -222,17 +222,17 @@ body::before {
     transition: left 0.5s ease;
 }
 
-.btn-primary:hover {
+.btn-unified--primary:hover {
     background: linear-gradient(135deg, #e67e22, var(--primary-gold));
     transform: translateY(-3px);
     box-shadow: 0 15px 40px rgba(255, 193, 7, 0.4);
 }
 
-.btn-primary:hover::before {
+.btn-unified--primary:hover::before {
     left: 100%;
 }
 
-.btn-primary:active {
+.btn-unified--primary:active {
     transform: translateY(-1px);
 }
 
@@ -280,7 +280,7 @@ body::before {
     text-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
 }
 
-.form-text {
+.form-help-unified {
     color: var(--text-secondary);
     font-size: 0.9rem;
     margin-top: 0.5rem;
@@ -373,37 +373,37 @@ a, a:hover, a:focus, a:active {
                         {% endwith %}
 
                         <form method="POST">
-                            <div class="mb-3">
-                                <label for="email" class="form-label">
+                            <div class="form-group-unified">
+                                <label for="email" class="form-label-unified">
                                     <i class="bi bi-envelope me-1"></i>
                                     {{ t('email_address') }}
                                 </label>
-                                <input type="email" class="form-control" id="email" name="email" required>
+                                <input type="email" class="form-control-unified" id="email" name="email" required>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="username" class="form-label">
+                            <div class="form-group-unified">
+                                <label for="username" class="form-label-unified">
                                     <i class="bi bi-person me-1"></i>
                                     {{ t('username_optional') }}
                                 </label>
-                                <input type="text" class="form-control" id="username" name="username" 
+                                <input type="text" class="form-control-unified" id="username" name="username" 
                                        placeholder="{{ t('username_placeholder') }}">
                             </div>
 
-                            <div class="mb-3">
-                                <label for="password" class="form-label">
+                            <div class="form-group-unified">
+                                <label for="password" class="form-label-unified">
                                     <i class="bi bi-lock me-1"></i>
                                     {{ t('password') }}
                                 </label>
-                                <input type="password" class="form-control" id="password" name="password" 
+                                <input type="password" class="form-control-unified" id="password" name="password" 
                                        placeholder="{{ t('password_placeholder_register') }}" minlength="6" required>
-                                <div class="form-text text-muted">
+                                <div class="form-help-unified text-muted">
                                     {{ t('password_requirements') }}
                                 </div>
                             </div>
 
                             <div class="d-grid">
-                                <button type="submit" class="btn btn-primary btn-lg">
+                                <button type="submit" class="btn-unified btn-unified--primary btn-unified--lg btn-unified--block">
                                     <i class="bi bi-person-plus me-2"></i>
                                     {{ t('create_account') }}
                                 </button>
