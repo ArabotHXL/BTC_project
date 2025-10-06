@@ -194,6 +194,7 @@
        Z-INDEX SCALE - 层级管理
        ============================================ */
     
+    --z-index-base: 1;
     --z-index-dropdown: 1000;
     --z-index-sticky: 1020;
     --z-index-fixed: 1030;
@@ -201,6 +202,53 @@
     --z-index-modal: 1050;
     --z-index-popover: 1060;
     --z-index-tooltip: 1070;
+    
+    /* ============================================
+       VISUAL HIERARCHY SYSTEM - 视觉层级系统
+       ============================================ */
+    
+    /* Hierarchy - Font Sizes - 层级字体大小 */
+    --hierarchy-h1-size: var(--font-size-4xl);      /* 48px - 最高层级标题 */
+    --hierarchy-h2-size: var(--font-size-3xl);      /* 36px - 二级标题 */
+    --hierarchy-h3-size: var(--font-size-2xl);      /* 30px - 三级标题 */
+    --hierarchy-h4-size: var(--font-size-xl);       /* 24px - 四级标题 */
+    --hierarchy-h5-size: var(--font-size-lg);       /* 20px - 五级标题 */
+    --hierarchy-h6-size: var(--font-size-md);       /* 18px - 六级标题 */
+    --hierarchy-body-size: var(--font-size-base);   /* 16px - 正文 */
+    --hierarchy-small-size: var(--font-size-sm);    /* 14px - 小文本 */
+    --hierarchy-tiny-size: var(--font-size-xs);     /* 12px - 微小文本 */
+    
+    /* Hierarchy - Font Weights - 层级字重 */
+    --hierarchy-weight-bold: var(--font-weight-bold);           /* 700 - 粗体 */
+    --hierarchy-weight-semibold: var(--font-weight-semibold);   /* 600 - 半粗体 */
+    --hierarchy-weight-medium: var(--font-weight-medium);       /* 500 - 中等 */
+    --hierarchy-weight-normal: var(--font-weight-normal);       /* 400 - 正常 */
+    --hierarchy-weight-light: var(--font-weight-light);         /* 300 - 细体 */
+    
+    /* Hierarchy - Opacity Levels - 层级透明度 */
+    --hierarchy-opacity-primary: var(--opacity-100);      /* 100% - 主要内容 */
+    --hierarchy-opacity-secondary: var(--opacity-80);     /* 80% - 次要内容 */
+    --hierarchy-opacity-tertiary: var(--opacity-60);      /* 60% - 辅助内容 */
+    --hierarchy-opacity-disabled: var(--opacity-40);      /* 40% - 禁用内容 */
+    --hierarchy-opacity-subtle: var(--opacity-30);        /* 30% - 极弱内容 */
+    
+    /* Hierarchy - Spacing Between Sections - 层级间距 */
+    --hierarchy-spacing-section-primary: var(--spacing-3xl);     /* 64px - 主要分区间距 */
+    --hierarchy-spacing-section-secondary: var(--spacing-2xl);   /* 48px - 次要分区间距 */
+    --hierarchy-spacing-section-tertiary: var(--spacing-xl);     /* 32px - 辅助分区间距 */
+    --hierarchy-spacing-content-primary: var(--spacing-lg);      /* 24px - 主要内容间距 */
+    --hierarchy-spacing-content-secondary: var(--spacing-md);    /* 16px - 次要内容间距 */
+    --hierarchy-spacing-content-tertiary: var(--spacing-sm);     /* 8px - 辅助内容间距 */
+    
+    /* Hierarchy - Visual Weight - 层级视觉权重 */
+    --hierarchy-border-primary: 3px;        /* 主要边框 */
+    --hierarchy-border-secondary: 2px;      /* 次要边框 */
+    --hierarchy-border-tertiary: 1px;       /* 辅助边框 */
+    
+    /* Hierarchy - Scale Factors - 层级缩放因子 */
+    --hierarchy-scale-primary: 1.2;         /* 主要元素缩放 */
+    --hierarchy-scale-secondary: 1.1;       /* 次要元素缩放 */
+    --hierarchy-scale-tertiary: 1;          /* 辅助元素缩放 */
     
     /* ============================================
        OPACITY SCALE - 透明度

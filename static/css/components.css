@@ -1615,3 +1615,286 @@
 .operations-center--crm {
     /* CRM-specific styles if needed */
 }
+
+/* ============================================
+   VISUAL HIERARCHY UTILITY CLASSES - 视觉层级工具类
+   ============================================ */
+
+/* Text Hierarchy - 文本层级 */
+.text-primary {
+    color: var(--color-text-primary);
+    opacity: var(--hierarchy-opacity-primary);
+    font-weight: var(--hierarchy-weight-normal);
+}
+
+.text-secondary {
+    color: var(--color-text-secondary);
+    opacity: var(--hierarchy-opacity-secondary);
+    font-weight: var(--hierarchy-weight-normal);
+}
+
+.text-tertiary {
+    color: var(--color-text-tertiary);
+    opacity: var(--hierarchy-opacity-tertiary);
+    font-weight: var(--hierarchy-weight-light);
+}
+
+.text-disabled {
+    color: var(--color-text-muted);
+    opacity: var(--hierarchy-opacity-disabled);
+    font-weight: var(--hierarchy-weight-light);
+}
+
+.text-subtle {
+    color: var(--color-text-muted);
+    opacity: var(--hierarchy-opacity-subtle);
+    font-weight: var(--hierarchy-weight-light);
+}
+
+/* Heading Hierarchy - 标题层级 */
+.heading-primary {
+    font-size: var(--hierarchy-h1-size);
+    font-weight: var(--hierarchy-weight-bold);
+    color: var(--color-text-primary);
+    opacity: var(--hierarchy-opacity-primary);
+    line-height: var(--line-height-tight);
+    margin-bottom: var(--hierarchy-spacing-content-primary);
+}
+
+.heading-secondary {
+    font-size: var(--hierarchy-h2-size);
+    font-weight: var(--hierarchy-weight-semibold);
+    color: var(--color-text-primary);
+    opacity: var(--hierarchy-opacity-secondary);
+    line-height: var(--line-height-normal);
+    margin-bottom: var(--hierarchy-spacing-content-secondary);
+}
+
+.heading-tertiary {
+    font-size: var(--hierarchy-h3-size);
+    font-weight: var(--hierarchy-weight-medium);
+    color: var(--color-text-secondary);
+    opacity: var(--hierarchy-opacity-tertiary);
+    line-height: var(--line-height-normal);
+    margin-bottom: var(--hierarchy-spacing-content-tertiary);
+}
+
+.heading-h4 {
+    font-size: var(--hierarchy-h4-size);
+    font-weight: var(--hierarchy-weight-semibold);
+    color: var(--color-text-primary);
+    line-height: var(--line-height-normal);
+}
+
+.heading-h5 {
+    font-size: var(--hierarchy-h5-size);
+    font-weight: var(--hierarchy-weight-medium);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-normal);
+}
+
+.heading-h6 {
+    font-size: var(--hierarchy-h6-size);
+    font-weight: var(--hierarchy-weight-medium);
+    color: var(--color-text-tertiary);
+    line-height: var(--line-height-normal);
+}
+
+/* Section Hierarchy - 内容分区层级 */
+.section-primary {
+    padding: var(--hierarchy-spacing-section-primary) 0;
+    border: var(--hierarchy-border-primary) solid var(--color-border-accent);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-card);
+    margin-bottom: var(--hierarchy-spacing-section-primary);
+    position: relative;
+    z-index: var(--z-index-base);
+}
+
+.section-secondary {
+    padding: var(--hierarchy-spacing-section-secondary) 0;
+    border: var(--hierarchy-border-secondary) solid var(--color-border-primary);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.03);
+    margin-bottom: var(--hierarchy-spacing-section-secondary);
+}
+
+.section-tertiary {
+    padding: var(--hierarchy-spacing-section-tertiary) 0;
+    border: var(--hierarchy-border-tertiary) solid var(--color-border-light);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.01);
+    margin-bottom: var(--hierarchy-spacing-section-tertiary);
+}
+
+/* Content Priority Modifiers - 内容优先级修饰符 */
+.priority-high {
+    font-size: calc(var(--hierarchy-body-size) * var(--hierarchy-scale-primary));
+    font-weight: var(--hierarchy-weight-semibold);
+    color: var(--color-text-primary);
+    border-left: var(--hierarchy-border-primary) solid var(--color-primary);
+    padding-left: var(--spacing-md);
+}
+
+.priority-medium {
+    font-size: calc(var(--hierarchy-body-size) * var(--hierarchy-scale-secondary));
+    font-weight: var(--hierarchy-weight-medium);
+    color: var(--color-text-secondary);
+    border-left: var(--hierarchy-border-secondary) solid var(--color-border-secondary);
+    padding-left: var(--spacing-sm);
+}
+
+.priority-low {
+    font-size: var(--hierarchy-small-size);
+    font-weight: var(--hierarchy-weight-normal);
+    color: var(--color-text-tertiary);
+    opacity: var(--hierarchy-opacity-tertiary);
+}
+
+/* Card Unified Hierarchy Elements - 统一卡片层级元素 */
+.card-unified__title {
+    font-size: var(--hierarchy-h4-size);
+    font-weight: var(--hierarchy-weight-bold);
+    color: var(--color-text-primary);
+    opacity: var(--hierarchy-opacity-primary);
+    margin-bottom: var(--hierarchy-spacing-content-secondary);
+}
+
+.card-unified__subtitle {
+    font-size: var(--hierarchy-h5-size);
+    font-weight: var(--hierarchy-weight-medium);
+    color: var(--color-text-secondary);
+    opacity: var(--hierarchy-opacity-secondary);
+    margin-bottom: var(--hierarchy-spacing-content-tertiary);
+}
+
+.card-unified__body {
+    font-size: var(--hierarchy-body-size);
+    font-weight: var(--hierarchy-weight-normal);
+    color: var(--color-text-primary);
+    line-height: var(--line-height-relaxed);
+    margin-bottom: var(--hierarchy-spacing-content-primary);
+}
+
+.card-unified__footer {
+    font-size: var(--hierarchy-small-size);
+    font-weight: var(--hierarchy-weight-normal);
+    color: var(--color-text-tertiary);
+    opacity: var(--hierarchy-opacity-tertiary);
+    padding-top: var(--hierarchy-spacing-content-secondary);
+    border-top: var(--hierarchy-border-tertiary) solid var(--color-border-light);
+}
+
+.card-unified__meta {
+    font-size: var(--hierarchy-tiny-size);
+    font-weight: var(--hierarchy-weight-light);
+    color: var(--color-text-muted);
+    opacity: var(--hierarchy-opacity-disabled);
+}
+
+/* Form Hierarchy - 表单层级 */
+.form-title {
+    font-size: var(--hierarchy-h3-size);
+    font-weight: var(--hierarchy-weight-bold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--hierarchy-spacing-content-primary);
+}
+
+.form-label--required {
+    font-size: var(--hierarchy-body-size);
+    font-weight: var(--hierarchy-weight-semibold);
+    color: var(--color-text-primary);
+    opacity: var(--hierarchy-opacity-secondary);
+}
+
+.form-label--required::after {
+    content: " *";
+    color: var(--color-danger);
+    opacity: var(--hierarchy-opacity-primary);
+}
+
+.form-label--optional {
+    font-size: var(--hierarchy-body-size);
+    font-weight: var(--hierarchy-weight-normal);
+    color: var(--color-text-secondary);
+    opacity: var(--hierarchy-opacity-secondary);
+}
+
+.form-help {
+    font-size: var(--hierarchy-small-size);
+    font-weight: var(--hierarchy-weight-light);
+    color: var(--color-text-tertiary);
+    opacity: var(--hierarchy-opacity-tertiary);
+    margin-top: var(--spacing-xs);
+}
+
+.form-validation {
+    font-size: var(--hierarchy-small-size);
+    font-weight: var(--hierarchy-weight-medium);
+    margin-top: var(--spacing-xs);
+}
+
+.form-validation--error {
+    color: var(--color-danger);
+    opacity: var(--hierarchy-opacity-primary);
+}
+
+.form-validation--success {
+    color: var(--color-success);
+    opacity: var(--hierarchy-opacity-primary);
+}
+
+/* Focus Management - 焦点管理 */
+.focus-primary {
+    outline: var(--hierarchy-border-primary) solid var(--color-primary);
+    outline-offset: 3px;
+    box-shadow: 0 0 0 4px var(--shadow-primary);
+}
+
+.focus-secondary {
+    outline: var(--hierarchy-border-secondary) solid var(--color-border-accent);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.2);
+}
+
+/* Visual Flow Helpers - 视觉流引导 */
+.flow-primary {
+    transform: scale(var(--hierarchy-scale-primary));
+    z-index: var(--z-index-sticky);
+    box-shadow: var(--shadow-xl);
+    transition: var(--transition-default);
+}
+
+.flow-secondary {
+    transform: scale(var(--hierarchy-scale-secondary));
+    z-index: calc(var(--z-index-base) + 1);
+    box-shadow: var(--shadow-lg);
+    transition: var(--transition-default);
+}
+
+/* Responsive Hierarchy Adjustments - 响应式层级调整 */
+@media (max-width: 768px) {
+    .heading-primary {
+        font-size: var(--hierarchy-h2-size);
+        margin-bottom: var(--hierarchy-spacing-content-secondary);
+    }
+    
+    .heading-secondary {
+        font-size: var(--hierarchy-h3-size);
+        margin-bottom: var(--hierarchy-spacing-content-tertiary);
+    }
+    
+    .heading-tertiary {
+        font-size: var(--hierarchy-h4-size);
+    }
+    
+    .section-primary {
+        padding: var(--hierarchy-spacing-section-secondary) 0;
+        margin-bottom: var(--hierarchy-spacing-section-secondary);
+    }
+    
+    .section-secondary {
+        padding: var(--hierarchy-spacing-section-tertiary) 0;
+        margin-bottom: var(--hierarchy-spacing-section-tertiary);
+    }
+}

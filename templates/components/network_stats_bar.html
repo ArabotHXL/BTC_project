@@ -1,10 +1,10 @@
-<div class="container-fluid mb-4">
+<div class="container-fluid mb-4 section-secondary">
     <div class="alert alert-info border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(13, 202, 240, 0.1) 100%); border-radius: 12px;">
         <div class="row">
             <div class="col-12">
-                <h6 class="alert-heading mb-2 text-info fw-bold d-flex align-items-center">
+                <h6 class="heading-h6 alert-heading mb-2 d-flex align-items-center">
                     <i class="bi bi-globe2 me-2"></i>
-                    {% if current_lang == 'en' %}Real-time Network Status{% else %}实时网络状态{% endif %}
+                    <span class="text-primary">{% if current_lang == 'en' %}Real-time Network Status{% else %}实时网络状态{% endif %}</span>
                 </h6>
                 <div id="network-stats-container" class="d-flex flex-column-mobile flex-row-tablet gap-3 text-center-mobile text-left-tablet flex-wrap justify-content-center">
                     <div class="stats-item d-flex align-items-center">
