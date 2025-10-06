@@ -433,8 +433,8 @@
             <div class="d-flex align-items-center">
                 <!-- 语言切换 / Language Switcher -->
                 <div class="btn-group btn-group-sm me-2 d-none d-md-flex" role="group">
-                    <a href="{{ url_with_lang('zh') }}" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
-                    <a href="{{ url_with_lang('en') }}" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}">English</a>
+                    <a href="{{ url_for(request.endpoint, lang='zh', **request.view_args) }}" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
+                    <a href="{{ url_for(request.endpoint, lang='en', **request.view_args) }}" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}">English</a>
                 </div>
                 
                 <span class="status-indicator status-online d-none d-md-inline" id="connectionStatus"></span>
@@ -3057,7 +3057,7 @@
                                 '<div class="col-md-6">' +
                                     '<div class="d-flex flex-column">' +
                                         '<span class="text-light mb-2 fw-semibold">投资建议:</span>' +
-                                        '<div class="p-3 bg--warning-subtle rounded border-start border-warning border-3">' +
+                                        '<div class="p-3 bg-warning bg-opacity-10 rounded border-start border-warning border-3">' +
                                             '<span class="text-warning fw-medium">' + report.executive_summary.investment_outlook + '</span>' +
                                         '</div>' +
                                     '</div>' +
@@ -3121,7 +3121,7 @@
                             '</div>' +
                             '<div class="row mt-3">' +
                                 '<div class="col-12">' +
-                                    '<div class="alert alert-info mb-0 border-info bg--info-subtle">' +
+                                    '<div class="alert alert-info mb-0 border-info bg-info bg-opacity-10">' +
                                         '<i class="bi bi-lightbulb"></i>' +
                                         '<strong>盈亏平衡电价:</strong> ' +
                                         '<span class="fw-bold text-info">' + best.breakeven_electricity_cost.toFixed(4) + '/kWh</span>' +

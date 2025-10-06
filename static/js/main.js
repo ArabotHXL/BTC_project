@@ -210,21 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data && data.length > 0) {
                     localStorage.setItem('miners', JSON.stringify(data));
-                    
-                    // 填充矿机选项
-                    if (minerModelSelect) {
-                        const currentLang = document.querySelector('meta[name="language"]')?.content || 'zh';
-                        const selectText = currentLang === 'en' ? 'Select a miner model' : '选择矿机型号';
-                        minerModelSelect.innerHTML = '<option value="">' + selectText + '</option>';
-                        
-                        data.forEach(function(miner) {
-                            var option = document.createElement('option');
-                            option.value = miner.name;
-                            option.textContent = miner.name + ' (' + miner.hashrate + ' TH/s, ' + miner.power_watt + 'W)';
-                            minerModelSelect.appendChild(option);
-                        });
-                    }
-                    
+                    populateMinerOptions(data);
                     console.log("矿机列表加载成功:", data.length);
                 }
                 resolve(data);

@@ -111,38 +111,6 @@ def inject_csrf_token():
     logging.debug(f"Context processor initialized: {session_info}")
     return dict(csrf_token=token)
 
-# Make navigation menu available to all templates
-@app.context_processor
-def inject_navigation():
-    """Inject navigation menu data into all templates"""
-    from navigation_config import get_user_navigation, get_user_menu
-    
-    current_role = session.get('role', 'guest')
-    current_lang = session.get('language', 'zh')
-    
-    return dict(
-        navigation_menu=get_user_navigation(current_role, current_lang),
-        user_menu=get_user_menu(current_role, current_lang)
-    )
-
-# Make language-aware URL builder available to all templates
-@app.context_processor
-def inject_url_helpers():
-    """Inject helper functions for building URLs"""
-    from urllib.parse import urlencode
-    
-    def url_with_lang(lang):
-        """Build URL with language parameter while preserving all query parameters including multi-valued ones"""
-        # Get all query parameters as lists to preserve multi-valued parameters
-        args = request.args.to_dict(flat=False)
-        # Set or update the language parameter
-        args['lang'] = [lang]
-        # Use doseq=True to handle multi-valued parameters correctly
-        query_string = urlencode(args, doseq=True)
-        return f"{request.path}?{query_string}"
-    
-    return dict(url_with_lang=url_with_lang)
-
 # Apply security headers middleware for hosting transparency
 @app.after_request
 def apply_security_headers(response):
@@ -3110,7 +3078,7 @@ def migrate_to_crm():
 
 @app.route('/api/profit-chart-data', methods=['POST'])
 @app.route('/profit_chart_data', methods=['POST'])
-@rate_limit(max_requests=50, window_minutes=60, feature_name="热力图")
+@rate_limit(max_requests=3, window_minutes=60, feature_name="热力图")
 def get_profit_chart_data():
     """Generate profit chart data for visualization"""
     try:
@@ -3718,21 +3686,21 @@ init_crm_routes(app)
 # DISABLED: Gold flow module - mining broker routes
 # init_broker_routes(app)
 
-# 注册托管功能模块 - MOVED TO MODULAR SYSTEM (modules/config.py)
-# try:
-#     from modules.hosting import hosting_bp
-#     app.register_blueprint(hosting_bp)
-#     logging.info("托管功能模块已注册")
-# except ImportError as e:
-#     logging.warning(f"托管功能模块不可用: {e}")
+# 注册托管功能模块
+try:
+    from modules.hosting import hosting_bp
+    app.register_blueprint(hosting_bp)
+    logging.info("托管功能模块已注册")
+except ImportError as e:
+    logging.warning(f"托管功能模块不可用: {e}")
 
-# 注册客户功能模块 - MOVED TO MODULAR SYSTEM (modules/config.py)
-# try:
-#     from modules.client import client_bp
-#     app.register_blueprint(client_bp)
-#     logging.info("客户功能模块已注册")
-# except ImportError as e:
-#     logging.warning(f"客户功能模块不可用: {e}")
+# 注册客户功能模块
+try:
+    from modules.client import client_bp
+    app.register_blueprint(client_bp)
+    logging.info("客户功能模块已注册")
+except ImportError as e:
+    logging.warning(f"客户功能模块不可用: {e}")
 
 # 添加矿场中介业务路由别名
 # DISABLED: Gold flow module - mining broker redirect
@@ -5923,46 +5891,6 @@ except ImportError as e:
 except Exception as e:
     logging.error(f"Failed to register SLA NFT routes: {e}")
 
-# Mining Operations Center 路由
-try:
-    from operations_routes import operations_bp
-    app.register_blueprint(operations_bp)
-    logging.info("Mining Operations Center routes registered successfully")
-except ImportError as e:
-    logging.warning(f"Mining Operations Center routes not available: {e}")
-except Exception as e:
-    logging.error(f"Failed to register Mining Operations Center routes: {e}")
-
-# Data Analytics Center 路由
-try:
-    from analytics_center_routes import analytics_center_bp
-    app.register_blueprint(analytics_center_bp)
-    logging.info("Data Analytics Center routes registered successfully")
-except ImportError as e:
-    logging.warning(f"Data Analytics Center routes not available: {e}")
-except Exception as e:
-    logging.error(f"Failed to register Data Analytics Center routes: {e}")
-
-# Web3 Center 路由
-try:
-    from web3_center_routes import web3_center_bp
-    app.register_blueprint(web3_center_bp)
-    logging.info("Web3 Center routes registered successfully")
-except ImportError as e:
-    logging.warning(f"Web3 Center routes not available: {e}")
-except Exception as e:
-    logging.error(f"Failed to register Web3 Center routes: {e}")
-
-# CRM Center 路由
-try:
-    from crm_center_routes import crm_center_bp
-    app.register_blueprint(crm_center_bp)
-    logging.info("CRM Center routes registered successfully")
-except ImportError as e:
-    logging.warning(f"CRM Center routes not available: {e}")
-except Exception as e:
-    logging.error(f"Failed to register CRM Center routes: {e}")
-
 # Register calculator module blueprint for modular architecture
 try:
     from modules.config import register_modules
@@ -7012,9 +6940,7 @@ def init_payment_monitor():
         
         if getattr(Config, 'SUBSCRIPTION_ENABLED', False):
             # SchedulerLock机制确保只有一个worker实例启动监控服务
-            # 使用app context确保数据库操作正常
-            with app.app_context():
-                payment_monitor.start_monitoring()
+            payment_monitor.start_monitoring()
             logging.info("支付监控服务初始化完成 (SchedulerLock机制)")
         else:
             logging.info("订阅功能未启用，跳过支付监控服务")

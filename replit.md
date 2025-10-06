@@ -91,68 +91,6 @@ The application is a modular Flask web application with a mobile-first design, s
 
 ## Recent Changes
 
-### Unified Navigation System & Operations Centers (2025-10-05)
-**Major UX overhaul consolidating 40+ scattered pages into 4 unified operation centers with role-based access and hash navigation:**
-
-**New Unified Centers Created:**
-1. **Mining Operations Center** (/operations/mining)
-   - Consolidated: Basic Calculator, Batch Calculator, Miner List, Batch Import
-   - Features: postMessage state sharing (miner selection → batch calculator), lazy loading, hash navigation (#calculator, #batch, #miners, #import)
-   - Permission: mining_site+ roles
-   
-2. **Data Analytics Center** (/operations/analytics)
-   - Consolidated: Technical Analysis, Market Data, Network History, ROI Heatmap
-   - Features: Complete hash deep-linking, iframe lazy loading, error handling with retry
-   - Permission: mining_site+ roles
-   
-3. **Web3 Dashboard** (/operations/web3)
-   - Consolidated: Web3 Overview, Blockchain Verification, SLA NFT Manager, Transparency Center, Crypto Payment
-   - Features: Admin-only payment tab with frontend hiding + backend enforcement
-   - Permission: mining_site+ (payment requires admin)
-   
-4. **CRM Center** (/operations/crm)
-   - Consolidated: CRM Dashboard, Customer Management, Mining Customers, User Access, Login Records
-   - Features: Full admin/owner-gated unified interface
-   - Permission: admin+ roles
-
-**Technical Implementation:**
-- **Navigation Config**: Centralized navigation_config.py with 5-level role hierarchy (owner>admin>mining_site>user>guest)
-- **Responsive Components**: Mobile accordion + Desktop vertical tabs pattern
-- **Hash Navigation**: Full URL fragment support (#tab-name) with history.replaceState() sync
-- **Lazy Loading**: Desktop tab activation and mobile accordion expansion trigger iframe src assignment
-- **Error Handling**: 10-second timeout fallback, retry buttons with event delegation
-- **State Sharing**: postMessage bridge for cross-iframe communication (Mining Operations Center)
-- **Security**: All routes protected with @login_required + @requires_role decorators, hash navigation cannot bypass permissions
-
-**Architecture Files:**
-- operations_routes.py (Mining Operations Center Blueprint)
-- analytics_center_routes.py (Data Analytics Center Blueprint)
-- web3_center_routes.py (Web3 Dashboard Blueprint)
-- crm_center_routes.py (CRM Center Blueprint)
-- navigation_config.py (Centralized menu configuration with role-based filtering)
-- templates/components/navbar.html (Responsive navbar component)
-- templates/mining_operations_center.html (4 tabs with state sharing)
-- templates/analytics_center.html (4 tabs with hash sync)
-- templates/web3_center.html (5 tabs with admin handling)
-- templates/crm_center.html (5 tabs with iframe lazy loading)
-
-**Quality Assurance:**
-- All 4 centers reviewed and approved by Architect
-- Mining Operations Center: 3 rounds of fixes (iframe loading, hash navigation, postMessage bridge, retry handler, first tab initialization)
-- Data Analytics Center: 1 round fix (hash synchronization on tab/accordion clicks)
-- Web3 Dashboard: Passed first review (admin handling correct)
-- CRM Center: 1 round fix (iframe src assignment missing, lazy loading broken)
-- Security audit: All permissions verified, no bypass paths, iframe embeds maintain server-side protection
-- System testing: All routes return 302 (correct auth redirect), no LSP errors, stable operation
-
-**Benefits:**
-- Reduced page count from 40+ to 4 unified centers (90% consolidation)
-- Improved UX: Single-page tab navigation vs multiple page loads
-- Better mobile experience: Accordion-based navigation optimized for touch
-- Enhanced discoverability: Related functions grouped logically
-- Consistent UI/UX: Reusable template pattern across all centers
-- Future-proof: Easy to add new tabs to existing centers
-
 ### Enterprise Sales Documentation Suite (2025-10-03)
 **Comprehensive professional documentation package for enterprise sales and due diligence:**
 

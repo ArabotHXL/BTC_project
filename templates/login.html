@@ -173,14 +173,14 @@ body::before {
 }
 
 /* Form Styling */
-.form-label-unified {
+.form-label {
     color: var(--text-primary);
     font-weight: 600;
     margin-bottom: 0.75rem;
     font-size: 0.95rem;
 }
 
-.form-control-unified {
+.form-control {
     background: rgba(255, 255, 255, 0.05);
     border: 2px solid rgba(255, 193, 7, 0.2);
     border-radius: 16px;
@@ -191,7 +191,7 @@ body::before {
     backdrop-filter: blur(10px);
 }
 
-.form-control-unified:focus {
+.form-control:focus {
     background: rgba(255, 255, 255, 0.08);
     border-color: var(--primary-gold);
     box-shadow: 
@@ -201,13 +201,13 @@ body::before {
     transform: translateY(-2px);
 }
 
-.form-control-unified::placeholder {
+.form-control::placeholder {
     color: var(--text-secondary);
     opacity: 0.7;
 }
 
 /* Primary Button */
-.btn-unified--primary {
+.btn-primary {
     background: linear-gradient(135deg, var(--primary-gold), #e67e22);
     border: none;
     border-radius: 16px;
@@ -221,7 +221,7 @@ body::before {
     box-shadow: 0 10px 30px rgba(255, 193, 7, 0.3);
 }
 
-.btn-unified--primary::before {
+.btn-primary::before {
     content: '';
     position: absolute;
     top: 0;
@@ -232,17 +232,17 @@ body::before {
     transition: left 0.5s ease;
 }
 
-.btn-unified--primary:hover {
+.btn-primary:hover {
     background: linear-gradient(135deg, #e67e22, var(--primary-gold));
     transform: translateY(-3px);
     box-shadow: 0 15px 40px rgba(255, 193, 7, 0.4);
 }
 
-.btn-unified--primary:hover::before {
+.btn-primary:hover::before {
     left: 100%;
 }
 
-.btn-unified--primary:active {
+.btn-primary:active {
     transform: translateY(-1px);
 }
 
@@ -297,7 +297,7 @@ body::before {
     color: #17a2b8 !important;
 }
 
-.form-help-unified {
+.form-text {
     color: var(--text-secondary);
     font-size: 0.9rem;
     margin-top: 0.5rem;
@@ -333,12 +333,12 @@ body::before {
         margin-top: 0.5rem;
     }
     
-    .form-control-unified {
+    .form-control {
         padding: 0.8rem 1rem;
         font-size: 0.95rem;
     }
     
-    .btn-unified--primary {
+    .btn-primary {
         padding: 0.8rem 1.5rem;
         font-size: 1rem;
     }
@@ -456,7 +456,7 @@ body::before {
         border-width: 2px;
     }
     
-    .form-control-unified {
+    .form-control {
         border-width: 1px;
     }
 }
@@ -552,19 +552,19 @@ a, a:hover, a:focus, a:active {
                         <!-- Traditional Email/Password Login -->
                         <form class="login-form" method="post" action="{{ url_for('login') }}">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
-                            <div class="form-group-unified">
-                                <label for="email" class="form-label-unified">{{ t('email_or_username') }}</label>
-                                <input type="text" class="form-control-unified" id="email" name="email" 
+                            <div class="mb-3">
+                                <label for="email" class="form-label">{{ t('email_or_username') }}</label>
+                                <input type="text" class="form-control" id="email" name="email" 
                                        placeholder="{{ t('email_placeholder') }}" required>
                             </div>
-                            <div class="form-group-unified">
-                                <label for="password" class="form-label-unified">{{ t('password') }}</label>
-                                <input type="password" class="form-control-unified" id="password" name="password" 
+                            <div class="mb-3">
+                                <label for="password" class="form-label">{{ t('password') }}</label>
+                                <input type="password" class="form-control" id="password" name="password" 
                                        placeholder="{{ t('password_placeholder') }}">
-                                <div class="form-help-unified text-muted">{{ t('new_user_register') }}</div>
+                                <div class="form-text text-muted">{{ t('new_user_register') }}</div>
                             </div>
                             <div class="d-grid">
-                                <button type="submit" class="btn-unified btn-unified--primary btn-unified--block">{{ t('login') }}</button>
+                                <button type="submit" class="btn btn-primary">{{ t('login') }}</button>
                             </div>
                         </form>
                         <div class="text-center mt-4">

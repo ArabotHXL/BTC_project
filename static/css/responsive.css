@@ -1,764 +1,181 @@
-/**
- * HashInsight Responsive Design System
- * Mobile-First Breakpoint System: 320px-1920px
- * 
- * Breakpoints (aligned with design-tokens.css):
- * - Mobile:  320px - 767px  (base styles)
- * - Tablet:  768px - 1023px
- * - Desktop: 1024px - 1919px
- * - Wide:    1920px+
- * 
- * @version 2.0.0
- * @lastModified 2025-10-06
- */
+/* 响应式设计 - 适配各种屏幕尺寸 */
 
-/* ============================================
-   BASE MOBILE STYLES (320px+)
-   Mobile-First Approach
-   ============================================ */
-
-/* Root Sizing */
-html {
-    font-size: 16px;
-    -webkit-text-size-adjust: 100%;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-    font-size: 14px;
-    line-height: 1.6;
-    overflow-x: hidden;
-}
-
-/* Container System - Mobile Base */
+/* 移动优先设计原则 */
+/* 基础移动样式 (320px+) */
 .container-fluid {
-    padding-left: 12px;
-    padding-right: 12px;
-    width: 100%;
-    max-width: 100%;
+    padding: 10px;
 }
 
-.container {
-    padding-left: 12px;
-    padding-right: 12px;
-    width: 100%;
-}
-
-/* Card System - Mobile */
 .card {
-    margin-bottom: 16px;
-    border-radius: var(--radius-md, 12px);
-    box-shadow: var(--shadow-sm, 0 2px 4px rgba(0,0,0,0.1));
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.card-body,
-.card__body {
-    padding: 16px;
+.form-control, .form-select {
+    font-size: 16px; /* 防止iOS自动缩放 */
+    padding: 10px;
 }
 
-.card-header,
-.card__header {
-    padding: 12px 16px;
-}
-
-/* Form Elements - Touch-Friendly */
-.form-control,
-.form-select {
-    font-size: 16px;
-    padding: 12px;
-    min-height: 44px;
-    border-radius: var(--radius-sm, 8px);
-}
-
-.form-label {
-    font-size: 14px;
-    margin-bottom: 6px;
-    font-weight: 500;
-}
-
-.form-text {
-    font-size: 12px;
-    margin-top: 4px;
-}
-
-/* Button System - Touch-Friendly */
 .btn {
-    padding: 12px 20px;
+    padding: 10px 15px;
     font-size: 14px;
-    min-height: 44px;
-    min-width: 44px;
-    border-radius: var(--radius-sm, 8px);
-    font-weight: 500;
-    line-height: 1.5;
+    min-height: 44px; /* 触摸友好 */
 }
 
-.btn-sm {
-    padding: 8px 16px;
-    font-size: 13px;
-    min-height: 36px;
-}
-
-.btn-lg {
-    padding: 14px 24px;
-    font-size: 16px;
-    min-height: 48px;
-}
-
-.btn-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.btn-group .btn {
-    border-radius: var(--radius-sm, 8px) !important;
-    width: 100%;
-}
-
-/* Grid System - Mobile Stacking */
-.row {
-    margin-left: -8px;
-    margin-right: -8px;
-}
-
-.row > [class*="col-"] {
-    padding-left: 8px;
-    padding-right: 8px;
-    margin-bottom: 16px;
-}
-
-.row.g-4 {
-    gap: 16px;
-    margin-left: 0;
-    margin-right: 0;
-}
-
-.row.g-4 > [class*="col-"] {
-    padding-left: 0;
-    padding-right: 0;
-}
-
-/* Typography - Mobile */
-h1, .h1 {
-    font-size: 1.75rem;
-    line-height: 1.2;
-    margin-bottom: 1rem;
-}
-
-h2, .h2 {
-    font-size: 1.5rem;
-    line-height: 1.3;
-    margin-bottom: 0.875rem;
-}
-
-h3, .h3 {
-    font-size: 1.25rem;
-    line-height: 1.4;
-    margin-bottom: 0.75rem;
-}
-
-h4, .h4 {
-    font-size: 1.125rem;
-    line-height: 1.4;
-    margin-bottom: 0.625rem;
-}
-
-h5, .h5 {
-    font-size: 1rem;
-    line-height: 1.5;
-    margin-bottom: 0.5rem;
-}
-
-h6, .h6 {
-    font-size: 0.875rem;
-    line-height: 1.5;
-    margin-bottom: 0.5rem;
-}
-
-.display-4 {
-    font-size: 2rem;
-    line-height: 1.2;
-}
-
-.lead {
-    font-size: 1rem;
-    line-height: 1.6;
-}
-
-/* Table - Mobile Responsive */
+/* 表格响应式处理 */
 .table-responsive {
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
     font-size: 14px;
 }
 
-.table {
-    font-size: 14px;
-    width: 100%;
-}
-
-.table th,
-.table td {
+.table th, .table td {
     padding: 8px;
     vertical-align: middle;
-    white-space: nowrap;
 }
 
-.table-sm th,
-.table-sm td {
-    padding: 6px;
-    font-size: 13px;
-}
-
-/* Mobile: Stack table for very small screens */
-@media (max-width: 480px) {
-    .table-stack-mobile thead {
-        display: none;
+/* 超小屏幕 (320px - 479px) */
+@media (max-width: 479px) {
+    .container-fluid {
+        padding: 5px;
     }
     
-    .table-stack-mobile tbody,
-    .table-stack-mobile tr,
-    .table-stack-mobile td {
+    .card-body {
+        padding: 10px;
+    }
+    
+    .row > .col-md-6,
+    .row > .col-lg-4,
+    .row > .col-lg-6 {
+        margin-bottom: 15px;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        border-radius: 4px !important;
+        margin-bottom: 5px;
+    }
+    
+    /* 隐藏非关键信息 */
+    .d-none-xs {
+        display: none !important;
+    }
+    
+    /* 表格在小屏幕上垂直显示 */
+    .table-responsive table,
+    .table-responsive thead,
+    .table-responsive tbody,
+    .table-responsive th,
+    .table-responsive td,
+    .table-responsive tr {
         display: block;
-        width: 100%;
     }
     
-    .table-stack-mobile tr {
-        margin-bottom: 16px;
-        border: 1px solid var(--color-border-primary, #333);
-        border-radius: 8px;
-        padding: 12px;
-    }
-    
-    .table-stack-mobile td {
-        text-align: left !important;
-        padding-left: 50% !important;
-        position: relative;
-        border: none;
-    }
-    
-    .table-stack-mobile td:before {
-        content: attr(data-label);
+    .table-responsive thead tr {
         position: absolute;
-        left: 12px;
+        top: -9999px;
+        left: -9999px;
+    }
+    
+    .table-responsive tr {
+        border: 1px solid #ccc;
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 5px;
+    }
+    
+    .table-responsive td {
+        border: none;
+        position: relative;
+        padding-left: 50% !important;
+        text-align: left;
+    }
+    
+    .table-responsive td:before {
+        content: attr(data-label) ": ";
+        position: absolute;
+        left: 6px;
         width: 45%;
-        font-weight: 600;
+        font-weight: bold;
         text-align: left;
     }
 }
 
-/* Navbar - Mobile */
-.navbar {
-    padding: 12px;
-    border-radius: var(--radius-md, 12px);
-}
-
-.navbar-brand {
-    font-size: 1.125rem;
-}
-
-.navbar-nav {
-    flex-direction: column;
-    gap: 8px;
-}
-
-.navbar .btn {
-    width: 100%;
-    text-align: left;
-}
-
-/* Network Stats Bar - Mobile */
-#network-stats-container {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
-}
-
-#network-stats-container .stats-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-}
-
-/* Chart Container - Mobile */
-.chart-container {
-    position: relative;
-    height: 250px;
-    width: 100%;
-    margin-bottom: 16px;
-}
-
-/* Calculator Results - Mobile Optimization */
-.results-hover-card {
-    padding: 16px;
-    border-radius: 8px;
-    margin-bottom: 12px;
-}
-
-.results-hover-card h6 {
-    font-size: 0.875rem;
-    margin-bottom: 8px;
-}
-
-.results-hover-card h3 {
-    font-size: 1.5rem;
-    margin-bottom: 0;
-}
-
-/* ============================================
-   RESPONSIVE UTILITY CLASSES
-   ============================================ */
-
-/* Display Utilities */
-.hide-mobile {
-    display: none !important;
-}
-
-.show-mobile {
-    display: block !important;
-}
-
-.hide-tablet {
-    display: block !important;
-}
-
-.show-tablet {
-    display: none !important;
-}
-
-.hide-desktop {
-    display: block !important;
-}
-
-.show-desktop {
-    display: none !important;
-}
-
-/* Text Alignment - Mobile */
-.text-center-mobile {
-    text-align: center !important;
-}
-
-.text-left-mobile {
-    text-align: left !important;
-}
-
-.text-right-mobile {
-    text-align: right !important;
-}
-
-/* Flexbox - Mobile */
-.flex-column-mobile {
-    flex-direction: column !important;
-}
-
-.flex-row-mobile {
-    flex-direction: row !important;
-}
-
-.flex-wrap-mobile {
-    flex-wrap: wrap !important;
-}
-
-/* Spacing - Mobile */
-.mt-1-mobile { margin-top: 4px !important; }
-.mt-2-mobile { margin-top: 8px !important; }
-.mt-3-mobile { margin-top: 16px !important; }
-.mt-4-mobile { margin-top: 24px !important; }
-
-.mb-1-mobile { margin-bottom: 4px !important; }
-.mb-2-mobile { margin-bottom: 8px !important; }
-.mb-3-mobile { margin-bottom: 16px !important; }
-.mb-4-mobile { margin-bottom: 24px !important; }
-
-.p-1-mobile { padding: 4px !important; }
-.p-2-mobile { padding: 8px !important; }
-.p-3-mobile { padding: 16px !important; }
-.p-4-mobile { padding: 24px !important; }
-
-/* Width Utilities - Mobile */
-.w-100-mobile {
-    width: 100% !important;
-}
-
-.w-auto-mobile {
-    width: auto !important;
-}
-
-/* ============================================
-   TABLET BREAKPOINT (768px - 1023px)
-   ============================================ */
-
-@media (min-width: 768px) {
-    /* Container - Tablet */
+/* 小屏幕 (480px - 767px) */
+@media (min-width: 480px) and (max-width: 767px) {
     .container-fluid {
-        padding-left: 24px;
-        padding-right: 24px;
+        padding: 15px;
     }
     
-    .container {
-        padding-left: 24px;
-        padding-right: 24px;
-        max-width: 720px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    
-    /* Typography - Tablet */
-    body {
-        font-size: 15px;
-    }
-    
-    h1, .h1 { font-size: 2.25rem; }
-    h2, .h2 { font-size: 1.875rem; }
-    h3, .h3 { font-size: 1.5rem; }
-    h4, .h4 { font-size: 1.25rem; }
-    h5, .h5 { font-size: 1.125rem; }
-    h6, .h6 { font-size: 1rem; }
-    
-    .display-4 { font-size: 2.5rem; }
-    .lead { font-size: 1.125rem; }
-    
-    /* Card - Tablet */
-    .card {
-        margin-bottom: 20px;
-    }
-    
-    .card-body,
-    .card__body {
-        padding: 20px;
-    }
-    
-    .card-header,
-    .card__header {
-        padding: 16px 20px;
-    }
-    
-    /* Grid - Tablet */
-    .row {
-        margin-left: -12px;
-        margin-right: -12px;
-    }
-    
-    .row > [class*="col-"] {
-        padding-left: 12px;
-        padding-right: 12px;
-    }
-    
-    /* Button Group - Tablet */
-    .btn-group {
-        flex-direction: row;
-        gap: 12px;
-    }
-    
-    .btn-group .btn {
-        width: auto;
-    }
-    
-    /* Navbar - Tablet */
-    .navbar {
-        padding: 16px 24px;
+    .card-columns {
+        column-count: 1;
     }
     
     .navbar-nav {
-        flex-direction: row;
-        gap: 16px;
+        flex-direction: column;
     }
     
-    .navbar .btn {
-        width: auto;
-        text-align: center;
+    .form-row .col-6 {
+        margin-bottom: 10px;
+    }
+}
+
+/* 中等屏幕 (768px - 991px) - 平板 */
+@media (min-width: 768px) and (max-width: 991px) {
+    .container-fluid {
+        padding: 20px;
     }
     
-    /* Network Stats Bar - Tablet */
-    #network-stats-container {
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 16px;
-        justify-content: center;
+    .card-columns {
+        column-count: 2;
     }
     
-    #network-stats-container .stats-item {
-        flex: 0 1 auto;
-        min-width: 200px;
-    }
-    
-    /* Chart - Tablet */
-    .chart-container {
-        height: 320px;
-    }
-    
-    /* Table - Tablet */
-    .table {
+    .table-responsive {
         font-size: 15px;
     }
     
-    .table th,
-    .table td {
+    /* 平板优化的表格显示 */
+    .table th, .table td {
         padding: 10px;
     }
-    
-    /* Display Utilities - Tablet */
-    .hide-mobile {
-        display: block !important;
-    }
-    
-    .show-mobile {
-        display: none !important;
-    }
-    
-    .hide-tablet {
-        display: none !important;
-    }
-    
-    .show-tablet {
-        display: block !important;
-    }
-    
-    /* Text Alignment - Tablet */
-    .text-center-tablet {
-        text-align: center !important;
-    }
-    
-    .text-left-tablet {
-        text-align: left !important;
-    }
-    
-    .text-right-tablet {
-        text-align: right !important;
-    }
-    
-    /* Flexbox - Tablet */
-    .flex-column-tablet {
-        flex-direction: column !important;
-    }
-    
-    .flex-row-tablet {
-        flex-direction: row !important;
-    }
-    
-    /* Spacing - Tablet */
-    .mt-1-tablet { margin-top: 6px !important; }
-    .mt-2-tablet { margin-top: 12px !important; }
-    .mt-3-tablet { margin-top: 20px !important; }
-    .mt-4-tablet { margin-top: 32px !important; }
-    
-    .mb-1-tablet { margin-bottom: 6px !important; }
-    .mb-2-tablet { margin-bottom: 12px !important; }
-    .mb-3-tablet { margin-bottom: 20px !important; }
-    .mb-4-tablet { margin-bottom: 32px !important; }
-    
-    .p-1-tablet { padding: 6px !important; }
-    .p-2-tablet { padding: 12px !important; }
-    .p-3-tablet { padding: 20px !important; }
-    .p-4-tablet { padding: 32px !important; }
 }
 
-/* ============================================
-   DESKTOP BREAKPOINT (1024px - 1919px)
-   ============================================ */
-
-@media (min-width: 1024px) {
-    /* Container - Desktop */
+/* 大屏幕 (992px - 1199px) - 桌面 */
+@media (min-width: 992px) and (max-width: 1199px) {
     .container-fluid {
-        padding-left: 32px;
-        padding-right: 32px;
-    }
-    
-    .container {
-        max-width: 960px;
-        padding-left: 32px;
-        padding-right: 32px;
-    }
-    
-    /* Typography - Desktop */
-    body {
-        font-size: 16px;
-    }
-    
-    h1, .h1 { font-size: 2.5rem; }
-    h2, .h2 { font-size: 2rem; }
-    h3, .h3 { font-size: 1.75rem; }
-    h4, .h4 { font-size: 1.5rem; }
-    h5, .h5 { font-size: 1.25rem; }
-    h6, .h6 { font-size: 1rem; }
-    
-    .display-4 { font-size: 3rem; }
-    .lead { font-size: 1.25rem; }
-    
-    /* Card - Desktop */
-    .card {
-        margin-bottom: 24px;
-    }
-    
-    .card-body,
-    .card__body {
-        padding: 24px;
-    }
-    
-    .card-header,
-    .card__header {
-        padding: 20px 24px;
-    }
-    
-    /* Grid - Desktop */
-    .row {
-        margin-left: -16px;
-        margin-right: -16px;
-    }
-    
-    .row > [class*="col-"] {
-        padding-left: 16px;
-        padding-right: 16px;
-        margin-bottom: 0;
-    }
-    
-    /* Chart - Desktop */
-    .chart-container {
-        height: 400px;
-    }
-    
-    /* Table - Desktop */
-    .table {
-        font-size: 16px;
-    }
-    
-    .table th,
-    .table td {
-        padding: 12px;
-    }
-    
-    /* Display Utilities - Desktop */
-    .hide-desktop {
-        display: none !important;
-    }
-    
-    .show-desktop {
-        display: block !important;
-    }
-    
-    /* Text Alignment - Desktop */
-    .text-center-desktop {
-        text-align: center !important;
-    }
-    
-    .text-left-desktop {
-        text-align: left !important;
-    }
-    
-    .text-right-desktop {
-        text-align: right !important;
-    }
-    
-    /* Flexbox - Desktop */
-    .flex-column-desktop {
-        flex-direction: column !important;
-    }
-    
-    .flex-row-desktop {
-        flex-direction: row !important;
-    }
-    
-    /* Spacing - Desktop */
-    .mt-1-desktop { margin-top: 8px !important; }
-    .mt-2-desktop { margin-top: 16px !important; }
-    .mt-3-desktop { margin-top: 24px !important; }
-    .mt-4-desktop { margin-top: 32px !important; }
-    
-    .mb-1-desktop { margin-bottom: 8px !important; }
-    .mb-2-desktop { margin-bottom: 16px !important; }
-    .mb-3-desktop { margin-bottom: 24px !important; }
-    .mb-4-desktop { margin-bottom: 32px !important; }
-    
-    .p-1-desktop { padding: 8px !important; }
-    .p-2-desktop { padding: 16px !important; }
-    .p-3-desktop { padding: 24px !important; }
-    .p-4-desktop { padding: 32px !important; }
-    
-    /* Results Cards - Desktop */
-    .results-hover-card {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    
-    .results-hover-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-    }
-}
-
-/* Desktop Large (1280px+) - Enhanced spacing */
-@media (min-width: 1280px) {
-    .container {
         max-width: 1140px;
+        margin: 0 auto;
+        padding: 30px;
+    }
+    
+    .card-columns {
+        column-count: 3;
     }
 }
 
-/* ============================================
-   WIDE SCREEN BREAKPOINT (1920px+)
-   ============================================ */
-
-@media (min-width: 1920px) {
-    /* Container - Wide */
+/* 超大屏幕 (1200px+) - 大桌面 */
+@media (min-width: 1200px) {
     .container-fluid {
-        max-width: 1800px;
-        margin-left: auto;
-        margin-right: auto;
-        padding-left: 48px;
-        padding-right: 48px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px;
     }
     
-    .container {
-        max-width: 1320px;
-        padding-left: 48px;
-        padding-right: 48px;
+    .card-columns {
+        column-count: 4;
     }
     
-    /* Typography - Wide */
-    h1, .h1 { font-size: 3rem; }
-    h2, .h2 { font-size: 2.5rem; }
-    
-    .display-4 { font-size: 3.5rem; }
-    
-    /* Card - Wide */
-    .card-body,
-    .card__body {
-        padding: 32px;
-    }
-    
-    .card-header,
-    .card__header {
-        padding: 24px 32px;
-    }
-    
-    /* Chart - Wide */
-    .chart-container {
-        height: 500px;
-    }
-    
-    /* Hide Wide Utility */
-    .hide-wide {
-        display: none !important;
-    }
-    
-    .show-wide {
-        display: block !important;
+    .table-responsive {
+        font-size: 16px;
     }
 }
 
-/* ============================================
-   SPECIAL RESPONSIVE FEATURES
-   ============================================ */
-
-/* High DPI Screens */
+/* 高分辨率屏幕优化 */
 @media (min-resolution: 192dpi), (-webkit-min-device-pixel-ratio: 2) {
     .card {
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.12);
     }
     
     .btn {
@@ -766,59 +183,83 @@ h6, .h6 {
     }
 }
 
-/* Touch Devices Optimization */
+/* 导航栏响应式 */
+@media (max-width: 991px) {
+    .navbar-collapse {
+        background-color: var(--bs-dark);
+        padding: 15px;
+        margin-top: 10px;
+        border-radius: 5px;
+    }
+}
+
+/* 图表容器响应式 */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+@media (max-width: 767px) {
+    .chart-container {
+        height: 250px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .chart-container {
+        height: 400px;
+    }
+}
+
+/* 响应式网格系统增强 */
+.row {
+    margin-left: -10px;
+    margin-right: -10px;
+}
+
+.row > [class*="col-"] {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+/* 响应式字体大小 */
+@media (max-width: 767px) {
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.3rem; }
+    h3 { font-size: 1.1rem; }
+    h4 { font-size: 1rem; }
+    h5 { font-size: 0.9rem; }
+    
+    .display-4 { font-size: 2rem; }
+    .lead { font-size: 1rem; }
+}
+
+/* 触摸设备优化 */
 @media (hover: none) and (pointer: coarse) {
-    .btn,
-    .nav-link,
-    .dropdown-item,
-    a.btn {
+    .btn {
         min-height: 44px;
         min-width: 44px;
+    }
+    
+    .form-control {
+        min-height: 44px;
+    }
+    
+    .nav-link {
         padding: 12px 16px;
     }
-    
-    .form-control,
-    .form-select {
-        min-height: 44px;
-        font-size: 16px;
-    }
-    
-    .table th,
-    .table td {
-        padding: 12px;
-    }
 }
 
-/* Landscape Mobile Devices */
-@media screen and (orientation: landscape) and (max-height: 500px) {
-    .navbar {
-        padding: 8px 16px;
-    }
-    
-    .card-body,
-    .card__body {
-        padding: 12px;
-    }
-    
-    .chart-container {
-        height: 220px;
-    }
-    
-    h1, .h1 { font-size: 1.5rem; }
-    h2, .h2 { font-size: 1.25rem; }
-}
-
-/* Print Styles */
+/* 打印样式 */
 @media print {
     .navbar,
     .btn,
-    .no-print,
-    .hide-print {
+    .no-print {
         display: none !important;
     }
     
-    .container-fluid,
-    .container {
+    .container-fluid {
         max-width: none;
         padding: 0;
     }
@@ -828,15 +269,21 @@ h6, .h6 {
         box-shadow: none;
         page-break-inside: avoid;
     }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+    .card {
+        background-color: #2d3748;
+        border-color: #4a5568;
+    }
     
-    body {
-        font-size: 12pt;
-        color: #000;
-        background: #fff;
+    .table-responsive {
+        color: #e2e8f0;
     }
 }
 
-/* Reduced Motion (Accessibility) */
+/* 减少动画效果（节能模式） */
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -844,138 +291,60 @@ h6, .h6 {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
     }
 }
 
-/* High Contrast Mode (Accessibility) */
+/* 横屏手机优化 */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    .navbar {
+        min-height: 50px;
+    }
+    
+    .card-body {
+        padding: 15px;
+    }
+    
+    .chart-container {
+        height: 200px;
+    }
+}
+
+/* 可访问性增强 */
 @media (prefers-contrast: high) {
     .card {
-        border: 2px solid currentColor;
+        border: 2px solid #000;
     }
     
     .btn {
-        border: 2px solid currentColor;
-    }
-    
-    .form-control,
-    .form-select {
-        border: 2px solid currentColor;
+        border: 2px solid;
     }
 }
 
-/* Dark Mode Preferences */
-@media (prefers-color-scheme: dark) {
-    :root {
-        color-scheme: dark;
-    }
+/* Flexbox 布局增强 */
+.d-flex-responsive {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
-/* ============================================
-   COMPONENT-SPECIFIC RESPONSIVE STYLES
-   ============================================ */
-
-/* Calculator Form - Responsive */
 @media (max-width: 767px) {
-    .col-lg-5,
-    .col-lg-7 {
-        margin-bottom: 20px;
-    }
-    
-    .form-control,
-    .form-select {
-        width: 100%;
+    .d-flex-responsive {
+        flex-direction: column;
     }
 }
 
-/* Results Grid - Responsive */
-@media (max-width: 767px) {
-    .col-md-4,
-    .col-md-6 {
-        flex: 0 0 100%;
-        max-width: 100%;
-    }
+/* 响应式间距系统 */
+@media (max-width: 575px) {
+    .p-responsive { padding: 10px !important; }
+    .m-responsive { margin: 10px !important; }
 }
 
-@media (min-width: 768px) and (max-width: 1023px) {
-    .col-md-4 {
-        flex: 0 0 50%;
-        max-width: 50%;
-    }
+@media (min-width: 576px) and (max-width: 991px) {
+    .p-responsive { padding: 20px !important; }
+    .m-responsive { margin: 15px !important; }
 }
 
-/* Alert/Network Stats - Responsive */
-.alert {
-    border-radius: var(--radius-md, 12px);
-    padding: 16px;
-}
-
-@media (min-width: 768px) {
-    .alert {
-        padding: 20px;
-    }
-}
-
-/* Badge Responsive Sizing */
-.badge {
-    font-size: 0.75rem;
-    padding: 4px 8px;
-}
-
-@media (min-width: 768px) {
-    .badge {
-        font-size: 0.875rem;
-        padding: 6px 12px;
-    }
-}
-
-/* Dropdown Menu - Touch Friendly */
-.dropdown-menu {
-    border-radius: var(--radius-md, 12px);
-    min-width: 200px;
-}
-
-.dropdown-item {
-    padding: 10px 16px;
-    font-size: 14px;
-}
-
-@media (hover: none) and (pointer: coarse) {
-    .dropdown-item {
-        padding: 12px 20px;
-        min-height: 44px;
-    }
-}
-
-/* ============================================
-   PERFORMANCE OPTIMIZATIONS
-   ============================================ */
-
-/* GPU Acceleration for Animations */
-.card,
-.btn,
-.results-hover-card {
-    will-change: transform;
-    backface-visibility: hidden;
-    perspective: 1000px;
-}
-
-/* Smooth Scrolling (unless reduced motion) */
-@media (prefers-reduced-motion: no-preference) {
-    html {
-        scroll-behavior: smooth;
-    }
-}
-
-/* Optimize Font Loading */
-@media (max-width: 767px) {
-    body {
-        text-rendering: optimizeSpeed;
-    }
-}
-
-@media (min-width: 768px) {
-    body {
-        text-rendering: optimizeLegibility;
-    }
+@media (min-width: 992px) {
+    .p-responsive { padding: 30px !important; }
+    .m-responsive { margin: 20px !important; }
 }

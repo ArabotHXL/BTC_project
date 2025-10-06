@@ -6,129 +6,71 @@
     <meta name="user-role" content="{{ session.role }}">
     <meta name="language" content="{{ current_lang }}">
     <title>{% block title %}BTC Mining Calculator{% endblock %}</title>
-    
-    <!-- Performance Optimization: DNS Prefetch & Preconnect for CDNs -->
-    <link rel="dns-prefetch" href="https://cdn.replit.com">
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-    <link rel="preconnect" href="https://cdn.replit.com" crossorigin>
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    
-    <!-- Performance Optimization: Preload Critical Resources -->
-    <link rel="preload" href="/static/css/design-tokens.css" as="style">
-    <link rel="preload" href="{{ url_for('static', filename='js/language-strings.js') }}" as="script">
-    
-    <!-- Performance Optimization: Critical CSS Inline (Design Tokens - Core Variables) -->
-    <style>
-        /* Critical CSS: Core Design Tokens for Above-the-Fold Content */
-        :root {
-            --color-primary: #f7931e;
-            --color-primary-rgb: 247, 147, 30;
-            --color-text-primary: #ffffff;
-            --color-text-secondary: #adb5bd;
-            --color-bg-primary: #212529;
-            --color-bg-secondary: #1a1a1a;
-            --color-bg-card: rgba(255, 255, 255, 0.05);
-            --color-border-primary: #333333;
-            --color-success: #28a745;
-            --color-danger: #dc3545;
-            --color-warning: #ffc107;
-            --gradient-primary: linear-gradient(135deg, #f7931e 0%, #ffc107 100%);
-        }
-        /* Prevent FOUC (Flash of Unstyled Content) */
-        body { background: var(--color-bg-primary); color: var(--color-text-primary); }
-    </style>
-    
     <!-- Bootstrap CSS from Replit CDN -->
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
-    
-    <!-- Performance Optimization: Async Load Non-Critical CSS (Safari Compatible) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"></noscript>
-    
-    <!-- Design System CSS - Optimized Loading Order -->
-    <link rel="stylesheet" href="/static/css/design-tokens.css">
-    <link rel="stylesheet" href="/static/css/layouts.css" media="print" onload="this.media='all'">
-    <link rel="stylesheet" href="/static/css/components.css" media="print" onload="this.media='all'">
-    <link rel="stylesheet" href="/static/css/styles.css" media="print" onload="this.media='all'">
-    <link rel="stylesheet" href="/static/css/animations.css" media="print" onload="this.media='all'">
-    <link rel="stylesheet" href="/static/css/responsive.css" media="print" onload="this.media='all'">
-    <noscript>
-        <link rel="stylesheet" href="/static/css/layouts.css">
-        <link rel="stylesheet" href="/static/css/components.css">
-        <link rel="stylesheet" href="/static/css/styles.css">
-        <link rel="stylesheet" href="/static/css/animations.css">
-        <link rel="stylesheet" href="/static/css/responsive.css">
-    </noscript>
-    
-    <!-- Performance Optimization: Defer Non-Critical JavaScript -->
-    <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script defer src="{{ url_for('static', filename='js/language-strings.js') }}"></script>
-    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Web3.js CDN for blockchain functionality -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@4.2.0/dist/web3.min.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- Animation CSS -->
+    <link rel="stylesheet" href="/static/css/animations.css">
+    <!-- Responsive CSS -->
+    <link rel="stylesheet" href="/static/css/responsive.css">
     {% block extra_css %}{% endblock %}
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-    {% set current_lang = session.get('language', 'zh') %}
-    
-    {% include 'components/navbar.html' %}
-    
     <div class="container-fluid">
-        <main class="container mb-5" style="margin-top: 2rem;">
-            {% include 'components/flash_messages.html' %}
+        <!-- Header navigation removed -->
+
+        <main class="container mb-5">
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endwith %}
             
             {% block content %}{% endblock %}
         </main>
 
-        {% include 'components/footer.html' %}
+        <!-- Legal Footer -->
+        <footer class="py-4 my-4 border-top bg-dark">
+            <div class="container text-center">
+                <div class="row">
+                    <div class="col-12 mb-3">
+                        <a href="{{ url_for('legal_terms') }}" class="btn btn-outline-warning btn-sm me-3">
+                            <i class="bi bi-shield-check me-1"></i>
+                            {% if current_lang == 'zh' %}服务条款和隐私政策{% else %}Terms of Use & Privacy Notice{% endif %}
+                        </a>
+                        <a href="mailto:cryptocalculator123@gmail.com" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-envelope me-1"></i>
+                            {% if current_lang == 'zh' %}联系我们{% else %}Contact Us{% endif %}
+                        </a>
+                    </div>
+                    <div class="col-12">
+                        <p class="text-muted mb-0">
+                            <small>© 2025 HashInsight Mining Intelligence. {% if current_lang == 'zh' %}最后更新{% else %}Last Updated{% endif %}: 22 August 2025</small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </footer>
     </div>
 
     {% block scripts %}{% endblock %}
-    
-    <!-- Performance Optimization: Performance Monitoring -->
-    <script>
-        // Performance metrics tracking
-        window.addEventListener('load', function() {
-            if (window.performance && performance.getEntriesByType) {
-                const perfData = performance.getEntriesByType('navigation')[0];
-                if (perfData) {
-                    const metrics = {
-                        dns: Math.round(perfData.domainLookupEnd - perfData.domainLookupStart),
-                        tcp: Math.round(perfData.connectEnd - perfData.connectStart),
-                        ttfb: Math.round(perfData.responseStart - perfData.requestStart),
-                        download: Math.round(perfData.responseEnd - perfData.responseStart),
-                        domInteractive: Math.round(perfData.domInteractive - perfData.fetchStart),
-                        domComplete: Math.round(perfData.domComplete - perfData.fetchStart),
-                        loadComplete: Math.round(perfData.loadEventEnd - perfData.fetchStart)
-                    };
-                    console.log('⚡ Performance Metrics:', metrics);
-                    console.log('📊 Page Load Time:', metrics.loadComplete + 'ms');
-                    console.log('🎯 DOM Interactive:', metrics.domInteractive + 'ms');
-                    console.log('⏱️ Time to First Byte:', metrics.ttfb + 'ms');
-                }
-                
-                // First Contentful Paint
-                const paintEntries = performance.getEntriesByType('paint');
-                paintEntries.forEach(function(entry) {
-                    console.log('🎨 ' + entry.name + ':', Math.round(entry.startTime) + 'ms');
-                });
-            }
-        });
-        
-        // Resource timing summary
-        if (window.performance && performance.getEntriesByType) {
-            window.addEventListener('load', function() {
-                setTimeout(function() {
-                    const resources = performance.getEntriesByType('resource');
-                    const summary = {
-                        total: resources.length,
-                        css: resources.filter(r => r.name.includes('.css')).length,
-                        js: resources.filter(r => r.name.includes('.js')).length,
-                        img: resources.filter(r => r.initiatorType === 'img').length
-                    };
-                    console.log('📦 Resources Loaded:', summary);
-                }, 1000);
-            });
-        }
-    </script>
 </body>
 </html>
