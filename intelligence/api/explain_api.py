@@ -55,7 +55,7 @@ def get_roi_explanation(user_id):
                 'message': 'Unable to calculate ROI factors. Check user mining data.'
             }), 500
         
-        logger.info(f"ROI explanation calculated for user {user_id}. Current ROI: {roi_factors['current_metrics']['annual_roi']:.2f}%")
+        logger.info(f"ROI explanation calculated for user {user_id}. Current ROI: {roi_factors['current_metrics']['annual_roi_percent']:.2f}%")
         
         return jsonify({
             'status': 'success',
