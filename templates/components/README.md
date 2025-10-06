@@ -1,6 +1,12 @@
-# Navbar Component Documentation
+# HashInsight Components Documentation
 
 ## Overview
+
+This directory contains reusable UI components for the HashInsight platform. All components support bilingual functionality (Chinese/English) and follow the design system standards.
+
+## Available Components
+
+### 1. Navbar Component (`navbar.html`)
 
 The `navbar.html` component is a professional, responsive navigation bar for the HashInsight platform. It provides:
 
@@ -10,7 +16,30 @@ The `navbar.html` component is a professional, responsive navigation bar for the
 - User authentication status display
 - Professional dark theme with gold accents
 
-## Usage
+### 2. Footer Component (`footer.html`)
+
+The `footer.html` component provides a standardized footer with legal links and contact information. It includes:
+
+- Legal terms and privacy policy link
+- Contact email link
+- Copyright information
+- Bilingual support (Chinese/English)
+- Consistent styling with dark theme
+
+### 3. Flash Messages Component (`flash_messages.html`)
+
+The `flash_messages.html` component displays user notifications and alerts. It supports:
+
+- Multiple message categories (success, warning, danger, info)
+- Dismissible alerts
+- Automatic styling based on message type
+- Responsive layout
+
+---
+
+## Component Details
+
+## Navbar Component
 
 ### Including in Templates
 
@@ -212,3 +241,147 @@ Tested and working on:
 - Minimal JavaScript footprint
 - Optimized for fast rendering
 - Cached navigation data through context processor
+
+---
+
+## Footer Component
+
+### Including in Templates
+
+The footer is automatically included in `base.html`:
+
+```jinja
+{% include 'components/footer.html' %}
+```
+
+### Features
+
+1. **Legal Links**: Direct links to Terms of Use and Privacy Policy
+2. **Contact Information**: Email link for user inquiries
+3. **Copyright Notice**: Displays copyright and last update date
+4. **Bilingual Support**: Automatically switches between Chinese and English based on `session['language']`
+
+### Context Requirements
+
+- `session['language']` - Current language (zh/en)
+- `url_for('legal_terms')` - URL for legal terms page
+
+### Usage Example
+
+The footer is included automatically in the base template and will appear on all pages that extend `base.html`. No additional configuration needed.
+
+### Customization
+
+To modify the footer content:
+
+1. Edit `templates/components/footer.html`
+2. Update the email address or legal links
+3. Modify the copyright year or last updated date
+
+### Styling
+
+The footer uses Bootstrap classes:
+- `py-4 my-4`: Padding and margin
+- `border-top`: Top border separator
+- `bg-dark`: Dark background
+- `btn-outline-warning`: Warning-colored outline buttons
+- `btn-outline-info`: Info-colored outline buttons
+
+---
+
+## Flash Messages Component
+
+### Including in Templates
+
+Flash messages are automatically included in `base.html`:
+
+```jinja
+{% include 'components/flash_messages.html' %}
+```
+
+### Features
+
+1. **Multiple Categories**: Supports success, warning, danger, info message types
+2. **Dismissible**: Users can close messages with the × button
+3. **Auto-styled**: Bootstrap alert classes apply automatically based on category
+4. **Responsive**: Works on all screen sizes
+
+### Message Categories
+
+The component supports the following Flask flash message categories:
+
+- `success` - Green alerts for successful operations
+- `warning` - Yellow alerts for warnings
+- `danger` - Red alerts for errors
+- `info` - Blue alerts for informational messages
+
+### Usage in Flask Routes
+
+```python
+from flask import flash
+
+# Success message
+flash('操作成功！', 'success')
+
+# Warning message
+flash('请注意：数据即将过期', 'warning')
+
+# Error message
+flash('发生错误，请重试', 'danger')
+
+# Info message
+flash('新功能已上线', 'info')
+```
+
+### Customization
+
+To modify the flash messages display:
+
+1. Edit `templates/components/flash_messages.html`
+2. Adjust Bootstrap alert classes
+3. Modify the layout structure
+
+### Technical Details
+
+- Uses Flask's `get_flashed_messages(with_categories=true)` function
+- Automatically handles message iteration
+- Bootstrap 5 alert component with dismiss functionality
+- No JavaScript required (uses Bootstrap's built-in dismiss)
+
+---
+
+## General Guidelines
+
+### Component Development
+
+When creating new components:
+
+1. **Bilingual Support**: Always use `session.get('language', 'zh')` for language detection
+2. **Independence**: Components should be self-contained and reusable
+3. **Consistency**: Follow existing design patterns and naming conventions
+4. **Responsive**: Ensure mobile-friendly design
+5. **Documentation**: Update this README when adding new components
+
+### Best Practices
+
+- Use `{% include %}` for static components
+- Use `{% extends %}` for page templates
+- Keep components small and focused on a single purpose
+- Use Bootstrap classes for consistent styling
+- Test components on multiple screen sizes
+
+### File Naming Convention
+
+- Use lowercase with underscores: `flash_messages.html`
+- Name should describe the component's function clearly
+- Keep names concise but descriptive
+
+### Adding New Components
+
+To add a new component:
+
+1. Create the component file in `templates/components/`
+2. Document it in this README
+3. Include it in the appropriate template using `{% include %}`
+4. Test across different pages and screen sizes
+5. Ensure bilingual support is implemented
