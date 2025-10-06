@@ -666,6 +666,71 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
+        // ===== Mining Site Information (Host Data) =====
+        // Update Host Income section
+        if (data.client_electricity_cost && data.electricity_cost) {
+            // Host Electric Profit (electricity markup)
+            var hostElectricProfit = data.client_electricity_cost.monthly - data.electricity_cost.monthly;
+            var hostMonthlyProfitEl = document.getElementById('host-monthly-profit');
+            if (hostMonthlyProfitEl) {
+                hostMonthlyProfitEl.textContent = '$' + hostElectricProfit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+            
+            // Host Operation Profit (set to 0 as per business logic - all mining revenue goes to customer)
+            var hostSelfProfitEl = document.getElementById('host-self-profit');
+            if (hostSelfProfitEl) {
+                hostSelfProfitEl.textContent = '$0.00';
+            }
+            
+            // Total Site Revenue (electric profit + operation profit)
+            var siteTotalRevenueEl = document.getElementById('site-total-revenue');
+            if (siteTotalRevenueEl) {
+                siteTotalRevenueEl.textContent = '$' + hostElectricProfit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+            
+            // Total Host Income
+            var hostTotalIncomeEl = document.getElementById('host-total-income');
+            if (hostTotalIncomeEl) {
+                hostTotalIncomeEl.textContent = '$' + hostElectricProfit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+        }
+        
+        // Update Host Expenses section
+        if (data.electricity_cost) {
+            var monthlyElectricityEl = document.getElementById('monthly-electricity');
+            if (monthlyElectricityEl) {
+                monthlyElectricityEl.textContent = '$' + data.electricity_cost.monthly.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+        }
+        
+        if (data.maintenance_fee) {
+            var operationCostEl = document.getElementById('operation-cost');
+            if (operationCostEl) {
+                operationCostEl.textContent = '$' + data.maintenance_fee.monthly.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+        }
+        
+        if (data.electricity_cost && data.maintenance_fee) {
+            var totalExpenses = data.electricity_cost.monthly + data.maintenance_fee.monthly;
+            var hostTotalExpensesEl = document.getElementById('host-total-expenses');
+            if (hostTotalExpensesEl) {
+                hostTotalExpensesEl.textContent = '$' + totalExpenses.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+        }
+        
+        // Update Host Net Profit section
+        if (data.host_profit) {
+            var hostMonthlyProfitDisplayEl = document.getElementById('host-monthly-profit-display');
+            if (hostMonthlyProfitDisplayEl) {
+                hostMonthlyProfitDisplayEl.textContent = '$' + data.host_profit.monthly.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+            
+            var hostYearlyProfitEl = document.getElementById('host-yearly-profit');
+            if (hostYearlyProfitEl) {
+                hostYearlyProfitEl.textContent = '$' + data.host_profit.yearly.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+        }
+        
         // Additional Client Info
         var clientMinerCount = document.getElementById('client-miner-count');
         if (clientMinerCount && data.inputs) {
