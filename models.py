@@ -2021,4 +2021,307 @@ class MinerImportJob(db.Model):
             'completed_at': self.completed_at.isoformat() if self.completed_at else None
         }
 
+# ============================================================================
+# 智能层事件驱动架构数据模型
+# Intelligence Layer Event-Driven Architecture Data Models
+# ============================================================================
+
+class EventStatus(enum.Enum):
+    """事件状态枚举"""
+    PENDING = "待处理"
+    PROCESSING = "处理中"
+    COMPLETED = "已完成"
+    FAILED = "失败"
+    RETRYING = "重试中"
+
+class EventOutbox(db.Model):
+    """
+    事件发件箱表 - Outbox Pattern
+    实现事件驱动架构，确保数据变更与事件发布的原子性
+    """
+    __tablename__ = 'event_outbox'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 事件基本信息
+    event_type = db.Column(db.String(100), nullable=False, index=True)  # miner.added, miner.updated, miner.deleted
+    event_payload = db.Column(db.JSON, nullable=False)  # 事件载荷（JSON格式）
+    aggregate_id = db.Column(db.String(100), nullable=False, index=True)  # 聚合根ID（如user_id, miner_id）
+    aggregate_type = db.Column(db.String(50), nullable=False)  # 聚合根类型（user, miner, portfolio）
+    
+    # 事件状态
+    status = db.Column(db.Enum(EventStatus), default=EventStatus.PENDING, nullable=False, index=True)
+    retry_count = db.Column(db.Integer, default=0, nullable=False)
+    max_retries = db.Column(db.Integer, default=3, nullable=False)
+    
+    # 时间戳
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    processing_started_at = db.Column(db.DateTime, nullable=True)  # 开始处理时间
+    processed_at = db.Column(db.DateTime, nullable=True)  # 完成/失败时间
+    next_retry_at = db.Column(db.DateTime, nullable=True)
+    
+    # 错误信息
+    error_message = db.Column(db.Text, nullable=True)
+    error_stacktrace = db.Column(db.Text, nullable=True)
+    
+    # 元数据
+    correlation_id = db.Column(db.String(100), nullable=True)  # 关联ID（用于追踪）
+    causation_id = db.Column(db.String(100), nullable=True)  # 因果ID（触发此事件的原因）
+    
+    # 索引优化（仅保留复合索引和非列定义的索引）
+    __table_args__ = (
+        db.Index('idx_outbox_aggregate', 'aggregate_id', 'aggregate_type'),
+        db.Index('idx_outbox_pending_retry', 'status', 'next_retry_at'),  # 用于查询待重试事件
+    )
+    
+    def __init__(self, event_type, event_payload, aggregate_id, aggregate_type, **kwargs):
+        self.event_type = event_type
+        self.event_payload = event_payload
+        self.aggregate_id = aggregate_id
+        self.aggregate_type = aggregate_type
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def mark_processing(self):
+        """标记事件为处理中"""
+        self.status = EventStatus.PROCESSING
+        self.processing_started_at = datetime.utcnow()
+    
+    def mark_completed(self):
+        """标记事件为已完成"""
+        self.status = EventStatus.COMPLETED
+        self.processed_at = datetime.utcnow()
+    
+    def mark_failed(self, error_message, error_stacktrace=None):
+        """标记事件为失败"""
+        self.status = EventStatus.FAILED
+        self.error_message = error_message
+        self.error_stacktrace = error_stacktrace
+        self.retry_count += 1
+        
+        if self.retry_count < self.max_retries:
+            self.status = EventStatus.RETRYING
+            # 指数退避：2^retry_count 分钟
+            delay_minutes = 2 ** self.retry_count
+            self.next_retry_at = datetime.utcnow() + timedelta(minutes=delay_minutes)
+    
+    def to_dict(self):
+        """转换为字典格式"""
+        return {
+            'id': self.id,
+            'event_type': self.event_type,
+            'event_payload': self.event_payload,
+            'aggregate_id': self.aggregate_id,
+            'aggregate_type': self.aggregate_type,
+            'status': self.status.value,
+            'retry_count': self.retry_count,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'processed_at': self.processed_at.isoformat() if self.processed_at else None,
+            'error_message': self.error_message
+        }
+    
+    def __repr__(self):
+        return f"<EventOutbox {self.id}: {self.event_type} ({self.status.value})>"
+
+class EventFailure(db.Model):
+    """
+    事件失败记录表
+    记录所有失败的事件及其详细信息，用于分析和排错
+    """
+    __tablename__ = 'event_failures'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 关联原始事件
+    event_id = db.Column(db.Integer, nullable=False, index=True)
+    event_type = db.Column(db.String(100), nullable=False)
+    event_payload = db.Column(db.JSON, nullable=False)
+    
+    # 失败信息
+    failure_reason = db.Column(db.Text, nullable=False)
+    failure_stacktrace = db.Column(db.Text, nullable=True)
+    failure_count = db.Column(db.Integer, default=1, nullable=False)
+    
+    # 时间戳
+    first_failed_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    last_failed_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    # 处理状态
+    is_resolved = db.Column(db.Boolean, default=False, nullable=False)
+    resolved_at = db.Column(db.DateTime, nullable=True)
+    resolved_by = db.Column(db.String(100), nullable=True)
+    resolution_note = db.Column(db.Text, nullable=True)
+    
+    def __init__(self, event_id, event_type, event_payload, failure_reason, **kwargs):
+        self.event_id = event_id
+        self.event_type = event_type
+        self.event_payload = event_payload
+        self.failure_reason = failure_reason
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def __repr__(self):
+        return f"<EventFailure {self.id}: Event {self.event_id} ({self.event_type})>"
+
+class ForecastDaily(db.Model):
+    """
+    每日预测数据表
+    存储智能层生成的BTC价格、难度、收益预测数据
+    """
+    __tablename__ = 'forecast_daily'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 用户关联
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
+    
+    # 预测日期
+    forecast_date = db.Column(db.Date, nullable=False, index=True)
+    forecast_horizon = db.Column(db.Integer, default=7, nullable=False)  # 预测天数（7/14/30）
+    
+    # BTC价格预测
+    predicted_btc_price = db.Column(db.Numeric(12, 2), nullable=False)
+    price_lower_bound = db.Column(db.Numeric(12, 2), nullable=True)  # 95%置信区间下界
+    price_upper_bound = db.Column(db.Numeric(12, 2), nullable=True)  # 95%置信区间上界
+    
+    # 难度预测
+    predicted_difficulty = db.Column(db.Numeric(20, 2), nullable=False)
+    difficulty_lower_bound = db.Column(db.Numeric(20, 2), nullable=True)
+    difficulty_upper_bound = db.Column(db.Numeric(20, 2), nullable=True)
+    
+    # 收益预测
+    predicted_daily_revenue = db.Column(db.Numeric(12, 2), nullable=True)
+    revenue_lower_bound = db.Column(db.Numeric(12, 2), nullable=True)
+    revenue_upper_bound = db.Column(db.Numeric(12, 2), nullable=True)
+    
+    # 模型评估指标
+    model_name = db.Column(db.String(50), default='ARIMA', nullable=False)  # ARIMA, XGBoost, Ensemble
+    rmse = db.Column(db.Numeric(10, 4), nullable=True)  # 均方根误差
+    mae = db.Column(db.Numeric(10, 4), nullable=True)  # 平均绝对误差
+    confidence_score = db.Column(db.Numeric(5, 2), nullable=True)  # 置信度分数 (0-100)
+    
+    # 时间戳
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # 索引优化
+    __table_args__ = (
+        db.Index('idx_forecast_date', 'forecast_date'),
+        db.Index('idx_forecast_user', 'user_id', 'forecast_date'),
+        db.UniqueConstraint('user_id', 'forecast_date', 'forecast_horizon', name='uq_forecast_user_date_horizon'),
+    )
+    
+    def __init__(self, forecast_date, predicted_btc_price, predicted_difficulty, **kwargs):
+        self.forecast_date = forecast_date
+        self.predicted_btc_price = predicted_btc_price
+        self.predicted_difficulty = predicted_difficulty
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        """转换为字典格式"""
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'forecast_date': self.forecast_date.isoformat() if self.forecast_date else None,
+            'forecast_horizon': self.forecast_horizon,
+            'predicted_btc_price': float(self.predicted_btc_price),
+            'price_lower_bound': float(self.price_lower_bound) if self.price_lower_bound else None,
+            'price_upper_bound': float(self.price_upper_bound) if self.price_upper_bound else None,
+            'predicted_difficulty': float(self.predicted_difficulty),
+            'predicted_daily_revenue': float(self.predicted_daily_revenue) if self.predicted_daily_revenue else None,
+            'model_name': self.model_name,
+            'rmse': float(self.rmse) if self.rmse else None,
+            'mae': float(self.mae) if self.mae else None,
+            'confidence_score': float(self.confidence_score) if self.confidence_score else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+    
+    def __repr__(self):
+        return f"<ForecastDaily {self.forecast_date}: BTC ${self.predicted_btc_price}>"
+
+class OpsSchedule(db.Model):
+    """
+    运营调度表
+    存储电力削峰排程和矿机开关机调度计划
+    """
+    __tablename__ = 'ops_schedule'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 用户关联
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    
+    # 调度日期和时段
+    schedule_date = db.Column(db.Date, nullable=False, index=True)
+    hour_of_day = db.Column(db.Integer, nullable=False)  # 0-23小时
+    
+    # 电价信息
+    electricity_price = db.Column(db.Numeric(10, 4), nullable=False)  # $/kWh
+    is_peak_hour = db.Column(db.Boolean, default=False, nullable=False)
+    
+    # 调度决策
+    miners_online = db.Column(db.Integer, default=0, nullable=False)  # 在线矿机数
+    miners_offline = db.Column(db.Integer, default=0, nullable=False)  # 离线矿机数
+    total_power_consumption_kw = db.Column(db.Numeric(12, 2), nullable=False)  # 总功耗(kW)
+    
+    # 削峰百分比
+    curtailment_percentage = db.Column(db.Numeric(5, 2), default=0, nullable=False)  # 削峰百分比
+    power_saved_kw = db.Column(db.Numeric(12, 2), default=0, nullable=False)  # 节省功耗(kW)
+    cost_saved_usd = db.Column(db.Numeric(12, 2), default=0, nullable=False)  # 节省成本($)
+    
+    # 优化算法信息
+    algorithm_used = db.Column(db.String(50), default='PuLP', nullable=False)  # PuLP, OR-Tools
+    optimization_status = db.Column(db.String(20), default='optimal', nullable=False)  # optimal, feasible, infeasible
+    computation_time_ms = db.Column(db.Integer, nullable=True)  # 计算耗时(毫秒)
+    
+    # 时间戳
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    # 索引优化
+    __table_args__ = (
+        db.Index('idx_schedule_user_date', 'user_id', 'schedule_date'),
+        db.Index('idx_schedule_date_hour', 'schedule_date', 'hour_of_day'),
+        db.UniqueConstraint('user_id', 'schedule_date', 'hour_of_day', name='uq_schedule_user_date_hour'),
+    )
+    
+    def __init__(self, user_id, schedule_date, hour_of_day, electricity_price, total_power_consumption_kw, **kwargs):
+        self.user_id = user_id
+        self.schedule_date = schedule_date
+        self.hour_of_day = hour_of_day
+        self.electricity_price = electricity_price
+        self.total_power_consumption_kw = total_power_consumption_kw
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        """转换为字典格式"""
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'schedule_date': self.schedule_date.isoformat() if self.schedule_date else None,
+            'hour_of_day': self.hour_of_day,
+            'electricity_price': float(self.electricity_price),
+            'is_peak_hour': self.is_peak_hour,
+            'miners_online': self.miners_online,
+            'miners_offline': self.miners_offline,
+            'total_power_consumption_kw': float(self.total_power_consumption_kw),
+            'curtailment_percentage': float(self.curtailment_percentage),
+            'power_saved_kw': float(self.power_saved_kw),
+            'cost_saved_usd': float(self.cost_saved_usd),
+            'algorithm_used': self.algorithm_used,
+            'optimization_status': self.optimization_status
+        }
+    
+    def __repr__(self):
+        return f"<OpsSchedule {self.schedule_date} {self.hour_of_day}:00 - {self.miners_online} online>"
+
 
