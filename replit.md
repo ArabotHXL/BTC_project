@@ -51,11 +51,51 @@ The application is a modular Flask web application with a mobile-first design, s
 
 ### CRM Platform (Node.js/TypeScript)
 A new enterprise-grade CRM platform built with Node.js/TypeScript, PostgreSQL, and React is being developed to replace and extend the existing Flask CRM system.
--   **Backend**: Node.js/TypeScript API service (Express + Prisma).
+
+**Architecture**:
+-   **Backend**: Node.js/TypeScript API service (Express + Prisma ORM).
 -   **Frontend**: React SPA with Vite + Tailwind CSS.
--   **Shared**: Shared TypeScript types and Zod schemas.
--   **Authentication**: JWT-based with dual tokens, token rotation, and RBAC permission engine.
--   **Data Model**: 30 core tables and 23 enum types managed via Prisma ORM.
+-   **Shared**: Shared TypeScript types and Zod schemas for type safety.
+-   **Event System**: Redis Pub/Sub + EventQueue dual-write pattern for reliable event distribution.
+
+**Security & Authentication**:
+-   **JWT-based Authentication**: Dual tokens (access + refresh) with automatic rotation.
+-   **RBAC Permission Engine**: 4 roles (SUPER_ADMIN, ADMIN, SALES, OPS) with 20+ granular permissions.
+-   **Secure Logout**: Refresh token revocation with logout-all functionality.
+-   **Token Security**: Proper userId validation to prevent cross-account token revocation.
+
+**Core CRM Modules (Completed)**:
+-   **Lead/Deal Management**: Intelligent lead scoring (40pts referral, 35pts partner), stage-based pipeline (10%-75% probability), contract auto-generation (CON-YYYY-XXXXX).
+-   **Billing System**: Invoice/Payment tracking with aging reports (0-30, 31-60, 61-90, 90+ days), net revenue calculation (output - power - service fees), payment accrual logic (PENDING→CONFIRMED→CLEARED).
+-   **Asset Management**: 10-state lifecycle (ORDERED→IN_TRANSIT→RECEIVED→IN_STORAGE→DEPLOYED→MINING→MAINTENANCE→DELAYED→CANCELLED→DECOMMISSIONED), serial number tracking, batch/shipment integration, bulk import (max 1000), inventory summaries, maintenance history.
+
+**Business Logic**:
+-   **Lead Scoring Algorithm**: Automated scoring based on source quality and company signals.
+-   **Deal Probability**: Stage-based conversion rates (PROSPECTING 10% → CLOSED_WON 75%).
+-   **Invoice Auto-numbering**: INV-YYYY-MM-XXXXX format with sequential generation.
+-   **Payment Status Flow**: PENDING→CONFIRMED→CLEARED with proper accrual tracking.
+-   **Asset Status Validation**: Enforced state transition rules via STATUS_TRANSITIONS mapping, all changes through validateStatusTransition().
+-   **Shipment-Asset Synchronization**: Shipment status automatically updates related asset states (markAsShipped → IN_TRANSIT, markAsDelivered → RECEIVED).
+
+**Event-Driven Architecture**:
+-   **12 Event Types**: LEAD_CREATED, DEAL_STAGE_CHANGED, CONTRACT_GENERATED, INVOICE_CREATED, PAYMENT_CONFIRMED, ASSET_CREATED, ASSET_STATUS_CHANGED, ASSET_DEPLOYED, ASSET_MINING_STARTED, ASSET_MINING_STOPPED, ASSET_DECOMMISSIONED, SHIPMENT_SHIPPED, SHIPMENT_DELIVERED, etc.
+-   **Event Publisher**: Dual-write to Redis Pub/Sub and EventQueue table for reliability.
+-   **Event Payload**: Complete post-update data with timestamps and state information.
+
+**Data Integrity & Security**:
+-   **Status Bypass Prevention**: UpdateAssetDTO/Schema excludes status field; all status changes require validation.
+-   **Lifecycle Enforcement**: validateStatusTransition() guards prevent invalid state transitions.
+-   **Event Consistency**: All state mutations emit events for downstream consumers.
+-   **Error Handling**: Graceful degradation with try-catch for multi-asset operations.
+
+**Data Model**: 30 core tables and 23 enum types managed via Prisma ORM.
+
+**API Endpoints (28 total)**:
+-   Lead/Deal: 12 endpoints (CRUD, scoring, stage management, contract generation)
+-   Billing: 9 endpoints (invoice/payment CRUD, aging reports, revenue calculation)
+-   Assets: 15 endpoints (CRUD, status flow, bulk import, inventory, maintenance)
+-   Batches: 6 endpoints (batch management, asset association, summaries)
+-   Shipments: 7 endpoints (tracking, status updates, delivery management)
 
 ## External Dependencies
 
