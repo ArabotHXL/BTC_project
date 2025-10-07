@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import { setupSwagger } from './swagger';
 import authRoutes from './routes/auth';
 import leadRoutes from './routes/leads';
 import dealRoutes from './routes/deals';
@@ -10,6 +11,7 @@ import paymentRoutes from './routes/payments';
 import assetRoutes from './routes/assets';
 import batchRoutes from './routes/batches';
 import shipmentRoutes from './routes/shipments';
+import healthRoutes from './routes/health';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,14 +21,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get('/api/health', (_req: Request, res: Response) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    service: 'CRM Backend API',
-  });
-});
-
 app.get('/api', (_req: Request, res: Response) => {
   res.json({
     message: 'Welcome to CRM Platform API',
@@ -34,6 +28,7 @@ app.get('/api', (_req: Request, res: Response) => {
   });
 });
 
+app.use('/api', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/deals', dealRoutes);
@@ -43,9 +38,16 @@ app.use('/api/assets', assetRoutes);
 app.use('/api/batches', batchRoutes);
 app.use('/api/shipments', shipmentRoutes);
 
+if (process.env.ENABLE_API_DOCS !== 'false') {
+  setupSwagger(app);
+}
+
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+  if (process.env.ENABLE_API_DOCS !== 'false') {
+    console.log(`📚 API Docs: http://localhost:${PORT}/api-docs`);
+  }
   console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
   console.log(`📋 Lead endpoints: http://localhost:${PORT}/api/leads`);
   console.log(`💼 Deal endpoints: http://localhost:${PORT}/api/deals`);
