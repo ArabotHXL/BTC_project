@@ -13,7 +13,7 @@ class FeatureFlags:
     """功能开关配置"""
     
     WEB3_ENABLED = os.environ.get('FEATURE_WEB3_ENABLED', 'false').lower() == 'true'
-    CRM_ENABLED = os.environ.get('FEATURE_CRM_ENABLED', 'false').lower() == 'true'
+    CRM_ENABLED = os.environ.get('FEATURE_CRM_ENABLED', 'true').lower() == 'true'
     TREASURY_EXECUTION_ENABLED = os.environ.get('FEATURE_TREASURY_EXECUTION_ENABLED', 'false').lower() == 'true'
     
     @classmethod
