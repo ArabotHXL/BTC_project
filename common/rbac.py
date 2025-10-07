@@ -84,6 +84,11 @@ class Permission(Enum):
     WEB3_VERIFY = "web3:verify"
     WEB3_READ = "web3:read"
     
+    CRM_READ = "crm:read"
+    CRM_SYNC = "crm:sync"
+    CRM_WEBHOOK = "crm:webhook"
+    CRM_ADMIN = "crm:admin"
+    
     WILDCARD = "*"  # 所有权限
 
 class Role(Enum):
@@ -143,7 +148,8 @@ ROLE_HIERARCHY: Dict[Role, RoleDefinition] = {
             Permission.INTEL_READ, Permission.INTEL_FORECAST, Permission.INTEL_OPTIMIZE, Permission.INTEL_EXPLAIN,
             Permission.OPS_PLAN, Permission.OPS_APPLY, Permission.OPS_READ,
             Permission.TREASURY_READ, Permission.TREASURY_TRADE, Permission.TREASURY_EXECUTE,
-            Permission.WEB3_MINT, Permission.WEB3_VERIFY, Permission.WEB3_READ
+            Permission.WEB3_MINT, Permission.WEB3_VERIFY, Permission.WEB3_READ,
+            Permission.CRM_READ, Permission.CRM_SYNC, Permission.CRM_WEBHOOK, Permission.CRM_ADMIN
         ],
         inherits_from=[],
         is_tenant_scoped=True
@@ -163,7 +169,8 @@ ROLE_HIERARCHY: Dict[Role, RoleDefinition] = {
             Permission.BILLING_READ,
             Permission.MINERS_READ, Permission.MINERS_WRITE,
             Permission.INTEL_READ, Permission.INTEL_FORECAST, Permission.INTEL_EXPLAIN,
-            Permission.OPS_READ, Permission.OPS_PLAN
+            Permission.OPS_READ, Permission.OPS_PLAN,
+            Permission.CRM_READ, Permission.CRM_SYNC
         ],
         inherits_from=[],
         is_tenant_scoped=True

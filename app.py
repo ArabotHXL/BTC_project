@@ -6,6 +6,7 @@ import secrets
 import requests
 import time
 import traceback
+import hashlib
 from datetime import datetime, timedelta
 import pytz
 
@@ -5916,6 +5917,22 @@ except ImportError as e:
     logging.warning(f"Intelligence Layer API blueprints not available: {e}")
 except Exception as e:
     logging.error(f"Failed to register Intelligence Layer API blueprints: {e}")
+
+# Web3/CRM/Treasury Integration API blueprints
+try:
+    from api.web3_sla_api import web3_sla_bp
+    from api.treasury_execute_api import treasury_execute_bp
+    from api.crm_integration_api import crm_integration_bp
+    
+    app.register_blueprint(web3_sla_bp)
+    app.register_blueprint(treasury_execute_bp)
+    app.register_blueprint(crm_integration_bp)
+    
+    logging.info("Web3/CRM/Treasury Integration API blueprints registered successfully")
+except ImportError as e:
+    logging.warning(f"Web3/CRM/Treasury Integration API blueprints not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register Web3/CRM/Treasury Integration API blueprints: {e}")
 
 # Register calculator module blueprint for modular architecture
 try:
