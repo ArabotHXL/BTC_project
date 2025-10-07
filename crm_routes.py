@@ -29,7 +29,7 @@ def crm_dashboard():
         flash('无法加载CRM页面', 'error')
         return redirect(url_for('dashboard'))
 
-@crm_bp.route('/crm/customers')
+@crm_bp.route('/crm/customers', endpoint='customers')
 def customers_list():
     """客户列表页面"""
     try:
