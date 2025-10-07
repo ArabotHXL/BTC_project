@@ -128,10 +128,16 @@ enum PaymentStatus {
 }
 
 enum MinerAssetStatus {
-  OPERATIONAL
+  ORDERED
+  IN_TRANSIT
+  RECEIVED
+  IN_STORAGE
+  DEPLOYED
+  MINING
   MAINTENANCE
-  OFFLINE
-  RETIRED
+  DELAYED
+  CANCELLED
+  DECOMMISSIONED
 }
 
 enum BatchStatus {
@@ -599,21 +605,24 @@ model RevenueRecognition {
 model MinerAsset {
   id             String            @id @default(uuid())
   accountId      String            @map("account_id")
+  shipmentId     String?           @map("shipment_id")
   model          String
   serialNumber   String            @unique @map("serial_number")
   hashrate       Decimal?          @db.Decimal(15, 2)
   power          Decimal?          @db.Decimal(10, 2)
-  status         MinerAssetStatus  @default(OPERATIONAL)
+  status         MinerAssetStatus  @default(ORDERED)
   location       String?
   purchasedAt    DateTime?         @map("purchased_at")
   createdAt      DateTime          @default(now()) @map("created_at")
   updatedAt      DateTime          @updatedAt @map("updated_at")
   
   account        Account           @relation(fields: [accountId], references: [id])
+  shipment       Shipment?         @relation(fields: [shipmentId], references: [id])
   tickets        OpsTicket[]
   maintenanceLogs MaintenanceLog[]
 
   @@index([accountId])
+  @@index([shipmentId])
   @@index([model])
   @@index([status])
   @@index([serialNumber])
@@ -648,6 +657,7 @@ model Shipment {
   updatedAt      DateTime       @updatedAt @map("updated_at")
   
   batch          MinerBatch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  assets         MinerAsset[]
 
   @@index([batchId])
   @@index([status])

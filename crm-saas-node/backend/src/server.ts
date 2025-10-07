@@ -7,6 +7,9 @@ import leadRoutes from './routes/leads';
 import dealRoutes from './routes/deals';
 import invoiceRoutes from './routes/invoices';
 import paymentRoutes from './routes/payments';
+import assetRoutes from './routes/assets';
+import batchRoutes from './routes/batches';
+import shipmentRoutes from './routes/shipments';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -36,6 +39,9 @@ app.use('/api/leads', leadRoutes);
 app.use('/api/deals', dealRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/assets', assetRoutes);
+app.use('/api/batches', batchRoutes);
+app.use('/api/shipments', shipmentRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
@@ -45,4 +51,7 @@ app.listen(PORT, () => {
   console.log(`💼 Deal endpoints: http://localhost:${PORT}/api/deals`);
   console.log(`🧾 Invoice endpoints: http://localhost:${PORT}/api/invoices`);
   console.log(`💰 Payment endpoints: http://localhost:${PORT}/api/payments`);
+  console.log(`🏗️  Asset endpoints: http://localhost:${PORT}/api/assets`);
+  console.log(`📦 Batch endpoints: http://localhost:${PORT}/api/batches`);
+  console.log(`🚚 Shipment endpoints: http://localhost:${PORT}/api/shipments`);
 });

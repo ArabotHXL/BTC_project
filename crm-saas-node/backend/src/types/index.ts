@@ -7,7 +7,11 @@ import {
   InvoiceStatus,
   InvoiceLineItemType,
   PaymentMethod,
-  PaymentStatus
+  PaymentStatus,
+  MinerAssetStatus,
+  BatchStatus,
+  ShipmentStatus,
+  MaintenanceType
 } from '@prisma/client';
 
 export interface JWTPayload {
@@ -241,4 +245,116 @@ export interface PaymentFilters {
   method?: PaymentMethod;
   invoiceId?: string;
   accountId?: string;
+}
+
+export interface CreateAssetDTO {
+  accountId: string;
+  model: string;
+  serialNumber: string;
+  hashrate?: number;
+  power?: number;
+  location?: string;
+  purchasedAt?: string;
+}
+
+export interface UpdateAssetDTO {
+  accountId?: string;
+  model?: string;
+  hashrate?: number;
+  power?: number;
+  location?: string;
+  purchasedAt?: string;
+}
+
+export interface BulkAssetDTO {
+  accountId: string;
+  model: string;
+  serialNumber: string;
+  hashrate?: number;
+  power?: number;
+  location?: string;
+  purchasedAt?: string;
+}
+
+export interface BulkImportResult {
+  success: number;
+  failed: number;
+  errors: Array<{
+    index: number;
+    serialNumber: string;
+    error: string;
+  }>;
+}
+
+export interface InventorySummary {
+  total: number;
+  byStatus: Record<string, number>;
+  byModel: Record<string, number>;
+  byAccount: Record<string, number>;
+}
+
+export interface MaintenanceLogDTO {
+  type: MaintenanceType;
+  description: string;
+  cost?: number;
+  performedBy: string;
+  performedAt: string;
+  ticketId?: string;
+}
+
+export interface AssetFilters {
+  status?: MinerAssetStatus;
+  model?: string;
+  accountId?: string;
+  location?: string;
+}
+
+export interface CreateBatchDTO {
+  batchNumber: string;
+  totalUnits: number;
+  arrivalDate?: string;
+  status?: BatchStatus;
+}
+
+export interface UpdateBatchDTO {
+  batchNumber?: string;
+  totalUnits?: number;
+  arrivalDate?: string;
+  status?: BatchStatus;
+}
+
+export interface BatchSummary {
+  batch: any;
+  totalUnits: number;
+  shipmentsCount: number;
+  status: BatchStatus;
+}
+
+export interface BatchFilters {
+  status?: BatchStatus;
+  arrivalDateFrom?: string;
+  arrivalDateTo?: string;
+}
+
+export interface CreateShipmentDTO {
+  batchId: string;
+  trackingNumber?: string;
+  carrier?: string;
+  shippedAt?: string;
+  deliveredAt?: string;
+  status?: ShipmentStatus;
+}
+
+export interface UpdateShipmentDTO {
+  trackingNumber?: string;
+  carrier?: string;
+  shippedAt?: string;
+  deliveredAt?: string;
+  status?: ShipmentStatus;
+}
+
+export interface ShipmentFilters {
+  status?: ShipmentStatus;
+  carrier?: string;
+  batchId?: string;
 }

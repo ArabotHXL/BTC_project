@@ -20,6 +20,19 @@ export enum EventType {
   PAYMENT_RECEIVED = 'payment.received',
   PAYMENT_CONFIRMED = 'payment.confirmed',
   PAYMENT_REFUNDED = 'payment.refunded',
+  ASSET_CREATED = 'asset.created',
+  ASSET_UPDATED = 'asset.updated',
+  ASSET_STATUS_CHANGED = 'asset.status_changed',
+  ASSET_DEPLOYED = 'asset.deployed',
+  ASSET_MINING_STARTED = 'asset.mining_started',
+  ASSET_MINING_STOPPED = 'asset.mining_stopped',
+  ASSET_DECOMMISSIONED = 'asset.decommissioned',
+  ASSET_MAINTENANCE = 'asset.maintenance',
+  BATCH_CREATED = 'batch.created',
+  SHIPMENT_CREATED = 'shipment.created',
+  SHIPMENT_SHIPPED = 'shipment.shipped',
+  SHIPMENT_DELIVERED = 'shipment.delivered',
+  SHIPMENT_DELAYED = 'shipment.delayed',
 }
 
 export interface EventPayload {
@@ -109,6 +122,9 @@ class EventPublisher {
     if (eventType.startsWith('contract.')) return 'CONTRACT';
     if (eventType.startsWith('invoice.')) return 'INVOICE';
     if (eventType.startsWith('payment.')) return 'PAYMENT';
+    if (eventType.startsWith('asset.')) return 'ASSET';
+    if (eventType.startsWith('batch.')) return 'BATCH';
+    if (eventType.startsWith('shipment.')) return 'SHIPMENT';
     return 'UNKNOWN';
   }
 
