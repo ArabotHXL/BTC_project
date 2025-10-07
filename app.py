@@ -5288,10 +5288,12 @@ def crm_current_user():
             return jsonify({'error': 'No CRM access'}), 403
         
         # 返回用户信息
+        # Type-safe email handling: email is guaranteed to be a string here due to check on line 5280
+        default_name = email.split('@')[0] if email else 'user'
         return jsonify({
             'email': email,
             'role': user_role,
-            'name': session.get('username', email.split('@')[0])
+            'name': session.get('username', default_name)
         })
     except Exception as e:
         logging.error(f"获取CRM用户信息失败: {e}")

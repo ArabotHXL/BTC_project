@@ -106,7 +106,7 @@ class SchedulerLock(db.Model):
     def cleanup_expired_locks(cls):
         """清理所有过期的锁"""
         current_time = datetime.utcnow()
-        expired_locks = cls.query.filter(cls.expires_at < current_time).all()
+        expired_locks = cls.query.filter(cls.expires_at < current_time).all()  # type: ignore
         
         for lock in expired_locks:
             db.session.delete(lock)
@@ -119,12 +119,12 @@ class SchedulerLock(db.Model):
     def get_active_lock(cls, lock_key: str):
         """获取指定key的活跃锁"""
         return cls.query.filter_by(lock_key=lock_key).filter(
-            cls.expires_at > datetime.utcnow()
+            cls.expires_at > datetime.utcnow()  # type: ignore
         ).first()
         
     @classmethod
     def acquire_lock(cls, lock_key: str, process_id: int, hostname: str, 
-                    timeout_seconds: int = 300, worker_info: str = None) -> bool:
+                    timeout_seconds: int = 300, worker_info: str | None = None) -> bool:
         """
         🔧 CRITICAL FIX: 原子性锁获取机制
         Atomic lock acquisition mechanism
@@ -657,7 +657,7 @@ class MinerModel(db.Model):
     @classmethod
     def get_active_miners(cls):
         """获取所有启用的矿机型号"""
-        return cls.query.filter_by(is_active=True).order_by(cls.manufacturer, cls.model_name).all()
+        return cls.query.filter_by(is_active=True).order_by(cls.manufacturer, cls.model_name).all()  # type: ignore
 
     @classmethod
     def get_by_name(cls, model_name):
@@ -667,7 +667,7 @@ class MinerModel(db.Model):
     @classmethod
     def get_by_manufacturer(cls, manufacturer):
         """根据制造商获取矿机列表"""
-        return cls.query.filter_by(manufacturer=manufacturer, is_active=True).order_by(cls.model_name).all()
+        return cls.query.filter_by(manufacturer=manufacturer, is_active=True).order_by(cls.model_name).all()  # type: ignore
 
 class UserMiner(db.Model):
     """用户矿机设备数据库模型 - 存储用户的实际矿机信息"""
