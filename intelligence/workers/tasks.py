@@ -16,6 +16,7 @@ from app import db
 from models import UserMiner, UserAccess, NetworkSnapshot, EventOutbox, EventFailure
 from intelligence.workers.distributed_lock import distributed_lock
 from intelligence.workers.idempotency import idempotent
+from intelligence.monitoring.slo_tracker import track_recalculation
 
 logger = logging.getLogger(__name__)
 
@@ -202,6 +203,7 @@ def mark_source_events_failed(event_ids: List[int], error_message: str) -> int:
 
 @distributed_lock("lock:recalc:user:{user_id}", timeout=300)
 @idempotent("result:recalc:user:{user_id}", ttl=1800, include_all_args=True)
+@track_recalculation
 def recalculate_user_portfolio(user_id: int, source_event_ids: Optional[List[int]] = None) -> dict:
     """
     Recalculate user's portfolio metrics including total hashrate, power consumption, and estimated revenue.

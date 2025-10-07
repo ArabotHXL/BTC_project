@@ -40,6 +40,7 @@ The application is a modular Flask web application with a mobile-first design, s
 - **Backtesting Engine**: Evaluates historical strategy performance with professional metrics.
 - **订单执行优化系统**: Institutional-grade execution capabilities, including real-time slippage prediction, TWAP calculation, liquidity depth assessment, and market impact minimization.
 - **Intelligence Layer**: Event-driven smart layer for mining operations automation and predictive analytics, featuring an event-driven system (Outbox Pattern), task queue system (Redis Queue), intelligence modules (Forecast, Anomaly Detection, Power Optimizer, ROI Explainer), and enhanced cache management.
+- **SLO监控系统**: Performance monitoring and alerting system tracking P95 TTR (Time To Recalculate), success rate (≥99.9%), and latency distribution with configurable thresholds.
 
 ### Database Architecture
 - **Primary Database**: PostgreSQL.
@@ -79,3 +80,33 @@ The application is a modular Flask web application with a mobile-first design, s
 - **PostgreSQL**: Relational database.
 - **Python 3.9+**: Runtime environment.
 - **Gunicorn**: Production WSGI server.
+
+## SLO监控系统 (Service Level Objectives Monitoring)
+
+### Overview
+The SLO monitoring system tracks critical performance metrics to ensure the intelligence layer meets its service level objectives. It provides real-time tracking of recalculation performance, success rates, and latency distribution.
+
+### Key Metrics
+- **P95 TTR (Time To Recalculate)**: Tracks the 95th percentile of recalculation duration (target: <5 seconds)
+- **Success Rate**: Monitors recalculation success rate (target: ≥99.9%)
+- **Latency Distribution**: Five latency buckets for detailed performance analysis:
+  - 0-50ms
+  - 50-100ms
+  - 100-200ms
+  - 200-500ms
+  - 500ms+
+
+### Alert System
+- **Configurable Thresholds**: Alert thresholds can be configured via environment variables
+- **Automatic SLO Violation Detection**: The system automatically detects when metrics fall below thresholds
+- **Severity Levels**: INFO, WARNING, CRITICAL
+
+### API Endpoints
+- **`/api/intelligence/health/slo`**: Detailed SLO metrics endpoint with full statistics
+- **`/api/intelligence/health`**: Main health endpoint including SLO summary
+
+### Implementation
+- **Core Tracker**: `intelligence/monitoring/slo_tracker.py` - Main SLO tracking logic
+- **Alert Configuration**: `intelligence/monitoring/alert_config.py` - Configurable alert thresholds
+- **Decorator Integration**: `@track_recalculation` decorator automatically tracks all recalculation operations
+- **Worker Integration**: Integrated into `intelligence/workers/tasks.py` for portfolio recalculation tracking

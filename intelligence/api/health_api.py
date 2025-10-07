@@ -16,6 +16,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from db import db
 from common.rbac import require_permission, Permission
+from intelligence.monitoring.slo_tracker import slo_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -208,6 +209,15 @@ def intelligence_health_check():
         if success_rate and success_rate.get('status') == 'degraded':
             health_status['status'] = 'degraded'
         
+        # 5. SLO摘要 (SLO Summary from SLO Tracker)
+        slo_summary = slo_metrics.get_summary()
+        health_status['slo'] = {
+            'p95_ttr_ms': slo_summary['p95_ttr_ms'],
+            'success_rate': slo_summary['success_rate_pct'],
+            'compliant': slo_summary['slo_compliance']['compliant'],
+            'alerts': slo_summary['slo_compliance']['alerts']
+        }
+        
         status_code = 200 if health_status['status'] == 'healthy' else 503
         
         logger.info(f"Health check completed: {health_status['status']}")
@@ -221,6 +231,53 @@ def intelligence_health_check():
             'error': str(e),
             'timestamp': datetime.utcnow().isoformat()
         }), 503
+
+
+@health_bp.route('/health/slo', methods=['GET'])
+@require_permission([Permission.INTEL_READ], require_all=True)
+def get_slo_metrics():
+    """
+    SLO监控端点（包含阈值配置）
+    
+    Returns:
+        JSON with detailed SLO metrics including:
+        - P95 TTR (Time To Recalculate)
+        - Success rate
+        - Latency distribution
+        - SLO compliance status
+        - Current alert thresholds
+    """
+    try:
+        from intelligence.monitoring.alert_config import AlertThresholds
+        
+        summary = slo_metrics.get_summary()
+        
+        return jsonify({
+            'success': True,
+            'slo_metrics': summary,
+            'alert_thresholds': {
+                'p95_ttr': {
+                    'warning_ms': AlertThresholds.P95_TTR_WARNING,
+                    'critical_ms': AlertThresholds.P95_TTR_CRITICAL
+                },
+                'success_rate': {
+                    'warning_pct': AlertThresholds.SUCCESS_RATE_WARNING,
+                    'critical_pct': AlertThresholds.SUCCESS_RATE_CRITICAL
+                },
+                'cache_hit_rate': {
+                    'warning_pct': AlertThresholds.CACHE_HIT_RATE_WARNING,
+                    'critical_pct': AlertThresholds.CACHE_HIT_RATE_CRITICAL
+                }
+            },
+            'timestamp': datetime.utcnow().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"SLO metrics retrieval failed: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'timestamp': datetime.utcnow().isoformat()
+        }), 500
 
 
 def check_redis_connection():
