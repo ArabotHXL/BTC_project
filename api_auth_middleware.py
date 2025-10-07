@@ -288,6 +288,14 @@ def require_api_auth(required_permissions: Optional[Union[List[Permission], List
             if required_permissions:
                 user_role_str = auth_result['payload'].get('role', 'guest')
                 
+                # 角色别名映射（兼容历史数据）
+                role_aliases = {
+                    'owner': 'tenant_owner',
+                    'admin': 'tenant_admin',
+                    'user': 'guest'
+                }
+                user_role_str = role_aliases.get(user_role_str, user_role_str)
+                
                 try:
                     user_role = Role(user_role_str)
                 except ValueError:
