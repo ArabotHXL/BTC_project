@@ -5,6 +5,8 @@ import helmet from 'helmet';
 import authRoutes from './routes/auth';
 import leadRoutes from './routes/leads';
 import dealRoutes from './routes/deals';
+import invoiceRoutes from './routes/invoices';
+import paymentRoutes from './routes/payments';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,6 +34,8 @@ app.get('/api', (_req: Request, res: Response) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/deals', dealRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/payments', paymentRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
@@ -39,4 +43,6 @@ app.listen(PORT, () => {
   console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
   console.log(`📋 Lead endpoints: http://localhost:${PORT}/api/leads`);
   console.log(`💼 Deal endpoints: http://localhost:${PORT}/api/deals`);
+  console.log(`🧾 Invoice endpoints: http://localhost:${PORT}/api/invoices`);
+  console.log(`💰 Payment endpoints: http://localhost:${PORT}/api/payments`);
 });

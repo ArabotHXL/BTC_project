@@ -92,14 +92,18 @@ enum EntityType {
 enum InvoiceStatus {
   DRAFT
   SENT
+  ISSUED
+  PARTIAL
   PAID
   OVERDUE
   CANCELLED
 }
 
 enum InvoiceLineItemType {
+  MINING_OUTPUT
   HOSTING_FEE
   ELECTRICITY
+  SERVICE_FEE
   MAINTENANCE
   EQUIPMENT
   OTHER
@@ -115,8 +119,11 @@ enum PaymentMethod {
 
 enum PaymentStatus {
   PENDING
+  CONFIRMED
+  CLEARED
   COMPLETED
   FAILED
+  REJECTED
   REFUNDED
 }
 
@@ -494,6 +501,7 @@ model Invoice {
   issueDate           DateTime             @map("issue_date")
   dueDate             DateTime             @map("due_date")
   totalAmount         Decimal              @db.Decimal(15, 2) @map("total_amount")
+  amountPaid          Decimal              @default(0) @db.Decimal(15, 2) @map("amount_paid")
   status              InvoiceStatus        @default(DRAFT)
   pdfUrl              String?              @map("pdf_url")
   createdAt           DateTime             @default(now()) @map("created_at")

@@ -1,5 +1,14 @@
 import { Request } from 'express';
-import { LeadSource, LeadStatus, DealStage, ContractStatus } from '@prisma/client';
+import { 
+  LeadSource, 
+  LeadStatus, 
+  DealStage, 
+  ContractStatus,
+  InvoiceStatus,
+  InvoiceLineItemType,
+  PaymentMethod,
+  PaymentStatus
+} from '@prisma/client';
 
 export interface JWTPayload {
   userId: string;
@@ -141,4 +150,95 @@ export interface PaginationParams {
   pageSize?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+}
+
+export interface LineItemDTO {
+  type: InvoiceLineItemType;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
+export interface CreateInvoiceDTO {
+  accountId: string;
+  dealId?: string;
+  contractId?: string;
+  dueDate: string;
+  items: LineItemDTO[];
+  notes?: string;
+}
+
+export interface UpdateInvoiceDTO {
+  dueDate?: string;
+  status?: InvoiceStatus;
+  notes?: string;
+}
+
+export interface PaymentDTO {
+  amount: number;
+  method: PaymentMethod;
+  reference?: string;
+  paidAt?: string;
+}
+
+export interface CreatePaymentDTO {
+  invoiceId: string;
+  amount: number;
+  method: PaymentMethod;
+  reference?: string;
+  paymentDate?: string;
+}
+
+export interface UpdatePaymentDTO {
+  amount?: number;
+  method?: PaymentMethod;
+  reference?: string;
+  status?: PaymentStatus;
+}
+
+export interface NetRevenueBreakdown {
+  miningOutput: number;
+  electricityCost: number;
+  serviceFee: number;
+  netRevenue: number;
+  margin: number;
+}
+
+export interface AgingReport {
+  current: number;
+  age30: number;
+  age60: number;
+  age90Plus: number;
+  total: number;
+}
+
+export interface TreasuryStatus {
+  synced: boolean;
+  treasuryId: string;
+  status: string;
+  syncedAt?: string;
+}
+
+export interface CreateBillingCycleDTO {
+  contractId: string;
+  startDate: string;
+  endDate: string;
+  btcProduced?: number;
+  powerConsumed?: number;
+  serviceFee?: number;
+}
+
+export interface InvoiceFilters {
+  status?: InvoiceStatus;
+  accountId?: string;
+  dueDateFrom?: string;
+  dueDateTo?: string;
+}
+
+export interface PaymentFilters {
+  status?: PaymentStatus;
+  method?: PaymentMethod;
+  invoiceId?: string;
+  accountId?: string;
 }

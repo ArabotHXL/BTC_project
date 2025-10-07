@@ -13,6 +13,13 @@ export enum EventType {
   DEAL_WON = 'deal.won',
   DEAL_LOST = 'deal.lost',
   CONTRACT_GENERATED = 'contract.generated',
+  INVOICE_CREATED = 'invoice.created',
+  INVOICE_ISSUED = 'invoice.issued',
+  INVOICE_PAID = 'invoice.paid',
+  INVOICE_OVERDUE = 'invoice.overdue',
+  PAYMENT_RECEIVED = 'payment.received',
+  PAYMENT_CONFIRMED = 'payment.confirmed',
+  PAYMENT_REFUNDED = 'payment.refunded',
 }
 
 export interface EventPayload {
@@ -100,6 +107,8 @@ class EventPublisher {
     if (eventType.startsWith('lead.')) return 'LEAD';
     if (eventType.startsWith('deal.')) return 'DEAL';
     if (eventType.startsWith('contract.')) return 'CONTRACT';
+    if (eventType.startsWith('invoice.')) return 'INVOICE';
+    if (eventType.startsWith('payment.')) return 'PAYMENT';
     return 'UNKNOWN';
   }
 
