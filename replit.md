@@ -85,6 +85,13 @@ A new enterprise-grade CRM platform built with Node.js/TypeScript, PostgreSQL, a
 -   **Worker Process**: Independent event worker with health check endpoint (port 3001), startup retry (5 attempts), graceful shutdown, and component status monitoring.
 -   **Production Features**: Partial startup support, error swallowing for resilience, reconnection loops, health checks reflecting Redis status.
 
+**Flask Integration Services (Completed)**:
+-   **FlaskClient**: API Key authentication (X-API-Key), HMAC-SHA256 request signing, retry mechanism (5xx errors, 2 retries, exponential backoff), 30s timeout.
+-   **CalcService**: Mining profitability calculations (`/calculate` endpoint), miner data, SHA256 comparison.
+-   **IntelligenceService**: Forecast, optimization, explanations, health checks (`/api/intelligence/*`).
+-   **AnalyticsService**: BTC price, network stats, technical indicators, treasury overview, trading signals, backtesting (`/api/analytics/*`, `/api/treasury/*`).
+-   **Authentication**: API Key-based (no self-signed JWT), request signing with query params and empty body handling, production-ready.
+
 **Data Integrity & Security**:
 -   **Status Bypass Prevention**: UpdateAssetDTO/Schema excludes status field; all status changes require validation.
 -   **Lifecycle Enforcement**: validateStatusTransition() guards prevent invalid state transitions.

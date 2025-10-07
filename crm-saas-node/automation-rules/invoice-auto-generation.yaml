@@ -1,0 +1,26 @@
+name: "Auto-generate Invoice on Contract Signed"
+description: "Create invoice when contract is signed"
+trigger:
+  type: DEAL_STAGE_CHANGED
+  event: "contract.signed"
+
+conditions:
+  - field: "deal.stage"
+    operator: "equals"
+    value: "CLOSED_WON"
+  - field: "contract.signed_date"
+    operator: "is_not_null"
+    value: true
+
+actions:
+  - type: "create_invoice"
+    params:
+      account_id: "{{deal.account_id}}"
+      amount: "{{deal.value}}"
+      due_date: "+30days"
+      items_from: "deal"
+  - type: "send_email"
+    params:
+      to: "{{deal.account.email}}"
+      subject: "Invoice {{invoice.number}} - {{deal.title}}"
+      template: "invoice_created"

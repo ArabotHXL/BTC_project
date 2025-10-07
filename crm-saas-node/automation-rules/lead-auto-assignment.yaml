@@ -1,0 +1,24 @@
+name: "Auto-assign Leads Round-robin"
+description: "Automatically assign new leads to sales team"
+trigger:
+  type: LEAD_CREATED
+  event: "lead.captured"
+
+conditions:
+  - field: "lead.assigned_to_id"
+    operator: "is_null"
+    value: true
+  - field: "lead.source"
+    operator: "in"
+    value: ["WEBSITE", "REFERRAL", "PARTNER"]
+
+actions:
+  - type: "assign_round_robin"
+    params:
+      entity: "lead"
+      team: "sales"
+  - type: "send_email"
+    params:
+      to: "{{lead.assigned_to.email}}"
+      subject: "New lead assigned: {{lead.company_name}}"
+      template: "new_lead_assignment"

@@ -15,11 +15,15 @@
   "description": "",
   "dependencies": {
     "@types/bcrypt": "^6.0.0",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node-cron": "^3.0.11",
     "@types/redis": "^4.0.10",
     "@types/swagger-ui-express": "^4.1.8",
     "@types/yamljs": "^0.2.34",
     "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
+    "js-yaml": "^4.1.0",
+    "node-cron": "^4.2.1",
     "redis": "^5.8.3",
     "swagger-ui-express": "^5.0.1",
     "yamljs": "^0.3.0"

@@ -1,0 +1,31 @@
+name: "Release Unpaid Orders After 7 Days"
+description: "Cancel pending orders after 7 days without payment"
+trigger:
+  type: SCHEDULED
+  schedule: "0 2 * * *" # Daily at 2 AM
+
+conditions:
+  - field: "invoice.status"
+    operator: "equals"
+    value: "DRAFT"
+  - field: "invoice.created_at"
+    operator: "older_than"
+    value: "7d"
+  - field: "invoice.amount_paid"
+    operator: "equals"
+    value: 0
+
+actions:
+  - type: "update_field"
+    params:
+      entity: "invoice"
+      field: "status"
+      value: "CANCELLED"
+  - type: "release_reserved_assets"
+    params:
+      invoice_id: "{{invoice.id}}"
+  - type: "send_email"
+    params:
+      to: "{{invoice.account.email}}"
+      subject: "Order {{invoice.invoice_number}} cancelled - No payment received"
+      template: "order_cancelled"

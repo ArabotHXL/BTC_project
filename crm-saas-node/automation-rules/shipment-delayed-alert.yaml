@@ -1,0 +1,32 @@
+name: "Alert on Shipment Delay"
+description: "Notify operations when shipment is delayed"
+trigger:
+  type: SCHEDULED
+  schedule: "0 12 * * *" # Daily at noon
+
+conditions:
+  - field: "shipment.status"
+    operator: "equals"
+    value: "SHIPPED"
+  - field: "shipment.shipped_at"
+    operator: "older_than"
+    value: "7d"
+  - field: "shipment.delivered_at"
+    operator: "is_null"
+    value: true
+
+actions:
+  - type: "update_field"
+    params:
+      entity: "shipment"
+      field: "status"
+      value: "DELAYED"
+  - type: "send_email"
+    params:
+      to: "ops@company.com"
+      subject: "⚠️ Shipment {{shipment.tracking_number}} delayed"
+      template: "shipment_delayed"
+  - type: "create_ticket"
+    params:
+      title: "Investigate delayed shipment: {{shipment.tracking_number}}"
+      priority: "HIGH"

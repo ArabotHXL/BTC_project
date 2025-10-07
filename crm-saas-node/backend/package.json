@@ -14,7 +14,9 @@
     "prisma:studio": "prisma studio",
     "worker": "tsx src/worker.ts",
     "worker:dev": "tsx watch src/worker.ts",
-    "verify:handlers": "tsx src/events/verify-handlers.ts"
+    "verify:handlers": "tsx src/events/verify-handlers.ts",
+    "import:rules": "tsx src/scripts/import-automation-rules.ts",
+    "test:rules": "tsx src/scripts/test-scheduled-rules.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
