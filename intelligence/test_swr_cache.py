@@ -280,6 +280,110 @@ def test_bug_fix_2_threading_lock_fallback():
     logger.info("\n✅ Bug Fix #2 test passed!")
 
 
+def test_callback_parameters_passing():
+    """Test: Callback parameters are correctly passed to refresh functions"""
+    logger.info("\n" + "="*60)
+    logger.info("Test: Callback Parameters Passing (New Feature)")
+    logger.info("="*60)
+    
+    cache = IntelligenceCacheManager()
+    
+    if not cache.cache:
+        logger.warning("⚠️  Cache not initialized")
+        return
+    
+    test_key = 'test:callback_params:user_portfolio'
+    call_log = []
+    
+    def fetch_user_portfolio(user_id, include_inactive=False):
+        """Test callback that requires parameters"""
+        logger.info(f"🔄 fetch_user_portfolio called with user_id={user_id}, include_inactive={include_inactive}")
+        call_log.append({
+            'user_id': user_id,
+            'include_inactive': include_inactive,
+            'timestamp': datetime.utcnow().isoformat()
+        })
+        return {
+            'user_id': user_id,
+            'portfolio': f'Portfolio for user {user_id}',
+            'include_inactive': include_inactive,
+            'data': 'test_data'
+        }
+    
+    logger.info("Test 1: Cache miss with callback parameters")
+    result1 = cache.get_with_swr(
+        key=test_key,
+        refresh_callback=fetch_user_portfolio,
+        refresh_args=(123,),
+        refresh_kwargs={'include_inactive': True},
+        ttl=2,
+        stale_window=5
+    )
+    
+    assert result1 is not None, "Should return fresh data"
+    assert result1['user_id'] == 123, "Should have correct user_id"
+    assert result1['include_inactive'] is True, "Should have correct include_inactive flag"
+    assert len(call_log) == 1, "Callback should be called once"
+    logger.info(f"✅ Cache miss correctly called callback with params: {result1}")
+    
+    logger.info("\nTest 2: Stale cache with callback parameters (threading path)")
+    call_log.clear()
+    time.sleep(3)
+    
+    result2 = cache.get_with_swr(
+        key=test_key,
+        refresh_callback=fetch_user_portfolio,
+        refresh_args=(456,),
+        refresh_kwargs={'include_inactive': False},
+        ttl=5,
+        stale_window=10,
+        use_rq=False
+    )
+    
+    logger.info(f"Stale result (should return old data): {result2}")
+    assert result2 is not None, "Should return stale data"
+    assert result2['user_id'] == 123, "Should return stale data immediately"
+    
+    time.sleep(2)
+    
+    logger.info(f"Callback log after background refresh: {call_log}")
+    assert len(call_log) > 0, "Background refresh should have been triggered"
+    if call_log:
+        assert call_log[0]['user_id'] == 456, "Background refresh should use new user_id"
+        logger.info("✅ Stale cache correctly triggered background refresh with new params")
+    
+    logger.info("\nTest 3: Verify refreshed cache has new data")
+    result3 = cache.get_with_swr(key=test_key)
+    logger.info(f"Refreshed result: {result3}")
+    if result3 and 'user_id' in result3:
+        assert result3['user_id'] == 456, "Should have refreshed data with new user_id"
+        assert result3['include_inactive'] is False, "Should have refreshed data with new flag"
+        logger.info("✅ Refreshed cache has correct data from callback with params")
+    
+    logger.info("\nTest 4: Backward compatibility - callback without parameters")
+    call_log.clear()
+    test_key_no_params = 'test:callback_no_params'
+    
+    def simple_callback():
+        """Callback without parameters (backward compatibility)"""
+        logger.info("🔄 simple_callback called (no parameters)")
+        call_log.append({'called': True})
+        return {'data': 'simple_data', 'timestamp': datetime.utcnow().isoformat()}
+    
+    result4 = cache.get_with_swr(
+        key=test_key_no_params,
+        refresh_callback=simple_callback,
+        ttl=5,
+        stale_window=5
+    )
+    
+    assert result4 is not None, "Should work with no parameters (backward compatible)"
+    assert len(call_log) == 1, "Simple callback should be called"
+    logger.info(f"✅ Backward compatibility: callback without params works: {result4}")
+    
+    logger.info("\n✅ Callback parameters passing test completed!")
+
+
 def test_bug_fix_3_correct_ttl_values():
     """Test Bug Fix #3: Correct TTL values in refresh"""
     logger.info("\n" + "="*60)
@@ -357,6 +461,7 @@ def main():
         
         test_bug_fix_1_cache_miss_sync_refresh()
         test_bug_fix_2_threading_lock_fallback()
+        test_callback_parameters_passing()
         test_bug_fix_3_correct_ttl_values()
         
         logger.info("\n" + "="*60)

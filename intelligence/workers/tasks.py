@@ -7,14 +7,117 @@ All tasks are idempotent with proper error handling and retry logic.
 """
 
 import logging
-from datetime import datetime
-from typing import Optional, List
+from datetime import datetime, timedelta
+from typing import Optional, List, Any
 from rq import get_current_job
+from importlib import import_module
 
 from app import db
 from models import UserMiner, UserAccess, NetworkSnapshot, EventOutbox, EventFailure
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# SWR Cache Refresh Task (Top-level for RQ serialization)
+# ============================================================================
+
+def refresh_cache_entry(
+    key: str, 
+    callback_path: str, 
+    callback_args: tuple = (), 
+    callback_kwargs: Optional[dict] = None, 
+    ttl: int = 300, 
+    stale_window: int = 300, 
+    lock_key: Optional[str] = None
+) -> dict:
+    """
+    Top-level RQ task for cache refresh (SWR pattern).
+    This function is picklable because it's defined at module level.
+    
+    Args:
+        key: Cache key to refresh
+        callback_path: Import path to callback function (e.g., "module.submodule.function_name")
+        callback_args: Positional arguments to pass to callback function
+        callback_kwargs: Keyword arguments to pass to callback function
+        ttl: Time-to-live (fresh period) in seconds
+        stale_window: Stale window duration in seconds
+        lock_key: Redis lock key for this refresh operation
+        
+    Returns:
+        dict: {
+            'status': str,
+            'key': str,
+            'refreshed': bool,
+            'timestamp': datetime
+        }
+    """
+    if callback_kwargs is None:
+        callback_kwargs = {}
+    
+    current_job = get_current_job()
+    job_id = current_job.id if current_job else 'manual'
+    
+    logger.info(
+        f"[Job {job_id}] Starting cache refresh for key={key}, callback_path={callback_path}, "
+        f"args={callback_args}, kwargs={callback_kwargs}"
+    )
+    
+    try:
+        from intelligence.cache_manager import intelligence_cache, CachedValue
+        
+        if intelligence_cache._check_cache_freshness(key):
+            logger.debug(f"[Job {job_id}] Cache already fresh, skipping refresh: {key}")
+            return {
+                'status': 'skipped',
+                'key': key,
+                'refreshed': False,
+                'reason': 'cache_already_fresh',
+                'timestamp': datetime.utcnow()
+            }
+        
+        module_path, func_name = callback_path.rsplit('.', 1)
+        module = import_module(module_path)
+        callback = getattr(module, func_name)
+        
+        fresh_value = callback(*callback_args, **callback_kwargs)
+        
+        now = datetime.utcnow()
+        cached_value = CachedValue(
+            value=fresh_value,
+            expires_at=now + timedelta(seconds=ttl),
+            stale_until=now + timedelta(seconds=ttl + stale_window)
+        )
+        
+        if intelligence_cache.cache:
+            intelligence_cache.cache.set(key, cached_value, timeout=ttl + stale_window)
+        
+        logger.info(f"[Job {job_id}] Background refresh complete (RQ): {key}")
+        
+        return {
+            'status': 'success',
+            'key': key,
+            'refreshed': True,
+            'timestamp': datetime.utcnow()
+        }
+        
+    except Exception as e:
+        logger.error(f"[Job {job_id}] Cache refresh failed for {key}: {str(e)}", exc_info=True)
+        return {
+            'status': 'error',
+            'key': key,
+            'refreshed': False,
+            'error': str(e),
+            'timestamp': datetime.utcnow()
+        }
+    finally:
+        try:
+            from intelligence.cache_manager import intelligence_cache
+            if lock_key:
+                intelligence_cache._release_redis_lock(lock_key)
+                logger.debug(f"[Job {job_id}] Released redis lock: {lock_key}")
+        except Exception as lock_error:
+            logger.error(f"[Job {job_id}] Failed to release lock {lock_key}: {lock_error}")
 
 
 # ============================================================================

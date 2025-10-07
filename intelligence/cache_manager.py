@@ -81,8 +81,7 @@ class IntelligenceCacheManager:
         self.cache: Optional[Cache] = None
         self._revalidate_locks: Dict[str, bool] = {}
         self._revalidate_lock = threading.Lock()
-        self._refresh_locks: Dict[str, threading.Lock] = {}
-        self._refresh_locks_lock = threading.Lock()
+        self._process_locks: Dict[str, threading.Lock] = {}
         
         if app is not None:
             self.init_app(app)
@@ -524,7 +523,9 @@ class IntelligenceCacheManager:
     def get_with_swr(
         self,
         key: str,
-        refresh_callback: Optional[Callable[[], Any]] = None,
+        refresh_callback: Optional[Callable[..., Any]] = None,
+        refresh_args: tuple = (),
+        refresh_kwargs: Optional[dict] = None,
         ttl: int = 300,
         stale_window: int = 300,
         use_rq: bool = True
@@ -547,6 +548,10 @@ class IntelligenceCacheManager:
             Cache key
         refresh_callback : Optional[Callable]
             Function to call to refresh the cache
+        refresh_args : tuple
+            Positional arguments to pass to refresh_callback
+        refresh_kwargs : dict
+            Keyword arguments to pass to refresh_callback
         ttl : int
             Time-to-live (fresh period) in seconds
         stale_window : int
@@ -566,15 +571,19 @@ class IntelligenceCacheManager:
         
         data = cache.get_with_swr(
             key='portfolio:123',
-            refresh_callback=lambda: fetch_user_data(123),
+            refresh_callback=fetch_user_data,
+            refresh_args=(123,),
             ttl=300,
             stale_window=300
         )
         """
+        if refresh_kwargs is None:
+            refresh_kwargs = {}
+        
         if not self.cache:
             logger.warning("Cache not initialized")
             if refresh_callback:
-                return refresh_callback()
+                return refresh_callback(*refresh_args, **refresh_kwargs)
             return None
         
         try:
@@ -583,7 +592,7 @@ class IntelligenceCacheManager:
             if cached_entry is None:
                 logger.info(f"Cache miss: {key}, fetching fresh data synchronously")
                 if refresh_callback:
-                    fresh_value = refresh_callback()
+                    fresh_value = refresh_callback(*refresh_args, **refresh_kwargs)
                     self.set_with_swr(key, fresh_value, ttl=ttl, stale_window=stale_window)
                     return fresh_value
                 return None
@@ -600,6 +609,8 @@ class IntelligenceCacheManager:
                         self._trigger_background_refresh(
                             key=key,
                             refresh_callback=refresh_callback,
+                            refresh_args=refresh_args,
+                            refresh_kwargs=refresh_kwargs,
                             ttl=ttl,
                             stale_window=stale_window,
                             use_rq=use_rq
@@ -610,7 +621,7 @@ class IntelligenceCacheManager:
                 else:
                     logger.info(f"Cache completely expired: {key}, fetching fresh data synchronously")
                     if refresh_callback:
-                        fresh_value = refresh_callback()
+                        fresh_value = refresh_callback(*refresh_args, **refresh_kwargs)
                         self.set_with_swr(key, fresh_value, ttl=ttl, stale_window=stale_window)
                         return fresh_value
                     return None
@@ -669,53 +680,37 @@ class IntelligenceCacheManager:
             logger.error(f"Error in set_with_swr for key {key}: {e}")
             return False
     
-    def _get_threading_lock(self, lock_key: str) -> Optional[threading.Lock]:
+    def _check_cache_freshness(self, key: str) -> bool:
         """
-        Get or create a threading lock for process-level locking (fallback when Redis unavailable)
+        Check if cache entry is still fresh (not expired)
         
         Parameters:
         -----------
-        lock_key : str
-            Lock key
+        key : str
+            Cache key
             
         Returns:
         --------
-        Optional[threading.Lock] : Threading lock or None if already locked
+        bool : True if cache is fresh, False otherwise
         """
-        with self._refresh_locks_lock:
-            if lock_key in self._refresh_locks:
-                logger.debug(f"Threading lock already exists for key: {lock_key}")
-                return None
-            
-            lock = threading.Lock()
-            if lock.acquire(blocking=False):
-                self._refresh_locks[lock_key] = lock
-                return lock
-            else:
-                return None
-    
-    def _release_threading_lock(self, lock_key: str):
-        """
-        Release a threading lock
+        if not self.cache:
+            return False
         
-        Parameters:
-        -----------
-        lock_key : str
-            Lock key
-        """
-        with self._refresh_locks_lock:
-            if lock_key in self._refresh_locks:
-                lock = self._refresh_locks[lock_key]
-                try:
-                    lock.release()
-                except:
-                    pass
-                del self._refresh_locks[lock_key]
+        try:
+            cached_entry = self.cache.get(key)
+            if cached_entry and isinstance(cached_entry, CachedValue):
+                return not cached_entry.is_expired()
+            return False
+        except Exception as e:
+            logger.error(f"Error checking cache freshness for {key}: {e}")
+            return False
     
     def _trigger_background_refresh(
         self,
         key: str,
         refresh_callback: Callable[[], Any],
+        refresh_args: tuple = (),
+        refresh_kwargs: Optional[dict] = None,
         ttl: int = 300,
         stale_window: int = 300,
         use_rq: bool = True
@@ -729,6 +724,10 @@ class IntelligenceCacheManager:
             Cache key
         refresh_callback : Callable
             Function to fetch fresh data
+        refresh_args : tuple
+            Positional arguments to pass to refresh_callback
+        refresh_kwargs : dict
+            Keyword arguments to pass to refresh_callback
         ttl : int
             Time-to-live (fresh period) in seconds
         stale_window : int
@@ -736,28 +735,57 @@ class IntelligenceCacheManager:
         use_rq : bool
             Whether to use RQ (falls back to threading if unavailable)
         """
+        if refresh_kwargs is None:
+            refresh_kwargs = {}
+        
         lock_key = f"refresh:{key}"
         
         redis_lock_acquired = self._get_redis_lock(lock_key, timeout=60)
-        threading_lock = None
         
-        if not redis_lock_acquired:
-            logger.debug(f"Redis lock not available, attempting threading lock for key: {key}")
-            threading_lock = self._get_threading_lock(lock_key)
+        if redis_lock_acquired:
+            if use_rq:
+                try:
+                    from intelligence.workers.worker import enqueue_task
+                    from intelligence.workers.tasks import refresh_cache_entry
+                    
+                    if not hasattr(refresh_callback, '__module__') or not hasattr(refresh_callback, '__name__'):
+                        raise ValueError(
+                            f"Callback must be a module-level function with __module__ and __name__ attributes. "
+                            f"Lambda functions and closures are not supported for RQ tasks."
+                        )
+                    
+                    callback_path = f"{refresh_callback.__module__}.{refresh_callback.__name__}"
+                    
+                    enqueue_task(
+                        'default',
+                        refresh_cache_entry,
+                        key=key,
+                        callback_path=callback_path,
+                        callback_args=refresh_args,
+                        callback_kwargs=refresh_kwargs,
+                        ttl=ttl,
+                        stale_window=stale_window,
+                        lock_key=lock_key,
+                        timeout=ttl
+                    )
+                    logger.info(f"Enqueued RQ refresh task for key: {key}, callback: {callback_path}, args: {refresh_args}")
+                    return
+                    
+                except Exception as e:
+                    logger.warning(f"Failed to enqueue RQ task, falling back to threading: {e}")
+                    self._release_redis_lock(lock_key)
+                    redis_lock_acquired = False
             
-            if not threading_lock:
-                logger.debug(f"Refresh already in progress for key: {key}")
-                return
-            
-            logger.info(f"Using threading lock for refresh: {key}")
-        
-        if use_rq:
-            try:
-                from intelligence.workers.worker import enqueue_task
-                
-                def refresh_task():
+            if redis_lock_acquired:
+                def refresh_with_threading():
                     try:
-                        fresh_value = refresh_callback()
+                        if self._check_cache_freshness(key):
+                            logger.debug(f"Cache already fresh, skipping refresh: {key}")
+                            return
+                        
+                        logger.debug(f"Starting background refresh (threading): {key}")
+                        fresh_value = refresh_callback(*refresh_args, **refresh_kwargs)
+                        
                         now = datetime.utcnow()
                         cached_value = CachedValue(
                             value=fresh_value,
@@ -768,25 +796,27 @@ class IntelligenceCacheManager:
                         if self.cache:
                             self.cache.set(key, cached_value, timeout=ttl + stale_window)
                         
-                        logger.info(f"Background refresh complete (RQ): {key}")
-                        return fresh_value
+                        logger.info(f"Background refresh complete (threading): {key}")
+                        
+                    except Exception as e:
+                        logger.error(f"Background refresh failed for {key}: {e}")
                     finally:
-                        if redis_lock_acquired:
-                            self._release_redis_lock(lock_key)
-                        if threading_lock:
-                            self._release_threading_lock(lock_key)
+                        self._release_redis_lock(lock_key)
                 
-                enqueue_task('default', refresh_task, timeout=ttl)
-                logger.info(f"Enqueued RQ refresh task for key: {key}")
+                thread = threading.Thread(target=refresh_with_threading, daemon=True)
+                thread.start()
                 return
-                
-            except Exception as e:
-                logger.warning(f"Failed to enqueue RQ task, falling back to threading: {e}")
         
-        def refresh_with_threading():
+        logger.debug(f"Redis lock not available, using process-level threading lock for key: {key}")
+        
+        with self._process_locks.setdefault(key, threading.Lock()):
+            if self._check_cache_freshness(key):
+                logger.debug(f"Cache already fresh after acquiring lock, skipping refresh: {key}")
+                return
+            
             try:
-                logger.debug(f"Starting background refresh (threading): {key}")
-                fresh_value = refresh_callback()
+                logger.debug(f"Starting background refresh with threading lock: {key}")
+                fresh_value = refresh_callback(*refresh_args, **refresh_kwargs)
                 
                 now = datetime.utcnow()
                 cached_value = CachedValue(
@@ -798,18 +828,10 @@ class IntelligenceCacheManager:
                 if self.cache:
                     self.cache.set(key, cached_value, timeout=ttl + stale_window)
                 
-                logger.info(f"Background refresh complete (threading): {key}")
+                logger.info(f"Background refresh complete (threading lock): {key}")
                 
             except Exception as e:
                 logger.error(f"Background refresh failed for {key}: {e}")
-            finally:
-                if redis_lock_acquired:
-                    self._release_redis_lock(lock_key)
-                if threading_lock:
-                    self._release_threading_lock(lock_key)
-        
-        thread = threading.Thread(target=refresh_with_threading, daemon=True)
-        thread.start()
     
     # ========================================================================
     # Stale-While-Revalidate Pattern Implementation
