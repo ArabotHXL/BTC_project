@@ -115,7 +115,7 @@ class UserSubscription(Base):
     __tablename__ = 'user_subscriptions'
     
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_id = Column(String, ForeignKey('users.id'), nullable=False)
     plan_id = Column(Integer, ForeignKey('subscription_plans.id'), nullable=False)
     
     # 订阅信息
@@ -289,7 +289,7 @@ class ApiUsage(Base):
     __tablename__ = 'api_usage'
     
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_id = Column(String, ForeignKey('users.id'), nullable=False)
     
     # 使用统计
     date = Column(DateTime, nullable=False)
@@ -316,7 +316,7 @@ except ImportError:
         """最小用户模型（如果不存在）"""
         __tablename__ = 'users'
         
-        id = Column(Integer, primary_key=True)
+        id = Column(String, primary_key=True)
         email = Column(String(120), unique=True, nullable=False)
         username = Column(String(64), unique=True, nullable=False)
         created_at = Column(DateTime, default=datetime.utcnow)

@@ -1088,7 +1088,7 @@ class User(db.Model):
     """用户模型"""
     __tablename__ = 'users'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     username = db.Column(db.String(80), unique=True, nullable=True)
     password_hash = db.Column(db.String(256), nullable=False)
@@ -1978,7 +1978,7 @@ class Miner(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
     # 用户关联
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=True, index=True)
     user = db.relationship('User', backref='miners')
     
     # 索引优化
@@ -2036,7 +2036,7 @@ class MinerImportJob(db.Model):
     site_id = db.Column(db.String(50), nullable=False, index=True)
     
     # 用户关联
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False, index=True)
     user = db.relationship('User', backref='import_jobs')
     
     # 文件信息
@@ -2264,7 +2264,7 @@ class ForecastDaily(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     
     # 用户关联
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=True, index=True)
     
     # 预测日期
     forecast_date = db.Column(db.Date, nullable=False, index=True)
@@ -2343,7 +2343,7 @@ class OpsSchedule(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     
     # 用户关联
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False, index=True)
     
     # 调度日期和时段
     schedule_date = db.Column(db.Date, nullable=False, index=True)
