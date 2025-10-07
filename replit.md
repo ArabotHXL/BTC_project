@@ -77,10 +77,13 @@ A new enterprise-grade CRM platform built with Node.js/TypeScript, PostgreSQL, a
 -   **Asset Status Validation**: Enforced state transition rules via STATUS_TRANSITIONS mapping, all changes through validateStatusTransition().
 -   **Shipment-Asset Synchronization**: Shipment status automatically updates related asset states (markAsShipped → IN_TRANSIT, markAsDelivered → RECEIVED).
 
-**Event-Driven Architecture**:
--   **12 Event Types**: LEAD_CREATED, DEAL_STAGE_CHANGED, CONTRACT_GENERATED, INVOICE_CREATED, PAYMENT_CONFIRMED, ASSET_CREATED, ASSET_STATUS_CHANGED, ASSET_DEPLOYED, ASSET_MINING_STARTED, ASSET_MINING_STOPPED, ASSET_DECOMMISSIONED, SHIPMENT_SHIPPED, SHIPMENT_DELIVERED, etc.
--   **Event Publisher**: Dual-write to Redis Pub/Sub and EventQueue table for reliability.
--   **Event Payload**: Complete post-update data with timestamps and state information.
+**Event-Driven Architecture (Production-Ready)**:
+-   **Event System Components**: EventPublisher (dual-write), EventSubscriber (Redis real-time), EventConsumer (queue polling), EventProcessor (lifecycle coordinator), dedicated worker process.
+-   **16 Event Handlers**: Covering all 12 core events - lead.captured, lead.converted, deal.stage_changed, deal.won, contract.signed, invoice.created, invoice.issued, invoice.paid, payment.received, payment.confirmed, asset.status_changed, asset.deployed, asset.mining_started, shipment.shipped, shipment.delivered, plus contract.generated.
+-   **Dual-Write Pattern**: Events persist to EventQueue table (reliable) and publish to Redis Pub/Sub (real-time) for fault tolerance.
+-   **Auto-Reconnection**: Publisher and Subscriber automatically reconnect to Redis every 5 seconds when disconnected.
+-   **Worker Process**: Independent event worker with health check endpoint (port 3001), startup retry (5 attempts), graceful shutdown, and component status monitoring.
+-   **Production Features**: Partial startup support, error swallowing for resilience, reconnection loops, health checks reflecting Redis status.
 
 **Data Integrity & Security**:
 -   **Status Bypass Prevention**: UpdateAssetDTO/Schema excludes status field; all status changes require validation.
