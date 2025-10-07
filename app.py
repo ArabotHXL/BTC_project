@@ -60,9 +60,6 @@ app.config['SECRET_KEY'] = app.secret_key  # Ensure SECRET_KEY is set for Flask-
 # Force disable Flask-WTF global CSRF protection that may auto-activate
 try:
     from flask_wtf.csrf import CSRFProtect
-    # Prevent CSRFProtect from auto-initializing
-    if hasattr(CSRFProtect, '_exempt_views'):
-        CSRFProtect._exempt_views = set()
     # Make sure no CSRFProtect instance is attached to our app
     if hasattr(app, 'extensions') and 'csrf' in app.extensions:
         del app.extensions['csrf']
@@ -1212,7 +1209,7 @@ def web3_dashboard():
             result = db.session.query(
                 func.sum(SLAMetrics.blockchain_verifications),
                 func.sum(SLAMetrics.ipfs_uploads),
-                func.avg(SLAMetrics.transparency_score)
+                func.avg(SLAMetrics.transparency_score)  # type: ignore
             ).first()
             
             if result and result[0] is not None:
@@ -3008,7 +3005,7 @@ def migrate_to_crm():
             existing_customer = Customer.query.filter(
                 or_(
                     Customer.email == user.email,
-                    and_(Customer.name == user.name, Customer.company == user.company)
+                    and_(Customer.name == user.name, Customer.company == user.company)  # type: ignore
                 )
             ).first()
             
@@ -3546,7 +3543,7 @@ def network_history():
         # 从数据库获取历史数据
         snapshots = NetworkSnapshot.query.filter(
             NetworkSnapshot.recorded_at >= start_date,
-            NetworkSnapshot.is_valid == True
+            NetworkSnapshot.is_valid == True  # type: ignore
         ).order_by(NetworkSnapshot.recorded_at.asc()).all()
         
         # 准备图表数据
