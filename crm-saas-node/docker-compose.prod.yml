@@ -79,6 +79,25 @@ services:
       - crm-network
     restart: unless-stopped
 
+  worker:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    container_name: crm-worker
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-crm_user}:${POSTGRES_PASSWORD:-crm_password}@postgres:5432/${POSTGRES_DB:-crm_db}
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: ${NODE_ENV:-production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run worker
+    networks:
+      - crm-network
+    restart: unless-stopped
+
 volumes:
   postgres_data:
     driver: local

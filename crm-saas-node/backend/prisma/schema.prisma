@@ -799,17 +799,18 @@ model AutomationLog {
 }
 
 model EventQueue {
-  id          String           @id @default(uuid())
-  eventType   String           @map("event_type")
-  payloadJson Json             @map("payload_json")
-  status      EventQueueStatus @default(PENDING)
-  retryCount  Int              @default(0) @map("retry_count")
-  createdAt   DateTime         @default(now()) @map("created_at")
-  processedAt DateTime?        @map("processed_at")
+  id           String           @id @default(uuid())
+  eventType    String           @map("event_type")
+  payloadJson  Json             @map("payload_json")
+  status       EventQueueStatus @default(PENDING)
+  retryCount   Int              @default(0) @map("retry_count")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  processedAt  DateTime?        @map("processed_at")
+  failedAt     DateTime?        @map("failed_at")
+  errorMessage String?          @map("error_message")
   
-  @@index([status])
+  @@index([status, createdAt])
   @@index([eventType])
-  @@index([createdAt])
   @@map("event_queue")
 }
 

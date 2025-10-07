@@ -13,6 +13,7 @@ export enum EventType {
   DEAL_WON = 'deal.won',
   DEAL_LOST = 'deal.lost',
   CONTRACT_GENERATED = 'contract.generated',
+  CONTRACT_SIGNED = 'contract.signed',
   INVOICE_CREATED = 'invoice.created',
   INVOICE_ISSUED = 'invoice.issued',
   INVOICE_PAID = 'invoice.paid',
@@ -47,33 +48,68 @@ export interface EventPayload {
 class EventPublisher {
   private redisClient: RedisClientType | null = null;
   private isConnected: boolean = false;
+  private reconnectInterval: NodeJS.Timeout | null = null;
+  private reconnectDelay: number = 5000;
 
   async connect(): Promise<void> {
+    await this.attemptConnect();
+    this.startReconnectLoop();
+  }
+
+  private async attemptConnect(): Promise<void> {
     if (this.isConnected && this.redisClient) {
       return;
     }
 
     try {
       const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+      
+      if (this.redisClient) {
+        try {
+          await this.redisClient.disconnect();
+        } catch (err) {
+        }
+      }
+
       this.redisClient = createClient({
         url: redisUrl,
       });
 
       this.redisClient.on('error', (err) => {
-        console.error('Redis Client Error:', err);
+        console.error('Redis Publisher Error:', err);
         this.isConnected = false;
       });
 
       this.redisClient.on('connect', () => {
-        console.log('Redis Client Connected');
+        console.log('✅ Redis Publisher Connected');
         this.isConnected = true;
       });
 
+      this.redisClient.on('disconnect', () => {
+        console.log('⚠️ Redis Publisher Disconnected');
+        this.isConnected = false;
+      });
+
       await this.redisClient.connect();
+      this.isConnected = true;
     } catch (error) {
-      console.error('Failed to connect to Redis:', error);
+      console.error('Failed to connect Redis Publisher:', error);
       this.isConnected = false;
+      console.warn('⚠️  Events will be queued only. Retrying every 5 seconds...');
     }
+  }
+
+  private startReconnectLoop(): void {
+    this.reconnectInterval = setInterval(async () => {
+      if (!this.isConnected) {
+        console.log('🔄 Attempting to reconnect Redis Publisher...');
+        await this.attemptConnect();
+      }
+    }, this.reconnectDelay);
+  }
+
+  get connected(): boolean {
+    return this.isConnected;
   }
 
   async publish(eventType: EventType, payload: any): Promise<void> {
@@ -129,9 +165,15 @@ class EventPublisher {
   }
 
   async disconnect(): Promise<void> {
+    if (this.reconnectInterval) {
+      clearInterval(this.reconnectInterval);
+      this.reconnectInterval = null;
+    }
+
     if (this.redisClient && this.isConnected) {
       await this.redisClient.quit();
       this.isConnected = false;
+      console.log('Redis Publisher Disconnected');
     }
   }
 }

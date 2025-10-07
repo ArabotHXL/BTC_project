@@ -12,6 +12,7 @@ import assetRoutes from './routes/assets';
 import batchRoutes from './routes/batches';
 import shipmentRoutes from './routes/shipments';
 import healthRoutes from './routes/health';
+import { eventPublisher } from './events/publisher';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,7 +43,7 @@ if (process.env.ENABLE_API_DOCS !== 'false') {
   setupSwagger(app);
 }
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
   if (process.env.ENABLE_API_DOCS !== 'false') {
@@ -56,4 +57,7 @@ app.listen(PORT, () => {
   console.log(`🏗️  Asset endpoints: http://localhost:${PORT}/api/assets`);
   console.log(`📦 Batch endpoints: http://localhost:${PORT}/api/batches`);
   console.log(`🚚 Shipment endpoints: http://localhost:${PORT}/api/shipments`);
+  
+  await eventPublisher.connect();
+  console.log(`✅ Event Publisher initialized`);
 });
