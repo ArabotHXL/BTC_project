@@ -596,10 +596,10 @@ body {
                             {% if current_lang == 'en' %}User Access Management{% else %}用户访问管理{% endif %}
                         </a></li>
                         
-                        <!-- CRM系统入口 -->
+                        <!-- CRM系统入口 - React CRM -->
                         {% if user_has_crm_access() %}
                         <li>
-                            <a class="dropdown-item text-light" href="{{ url_for('crm.crm_dashboard') }}" style="border-radius: 10px; margin: 4px;">
+                            <a class="dropdown-item text-light" href="/crm/" style="border-radius: 10px; margin: 4px;">
                                 <i class="bi bi-people-fill me-2 text-danger"></i> 
                                 {% if current_lang == 'en' %}Customer Relationship Management{% else %}客户关系管理系统{% endif %}
                             </a>
@@ -711,9 +711,9 @@ body {
             </div>
         </div>
 
-        <!-- 客户管理 -->
+        <!-- 客户管理 - React CRM -->
         {% if user_has_crm_access() %}
-        <div class="dashboard-card customer-item" onclick="location.href='{{ url_for('crm.crm_dashboard') }}'">
+        <div class="dashboard-card customer-item" onclick="location.href='/crm/'">
             <div class="card-stats">CRM</div>
             <div class="card-content">
                 <i class="bi bi-people card-icon"></i>
