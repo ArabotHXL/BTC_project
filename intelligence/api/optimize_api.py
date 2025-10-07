@@ -18,6 +18,7 @@ from db import db
 from models import OpsSchedule, UserAccess
 from api_auth_middleware import require_api_auth
 from intelligence.optimizer import optimize_curtailment, calculate_curtailment_savings
+from common.rbac import require_permission, Permission
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ optimize_bp = Blueprint('optimize_api', __name__, url_prefix='/api/intelligence/
 
 @optimize_bp.route('/curtailment', methods=['POST'])
 @require_api_auth(required_permissions=['write'], allow_session_auth=True)
+@require_permission([Permission.OPS_PLAN, Permission.INTEL_OPTIMIZE], require_all=True)
 def submit_curtailment_optimization():
     """
     Submit curtailment optimization request
@@ -164,6 +166,7 @@ def submit_curtailment_optimization():
 
 @optimize_bp.route('/<int:user_id>/<date_str>', methods=['GET'])
 @require_api_auth(required_permissions=['read'], allow_session_auth=True)
+@require_permission([Permission.OPS_READ, Permission.INTEL_READ], require_all=True)
 def get_optimization_schedule(user_id, date_str):
     """
     Get optimization schedule for a specific date

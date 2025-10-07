@@ -17,6 +17,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from models import UserAccess
 from api_auth_middleware import require_api_auth
 from intelligence.explain import calculate_roi_factors
+from common.rbac import require_permission, Permission
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,7 @@ explain_bp = Blueprint('explain_api', __name__, url_prefix='/api/intelligence/ex
 
 @explain_bp.route('/roi/<int:user_id>', methods=['GET'])
 @require_api_auth(required_permissions=['read'], allow_session_auth=True)
+@require_permission([Permission.INTEL_READ, Permission.INTEL_EXPLAIN], require_all=True)
 def get_roi_explanation(user_id):
     """
     Get ROI explanation with factor breakdown
@@ -83,6 +85,7 @@ def get_roi_explanation(user_id):
 
 @explain_bp.route('/roi/<int:user_id>/change', methods=['GET'])
 @require_api_auth(required_permissions=['read'], allow_session_auth=True)
+@require_permission([Permission.INTEL_READ, Permission.INTEL_EXPLAIN], require_all=True)
 def get_roi_change_analysis(user_id):
     """
     Get ROI change analysis
@@ -174,6 +177,7 @@ def get_roi_change_analysis(user_id):
 
 @explain_bp.route('/roi/<int:user_id>/recommendations', methods=['GET'])
 @require_api_auth(required_permissions=['read'], allow_session_auth=True)
+@require_permission([Permission.INTEL_READ, Permission.INTEL_EXPLAIN], require_all=True)
 def get_recommendations(user_id):
     """
     Get ROI improvement recommendations

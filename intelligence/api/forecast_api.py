@@ -18,6 +18,7 @@ from db import db
 from models import ForecastDaily, UserAccess
 from api_auth_middleware import require_api_auth
 from intelligence.forecast import forecast_btc_price, forecast_difficulty
+from common.rbac import require_permission, Permission
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ forecast_bp = Blueprint('forecast_api', __name__, url_prefix='/api/intelligence/
 
 @forecast_bp.route('/<int:user_id>', methods=['GET'])
 @require_api_auth(required_permissions=['read'], allow_session_auth=True)
+@require_permission([Permission.INTEL_READ, Permission.INTEL_FORECAST], require_all=True)
 def get_user_forecast(user_id):
     """
     Get user's forecast data
@@ -114,6 +116,7 @@ def get_user_forecast(user_id):
 
 @forecast_bp.route('/<int:user_id>/refresh', methods=['POST'])
 @require_api_auth(required_permissions=['write'], allow_session_auth=True)
+@require_permission([Permission.INTEL_READ, Permission.INTEL_FORECAST], require_all=True)
 def refresh_user_forecast(user_id):
     """
     Trigger forecast refresh for a user

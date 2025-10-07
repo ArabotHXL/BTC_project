@@ -15,6 +15,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from db import db
+from common.rbac import require_permission, Permission
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ health_bp = Blueprint('health_api', __name__, url_prefix='/api/intelligence')
 
 
 @health_bp.route('/health', methods=['GET'])
+@require_permission([Permission.INTEL_READ], require_all=True)
 def intelligence_health_check():
     """
     Intelligence layer system health check

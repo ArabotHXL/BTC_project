@@ -63,6 +63,27 @@ class Permission(Enum):
     WEBHOOK_READ = "webhook:read"
     WEBHOOK_WRITE = "webhook:write"
     
+    MINERS_READ = "miners:read"
+    MINERS_WRITE = "miners:write"
+    MINERS_DELETE = "miners:delete"
+    
+    INTEL_READ = "intel:read"
+    INTEL_FORECAST = "intel:forecast"
+    INTEL_OPTIMIZE = "intel:optimize"
+    INTEL_EXPLAIN = "intel:explain"
+    
+    OPS_PLAN = "ops:plan"
+    OPS_APPLY = "ops:apply"
+    OPS_READ = "ops:read"
+    
+    TREASURY_READ = "treasury:read"
+    TREASURY_TRADE = "treasury:trade"
+    TREASURY_EXECUTE = "treasury:execute"
+    
+    WEB3_MINT = "web3:mint"
+    WEB3_VERIFY = "web3:verify"
+    WEB3_READ = "web3:read"
+    
     WILDCARD = "*"  # 所有权限
 
 class Role(Enum):
@@ -75,6 +96,7 @@ class Role(Enum):
     INVESTOR = "investor"
     OPERATOR = "operator"
     FINANCE = "finance"
+    TRADER = "trader"
     
     DEVELOPER = "developer"
     API_CLIENT = "api_client"
@@ -116,7 +138,12 @@ ROLE_HIERARCHY: Dict[Role, RoleDefinition] = {
             Permission.BLOCKCHAIN_READ, Permission.BLOCKCHAIN_WRITE,
             Permission.REPORT_READ, Permission.REPORT_CREATE, Permission.REPORT_EXPORT,
             Permission.BILLING_READ, Permission.BILLING_WRITE,
-            Permission.WEBHOOK_READ, Permission.WEBHOOK_WRITE
+            Permission.WEBHOOK_READ, Permission.WEBHOOK_WRITE,
+            Permission.MINERS_READ, Permission.MINERS_WRITE, Permission.MINERS_DELETE,
+            Permission.INTEL_READ, Permission.INTEL_FORECAST, Permission.INTEL_OPTIMIZE, Permission.INTEL_EXPLAIN,
+            Permission.OPS_PLAN, Permission.OPS_APPLY, Permission.OPS_READ,
+            Permission.TREASURY_READ, Permission.TREASURY_TRADE, Permission.TREASURY_EXECUTE,
+            Permission.WEB3_MINT, Permission.WEB3_VERIFY, Permission.WEB3_READ
         ],
         inherits_from=[],
         is_tenant_scoped=True
@@ -133,7 +160,10 @@ ROLE_HIERARCHY: Dict[Role, RoleDefinition] = {
             Permission.TENANT_READ,
             Permission.API_KEY_READ,
             Permission.REPORT_READ, Permission.REPORT_CREATE,
-            Permission.BILLING_READ
+            Permission.BILLING_READ,
+            Permission.MINERS_READ, Permission.MINERS_WRITE,
+            Permission.INTEL_READ, Permission.INTEL_FORECAST, Permission.INTEL_EXPLAIN,
+            Permission.OPS_READ, Permission.OPS_PLAN
         ],
         inherits_from=[],
         is_tenant_scoped=True
@@ -147,7 +177,9 @@ ROLE_HIERARCHY: Dict[Role, RoleDefinition] = {
             Permission.CALC_READ, Permission.CALC_EXPORT,
             Permission.ANALYTICS_READ, Permission.ANALYTICS_EXPORT,
             Permission.REPORT_READ, Permission.REPORT_EXPORT,
-            Permission.BILLING_READ
+            Permission.BILLING_READ,
+            Permission.INTEL_READ, Permission.INTEL_FORECAST, Permission.INTEL_EXPLAIN,
+            Permission.TREASURY_READ
         ],
         inherits_from=[],
         is_tenant_scoped=True
@@ -161,7 +193,10 @@ ROLE_HIERARCHY: Dict[Role, RoleDefinition] = {
             Permission.CALC_READ, Permission.CALC_WRITE,
             Permission.ANALYTICS_READ,
             Permission.REPORT_READ,
-            Permission.BLOCKCHAIN_READ
+            Permission.BLOCKCHAIN_READ,
+            Permission.MINERS_READ, Permission.MINERS_WRITE, Permission.MINERS_DELETE,
+            Permission.OPS_PLAN, Permission.OPS_APPLY, Permission.OPS_READ,
+            Permission.INTEL_READ
         ],
         inherits_from=[],
         is_tenant_scoped=True
@@ -176,6 +211,20 @@ ROLE_HIERARCHY: Dict[Role, RoleDefinition] = {
             Permission.ANALYTICS_READ, Permission.ANALYTICS_EXPORT,
             Permission.REPORT_READ, Permission.REPORT_EXPORT,
             Permission.BILLING_READ, Permission.BILLING_WRITE
+        ],
+        inherits_from=[],
+        is_tenant_scoped=True
+    ),
+    
+    Role.TRADER: RoleDefinition(
+        name=Role.TRADER,
+        display_name="交易员",
+        description="财资交易权限",
+        permissions=[
+            Permission.CALC_READ,
+            Permission.ANALYTICS_READ,
+            Permission.TREASURY_READ, Permission.TREASURY_TRADE,
+            Permission.INTEL_READ
         ],
         inherits_from=[],
         is_tenant_scoped=True
