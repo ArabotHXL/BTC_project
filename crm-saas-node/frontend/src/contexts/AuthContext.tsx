@@ -19,14 +19,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     const initAuth = async () => {
-      if (checkAuth()) {
-        try {
-          const response = await api.get('/api/auth/me');
+      try {
+        // 从主应用获取当前用户信息
+        const response = await api.get('/api/crm/current-user');
+        if (response.data && response.data.email) {
           setUserState(response.data);
           setUser(response.data);
-        } catch (error) {
-          clearTokens();
         }
+      } catch (error) {
+        console.log('Not authenticated in main app');
       }
       setLoading(false);
     };

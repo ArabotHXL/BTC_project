@@ -5271,6 +5271,32 @@ def analytics_price_history():
         app.logger.error(f"获取价格历史失败: {e}")
         return jsonify({'error': f'获取价格历史失败: {str(e)}'}), 500
 
+# CRM 认证集成 API
+@app.route('/api/crm/current-user')
+def crm_current_user():
+    """CRM系统获取当前登录用户信息"""
+    try:
+        # 检查用户是否登录
+        if 'email' not in session:
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        email = session.get('email')
+        user_role = get_user_role(email)
+        
+        # 检查是否有CRM访问权限
+        if user_role not in ['owner', 'admin', 'mining_site']:
+            return jsonify({'error': 'No CRM access'}), 403
+        
+        # 返回用户信息
+        return jsonify({
+            'email': email,
+            'role': user_role,
+            'name': session.get('username', email.split('@')[0])
+        })
+    except Exception as e:
+        logging.error(f"获取CRM用户信息失败: {e}")
+        return jsonify({'error': str(e)}), 500
+
 # New React CRM Proxy - 将/crm/路由代理到React前端
 @app.route('/crm/')
 @app.route('/crm/<path:path>')
