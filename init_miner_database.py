@@ -331,12 +331,17 @@ def init_miner_database():
                 detailed_info = DETAILED_MINER_INFO.get(model_name, {})
                 
                 # 创建矿机记录
+                # 处理详细信息中的price_usd -> reference_price
+                detailed_copy = detailed_info.copy()
+                if 'price_usd' in detailed_copy:
+                    detailed_copy['reference_price'] = detailed_copy.pop('price_usd')
+                
                 miner = MinerModel(
                     model_name=model_name,
                     manufacturer=get_manufacturer(model_name),
-                    hashrate=basic_info["hashrate"],
-                    power_consumption=basic_info["power_watt"],
-                    **detailed_info
+                    reference_hashrate=basic_info["hashrate"],
+                    reference_power=basic_info["power_watt"],
+                    **detailed_copy
                 )
                 
                 db.session.add(miner)
