@@ -213,6 +213,7 @@ model User {
   role          Role           @relation(fields: [roleId], references: [id])
   auditLogs     AuditLog[]
   apiKeys       ApiKey[]
+  refreshTokens RefreshToken[]
   ownedAccounts Account[]      @relation("AccountOwner")
   ownedDeals    Deal[]         @relation("DealOwner")
   activities    Activity[]
@@ -288,6 +289,20 @@ model ApiKey {
   @@index([userId])
   @@index([expiresAt])
   @@map("api_keys")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
 }
 
 // ===================================

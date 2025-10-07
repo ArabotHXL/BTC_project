@@ -99,10 +99,14 @@ paths:
                       data:
                         type: object
                         properties:
-                          token:
+                          accessToken:
                             type: string
                             description: JWT访问令牌 / JWT access token
                             example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                          refreshToken:
+                            type: string
+                            description: 刷新令牌（30天有效）/ Refresh token (valid for 30 days)
+                            example: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0
                           user:
                             $ref: '#/components/schemas/User'
         '401':
@@ -160,9 +164,12 @@ paths:
                       data:
                         type: object
                         properties:
-                          token:
+                          accessToken:
                             type: string
                             description: JWT访问令牌 / JWT access token
+                          refreshToken:
+                            type: string
+                            description: 刷新令牌（30天有效）/ Refresh token (valid for 30 days)
                           user:
                             $ref: '#/components/schemas/User'
         '409':
@@ -173,6 +180,148 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '422':
           $ref: '#/components/responses/ValidationError'
+
+  /api/auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: 刷新访问令牌 / Refresh Access Token
+      description: |
+        使用刷新令牌获取新的访问令牌和刷新令牌（Token Rotation）
+        
+        Use refresh token to get new access token and refresh token (Token Rotation)
+      operationId: refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+                  description: 刷新令牌 / Refresh token
+                  example: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0
+      responses:
+        '200':
+          description: 令牌刷新成功 / Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          accessToken:
+                            type: string
+                            description: 新的JWT访问令牌 / New JWT access token
+                            example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                          refreshToken:
+                            type: string
+                            description: 新的刷新令牌 / New refresh token
+                            example: b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1
+        '400':
+          description: 缺少刷新令牌 / Missing refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 无效或过期的刷新令牌 / Invalid or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: 用户登出 / User Logout
+      description: |
+        撤销当前设备的刷新令牌，要求客户端提供有效的refresh token
+        
+        Revoke the refresh token for current device, requires valid refresh token from client
+      operationId: logout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+                  description: 要撤销的刷新令牌 / Refresh token to revoke
+                  example: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0
+      responses:
+        '200':
+          description: 登出成功 / Logout successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Logout successful
+        '400':
+          description: 缺少或无效的刷新令牌 / Missing or invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingToken:
+                  value:
+                    error: Bad Request
+                    message: Refresh token required
+                invalidToken:
+                  value:
+                    error: Bad Request
+                    message: Invalid refresh token
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/logout-all:
+    post:
+      tags:
+        - Authentication
+      summary: 全局登出 / Logout from All Devices
+      description: |
+        撤销当前用户的所有刷新令牌，从所有设备登出
+        
+        Revoke all refresh tokens for current user, logout from all devices
+      operationId: logoutAll
+      responses:
+        '200':
+          description: 全局登出成功 / Logout from all devices successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Logged out from 3 device(s)
+                      devicesLoggedOut:
+                        type: integer
+                        description: 登出的设备数量 / Number of devices logged out
+                        example: 3
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   # ==================== CRM Core CRM核心 ====================
   /api/leads:

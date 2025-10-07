@@ -1,6 +1,8 @@
+import 'dotenv/config';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import authRoutes from './routes/auth';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,7 +27,10 @@ app.get('/api', (_req: Request, res: Response) => {
   });
 });
 
+app.use('/api/auth', authRoutes);
+
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
 });
