@@ -1311,6 +1311,93 @@ class Activity(db.Model):
     def __repr__(self):
         return f"<Activity {self.type} - {self.summary}>"
 
+class Invoice(db.Model):
+    """发票管理"""
+    __tablename__ = 'crm_invoices'
+
+    id = db.Column(db.Integer, primary_key=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('crm_customers.id'), nullable=False)
+    deal_id = db.Column(db.Integer, db.ForeignKey('crm_deals.id'), nullable=True)
+    invoice_number = db.Column(db.String(50), unique=True, nullable=False)
+    
+    # 发票状态
+    status = db.Column(db.String(20), default='draft', nullable=False)  # draft, sent, paid, overdue, cancelled
+    
+    # 金额
+    amount = db.Column(db.Float, default=0.0, nullable=False)
+    currency = db.Column(db.String(10), default="USD", nullable=False)
+    tax_amount = db.Column(db.Float, default=0.0, nullable=False)
+    total_amount = db.Column(db.Float, default=0.0, nullable=False)
+    
+    # 日期
+    issue_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    due_date = db.Column(db.DateTime, nullable=True)
+    paid_date = db.Column(db.DateTime, nullable=True)
+    
+    # 备注
+    description = db.Column(db.Text, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    
+    # 创建信息
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
+    created_by = db.relationship('UserAccess', foreign_keys=[created_by_id], backref='created_invoices')
+    
+    # 关联
+    customer = db.relationship('Customer', backref=db.backref('invoices', lazy=True))
+    deal = db.relationship('Deal', backref=db.backref('invoices', lazy=True))
+
+    def __repr__(self):
+        return f"<Invoice {self.invoice_number} - ${self.total_amount} - {self.status}>"
+
+class Asset(db.Model):
+    """资产管理"""
+    __tablename__ = 'crm_assets'
+
+    id = db.Column(db.Integer, primary_key=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('crm_customers.id'), nullable=False)
+    deal_id = db.Column(db.Integer, db.ForeignKey('crm_deals.id'), nullable=True)
+    
+    # 资产信息
+    asset_type = db.Column(db.String(50), nullable=False)  # miner, hosting_slot, equipment
+    asset_name = db.Column(db.String(200), nullable=False)
+    serial_number = db.Column(db.String(100), nullable=True)
+    model = db.Column(db.String(100), nullable=True)
+    
+    # 状态
+    status = db.Column(db.String(20), default='active', nullable=False)  # active, inactive, maintenance, sold
+    
+    # 价值
+    purchase_value = db.Column(db.Float, default=0.0, nullable=False)
+    current_value = db.Column(db.Float, default=0.0, nullable=False)
+    currency = db.Column(db.String(10), default="USD", nullable=False)
+    
+    # 位置和配置
+    location = db.Column(db.String(200), nullable=True)
+    configuration = db.Column(db.Text, nullable=True)  # JSON格式存储配置信息
+    
+    # 日期
+    purchase_date = db.Column(db.DateTime, nullable=True)
+    warranty_expiry = db.Column(db.DateTime, nullable=True)
+    
+    # 备注
+    description = db.Column(db.Text, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    
+    # 创建信息
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
+    created_by = db.relationship('UserAccess', foreign_keys=[created_by_id], backref='created_assets')
+    
+    # 关联
+    customer = db.relationship('Customer', backref=db.backref('assets', lazy=True))
+    deal = db.relationship('Deal', backref=db.backref('assets', lazy=True))
+
+    def __repr__(self):
+        return f"<Asset {self.asset_name} - {self.asset_type} - {self.status}>"
+
 # ==================== 托管平台数据模型 ====================
 
 class HostingSite(db.Model):
