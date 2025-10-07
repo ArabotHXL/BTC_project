@@ -7,6 +7,7 @@ from flask import Blueprint, render_template, request, jsonify, session, redirec
 import logging
 from datetime import datetime, timedelta
 import json
+from sqlalchemy import func
 
 # Import database and models
 from db import db
@@ -42,13 +43,17 @@ def crm_dashboard():
         if not user_id:
             return redirect(url_for('login'))
         
-        # 模拟统计数据
-        customers_count = 15
-        leads_count = 8
-        deals_count = 12
-        deals_value = 125000.00
-        recent_activities = []
-        follow_up_leads = []
+        # Query real statistics from database
+        customers_count = Customer.query.count() or 0
+        leads_count = Lead.query.count() or 0
+        deals_count = Deal.query.count() or 0
+        deals_value = Deal.query.with_entities(func.sum(Deal.value)).scalar() or 0
+        
+        # Get recent activities (limit 10)
+        recent_activities = Activity.query.order_by(Activity.created_at.desc()).limit(10).all()
+        
+        # Get leads with follow-up dates
+        follow_up_leads = Lead.query.filter(Lead.next_follow_up.isnot(None)).order_by(Lead.next_follow_up).limit(10).all()
         
         return render_template('crm/dashboard.html',
                              title='CRM Dashboard',
@@ -132,53 +137,61 @@ def get_customers():
 def get_customer_details(customer_id):
     """获取客户详情"""
     try:
-        # 模拟客户详情数据
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        # Query real customer from database
+        customer = Customer.query.get_or_404(customer_id)
+        
+        # Get real deals for this customer
+        deals = Deal.query.filter_by(customer_id=customer_id).all()
+        
+        # Calculate total revenue from deals
+        total_revenue = sum([deal.value for deal in deals if deal.value]) or 0
+        
+        # Get real activities/notes for this customer
+        activities = Activity.query.filter_by(customer_id=customer_id).order_by(Activity.created_at.desc()).limit(10).all()
+        
+        # Format deals/contracts data
+        contracts = []
+        for deal in deals:
+            contracts.append({
+                'id': deal.id,
+                'type': deal.deal_type,
+                'start_date': deal.start_date.strftime('%Y-%m-%d') if deal.start_date else None,
+                'end_date': deal.end_date.strftime('%Y-%m-%d') if deal.end_date else None,
+                'value': deal.value or 0,
+                'status': deal.status
+            })
+        
+        # Format activities/notes data
+        notes = []
+        for activity in activities:
+            notes.append({
+                'id': activity.id,
+                'date': activity.created_at.strftime('%Y-%m-%d') if activity.created_at else None,
+                'author': activity.user_email or 'System',
+                'content': activity.description or ''
+            })
+        
+        # Build response with actual customer data
         customer_detail = {
             'success': True,
             'data': {
-                'id': customer_id,
-                'name': 'ABC Mining Corp',
-                'email': 'contact@abcmining.com',
-                'phone': '+1-555-0123',
-                'address': '123 Mining Street, Bitcoin City, BC 12345',
-                'status': 'active',
-                'tier': 'enterprise',
-                'join_date': '2023-01-15',
-                'total_revenue': 25000.00,
-                'mining_capacity': '50 PH/s',
-                'electricity_cost': 0.05,
-                'contracts': [
-                    {
-                        'id': 1,
-                        'type': 'hosting',
-                        'start_date': '2023-01-15',
-                        'end_date': '2024-01-15',
-                        'value': 15000.00,
-                        'status': 'active'
-                    },
-                    {
-                        'id': 2,
-                        'type': 'maintenance',
-                        'start_date': '2023-06-01',
-                        'end_date': '2024-06-01',
-                        'value': 10000.00,
-                        'status': 'active'
-                    }
-                ],
-                'notes': [
-                    {
-                        'id': 1,
-                        'date': '2024-08-20',
-                        'author': 'Sales Rep',
-                        'content': '客户对新的S21矿机感兴趣，已发送报价'
-                    },
-                    {
-                        'id': 2,
-                        'date': '2024-08-15',
-                        'author': 'Support',
-                        'content': '解决了电力供应问题，客户满意'
-                    }
-                ]
+                'id': customer.id,
+                'name': customer.name,
+                'email': customer.email,
+                'phone': customer.phone,
+                'address': customer.address or '',
+                'status': customer.status or 'active',
+                'tier': customer.customer_type or 'standard',
+                'join_date': customer.created_at.strftime('%Y-%m-%d') if customer.created_at else None,
+                'total_revenue': total_revenue,
+                'mining_capacity': customer.mining_capacity or '',
+                'electricity_cost': customer.electricity_cost or 0,
+                'contracts': contracts,
+                'notes': notes
             }
         }
         
@@ -460,40 +473,37 @@ def update_customer_notes(customer_id):
 def get_leads():
     """获取潜在客户"""
     try:
-        leads_data = {
-            'success': True,
-            'data': [
-                {
-                    'id': 1,
-                    'name': 'New Mining Venture',
-                    'email': 'contact@newmining.com',
-                    'phone': '+1-555-9999',
-                    'source': 'website',
-                    'status': 'qualified',
-                    'interest_level': 'high',
-                    'estimated_value': 50000.00,
-                    'created_date': '2024-08-20',
-                    'last_contact': '2024-08-21',
-                    'next_followup': '2024-08-25'
-                },
-                {
-                    'id': 2,
-                    'name': 'Bitcoin Farm LLC',
-                    'email': 'info@bitcoinfarm.com',
-                    'phone': '+1-555-8888',
-                    'source': 'referral',
-                    'status': 'contacted',
-                    'interest_level': 'medium',
-                    'estimated_value': 25000.00,
-                    'created_date': '2024-08-18',
-                    'last_contact': '2024-08-19',
-                    'next_followup': '2024-08-24'
-                }
-            ],
-            'total': 2
-        }
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
         
-        return jsonify(leads_data)
+        # Query real leads from database
+        leads = Lead.query.order_by(Lead.created_at.desc()).all()
+        
+        leads_data = []
+        for lead in leads:
+            # Get last activity for this lead
+            last_activity = Activity.query.filter_by(lead_id=lead.id).order_by(Activity.created_at.desc()).first()
+            
+            leads_data.append({
+                'id': lead.id,
+                'name': lead.name,
+                'email': lead.email,
+                'phone': lead.phone,
+                'source': lead.source or 'unknown',
+                'status': lead.status,
+                'interest_level': lead.interest_level or 'medium',
+                'estimated_value': lead.estimated_value or 0,
+                'created_date': lead.created_at.strftime('%Y-%m-%d') if lead.created_at else None,
+                'last_contact': last_activity.created_at.strftime('%Y-%m-%d') if last_activity else None,
+                'next_followup': lead.next_follow_up.strftime('%Y-%m-%d') if lead.next_follow_up else None
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': leads_data,
+            'total': len(leads_data)
+        })
         
     except Exception as e:
         logger.error(f"获取潜在客户错误: {e}")
@@ -506,21 +516,64 @@ def get_leads():
 def get_sales_stats():
     """获取销售统计"""
     try:
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        # Calculate real statistics from database
+        # Get current month's date range
+        now = datetime.now()
+        first_day_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        # Monthly revenue from deals closed this month
+        monthly_revenue = Deal.query.filter(
+            Deal.created_at >= first_day_of_month
+        ).with_entities(func.sum(Deal.value)).scalar() or 0
+        
+        # Active customers count
+        active_customers = Customer.query.filter_by(status='active').count() or 0
+        
+        # New leads this month
+        new_leads = Lead.query.filter(Lead.created_at >= first_day_of_month).count() or 0
+        
+        # Total pipeline value (all deals)
+        pipeline_value = Deal.query.with_entities(func.sum(Deal.value)).scalar() or 0
+        
+        # Average deal size
+        total_deals = Deal.query.count() or 1
+        average_deal_size = pipeline_value / total_deals if total_deals > 0 else 0
+        
+        # Conversion rate (won deals / total leads)
+        won_deals_count = Lead.query.filter_by(status='WON').count() or 0
+        total_leads = Lead.query.count() or 1
+        conversion_rate = won_deals_count / total_leads if total_leads > 0 else 0
+        
+        # Top performers (customers by revenue)
+        top_performers = []
+        top_customers = db.session.query(
+            Customer.name,
+            func.sum(Deal.value).label('revenue')
+        ).join(Deal, Customer.id == Deal.customer_id).group_by(
+            Customer.id, Customer.name
+        ).order_by(func.sum(Deal.value).desc()).limit(3).all()
+        
+        for customer in top_customers:
+            top_performers.append({
+                'name': customer.name,
+                'revenue': customer.revenue or 0
+            })
+        
         stats_data = {
             'success': True,
             'data': {
-                'monthly_revenue': 45000.00,
-                'monthly_target': 50000.00,
-                'active_customers': 15,
-                'new_leads': 8,
-                'conversion_rate': 0.65,
-                'average_deal_size': 18500.00,
-                'pipeline_value': 125000.00,
-                'top_performers': [
-                    {'name': 'John Smith', 'revenue': 15000.00},
-                    {'name': 'Sarah Johnson', 'revenue': 12500.00},
-                    {'name': 'Mike Wilson', 'revenue': 10000.00}
-                ]
+                'monthly_revenue': monthly_revenue,
+                'monthly_target': 50000.00,  # This could be configurable
+                'active_customers': active_customers,
+                'new_leads': new_leads,
+                'conversion_rate': round(conversion_rate, 2),
+                'average_deal_size': round(average_deal_size, 2),
+                'pipeline_value': pipeline_value,
+                'top_performers': top_performers
             }
         }
         
