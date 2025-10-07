@@ -1,25 +1,33 @@
 import { Routes, Route } from 'react-router-dom';
+import { PrivateRoute } from './components/PrivateRoute';
+import { Layout } from './components/Layout';
+import { LoginPage } from './pages/LoginPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { LeadsPage } from './pages/LeadsPage';
+import { LeadDetailPage } from './pages/LeadDetailPage';
+import { DealsPage } from './pages/DealsPage';
+import { DealDetailPage } from './pages/DealDetailPage';
+import { InvoicesPage } from './pages/InvoicesPage';
+import { InvoiceDetailPage } from './pages/InvoiceDetailPage';
+import { AssetsPage } from './pages/AssetsPage';
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-      </Routes>
-    </div>
-  );
-}
-
-function HomePage() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold text-gray-900 mb-4">
-        Welcome to CRM Platform
-      </h1>
-      <p className="text-lg text-gray-600">
-        Enterprise-level Customer Relationship Management System
-      </p>
-    </div>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<PrivateRoute />}>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<DashboardPage />} />
+          <Route path="leads" element={<LeadsPage />} />
+          <Route path="leads/:id" element={<LeadDetailPage />} />
+          <Route path="deals" element={<DealsPage />} />
+          <Route path="deals/:id" element={<DealDetailPage />} />
+          <Route path="invoices" element={<InvoicesPage />} />
+          <Route path="invoices/:id" element={<InvoiceDetailPage />} />
+          <Route path="assets" element={<AssetsPage />} />
+        </Route>
+      </Route>
+    </Routes>
   );
 }
 

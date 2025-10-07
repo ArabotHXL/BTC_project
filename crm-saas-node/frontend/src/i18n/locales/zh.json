@@ -1,0 +1,141 @@
+{
+  "app": {
+    "name": "CRM平台",
+    "welcome": "欢迎使用CRM平台"
+  },
+  "nav": {
+    "dashboard": "仪表盘",
+    "leads": "线索",
+    "deals": "交易",
+    "invoices": "发票",
+    "assets": "资产",
+    "logout": "退出登录"
+  },
+  "auth": {
+    "login": "登录",
+    "register": "注册",
+    "email": "邮箱",
+    "password": "密码",
+    "username": "用户名",
+    "loginSuccess": "登录成功",
+    "loginError": "登录失败",
+    "logoutSuccess": "退出成功"
+  },
+  "common": {
+    "submit": "提交",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "save": "保存",
+    "create": "创建",
+    "search": "搜索",
+    "filter": "筛选",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "confirm": "确认",
+    "name": "名称",
+    "email": "邮箱",
+    "phone": "电话",
+    "company": "公司",
+    "status": "状态",
+    "date": "日期",
+    "amount": "金额",
+    "actions": "操作",
+    "details": "详情",
+    "back": "返回",
+    "next": "下一页",
+    "previous": "上一页",
+    "total": "总计",
+    "notes": "备注"
+  },
+  "lead": {
+    "leads": "线索",
+    "newLead": "新建线索",
+    "leadDetails": "线索详情",
+    "source": "来源",
+    "score": "评分",
+    "convertToDeal": "转为交易",
+    "leadConverted": "线索已成功转为交易",
+    "sources": {
+      "WEBSITE": "网站",
+      "REFERRAL": "推荐",
+      "PARTNER": "合作伙伴",
+      "OTHER": "其他"
+    }
+  },
+  "deal": {
+    "deals": "交易",
+    "newDeal": "新建交易",
+    "dealDetails": "交易详情",
+    "pipeline": "销售管道",
+    "stage": "阶段",
+    "probability": "成交概率",
+    "value": "金额",
+    "expectedCloseDate": "预计成交日期",
+    "generateContract": "生成合同",
+    "contractGenerated": "合同生成成功",
+    "stages": {
+      "PROSPECTING": "开发中",
+      "QUALIFIED": "已确认",
+      "PROPOSAL": "方案提交",
+      "NEGOTIATION": "谈判中",
+      "CLOSED_WON": "已成交",
+      "CLOSED_LOST": "已失败"
+    }
+  },
+  "invoice": {
+    "invoices": "发票",
+    "newInvoice": "新建发票",
+    "invoiceDetails": "发票详情",
+    "invoiceNumber": "发票编号",
+    "dueDate": "到期日期",
+    "issueDate": "开票日期",
+    "recordPayment": "记录付款",
+    "paymentRecorded": "付款记录成功",
+    "agingReport": "账龄报告",
+    "statuses": {
+      "DRAFT": "草稿",
+      "SENT": "已发送",
+      "PARTIAL": "部分支付",
+      "PAID": "已支付",
+      "OVERDUE": "逾期"
+    }
+  },
+  "payment": {
+    "payment": "付款",
+    "paymentMethod": "付款方式",
+    "paymentDate": "付款日期",
+    "paymentAmount": "付款金额",
+    "methods": {
+      "CASH": "现金",
+      "BANK_TRANSFER": "银行转账",
+      "CREDIT_CARD": "信用卡",
+      "CHECK": "支票"
+    }
+  },
+  "asset": {
+    "assets": "资产",
+    "assetDetails": "资产详情",
+    "serialNumber": "序列号",
+    "model": "型号",
+    "purchaseDate": "购买日期",
+    "warrantyExpiry": "保修到期"
+  },
+  "dashboard": {
+    "dashboard": "仪表盘",
+    "overview": "概览",
+    "metrics": "关键指标",
+    "recentActivities": "最近活动",
+    "totalLeads": "线索总数",
+    "activeDeals": "活跃交易",
+    "pendingInvoices": "待付发票",
+    "totalAssets": "资产总数"
+  },
+  "validation": {
+    "required": "此字段为必填项",
+    "invalidEmail": "无效的邮箱地址",
+    "minLength": "最小长度为 {{min}} 个字符",
+    "maxLength": "最大长度为 {{max}} 个字符"
+  }
+}
