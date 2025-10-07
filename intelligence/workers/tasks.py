@@ -14,6 +14,8 @@ from importlib import import_module
 
 from app import db
 from models import UserMiner, UserAccess, NetworkSnapshot, EventOutbox, EventFailure
+from intelligence.workers.distributed_lock import distributed_lock
+from intelligence.workers.idempotency import idempotent
 
 logger = logging.getLogger(__name__)
 
@@ -198,6 +200,8 @@ def mark_source_events_failed(event_ids: List[int], error_message: str) -> int:
         return 0
 
 
+@distributed_lock("lock:recalc:user:{user_id}", timeout=300)
+@idempotent("result:recalc:user:{user_id}", ttl=1800, include_all_args=True)
 def recalculate_user_portfolio(user_id: int, source_event_ids: Optional[List[int]] = None) -> dict:
     """
     Recalculate user's portfolio metrics including total hashrate, power consumption, and estimated revenue.
@@ -314,6 +318,8 @@ def recalculate_user_portfolio(user_id: int, source_event_ids: Optional[List[int
         }
 
 
+@distributed_lock("lock:recalc:analytics:{user_id}", timeout=300)
+@idempotent("result:recalc:analytics:{user_id}", ttl=1800, include_all_args=True)
 def update_user_analytics(user_id: int) -> dict:
     """
     Update user analytics data including performance metrics and trends.
@@ -377,6 +383,8 @@ def update_user_analytics(user_id: int) -> dict:
         }
 
 
+@distributed_lock("lock:refresh:cache:{user_id}", timeout=300)
+@idempotent("result:refresh:cache:{user_id}", ttl=1800, include_all_args=True)
 def refresh_user_cache(user_id: int) -> dict:
     """
     Refresh user's cached data including miner stats and network data.

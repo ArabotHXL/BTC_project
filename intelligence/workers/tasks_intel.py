@@ -14,10 +14,14 @@ from rq import get_current_job
 from intelligence.forecast import forecast_user_revenue
 from intelligence.optimizer import optimize_curtailment
 from intelligence.anomaly import generate_anomaly_report
+from intelligence.workers.distributed_lock import distributed_lock
+from intelligence.workers.idempotency import idempotent
 
 logger = logging.getLogger(__name__)
 
 
+@distributed_lock("lock:forecast:{user_id}", timeout=300)
+@idempotent("result:forecast:{user_id}", ttl=7200, include_all_args=True)
 def forecast_refresh(user_id: int, days: int = 7) -> dict:
     """
     Refresh forecast data for a user using ARIMA models.
@@ -71,6 +75,8 @@ def forecast_refresh(user_id: int, days: int = 7) -> dict:
         }
 
 
+@distributed_lock("lock:optimize:{user_id}:{schedule_date}", timeout=300)
+@idempotent("result:optimize:{user_id}:{schedule_date}", ttl=3600, include_all_args=True)
 def optimize_curtailment_task(
     user_id: int,
     schedule_date: date,
@@ -140,6 +146,8 @@ def optimize_curtailment_task(
         }
 
 
+@distributed_lock("lock:anomaly:{user_id}", timeout=300)
+@idempotent("result:anomaly:{user_id}", ttl=3600, include_all_args=True)
 def detect_anomalies_task(user_id: int, lookback_days: int = 30) -> dict:
     """
     Detect anomalies in user's mining operations.
