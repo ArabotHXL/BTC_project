@@ -12,6 +12,7 @@ import assetRoutes from './routes/assets';
 import batchRoutes from './routes/batches';
 import shipmentRoutes from './routes/shipments';
 import healthRoutes from './routes/health';
+import webhookRoutes from './routes/webhooks';
 import { eventPublisher } from './events/publisher';
 
 const app = express();
@@ -38,26 +39,32 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/assets', assetRoutes);
 app.use('/api/batches', batchRoutes);
 app.use('/api/shipments', shipmentRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
 if (process.env.ENABLE_API_DOCS !== 'false') {
   setupSwagger(app);
 }
 
-app.listen(PORT, async () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-  if (process.env.ENABLE_API_DOCS !== 'false') {
-    console.log(`📚 API Docs: http://localhost:${PORT}/api-docs`);
-  }
-  console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
-  console.log(`📋 Lead endpoints: http://localhost:${PORT}/api/leads`);
-  console.log(`💼 Deal endpoints: http://localhost:${PORT}/api/deals`);
-  console.log(`🧾 Invoice endpoints: http://localhost:${PORT}/api/invoices`);
-  console.log(`💰 Payment endpoints: http://localhost:${PORT}/api/payments`);
-  console.log(`🏗️  Asset endpoints: http://localhost:${PORT}/api/assets`);
-  console.log(`📦 Batch endpoints: http://localhost:${PORT}/api/batches`);
-  console.log(`🚚 Shipment endpoints: http://localhost:${PORT}/api/shipments`);
-  
-  await eventPublisher.connect();
-  console.log(`✅ Event Publisher initialized`);
-});
+if (require.main === module) {
+  app.listen(PORT, async () => {
+    console.log(`🚀 Server is running on http://localhost:${PORT}`);
+    console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+    if (process.env.ENABLE_API_DOCS !== 'false') {
+      console.log(`📚 API Docs: http://localhost:${PORT}/api-docs`);
+    }
+    console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
+    console.log(`📋 Lead endpoints: http://localhost:${PORT}/api/leads`);
+    console.log(`💼 Deal endpoints: http://localhost:${PORT}/api/deals`);
+    console.log(`🧾 Invoice endpoints: http://localhost:${PORT}/api/invoices`);
+    console.log(`💰 Payment endpoints: http://localhost:${PORT}/api/payments`);
+    console.log(`🏗️  Asset endpoints: http://localhost:${PORT}/api/assets`);
+    console.log(`📦 Batch endpoints: http://localhost:${PORT}/api/batches`);
+    console.log(`🚚 Shipment endpoints: http://localhost:${PORT}/api/shipments`);
+    console.log(`🔗 Webhook endpoints: http://localhost:${PORT}/api/webhooks`);
+    
+    await eventPublisher.connect();
+    console.log(`✅ Event Publisher initialized`);
+  });
+}
+
+export { app };
