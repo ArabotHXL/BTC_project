@@ -3689,8 +3689,8 @@ def network_history():
 #         logging.error(f"手动记录快照失败: {e}")
 #         return jsonify({'error': str(e)}), 500
 
-# 初始化CRM系统
-init_crm_routes(app)
+# 初始化CRM系统 - 已禁用，使用React CRM代理（见5280行的react_crm_proxy）
+# init_crm_routes(app)  # 旧的Flask CRM系统已被React CRM替代
 
 # DISABLED: Gold flow module - mining broker routes
 # init_broker_routes(app)
