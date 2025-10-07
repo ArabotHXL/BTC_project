@@ -5280,8 +5280,8 @@ def analytics_price_history():
 def react_crm_proxy(path=''):
     """反向代理到React CRM前端（运行在5001端口）"""
     try:
-        # React前端运行在5001端口，basename已设置为/crm
-        react_url = f'http://localhost:5001/{path}' if path else 'http://localhost:5001/'
+        # React前端运行在5001端口，Vite base配置为/crm/，需要保留前缀
+        react_url = f'http://localhost:5001/crm/{path}' if path else 'http://localhost:5001/crm/'
         
         # 转发查询参数
         if request.query_string:
