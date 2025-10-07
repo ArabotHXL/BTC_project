@@ -8,22 +8,101 @@ All tasks are idempotent with proper error handling and retry logic.
 
 import logging
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from rq import get_current_job
 
 from app import db
-from models import UserMiner, UserAccess, NetworkSnapshot
+from models import UserMiner, UserAccess, NetworkSnapshot, EventOutbox, EventFailure
 
 logger = logging.getLogger(__name__)
 
 
-def recalculate_user_portfolio(user_id: int) -> dict:
+# ============================================================================
+# Event Callback Functions
+# ============================================================================
+
+def mark_source_events_completed(event_ids: List[int]) -> int:
+    """
+    Mark source events as COMPLETED after successful task execution.
+    标记源事件为已完成（任务成功后）。
+    
+    Args:
+        event_ids: List of event IDs to mark as completed
+        
+    Returns:
+        int: Number of events updated
+    """
+    if not event_ids:
+        return 0
+    
+    try:
+        events = EventOutbox.query.filter(EventOutbox.id.in_(event_ids)).all()
+        
+        updated_count = 0
+        for event in events:
+            event.mark_completed()
+            updated_count += 1
+        
+        db.session.commit()
+        logger.info(f"Marked {updated_count} source events as COMPLETED: {event_ids}")
+        return updated_count
+        
+    except Exception as e:
+        logger.error(f"Error marking events as completed: {str(e)}", exc_info=True)
+        db.session.rollback()
+        return 0
+
+
+def mark_source_events_failed(event_ids: List[int], error_message: str) -> int:
+    """
+    Mark source events as FAILED after task failure.
+    标记源事件为失败（任务失败后）。
+    
+    Args:
+        event_ids: List of event IDs to mark as failed
+        error_message: Error message to record
+        
+    Returns:
+        int: Number of events updated
+    """
+    if not event_ids:
+        return 0
+    
+    try:
+        events = EventOutbox.query.filter(EventOutbox.id.in_(event_ids)).all()
+        
+        updated_count = 0
+        for event in events:
+            event.mark_failed(error_message)
+            
+            # Create failure record
+            failure = EventFailure(
+                event_id=event.id,
+                event_type=event.event_type,
+                event_payload=event.event_payload,
+                failure_reason=error_message
+            )
+            db.session.add(failure)
+            updated_count += 1
+        
+        db.session.commit()
+        logger.info(f"Marked {updated_count} source events as FAILED: {event_ids}")
+        return updated_count
+        
+    except Exception as e:
+        logger.error(f"Error marking events as failed: {str(e)}", exc_info=True)
+        db.session.rollback()
+        return 0
+
+
+def recalculate_user_portfolio(user_id: int, source_event_ids: Optional[List[int]] = None) -> dict:
     """
     Recalculate user's portfolio metrics including total hashrate, power consumption, and estimated revenue.
     This task is idempotent and can be safely retried.
     
     Args:
         user_id: User ID to recalculate portfolio for
+        source_event_ids: Optional list of event IDs that triggered this recalculation
         
     Returns:
         dict: {
@@ -33,23 +112,34 @@ def recalculate_user_portfolio(user_id: int) -> dict:
             'active_miners': int,
             'estimated_daily_revenue': float,
             'status': str,
-            'timestamp': datetime
+            'timestamp': datetime,
+            'source_events_updated': int
         }
     """
     current_job = get_current_job()
     job_id = current_job.id if current_job else 'manual'
     
-    logger.info(f"[Job {job_id}] Starting portfolio recalculation for user_id={user_id}")
+    logger.info(
+        f"[Job {job_id}] Starting portfolio recalculation for user_id={user_id}, "
+        f"source_event_ids={source_event_ids}"
+    )
     
     try:
         user = UserAccess.query.get(user_id)
         if not user:
-            logger.error(f"[Job {job_id}] User {user_id} not found")
+            error_msg = f"User {user_id} not found"
+            logger.error(f"[Job {job_id}] {error_msg}")
+            
+            # Mark source events as FAILED
+            if source_event_ids:
+                mark_source_events_failed(source_event_ids, error_msg)
+            
             return {
                 'user_id': user_id,
                 'status': 'error',
-                'error': 'User not found',
-                'timestamp': datetime.utcnow()
+                'error': error_msg,
+                'timestamp': datetime.utcnow(),
+                'source_events_updated': len(source_event_ids) if source_event_ids else 0
             }
         
         active_miners = UserMiner.query.filter_by(
@@ -77,6 +167,11 @@ def recalculate_user_portfolio(user_id: int) -> dict:
                 daily_btc = (total_hashrate / network_hashrate_th) * blocks_per_day * block_reward
                 estimated_daily_revenue = daily_btc * btc_price
         
+        # Mark source events as COMPLETED on success
+        events_updated = 0
+        if source_event_ids:
+            events_updated = mark_source_events_completed(source_event_ids)
+        
         result = {
             'user_id': user_id,
             'total_hashrate': float(total_hashrate),
@@ -84,21 +179,35 @@ def recalculate_user_portfolio(user_id: int) -> dict:
             'active_miners': len(active_miners),
             'estimated_daily_revenue': float(estimated_daily_revenue),
             'status': 'success',
-            'timestamp': datetime.utcnow()
+            'timestamp': datetime.utcnow(),
+            'source_events_updated': events_updated
         }
         
-        logger.info(f"[Job {job_id}] Portfolio recalculation completed for user_id={user_id}: "
-                   f"hashrate={total_hashrate:.2f} TH/s, revenue=${estimated_daily_revenue:.2f}/day")
+        logger.info(
+            f"[Job {job_id}] Portfolio recalculation completed for user_id={user_id}: "
+            f"hashrate={total_hashrate:.2f} TH/s, revenue=${estimated_daily_revenue:.2f}/day, "
+            f"source_events_updated={events_updated}"
+        )
         
         return result
         
     except Exception as e:
-        logger.error(f"[Job {job_id}] Error recalculating portfolio for user_id={user_id}: {str(e)}", exc_info=True)
+        error_msg = str(e)
+        logger.error(
+            f"[Job {job_id}] Error recalculating portfolio for user_id={user_id}: {error_msg}",
+            exc_info=True
+        )
+        
+        # Mark source events as FAILED on error
+        if source_event_ids:
+            mark_source_events_failed(source_event_ids, error_msg)
+        
         return {
             'user_id': user_id,
             'status': 'error',
-            'error': str(e),
-            'timestamp': datetime.utcnow()
+            'error': error_msg,
+            'timestamp': datetime.utcnow(),
+            'source_events_updated': len(source_event_ids) if source_event_ids else 0
         }
 
 
