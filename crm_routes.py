@@ -211,6 +211,226 @@ def activities_page():
         logger.error(f"活动页面错误: {e}")
         return redirect(url_for('crm.crm_dashboard'))
 
+@crm_bp.route('/broker', endpoint='broker_dashboard')
+def broker_dashboard_page():
+    """经纪人仪表盘页面"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        
+        return render_template('crm/broker_dashboard.html',
+                             title='Broker Dashboard',
+                             page='crm_broker')
+    except Exception as e:
+        logger.error(f"经纪人仪表盘错误: {e}")
+        return redirect(url_for('crm.crm_dashboard'))
+
+@crm_bp.route('/broker/deals', endpoint='broker_deals')
+def broker_deals_page():
+    """经纪人交易页面"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        
+        return render_template('crm/broker_deals.html',
+                             title='Broker Deals',
+                             page='crm_broker_deals')
+    except Exception as e:
+        logger.error(f"经纪人交易页面错误: {e}")
+        return redirect(url_for('crm.crm_dashboard'))
+
+@crm_bp.route('/broker/commissions', endpoint='broker_commissions')
+def broker_commissions_page():
+    """经纪人佣金页面"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        
+        return render_template('crm/broker_commissions.html',
+                             title='Broker Commissions',
+                             page='crm_broker_commissions')
+    except Exception as e:
+        logger.error(f"经纪人佣金页面错误: {e}")
+        return redirect(url_for('crm.crm_dashboard'))
+
+@crm_bp.route('/customer/<int:customer_id>', endpoint='customer_detail')
+def customer_detail_page(customer_id):
+    """客户详情页面"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        
+        return render_template('crm/customer_detail.html',
+                             title='Customer Detail',
+                             page='crm_customer_detail',
+                             customer_id=customer_id)
+    except Exception as e:
+        logger.error(f"客户详情页面错误: {e}")
+        return redirect(url_for('crm.customers'))
+
+@crm_bp.route('/customer/new', endpoint='new_customer')
+def new_customer_page():
+    """新建客户页面"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        
+        return render_template('crm/customer_form.html',
+                             title='New Customer',
+                             page='crm_new_customer')
+    except Exception as e:
+        logger.error(f"新建客户页面错误: {e}")
+        return redirect(url_for('crm.customers'))
+
+@crm_bp.route('/customer/<int:customer_id>/edit', endpoint='edit_customer')
+def edit_customer_page(customer_id):
+    """编辑客户页面"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        
+        return render_template('crm/customer_form.html',
+                             title='Edit Customer',
+                             page='crm_edit_customer',
+                             customer_id=customer_id)
+    except Exception as e:
+        logger.error(f"编辑客户页面错误: {e}")
+        return redirect(url_for('crm.customers'))
+
+@crm_bp.route('/lead/<int:lead_id>', endpoint='lead_detail')
+def lead_detail_page(lead_id):
+    """商机详情页面"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        
+        return render_template('crm/lead_detail.html',
+                             title='Lead Detail',
+                             page='crm_lead_detail',
+                             lead_id=lead_id)
+    except Exception as e:
+        logger.error(f"商机详情页面错误: {e}")
+        return redirect(url_for('crm.leads'))
+
+@crm_bp.route('/customer/<int:customer_id>/lead/new', endpoint='new_lead')
+def new_lead_page(customer_id):
+    """新建商机页面"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        
+        return render_template('crm/lead_form.html',
+                             title='New Lead',
+                             page='crm_new_lead',
+                             customer_id=customer_id)
+    except Exception as e:
+        logger.error(f"新建商机页面错误: {e}")
+        return redirect(url_for('crm.customers'))
+
+@crm_bp.route('/lead/<int:lead_id>/edit', endpoint='edit_lead')
+def edit_lead_page(lead_id):
+    """编辑商机页面"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        
+        return render_template('crm/lead_form.html',
+                             title='Edit Lead',
+                             page='crm_edit_lead',
+                             lead_id=lead_id)
+    except Exception as e:
+        logger.error(f"编辑商机页面错误: {e}")
+        return redirect(url_for('crm.leads'))
+
+@crm_bp.route('/deal/<int:deal_id>', endpoint='deal_detail')
+def deal_detail_page(deal_id):
+    """交易详情页面"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        
+        return render_template('crm/deal_detail.html',
+                             title='Deal Detail',
+                             page='crm_deal_detail',
+                             deal_id=deal_id)
+    except Exception as e:
+        logger.error(f"交易详情页面错误: {e}")
+        return redirect(url_for('crm.deals'))
+
+@crm_bp.route('/customer/<int:customer_id>/deal/new', endpoint='new_deal')
+def new_deal_page(customer_id):
+    """新建交易页面"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        
+        return render_template('crm/deal_form.html',
+                             title='New Deal',
+                             page='crm_new_deal',
+                             customer_id=customer_id)
+    except Exception as e:
+        logger.error(f"新建交易页面错误: {e}")
+        return redirect(url_for('crm.customers'))
+
+@crm_bp.route('/customer/<int:customer_id>/contact/new', endpoint='new_contact')
+def new_contact_page(customer_id):
+    """新建联系人页面"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        
+        return render_template('crm/contact_form.html',
+                             title='New Contact',
+                             page='crm_new_contact',
+                             customer_id=customer_id)
+    except Exception as e:
+        logger.error(f"新建联系人页面错误: {e}")
+        return redirect(url_for('crm.customers'))
+
+@crm_bp.route('/customer/<int:customer_id>/contact/<int:contact_id>/edit', endpoint='edit_contact')
+def edit_contact_page(customer_id, contact_id):
+    """编辑联系人页面"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        
+        return render_template('crm/contact_form.html',
+                             title='Edit Contact',
+                             page='crm_edit_contact',
+                             customer_id=customer_id,
+                             contact_id=contact_id)
+    except Exception as e:
+        logger.error(f"编辑联系人页面错误: {e}")
+        return redirect(url_for('crm.customers'))
+
+@crm_bp.route('/customer/<int:customer_id>/notes', methods=['POST'], endpoint='update_customer_notes')
+def update_customer_notes(customer_id):
+    """更新客户备注"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        
+        flash('备注已更新', 'success')
+        return redirect(url_for('crm.customer_detail', customer_id=customer_id))
+    except Exception as e:
+        logger.error(f"更新客户备注错误: {e}")
+        flash('更新备注失败', 'error')
+        return redirect(url_for('crm.customer_detail', customer_id=customer_id))
+
 @crm_bp.route('/api/crm/leads')
 def get_leads():
     """获取潜在客户"""
