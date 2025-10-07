@@ -442,3 +442,33 @@ def refresh_user_cache(user_id: int) -> dict:
             'error': str(e),
             'timestamp': datetime.utcnow()
         }
+
+
+# ============================================================================
+# CLI Entry Point - Start RQ Worker
+# ============================================================================
+
+if __name__ == '__main__':
+    """
+    Start RQ worker to process tasks.
+    
+    Usage:
+        python -m intelligence.workers.tasks
+    """
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    
+    logger.info("Starting RQ Worker from tasks module...")
+    
+    from intelligence.workers.worker import start_worker
+    
+    import sys
+    burst_mode = '--burst' in sys.argv
+    
+    if len(sys.argv) > 1 and sys.argv[1] not in ['--burst']:
+        queue_names = [q for q in sys.argv[1:] if q != '--burst']
+        start_worker(queue_names=queue_names, burst=burst_mode)
+    else:
+        start_worker(burst=burst_mode)
