@@ -18,33 +18,27 @@ const adapters = {
 router.post('/intake', async (req: Request, res: Response) => {
   try {
     const source = req.query.source as string;
+    const signature = req.headers['x-webhook-signature'] as string;
+    const payload = JSON.stringify(req.body);
 
     if (!source || !adapters[source as keyof typeof adapters]) {
       return res.status(400).json({ error: 'Invalid or missing source parameter' });
     }
 
-    const signature = source === 'gmail'
-      ? req.headers['authorization'] as string
-      : req.headers['x-webhook-signature'] as string;
-
-    const payload = JSON.stringify(req.body);
-
+    // 强制要求签名header
     if (!signature) {
-      return res.status(401).json({ error: 'Missing webhook signature or authorization' });
+      return res.status(401).json({ error: 'Missing X-Webhook-Signature header' });
     }
 
     const adapter = adapters[source as keyof typeof adapters];
+
+    // 签名验证（必须通过）
     const secret = process.env[`${source.toUpperCase()}_WEBHOOK_SECRET`] || '';
-
-    if (!secret) {
-      console.error(`Missing secret for ${source}`);
-      return res.status(500).json({ error: 'Integration not properly configured' });
-    }
-
     if (!adapter.validateWebhookSignature(payload, signature, secret)) {
       return res.status(401).json({ error: 'Invalid webhook signature' });
     }
 
+    // 处理webhook
     await adapter.handleWebhook(req.body);
 
     return res.status(200).json({ success: true, message: 'Webhook processed' });

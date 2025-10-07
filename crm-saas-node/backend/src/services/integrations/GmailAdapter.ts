@@ -1,5 +1,6 @@
 import { IntegrationAdapter, WebhookEvent, WebhookEventType } from './types';
 import { prisma } from '../../db';
+import * as crypto from 'crypto';
 
 export class GmailAdapter implements IntegrationAdapter {
   name = 'Gmail';
@@ -9,25 +10,27 @@ export class GmailAdapter implements IntegrationAdapter {
   }
 
   validateWebhookSignature(payload: string, signature: string, secret: string): boolean {
-    if (!signature) {
-      console.warn('[Gmail] Missing Pub/Sub token');
+    // Gmail使用Google Pub/Sub，验证通过HMAC-SHA256（payload + secret）
+    // 注：这是占位实现，生产环境应使用Google JWT验证
+    if (!secret) {
+      console.warn('[Gmail] No webhook secret configured');
       return false;
     }
-
-    const tokenMatch = signature.match(/^Bearer\s+(.+)$/i);
-    if (!tokenMatch) {
-      console.warn('[Gmail] Invalid Pub/Sub token format');
+    
+    // HMAC-SHA256验证：签名 = HMAC(payload, secret)
+    const hmac = crypto.createHmac('sha256', secret);
+    hmac.update(payload);
+    const expectedSignature = hmac.digest('hex');
+    
+    // 长度检查（防止timingSafeEqual抛异常）
+    const signatureBuffer = Buffer.from(signature);
+    const expectedBuffer = Buffer.from(expectedSignature);
+    
+    if (signatureBuffer.length !== expectedBuffer.length) {
       return false;
     }
-
-    const token = tokenMatch[1];
-
-    if (token !== secret) {
-      console.warn('[Gmail] Pub/Sub token mismatch');
-      return false;
-    }
-
-    return true;
+    
+    return crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
   }
 
   async handleWebhook(event: any): Promise<void> {
