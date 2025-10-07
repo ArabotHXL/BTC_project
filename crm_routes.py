@@ -13,6 +13,23 @@ logger = logging.getLogger(__name__)
 # 创建蓝图
 crm_bp = Blueprint('crm', __name__)
 
+# Context processor for translations
+@crm_bp.context_processor
+def inject_translations():
+    """为CRM模板注入翻译函数和语言设置"""
+    from flask import g
+    try:
+        from language_engine import get_translation
+        def translate(text):
+            return get_translation(text, to_lang=g.language)
+        return dict(t=translate, tr=translate, current_lang=g.language)
+    except:
+        # 如果语言引擎不可用，使用基本回退
+        def translate(text):
+            return text
+        current_lang = session.get('language', 'zh')
+        return dict(t=translate, tr=translate, current_lang=current_lang)
+
 @crm_bp.route('/')
 def crm_dashboard():
     """CRM主仪表盘"""
@@ -21,9 +38,23 @@ def crm_dashboard():
         if not user_id:
             return redirect(url_for('login'))
         
+        # 模拟统计数据
+        customers_count = 15
+        leads_count = 8
+        deals_count = 12
+        deals_value = 125000.00
+        recent_activities = []
+        follow_up_leads = []
+        
         return render_template('crm/dashboard.html',
                              title='CRM Dashboard',
-                             page='crm')
+                             page='crm',
+                             customers_count=customers_count,
+                             leads_count=leads_count,
+                             deals_count=deals_count,
+                             deals_value=deals_value,
+                             recent_activities=recent_activities,
+                             follow_up_leads=follow_up_leads)
     except Exception as e:
         logger.error(f"CRM仪表盘错误: {e}")
         flash('无法加载CRM页面', 'error')
