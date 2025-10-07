@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 # 创建蓝图
 crm_bp = Blueprint('crm', __name__)
 
-@crm_bp.route('/crm')
+@crm_bp.route('/')
 def crm_dashboard():
     """CRM主仪表盘"""
     try:
@@ -29,7 +29,7 @@ def crm_dashboard():
         flash('无法加载CRM页面', 'error')
         return redirect(url_for('dashboard'))
 
-@crm_bp.route('/crm/customers', endpoint='customers')
+@crm_bp.route('/customers', endpoint='customers')
 def customers_list():
     """客户列表页面"""
     try:
@@ -165,6 +165,51 @@ def get_customer_details(customer_id):
             'success': False,
             'error': str(e)
         }), 500
+
+@crm_bp.route('/leads', endpoint='leads')
+def leads_page():
+    """潜在客户页面"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        
+        return render_template('crm/leads.html',
+                             title='Leads Management',
+                             page='crm_leads')
+    except Exception as e:
+        logger.error(f"潜在客户页面错误: {e}")
+        return redirect(url_for('crm.crm_dashboard'))
+
+@crm_bp.route('/deals', endpoint='deals')
+def deals_page():
+    """交易页面"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        
+        return render_template('crm/deals.html',
+                             title='Deals Management',
+                             page='crm_deals')
+    except Exception as e:
+        logger.error(f"交易页面错误: {e}")
+        return redirect(url_for('crm.crm_dashboard'))
+
+@crm_bp.route('/activities', endpoint='activities')
+def activities_page():
+    """活动页面"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        
+        return render_template('crm/activities.html',
+                             title='Activities',
+                             page='crm_activities')
+    except Exception as e:
+        logger.error(f"活动页面错误: {e}")
+        return redirect(url_for('crm.crm_dashboard'))
 
 @crm_bp.route('/api/crm/leads')
 def get_leads():
