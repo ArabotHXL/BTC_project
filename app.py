@@ -429,6 +429,29 @@ blockchain_scheduler = None
 if initialize_database_result:
     blockchain_scheduler = initialize_blockchain_scheduler()
 
+# 🚀 Initialize data collectors manager
+def initialize_data_collectors():
+    """Initialize all data collection pipelines"""
+    try:
+        from data_collectors_manager import start_all_collectors
+        import threading
+        
+        # Start collectors in background thread
+        def start_collectors():
+            time.sleep(5)  # Wait for app to be fully ready
+            results = start_all_collectors()
+            logging.info(f"Data collectors started: {results}")
+        
+        collector_thread = threading.Thread(target=start_collectors, daemon=True)
+        collector_thread.start()
+        logging.info("Data collectors manager initialized")
+    except Exception as e:
+        logging.error(f"Failed to initialize data collectors: {e}")
+
+# Start data collectors if database is ready
+if initialize_database_result:
+    initialize_data_collectors()
+
 # Import models at module level for global access
 from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot, MinerModel, User
 import models
