@@ -13,6 +13,7 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5000,
+    allowedHosts: ['.repl.co', '.replit.dev'],
     hmr: {
       clientPort: 443,
     },
