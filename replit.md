@@ -49,77 +49,45 @@ The application is a modular Flask web application with a mobile-first design, s
 -   **Data Models**: Comprehensive models for users, customers, mining data, network snapshots, and miner specifications.
 -   **Optimization**: Data storage optimized to a maximum of 10 data points per day, with cleanup policies.
 
-### CRM Platform (Node.js/TypeScript)
-A new enterprise-grade CRM platform built with Node.js/TypeScript, PostgreSQL, and React is being developed to replace and extend the existing Flask CRM system.
+### CRM System (Flask Native Implementation)
+The CRM system is natively integrated into the Flask application, accessible at `/crm/` routes, using the main application's session-based authentication and PostgreSQL database.
 
-**Architecture**:
--   **Backend**: Node.js/TypeScript API service (Express + Prisma ORM).
--   **Frontend**: React SPA with Vite + Tailwind CSS.
--   **Shared**: Shared TypeScript types and Zod schemas for type safety.
--   **Event System**: Redis Pub/Sub + EventQueue dual-write pattern for reliable event distribution.
+**Architecture** (October 2025):
+-   **Integration**: Native Flask blueprint registered at `/crm/` prefix
+-   **Templates**: Jinja2 templates with Bootstrap 5 dark theme
+-   **Authentication**: Session-based (shares main app's authentication)
+-   **Database**: SQLAlchemy ORM with PostgreSQL
 
-**Security & Authentication**:
--   **JWT-based Authentication**: Dual tokens (access + refresh) with automatic rotation.
--   **RBAC Permission Engine**: 4 roles (SUPER_ADMIN, ADMIN, SALES, OPS) with 20+ granular permissions.
--   **Secure Logout**: Refresh token revocation with logout-all functionality.
--   **Token Security**: Proper userId validation to prevent cross-account token revocation.
+**Core Models**:
+-   **Customer**: Company information, contacts, mining capacity, electricity costs
+-   **Lead**: Potential opportunities with status tracking (NEW, CONTACTED, QUALIFIED, NEGOTIATION, WON, LOST)
+-   **Deal**: Transaction projects with value tracking, mining-specific fields, commission management
+-   **Invoice**: Billing with status flow (draft, sent, paid, overdue, cancelled)
+-   **Asset**: Equipment tracking (miners, hosting slots) with lifecycle management
+-   **Activity**: Customer interaction history and notes
 
-**Core CRM Modules (Completed)**:
--   **Lead/Deal Management**: Intelligent lead scoring (40pts referral, 35pts partner), stage-based pipeline (10%-75% probability), contract auto-generation (CON-YYYY-XXXXX).
--   **Billing System**: Invoice/Payment tracking with aging reports (0-30, 31-60, 61-90, 90+ days), net revenue calculation (output - power - service fees), payment accrual logic (PENDING→CONFIRMED→CLEARED).
--   **Asset Management**: 10-state lifecycle (ORDERED→IN_TRANSIT→RECEIVED→IN_STORAGE→DEPLOYED→MINING→MAINTENANCE→DELAYED→CANCELLED→DECOMMISSIONED), serial number tracking, batch/shipment integration, bulk import (max 1000), inventory summaries, maintenance history.
+**CRM Features**:
+-   **Dashboard**: Real-time statistics for customers, leads, deals, and revenue
+-   **Customer Management**: Full CRUD operations with relationship tracking
+-   **Lead Pipeline**: Visual workflow with status filtering and follow-up reminders
+-   **Deal Tracking**: Transaction management with mining farm broker support
+-   **Invoice Management**: Billing with tax calculations and payment tracking
+-   **Asset Management**: Equipment inventory with serial number tracking
+-   **Activity Logging**: Complete interaction history across all entities
 
-**Business Logic**:
--   **Lead Scoring Algorithm**: Automated scoring based on source quality and company signals.
--   **Deal Probability**: Stage-based conversion rates (PROSPECTING 10% → CLOSED_WON 75%).
--   **Invoice Auto-numbering**: INV-YYYY-MM-XXXXX format with sequential generation.
--   **Payment Status Flow**: PENDING→CONFIRMED→CLEARED with proper accrual tracking.
--   **Asset Status Validation**: Enforced state transition rules via STATUS_TRANSITIONS mapping, all changes through validateStatusTransition().
--   **Shipment-Asset Synchronization**: Shipment status automatically updates related asset states (markAsShipped → IN_TRANSIT, markAsDelivered → RECEIVED).
+**Mining Broker Features**:
+-   Commission tracking (percentage or fixed amount)
+-   Mining farm deal management
+-   Client investment and profit estimation
+-   Monthly commission records with payment status
 
-**Event-Driven Architecture (Production-Ready)**:
--   **Event System Components**: EventPublisher (dual-write), EventSubscriber (Redis real-time), EventConsumer (queue polling), EventProcessor (lifecycle coordinator), dedicated worker process.
--   **16 Event Handlers**: Covering all 12 core events - lead.captured, lead.converted, deal.stage_changed, deal.won, contract.signed, invoice.created, invoice.issued, invoice.paid, payment.received, payment.confirmed, asset.status_changed, asset.deployed, asset.mining_started, shipment.shipped, shipment.delivered, plus contract.generated.
--   **Dual-Write Pattern**: Events persist to EventQueue table (reliable) and publish to Redis Pub/Sub (real-time) for fault tolerance.
--   **Auto-Reconnection**: Publisher and Subscriber automatically reconnect to Redis every 5 seconds when disconnected.
--   **Worker Process**: Independent event worker with health check endpoint (port 3001), startup retry (5 attempts), graceful shutdown, and component status monitoring.
--   **Production Features**: Partial startup support, error swallowing for resilience, reconnection loops, health checks reflecting Redis status.
+**Data Integrity**:
+-   All routes enforce session-based authentication
+-   Real database queries (no mock data)
+-   Foreign key relationships between entities
+-   Audit trail through Activity records
 
-**Flask Integration Services (Completed)**:
--   **FlaskClient**: API Key authentication (X-API-Key), HMAC-SHA256 request signing, retry mechanism (5xx errors, 2 retries, exponential backoff), 30s timeout.
--   **CalcService**: Mining profitability calculations (`/calculate` endpoint), miner data, SHA256 comparison.
--   **IntelligenceService**: Forecast, optimization, explanations, health checks (`/api/intelligence/*`).
--   **AnalyticsService**: BTC price, network stats, technical indicators, treasury overview, trading signals, backtesting (`/api/analytics/*`, `/api/treasury/*`).
--   **Authentication**: API Key-based (no self-signed JWT), request signing with query params and empty body handling, production-ready.
-
-**Automation Engine (Completed)**:
--   **10 YAML Rules**: Lead 24h follow-up, auto-assignment, deal advancement, invoice generation, overdue reminders, order release, asset deployment notifications, payment updates, shipment alerts, birthday greetings.
--   **RuleParser**: YAML to JSON parsing with validation.
--   **RuleExecutor**: 12 operators (equals, not_equals, greater_than, less_than, in, is_null, older_than, before, is_today, etc.) and 11 action types (send_email, create_task, update_field, etc.).
--   **AutomationScheduler**: Recursive nested Prisma queries with relation filters (is/some), multi-condition merging, scheduled rule execution via cron.
--   **CLI Tools**: `npm run import:rules`, `npm run test:rules` for rule management.
-
-**Third-Party Integration Placeholder (Completed)**:
--   **Webhook Infrastructure**: Universal endpoint `/api/webhooks/intake?source=quickbooks|docusign|gmail` with mandatory signature validation.
--   **Adapters**: QuickBooks (HMAC-SHA256 base64), DocuSign (HMAC-SHA256 hex), Gmail (HMAC-SHA256 hex with length checks).
--   **Security**: Forced signature verification, timing-safe comparison, per-source webhook secrets.
--   **WebhookLog Model**: Audit trail for all incoming webhooks (source, eventType, payload, timestamps).
--   **Note**: Gmail adapter is placeholder - production requires Google Pub/Sub JWT validation.
-
-**Data Integrity & Security**:
--   **Status Bypass Prevention**: UpdateAssetDTO/Schema excludes status field; all status changes require validation.
--   **Lifecycle Enforcement**: validateStatusTransition() guards prevent invalid state transitions.
--   **Event Consistency**: All state mutations emit events for downstream consumers.
--   **Error Handling**: Graceful degradation with try-catch for multi-asset operations.
-
-**Data Model**: 30 core tables and 23 enum types managed via Prisma ORM.
-
-**API Endpoints (28 total)**:
--   Lead/Deal: 12 endpoints (CRUD, scoring, stage management, contract generation)
--   Billing: 9 endpoints (invoice/payment CRUD, aging reports, revenue calculation)
--   Assets: 15 endpoints (CRUD, status flow, bulk import, inventory, maintenance)
--   Batches: 6 endpoints (batch management, asset association, summaries)
--   Shipments: 7 endpoints (tracking, status updates, delivery management)
+**Deprecated**: React/Node.js CRM proxy removed (October 2025) - replaced with native Flask implementation for better integration with main app authentication and simplified architecture.
 
 ## External Dependencies
 
