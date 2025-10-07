@@ -8,7 +8,7 @@ import './i18n/config';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename="/crm">
       <AuthProvider>
         <App />
       </AuthProvider>
