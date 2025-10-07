@@ -8,6 +8,10 @@ import logging
 from datetime import datetime, timedelta
 import json
 
+# Import database and models
+from db import db
+from models import Customer, Lead, Deal, Invoice, Asset, Activity
+
 logger = logging.getLogger(__name__)
 
 # 创建蓝图
@@ -77,55 +81,45 @@ def customers_list():
 
 @crm_bp.route('/api/crm/customers')
 def get_customers():
-    """获取客户列表"""
+    """获取客户列表 - 从数据库读取真实数据"""
     try:
-        # 模拟客户数据
-        customers_data = {
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        # Fetch customers from database
+        customers = Customer.query.order_by(Customer.created_at.desc()).all()
+        
+        customers_data = []
+        for customer in customers:
+            # Calculate total revenue from deals
+            total_revenue = sum([deal.value for deal in customer.deals if deal.value])
+            
+            # Get last activity date
+            last_activity = Activity.query.filter_by(customer_id=customer.id).order_by(Activity.created_at.desc()).first()
+            last_contact = last_activity.created_at.strftime('%Y-%m-%d') if last_activity else None
+            
+            customers_data.append({
+                'id': customer.id,
+                'name': customer.name,
+                'company': customer.company,
+                'email': customer.email,
+                'phone': customer.phone,
+                'customer_type': customer.customer_type,
+                'mining_capacity': customer.mining_capacity,
+                'join_date': customer.created_at.strftime('%Y-%m-%d'),
+                'total_revenue': total_revenue,
+                'last_contact': last_contact,
+                'tags': customer.tags
+            })
+        
+        return jsonify({
             'success': True,
-            'data': [
-                {
-                    'id': 1,
-                    'name': 'ABC Mining Corp',
-                    'email': 'contact@abcmining.com',
-                    'phone': '+1-555-0123',
-                    'status': 'active',
-                    'tier': 'enterprise',
-                    'join_date': '2023-01-15',
-                    'total_revenue': 25000.00,
-                    'last_contact': '2024-08-20',
-                    'mining_capacity': '50 PH/s'
-                },
-                {
-                    'id': 2,
-                    'name': 'Crypto Solutions Ltd',
-                    'email': 'info@cryptosolutions.io',
-                    'phone': '+1-555-0456',
-                    'status': 'active',
-                    'tier': 'professional',
-                    'join_date': '2023-03-22',
-                    'total_revenue': 12500.00,
-                    'last_contact': '2024-08-19',
-                    'mining_capacity': '25 PH/s'
-                },
-                {
-                    'id': 3,
-                    'name': 'Digital Assets Inc',
-                    'email': 'admin@digitalassets.com',
-                    'phone': '+1-555-0789',
-                    'status': 'pending',
-                    'tier': 'basic',
-                    'join_date': '2024-08-15',
-                    'total_revenue': 0.00,
-                    'last_contact': '2024-08-15',
-                    'mining_capacity': '5 PH/s'
-                }
-            ],
-            'total': 3,
+            'data': customers_data,
+            'total': len(customers_data),
             'page': 1,
             'per_page': 50
-        }
-        
-        return jsonify(customers_data)
+        })
         
     except Exception as e:
         logger.error(f"获取客户列表错误: {e}")
@@ -570,6 +564,126 @@ def add_customer_note():
         
     except Exception as e:
         logger.error(f"添加客户备注错误: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@crm_bp.route('/invoices', endpoint='invoices')
+def invoices_page():
+    """发票管理页面"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        
+        return render_template('crm/invoices.html',
+                             title='Invoice Management',
+                             page='crm_invoices')
+    except Exception as e:
+        logger.error(f"发票页面错误: {e}")
+        return redirect(url_for('crm.crm_dashboard'))
+
+@crm_bp.route('/assets', endpoint='assets')
+def assets_page():
+    """资产管理页面"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        
+        return render_template('crm/assets.html',
+                             title='Asset Management',
+                             page='crm_assets')
+    except Exception as e:
+        logger.error(f"资产页面错误: {e}")
+        return redirect(url_for('crm.crm_dashboard'))
+
+@crm_bp.route('/api/crm/invoices')
+def get_invoices():
+    """获取发票列表 - 从数据库读取真实数据"""
+    try:
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        # Fetch invoices from database
+        invoices = Invoice.query.order_by(Invoice.created_at.desc()).all()
+        
+        invoices_data = []
+        for invoice in invoices:
+            invoices_data.append({
+                'id': invoice.id,
+                'invoice_number': invoice.invoice_number,
+                'customer_id': invoice.customer_id,
+                'customer_name': invoice.customer.name if invoice.customer else 'N/A',
+                'deal_id': invoice.deal_id,
+                'status': invoice.status,
+                'amount': invoice.amount,
+                'tax_amount': invoice.tax_amount,
+                'total_amount': invoice.total_amount,
+                'currency': invoice.currency,
+                'issue_date': invoice.issue_date.strftime('%Y-%m-%d') if invoice.issue_date else None,
+                'due_date': invoice.due_date.strftime('%Y-%m-%d') if invoice.due_date else None,
+                'paid_date': invoice.paid_date.strftime('%Y-%m-%d') if invoice.paid_date else None,
+                'description': invoice.description,
+                'notes': invoice.notes
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': invoices_data,
+            'total': len(invoices_data)
+        })
+        
+    except Exception as e:
+        logger.error(f"获取发票列表错误: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@crm_bp.route('/api/crm/assets')
+def get_assets():
+    """获取资产列表 - 从数据库读取真实数据"""
+    try:
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        # Fetch assets from database
+        assets = Asset.query.order_by(Asset.created_at.desc()).all()
+        
+        assets_data = []
+        for asset in assets:
+            assets_data.append({
+                'id': asset.id,
+                'customer_id': asset.customer_id,
+                'customer_name': asset.customer.name if asset.customer else 'N/A',
+                'deal_id': asset.deal_id,
+                'asset_type': asset.asset_type,
+                'asset_name': asset.asset_name,
+                'serial_number': asset.serial_number,
+                'model': asset.model,
+                'status': asset.status,
+                'purchase_value': asset.purchase_value,
+                'current_value': asset.current_value,
+                'currency': asset.currency,
+                'location': asset.location,
+                'purchase_date': asset.purchase_date.strftime('%Y-%m-%d') if asset.purchase_date else None,
+                'warranty_expiry': asset.warranty_expiry.strftime('%Y-%m-%d') if asset.warranty_expiry else None,
+                'description': asset.description,
+                'notes': asset.notes
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': assets_data,
+            'total': len(assets_data)
+        })
+        
+    except Exception as e:
+        logger.error(f"获取资产列表错误: {e}")
         return jsonify({
             'success': False,
             'error': str(e)

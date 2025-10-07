@@ -3686,8 +3686,8 @@ def network_history():
 #         logging.error(f"手动记录快照失败: {e}")
 #         return jsonify({'error': str(e)}), 500
 
-# 初始化CRM系统 - 已禁用，使用React CRM代理（见5280行的react_crm_proxy）
-# init_crm_routes(app)  # 旧的Flask CRM系统已被React CRM替代
+# 初始化CRM系统 - Flask CRM已启用
+init_crm_routes(app)
 
 # DISABLED: Gold flow module - mining broker routes
 # init_broker_routes(app)
@@ -5297,47 +5297,47 @@ def crm_current_user():
         logging.error(f"获取CRM用户信息失败: {e}")
         return jsonify({'error': str(e)}), 500
 
-# New React CRM Proxy - 将/crm/路由代理到React前端
-@app.route('/crm/')
-@app.route('/crm/<path:path>')
-def react_crm_proxy(path=''):
-    """反向代理到React CRM前端（运行在5001端口）"""
-    try:
-        # React前端运行在5001端口，Vite base配置为/crm/，需要保留前缀
-        react_url = f'http://localhost:5001/crm/{path}' if path else 'http://localhost:5001/crm/'
-        
-        # 转发查询参数
-        if request.query_string:
-            react_url += f'?{request.query_string.decode()}'
-        
-        # 发起代理请求
-        resp = requests.request(
-            method=request.method,
-            url=react_url,
-            headers={key: value for (key, value) in request.headers if key != 'Host'},
-            data=request.get_data(),
-            cookies=request.cookies,
-            allow_redirects=False,
-            timeout=30
-        )
-        
-        # 构造响应
-        excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
-        headers = [(name, value) for (name, value) in resp.raw.headers.items()
-                   if name.lower() not in excluded_headers]
-        
-        response = app.make_response((resp.content, resp.status_code, headers))
-        return response
-        
-    except requests.exceptions.ConnectionError:
-        logging.error("无法连接到React CRM前端（5001端口）")
-        return jsonify({
-            'error': 'CRM系统暂时不可用',
-            'message': '请确保React前端正在运行（端口5001）'
-        }), 503
-    except Exception as e:
-        logging.error(f"CRM代理错误: {e}")
-        return jsonify({'error': str(e)}), 500
+# DISABLED: React CRM Proxy - Now using Flask CRM routes (registered via init_crm_routes)
+# @app.route('/crm/')
+# @app.route('/crm/<path:path>')
+# def react_crm_proxy(path=''):
+#     """反向代理到React CRM前端（运行在5001端口）- DISABLED"""
+#     try:
+#         # React前端运行在5001端口，Vite base配置为/crm/，需要保留前缀
+#         react_url = f'http://localhost:5001/crm/{path}' if path else 'http://localhost:5001/crm/'
+#         
+#         # 转发查询参数
+#         if request.query_string:
+#             react_url += f'?{request.query_string.decode()}'
+#         
+#         # 发起代理请求
+#         resp = requests.request(
+#             method=request.method,
+#             url=react_url,
+#             headers={key: value for (key, value) in request.headers if key != 'Host'},
+#             data=request.get_data(),
+#             cookies=request.cookies,
+#             allow_redirects=False,
+#             timeout=30
+#         )
+#         
+#         # 构造响应
+#         excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+#         headers = [(name, value) for (name, value) in resp.raw.headers.items()
+#                    if name.lower() not in excluded_headers]
+#         
+#         response = app.make_response((resp.content, resp.status_code, headers))
+#         return response
+#         
+#     except requests.exceptions.ConnectionError:
+#         logging.error("无法连接到React CRM前端（5001端口）")
+#         return jsonify({
+#             'error': 'CRM系统暂时不可用',
+#             'message': '请确保React前端正在运行（端口5001）'
+#         }), 503
+#     except Exception as e:
+#         logging.error(f"CRM代理错误: {e}")
+#         return jsonify({'error': str(e)}), 500
 
 # Missing frontend routes that were causing 404 errors  
 # 注意：以下旧的CRM路由已被上面的React代理替代
