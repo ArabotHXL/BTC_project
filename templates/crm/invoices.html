@@ -1,0 +1,170 @@
+{% extends "crm/base.html" %}
+
+{% block title %}{{ t('invoices') if current_lang == 'zh' else 'Invoices' }} | BTC Mining CRM{% endblock %}
+
+{% block page_title %}{{ t('invoices') if current_lang == 'zh' else 'Invoices' }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">{{ t('invoices') if current_lang == 'zh' else 'Invoices' }}</li>
+{% endblock %}
+
+{% block action_buttons %}
+<a href="{{ url_for('crm.customers') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle me-1"></i> {{ t('create_invoice') if current_lang == 'zh' else 'Create Invoice' }}
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Filter by Status -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ url_for('crm.invoices') }}" class="btn btn-sm btn-dark">
+                {{ t('all_invoices') if current_lang == 'zh' else 'All Invoices' }}
+            </a>
+            <a href="{{ url_for('crm.invoices', status='draft') }}" class="btn btn-sm btn-outline-secondary">
+                {{ t('draft') if current_lang == 'zh' else 'Draft' }}
+            </a>
+            <a href="{{ url_for('crm.invoices', status='sent') }}" class="btn btn-sm btn-outline-info">
+                {{ t('sent') if current_lang == 'zh' else 'Sent' }}
+            </a>
+            <a href="{{ url_for('crm.invoices', status='paid') }}" class="btn btn-sm btn-outline-success">
+                {{ t('paid') if current_lang == 'zh' else 'Paid' }}
+            </a>
+            <a href="{{ url_for('crm.invoices', status='overdue') }}" class="btn btn-sm btn-outline-danger">
+                {{ t('overdue') if current_lang == 'zh' else 'Overdue' }}
+            </a>
+            <a href="{{ url_for('crm.invoices', status='cancelled') }}" class="btn btn-sm btn-outline-warning">
+                {{ t('cancelled') if current_lang == 'zh' else 'Cancelled' }}
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Invoices Table -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">{{ t('invoice_list') if current_lang == 'zh' else 'Invoice List' }}</h5>
+            <span class="badge bg-info" id="invoice-count">0</span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0" id="invoices-table">
+                <thead>
+                    <tr>
+                        <th>{{ t('invoice_number') if current_lang == 'zh' else 'Invoice #' }}</th>
+                        <th>{{ t('customer') if current_lang == 'zh' else 'Customer' }}</th>
+                        <th>{{ t('status') if current_lang == 'zh' else 'Status' }}</th>
+                        <th>{{ t('amount') if current_lang == 'zh' else 'Amount' }}</th>
+                        <th>{{ t('issue_date') if current_lang == 'zh' else 'Issue Date' }}</th>
+                        <th>{{ t('due_date') if current_lang == 'zh' else 'Due Date' }}</th>
+                        <th>{{ t('actions') if current_lang == 'zh' else 'Actions' }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="spinner-border text-info" role="status">
+                                <span class="visually-hidden">{{ t('loading') if current_lang == 'zh' else 'Loading...' }}</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/crm/api/crm/invoices')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data) {
+                const tbody = document.querySelector('#invoices-table tbody');
+                const invoiceCount = document.getElementById('invoice-count');
+                
+                invoiceCount.textContent = data.data.length;
+                
+                if (data.data.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <i class="bi bi-receipt text-secondary mb-3" style="font-size: 2rem;"></i>
+                                <p class="text-muted mb-0">${'{{ t("no_invoices") if current_lang == "zh" else "No invoices found" }}'}</p>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    tbody.innerHTML = data.data.map(invoice => {
+                        const statusClass = {
+                            'draft': 'secondary',
+                            'sent': 'info',
+                            'paid': 'success',
+                            'overdue': 'danger',
+                            'cancelled': 'warning'
+                        }[invoice.status] || 'secondary';
+                        
+                        return `
+                            <tr>
+                                <td><strong>${invoice.invoice_number}</strong></td>
+                                <td>${invoice.customer_name || 'N/A'}</td>
+                                <td><span class="badge bg-${statusClass}">${invoice.status}</span></td>
+                                <td>$${parseFloat(invoice.total_amount || 0).toFixed(2)}</td>
+                                <td>${new Date(invoice.issue_date).toLocaleDateString()}</td>
+                                <td>${invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'N/A'}</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewInvoice(${invoice.id})">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            } else {
+                console.error('Failed to load invoices:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching invoices:', error);
+            const tbody = document.querySelector('#invoices-table tbody');
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-danger">
+                        <i class="bi bi-exclamation-triangle mb-3" style="font-size: 2rem;"></i>
+                        <p class="mb-0">${'{{ t("error_loading") if current_lang == "zh" else "Error loading invoices" }}'}</p>
+                    </td>
+                </tr>
+            `;
+        });
+});
+
+function viewInvoice(id) {
+    window.location.href = '/crm/invoice/' + id;
+}
+</script>
+
+<style>
+.stat-card .icon {
+    font-size: 2rem;
+    color: #17a2b8;
+}
+
+.stat-card .value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-top: 0.5rem;
+}
+
+.stat-card .label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    text-transform: uppercase;
+}
+</style>
+{% endblock %}

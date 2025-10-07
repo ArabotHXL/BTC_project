@@ -235,6 +235,12 @@
             <a href="{{ url_for('crm.activities') }}" class="nav-link {% if request.endpoint == 'crm.activities' %}active{% endif %}">
                 <i class="bi bi-journal-text"></i> {{ t('activities') }}
             </a>
+            <a href="{{ url_for('crm.invoices') }}" class="nav-link {% if 'invoices' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-receipt"></i> {{ t('invoices') if current_lang == 'zh' else 'Invoices' }}
+            </a>
+            <a href="{{ url_for('crm.assets') }}" class="nav-link {% if 'assets' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-box-seam"></i> {{ t('assets') if current_lang == 'zh' else 'Assets' }}
+            </a>
             
             <!-- 矿场中介业务 (仅所有者可见) -->
             {% if session.role == 'owner' %}

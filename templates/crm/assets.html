@@ -1,0 +1,196 @@
+{% extends "crm/base.html" %}
+
+{% block title %}{{ t('assets') if current_lang == 'zh' else 'Assets' }} | BTC Mining CRM{% endblock %}
+
+{% block page_title %}{{ t('assets') if current_lang == 'zh' else 'Assets' }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">{{ t('assets') if current_lang == 'zh' else 'Assets' }}</li>
+{% endblock %}
+
+{% block action_buttons %}
+<a href="{{ url_for('crm.customers') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle me-1"></i> {{ t('create_asset') if current_lang == 'zh' else 'Create Asset' }}
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Filter by Type and Status -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <label class="form-label small text-muted">{{ t('asset_type') if current_lang == 'zh' else 'Asset Type' }}</label>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ url_for('crm.assets') }}" class="btn btn-sm btn-dark">
+                        {{ t('all_types') if current_lang == 'zh' else 'All Types' }}
+                    </a>
+                    <a href="{{ url_for('crm.assets', type='miner') }}" class="btn btn-sm btn-outline-info">
+                        {{ t('miner') if current_lang == 'zh' else 'Miner' }}
+                    </a>
+                    <a href="{{ url_for('crm.assets', type='hosting_slot') }}" class="btn btn-sm btn-outline-primary">
+                        {{ t('hosting_slot') if current_lang == 'zh' else 'Hosting Slot' }}
+                    </a>
+                    <a href="{{ url_for('crm.assets', type='equipment') }}" class="btn btn-sm btn-outline-warning">
+                        {{ t('equipment') if current_lang == 'zh' else 'Equipment' }}
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small text-muted">{{ t('status') if current_lang == 'zh' else 'Status' }}</label>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ url_for('crm.assets', status='active') }}" class="btn btn-sm btn-outline-success">
+                        {{ t('active') if current_lang == 'zh' else 'Active' }}
+                    </a>
+                    <a href="{{ url_for('crm.assets', status='inactive') }}" class="btn btn-sm btn-outline-secondary">
+                        {{ t('inactive') if current_lang == 'zh' else 'Inactive' }}
+                    </a>
+                    <a href="{{ url_for('crm.assets', status='maintenance') }}" class="btn btn-sm btn-outline-warning">
+                        {{ t('maintenance') if current_lang == 'zh' else 'Maintenance' }}
+                    </a>
+                    <a href="{{ url_for('crm.assets', status='sold') }}" class="btn btn-sm btn-outline-danger">
+                        {{ t('sold') if current_lang == 'zh' else 'Sold' }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assets Table -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">{{ t('asset_list') if current_lang == 'zh' else 'Asset List' }}</h5>
+            <span class="badge bg-info" id="asset-count">0</span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0" id="assets-table">
+                <thead>
+                    <tr>
+                        <th>{{ t('asset_name') if current_lang == 'zh' else 'Asset Name' }}</th>
+                        <th>{{ t('type') if current_lang == 'zh' else 'Type' }}</th>
+                        <th>{{ t('customer') if current_lang == 'zh' else 'Customer' }}</th>
+                        <th>{{ t('serial_number') if current_lang == 'zh' else 'Serial #' }}</th>
+                        <th>{{ t('status') if current_lang == 'zh' else 'Status' }}</th>
+                        <th>{{ t('current_value') if current_lang == 'zh' else 'Value' }}</th>
+                        <th>{{ t('location') if current_lang == 'zh' else 'Location' }}</th>
+                        <th>{{ t('actions') if current_lang == 'zh' else 'Actions' }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <div class="spinner-border text-info" role="status">
+                                <span class="visually-hidden">{{ t('loading') if current_lang == 'zh' else 'Loading...' }}</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/crm/api/crm/assets')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data) {
+                const tbody = document.querySelector('#assets-table tbody');
+                const assetCount = document.getElementById('asset-count');
+                
+                assetCount.textContent = data.data.length;
+                
+                if (data.data.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <i class="bi bi-box-seam text-secondary mb-3" style="font-size: 2rem;"></i>
+                                <p class="text-muted mb-0">${'{{ t("no_assets") if current_lang == "zh" else "No assets found" }}'}</p>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    tbody.innerHTML = data.data.map(asset => {
+                        const statusClass = {
+                            'active': 'success',
+                            'inactive': 'secondary',
+                            'maintenance': 'warning',
+                            'sold': 'danger'
+                        }[asset.status] || 'secondary';
+                        
+                        const typeIcons = {
+                            'miner': 'cpu',
+                            'hosting_slot': 'hdd-stack',
+                            'equipment': 'tools'
+                        };
+                        
+                        return `
+                            <tr>
+                                <td>
+                                    <i class="bi bi-${typeIcons[asset.asset_type] || 'box'} me-2"></i>
+                                    <strong>${asset.asset_name}</strong>
+                                </td>
+                                <td><span class="badge bg-info">${asset.asset_type}</span></td>
+                                <td>${asset.customer_name || 'N/A'}</td>
+                                <td>${asset.serial_number || 'N/A'}</td>
+                                <td><span class="badge bg-${statusClass}">${asset.status}</span></td>
+                                <td>$${parseFloat(asset.current_value || 0).toFixed(2)}</td>
+                                <td>${asset.location || 'N/A'}</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewAsset(${asset.id})">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            } else {
+                console.error('Failed to load assets:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching assets:', error);
+            const tbody = document.querySelector('#assets-table tbody');
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-danger">
+                        <i class="bi bi-exclamation-triangle mb-3" style="font-size: 2rem;"></i>
+                        <p class="mb-0">${'{{ t("error_loading") if current_lang == "zh" else "Error loading assets" }}'}</p>
+                    </td>
+                </tr>
+            `;
+        });
+});
+
+function viewAsset(id) {
+    window.location.href = '/crm/asset/' + id;
+}
+</script>
+
+<style>
+.stat-card .icon {
+    font-size: 2rem;
+    color: #17a2b8;
+}
+
+.stat-card .value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-top: 0.5rem;
+}
+
+.stat-card .label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    text-transform: uppercase;
+}
+</style>
+{% endblock %}
