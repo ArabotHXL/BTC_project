@@ -25,7 +25,7 @@ def feature_check():
 
 
 @crm_integration_bp.route('/sync/customer', methods=['POST'])
-@require_api_auth(required_permissions=['write'], allow_session_auth=True)
+@require_api_auth(required_permissions=[Permission.CRM_SYNC], allow_session_auth=True)
 @require_permission([Permission.CRM_SYNC], require_all=True)
 def sync_customer_to_crm():
     """
@@ -65,7 +65,7 @@ def sync_customer_to_crm():
 
 
 @crm_integration_bp.route('/webhook/deal-stage', methods=['POST'])
-@require_api_auth(required_permissions=['write'], allow_session_auth=True)
+@require_api_auth(required_permissions=[Permission.CRM_WEBHOOK], allow_session_auth=True)
 @require_permission([Permission.CRM_WEBHOOK], require_all=True)
 def handle_crm_deal_webhook():
     """

@@ -10,9 +10,10 @@ import hashlib
 import hmac
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, Optional, Any, List
+from typing import Dict, Optional, Any, List, Union
 from functools import wraps
 from flask import request, jsonify, session, g
+from common.rbac import Permission, Role, rbac_manager
 
 logger = logging.getLogger(__name__)
 
@@ -115,30 +116,42 @@ class APIKeyManager:
         # 从环境变量加载API密钥
         for i in range(1, 11):  # 支持最多10个API密钥
             key_name = f"API_KEY_{i}"
-            permissions_name = f"API_KEY_{i}_PERMISSIONS"
+            role_name = f"API_KEY_{i}_ROLE"
             
             api_key = os.environ.get(key_name)
             if api_key:
-                permissions = os.environ.get(permissions_name, '').split(',')
-                permissions = [p.strip() for p in permissions if p.strip()]
+                role_str = os.environ.get(role_name, 'api_client')
+                
+                try:
+                    role = Role(role_str)
+                except ValueError:
+                    logger.warning(f"Invalid role '{role_str}' for {key_name}, defaulting to api_client")
+                    role = Role.API_CLIENT
+                
+                role_permissions = rbac_manager.get_role_permissions(role)
                 
                 api_keys[api_key] = {
                     'name': f"api_key_{i}",
-                    'permissions': permissions,
-                    'role': 'api_client',
+                    'role': role.value,
+                    'role_enum': role,
+                    'permissions': [p.value for p in role_permissions],
                     'created_at': datetime.utcnow().isoformat()
                 }
         
         # 默认开发API密钥（仅在开发环境）
         if os.environ.get('FLASK_ENV') != 'production' and not api_keys:
             dev_key = f"{APIAuthConfig.API_KEY_PREFIX}dev_key_2025"
+            dev_role = Role.DEVELOPER
+            dev_permissions = rbac_manager.get_role_permissions(dev_role)
+            
             api_keys[dev_key] = {
                 'name': 'development_key',
-                'permissions': ['read', 'write', 'calculate', 'analytics'],
-                'role': 'developer',
+                'role': dev_role.value,
+                'role_enum': dev_role,
+                'permissions': [p.value for p in dev_permissions],
                 'created_at': datetime.utcnow().isoformat()
             }
-            logger.warning(f"Using development API key: {dev_key}")
+            logger.warning(f"Using development API key: {dev_key} with role {dev_role.value}")
         
         logger.info(f"Loaded {len(api_keys)} API keys")
         return api_keys
@@ -223,12 +236,12 @@ class APIAuthMiddleware:
 # 全局实例
 auth_middleware = APIAuthMiddleware()
 
-def require_api_auth(required_permissions: List[str] = None, allow_session_auth: bool = True):
+def require_api_auth(required_permissions: Optional[Union[List[Permission], List[str]]] = None, allow_session_auth: bool = True):
     """
-    API认证装饰器
+    API认证装饰器 - 集成RBAC细粒度权限检查
     
     Args:
-        required_permissions: 需要的权限列表
+        required_permissions: 需要的权限列表（Permission枚举或字符串，推荐使用Permission枚举）
         allow_session_auth: 是否允许session认证（用于兼容现有前端）
     """
     def decorator(f):
@@ -271,26 +284,51 @@ def require_api_auth(required_permissions: List[str] = None, allow_session_auth:
                     'error': 'Invalid request signature'
                 }), 401
             
-            # 5. 检查权限
+            # 5. 检查权限（使用RBAC细粒度权限）
             if required_permissions:
-                user_permissions = auth_result['payload'].get('permissions', [])
-                user_role = auth_result['payload'].get('role', 'guest')
+                user_role_str = auth_result['payload'].get('role', 'guest')
                 
-                # 管理员和所有者拥有所有权限
-                if user_role in ['admin', 'owner']:
+                try:
+                    user_role = Role(user_role_str)
+                except ValueError:
+                    logger.error(f"Invalid role: {user_role_str}")
+                    return jsonify({
+                        'success': False,
+                        'error': 'Invalid user role'
+                    }), 403
+                
+                # 超级管理员和租户所有者拥有所有权限
+                if user_role in [Role.SUPER_ADMIN, Role.TENANT_OWNER]:
                     pass  # 跳过权限检查
                 else:
-                    # 检查是否有所需权限
-                    has_permission = any(perm in user_permissions for perm in required_permissions)
-                    if not has_permission:
-                        return jsonify({
-                            'success': False,
-                            'error': 'Insufficient permissions',
-                            'required_permissions': required_permissions,
-                            'user_permissions': user_permissions
-                        }), 403
+                    # 转换required_permissions为Permission枚举
+                    required_perms = []
+                    for perm in required_permissions:
+                        if isinstance(perm, Permission):
+                            required_perms.append(perm)
+                        elif isinstance(perm, str):
+                            try:
+                                required_perms.append(Permission(perm))
+                            except ValueError:
+                                logger.warning(f"Unknown permission string: {perm}")
+                    
+                    # 使用RBAC管理器检查权限
+                    if required_perms:
+                        has_access = rbac_manager.has_any_permission(user_role, required_perms)
+                        
+                        if not has_access:
+                            logger.warning(
+                                f"Permission denied for {auth_result['payload'].get('email')} ({user_role_str}): "
+                                f"required {[p.value for p in required_perms]}"
+                            )
+                            return jsonify({
+                                'success': False,
+                                'error': 'Insufficient permissions',
+                                'required_permissions': [p.value for p in required_perms],
+                                'user_role': user_role_str
+                            }), 403
             
-            # 6. 将认证信息存储在Flask全局对象中
+            # 6. 将认证信息存储在Flask全局对象中（供后续@require_permission使用）
             g.auth = auth_result
             g.user_role = auth_result['payload'].get('role', 'guest')
             g.user_email = auth_result['payload'].get('email')
@@ -303,7 +341,7 @@ def require_api_auth(required_permissions: List[str] = None, allow_session_auth:
         return decorated_function
     return decorator
 
-def require_jwt_auth(required_permissions: List[str] = None):
+def require_jwt_auth(required_permissions: Optional[Union[List[Permission], List[str]]] = None):
     """
     严格JWT认证装饰器（不允许session认证）
     """

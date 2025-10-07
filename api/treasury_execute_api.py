@@ -25,7 +25,7 @@ def feature_check():
 
 
 @treasury_execute_bp.route('/execute', methods=['POST'])
-@require_api_auth(required_permissions=['write'], allow_session_auth=True)
+@require_api_auth(required_permissions=[Permission.TREASURY_TRADE], allow_session_auth=True)
 @require_permission([Permission.TREASURY_TRADE], require_all=True)
 def execute_trade():
     """

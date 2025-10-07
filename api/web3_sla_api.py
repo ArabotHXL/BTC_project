@@ -25,8 +25,8 @@ def feature_check():
 
 
 @web3_sla_bp.route('/certificates', methods=['GET'])
-@require_api_auth(required_permissions=['read'], allow_session_auth=True)
-@require_permission([Permission.WEB3_MINT], require_all=True)
+@require_api_auth(required_permissions=[Permission.WEB3_READ], allow_session_auth=True)
+@require_permission([Permission.WEB3_READ], require_all=True)
 def get_sla_certificates():
     """
     获取SLA证书NFT列表（占位实现）
@@ -64,7 +64,7 @@ def get_sla_certificates():
 
 
 @web3_sla_bp.route('/mint-request', methods=['POST'])
-@require_api_auth(required_permissions=['write'], allow_session_auth=True)
+@require_api_auth(required_permissions=[Permission.WEB3_MINT], allow_session_auth=True)
 @require_permission([Permission.WEB3_MINT], require_all=True)
 def request_mint_sla_nft():
     """
