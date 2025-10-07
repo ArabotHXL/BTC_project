@@ -5274,16 +5274,59 @@ def analytics_price_history():
         app.logger.error(f"获取价格历史失败: {e}")
         return jsonify({'error': f'获取价格历史失败: {str(e)}'}), 500
 
-# Missing frontend routes that were causing 404 errors
-@app.route('/crm/dashboard')
-@login_required
-def crm_dashboard_redirect():
-    """CRM系统仪表盘重定向"""
-    user_role = get_user_role(session.get('email'))
-    if user_role not in ['owner', 'admin', 'mining_site']:
-        flash('您没有权限访问CRM系统', 'danger')
-        return redirect(url_for('index'))
-    return redirect(url_for('crm.crm_dashboard'))
+# New React CRM Proxy - 将/crm/路由代理到React前端
+@app.route('/crm/')
+@app.route('/crm/<path:path>')
+def react_crm_proxy(path=''):
+    """反向代理到React CRM前端（运行在5001端口）"""
+    try:
+        # React前端运行在5001端口，basename已设置为/crm
+        react_url = f'http://localhost:5001/{path}' if path else 'http://localhost:5001/'
+        
+        # 转发查询参数
+        if request.query_string:
+            react_url += f'?{request.query_string.decode()}'
+        
+        # 发起代理请求
+        resp = requests.request(
+            method=request.method,
+            url=react_url,
+            headers={key: value for (key, value) in request.headers if key != 'Host'},
+            data=request.get_data(),
+            cookies=request.cookies,
+            allow_redirects=False,
+            timeout=30
+        )
+        
+        # 构造响应
+        excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+        headers = [(name, value) for (name, value) in resp.raw.headers.items()
+                   if name.lower() not in excluded_headers]
+        
+        response = app.make_response((resp.content, resp.status_code, headers))
+        return response
+        
+    except requests.exceptions.ConnectionError:
+        logging.error("无法连接到React CRM前端（5001端口）")
+        return jsonify({
+            'error': 'CRM系统暂时不可用',
+            'message': '请确保React前端正在运行（端口5001）'
+        }), 503
+    except Exception as e:
+        logging.error(f"CRM代理错误: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Missing frontend routes that were causing 404 errors  
+# 注意：以下旧的CRM路由已被上面的React代理替代
+# @app.route('/crm/dashboard')
+# @login_required
+# def crm_dashboard_redirect():
+#     """CRM系统仪表盘重定向 - 已废弃，使用React CRM"""
+#     user_role = get_user_role(session.get('email'))
+#     if user_role not in ['owner', 'admin', 'mining_site']:
+#         flash('您没有权限访问CRM系统', 'danger')
+#         return redirect(url_for('index'))
+#     return redirect(url_for('crm.crm_dashboard'))
 
 @app.route('/curtailment/calculator')
 @login_required
