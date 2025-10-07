@@ -92,6 +92,20 @@ A new enterprise-grade CRM platform built with Node.js/TypeScript, PostgreSQL, a
 -   **AnalyticsService**: BTC price, network stats, technical indicators, treasury overview, trading signals, backtesting (`/api/analytics/*`, `/api/treasury/*`).
 -   **Authentication**: API Key-based (no self-signed JWT), request signing with query params and empty body handling, production-ready.
 
+**Automation Engine (Completed)**:
+-   **10 YAML Rules**: Lead 24h follow-up, auto-assignment, deal advancement, invoice generation, overdue reminders, order release, asset deployment notifications, payment updates, shipment alerts, birthday greetings.
+-   **RuleParser**: YAML to JSON parsing with validation.
+-   **RuleExecutor**: 12 operators (equals, not_equals, greater_than, less_than, in, is_null, older_than, before, is_today, etc.) and 11 action types (send_email, create_task, update_field, etc.).
+-   **AutomationScheduler**: Recursive nested Prisma queries with relation filters (is/some), multi-condition merging, scheduled rule execution via cron.
+-   **CLI Tools**: `npm run import:rules`, `npm run test:rules` for rule management.
+
+**Third-Party Integration Placeholder (Completed)**:
+-   **Webhook Infrastructure**: Universal endpoint `/api/webhooks/intake?source=quickbooks|docusign|gmail` with mandatory signature validation.
+-   **Adapters**: QuickBooks (HMAC-SHA256 base64), DocuSign (HMAC-SHA256 hex), Gmail (HMAC-SHA256 hex with length checks).
+-   **Security**: Forced signature verification, timing-safe comparison, per-source webhook secrets.
+-   **WebhookLog Model**: Audit trail for all incoming webhooks (source, eventType, payload, timestamps).
+-   **Note**: Gmail adapter is placeholder - production requires Google Pub/Sub JWT validation.
+
 **Data Integrity & Security**:
 -   **Status Bypass Prevention**: UpdateAssetDTO/Schema excludes status field; all status changes require validation.
 -   **Lifecycle Enforcement**: validateStatusTransition() guards prevent invalid state transitions.

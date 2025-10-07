@@ -18,7 +18,8 @@
     "worker:dev": "tsx watch src/worker.ts",
     "verify:handlers": "tsx src/events/verify-handlers.ts",
     "import:rules": "tsx src/scripts/import-automation-rules.ts",
-    "test:rules": "tsx src/scripts/test-scheduled-rules.ts"
+    "test:rules": "tsx src/scripts/test-scheduled-rules.ts",
+    "e2e:test": "node src/scripts/e2e-acceptance-test.js"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
