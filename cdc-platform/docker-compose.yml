@@ -1,0 +1,231 @@
+version: '3.9'
+
+services:
+  # PostgreSQL 15 + TimescaleDB
+  postgres:
+    image: timescale/timescaledb:2.13.0-pg15
+    container_name: hashinsight-postgres
+    environment:
+      POSTGRES_DB: hashinsight
+      POSTGRES_USER: hashinsight
+      POSTGRES_PASSWORD: hashinsight_secret_2024
+      POSTGRES_HOST_AUTH_METHOD: md5
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    command: 
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
+      - "-c"
+      - "max_replication_slots=4"
+      - "-c"
+      - "max_wal_senders=4"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hashinsight"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: hashinsight-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Zookeeper
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: hashinsight-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo ruok | nc localhost 2181 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Kafka
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: hashinsight-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # Kafka Connect + Debezium
+  kafka-connect:
+    image: debezium/connect:2.4
+    container_name: hashinsight-connect
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8083:8083"
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: hashinsight-connect-cluster
+      CONFIG_STORAGE_TOPIC: connect-configs
+      OFFSET_STORAGE_TOPIC: connect-offsets
+      STATUS_STORAGE_TOPIC: connect-status
+      CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      STATUS_STORAGE_REPLICATION_FACTOR: 1
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Kafka UI (可选)
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: hashinsight-kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: hashinsight
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+
+  # Flask Web API
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: hashinsight-web
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: postgresql://hashinsight:hashinsight_secret_2024@postgres:5432/hashinsight
+      REDIS_URL: redis://redis:6379/0
+      KAFKA_BROKERS: kafka:9092
+      CONNECT_URL: http://kafka-connect:8083
+      JWT_SECRET: your-secret-key-change-in-production
+      FLASK_ENV: development
+      PYTHONUNBUFFERED: 1
+    volumes:
+      - ./core:/app/core
+      - ./migrations:/app/migrations
+    command: gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 --reload core.app:app
+
+  # Portfolio Worker
+  worker-portfolio:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: hashinsight-worker-portfolio
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://hashinsight:hashinsight_secret_2024@postgres:5432/hashinsight
+      REDIS_URL: redis://redis:6379/0
+      KAFKA_BROKERS: kafka:9092
+      WORKER_NAME: portfolio-consumer
+      PYTHONUNBUFFERED: 1
+    volumes:
+      - ./workers:/app/workers
+      - ./core:/app/core
+    command: python -u workers/portfolio_consumer.py
+    restart: unless-stopped
+
+  # Intelligence Worker (占位)
+  worker-intel:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: hashinsight-worker-intel
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://hashinsight:hashinsight_secret_2024@postgres:5432/hashinsight
+      REDIS_URL: redis://redis:6379/0
+      KAFKA_BROKERS: kafka:9092
+      WORKER_NAME: intel-consumer
+      PYTHONUNBUFFERED: 1
+    volumes:
+      - ./workers:/app/workers
+      - ./core:/app/core
+    command: python -u workers/intel_consumer.py
+    restart: unless-stopped
+
+  # Topic Creator (初始化Kafka主题)
+  kafka-init:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: hashinsight-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Creating Kafka topics..."
+        kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --topic events.miner --partitions 3 --replication-factor 1 --config retention.ms=604800000
+        kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --topic events.treasury --partitions 3 --replication-factor 1 --config retention.ms=604800000
+        kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --topic events.ops --partitions 3 --replication-factor 1 --config retention.ms=604800000
+        kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --topic events.crm --partitions 3 --replication-factor 1 --config retention.ms=604800000
+        kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --topic events.dlq --partitions 3 --replication-factor 1 --config retention.ms=2592000000
+        echo "Topics created successfully!"
+        kafka-topics --list --bootstrap-server kafka:9092
+
+volumes:
+  postgres_data:
+  redis_data:
