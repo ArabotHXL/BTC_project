@@ -158,12 +158,37 @@ def health_check():
             'error': str(e)
         }
     
-    # 4. Kafka消费者延迟检查（占位）
-    health_data['checks']['kafka_consumer'] = {
-        'status': 'unknown',
-        'lag': None,
-        'note': 'Placeholder - requires Kafka metrics integration'
-    }
+    # 4. Kafka消费者延迟检查
+    try:
+        from core.monitoring.kafka_lag import get_consumer_lag_summary  # type: ignore
+        
+        lag_summary = get_consumer_lag_summary()
+        
+        if lag_summary.get('status') == 'unavailable':
+            health_data['checks']['kafka_consumer'] = {
+                'status': 'unavailable',
+                'message': 'Kafka monitoring not available'
+            }
+        else:
+            kafka_status = lag_summary.get('status', 'unknown')
+            total_lag = lag_summary.get('total_lag_all_groups', 0)
+            
+            health_data['checks']['kafka_consumer'] = {
+                'status': kafka_status,
+                'total_lag': total_lag,
+                'group_count': lag_summary.get('group_count', 0),
+                'groups': lag_summary.get('groups', {})
+            }
+            
+            if kafka_status == 'critical':
+                logger.warning(f"⚠️ Kafka consumer lag is critical: {total_lag}")
+    
+    except Exception as e:
+        logger.error(f"❌ Kafka consumer lag check failed: {e}")
+        health_data['checks']['kafka_consumer'] = {
+            'status': 'error',
+            'error': str(e)
+        }
     
     # 5. DLQ死信队列检查
     try:
