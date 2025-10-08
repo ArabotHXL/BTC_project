@@ -50,3 +50,36 @@ uv.lock
 
 # 资源文件夹
 attached_assets/
+
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 环境变量和密钥
+*.pem
+*.key
+.env*
+!.env.example
+
+# 日志和临时文件
+/tmp/
+*.log
+logs/
+/tmp/logs/
+
+# CDC平台（如果不想上传）
+# cdc-platform/
+
+# Node模块
+node_modules/
+package-lock.json
+
+# Python虚拟环境
+.venv/
+venv/
+
+# 缓存
+.cache/
+*.pyc
+__pycache__/
