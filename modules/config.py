@@ -22,42 +22,42 @@ AVAILABLE_MODULES = {
         'blueprint': 'modules.crm',
         'url_prefix': '/crm',
         'requires_auth': True,
-        'enabled': False  # No-Money模式禁用CRM
+        'enabled': False  # 已在app.py通过crm_routes.py注册
     },
     'batch': {
         'name': '批量计算器',
         'blueprint': 'modules.batch',
         'url_prefix': '/batch',
         'requires_auth': True,
-        'enabled': False  # No-Money模式禁用批量计算
+        'enabled': False  # 模块不存在，功能已在app.py的batch_calculator_bp中实现
     },
     'analytics': {
         'name': '数据分析',
         'blueprint': 'modules.analytics',
         'url_prefix': '/analytics',
         'requires_auth': True,
-        'enabled': False  # No-Money模式禁用分析模块
+        'enabled': False  # 模块缺少蓝图定义，功能已在app.py的analytics_bp中实现
     },
     'broker': {
         'name': '经纪人系统',
         'blueprint': 'modules.broker',
         'url_prefix': '/broker',
         'requires_auth': True,
-        'enabled': False  # No-Money模式禁用经纪人系统
+        'enabled': False  # 模块不存在（已禁用mining broker功能）
     },
     'hosting': {
         'name': '托管服务',
         'blueprint': 'modules.hosting',
         'url_prefix': '/hosting',
         'requires_auth': True,
-        'enabled': True
+        'enabled': False  # 已在app.py中直接注册
     },
     'client': {
         'name': '客户服务',
         'blueprint': 'modules.client',
         'url_prefix': '/client',
         'requires_auth': True,
-        'enabled': True
+        'enabled': False  # 已在app.py中直接注册
     }
 }
 
