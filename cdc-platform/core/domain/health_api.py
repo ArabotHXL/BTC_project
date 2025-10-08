@@ -138,8 +138,8 @@ def health_check():
         """)
         result = db.session.execute(sql).first()
         
-        backlog = result.backlog or 0
-        oldest_pending_sec = result.oldest_pending_sec or 0
+        backlog = result.backlog or 0 if result else 0
+        oldest_pending_sec = result.oldest_pending_sec or 0 if result else 0
         
         # 判断健康状态（积压>1000或最老事件>5分钟则警告）
         outbox_status = 'healthy'
@@ -195,7 +195,7 @@ def health_check():
         """)
         result = db.session.execute(sql).first()
         
-        if result.last_update:
+        if result and result.last_update:
             freshness_sec = int((datetime.utcnow() - result.last_update).total_seconds())
             forecast_status = 'healthy' if freshness_sec < 3600 else 'stale'
             

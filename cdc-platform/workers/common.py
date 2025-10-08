@@ -15,17 +15,17 @@ import time
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any, Callable
 from datetime import datetime
-from kafka import KafkaConsumer
-from kafka.errors import KafkaError
+from kafka import KafkaConsumer  # type: ignore
+from kafka.errors import KafkaError  # type: ignore
 
 # 添加CDC平台核心模块到Python路径
 CDC_CORE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'core'))
 sys.path.insert(0, CDC_CORE_PATH)
 
 from flask import Flask
-from infra.database import db, init_db
-from infra.models import ConsumerInbox, EventDLQ
-from infra.redis_client import redis_client
+from infra.database import db, init_db  # type: ignore
+from infra.models import ConsumerInbox, EventDLQ  # type: ignore
+from infra.redis_client import redis_client  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -113,6 +113,8 @@ class KafkaConsumerBase(ABC):
             False: 未消费（处理）
         """
         try:
+            if not self.app:
+                return False
             with self.app.app_context():
                 existing = ConsumerInbox.query.filter_by(
                     consumer_name=self.consumer_name,
@@ -142,6 +144,8 @@ class KafkaConsumerBase(ABC):
             processing_duration_ms: 处理耗时（毫秒）
         """
         try:
+            if not self.app:
+                return
             with self.app.app_context():
                 inbox_entry = ConsumerInbox(
                     consumer_name=self.consumer_name,
@@ -171,6 +175,8 @@ class KafkaConsumerBase(ABC):
             retry_count: 重试次数
         """
         try:
+            if not self.app:
+                return
             with self.app.app_context():
                 dlq_entry = EventDLQ(
                     id=f"{event_id}_dlq_{int(time.time())}",
@@ -313,6 +319,9 @@ class KafkaConsumerBase(ABC):
         logger.info(f"✅ {self.consumer_name} is running, listening to topic '{self.topic}'")
         
         try:
+            if not self.consumer:
+                logger.error("❌ Kafka consumer not initialized")
+                return
             for message in self.consumer:
                 if not self.running:
                     break
@@ -326,14 +335,16 @@ class KafkaConsumerBase(ABC):
                     
                     if not event_id or not user_id:
                         logger.error(f"❌ Invalid message format (missing id/user_id): {message.value}")
-                        self.consumer.commit()
+                        if self.consumer:
+                            self.consumer.commit()
                         continue
                     
                     logger.info(f"📨 Received event: id={event_id}, kind={event_kind}, user={user_id}")
                     
                     # 检查是否已消费（幂等性）
                     if self._check_inbox(event_id):
-                        self.consumer.commit()
+                        if self.consumer:
+                            self.consumer.commit()
                         continue
                     
                     # 带重试机制的处理
@@ -342,7 +353,8 @@ class KafkaConsumerBase(ABC):
                     )
                     
                     # 提交offset（无论成功或失败都提交，避免重复消费）
-                    self.consumer.commit()
+                    if self.consumer:
+                        self.consumer.commit()
                     
                     if success:
                         logger.info(f"✅ Message committed: {event_id}")
@@ -352,7 +364,8 @@ class KafkaConsumerBase(ABC):
                 except Exception as e:
                     logger.error(f"❌ Error processing message: {e}\n{traceback.format_exc()}")
                     # 即使出错也提交offset，避免无限重试
-                    self.consumer.commit()
+                    if self.consumer:
+                        self.consumer.commit()
         
         except KeyboardInterrupt:
             logger.info("⏹️ Consumer interrupted by user")

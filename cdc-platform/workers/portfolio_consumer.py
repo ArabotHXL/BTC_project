@@ -27,7 +27,7 @@ sys.path.insert(0, PROJECT_ROOT)
 CDC_WORKERS_PATH = os.path.dirname(__file__)
 sys.path.insert(0, CDC_WORKERS_PATH)
 
-from common import KafkaConsumerBase, format_error_message
+from .common import KafkaConsumerBase, format_error_message  # type: ignore
 
 # 配置日志
 logging.basicConfig(
@@ -127,6 +127,9 @@ class PortfolioConsumer(KafkaConsumerBase):
         """
         try:
             # 导入重算函数（延迟导入避免循环依赖）
+            if not self.app:
+                logger.error("❌ Flask app not initialized")
+                return self._placeholder_recalc(user_id)
             with self.app.app_context():
                 # 尝试导入主应用的重算函数
                 try:
