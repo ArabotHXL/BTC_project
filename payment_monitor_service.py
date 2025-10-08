@@ -563,6 +563,9 @@ class PaymentMonitorService:
     def _acquire_scheduler_lock(self) -> bool:
         """获取调度器锁"""
         try:
+            # 🔧 FIX: 确保在应用上下文中执行数据库操作
+            from app import app
+            
             worker_info = json.dumps({
                 'process_id': self.process_id,
                 'hostname': self.hostname,
@@ -570,13 +573,14 @@ class PaymentMonitorService:
                 'service_type': 'payment_monitor'
             })
             
-            return SchedulerLock.acquire_lock(
-                lock_key=self.lock_key,
-                process_id=self.process_id,
-                hostname=self.hostname,
-                timeout_seconds=self.lock_timeout,
-                worker_info=worker_info
-            )
+            with app.app_context():
+                return SchedulerLock.acquire_lock(
+                    lock_key=self.lock_key,
+                    process_id=self.process_id,
+                    hostname=self.hostname,
+                    timeout_seconds=self.lock_timeout,
+                    worker_info=worker_info
+                )
         except Exception as e:
             logger.error(f"获取调度器锁失败: {e}")
             return False

@@ -135,28 +135,39 @@ class BlockchainIntegration:
     def _initialize_encryption(self):
         """初始化数据加密 - 生产安全版本"""
         try:
-            # SECURITY FIX: 生产环境必须设置加密密码和盐值
+            # SECURITY FIX: 主网模式必须设置加密密码和盐值，测试网模式可选
             password = os.environ.get('ENCRYPTION_PASSWORD')
             salt = os.environ.get('ENCRYPTION_SALT')
             
-            if not password:
-                raise ValueError(
-                    "ENCRYPTION_PASSWORD环境变量必须设置。生产环境不允许使用默认密码。"
-                    "请设置强密码（建议32位以上随机字符串）"
-                )
-            
-            if not salt:
-                raise ValueError(
-                    "ENCRYPTION_SALT环境变量必须设置。生产环境不允许使用默认盐值。"
-                    "请设置唯一盐值（建议16位以上随机字符串）"
-                )
-            
-            # 验证密码强度
-            if len(password) < 16:
-                raise ValueError("ENCRYPTION_PASSWORD长度至少16个字符")
-            
-            if len(salt) < 8:
-                raise ValueError("ENCRYPTION_SALT长度至少8个字符")
+            # 仅在主网模式下强制要求加密配置
+            if self.is_mainnet_mode:
+                if not password:
+                    raise ValueError(
+                        "ENCRYPTION_PASSWORD环境变量必须设置。生产环境不允许使用默认密码。"
+                        "请设置强密码（建议32位以上随机字符串）"
+                    )
+                
+                if not salt:
+                    raise ValueError(
+                        "ENCRYPTION_SALT环境变量必须设置。生产环境不允许使用默认盐值。"
+                        "请设置唯一盐值（建议16位以上随机字符串）"
+                    )
+                
+                # 验证密码强度
+                if len(password) < 16:
+                    raise ValueError("ENCRYPTION_PASSWORD长度至少16个字符")
+                
+                if len(salt) < 8:
+                    raise ValueError("ENCRYPTION_SALT长度至少8个字符")
+            else:
+                # 测试网模式：使用开发默认值（如果未配置）
+                if not password:
+                    password = "dev-encryption-password-2024-testnet-only"
+                    logger.warning("⚠️ 测试网模式：使用开发默认加密密码")
+                
+                if not salt:
+                    salt = "dev-salt-testnet"
+                    logger.warning("⚠️ 测试网模式：使用开发默认盐值")
             
             kdf = PBKDF2HMAC(
                 algorithm=hashes.SHA256(),
@@ -167,7 +178,10 @@ class BlockchainIntegration:
             key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
             self.encryption_key = Fernet(key)
             
-            logger.info("数据加密已初始化（使用强加密配置）")
+            if self.is_mainnet_mode:
+                logger.info("数据加密已初始化（使用强加密配置）")
+            else:
+                logger.info("数据加密已初始化（测试网开发模式）")
             
         except ValueError as e:
             logger.error(f"加密配置错误: {e}")
