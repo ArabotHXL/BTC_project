@@ -536,6 +536,286 @@ def deals_page():
         logger.error(f"交易页面错误: {e}")
         return redirect(url_for('crm.crm_dashboard'))
 
+@crm_bp.route('/api/deals/kpi')
+def deals_kpi():
+    """获取交易KPI统计数据"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        from sqlalchemy.orm import joinedload
+        
+        # 总交易数量
+        total_deals = Deal.query.count() or 0
+        
+        # 总交易价值
+        total_value = Deal.query.with_entities(func.sum(Deal.value)).scalar() or 0
+        
+        # 活跃项目数（状态非COMPLETED/CANCELED）
+        active_projects = Deal.query.filter(
+            ~Deal.status.in_([DealStatus.COMPLETED, DealStatus.CANCELED])
+        ).count() or 0
+        
+        # 计算平均成交周期（已完成的交易）
+        completed_deals = Deal.query.filter(
+            Deal.status == DealStatus.COMPLETED,
+            Deal.closed_date.isnot(None),
+            Deal.created_at.isnot(None)
+        ).all()
+        
+        if completed_deals:
+            total_days = sum([
+                (deal.closed_date - deal.created_at).days 
+                for deal in completed_deals 
+                if deal.closed_date and deal.created_at
+            ])
+            avg_cycle = total_days / len(completed_deals) if len(completed_deals) > 0 else 0
+        else:
+            avg_cycle = 0
+        
+        logger.info(f"Deals KPI: total={total_deals}, value={total_value}, active={active_projects}, avg_cycle={avg_cycle}")
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'total_deals': total_deals,
+                'total_value': float(total_value),
+                'active_projects': active_projects,
+                'avg_close_cycle': round(avg_cycle, 1)
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取交易KPI错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/deals/revenue-trend')
+def deals_revenue_trend():
+    """获取月度收入趋势数据"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        # 获取最近6个月的数据
+        now = datetime.now()
+        months_data = []
+        
+        for i in range(5, -1, -1):
+            # 计算月份
+            target_month = now - timedelta(days=30*i)
+            month_start = target_month.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            
+            # 下个月的第一天
+            if month_start.month == 12:
+                month_end = month_start.replace(year=month_start.year + 1, month=1)
+            else:
+                month_end = month_start.replace(month=month_start.month + 1)
+            
+            # 查询该月所有交易
+            month_deals = Deal.query.filter(
+                Deal.created_at >= month_start,
+                Deal.created_at < month_end
+            ).all()
+            
+            # 计算总收入和已完成收入
+            total_revenue = sum([deal.value or 0 for deal in month_deals])
+            completed_revenue = sum([
+                deal.value or 0 
+                for deal in month_deals 
+                if deal.status == DealStatus.COMPLETED
+            ])
+            
+            months_data.append({
+                'month': month_start.strftime('%Y-%m'),
+                'month_label': month_start.strftime('%m月'),
+                'total_revenue': float(total_revenue),
+                'completed_revenue': float(completed_revenue)
+            })
+        
+        logger.info(f"Revenue trend calculated for {len(months_data)} months")
+        
+        return jsonify({
+            'success': True,
+            'data': months_data
+        })
+        
+    except Exception as e:
+        logger.error(f"获取收入趋势错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/deals/mining-stats')
+def deals_mining_stats():
+    """获取矿场业务统计数据"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        # 获取所有有挖矿容量的交易
+        mining_deals = Deal.query.filter(
+            Deal.mining_capacity.isnot(None),
+            Deal.mining_capacity > 0
+        ).all()
+        
+        # 托管容量统计
+        total_capacity = sum([deal.mining_capacity or 0 for deal in mining_deals])
+        signed_capacity = sum([
+            deal.mining_capacity or 0 
+            for deal in mining_deals 
+            if deal.status in [DealStatus.SIGNED, DealStatus.COMPLETED]
+        ])
+        pending_capacity = total_capacity - signed_capacity
+        
+        # 电费价格分析
+        deals_with_electricity = [
+            deal for deal in mining_deals 
+            if deal.electricity_cost and deal.electricity_cost > 0
+        ]
+        
+        if deals_with_electricity:
+            electricity_costs = [deal.electricity_cost for deal in deals_with_electricity]
+            avg_electricity = sum(electricity_costs) / len(electricity_costs)
+            min_electricity = min(electricity_costs)
+            max_electricity = max(electricity_costs)
+        else:
+            avg_electricity = 0
+            min_electricity = 0
+            max_electricity = 0
+        
+        # 电费分布（用于柱状图）
+        electricity_distribution = []
+        for deal in deals_with_electricity[:10]:  # 前10个项目
+            electricity_distribution.append({
+                'deal_title': deal.title,
+                'electricity_cost': float(deal.electricity_cost or 0)
+            })
+        
+        logger.info(f"Mining stats: capacity={total_capacity}MW, avg_elec={avg_electricity}")
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'total_capacity': float(total_capacity),
+                'signed_capacity': float(signed_capacity),
+                'pending_capacity': float(pending_capacity),
+                'avg_electricity_cost': float(avg_electricity),
+                'min_electricity_cost': float(min_electricity),
+                'max_electricity_cost': float(max_electricity),
+                'electricity_distribution': electricity_distribution
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取矿场统计错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/deals/kanban')
+def deals_kanban():
+    """获取Kanban看板数据（按状态分组）"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        from sqlalchemy.orm import joinedload
+        
+        # 预加载customer关系，防止N+1查询
+        all_deals = Deal.query.options(joinedload(Deal.customer)).all()
+        
+        # 按状态分组
+        kanban_data = {}
+        
+        for status in DealStatus:
+            status_deals = [deal for deal in all_deals if deal.status == status]
+            
+            # 计算该状态的总金额
+            status_value = sum([deal.value or 0 for deal in status_deals])
+            
+            # 格式化交易数据
+            deals_list = []
+            for deal in status_deals:
+                deals_list.append({
+                    'id': deal.id,
+                    'title': deal.title,
+                    'customer_name': deal.customer.name if deal.customer else '未知客户',
+                    'value': float(deal.value or 0),
+                    'mining_capacity': float(deal.mining_capacity or 0),
+                    'expected_close_date': deal.expected_close_date.strftime('%Y-%m-%d') if deal.expected_close_date else None,
+                    'status': status.value
+                })
+            
+            kanban_data[status.name] = {
+                'status_name': status.value,
+                'count': len(status_deals),
+                'total_value': float(status_value),
+                'deals': deals_list
+            }
+        
+        logger.info(f"Kanban data prepared for {len(DealStatus)} statuses")
+        
+        return jsonify({
+            'success': True,
+            'data': kanban_data
+        })
+        
+    except Exception as e:
+        logger.error(f"获取Kanban数据错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/deals/top-investments')
+def deals_top_investments():
+    """获取TOP投资客户排行"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        from sqlalchemy.orm import joinedload
+        
+        # 获取所有交易，预加载客户关系
+        all_deals = Deal.query.options(joinedload(Deal.customer)).all()
+        
+        # 按客户聚合投资额
+        customer_investments = {}
+        for deal in all_deals:
+            if deal.customer:
+                customer_id = deal.customer.id
+                customer_name = deal.customer.name
+                
+                if customer_id not in customer_investments:
+                    customer_investments[customer_id] = {
+                        'customer_name': customer_name,
+                        'total_investment': 0,
+                        'monthly_profit': 0
+                    }
+                
+                customer_investments[customer_id]['total_investment'] += deal.value or 0
+                customer_investments[customer_id]['monthly_profit'] += deal.monthly_profit_estimate or 0
+        
+        # 排序并获取TOP 5
+        top_investments = sorted(
+            customer_investments.values(),
+            key=lambda x: x['total_investment'],
+            reverse=True
+        )[:5]
+        
+        # 格式化数据
+        top_investments_data = []
+        for inv in top_investments:
+            top_investments_data.append({
+                'customer_name': inv['customer_name'],
+                'total_investment': float(inv['total_investment']),
+                'monthly_profit': float(inv['monthly_profit'])
+            })
+        
+        logger.info(f"Top investments calculated for {len(top_investments_data)} customers")
+        
+        return jsonify({
+            'success': True,
+            'data': top_investments_data
+        })
+        
+    except Exception as e:
+        logger.error(f"获取投资排行错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @crm_bp.route('/activities', endpoint='activities')
 def activities_page():
     """活动页面"""
