@@ -1132,10 +1132,12 @@ def deal_detail_page(deal_id):
         if not user_id:
             return redirect(url_for('login'))
         
+        deal = Deal.query.get_or_404(deal_id)
+        
         return render_template('crm/deal_detail.html',
                              title='Deal Detail',
                              page='crm_deal_detail',
-                             deal_id=deal_id)
+                             deal=deal)
     except Exception as e:
         logger.error(f"交易详情页面错误: {e}")
         return redirect(url_for('crm.deals'))
@@ -1939,6 +1941,254 @@ def alerts_urgent():
         
     except Exception as e:
         logger.error(f"获取紧急提醒错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/deals/<int:deal_id>/overview')
+def deal_overview(deal_id):
+    """交易概览KPI"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        deal = Deal.query.get_or_404(deal_id)
+        
+        deal_value = float(deal.value) if deal.value else 0
+        client_investment = float(deal.client_investment) if deal.client_investment else 0
+        mining_capacity = float(deal.mining_capacity) if deal.mining_capacity else 0
+        electricity_cost = float(deal.electricity_cost) if deal.electricity_cost else 0.05
+        commission_rate = float(deal.commission_rate) if deal.commission_rate else 0
+        
+        btc_price = 60000
+        monthly_btc = mining_capacity * 50
+        monthly_revenue = monthly_btc * btc_price
+        monthly_electricity = mining_capacity * 1000 * 24 * 30 * electricity_cost
+        monthly_profit = monthly_revenue - monthly_electricity
+        
+        roi_percent = (monthly_profit / client_investment * 100) if client_investment > 0 else 0
+        
+        if deal.commission_type == 'percentage':
+            expected_commission = (commission_rate * monthly_profit / 100) if monthly_profit > 0 else 0
+        elif deal.commission_type == 'fixed':
+            expected_commission = commission_rate
+        else:
+            expected_commission = 0
+        
+        contract_term_days = (deal.contract_term or 12) * 30 if deal.contract_term else 360
+        if deal.created_at and deal.expected_close_date:
+            total_days = (deal.expected_close_date - deal.created_at).days
+            used_days = (datetime.now() - deal.created_at).days
+            contract_progress = min(100, (used_days / total_days * 100)) if total_days > 0 else 0
+        else:
+            contract_progress = 0
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'deal_value': deal_value,
+                'client_investment': client_investment,
+                'monthly_profit': monthly_profit,
+                'roi_percent': roi_percent,
+                'contract_progress': contract_progress,
+                'expected_commission': expected_commission
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取交易概览错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/deals/<int:deal_id>/timeline')
+def deal_timeline(deal_id):
+    """交易时间线"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        deal = Deal.query.get_or_404(deal_id)
+        
+        milestones = []
+        
+        if deal.created_at:
+            milestones.append({
+                'date': deal.created_at.strftime('%Y-%m-%d'),
+                'title': '创建交易',
+                'description': f'交易已创建，金额: ${deal.value:,.2f}' if deal.value else '交易已创建',
+                'status': 'completed',
+                'icon': 'plus-circle'
+            })
+        
+        status_activities = Activity.query.filter_by(deal_id=deal_id).filter(
+            Activity.type.in_(['状态变更', '创建'])
+        ).order_by(Activity.created_at).all()
+        
+        for activity in status_activities:
+            if activity.type == '状态变更':
+                milestones.append({
+                    'date': activity.created_at.strftime('%Y-%m-%d'),
+                    'title': activity.summary or '状态变更',
+                    'description': activity.details or '',
+                    'status': 'completed',
+                    'icon': 'arrow-right-circle'
+                })
+        
+        if deal.expected_close_date:
+            is_future = deal.expected_close_date > datetime.now()
+            milestones.append({
+                'date': deal.expected_close_date.strftime('%Y-%m-%d'),
+                'title': '预计完成日期',
+                'description': '预计交易完成时间',
+                'status': 'pending' if is_future else 'completed',
+                'icon': 'calendar-check'
+            })
+        
+        if deal.closed_date:
+            milestones.append({
+                'date': deal.closed_date.strftime('%Y-%m-%d'),
+                'title': '实际完成日期',
+                'description': f'交易已{deal.status.value}',
+                'status': 'completed',
+                'icon': 'check-circle'
+            })
+        
+        milestones.sort(key=lambda x: x['date'])
+        
+        return jsonify({
+            'success': True,
+            'milestones': milestones
+        })
+        
+    except Exception as e:
+        logger.error(f"获取交易时间线错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/deals/<int:deal_id>/profitability')
+def deal_profitability(deal_id):
+    """收益预测"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        deal = Deal.query.get_or_404(deal_id)
+        
+        mining_capacity = float(deal.mining_capacity) if deal.mining_capacity else 0
+        electricity_cost = float(deal.electricity_cost) if deal.electricity_cost else 0.05
+        
+        btc_price = 60000
+        monthly_btc = mining_capacity * 50
+        monthly_revenue = monthly_btc * btc_price
+        monthly_electricity = mining_capacity * 1000 * 24 * 30 * electricity_cost
+        monthly_profit = monthly_revenue - monthly_electricity
+        
+        months = []
+        revenues = []
+        cumulative_profits = []
+        cumulative = 0
+        
+        for i in range(1, 13):
+            months.append(f'月{i}')
+            revenues.append(monthly_revenue)
+            cumulative += monthly_profit
+            cumulative_profits.append(cumulative)
+        
+        client_investment = float(deal.client_investment) if deal.client_investment else 0
+        roi_breakeven_months = int(client_investment / monthly_profit) if monthly_profit > 0 else 12
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'months': months,
+                'revenues': revenues,
+                'cumulative_profits': cumulative_profits,
+                'roi_breakeven_months': min(roi_breakeven_months, 12)
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取收益预测错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/deals/<int:deal_id>/power-analysis')
+def deal_power_analysis(deal_id):
+    """功耗分析"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        deal = Deal.query.get_or_404(deal_id)
+        
+        mining_capacity = float(deal.mining_capacity) if deal.mining_capacity else 0
+        electricity_cost = float(deal.electricity_cost) if deal.electricity_cost else 0.05
+        
+        total_power_kw = mining_capacity * 1000
+        monthly_kwh = total_power_kw * 24 * 30
+        monthly_electricity_cost = monthly_kwh * electricity_cost
+        
+        btc_price = 60000
+        monthly_btc = mining_capacity * 50
+        monthly_revenue = monthly_btc * btc_price
+        
+        electricity_ratio = (monthly_electricity_cost / monthly_revenue * 100) if monthly_revenue > 0 else 0
+        
+        market_avg_cost = 0.06
+        comparison = ((electricity_cost - market_avg_cost) / market_avg_cost * 100) if market_avg_cost > 0 else 0
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'total_power_kw': total_power_kw,
+                'monthly_electricity_cost': monthly_electricity_cost,
+                'electricity_ratio': electricity_ratio,
+                'market_comparison': comparison
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取功耗分析错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/deals/<int:deal_id>/sensitivity')
+def deal_sensitivity(deal_id):
+    """敏感性分析"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        deal = Deal.query.get_or_404(deal_id)
+        
+        mining_capacity = float(deal.mining_capacity) if deal.mining_capacity else 0
+        electricity_cost = float(deal.electricity_cost) if deal.electricity_cost else 0.05
+        client_investment = float(deal.client_investment) if deal.client_investment else 0
+        
+        base_btc_price = 60000
+        scenarios = [-20, -10, 0, 10, 20]
+        
+        price_scenarios = []
+        monthly_profits = []
+        roi_values = []
+        
+        for change in scenarios:
+            btc_price = base_btc_price * (1 + change / 100)
+            monthly_btc = mining_capacity * 50
+            monthly_revenue = monthly_btc * btc_price
+            monthly_electricity = mining_capacity * 1000 * 24 * 30 * electricity_cost
+            monthly_profit = monthly_revenue - monthly_electricity
+            roi = (monthly_profit / client_investment * 100) if client_investment > 0 else 0
+            
+            price_scenarios.append(f'${btc_price:,.0f}')
+            monthly_profits.append(monthly_profit)
+            roi_values.append(roi)
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'price_scenarios': price_scenarios,
+                'monthly_profits': monthly_profits,
+                'roi_values': roi_values
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取敏感性分析错误: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 def init_crm_routes(app):
