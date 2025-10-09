@@ -68,6 +68,17 @@ The CRM system is natively integrated into the Flask application, accessible at 
 -   **Authentication**: Session-based (shares main app's authentication)
 -   **Database**: SQLAlchemy ORM with PostgreSQL
 
+**🆕 New CRM Dashboard** (October 2025):
+-   **Template**: dashboard_new.html with Chart.js & CountUp.js
+-   **Design**: Data visualization + Mining-specific analytics
+-   **Features**: 
+    - 4 KPI cards with animations (Customers, Deals, Hosting Capacity, Active Deals)
+    - 4 Chart.js visualizations (Revenue Trend, Sales Funnel, Capacity Distribution, Customer Type)
+    - Mining Business Zone (Miner Models Ranking, Customer Capacity TOP 5)
+    - Smart Operations (Follow-ups, Urgent Alerts, Quick Actions)
+-   **API Endpoints**: 12 dedicated endpoints (/api/crm/kpi/*, /api/crm/analytics/*, /api/crm/rankings/*, /api/crm/followups/*, /api/crm/alerts/*)
+-   **Styling**: BTC-style dark theme with gold/orange accents (#f7931a, #ffa500)
+
 **Core Models**:
 -   **Customer**: Company information, contacts, mining capacity, electricity costs
 -   **Lead**: Potential opportunities with status tracking (NEW, CONTACTED, QUALIFIED, NEGOTIATION, WON, LOST)
