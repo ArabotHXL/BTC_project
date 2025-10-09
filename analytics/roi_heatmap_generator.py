@@ -57,7 +57,7 @@ class ROIHeatmapGenerator:
             query = text("""
                 SELECT btc_price, network_difficulty, network_hashrate, block_reward
                 FROM market_analytics
-                ORDER BY timestamp DESC
+                ORDER BY recorded_at DESC
                 LIMIT 1
             """)
             result = db.session.execute(query).fetchone()
@@ -220,23 +220,23 @@ class ROIHeatmapGenerator:
             return {
                 'success': True,
                 'heatmap': heatmap_matrix,
-                'x_axis': btc_prices.tolist(),
-                'y_axis': difficulty_multipliers.tolist(),
+                'x_axis': [float(x) for x in btc_prices.tolist()],
+                'y_axis': [float(y) for y in difficulty_multipliers.tolist()],
                 'x_label': 'BTC Price ($)',
                 'y_label': 'Network Difficulty (Multiplier)',
                 'breakeven_points': breakeven_points,
                 'current_state': {
-                    'btc_price': self.current_btc_price,
+                    'btc_price': float(self.current_btc_price),
                     'difficulty_mult': 1.0,
-                    'profit': current_result['daily_profit'],
-                    'is_profitable': current_result['is_profitable']
+                    'profit': float(current_result['daily_profit']),
+                    'is_profitable': bool(current_result['is_profitable'])
                 },
                 'curtailment': curtailment_config,
                 'stats': {
-                    'max_profit': max([max([cell['profit'] for cell in row]) for row in heatmap_matrix]),
-                    'min_profit': min([min([cell['profit'] for cell in row]) for row in heatmap_matrix]),
-                    'profitable_scenarios': sum([sum([1 for cell in row if cell['is_profitable']]) for row in heatmap_matrix]),
-                    'total_scenarios': len(btc_prices) * len(difficulty_multipliers)
+                    'max_profit': float(max([max([cell['profit'] for cell in row]) for row in heatmap_matrix])),
+                    'min_profit': float(min([min([cell['profit'] for cell in row]) for row in heatmap_matrix])),
+                    'profitable_scenarios': int(sum([sum([1 for cell in row if cell['is_profitable']]) for row in heatmap_matrix])),
+                    'total_scenarios': int(len(btc_prices) * len(difficulty_multipliers))
                 }
             }
             
@@ -332,10 +332,10 @@ class ROIHeatmapGenerator:
         try:
             # 查询历史市场数据
             query = text("""
-                SELECT timestamp, btc_price, network_difficulty, network_hashrate
+                SELECT recorded_at, btc_price, network_difficulty, network_hashrate
                 FROM market_analytics
-                WHERE timestamp BETWEEN :start_date AND :end_date
-                ORDER BY timestamp ASC
+                WHERE recorded_at BETWEEN :start_date AND :end_date
+                ORDER BY recorded_at ASC
             """)
             
             results = db.session.execute(

@@ -294,7 +294,7 @@ def batch_calculate():
             cursor.execute("""
                 SELECT btc_price, network_difficulty, network_hashrate, block_reward 
                 FROM market_analytics 
-                ORDER BY timestamp DESC 
+                ORDER BY recorded_at DESC 
                 LIMIT 1
             """)
             
