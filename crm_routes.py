@@ -1323,6 +1323,195 @@ def broker_performance_ranking():
         logger.error(f"获取业绩排行错误: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# ==================== Broker Commissions Page APIs ====================
+
+@crm_bp.route('/api/broker/commissions/stats')
+def broker_commissions_stats():
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        user_id = session['user_id']
+        
+        total_commission = db.session.query(func.sum(CommissionRecord.commission_amount))\
+            .filter(CommissionRecord.created_by_id == user_id)\
+            .scalar() or 0
+        
+        paid_commission = db.session.query(func.sum(CommissionRecord.commission_amount))\
+            .filter(CommissionRecord.created_by_id == user_id, CommissionRecord.paid == True)\
+            .scalar() or 0
+        
+        unpaid_commission = total_commission - paid_commission
+        
+        current_month = datetime.now().strftime('%Y-%m')
+        this_month_commission = db.session.query(func.sum(CommissionRecord.commission_amount))\
+            .filter(
+                CommissionRecord.created_by_id == user_id,
+                CommissionRecord.record_month == current_month
+            )\
+            .scalar() or 0
+        
+        total_records = CommissionRecord.query.filter(CommissionRecord.created_by_id == user_id).count() or 0
+        
+        avg_monthly_commission = db.session.query(func.avg(CommissionRecord.commission_amount))\
+            .filter(CommissionRecord.created_by_id == user_id)\
+            .scalar() or 0
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'total_commission': float(total_commission),
+                'paid_commission': float(paid_commission),
+                'unpaid_commission': float(unpaid_commission),
+                'this_month_commission': float(this_month_commission),
+                'total_records': int(total_records),
+                'avg_monthly_commission': float(avg_monthly_commission)
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取佣金统计错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/broker/commissions/trend')
+def broker_commissions_trend():
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        user_id = session['user_id']
+        
+        current_date = datetime.now()
+        months = []
+        paid_amounts = []
+        unpaid_amounts = []
+        
+        for i in range(11, -1, -1):
+            month_date = current_date - relativedelta(months=i)
+            month_key = month_date.strftime('%Y-%m')
+            month_label = month_date.strftime('%b %Y')
+            
+            months.append(month_label)
+            
+            paid = db.session.query(func.sum(CommissionRecord.commission_amount))\
+                .filter(
+                    CommissionRecord.created_by_id == user_id,
+                    CommissionRecord.record_month == month_key,
+                    CommissionRecord.paid == True
+                )\
+                .scalar() or 0
+            
+            unpaid = db.session.query(func.sum(CommissionRecord.commission_amount))\
+                .filter(
+                    CommissionRecord.created_by_id == user_id,
+                    CommissionRecord.record_month == month_key,
+                    CommissionRecord.paid == False
+                )\
+                .scalar() or 0
+            
+            paid_amounts.append(float(paid))
+            unpaid_amounts.append(float(unpaid))
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'months': months,
+                'paid': paid_amounts,
+                'unpaid': unpaid_amounts
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取佣金趋势错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/broker/commissions/settlement-status')
+def broker_commissions_settlement_status():
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        user_id = session['user_id']
+        
+        settlement_status = db.session.query(
+            CommissionRecord.paid,
+            func.sum(CommissionRecord.commission_amount).label('total_amount'),
+            func.count(CommissionRecord.id).label('count')
+        ).filter(CommissionRecord.created_by_id == user_id)\
+         .group_by(CommissionRecord.paid)\
+         .all()
+        
+        labels = []
+        amounts = []
+        counts = []
+        
+        for paid, total_amount, count in settlement_status:
+            labels.append('Paid' if paid else 'Unpaid')
+            amounts.append(float(total_amount or 0))
+            counts.append(int(count))
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'labels': labels,
+                'amounts': amounts,
+                'counts': counts
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取结算状态错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/broker/commissions/list')
+def broker_commissions_list():
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        user_id = session['user_id']
+        
+        paid_filter = request.args.get('paid', None)
+        
+        query = CommissionRecord.query.filter(CommissionRecord.created_by_id == user_id)
+        
+        if paid_filter == 'true':
+            query = query.filter(CommissionRecord.paid == True)
+        elif paid_filter == 'false':
+            query = query.filter(CommissionRecord.paid == False)
+        
+        records = query.order_by(CommissionRecord.record_date.desc()).all()
+        
+        commissions_data = []
+        for record in records:
+            deal = Deal.query.get(record.deal_id)
+            customer = Customer.query.get(record.customer_id)
+            
+            commissions_data.append({
+                'id': record.id,
+                'deal_id': record.deal_id,
+                'customer_id': record.customer_id,
+                'customer_name': customer.name if customer else 'Unknown',
+                'mining_farm_name': deal.mining_farm_name if deal else 'Unknown',
+                'commission_amount': float(record.commission_amount or 0),
+                'paid': record.paid,
+                'record_month': record.record_month,
+                'payment_date': record.paid_date.strftime('%Y-%m-%d') if record.paid_date else None,
+                'record_date': record.record_date.strftime('%Y-%m-%d') if record.record_date else None,
+                'commission_type': record.commission_type,
+                'notes': record.notes or ''
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': commissions_data,
+            'total': len(commissions_data)
+        })
+        
+    except Exception as e:
+        logger.error(f"获取佣金列表错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # ==================== Broker Deals Page APIs ====================
 
 @crm_bp.route('/api/broker/deals/stats')
