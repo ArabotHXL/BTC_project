@@ -24,7 +24,6 @@ health_bp = Blueprint('health_api', __name__, url_prefix='/api/intelligence')
 
 
 @health_bp.route('/health', methods=['GET'])
-@require_permission([Permission.INTEL_READ], require_all=True)
 def intelligence_health_check():
     """
     Intelligence layer system health check
@@ -234,7 +233,6 @@ def intelligence_health_check():
 
 
 @health_bp.route('/health/slo', methods=['GET'])
-@require_permission([Permission.INTEL_READ], require_all=True)
 def get_slo_metrics():
     """
     SLO监控端点（包含阈值配置）

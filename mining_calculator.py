@@ -647,25 +647,45 @@ def calculate_mining_profitability(hashrate=0.0, power_consumption=0.0, electric
         
     try:
         # Get values from miner model if provided
-        if miner_model and miner_model in MINER_DATA:
-            # Get single miner specs
-            single_hashrate = MINER_DATA[miner_model]["hashrate"]
-            single_power_watt = MINER_DATA[miner_model]["power_watt"]
+        if miner_model:
+            single_hashrate = None
+            single_power_watt = None
             
-            # Use user-specified miner count instead of calculating from site power
-            # Only recalculate if miner_count is 0 or explicitly requested
-            if site_power_mw and site_power_mw > 0 and miner_count == 0:
-                # Formula from original code: site_miner_count = int((site_power_mw * 1000) / (power_watt / 1000))
-                calculated_count = int((site_power_mw * 1000) / (single_power_watt / 1000))
-                miner_count = max(1, calculated_count)  # Ensure at least 1 miner
-                logging.info(f"Calculated {miner_count} miners for {site_power_mw} MW using {miner_model}")
+            # First, try to get from MINER_DATA dictionary (fast)
+            if miner_model in MINER_DATA:
+                single_hashrate = MINER_DATA[miner_model]["hashrate"]
+                single_power_watt = MINER_DATA[miner_model]["power_watt"]
+                logging.info(f"Loaded {miner_model} from MINER_DATA cache")
             else:
-                logging.info(f"Using user-specified miner count: {miner_count} for {miner_model}")
+                # If not in dictionary, try to load from database
+                try:
+                    from models import MinerModel
+                    miner_db = MinerModel.query.filter_by(model_name=miner_model).first()
+                    if miner_db:
+                        single_hashrate = float(miner_db.reference_hashrate)
+                        single_power_watt = float(miner_db.reference_power)
+                        logging.info(f"Loaded {miner_model} from database: {single_hashrate}TH/s, {single_power_watt}W")
+                    else:
+                        logging.warning(f"Miner model {miner_model} not found in MINER_DATA or database")
+                except Exception as db_error:
+                    logging.error(f"Failed to load miner from database: {db_error}")
             
-            # Apply miner count to get total specs
-            hashrate = single_hashrate * miner_count
-            power_consumption = single_power_watt * miner_count
-            logging.info(f"Miner model {miner_model}: single={single_hashrate}TH/s, count={miner_count}, total={hashrate}TH/s")
+            # If we got valid miner specs, use them
+            if single_hashrate and single_power_watt:
+                # Use user-specified miner count instead of calculating from site power
+                # Only recalculate if miner_count is 0 or explicitly requested
+                if site_power_mw and site_power_mw > 0 and miner_count == 0:
+                    # Formula from original code: site_miner_count = int((site_power_mw * 1000) / (power_watt / 1000))
+                    calculated_count = int((site_power_mw * 1000) / (single_power_watt / 1000))
+                    miner_count = max(1, calculated_count)  # Ensure at least 1 miner
+                    logging.info(f"Calculated {miner_count} miners for {site_power_mw} MW using {miner_model}")
+                else:
+                    logging.info(f"Using user-specified miner count: {miner_count} for {miner_model}")
+                
+                # Apply miner count to get total specs
+                hashrate = single_hashrate * miner_count
+                power_consumption = single_power_watt * miner_count
+                logging.info(f"Miner model {miner_model}: single={single_hashrate}TH/s, count={miner_count}, total={hashrate}TH/s")
         
         # Get real-time data if requested
         if use_real_time_data:

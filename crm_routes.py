@@ -310,19 +310,78 @@ def customer_detail_page(customer_id):
         logger.error(f"客户详情页面错误: {e}")
         return redirect(url_for('crm.customers'))
 
-@crm_bp.route('/customer/new', endpoint='new_customer')
+@crm_bp.route('/customer/new', methods=['GET', 'POST'], endpoint='new_customer')
 def new_customer_page():
-    """新建客户页面"""
+    """新建客户页面和创建处理"""
     try:
         user_id = session.get('user_id')
         if not user_id:
             return redirect(url_for('login'))
         
-        return render_template('crm/customer_form.html',
-                             title='New Customer',
-                             page='crm_new_customer')
+        # Handle GET request - show form
+        if request.method == 'GET':
+            return render_template('crm/customer_form.html',
+                                 title='New Customer',
+                                 page='crm_new_customer')
+        
+        # Handle POST request - create customer
+        name = request.form.get('name', '').strip()
+        company = request.form.get('company', '').strip()
+        email = request.form.get('email', '').strip()
+        phone = request.form.get('phone', '').strip()
+        address = request.form.get('address', '').strip()
+        customer_type = request.form.get('customer_type', '企业')
+        tags = request.form.get('tags', '').strip()
+        mining_capacity = request.form.get('mining_capacity', type=float)
+        
+        # Validate required fields
+        if not name:
+            flash('客户名称为必填项', 'error')
+            return render_template('crm/customer_form.html',
+                                 title='New Customer',
+                                 page='crm_new_customer')
+        
+        # Create new customer
+        new_customer = Customer(
+            name=name,
+            company=company,
+            email=email,
+            phone=phone,
+            address=address,
+            customer_type=customer_type,
+            tags=tags,
+            mining_capacity=mining_capacity,
+            status='active'
+        )
+        
+        db.session.add(new_customer)
+        db.session.commit()
+        
+        # Handle calculator access if granted
+        if request.form.get('grant_calculator_access') == 'yes':
+            access_days = int(request.form.get('access_days', 30))
+            # Create user access for calculator
+            from models import UserAccess
+            from datetime import datetime, timedelta
+            
+            user_access = UserAccess(
+                name=name,
+                email=email,
+                access_days=access_days,
+                expires_at=datetime.now() + timedelta(days=access_days),
+                role='customer',
+                customer_id=new_customer.id
+            )
+            db.session.add(user_access)
+            db.session.commit()
+        
+        flash(f'客户 {name} 创建成功', 'success')
+        return redirect(url_for('crm.customer_detail', customer_id=new_customer.id))
+        
     except Exception as e:
-        logger.error(f"新建客户页面错误: {e}")
+        logger.error(f"新建客户错误: {e}")
+        db.session.rollback()
+        flash('创建客户失败，请重试', 'error')
         return redirect(url_for('crm.customers'))
 
 @crm_bp.route('/customer/<int:customer_id>/edit', endpoint='edit_customer')
