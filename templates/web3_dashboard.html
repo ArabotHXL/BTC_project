@@ -810,7 +810,7 @@ body {
 </div>
 {% endblock %}
 
-{% block extra_js %}
+{% block scripts %}
 <!-- Web3 Utils Library -->
 <script src="/static/js/web3_utils.js"></script>
 <script>
@@ -999,12 +999,16 @@ function viewNetworkStatus() {
 
 // 显示加载动画
 function showLoading() {
-    $('#loadingModal').modal('show');
+    const modalElement = document.getElementById('loadingModal');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    modal.show();
 }
 
 // 隐藏加载动画
 function hideLoading() {
-    $('#loadingModal').modal('hide');
+    const modalElement = document.getElementById('loadingModal');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    modal.hide();
 }
 
 // 初始化
