@@ -485,17 +485,40 @@ def get_customer_activities(customer_id):
 
 @crm_bp.route('/leads', endpoint='leads')
 def leads_page():
-    """潜在客户页面"""
+    """线索管理页面 - 带KPI、可视化和跟进提醒"""
     try:
         user_id = session.get('user_id')
         if not user_id:
             return redirect(url_for('login'))
         
+        # 验证status参数，防止无效输入
+        status_filter = request.args.get('status', '').upper()
+        valid_statuses = ['NEW', 'CONTACTED', 'QUALIFIED', 'NEGOTIATION', 'WON', 'LOST']
+        if status_filter and status_filter not in valid_statuses:
+            status_filter = None  # 忽略无效的状态参数
+        
+        leads_query = Lead.query
+        if status_filter:
+            leads_query = leads_query.filter(Lead.status == LeadStatus[status_filter])
+        
+        leads = leads_query.order_by(Lead.created_at.desc()).all()
+        
+        today = datetime.now().date()
+        today_followups = Lead.query.filter(
+            func.date(Lead.next_follow_up) == today
+        ).order_by(Lead.next_follow_up).all()
+        
+        all_statuses = [status.name for status in LeadStatus]
+        
         return render_template('crm/leads.html',
-                             title='Leads Management',
-                             page='crm_leads')
+                             title='线索管理',
+                             page='crm_leads',
+                             leads=leads,
+                             today_followups=today_followups,
+                             status=status_filter,
+                             all_statuses=all_statuses)
     except Exception as e:
-        logger.error(f"潜在客户页面错误: {e}")
+        logger.error(f"线索页面错误: {e}")
         return redirect(url_for('crm.crm_dashboard'))
 
 @crm_bp.route('/deals', endpoint='deals')
