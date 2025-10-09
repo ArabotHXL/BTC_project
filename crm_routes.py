@@ -35,7 +35,7 @@ def inject_translations():
         current_lang = session.get('language', 'zh')
         return dict(t=translate, tr=translate, current_lang=current_lang)
 
-@crm_bp.route('/')
+@crm_bp.route('/crm/')
 def crm_dashboard():
     """CRM主仪表盘"""
     try:
@@ -805,64 +805,145 @@ def get_assets():
             'error': str(e)
         }), 500
 
-@crm_bp.route('/api/dashboard-stats')
-def get_dashboard_stats():
-    """综合统计数据 - 矿场专属仪表盘"""
+# ============================================================================
+# 新版 CRM API 端点 - 匹配模板要求
+# New CRM API Endpoints - Template Compliant
+# ============================================================================
+
+# -------------------- KPI 端点 (4个) --------------------
+
+@crm_bp.route('/api/crm/kpi/customers')
+def kpi_customers():
+    """KPI: 客户统计"""
     try:
         if 'user_id' not in session:
             return jsonify({'error': 'Unauthorized'}), 401
         
+        # 计算总客户数
+        total_customers = Customer.query.count() or 0
+        
+        # 计算本月新增客户
         now = datetime.now()
         first_day_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        this_month_customers = Customer.query.filter(Customer.created_at >= first_day_of_month).count() or 0
         
-        total_customers = Customer.query.count() or 0
-        customers_this_month = Customer.query.filter(Customer.created_at >= first_day_of_month).count() or 0
+        # 计算增长率
+        growth_rate = (this_month_customers / total_customers * 100) if total_customers > 0 else 0
         
-        total_deals_value = Deal.query.filter(Deal.status == DealStatus.SIGNED).with_entities(func.sum(Deal.value)).scalar() or 0
-        total_deals_count = Deal.query.filter(Deal.status == DealStatus.SIGNED).count() or 0
-        deals_this_month_value = Deal.query.filter(
-            Deal.status == DealStatus.SIGNED,
+        logger.info(f"KPI Customers: total={total_customers}, this_month={this_month_customers}")
+        
+        return jsonify({
+            'success': True,
+            'total': total_customers,
+            'this_month': this_month_customers,
+            'growth_rate': round(growth_rate, 1)
+        })
+        
+    except Exception as e:
+        logger.error(f"获取客户KPI错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/crm/kpi/deals')
+def kpi_deals():
+    """KPI: 交易统计"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        # 计算总交易价值和数量
+        total_value = Deal.query.with_entities(func.sum(Deal.value)).scalar() or 0
+        total_count = Deal.query.count() or 0
+        
+        # 计算本月交易价值
+        now = datetime.now()
+        first_day_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        this_month_value = Deal.query.filter(
             Deal.created_at >= first_day_of_month
         ).with_entities(func.sum(Deal.value)).scalar() or 0
         
-        total_hosting_capacity = Customer.query.with_entities(func.sum(Customer.mining_capacity)).scalar() or 0
-        total_deal_capacity = Deal.query.filter(Deal.mining_capacity.isnot(None)).with_entities(func.sum(Deal.mining_capacity)).scalar() or 0
-        utilization_rate = (total_deal_capacity / total_hosting_capacity * 100) if total_hosting_capacity > 0 else 0
+        logger.info(f"KPI Deals: total_value={total_value}, count={total_count}")
         
-        active_deals_count = Deal.query.filter(Deal.status.in_([DealStatus.APPROVED, DealStatus.SIGNED])).count() or 0
+        return jsonify({
+            'success': True,
+            'total_value': float(total_value),
+            'count': total_count,
+            'this_month_value': float(this_month_value)
+        })
+        
+    except Exception as e:
+        logger.error(f"获取交易KPI错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/crm/kpi/capacity')
+def kpi_capacity():
+    """KPI: 容量统计"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        # 计算总容量
+        total_mw = Customer.query.with_entities(func.sum(Customer.mining_capacity)).scalar() or 0
+        
+        # 计算已使用容量（从交易中）
+        used_capacity = Deal.query.filter(
+            Deal.mining_capacity.isnot(None)
+        ).with_entities(func.sum(Deal.mining_capacity)).scalar() or 0
+        
+        # 计算利用率和可用容量
+        utilization_rate = (used_capacity / total_mw * 100) if total_mw > 0 else 0
+        available_mw = total_mw - used_capacity
+        
+        logger.info(f"KPI Capacity: total_mw={total_mw}, utilization={utilization_rate}%")
+        
+        return jsonify({
+            'success': True,
+            'total_mw': float(total_mw),
+            'utilization_rate': round(float(utilization_rate), 1),
+            'available_mw': float(available_mw)
+        })
+        
+    except Exception as e:
+        logger.error(f"获取容量KPI错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/crm/kpi/active-deals')
+def kpi_active_deals():
+    """KPI: 活跃交易统计"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        # 计算活跃交易数量
+        active_deals = Deal.query.filter(
+            Deal.status.in_([DealStatus.PENDING, DealStatus.APPROVED, DealStatus.SIGNED])
+        ).all()
+        
+        active_count = len(active_deals)
+        pending_value = sum([deal.value for deal in active_deals if deal.value]) or 0
+        
+        # 计算转化率
         total_leads = Lead.query.count() or 0
         won_leads = Lead.query.filter(Lead.status == LeadStatus.WON).count() or 0
         conversion_rate = (won_leads / total_leads * 100) if total_leads > 0 else 0
         
-        logger.info(f"Dashboard stats retrieved: customers={total_customers}, deals_value={total_deals_value}")
+        logger.info(f"KPI Active Deals: count={active_count}, conversion_rate={conversion_rate}%")
         
         return jsonify({
-            'customers': {
-                'total': total_customers,
-                'this_month': customers_this_month
-            },
-            'deals': {
-                'total_value': float(total_deals_value),
-                'count': total_deals_count,
-                'this_month_value': float(deals_this_month_value)
-            },
-            'hosting_capacity': {
-                'total_mw': float(total_hosting_capacity),
-                'utilization_rate': round(float(utilization_rate), 2)
-            },
-            'active_deals': {
-                'count': active_deals_count,
-                'conversion_rate': round(float(conversion_rate), 2)
-            }
+            'success': True,
+            'count': active_count,
+            'conversion_rate': round(conversion_rate, 1),
+            'pending_value': float(pending_value)
         })
         
     except Exception as e:
-        logger.error(f"获取仪表盘统计数据错误: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"获取活跃交易KPI错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
-@crm_bp.route('/api/revenue-trend')
-def get_revenue_trend():
-    """收入趋势数据 - 最近12个月"""
+# -------------------- Analytics 端点 (4个) --------------------
+
+@crm_bp.route('/api/crm/analytics/revenue-trend')
+def analytics_revenue_trend():
+    """分析: 收入趋势 - 最近12个月"""
     try:
         if 'user_id' not in session:
             return jsonify({'error': 'Unauthorized'}), 401
@@ -870,49 +951,61 @@ def get_revenue_trend():
         now = datetime.now()
         twelve_months_ago = now - timedelta(days=365)
         
+        # 按月统计收入
         revenue_by_month = db.session.query(
             func.date_trunc('month', Deal.created_at).label('month'),
             func.sum(Deal.value).label('total')
         ).filter(
-            Deal.created_at >= twelve_months_ago,
-            Deal.status == DealStatus.SIGNED
+            Deal.created_at >= twelve_months_ago
         ).group_by('month').order_by('month').all()
         
         labels = []
-        miner_sales = []
-        hosting_fees = []
+        miner_sales_data = []
+        hosting_data = []
         
         for month_data in revenue_by_month:
-            month_str = month_data.month.strftime('%Y-%m') if month_data.month else ''
-            labels.append(month_str)
-            total_revenue = float(month_data.total or 0)
-            miner_sales.append(round(total_revenue * 0.6, 2))
-            hosting_fees.append(round(total_revenue * 0.4, 2))
+            if month_data.month:
+                labels.append(month_data.month.strftime('%Y-%m'))
+                total_revenue = float(month_data.total or 0)
+                # 假设60%是矿机销售，40%是托管费用
+                miner_sales_data.append(round(total_revenue * 0.6, 2))
+                hosting_data.append(round(total_revenue * 0.4, 2))
         
+        # 如果没有数据，返回空列表
         if not labels:
             labels = [(now - timedelta(days=30*i)).strftime('%Y-%m') for i in range(11, -1, -1)]
-            miner_sales = [0] * 12
-            hosting_fees = [0] * 12
+            miner_sales_data = [0] * 12
+            hosting_data = [0] * 12
         
-        logger.info(f"Revenue trend retrieved: {len(labels)} months")
+        logger.info(f"Analytics Revenue Trend: {len(labels)} months")
         
         return jsonify({
+            'success': True,
             'labels': labels,
-            'miner_sales': miner_sales,
-            'hosting_fees': hosting_fees
+            'datasets': [
+                {
+                    'label': 'Miner Sales',
+                    'data': miner_sales_data
+                },
+                {
+                    'label': 'Hosting',
+                    'data': hosting_data
+                }
+            ]
         })
         
     except Exception as e:
-        logger.error(f"获取收入趋势错误: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"获取收入趋势分析错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
-@crm_bp.route('/api/sales-funnel')
-def get_sales_funnel():
-    """销售漏斗数据"""
+@crm_bp.route('/api/crm/analytics/sales-funnel')
+def analytics_sales_funnel():
+    """分析: 销售漏斗"""
     try:
         if 'user_id' not in session:
             return jsonify({'error': 'Unauthorized'}), 401
         
+        # 统计各状态的线索数量
         funnel_data = {
             LeadStatus.NEW.value: Lead.query.filter_by(status=LeadStatus.NEW).count() or 0,
             LeadStatus.CONTACTED.value: Lead.query.filter_by(status=LeadStatus.CONTACTED).count() or 0,
@@ -922,97 +1015,144 @@ def get_sales_funnel():
         }
         
         labels = list(funnel_data.keys())
-        values = list(funnel_data.values())
+        data = list(funnel_data.values())
         
-        logger.info(f"Sales funnel retrieved: {sum(values)} total leads")
+        logger.info(f"Analytics Sales Funnel: total={sum(data)} leads")
         
         return jsonify({
+            'success': True,
             'labels': labels,
-            'values': values
+            'data': data
         })
         
     except Exception as e:
-        logger.error(f"获取销售漏斗数据错误: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"获取销售漏斗分析错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
-@crm_bp.route('/api/capacity-distribution')
-def get_capacity_distribution():
-    """容量分布数据 - TOP 10客户"""
+@crm_bp.route('/api/crm/analytics/capacity-distribution')
+def analytics_capacity_distribution():
+    """分析: 容量分布 - TOP 10客户"""
     try:
         if 'user_id' not in session:
             return jsonify({'error': 'Unauthorized'}), 401
         
+        # 获取TOP 10容量客户
         top_customers = Customer.query.filter(
             Customer.mining_capacity.isnot(None),
             Customer.mining_capacity > 0
         ).order_by(Customer.mining_capacity.desc()).limit(10).all()
         
         labels = []
-        values = []
+        data = []
+        colors = []
         
-        for customer in top_customers:
+        # 生成图表颜色
+        chart_colors = [
+            '#f7931a', '#ffa500', '#ff8c00', '#ff7f00', '#ff6f00',
+            '#ff5f00', '#ff4f00', '#ff3f00', '#ff2f00', '#ff1f00'
+        ]
+        
+        for idx, customer in enumerate(top_customers):
             labels.append(customer.name or 'Unknown')
-            values.append(float(customer.mining_capacity or 0))
+            data.append(float(customer.mining_capacity or 0))
+            colors.append(chart_colors[idx] if idx < len(chart_colors) else '#cccccc')
         
-        if not labels:
-            labels = []
-            values = []
-        
-        logger.info(f"Capacity distribution retrieved: {len(labels)} customers")
+        logger.info(f"Analytics Capacity Distribution: {len(labels)} customers")
         
         return jsonify({
+            'success': True,
             'labels': labels,
-            'values': values
+            'data': data,
+            'colors': colors
         })
         
     except Exception as e:
-        logger.error(f"获取容量分布数据错误: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"获取容量分布分析错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
-@crm_bp.route('/api/miner-models-ranking')
-def get_miner_models_ranking():
-    """矿机型号销售排行"""
+@crm_bp.route('/api/crm/analytics/customer-type')
+def analytics_customer_type():
+    """分析: 客户类型分布"""
     try:
         if 'user_id' not in session:
             return jsonify({'error': 'Unauthorized'}), 401
         
-        miner_models = db.session.query(
+        # 按客户类型分组统计
+        type_stats = db.session.query(
+            Customer.customer_type,
+            func.count(Customer.id).label('count')
+        ).group_by(Customer.customer_type).all()
+        
+        labels = []
+        data = []
+        
+        for type_data in type_stats:
+            labels.append(type_data.customer_type or '未分类')
+            data.append(int(type_data.count or 0))
+        
+        # 如果没有数据，返回空列表
+        if not labels:
+            labels = []
+            data = []
+        
+        logger.info(f"Analytics Customer Type: {len(labels)} types")
+        
+        return jsonify({
+            'success': True,
+            'labels': labels,
+            'data': data
+        })
+        
+    except Exception as e:
+        logger.error(f"获取客户类型分析错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# -------------------- Rankings 端点 (2个) --------------------
+
+@crm_bp.route('/api/crm/rankings/miners')
+def rankings_miners():
+    """排行: 矿机型号销售排行"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        # 统计矿机型号销售情况
+        miner_stats = db.session.query(
             Asset.model,
-            func.count(Asset.id).label('sales_count')
+            func.count(Asset.id).label('sales'),
+            func.sum(Asset.purchase_value).label('revenue')
         ).filter(
             Asset.asset_type == 'miner',
             Asset.model.isnot(None)
         ).group_by(Asset.model).order_by(func.count(Asset.id).desc()).limit(10).all()
         
         models = []
-        sales = []
+        for stat in miner_stats:
+            models.append({
+                'name': stat.model or 'Unknown',
+                'sales': int(stat.sales or 0),
+                'revenue': float(stat.revenue or 0)
+            })
         
-        for model_data in miner_models:
-            models.append(model_data.model or 'Unknown')
-            sales.append(int(model_data.sales_count or 0))
-        
-        if not models:
-            models = []
-            sales = []
-        
-        logger.info(f"Miner models ranking retrieved: {len(models)} models")
+        logger.info(f"Rankings Miners: {len(models)} models")
         
         return jsonify({
-            'models': models,
-            'sales': sales
+            'success': True,
+            'models': models
         })
         
     except Exception as e:
-        logger.error(f"获取矿机型号排行错误: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"获取矿机排行错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
-@crm_bp.route('/api/customer-capacity-top')
-def get_customer_capacity_top():
-    """客户容量TOP榜 - TOP 5"""
+@crm_bp.route('/api/crm/rankings/customer-capacity')
+def rankings_customer_capacity():
+    """排行: 客户容量TOP榜 - TOP 5"""
     try:
         if 'user_id' not in session:
             return jsonify({'error': 'Unauthorized'}), 401
         
+        # 获取TOP 5容量客户
         top_customers = Customer.query.filter(
             Customer.mining_capacity.isnot(None),
             Customer.mining_capacity > 0
@@ -1020,29 +1160,119 @@ def get_customer_capacity_top():
         
         customers = []
         for customer in top_customers:
+            # 计算客户的总收入
+            total_revenue = sum([deal.value for deal in customer.deals if deal.value]) or 0
+            
             customers.append({
                 'name': customer.name or 'Unknown',
                 'capacity': float(customer.mining_capacity or 0),
-                'company': customer.company or ''
+                'company': customer.company or '',
+                'revenue': float(total_revenue)
             })
         
-        if not customers:
-            customers = []
-        
-        logger.info(f"Customer capacity top retrieved: {len(customers)} customers")
+        logger.info(f"Rankings Customer Capacity: {len(customers)} customers")
         
         return jsonify({
+            'success': True,
             'customers': customers
         })
         
     except Exception as e:
-        logger.error(f"获取客户容量TOP榜错误: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"获取客户容量排行错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# -------------------- 智能提醒端点 (2个) --------------------
+
+@crm_bp.route('/api/crm/followups/today')
+def followups_today():
+    """智能提醒: 今日跟进"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        # 获取今日跟进的线索
+        today = datetime.now().date()
+        today_followups = Lead.query.filter(
+            func.date(Lead.next_follow_up) == today
+        ).all()
+        
+        leads = []
+        for lead in today_followups:
+            customer_name = lead.customer.name if lead.customer else lead.name
+            leads.append({
+                'id': lead.id,
+                'title': lead.title or f'{customer_name}的商机',
+                'customer': customer_name,
+                'scheduled': lead.next_follow_up.strftime('%Y-%m-%d %H:%M') if lead.next_follow_up else ''
+            })
+        
+        logger.info(f"Follow-ups Today: {len(leads)} leads")
+        
+        return jsonify({
+            'success': True,
+            'leads': leads
+        })
+        
+    except Exception as e:
+        logger.error(f"获取今日跟进错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/crm/alerts/urgent')
+def alerts_urgent():
+    """智能提醒: 紧急提醒"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        alerts = []
+        now = datetime.now()
+        seven_days_later = now + timedelta(days=7)
+        
+        # 检查即将到期的交易
+        expiring_deals = Deal.query.filter(
+            Deal.expected_close_date.isnot(None),
+            Deal.expected_close_date <= seven_days_later,
+            Deal.expected_close_date >= now,
+            Deal.status.in_([DealStatus.PENDING, DealStatus.APPROVED])
+        ).all()
+        
+        for deal in expiring_deals:
+            days_left = (deal.expected_close_date - now).days
+            alerts.append({
+                'type': 'deal',
+                'id': deal.id,
+                'message': f'交易即将在{days_left}天后到期',
+                'priority': 'high' if days_left <= 3 else 'medium'
+            })
+        
+        # 检查逾期发票
+        overdue_invoices = Invoice.query.filter(
+            Invoice.status == 'overdue'
+        ).all()
+        
+        for invoice in overdue_invoices:
+            alerts.append({
+                'type': 'invoice',
+                'id': invoice.id,
+                'message': f'发票已逾期 - 金额: {invoice.amount}',
+                'priority': 'high'
+            })
+        
+        logger.info(f"Urgent Alerts: {len(alerts)} alerts")
+        
+        return jsonify({
+            'success': True,
+            'alerts': alerts
+        })
+        
+    except Exception as e:
+        logger.error(f"获取紧急提醒错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 def init_crm_routes(app):
     """初始化CRM路由到应用"""
     try:
-        app.register_blueprint(crm_bp, url_prefix='/crm')
+        app.register_blueprint(crm_bp)
         logger.info("CRM routes registered successfully")
     except Exception as e:
         logger.error(f"Failed to register CRM routes: {e}")
