@@ -178,23 +178,31 @@ def get_customer_details(customer_id):
         # Format deals/contracts data
         contracts = []
         for deal in deals:
+            # Infer deal type from mining_capacity
+            deal_type = 'hosting' if deal.mining_capacity and deal.mining_capacity > 0 else 'sales'
+            
             contracts.append({
                 'id': deal.id,
-                'type': deal.deal_type,
-                'start_date': deal.start_date.strftime('%Y-%m-%d') if deal.start_date else None,
-                'end_date': deal.end_date.strftime('%Y-%m-%d') if deal.end_date else None,
+                'type': deal_type,
+                'start_date': deal.created_at.strftime('%Y-%m-%d') if deal.created_at else None,
+                'end_date': deal.expected_close_date.strftime('%Y-%m-%d') if deal.expected_close_date else (deal.closed_date.strftime('%Y-%m-%d') if deal.closed_date else None),
                 'value': deal.value or 0,
-                'status': deal.status
+                'status': deal.status.value if hasattr(deal.status, 'value') else str(deal.status)
             })
         
         # Format activities/notes data
         notes = []
         for activity in activities:
+            # Get author name from created_by field or relationship
+            author = activity.created_by or 'System'
+            if not author and activity.created_by_user:
+                author = activity.created_by_user.email or activity.created_by_user.username or 'System'
+            
             notes.append({
                 'id': activity.id,
                 'date': activity.created_at.strftime('%Y-%m-%d') if activity.created_at else None,
-                'author': activity.user_email or 'System',
-                'content': activity.description or ''
+                'author': author,
+                'content': activity.details or activity.summary or ''
             })
         
         # Build response with actual customer data
@@ -2032,10 +2040,14 @@ def new_lead_page(customer_id):
         if not user_id:
             return redirect(url_for('login'))
         
+        # Query customer object for template breadcrumb
+        customer = Customer.query.get_or_404(customer_id)
+        
         return render_template('crm/lead_form.html',
                              title='New Lead',
                              page='crm_new_lead',
-                             customer_id=customer_id)
+                             customer_id=customer_id,
+                             customer=customer)
     except Exception as e:
         logger.error(f"新建商机页面错误: {e}")
         return redirect(url_for('crm.customers'))
@@ -2082,10 +2094,14 @@ def new_deal_page(customer_id):
         if not user_id:
             return redirect(url_for('login'))
         
+        # Query customer object for template breadcrumb
+        customer = Customer.query.get_or_404(customer_id)
+        
         return render_template('crm/deal_form.html',
                              title='New Deal',
                              page='crm_new_deal',
-                             customer_id=customer_id)
+                             customer_id=customer_id,
+                             customer=customer)
     except Exception as e:
         logger.error(f"新建交易页面错误: {e}")
         return redirect(url_for('crm.customers'))
@@ -2098,10 +2114,14 @@ def new_contact_page(customer_id):
         if not user_id:
             return redirect(url_for('login'))
         
+        # Query customer object for template breadcrumb
+        customer = Customer.query.get_or_404(customer_id)
+        
         return render_template('crm/contact_form.html',
                              title='New Contact',
                              page='crm_new_contact',
-                             customer_id=customer_id)
+                             customer_id=customer_id,
+                             customer=customer)
     except Exception as e:
         logger.error(f"新建联系人页面错误: {e}")
         return redirect(url_for('crm.customers'))
