@@ -1930,14 +1930,29 @@ def get_top_customers():
 
 @crm_bp.route('/api/assets')
 def get_assets():
-    """获取资产列表 - 从数据库读取真实数据"""
+    """获取资产列表 - 从数据库读取真实数据，支持类型和状态过滤"""
     try:
         # Check authentication
         if 'user_id' not in session:
             return jsonify({'success': False, 'error': 'Not authenticated'}), 401
         
+        user_id = session.get('user_id')
+        
+        # Build query with filters
+        assets_query = Asset.query.filter_by(created_by_id=user_id)
+        
+        # Filter by type
+        asset_type = request.args.get('type', '').strip()
+        if asset_type:
+            assets_query = assets_query.filter_by(asset_type=asset_type)
+        
+        # Filter by status
+        status = request.args.get('status', '').strip()
+        if status:
+            assets_query = assets_query.filter_by(status=status)
+        
         # Fetch assets from database
-        assets = Asset.query.order_by(Asset.created_at.desc()).all()
+        assets = assets_query.order_by(Asset.created_at.desc()).all()
         
         assets_data = []
         for asset in assets:
@@ -1969,6 +1984,211 @@ def get_assets():
         
     except Exception as e:
         logger.error(f"获取资产列表错误: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@crm_bp.route('/api/assets/stats')
+def get_asset_stats():
+    """资产统计KPI - A. GET /crm/api/assets/stats"""
+    try:
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        user_id = session.get('user_id')
+        
+        # Query all assets for current user
+        assets = Asset.query.filter_by(created_by_id=user_id).all()
+        
+        # Calculate statistics
+        total_assets = len(assets)
+        active_assets = sum(1 for a in assets if a.status == 'active')
+        maintenance_assets = sum(1 for a in assets if a.status == 'maintenance')
+        total_value = sum(float(a.current_value or 0) for a in assets)
+        
+        # Group by type
+        type_stats = {}
+        for asset in assets:
+            asset_type = asset.asset_type or 'unknown'
+            if asset_type not in type_stats:
+                type_stats[asset_type] = {'count': 0, 'value': 0}
+            type_stats[asset_type]['count'] += 1
+            type_stats[asset_type]['value'] += float(asset.current_value or 0)
+        
+        # Average asset value
+        avg_value = total_value / total_assets if total_assets > 0 else 0
+        
+        return jsonify({
+            'success': True,
+            'total_assets': total_assets,
+            'active_assets': active_assets,
+            'maintenance_assets': maintenance_assets,
+            'total_value': round(total_value, 2),
+            'avg_value': round(avg_value, 2),
+            'type_stats': type_stats
+        })
+        
+    except Exception as e:
+        logger.error(f"获取资产统计错误: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@crm_bp.route('/api/assets/inventory')
+def get_asset_inventory():
+    """库存分布 - B. GET /crm/api/assets/inventory"""
+    try:
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        user_id = session.get('user_id')
+        
+        # Query all assets for current user
+        assets = Asset.query.filter_by(created_by_id=user_id).all()
+        
+        # Group by model (for miners)
+        model_stats = {}
+        for asset in assets:
+            if asset.asset_type == 'miner' and asset.model:
+                model = asset.model
+                model_stats[model] = model_stats.get(model, 0) + 1
+        
+        # Group by status
+        status_stats = {}
+        for asset in assets:
+            status = asset.status or 'unknown'
+            status_stats[status] = status_stats.get(status, 0) + 1
+        
+        # Group by customer (TOP 5)
+        customer_stats = {}
+        for asset in assets:
+            if asset.customer:
+                customer_name = asset.customer.name
+                customer_stats[customer_name] = customer_stats.get(customer_name, 0) + 1
+        
+        # Sort and get top 5 customers
+        top_customers = sorted(customer_stats.items(), key=lambda x: x[1], reverse=True)[:5]
+        
+        return jsonify({
+            'success': True,
+            'model_stats': model_stats,
+            'status_stats': status_stats,
+            'top_customers': dict(top_customers)
+        })
+        
+    except Exception as e:
+        logger.error(f"获取库存分布错误: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@crm_bp.route('/api/assets/maintenance-alerts')
+def get_maintenance_alerts():
+    """维护预警 - C. GET /crm/api/assets/maintenance-alerts"""
+    try:
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        user_id = session.get('user_id')
+        
+        # Query assets that need maintenance
+        maintenance_assets = Asset.query.filter_by(
+            created_by_id=user_id,
+            status='maintenance'
+        ).all()
+        
+        # Build maintenance alerts list
+        alerts = []
+        for asset in maintenance_assets:
+            # Determine priority based on asset value
+            value = float(asset.current_value or 0)
+            if value > 10000:
+                priority = 'high'
+                priority_color = 'danger'
+            elif value > 5000:
+                priority = 'medium'
+                priority_color = 'warning'
+            else:
+                priority = 'low'
+                priority_color = 'info'
+            
+            alerts.append({
+                'id': asset.id,
+                'asset_name': asset.asset_name,
+                'customer_name': asset.customer.name if asset.customer else 'N/A',
+                'serial_number': asset.serial_number or 'N/A',
+                'priority': priority,
+                'priority_color': priority_color,
+                'value': value,
+                'maintenance_due': asset.warranty_expiry.strftime('%Y-%m-%d') if asset.warranty_expiry else None
+            })
+        
+        # Sort by priority (high first) and value
+        priority_order = {'high': 0, 'medium': 1, 'low': 2}
+        alerts.sort(key=lambda x: (priority_order.get(x['priority'], 3), -x['value']))
+        
+        # Return top 5
+        return jsonify({
+            'success': True,
+            'alerts': alerts[:5],
+            'total': len(alerts)
+        })
+        
+    except Exception as e:
+        logger.error(f"获取维护预警错误: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@crm_bp.route('/api/assets/value-trend')
+def get_asset_value_trend():
+    """资产价值趋势 - D. GET /crm/api/assets/value-trend"""
+    try:
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        user_id = session.get('user_id')
+        
+        # Query all assets for current user
+        assets = Asset.query.filter_by(created_by_id=user_id).all()
+        
+        # Group by type and calculate total value
+        type_values = {}
+        for asset in assets:
+            asset_type = asset.asset_type or 'unknown'
+            type_values[asset_type] = type_values.get(asset_type, 0) + float(asset.current_value or 0)
+        
+        # Generate past 6 months labels (simplified - using current values)
+        from dateutil.relativedelta import relativedelta
+        end_date = datetime.now()
+        months = []
+        
+        for i in range(5, -1, -1):
+            month = end_date - relativedelta(months=i)
+            months.append(month.strftime('%b %Y'))
+        
+        # For each type, create trend data (using current value for all months as simplified implementation)
+        trend_data = {}
+        for asset_type, value in type_values.items():
+            trend_data[asset_type] = [round(value, 2)] * 6  # Same value for all 6 months
+        
+        return jsonify({
+            'success': True,
+            'months': months,
+            'type_values': type_values,
+            'trend_data': trend_data
+        })
+        
+    except Exception as e:
+        logger.error(f"获取资产价值趋势错误: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
