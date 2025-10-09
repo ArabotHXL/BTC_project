@@ -6051,7 +6051,7 @@ try:
     
     # Add standalone /performance-monitor route (not under /api/monitoring prefix)
     @app.route('/performance-monitor', methods=['GET'])
-    @require_permission([Permission.SYSTEM_ADMIN])
+    @login_required
     def performance_monitor_standalone():
         """
         Standalone performance monitoring dashboard
@@ -6059,7 +6059,13 @@ try:
         
         This route provides direct access to the monitoring dashboard at /performance-monitor
         while maintaining backward compatibility with /api/monitoring/dashboard
+        
+        Requires admin or owner role for access
         """
+        if not has_role(['owner', 'admin']):
+            flash('需要管理员权限访问系统监控', 'error')
+            return redirect(url_for('index'))
+        
         return render_template('admin/monitoring_dashboard.html',
                              title='System Monitoring',
                              page='monitoring_dashboard')
