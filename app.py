@@ -6044,8 +6044,28 @@ except Exception as e:
 # System Monitoring Blueprint
 try:
     from monitoring_routes import monitoring_bp
+    from common.rbac import require_permission, Permission
+    
     app.register_blueprint(monitoring_bp)
     logging.info("System Monitoring API blueprint registered successfully")
+    
+    # Add standalone /performance-monitor route (not under /api/monitoring prefix)
+    @app.route('/performance-monitor', methods=['GET'])
+    @require_permission([Permission.SYSTEM_ADMIN])
+    def performance_monitor_standalone():
+        """
+        Standalone performance monitoring dashboard
+        独立性能监控仪表盘
+        
+        This route provides direct access to the monitoring dashboard at /performance-monitor
+        while maintaining backward compatibility with /api/monitoring/dashboard
+        """
+        return render_template('admin/monitoring_dashboard.html',
+                             title='System Monitoring',
+                             page='monitoring_dashboard')
+    
+    logging.info("Standalone /performance-monitor route registered successfully")
+    
 except ImportError as e:
     logging.warning(f"System Monitoring API blueprint not available: {e}")
 except Exception as e:
