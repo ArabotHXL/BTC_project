@@ -79,7 +79,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    fetch('/crm/api/crm/invoices')
+    fetch('/crm/crm/api/invoices')
         .then(response => response.json())
         .then(data => {
             if (data.success && data.data) {

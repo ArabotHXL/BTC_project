@@ -280,25 +280,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function loadKPIData() {
     try {
-        const customerKPI = await fetch('/api/crm/kpi/customers').then(r => r.json());
+        const customerKPI = await fetch('/crm/api/kpi/customers').then(r => r.json());
         if (customerKPI.success) {
             initCountUp('total-customers', customerKPI.total);
             document.getElementById('this-month-customers').textContent = customerKPI.this_month;
             document.getElementById('growth-rate').textContent = customerKPI.growth_rate + '%';
         }
 
-        const capacityKPI = await fetch('/api/crm/kpi/capacity').then(r => r.json());
+        const capacityKPI = await fetch('/crm/api/kpi/capacity').then(r => r.json());
         if (capacityKPI.success) {
             initCountUp('total-capacity', capacityKPI.total_mw, { decimalPlaces: 1 });
             document.getElementById('utilization-rate').textContent = capacityKPI.utilization_rate + '%';
         }
 
-        const dealsKPI = await fetch('/api/crm/kpi/deals').then(r => r.json());
+        const dealsKPI = await fetch('/crm/api/kpi/deals').then(r => r.json());
         if (dealsKPI.success) {
             initCountUp('monthly-revenue', dealsKPI.this_month_value, { decimalPlaces: 0 });
         }
 
-        const activeKPI = await fetch('/api/crm/kpi/active-deals').then(r => r.json());
+        const activeKPI = await fetch('/crm/api/kpi/active-deals').then(r => r.json());
         if (activeKPI.success) {
             initCountUp('active-customers', activeKPI.count);
         }
@@ -309,7 +309,7 @@ async function loadKPIData() {
 
 async function loadCharts() {
     try {
-        const capacityData = await fetch('/api/crm/analytics/capacity-distribution').then(r => r.json());
+        const capacityData = await fetch('/crm/api/analytics/capacity-distribution').then(r => r.json());
         if (capacityData.success && capacityData.labels.length > 0) {
             const ctx1 = document.getElementById('capacity-chart');
             capacityChart = initChart(ctx1, {
@@ -347,7 +347,7 @@ async function loadCharts() {
             });
         }
 
-        const typeData = await fetch('/api/crm/analytics/customer-type').then(r => r.json());
+        const typeData = await fetch('/crm/api/analytics/customer-type').then(r => r.json());
         if (typeData.success && typeData.labels.length > 0) {
             const ctx2 = document.getElementById('customer-type-chart');
             customerTypeChart = initChart(ctx2, {
@@ -394,7 +394,7 @@ async function loadCharts() {
 
 async function loadCustomers() {
     try {
-        const response = await fetch('/api/crm/customers');
+        const response = await fetch('/crm/api/customers');
         const data = await response.json();
         
         if (data.success) {

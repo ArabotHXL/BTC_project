@@ -35,7 +35,7 @@ def inject_translations():
         current_lang = session.get('language', 'zh')
         return dict(t=translate, tr=translate, current_lang=current_lang)
 
-@crm_bp.route('/crm/')
+@crm_bp.route('/')
 def crm_dashboard():
     """CRM主仪表盘"""
     try:
@@ -84,7 +84,7 @@ def customers_list():
         logger.error(f"客户列表页面错误: {e}")
         return redirect(url_for('crm.crm_dashboard'))
 
-@crm_bp.route('/api/crm/customers')
+@crm_bp.route('/api/customers')
 def get_customers():
     """获取客户列表 - 从数据库读取真实数据"""
     try:
@@ -139,7 +139,7 @@ def get_customers():
             'error': str(e)
         }), 500
 
-@crm_bp.route('/api/crm/customer/<int:customer_id>')
+@crm_bp.route('/api/customer/<int:customer_id>')
 def get_customer_details(customer_id):
     """获取客户详情"""
     try:
@@ -205,6 +205,279 @@ def get_customer_details(customer_id):
         
     except Exception as e:
         logger.error(f"获取客户详情错误: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@crm_bp.route('/api/customer/<int:customer_id>/revenue-trend')
+def get_customer_revenue_trend(customer_id):
+    """获取客户收入趋势数据（用于图表）"""
+    try:
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        # Query customer
+        customer = Customer.query.get_or_404(customer_id)
+        
+        # Get all deals for this customer
+        deals = Deal.query.filter_by(customer_id=customer_id).order_by(Deal.created_at.asc()).all()
+        
+        # Calculate monthly revenue (past 12 months)
+        from collections import defaultdict
+        from dateutil.relativedelta import relativedelta
+        
+        end_date = datetime.now()
+        start_date = end_date - relativedelta(months=11)
+        
+        monthly_sales = defaultdict(float)
+        monthly_hosting = defaultdict(float)
+        
+        for deal in deals:
+            if deal.created_at and deal.created_at >= start_date:
+                month_key = deal.created_at.strftime('%Y-%m')
+                
+                # Categorize by mining_capacity (if exists, it's hosting)
+                if deal.mining_capacity and deal.mining_capacity > 0:
+                    monthly_hosting[month_key] += deal.value or 0
+                else:
+                    monthly_sales[month_key] += deal.value or 0
+        
+        # Generate month labels for past 12 months
+        months = []
+        miner_sales = []
+        hosting_fees = []
+        
+        for i in range(12):
+            month = start_date + relativedelta(months=i)
+            month_key = month.strftime('%Y-%m')
+            month_label = month.strftime('%b %Y')
+            
+            months.append(month_label)
+            miner_sales.append(monthly_sales.get(month_key, 0))
+            hosting_fees.append(monthly_hosting.get(month_key, 0))
+        
+        # Calculate ROI metrics
+        total_investment = sum([deal.value for deal in deals if deal.value]) or 0
+        total_return = total_investment * 1.15  # Simplified calculation
+        roi_percent = ((total_return - total_investment) / total_investment * 100) if total_investment > 0 else 0
+        
+        # Calculate breakeven point (simplified)
+        monthly_avg = total_return / 12 if total_return > 0 else 0
+        breakeven_months = int(total_investment / monthly_avg) if monthly_avg > 0 else 0
+        
+        # Annual projection
+        annual_projection = monthly_avg * 12
+        
+        return jsonify({
+            'success': True,
+            'months': months,
+            'miner_sales': miner_sales,
+            'hosting_fees': hosting_fees,
+            'total_investment': round(total_investment, 2),
+            'total_return': round(total_return, 2),
+            'roi_percent': round(roi_percent, 2),
+            'breakeven_months': breakeven_months,
+            'annual_projection': round(annual_projection, 2)
+        })
+        
+    except Exception as e:
+        logger.error(f"获取收入趋势错误: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@crm_bp.route('/api/customer/<int:customer_id>/assets')
+def get_customer_assets(customer_id):
+    """获取客户矿机资产列表"""
+    try:
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        # Query customer
+        customer = Customer.query.get_or_404(customer_id)
+        
+        # Query assets for this customer
+        assets = Asset.query.filter_by(customer_id=customer_id).all()
+        
+        assets_data = []
+        total_power = 0
+        total_hashrate = 0
+        
+        for asset in assets:
+            # Parse configuration if JSON
+            config = {}
+            if asset.configuration:
+                try:
+                    import json
+                    config = json.loads(asset.configuration)
+                except:
+                    pass
+            
+            power_w = config.get('power_w', 0) or 0
+            hashrate_th = config.get('hashrate_th', 0) or 0
+            
+            total_power += power_w
+            total_hashrate += hashrate_th
+            
+            assets_data.append({
+                'id': asset.id,
+                'model': asset.model or 'Unknown',
+                'quantity': 1,  # Could be extracted from config
+                'status': asset.status or 'active',
+                'location': asset.location or 'Not specified',
+                'power_w': power_w,
+                'hashrate_th': hashrate_th,
+                'purchase_value': asset.purchase_value or 0,
+                'current_value': asset.current_value or 0
+            })
+        
+        # Calculate utilization rate
+        total_capacity = customer.mining_capacity or 1
+        used_capacity = total_power / 1000000  # Convert W to MW
+        utilization_rate = min(100, (used_capacity / total_capacity * 100)) if total_capacity > 0 else 0
+        
+        return jsonify({
+            'success': True,
+            'assets': assets_data,
+            'total_power': total_power,
+            'total_hashrate': total_hashrate,
+            'utilization_rate': round(utilization_rate, 2),
+            'total_capacity_mw': total_capacity,
+            'used_capacity_mw': round(used_capacity, 2)
+        })
+        
+    except Exception as e:
+        logger.error(f"获取资产列表错误: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@crm_bp.route('/api/customer/<int:customer_id>/deals')
+def get_customer_deals(customer_id):
+    """获取客户交易历史"""
+    try:
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        # Query customer
+        customer = Customer.query.get_or_404(customer_id)
+        
+        # Query deals for this customer
+        deals = Deal.query.filter_by(customer_id=customer_id).order_by(Deal.created_at.desc()).all()
+        
+        deals_data = []
+        deal_types = {}
+        monthly_counts = {}
+        
+        for deal in deals:
+            # Determine deal type based on attributes
+            if deal.mining_capacity and deal.mining_capacity > 0:
+                deal_type = 'Hosting'
+            elif deal.commission_type:
+                deal_type = 'Commission'
+            else:
+                deal_type = 'Equipment Sale'
+            
+            # Format deal data
+            deals_data.append({
+                'id': deal.id,
+                'title': deal.title,
+                'value': deal.value or 0,
+                'status': deal.status.value if deal.status else 'Unknown',
+                'deal_type': deal_type,
+                'created_at': deal.created_at.strftime('%Y-%m-%d') if deal.created_at else None,
+                'expected_close_date': deal.expected_close_date.strftime('%Y-%m-%d') if deal.expected_close_date else None,
+                'description': deal.description or '',
+                'mining_capacity': deal.mining_capacity or 0,
+                'electricity_cost': deal.electricity_cost or 0
+            })
+            
+            # Count by type
+            deal_types[deal_type] = deal_types.get(deal_type, 0) + 1
+            
+            # Count by month
+            if deal.created_at:
+                month_key = deal.created_at.strftime('%b %Y')
+                monthly_counts[month_key] = monthly_counts.get(month_key, 0) + 1
+        
+        # Prepare monthly labels and counts (last 6 months)
+        from dateutil.relativedelta import relativedelta
+        end_date = datetime.now()
+        monthly_labels = []
+        monthly_deal_counts = []
+        
+        for i in range(5, -1, -1):
+            month = end_date - relativedelta(months=i)
+            month_label = month.strftime('%b %Y')
+            monthly_labels.append(month_label)
+            monthly_deal_counts.append(monthly_counts.get(month_label, 0))
+        
+        return jsonify({
+            'success': True,
+            'deals': deals_data,
+            'total_deals': len(deals_data),
+            'deal_types': deal_types,
+            'monthly_labels': monthly_labels,
+            'monthly_counts': monthly_deal_counts
+        })
+        
+    except Exception as e:
+        logger.error(f"获取交易历史错误: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@crm_bp.route('/api/customer/<int:customer_id>/activities')
+def get_customer_activities(customer_id):
+    """获取客户活动记录"""
+    try:
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        # Query customer
+        customer = Customer.query.get_or_404(customer_id)
+        
+        # Get pagination parameters
+        page = request.args.get('page', 1, type=int)
+        per_page = 30
+        
+        # Query activities for this customer
+        activities_query = Activity.query.filter_by(customer_id=customer_id).order_by(Activity.created_at.desc())
+        activities = activities_query.limit(per_page).offset((page - 1) * per_page).all()
+        
+        activities_data = []
+        for activity in activities:
+            activities_data.append({
+                'id': activity.id,
+                'type': activity.type or '备注',
+                'summary': activity.summary,
+                'details': activity.details,
+                'created_at': activity.created_at.strftime('%Y-%m-%d %H:%M:%S') if activity.created_at else None,
+                'created_by': activity.created_by or 'System',
+                'customer_id': activity.customer_id,
+                'deal_id': activity.deal_id,
+                'lead_id': activity.lead_id
+            })
+        
+        return jsonify({
+            'success': True,
+            'activities': activities_data,
+            'total': activities_query.count(),
+            'page': page,
+            'per_page': per_page,
+            'has_more': activities_query.count() > page * per_page
+        })
+        
+    except Exception as e:
+        logger.error(f"获取活动记录错误: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -538,7 +811,7 @@ def update_customer_notes(customer_id):
         flash('更新备注失败', 'error')
         return redirect(url_for('crm.customer_detail', customer_id=customer_id))
 
-@crm_bp.route('/api/crm/leads')
+@crm_bp.route('/api/leads')
 def get_leads():
     """获取潜在客户"""
     try:
@@ -581,7 +854,7 @@ def get_leads():
             'error': str(e)
         }), 500
 
-@crm_bp.route('/api/crm/sales-stats')
+@crm_bp.route('/api/sales-stats')
 def get_sales_stats():
     """获取销售统计"""
     try:
@@ -655,7 +928,7 @@ def get_sales_stats():
             'error': str(e)
         }), 500
 
-@crm_bp.route('/api/crm/add-note', methods=['POST'])
+@crm_bp.route('/api/add-note', methods=['POST'])
 def add_customer_note():
     """添加客户备注"""
     try:
@@ -721,7 +994,7 @@ def assets_page():
         logger.error(f"资产页面错误: {e}")
         return redirect(url_for('crm.crm_dashboard'))
 
-@crm_bp.route('/api/crm/invoices')
+@crm_bp.route('/api/invoices')
 def get_invoices():
     """获取发票列表 - 从数据库读取真实数据"""
     try:
@@ -765,7 +1038,7 @@ def get_invoices():
             'error': str(e)
         }), 500
 
-@crm_bp.route('/api/crm/assets')
+@crm_bp.route('/api/assets')
 def get_assets():
     """获取资产列表 - 从数据库读取真实数据"""
     try:
@@ -818,7 +1091,7 @@ def get_assets():
 
 # -------------------- KPI 端点 (4个) --------------------
 
-@crm_bp.route('/api/crm/kpi/customers')
+@crm_bp.route('/api/kpi/customers')
 def kpi_customers():
     """KPI: 客户统计"""
     try:
@@ -849,7 +1122,7 @@ def kpi_customers():
         logger.error(f"获取客户KPI错误: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@crm_bp.route('/api/crm/kpi/deals')
+@crm_bp.route('/api/kpi/deals')
 def kpi_deals():
     """KPI: 交易统计"""
     try:
@@ -880,7 +1153,7 @@ def kpi_deals():
         logger.error(f"获取交易KPI错误: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@crm_bp.route('/api/crm/kpi/capacity')
+@crm_bp.route('/api/kpi/capacity')
 def kpi_capacity():
     """KPI: 容量统计"""
     try:
@@ -912,7 +1185,7 @@ def kpi_capacity():
         logger.error(f"获取容量KPI错误: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@crm_bp.route('/api/crm/kpi/active-deals')
+@crm_bp.route('/api/kpi/active-deals')
 def kpi_active_deals():
     """KPI: 活跃交易统计"""
     try:
@@ -947,7 +1220,7 @@ def kpi_active_deals():
 
 # -------------------- Analytics 端点 (4个) --------------------
 
-@crm_bp.route('/api/crm/analytics/revenue-trend')
+@crm_bp.route('/api/analytics/revenue-trend')
 def analytics_revenue_trend():
     """分析: 收入趋势 - 最近12个月"""
     try:
@@ -1004,7 +1277,7 @@ def analytics_revenue_trend():
         logger.error(f"获取收入趋势分析错误: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@crm_bp.route('/api/crm/analytics/sales-funnel')
+@crm_bp.route('/api/analytics/sales-funnel')
 def analytics_sales_funnel():
     """分析: 销售漏斗"""
     try:
@@ -1035,7 +1308,7 @@ def analytics_sales_funnel():
         logger.error(f"获取销售漏斗分析错误: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@crm_bp.route('/api/crm/analytics/capacity-distribution')
+@crm_bp.route('/api/analytics/capacity-distribution')
 def analytics_capacity_distribution():
     """分析: 容量分布 - TOP 10客户"""
     try:
@@ -1076,7 +1349,7 @@ def analytics_capacity_distribution():
         logger.error(f"获取容量分布分析错误: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@crm_bp.route('/api/crm/analytics/customer-type')
+@crm_bp.route('/api/analytics/customer-type')
 def analytics_customer_type():
     """分析: 客户类型分布"""
     try:
@@ -1115,7 +1388,7 @@ def analytics_customer_type():
 
 # -------------------- Rankings 端点 (2个) --------------------
 
-@crm_bp.route('/api/crm/rankings/miners')
+@crm_bp.route('/api/rankings/miners')
 def rankings_miners():
     """排行: 矿机型号销售排行"""
     try:
@@ -1151,7 +1424,7 @@ def rankings_miners():
         logger.error(f"获取矿机排行错误: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@crm_bp.route('/api/crm/rankings/customer-capacity')
+@crm_bp.route('/api/rankings/customer-capacity')
 def rankings_customer_capacity():
     """排行: 客户容量TOP榜 - TOP 5"""
     try:
@@ -1189,7 +1462,7 @@ def rankings_customer_capacity():
 
 # -------------------- 智能提醒端点 (2个) --------------------
 
-@crm_bp.route('/api/crm/followups/today')
+@crm_bp.route('/api/followups/today')
 def followups_today():
     """智能提醒: 今日跟进"""
     try:
@@ -1223,7 +1496,7 @@ def followups_today():
         logger.error(f"获取今日跟进错误: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@crm_bp.route('/api/crm/alerts/urgent')
+@crm_bp.route('/api/alerts/urgent')
 def alerts_urgent():
     """智能提醒: 紧急提醒"""
     try:
@@ -1278,7 +1551,7 @@ def alerts_urgent():
 def init_crm_routes(app):
     """初始化CRM路由到应用"""
     try:
-        app.register_blueprint(crm_bp)
+        app.register_blueprint(crm_bp, url_prefix='/crm')
         logger.info("CRM routes registered successfully")
     except Exception as e:
         logger.error(f"Failed to register CRM routes: {e}")

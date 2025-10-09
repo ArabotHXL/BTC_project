@@ -280,7 +280,7 @@
 <div class="row mb-4">
     <!-- 总客户数 -->
     <div class="col-lg-3 col-md-6 mb-3">
-        <div class="kpi-card" data-api-endpoint="/api/crm/kpi/customers">
+        <div class="kpi-card" data-api-endpoint="/crm/api/kpi/customers">
             <div class="kpi-icon">
                 <i class="bi bi-people-fill"></i>
             </div>
@@ -295,7 +295,7 @@
     
     <!-- 交易总额 -->
     <div class="col-lg-3 col-md-6 mb-3">
-        <div class="kpi-card" data-api-endpoint="/api/crm/kpi/deals">
+        <div class="kpi-card" data-api-endpoint="/crm/api/kpi/deals">
             <div class="kpi-icon">
                 <i class="bi bi-cash-stack"></i>
             </div>
@@ -310,7 +310,7 @@
     
     <!-- 托管容量 -->
     <div class="col-lg-3 col-md-6 mb-3">
-        <div class="kpi-card" data-api-endpoint="/api/crm/kpi/capacity">
+        <div class="kpi-card" data-api-endpoint="/crm/api/kpi/capacity">
             <div class="kpi-icon">
                 <i class="bi bi-lightning-charge-fill"></i>
             </div>
@@ -325,7 +325,7 @@
     
     <!-- 活跃交易 -->
     <div class="col-lg-3 col-md-6 mb-3">
-        <div class="kpi-card" data-api-endpoint="/api/crm/kpi/active-deals">
+        <div class="kpi-card" data-api-endpoint="/crm/api/kpi/active-deals">
             <div class="kpi-icon">
                 <i class="bi bi-activity"></i>
             </div>
@@ -358,7 +358,7 @@
                 </h6>
             </div>
             <div class="card-body">
-                <div class="chart-container" data-api-endpoint="/api/crm/analytics/revenue-trend">
+                <div class="chart-container" data-api-endpoint="/crm/api/analytics/revenue-trend">
                     <canvas id="revenueTrendChart"></canvas>
                 </div>
             </div>
@@ -375,7 +375,7 @@
                 </h6>
             </div>
             <div class="card-body">
-                <div class="chart-container" data-api-endpoint="/api/crm/analytics/sales-funnel">
+                <div class="chart-container" data-api-endpoint="/crm/api/analytics/sales-funnel">
                     <canvas id="salesFunnelChart"></canvas>
                 </div>
             </div>
@@ -392,7 +392,7 @@
                 </h6>
             </div>
             <div class="card-body">
-                <div class="chart-container" data-api-endpoint="/api/crm/analytics/capacity-distribution">
+                <div class="chart-container" data-api-endpoint="/crm/api/analytics/capacity-distribution">
                     <canvas id="capacityDistributionChart"></canvas>
                 </div>
             </div>
@@ -409,7 +409,7 @@
                 </h6>
             </div>
             <div class="card-body">
-                <div class="chart-container" data-api-endpoint="/api/crm/analytics/customer-type">
+                <div class="chart-container" data-api-endpoint="/crm/api/analytics/customer-type">
                     <canvas id="customerTypeChart"></canvas>
                 </div>
             </div>
@@ -435,7 +435,7 @@
                     {% if current_lang == 'en' %}Top 5 Miner Models{% else %}矿机型号销售 TOP 5{% endif %}
                 </h6>
             </div>
-            <div class="card-body" data-api-endpoint="/api/crm/rankings/miners">
+            <div class="card-body" data-api-endpoint="/crm/api/rankings/miners">
                 <div class="ranking-item">
                     <div class="ranking-number">1</div>
                     <div class="ranking-content">
@@ -484,7 +484,7 @@
                     {% if current_lang == 'en' %}Top 5 Customer Capacity{% else %}客户挖矿容量 TOP 5{% endif %}
                 </h6>
             </div>
-            <div class="card-body" data-api-endpoint="/api/crm/rankings/customer-capacity">
+            <div class="card-body" data-api-endpoint="/crm/api/rankings/customer-capacity">
                 <div class="ranking-item">
                     <div class="ranking-number">1</div>
                     <div class="ranking-content">
@@ -544,7 +544,7 @@
                     <span class="badge bg-danger ms-2">3</span>
                 </h6>
             </div>
-            <div class="card-body" data-api-endpoint="/api/crm/followups/today">
+            <div class="card-body" data-api-endpoint="/crm/api/followups/today">
                 {% if follow_up_leads %}
                     {% for lead in follow_up_leads[:3] %}
                     <div class="alert-item {% if loop.index == 1 %}urgent{% endif %}">
@@ -585,7 +585,7 @@
                     <span class="badge bg-warning ms-2">2</span>
                 </h6>
             </div>
-            <div class="card-body" data-api-endpoint="/api/crm/alerts/urgent">
+            <div class="card-body" data-api-endpoint="/crm/api/alerts/urgent">
                 <div class="alert-item urgent">
                     <div class="alert-icon">
                         <i class="bi bi-lightning-fill text-white" style="font-size: 14px;"></i>

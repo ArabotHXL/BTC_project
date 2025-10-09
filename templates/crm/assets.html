@@ -96,7 +96,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    fetch('/crm/api/crm/assets')
+    fetch('/crm/crm/api/assets')
         .then(response => response.json())
         .then(data => {
             if (data.success && data.data) {
