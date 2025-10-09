@@ -11,7 +11,7 @@ from sqlalchemy import func
 
 # Import database and models
 from db import db
-from models import Customer, Lead, Deal, Invoice, Asset, Activity
+from models import Customer, Lead, Deal, Invoice, Asset, Activity, DealStatus, LeadStatus
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ def crm_dashboard():
         # Get leads with follow-up dates
         follow_up_leads = Lead.query.filter(Lead.next_follow_up.isnot(None)).order_by(Lead.next_follow_up).limit(10).all()
         
-        return render_template('crm/dashboard.html',
+        return render_template('crm/dashboard_new.html',
                              title='CRM Dashboard',
                              page='crm',
                              customers_count=customers_count,
@@ -804,6 +804,240 @@ def get_assets():
             'success': False,
             'error': str(e)
         }), 500
+
+@crm_bp.route('/api/dashboard-stats')
+def get_dashboard_stats():
+    """综合统计数据 - 矿场专属仪表盘"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        now = datetime.now()
+        first_day_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        total_customers = Customer.query.count() or 0
+        customers_this_month = Customer.query.filter(Customer.created_at >= first_day_of_month).count() or 0
+        
+        total_deals_value = Deal.query.filter(Deal.status == DealStatus.SIGNED).with_entities(func.sum(Deal.value)).scalar() or 0
+        total_deals_count = Deal.query.filter(Deal.status == DealStatus.SIGNED).count() or 0
+        deals_this_month_value = Deal.query.filter(
+            Deal.status == DealStatus.SIGNED,
+            Deal.created_at >= first_day_of_month
+        ).with_entities(func.sum(Deal.value)).scalar() or 0
+        
+        total_hosting_capacity = Customer.query.with_entities(func.sum(Customer.mining_capacity)).scalar() or 0
+        total_deal_capacity = Deal.query.filter(Deal.mining_capacity.isnot(None)).with_entities(func.sum(Deal.mining_capacity)).scalar() or 0
+        utilization_rate = (total_deal_capacity / total_hosting_capacity * 100) if total_hosting_capacity > 0 else 0
+        
+        active_deals_count = Deal.query.filter(Deal.status.in_([DealStatus.APPROVED, DealStatus.SIGNED])).count() or 0
+        total_leads = Lead.query.count() or 0
+        won_leads = Lead.query.filter(Lead.status == LeadStatus.WON).count() or 0
+        conversion_rate = (won_leads / total_leads * 100) if total_leads > 0 else 0
+        
+        logger.info(f"Dashboard stats retrieved: customers={total_customers}, deals_value={total_deals_value}")
+        
+        return jsonify({
+            'customers': {
+                'total': total_customers,
+                'this_month': customers_this_month
+            },
+            'deals': {
+                'total_value': float(total_deals_value),
+                'count': total_deals_count,
+                'this_month_value': float(deals_this_month_value)
+            },
+            'hosting_capacity': {
+                'total_mw': float(total_hosting_capacity),
+                'utilization_rate': round(float(utilization_rate), 2)
+            },
+            'active_deals': {
+                'count': active_deals_count,
+                'conversion_rate': round(float(conversion_rate), 2)
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取仪表盘统计数据错误: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@crm_bp.route('/api/revenue-trend')
+def get_revenue_trend():
+    """收入趋势数据 - 最近12个月"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        now = datetime.now()
+        twelve_months_ago = now - timedelta(days=365)
+        
+        revenue_by_month = db.session.query(
+            func.date_trunc('month', Deal.created_at).label('month'),
+            func.sum(Deal.value).label('total')
+        ).filter(
+            Deal.created_at >= twelve_months_ago,
+            Deal.status == DealStatus.SIGNED
+        ).group_by('month').order_by('month').all()
+        
+        labels = []
+        miner_sales = []
+        hosting_fees = []
+        
+        for month_data in revenue_by_month:
+            month_str = month_data.month.strftime('%Y-%m') if month_data.month else ''
+            labels.append(month_str)
+            total_revenue = float(month_data.total or 0)
+            miner_sales.append(round(total_revenue * 0.6, 2))
+            hosting_fees.append(round(total_revenue * 0.4, 2))
+        
+        if not labels:
+            labels = [(now - timedelta(days=30*i)).strftime('%Y-%m') for i in range(11, -1, -1)]
+            miner_sales = [0] * 12
+            hosting_fees = [0] * 12
+        
+        logger.info(f"Revenue trend retrieved: {len(labels)} months")
+        
+        return jsonify({
+            'labels': labels,
+            'miner_sales': miner_sales,
+            'hosting_fees': hosting_fees
+        })
+        
+    except Exception as e:
+        logger.error(f"获取收入趋势错误: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@crm_bp.route('/api/sales-funnel')
+def get_sales_funnel():
+    """销售漏斗数据"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        funnel_data = {
+            LeadStatus.NEW.value: Lead.query.filter_by(status=LeadStatus.NEW).count() or 0,
+            LeadStatus.CONTACTED.value: Lead.query.filter_by(status=LeadStatus.CONTACTED).count() or 0,
+            LeadStatus.QUALIFIED.value: Lead.query.filter_by(status=LeadStatus.QUALIFIED).count() or 0,
+            LeadStatus.NEGOTIATION.value: Lead.query.filter_by(status=LeadStatus.NEGOTIATION).count() or 0,
+            LeadStatus.WON.value: Lead.query.filter_by(status=LeadStatus.WON).count() or 0
+        }
+        
+        labels = list(funnel_data.keys())
+        values = list(funnel_data.values())
+        
+        logger.info(f"Sales funnel retrieved: {sum(values)} total leads")
+        
+        return jsonify({
+            'labels': labels,
+            'values': values
+        })
+        
+    except Exception as e:
+        logger.error(f"获取销售漏斗数据错误: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@crm_bp.route('/api/capacity-distribution')
+def get_capacity_distribution():
+    """容量分布数据 - TOP 10客户"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        top_customers = Customer.query.filter(
+            Customer.mining_capacity.isnot(None),
+            Customer.mining_capacity > 0
+        ).order_by(Customer.mining_capacity.desc()).limit(10).all()
+        
+        labels = []
+        values = []
+        
+        for customer in top_customers:
+            labels.append(customer.name or 'Unknown')
+            values.append(float(customer.mining_capacity or 0))
+        
+        if not labels:
+            labels = []
+            values = []
+        
+        logger.info(f"Capacity distribution retrieved: {len(labels)} customers")
+        
+        return jsonify({
+            'labels': labels,
+            'values': values
+        })
+        
+    except Exception as e:
+        logger.error(f"获取容量分布数据错误: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@crm_bp.route('/api/miner-models-ranking')
+def get_miner_models_ranking():
+    """矿机型号销售排行"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        miner_models = db.session.query(
+            Asset.model,
+            func.count(Asset.id).label('sales_count')
+        ).filter(
+            Asset.asset_type == 'miner',
+            Asset.model.isnot(None)
+        ).group_by(Asset.model).order_by(func.count(Asset.id).desc()).limit(10).all()
+        
+        models = []
+        sales = []
+        
+        for model_data in miner_models:
+            models.append(model_data.model or 'Unknown')
+            sales.append(int(model_data.sales_count or 0))
+        
+        if not models:
+            models = []
+            sales = []
+        
+        logger.info(f"Miner models ranking retrieved: {len(models)} models")
+        
+        return jsonify({
+            'models': models,
+            'sales': sales
+        })
+        
+    except Exception as e:
+        logger.error(f"获取矿机型号排行错误: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@crm_bp.route('/api/customer-capacity-top')
+def get_customer_capacity_top():
+    """客户容量TOP榜 - TOP 5"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        top_customers = Customer.query.filter(
+            Customer.mining_capacity.isnot(None),
+            Customer.mining_capacity > 0
+        ).order_by(Customer.mining_capacity.desc()).limit(5).all()
+        
+        customers = []
+        for customer in top_customers:
+            customers.append({
+                'name': customer.name or 'Unknown',
+                'capacity': float(customer.mining_capacity or 0),
+                'company': customer.company or ''
+            })
+        
+        if not customers:
+            customers = []
+        
+        logger.info(f"Customer capacity top retrieved: {len(customers)} customers")
+        
+        return jsonify({
+            'customers': customers
+        })
+        
+    except Exception as e:
+        logger.error(f"获取客户容量TOP榜错误: {e}")
+        return jsonify({'error': str(e)}), 500
 
 def init_crm_routes(app):
     """初始化CRM路由到应用"""
