@@ -3,6 +3,16 @@
 ## Overview
 The BTC Mining Calculator is an enterprise-grade web application for Bitcoin mining profitability analysis, targeting mining site owners and their clients. It provides real-time data integration, dual-algorithm validation, multilingual support (Chinese/English), and robust role-based access control. The system aims to optimize Bitcoin mining investments through comprehensive operations management, CRM, power management, technical analysis, and professional reporting.
 
+## 📚 Architecture Documentation
+**完整系统架构文档**: 查看 [`SYSTEM_ARCHITECTURE_COMPLETE.md`](./SYSTEM_ARCHITECTURE_COMPLETE.md) 获取：
+- 20个业务模块完整映射
+- 50+数据库表结构
+- 100+ API端点详细列表
+- 外部集成（CoinGecko, Blockchain.info, Deribit, OKX, Binance等）
+- Redis缓存策略和分布式锁
+- CDC事件平台完整架构
+- 数据流向图和技术栈
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
