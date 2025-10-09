@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}系统监控 - System Monitoring{% endblock %}
+{% block title %}{% if current_lang == 'en' %}System Monitoring{% else %}系统监控{% endif %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -17,6 +17,34 @@
     body {
         background-color: #1a1d2e;
         color: #e0e0e0;
+    }
+    
+    .language-switcher {
+        display: inline-flex;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid rgba(247, 147, 26, 0.3);
+        background: rgba(247, 147, 26, 0.1);
+    }
+    
+    .language-switcher .btn {
+        border: none;
+        padding: 6px 16px;
+        font-size: 0.9rem;
+        background: transparent;
+        color: #8b92a7;
+        transition: all 0.3s ease;
+    }
+    
+    .language-switcher .btn:hover {
+        background: rgba(247, 147, 26, 0.2);
+        color: var(--btc-gold);
+    }
+    
+    .language-switcher .btn.active {
+        background: var(--btc-gold);
+        color: #000;
+        font-weight: 600;
     }
     
     .page-header {
@@ -323,21 +351,29 @@
         <div class="col-md-6">
             <h1 class="page-title">
                 <i class="bi bi-speedometer2"></i>
-                System Monitoring Dashboard
+                {% if current_lang == 'en' %}System Monitoring{% else %}系统监控{% endif %}
             </h1>
-            <p class="text-muted mb-0">Real-time system health and performance metrics</p>
+            <p class="text-muted mb-0">
+                {% if current_lang == 'en' %}Real-time system health and performance metrics{% else %}实时系统健康和性能指标{% endif %}
+            </p>
         </div>
         <div class="col-md-6 text-end">
             <div class="d-inline-block me-3 align-middle">
                 <div class="last-updated" id="last-updated">
-                    Last updated: <span id="update-time">Loading...</span>
+                    {% if current_lang == 'en' %}Last updated{% else %}最后更新{% endif %}: <span id="update-time">{% if current_lang == 'en' %}Loading...{% else %}加载中...{% endif %}</span>
                 </div>
             </div>
-            <a href="{{ url_for('admin_user_list') }}" class="btn btn-outline-light">
-                <i class="bi bi-people-fill me-1"></i>用户管理
+            
+            <div class="language-switcher me-2 d-inline-flex">
+                <a href="{{ url_for('set_language', lang='zh', return_url=request.url) }}" class="btn btn-sm {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
+                <a href="{{ url_for('set_language', lang='en', return_url=request.url) }}" class="btn btn-sm {{ 'active' if current_lang == 'en' else '' }}">English</a>
+            </div>
+            
+            <a href="{{ url_for('admin_user_list') }}" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-people-fill me-1"></i>{% if current_lang == 'en' %}User Management{% else %}用户管理{% endif %}
             </a>
-            <a href="{{ url_for('index') }}" class="btn btn-outline-light ms-2">
-                <i class="bi bi-house-door me-1"></i>主页
+            <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm ms-2">
+                <i class="bi bi-house-door me-1"></i>{% if current_lang == 'en' %}Back to Home{% else %}返回主页{% endif %}
             </a>
         </div>
     </div>
@@ -351,7 +387,7 @@
                 <i class="bi bi-heart-pulse-fill"></i>
             </div>
             <div id="health-score" class="kpi-value">0</div>
-            <div class="kpi-label">System Health Score</div>
+            <div class="kpi-label">{% if current_lang == 'en' %}System Health Score{% else %}系统健康评分{% endif %}</div>
         </div>
     </div>
     
@@ -361,7 +397,7 @@
                 <i class="bi bi-check-circle-fill"></i>
             </div>
             <div id="success-rate" class="kpi-value">0%</div>
-            <div class="kpi-label">API Success Rate</div>
+            <div class="kpi-label">{% if current_lang == 'en' %}API Success Rate{% else %}API成功率{% endif %}</div>
         </div>
     </div>
     
@@ -371,7 +407,7 @@
                 <i class="bi bi-stopwatch-fill"></i>
             </div>
             <div id="p95-latency" class="kpi-value">0 ms</div>
-            <div class="kpi-label">P95 Latency</div>
+            <div class="kpi-label">{% if current_lang == 'en' %}P95 Latency{% else %}P95延迟{% endif %}</div>
         </div>
     </div>
     
@@ -381,7 +417,7 @@
                 <i class="bi bi-grid-3x3-gap-fill"></i>
             </div>
             <div id="active-modules" class="kpi-value">0</div>
-            <div class="kpi-label">Active Modules</div>
+            <div class="kpi-label">{% if current_lang == 'en' %}Active Modules{% else %}活跃模块{% endif %}</div>
         </div>
     </div>
 </div>
@@ -391,7 +427,7 @@
     <div class="col-12">
         <h4 class="section-title">
             <i class="bi bi-hdd-rack me-2" style="color: var(--btc-gold);"></i>
-            Module Health Status
+            {% if current_lang == 'en' %}Module Health Status{% else %}模块健康状态{% endif %}
         </h4>
     </div>
     
@@ -400,9 +436,9 @@
             <div class="module-status-icon healthy">
                 <i class="bi bi-check-circle-fill"></i>
             </div>
-            <div class="module-name">Database</div>
-            <div class="module-type text-muted mb-2">PostgreSQL</div>
-            <div class="module-metric">Response Time: <span class="module-response-time">-- ms</span></div>
+            <div class="module-name">{% if current_lang == 'en' %}Database{% else %}数据库{% endif %}</div>
+            <div class="module-type text-muted mb-2">{% if current_lang == 'en' %}PostgreSQL{% else %}PostgreSQL{% endif %}</div>
+            <div class="module-metric">{% if current_lang == 'en' %}Response Time{% else %}响应时间{% endif %}: <span class="module-response-time">-- ms</span></div>
         </div>
     </div>
     
@@ -411,9 +447,9 @@
             <div class="module-status-icon healthy">
                 <i class="bi bi-check-circle-fill"></i>
             </div>
-            <div class="module-name">Redis</div>
-            <div class="module-type text-muted mb-2">Cache</div>
-            <div class="module-metric">Status: <span class="module-status-text">Connected</span></div>
+            <div class="module-name">{% if current_lang == 'en' %}Cache Service{% else %}缓存服务{% endif %}</div>
+            <div class="module-type text-muted mb-2">{% if current_lang == 'en' %}Redis{% else %}Redis{% endif %}</div>
+            <div class="module-metric">{% if current_lang == 'en' %}Status{% else %}状态{% endif %}: <span class="module-status-text">{% if current_lang == 'en' %}Connected{% else %}已连接{% endif %}</span></div>
         </div>
     </div>
     
@@ -422,9 +458,9 @@
             <div class="module-status-icon healthy">
                 <i class="bi bi-check-circle-fill"></i>
             </div>
-            <div class="module-name">Intelligence Layer</div>
-            <div class="module-type text-muted mb-2">Event Processing</div>
-            <div class="module-metric">Outbox Backlog: <span class="module-backlog">0</span></div>
+            <div class="module-name">{% if current_lang == 'en' %}Intelligence Layer{% else %}智能层{% endif %}</div>
+            <div class="module-type text-muted mb-2">{% if current_lang == 'en' %}Event Processing{% else %}事件处理{% endif %}</div>
+            <div class="module-metric">{% if current_lang == 'en' %}Outbox Backlog{% else %}待处理事件{% endif %}: <span class="module-backlog">0</span></div>
         </div>
     </div>
     
@@ -433,9 +469,9 @@
             <div class="module-status-icon healthy">
                 <i class="bi bi-check-circle-fill"></i>
             </div>
-            <div class="module-name">CDC Platform</div>
-            <div class="module-type text-muted mb-2">Change Data Capture</div>
-            <div class="module-metric">Kafka Lag: <span class="module-lag">0</span></div>
+            <div class="module-name">{% if current_lang == 'en' %}External APIs{% else %}外部APIs{% endif %}</div>
+            <div class="module-type text-muted mb-2">{% if current_lang == 'en' %}Change Data Capture{% else %}数据捕获{% endif %}</div>
+            <div class="module-metric">{% if current_lang == 'en' %}Kafka Lag{% else %}Kafka延迟{% endif %}: <span class="module-lag">0</span></div>
         </div>
     </div>
     
@@ -444,9 +480,9 @@
             <div class="module-status-icon healthy">
                 <i class="bi bi-check-circle-fill"></i>
             </div>
-            <div class="module-name">Scheduler</div>
-            <div class="module-type text-muted mb-2">Task Execution</div>
-            <div class="module-metric">Tasks (24h): <span class="module-tasks">0</span></div>
+            <div class="module-name">{% if current_lang == 'en' %}Worker Queue{% else %}任务队列{% endif %}</div>
+            <div class="module-type text-muted mb-2">{% if current_lang == 'en' %}Task Execution{% else %}任务执行{% endif %}</div>
+            <div class="module-metric">{% if current_lang == 'en' %}Tasks (24h){% else %}任务(24小时){% endif %}: <span class="module-tasks">0</span></div>
         </div>
     </div>
     
@@ -455,9 +491,9 @@
             <div class="module-status-icon healthy">
                 <i class="bi bi-check-circle-fill"></i>
             </div>
-            <div class="module-name">API Gateway</div>
-            <div class="module-type text-muted mb-2">Request Routing</div>
-            <div class="module-metric">Active Requests: <span class="module-requests">0</span></div>
+            <div class="module-name">{% if current_lang == 'en' %}API Gateway{% else %}API网关{% endif %}</div>
+            <div class="module-type text-muted mb-2">{% if current_lang == 'en' %}Request Routing{% else %}请求路由{% endif %}</div>
+            <div class="module-metric">{% if current_lang == 'en' %}Active Requests{% else %}活跃请求{% endif %}: <span class="module-requests">0</span></div>
         </div>
     </div>
 </div>
@@ -467,7 +503,7 @@
     <div class="col-12">
         <h4 class="section-title">
             <i class="bi bi-graph-up me-2" style="color: var(--btc-gold);"></i>
-            Performance Metrics
+            {% if current_lang == 'en' %}Performance Trends{% else %}性能趋势{% endif %}
         </h4>
     </div>
     
@@ -475,7 +511,7 @@
         <div class="chart-card">
             <div class="chart-title">
                 <i class="bi bi-activity"></i>
-                API Request Trend (24h)
+                {% if current_lang == 'en' %}API Response Time{% else %}API响应时间{% endif %}
             </div>
             <div class="chart-container">
                 <canvas id="api-trend-chart"></canvas>
@@ -487,7 +523,7 @@
         <div class="chart-card">
             <div class="chart-title">
                 <i class="bi bi-bar-chart-fill"></i>
-                Latency Percentiles
+                {% if current_lang == 'en' %}Latency Distribution{% else %}延迟分布{% endif %}
             </div>
             <div class="chart-container">
                 <canvas id="latency-chart"></canvas>
@@ -499,7 +535,7 @@
         <div class="chart-card">
             <div class="chart-title">
                 <i class="bi bi-pie-chart-fill"></i>
-                Cache Hit Rate
+                {% if current_lang == 'en' %}Cache Hit Rate{% else %}缓存命中率{% endif %}
             </div>
             <div class="chart-container">
                 <canvas id="cache-chart"></canvas>
@@ -511,7 +547,7 @@
         <div class="chart-card">
             <div class="chart-title">
                 <i class="bi bi-speedometer"></i>
-                SLO Compliance
+                {% if current_lang == 'en' %}SLO Dashboard{% else %}SLO仪表盘{% endif %}
             </div>
             <div class="chart-container">
                 <canvas id="slo-gauge-chart"></canvas>
@@ -525,7 +561,7 @@
     <div class="col-12">
         <h4 class="section-title">
             <i class="bi bi-exclamation-triangle me-2" style="color: var(--btc-gold);"></i>
-            System Alerts
+            {% if current_lang == 'en' %}System Alerts{% else %}系统告警{% endif %}
         </h4>
         
         <div class="chart-card">
@@ -533,16 +569,16 @@
                 <table class="alerts-table">
                     <thead>
                         <tr>
-                            <th>Severity</th>
-                            <th>Module</th>
-                            <th>Metric</th>
-                            <th>Message</th>
-                            <th>Time</th>
+                            <th>{% if current_lang == 'en' %}Severity{% else %}严重程度{% endif %}</th>
+                            <th>{% if current_lang == 'en' %}Module{% else %}模块{% endif %}</th>
+                            <th>{% if current_lang == 'en' %}Metric{% else %}指标{% endif %}</th>
+                            <th>{% if current_lang == 'en' %}Message{% else %}消息{% endif %}</th>
+                            <th>{% if current_lang == 'en' %}Time{% else %}时间{% endif %}</th>
                         </tr>
                     </thead>
                     <tbody id="alerts-tbody">
                         <tr>
-                            <td colspan="5" class="text-center text-muted">Loading alerts...</td>
+                            <td colspan="5" class="text-center text-muted">{% if current_lang == 'en' %}Loading alerts...{% else %}加载告警中...{% endif %}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -557,11 +593,55 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <script>
+const currentLang = '{{ current_lang }}';
 let apiTrendChart = null;
 let latencyChart = null;
 let cacheChart = null;
 let sloGaugeChart = null;
 let countUpInstances = {};
+
+const translations = {
+    en: {
+        connected: 'Connected',
+        unavailable: 'Unavailable',
+        healthy: 'Healthy',
+        degraded: 'Degraded',
+        unhealthy: 'Unhealthy',
+        noAlerts: 'No alerts',
+        apiRequests: 'API Requests',
+        latency: 'Latency (ms)',
+        cacheHits: 'Cache Hits',
+        cacheMisses: 'Cache Misses',
+        compliant: 'Compliant',
+        nonCompliant: 'Non-Compliant',
+        critical: 'Critical',
+        warning: 'Warning',
+        info: 'Info',
+        kafkaLag: 'Kafka Lag'
+    },
+    zh: {
+        connected: '已连接',
+        unavailable: '不可用',
+        healthy: '健康',
+        degraded: '降级',
+        unhealthy: '异常',
+        noAlerts: '暂无告警',
+        apiRequests: 'API请求',
+        latency: '延迟 (ms)',
+        cacheHits: '缓存命中',
+        cacheMisses: '缓存未命中',
+        compliant: '合规',
+        nonCompliant: '不合规',
+        critical: '严重',
+        warning: '警告',
+        info: '信息',
+        kafkaLag: 'Kafka延迟'
+    }
+};
+
+function t(key) {
+    return translations[currentLang][key] || translations['en'][key] || key;
+}
 
 function initCountUp(elementId, endValue, suffix = '', decimals = 0) {
     const element = document.getElementById(elementId);
@@ -613,7 +693,7 @@ function updateModuleCard(moduleId, status, metric) {
     } else if (moduleId === 'api-gateway') {
         card.querySelector('.module-requests').textContent = metric || 0;
     } else if (moduleId === 'redis') {
-        card.querySelector('.module-status-text').textContent = status === 'healthy' ? 'Connected' : 'Unavailable';
+        card.querySelector('.module-status-text').textContent = status === 'healthy' ? t('connected') : t('unavailable');
     }
 }
 
@@ -711,7 +791,7 @@ async function updateAlerts() {
         const tbody = document.getElementById('alerts-tbody');
         
         if (!data.alerts || data.alerts.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No active alerts</td></tr>';
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">${t('noAlerts')}</td></tr>`;
             return;
         }
         
@@ -766,7 +846,7 @@ function updateApiTrendChart() {
         data: {
             labels: hours,
             datasets: [{
-                label: 'API Requests',
+                label: t('apiRequests'),
                 data: requests,
                 borderColor: '#f7931a',
                 backgroundColor: 'rgba(247, 147, 26, 0.1)',
@@ -813,7 +893,7 @@ function updateLatencyChart(distribution) {
         data: {
             labels: ['P50', 'P95', 'P99'],
             datasets: [{
-                label: 'Latency (ms)',
+                label: t('latency'),
                 data: [p50, p95, p99],
                 backgroundColor: [
                     'rgba(40, 167, 69, 0.7)',
@@ -866,7 +946,7 @@ function updateCacheChart(cacheData) {
     cacheChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Cache Hits', 'Cache Misses'],
+            labels: [t('cacheHits'), t('cacheMisses')],
             datasets: [{
                 data: [hits, misses],
                 backgroundColor: [
@@ -904,7 +984,7 @@ function updateSloGaugeChart(compliancePercent) {
     sloGaugeChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Compliant', 'Non-Compliant'],
+            labels: [t('compliant'), t('nonCompliant')],
             datasets: [{
                 data: [compliancePercent, 100 - compliancePercent],
                 backgroundColor: [
