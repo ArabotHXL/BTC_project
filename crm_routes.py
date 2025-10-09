@@ -831,6 +831,225 @@ def activities_page():
         logger.error(f"活动页面错误: {e}")
         return redirect(url_for('crm.crm_dashboard'))
 
+@crm_bp.route('/api/activities/stats')
+def get_activities_stats():
+    """获取活动统计KPI数据"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        from collections import Counter
+        
+        today = datetime.now().date()
+        week_start = today - timedelta(days=today.weekday())
+        month_start = today.replace(day=1)
+        
+        total_activities = Activity.query.count() or 0
+        
+        today_activities = Activity.query.filter(
+            func.date(Activity.created_at) == today
+        ).count() or 0
+        
+        week_activities = Activity.query.filter(
+            Activity.created_at >= week_start
+        ).count() or 0
+        
+        month_activities = Activity.query.filter(
+            Activity.created_at >= month_start
+        ).count() or 0
+        
+        customer_activity_counts = db.session.query(
+            Customer.name,
+            func.count(Activity.id).label('activity_count')
+        ).join(Activity, Activity.customer_id == Customer.id)\
+         .group_by(Customer.id, Customer.name)\
+         .order_by(func.count(Activity.id).desc())\
+         .first()
+        
+        most_active_customer = {
+            'name': customer_activity_counts[0] if customer_activity_counts else 'N/A',
+            'count': int(customer_activity_counts[1]) if customer_activity_counts else 0
+        }
+        
+        type_counts = db.session.query(
+            Activity.type,
+            func.count(Activity.id).label('count')
+        ).group_by(Activity.type)\
+         .order_by(func.count(Activity.id).desc())\
+         .first()
+        
+        most_active_type = {
+            'type': type_counts[0] if type_counts else '备注',
+            'count': int(type_counts[1]) if type_counts else 0
+        }
+        
+        return jsonify({
+            'success': True,
+            'total_activities': int(total_activities),
+            'today_activities': int(today_activities),
+            'week_activities': int(week_activities),
+            'month_activities': int(month_activities),
+            'most_active_customer': most_active_customer,
+            'most_active_type': most_active_type
+        })
+        
+    except Exception as e:
+        logger.error(f"获取活动统计错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/activities/heatmap')
+def get_activities_heatmap():
+    """获取客户互动热力图数据"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        customer_activities = db.session.query(
+            Customer.id,
+            Customer.name,
+            func.count(Activity.id).label('activity_count')
+        ).join(Activity, Activity.customer_id == Customer.id)\
+         .group_by(Customer.id, Customer.name)\
+         .order_by(func.count(Activity.id).desc())\
+         .limit(10)\
+         .all()
+        
+        heatmap_data = []
+        for customer_id, customer_name, activity_count in customer_activities:
+            type_distribution = db.session.query(
+                Activity.type,
+                func.count(Activity.id).label('count')
+            ).filter(Activity.customer_id == customer_id)\
+             .group_by(Activity.type)\
+             .all()
+            
+            types = {}
+            for activity_type, count in type_distribution:
+                types[activity_type or '备注'] = int(count)
+            
+            heatmap_data.append({
+                'customer_id': int(customer_id),
+                'customer_name': customer_name,
+                'activity_count': int(activity_count),
+                'type_distribution': types
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': heatmap_data
+        })
+        
+    except Exception as e:
+        logger.error(f"获取热力图数据错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/activities/timeline')
+def get_activities_timeline():
+    """获取活动时间线数据（过去30天）"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        end_date = datetime.now().date()
+        start_date = end_date - timedelta(days=29)
+        
+        daily_counts = {}
+        for i in range(30):
+            date = start_date + timedelta(days=i)
+            daily_counts[date.strftime('%Y-%m-%d')] = {
+                'total': 0,
+                'types': {}
+            }
+        
+        activities = Activity.query.filter(
+            Activity.created_at >= start_date
+        ).all()
+        
+        for activity in activities:
+            date_key = activity.created_at.strftime('%Y-%m-%d')
+            if date_key in daily_counts:
+                daily_counts[date_key]['total'] += 1
+                activity_type = activity.type or '备注'
+                daily_counts[date_key]['types'][activity_type] = \
+                    daily_counts[date_key]['types'].get(activity_type, 0) + 1
+        
+        timeline_data = []
+        for date_str, data in sorted(daily_counts.items()):
+            timeline_data.append({
+                'date': date_str,
+                'total': data['total'],
+                'types': data['types']
+            })
+        
+        milestones = []
+        first_contact = Activity.query.order_by(Activity.created_at.asc()).first()
+        if first_contact:
+            milestones.append({
+                'date': first_contact.created_at.strftime('%Y-%m-%d'),
+                'event': '首次接触',
+                'description': first_contact.summary
+            })
+        
+        recent_deals = Deal.query.filter(
+            Deal.status == DealStatus.COMPLETED,
+            Deal.created_at >= start_date
+        ).order_by(Deal.created_at.desc()).limit(3).all()
+        
+        for deal in recent_deals:
+            milestones.append({
+                'date': deal.created_at.strftime('%Y-%m-%d'),
+                'event': '交易成交',
+                'description': deal.title
+            })
+        
+        return jsonify({
+            'success': True,
+            'timeline': timeline_data,
+            'milestones': milestones
+        })
+        
+    except Exception as e:
+        logger.error(f"获取时间线数据错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/activities/type-trend')
+def get_activities_type_trend():
+    """获取活动类型趋势（过去7天）"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        end_date = datetime.now().date()
+        start_date = end_date - timedelta(days=6)
+        
+        activity_types = ['备注', '电话', '会议', '邮件', '现场拜访', '创建', '其他']
+        
+        trend_data = {
+            'dates': [],
+            'types': {t: [] for t in activity_types}
+        }
+        
+        for i in range(7):
+            date = start_date + timedelta(days=i)
+            trend_data['dates'].append(date.strftime('%m-%d'))
+            
+            for activity_type in activity_types:
+                count = Activity.query.filter(
+                    func.date(Activity.created_at) == date,
+                    Activity.type == activity_type
+                ).count() or 0
+                
+                trend_data['types'][activity_type].append(int(count))
+        
+        return jsonify({
+            'success': True,
+            'data': trend_data
+        })
+        
+    except Exception as e:
+        logger.error(f"获取类型趋势错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @crm_bp.route('/broker', endpoint='broker_dashboard')
 def broker_dashboard_page():
     """经纪人仪表盘页面"""
