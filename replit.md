@@ -91,6 +91,12 @@ The CRM system is natively integrated into the Flask application, accessible at 
 -   **Dashboard**: Real-time statistics for customers, leads, deals, and revenue
 -   **Customer Management**: Full CRUD operations with relationship tracking
 -   **Lead Pipeline**: Visual workflow with status filtering and follow-up reminders
+-   **Lead Detail Page** (October 2025): 
+    - Vertical timeline view with activity tracking
+    - Conversion prediction with gauge chart and smart algorithms
+    - KPI cards (lead score 0-100, lead days, activity count)
+    - CountUp.js v2.8.0 with multi-layer fallback protection
+    - Fixed NaN display bugs via enhanced error handling and data preloading
 -   **Deal Tracking**: Transaction management with mining farm broker support
 -   **Invoice Management**: Billing with tax calculations and payment tracking
 -   **Asset Management**: Equipment inventory with serial number tracking
