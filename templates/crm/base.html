@@ -879,8 +879,8 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
-    <!-- CountUp.js -->
-    <script src="https://cdn.jsdelivr.net/npm/countup.js@1.8.2/dist/countUp.min.js"></script>
+    <!-- CountUp.js (v2.x) -->
+    <script src="https://cdn.jsdelivr.net/npm/countup.js@2.8.0/dist/countUp.umd.js"></script>
     
     <!-- Leaflet.js -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1029,7 +1029,17 @@
         // Initialize CountUp
         window.initCountUp = function(elementId, endValue, options = {}) {
             const element = document.getElementById(elementId);
-            if (!element) return;
+            if (!element) {
+                console.error('initCountUp: Element not found:', elementId);
+                return;
+            }
+            
+            // Validate endValue
+            if (typeof endValue !== 'number' || isNaN(endValue)) {
+                console.error('initCountUp: Invalid endValue:', endValue);
+                element.textContent = '0';
+                return;
+            }
             
             const defaultOptions = {
                 duration: 2,
@@ -1038,11 +1048,26 @@
                 ...options
             };
             
-            const countUp = new CountUp(elementId, endValue, defaultOptions);
-            if (!countUp.error) {
-                countUp.start();
-            } else {
-                console.error(countUp.error);
+            try {
+                // CountUp v2.x UMD export: window.countUp.CountUp
+                const CountUpClass = window.countUp && window.countUp.CountUp ? window.countUp.CountUp : null;
+                
+                if (!CountUpClass) {
+                    console.error('CountUp library not loaded');
+                    element.textContent = Math.round(endValue).toString();
+                    return;
+                }
+                
+                const countUpInstance = new CountUpClass(elementId, endValue, defaultOptions);
+                if (!countUpInstance.error) {
+                    countUpInstance.start();
+                } else {
+                    console.error('CountUp error:', countUpInstance.error);
+                    element.textContent = Math.round(endValue).toString();
+                }
+            } catch (err) {
+                console.error('initCountUp exception:', err);
+                element.textContent = Math.round(endValue).toString();
             }
         };
         

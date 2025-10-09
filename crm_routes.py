@@ -714,13 +714,103 @@ def lead_detail_page(lead_id):
         if not user_id:
             return redirect(url_for('login'))
         
+        # 从数据库加载lead对象 - 预加载activities关系以避免NaN
+        from sqlalchemy.orm import joinedload
+        lead = Lead.query.options(joinedload(Lead.activities)).get_or_404(lead_id)
+        
         return render_template('crm/lead_detail.html',
-                             title='Lead Detail',
+                             title=f'Lead Detail - {lead.title}',
                              page='crm_lead_detail',
-                             lead_id=lead_id)
+                             lead=lead)
     except Exception as e:
         logger.error(f"商机详情页面错误: {e}")
+        flash('无法加载商机详情', 'error')
         return redirect(url_for('crm.leads'))
+
+@crm_bp.route('/lead/<int:lead_id>/status', methods=['POST'], endpoint='update_lead_status')
+def update_lead_status(lead_id):
+    """更新商机状态"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        
+        lead = Lead.query.get_or_404(lead_id)
+        
+        # 获取表单数据
+        new_status_name = request.form.get('status')
+        status_comment = request.form.get('status_comment', '')
+        
+        # 更新状态
+        if new_status_name:
+            try:
+                new_status = LeadStatus[new_status_name]
+                old_status = lead.status
+                lead.status = new_status
+                
+                # 创建状态变更活动记录
+                if status_comment:
+                    activity_summary = f"状态更新: {old_status.value} → {new_status.value}"
+                    activity = Activity(
+                        customer_id=lead.customer_id,
+                        lead_id=lead.id,
+                        type='状态变更',
+                        summary=activity_summary,
+                        details=status_comment,
+                        created_by=session.get('email', 'System')
+                    )
+                    db.session.add(activity)
+                
+                db.session.commit()
+                flash(f'商机状态已更新为: {new_status.value}', 'success')
+            except KeyError:
+                flash('无效的状态值', 'error')
+        
+        return redirect(url_for('crm.lead_detail', lead_id=lead_id))
+        
+    except Exception as e:
+        logger.error(f"更新商机状态错误: {e}")
+        db.session.rollback()
+        flash('更新状态失败', 'error')
+        return redirect(url_for('crm.lead_detail', lead_id=lead_id))
+
+@crm_bp.route('/activity/new', methods=['POST'], endpoint='new_activity')
+def create_activity():
+    """创建新活动记录"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        # 获取JSON数据
+        data = request.get_json()
+        
+        # 创建新活动
+        activity = Activity(
+            customer_id=data.get('customer_id'),
+            lead_id=data.get('lead_id'),
+            type=data.get('type'),
+            summary=data.get('summary'),
+            details=data.get('details'),
+            created_by=session.get('email', 'System')
+        )
+        
+        db.session.add(activity)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'activity': {
+                'id': activity.id,
+                'created_at': activity.created_at.strftime('%Y-%m-%d %H:%M'),
+                'created_by': activity.created_by
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"创建活动记录错误: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @crm_bp.route('/customer/<int:customer_id>/lead/new', endpoint='new_lead')
 def new_lead_page(customer_id):
