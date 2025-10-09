@@ -6,6 +6,7 @@ CRM (Customer Relationship Management) Routes
 from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, flash
 import logging
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 import json
 from sqlalchemy import func
 
@@ -1616,8 +1617,18 @@ def get_invoices():
         if 'user_id' not in session:
             return jsonify({'success': False, 'error': 'Not authenticated'}), 401
         
+        user_id = session.get('user_id')
+        
+        # Build query with user filtering
+        invoices_query = Invoice.query.filter(Invoice.created_by_id == user_id)
+        
+        # Apply status filter if provided
+        status_filter = request.args.get('status', '').strip()
+        if status_filter:
+            invoices_query = invoices_query.filter(Invoice.status == status_filter)
+        
         # Fetch invoices from database
-        invoices = Invoice.query.order_by(Invoice.created_at.desc()).all()
+        invoices = invoices_query.order_by(Invoice.created_at.desc()).all()
         
         invoices_data = []
         for invoice in invoices:
@@ -1647,6 +1658,271 @@ def get_invoices():
         
     except Exception as e:
         logger.error(f"获取发票列表错误: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@crm_bp.route('/api/invoices/stats')
+def get_invoice_stats():
+    """财务统计KPI - 发票总览数据"""
+    try:
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        user_id = session.get('user_id')
+        
+        # 总收入 - 所有已支付发票（按用户过滤）
+        total_revenue = db.session.query(func.sum(Invoice.total_amount)).filter(
+            Invoice.created_by_id == user_id,
+            Invoice.status == 'paid'
+        ).scalar() or 0
+        
+        # 待收款金额 - sent状态发票（按用户过滤）
+        accounts_receivable = db.session.query(func.sum(Invoice.total_amount)).filter(
+            Invoice.created_by_id == user_id,
+            Invoice.status == 'sent'
+        ).scalar() or 0
+        
+        # 逾期金额 - overdue状态发票（按用户过滤）
+        overdue_amount = db.session.query(func.sum(Invoice.total_amount)).filter(
+            Invoice.created_by_id == user_id,
+            Invoice.status == 'overdue'
+        ).scalar() or 0
+        
+        # 本月收入 - 当月已支付发票（按用户过滤）
+        now = datetime.now()
+        first_day_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        monthly_revenue = db.session.query(func.sum(Invoice.total_amount)).filter(
+            Invoice.created_by_id == user_id,
+            Invoice.status == 'paid',
+            Invoice.paid_date >= first_day_of_month
+        ).scalar() or 0
+        
+        # 发票总数按状态分组（按用户过滤）
+        invoice_counts = {}
+        for status in ['draft', 'sent', 'paid', 'overdue', 'cancelled']:
+            count = Invoice.query.filter(
+                Invoice.created_by_id == user_id,
+                Invoice.status == status
+            ).count() or 0
+            invoice_counts[status] = count
+        
+        # 平均发票金额（按用户过滤）
+        total_invoices = Invoice.query.filter(Invoice.created_by_id == user_id).count() or 1
+        avg_invoice_amount = db.session.query(func.avg(Invoice.total_amount)).filter(
+            Invoice.created_by_id == user_id
+        ).scalar() or 0
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'total_revenue': float(total_revenue),
+                'accounts_receivable': float(accounts_receivable),
+                'overdue_amount': float(overdue_amount),
+                'monthly_revenue': float(monthly_revenue),
+                'invoice_counts': invoice_counts,
+                'total_invoices': total_invoices,
+                'avg_invoice_amount': float(avg_invoice_amount)
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取发票统计错误: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@crm_bp.route('/api/invoices/revenue-trend')
+def get_revenue_trend():
+    """收款趋势 - 过去12个月的收款数据"""
+    try:
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        user_id = session.get('user_id')
+        
+        # 计算过去12个月 - 使用relativedelta确保日历月准确
+        current_date = datetime.now()
+        months_data = []
+        
+        for i in range(11, -1, -1):
+            # 从11个月前到当月，使用relativedelta计算准确的日历月
+            month_date = current_date - relativedelta(months=i)
+            month_start = month_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            
+            # 下月初 - 使用relativedelta确保跨年等边界情况正确
+            next_month = month_start + relativedelta(months=1)
+            
+            # 按月份边界过滤该月的已支付发票（按用户过滤）
+            monthly_revenue = db.session.query(func.sum(Invoice.total_amount)).filter(
+                Invoice.created_by_id == user_id,
+                Invoice.status == 'paid',
+                Invoice.paid_date >= month_start,
+                Invoice.paid_date < next_month
+            ).scalar() or 0
+            
+            monthly_count = Invoice.query.filter(
+                Invoice.created_by_id == user_id,
+                Invoice.status == 'paid',
+                Invoice.paid_date >= month_start,
+                Invoice.paid_date < next_month
+            ).count() or 0
+            
+            months_data.append({
+                'month': month_start.strftime('%Y-%m'),
+                'month_label': month_start.strftime('%b %Y'),
+                'revenue': float(monthly_revenue),
+                'count': monthly_count
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': months_data
+        })
+        
+    except Exception as e:
+        logger.error(f"获取收款趋势错误: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@crm_bp.route('/api/invoices/aging')
+def get_invoice_aging():
+    """账龄分析 - 基于due_date和当前日期计算"""
+    try:
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        user_id = session.get('user_id')
+        now = datetime.now()
+        
+        # 0-30天账龄（只计算应收账款：sent和overdue状态，按用户过滤）
+        aging_0_30_amount = db.session.query(func.sum(Invoice.total_amount)).filter(
+            Invoice.created_by_id == user_id,
+            Invoice.status.in_(['sent', 'overdue']),
+            Invoice.due_date >= now - timedelta(days=30)
+        ).scalar() or 0
+        
+        aging_0_30_count = Invoice.query.filter(
+            Invoice.created_by_id == user_id,
+            Invoice.status.in_(['sent', 'overdue']),
+            Invoice.due_date >= now - timedelta(days=30)
+        ).count() or 0
+        
+        # 31-60天账龄（按用户过滤）
+        aging_31_60_amount = db.session.query(func.sum(Invoice.total_amount)).filter(
+            Invoice.created_by_id == user_id,
+            Invoice.status.in_(['sent', 'overdue']),
+            Invoice.due_date >= now - timedelta(days=60),
+            Invoice.due_date < now - timedelta(days=30)
+        ).scalar() or 0
+        
+        aging_31_60_count = Invoice.query.filter(
+            Invoice.created_by_id == user_id,
+            Invoice.status.in_(['sent', 'overdue']),
+            Invoice.due_date >= now - timedelta(days=60),
+            Invoice.due_date < now - timedelta(days=30)
+        ).count() or 0
+        
+        # 61-90天账龄（按用户过滤）
+        aging_61_90_amount = db.session.query(func.sum(Invoice.total_amount)).filter(
+            Invoice.created_by_id == user_id,
+            Invoice.status.in_(['sent', 'overdue']),
+            Invoice.due_date >= now - timedelta(days=90),
+            Invoice.due_date < now - timedelta(days=60)
+        ).scalar() or 0
+        
+        aging_61_90_count = Invoice.query.filter(
+            Invoice.created_by_id == user_id,
+            Invoice.status.in_(['sent', 'overdue']),
+            Invoice.due_date >= now - timedelta(days=90),
+            Invoice.due_date < now - timedelta(days=60)
+        ).count() or 0
+        
+        # 90天以上账龄（按用户过滤）
+        aging_90_plus_amount = db.session.query(func.sum(Invoice.total_amount)).filter(
+            Invoice.created_by_id == user_id,
+            Invoice.status.in_(['sent', 'overdue']),
+            Invoice.due_date < now - timedelta(days=90)
+        ).scalar() or 0
+        
+        aging_90_plus_count = Invoice.query.filter(
+            Invoice.created_by_id == user_id,
+            Invoice.status.in_(['sent', 'overdue']),
+            Invoice.due_date < now - timedelta(days=90)
+        ).count() or 0
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'aging_0_30': {
+                    'amount': float(aging_0_30_amount),
+                    'count': aging_0_30_count
+                },
+                'aging_31_60': {
+                    'amount': float(aging_31_60_amount),
+                    'count': aging_31_60_count
+                },
+                'aging_61_90': {
+                    'amount': float(aging_61_90_amount),
+                    'count': aging_61_90_count
+                },
+                'aging_90_plus': {
+                    'amount': float(aging_90_plus_amount),
+                    'count': aging_90_plus_count
+                }
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取账龄分析错误: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@crm_bp.route('/api/invoices/top-customers')
+def get_top_customers():
+    """TOP 5付款客户 - 按总支付金额排序"""
+    try:
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        user_id = session.get('user_id')
+        
+        # 查询每个客户的总支付金额（只统计已支付发票，按用户过滤）
+        top_customers = db.session.query(
+            Customer.name,
+            func.sum(Invoice.total_amount).label('total_paid')
+        ).join(Invoice, Invoice.customer_id == Customer.id).filter(
+            Invoice.created_by_id == user_id,
+            Invoice.status == 'paid'
+        ).group_by(Customer.id, Customer.name).order_by(
+            func.sum(Invoice.total_amount).desc()
+        ).limit(5).all()
+        
+        # 格式化数据
+        customers_data = []
+        for customer_name, total_paid in top_customers:
+            customers_data.append({
+                'customer_name': customer_name,
+                'total_amount': float(total_paid or 0)
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': customers_data
+        })
+        
+    except Exception as e:
+        logger.error(f"获取TOP客户错误: {e}")
         return jsonify({
             'success': False,
             'error': str(e)

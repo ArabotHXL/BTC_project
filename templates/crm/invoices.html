@@ -1,8 +1,8 @@
 {% extends "crm/base.html" %}
 
-{% block title %}{{ t('invoices') if current_lang == 'zh' else 'Invoices' }} | BTC Mining CRM{% endblock %}
+{% block title %}{{ t('invoices') if current_lang == 'zh' else 'Invoice Dashboard' }} | BTC Mining CRM{% endblock %}
 
-{% block page_title %}{{ t('invoices') if current_lang == 'zh' else 'Invoices' }}{% endblock %}
+{% block page_title %}{{ t('invoices') if current_lang == 'zh' else 'Invoice Dashboard' }}{% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item active" aria-current="page">{{ t('invoices') if current_lang == 'zh' else 'Invoices' }}</li>
@@ -15,6 +15,73 @@
 {% endblock %}
 
 {% block content %}
+<!-- KPI Cards Section -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card kpi-card bg-gradient-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-white-50 mb-1">{{ t('total_revenue') if current_lang == 'zh' else 'Total Revenue' }}</p>
+                        <h3 class="mb-0 text-white">$<span id="kpi-total-revenue" data-countup="0">0</span></h3>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card kpi-card bg-gradient-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-white-50 mb-1">{{ t('accounts_receivable') if current_lang == 'zh' else 'Accounts Receivable' }}</p>
+                        <h3 class="mb-0 text-white">$<span id="kpi-receivable" data-countup="0">0</span></h3>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card kpi-card bg-gradient-danger">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-white-50 mb-1">{{ t('overdue_amount') if current_lang == 'zh' else 'Overdue Amount' }}</p>
+                        <h3 class="mb-0 text-white">$<span id="kpi-overdue" data-countup="0">0</span></h3>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card kpi-card bg-gradient-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-white-50 mb-1">{{ t('monthly_revenue') if current_lang == 'zh' else 'This Month' }}</p>
+                        <h3 class="mb-0 text-white">$<span id="kpi-monthly" data-countup="0">0</span></h3>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Filter by Status -->
 <div class="card mb-4">
     <div class="card-body">
@@ -41,107 +108,404 @@
     </div>
 </div>
 
-<!-- Invoices Table -->
-<div class="card">
-    <div class="card-header">
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">{{ t('invoice_list') if current_lang == 'zh' else 'Invoice List' }}</h5>
-            <span class="badge bg-info" id="invoice-count">0</span>
+<!-- Main Content: Table + Charts -->
+<div class="row g-4">
+    <!-- Left Column: Invoice Table + Aging Chart -->
+    <div class="col-lg-8">
+        <!-- Invoices Table -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ t('invoice_list') if current_lang == 'zh' else 'Invoice List' }}</h5>
+                    <span class="badge bg-info" id="invoice-count">0</span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover mb-0" id="invoices-table">
+                        <thead>
+                            <tr>
+                                <th>{{ t('invoice_number') if current_lang == 'zh' else 'Invoice #' }}</th>
+                                <th>{{ t('customer') if current_lang == 'zh' else 'Customer' }}</th>
+                                <th>{{ t('status') if current_lang == 'zh' else 'Status' }}</th>
+                                <th>{{ t('amount') if current_lang == 'zh' else 'Amount' }}</th>
+                                <th>{{ t('issue_date') if current_lang == 'zh' else 'Issue Date' }}</th>
+                                <th>{{ t('due_date') if current_lang == 'zh' else 'Due Date' }}</th>
+                                <th>{{ t('actions') if current_lang == 'zh' else 'Actions' }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="spinner-border text-info" role="status">
+                                        <span class="visually-hidden">{{ t('loading') if current_lang == 'zh' else 'Loading...' }}</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aging Analysis Chart -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{{ t('aging_analysis') if current_lang == 'zh' else 'Aging Analysis' }}</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="aging-chart" height="100"></canvas>
+            </div>
         </div>
     </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-dark table-hover mb-0" id="invoices-table">
-                <thead>
-                    <tr>
-                        <th>{{ t('invoice_number') if current_lang == 'zh' else 'Invoice #' }}</th>
-                        <th>{{ t('customer') if current_lang == 'zh' else 'Customer' }}</th>
-                        <th>{{ t('status') if current_lang == 'zh' else 'Status' }}</th>
-                        <th>{{ t('amount') if current_lang == 'zh' else 'Amount' }}</th>
-                        <th>{{ t('issue_date') if current_lang == 'zh' else 'Issue Date' }}</th>
-                        <th>{{ t('due_date') if current_lang == 'zh' else 'Due Date' }}</th>
-                        <th>{{ t('actions') if current_lang == 'zh' else 'Actions' }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td colspan="7" class="text-center py-4">
-                            <div class="spinner-border text-info" role="status">
-                                <span class="visually-hidden">{{ t('loading') if current_lang == 'zh' else 'Loading...' }}</span>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+
+    <!-- Right Column: Charts -->
+    <div class="col-lg-4">
+        <!-- Revenue Trend Chart -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">{{ t('revenue_trend') if current_lang == 'zh' else 'Revenue Trend (12M)' }}</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenue-trend-chart" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Top 5 Customers Chart -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">{{ t('top_customers') if current_lang == 'zh' else 'Top 5 Customers' }}</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="top-customers-chart" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Quick Stats Card -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{{ t('quick_stats') if current_lang == 'zh' else 'Quick Stats' }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom border-secondary">
+                    <div>
+                        <p class="text-muted mb-0">{{ t('avg_invoice') if current_lang == 'zh' else 'Avg Invoice' }}</p>
+                        <h5 class="mb-0">$<span id="stat-avg-invoice">0</span></h5>
+                    </div>
+                    <i class="bi bi-calculator text-info" style="font-size: 2rem;"></i>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-0">{{ t('overdue_rate') if current_lang == 'zh' else 'Overdue Rate' }}</p>
+                        <h5 class="mb-0"><span id="stat-overdue-rate">0</span>%</h5>
+                    </div>
+                    <i class="bi bi-speedometer text-warning" style="font-size: 2rem;"></i>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    fetch('/crm/crm/api/invoices')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && data.data) {
-                const tbody = document.querySelector('#invoices-table tbody');
-                const invoiceCount = document.getElementById('invoice-count');
-                
-                invoiceCount.textContent = data.data.length;
-                
-                if (data.data.length === 0) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="7" class="text-center py-4">
-                                <i class="bi bi-receipt text-secondary mb-3" style="font-size: 2rem;"></i>
-                                <p class="text-muted mb-0">${'{{ t("no_invoices") if current_lang == "zh" else "No invoices found" }}'}</p>
-                            </td>
-                        </tr>
-                    `;
-                } else {
-                    tbody.innerHTML = data.data.map(invoice => {
-                        const statusClass = {
-                            'draft': 'secondary',
-                            'sent': 'info',
-                            'paid': 'success',
-                            'overdue': 'danger',
-                            'cancelled': 'warning'
-                        }[invoice.status] || 'secondary';
-                        
-                        return `
+    // Load all data on page load
+    loadKPIStats();
+    loadInvoicesList();
+    loadRevenueTrend();
+    loadAgingAnalysis();
+    loadTopCustomers();
+
+    function loadKPIStats() {
+        fetch('/crm/api/invoices/stats')
+            .then(response => response.json())
+            .then(result => {
+                if (result.success && result.data) {
+                    const data = result.data;
+                    
+                    // Update KPI cards with CountUp
+                    const totalRevenue = parseFloat(data.total_revenue) || 0;
+                    const receivable = parseFloat(data.accounts_receivable) || 0;
+                    const overdue = parseFloat(data.overdue_amount) || 0;
+                    const monthly = parseFloat(data.monthly_revenue) || 0;
+                    const avgInvoice = parseFloat(data.avg_invoice_amount) || 0;
+                    
+                    initCountUp('kpi-total-revenue', totalRevenue, { decimalPlaces: 2 });
+                    initCountUp('kpi-receivable', receivable, { decimalPlaces: 2 });
+                    initCountUp('kpi-overdue', overdue, { decimalPlaces: 2 });
+                    initCountUp('kpi-monthly', monthly, { decimalPlaces: 2 });
+                    
+                    // Update quick stats
+                    document.getElementById('stat-avg-invoice').textContent = avgInvoice.toFixed(2);
+                    
+                    // Calculate overdue rate
+                    const totalInvoices = data.total_invoices || 1;
+                    const overdueCount = data.invoice_counts.overdue || 0;
+                    const overdueRate = ((overdueCount / totalInvoices) * 100) || 0;
+                    document.getElementById('stat-overdue-rate').textContent = overdueRate.toFixed(1);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading KPI stats:', error);
+            });
+    }
+
+    function loadInvoicesList() {
+        // Get status filter from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const statusFilter = urlParams.get('status') || '';
+        
+        // Build API URL with status parameter
+        const apiUrl = statusFilter ? `/crm/api/invoices?status=${statusFilter}` : '/crm/api/invoices';
+        
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    const tbody = document.querySelector('#invoices-table tbody');
+                    const invoiceCount = document.getElementById('invoice-count');
+                    
+                    invoiceCount.textContent = data.data.length;
+                    
+                    // Pre-define translated text
+                    const noInvoicesText = '{{ t("no_invoices") if current_lang == "zh" else "No invoices found" }}';
+                    
+                    if (data.data.length === 0) {
+                        tbody.innerHTML = `
                             <tr>
-                                <td><strong>${invoice.invoice_number}</strong></td>
-                                <td>${invoice.customer_name || 'N/A'}</td>
-                                <td><span class="badge bg-${statusClass}">${invoice.status}</span></td>
-                                <td>$${parseFloat(invoice.total_amount || 0).toFixed(2)}</td>
-                                <td>${new Date(invoice.issue_date).toLocaleDateString()}</td>
-                                <td>${invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'N/A'}</td>
-                                <td>
-                                    <div class="btn-group">
-                                        <button class="btn btn-sm btn-outline-info" onclick="viewInvoice(${invoice.id})">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                    </div>
+                                <td colspan="7" class="text-center py-4">
+                                    <i class="bi bi-receipt text-secondary mb-3" style="font-size: 2rem;"></i>
+                                    <p class="text-muted mb-0">${noInvoicesText}</p>
                                 </td>
                             </tr>
                         `;
-                    }).join('');
+                    } else {
+                        tbody.innerHTML = data.data.map(invoice => {
+                            const statusClass = {
+                                'draft': 'secondary',
+                                'sent': 'info',
+                                'paid': 'success',
+                                'overdue': 'danger',
+                                'cancelled': 'warning'
+                            }[invoice.status] || 'secondary';
+                            
+                            const amount = parseFloat(invoice.total_amount) || 0;
+                            
+                            return `
+                                <tr>
+                                    <td><strong>${invoice.invoice_number}</strong></td>
+                                    <td>${invoice.customer_name || 'N/A'}</td>
+                                    <td><span class="badge bg-${statusClass}">${invoice.status}</span></td>
+                                    <td>$${amount.toFixed(2)}</td>
+                                    <td>${invoice.issue_date ? new Date(invoice.issue_date).toLocaleDateString() : 'N/A'}</td>
+                                    <td>${invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'N/A'}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-info" onclick="viewInvoice(${invoice.id})">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('');
+                    }
                 }
-            } else {
-                console.error('Failed to load invoices:', data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching invoices:', error);
-            const tbody = document.querySelector('#invoices-table tbody');
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="7" class="text-center py-4 text-danger">
-                        <i class="bi bi-exclamation-triangle mb-3" style="font-size: 2rem;"></i>
-                        <p class="mb-0">${'{{ t("error_loading") if current_lang == "zh" else "Error loading invoices" }}'}</p>
-                    </td>
-                </tr>
-            `;
-        });
+            })
+            .catch(error => {
+                console.error('Error loading invoices:', error);
+                const tbody = document.querySelector('#invoices-table tbody');
+                
+                // Pre-define translated error text
+                const errorText = '{{ t("error_loading") if current_lang == "zh" else "Error loading invoices" }}';
+                
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-danger">
+                            <i class="bi bi-exclamation-triangle mb-3" style="font-size: 2rem;"></i>
+                            <p class="mb-0">${errorText}</p>
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+
+    function loadRevenueTrend() {
+        fetch('/crm/api/invoices/revenue-trend')
+            .then(response => response.json())
+            .then(result => {
+                if (result.success && result.data) {
+                    const labels = result.data.map(m => m.month_label);
+                    const revenues = result.data.map(m => parseFloat(m.revenue) || 0);
+                    
+                    const config = {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: '{{ t("revenue") if current_lang == "zh" else "Revenue" }}',
+                                data: revenues,
+                                borderColor: '#f7931a',
+                                backgroundColor: 'rgba(247, 147, 26, 0.1)',
+                                tension: 0.4,
+                                fill: true,
+                                pointRadius: 4,
+                                pointHoverRadius: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return '$' + context.parsed.y.toFixed(2);
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return '$' + value;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    };
+                    
+                    initChart('revenue-trend-chart', config);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading revenue trend:', error);
+            });
+    }
+
+    function loadAgingAnalysis() {
+        fetch('/crm/api/invoices/aging')
+            .then(response => response.json())
+            .then(result => {
+                if (result.success && result.data) {
+                    const data = result.data;
+                    
+                    const config = {
+                        type: 'bar',
+                        data: {
+                            labels: ['0-30 Days', '31-60 Days', '61-90 Days', '90+ Days'],
+                            datasets: [{
+                                label: '{{ t("amount") if current_lang == "zh" else "Amount" }}',
+                                data: [
+                                    parseFloat(data.aging_0_30.amount) || 0,
+                                    parseFloat(data.aging_31_60.amount) || 0,
+                                    parseFloat(data.aging_61_90.amount) || 0,
+                                    parseFloat(data.aging_90_plus.amount) || 0
+                                ],
+                                backgroundColor: [
+                                    '#28a745',
+                                    '#ffc107',
+                                    '#fd7e14',
+                                    '#dc3545'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return '$' + context.parsed.y.toFixed(2);
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return '$' + value;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    };
+                    
+                    initChart('aging-chart', config);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading aging analysis:', error);
+            });
+    }
+
+    function loadTopCustomers() {
+        fetch('/crm/api/invoices/top-customers')
+            .then(response => response.json())
+            .then(result => {
+                if (result.success && result.data) {
+                    const labels = result.data.map(c => c.customer_name);
+                    const amounts = result.data.map(c => parseFloat(c.total_amount) || 0);
+                    
+                    const config = {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: '{{ t("total_paid") if current_lang == "zh" else "Total Paid" }}',
+                                data: amounts,
+                                backgroundColor: '#17a2b8',
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return '$' + context.parsed.x.toFixed(2);
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return '$' + value;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    };
+                    
+                    initChart('top-customers-chart', config);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading top customers:', error);
+            });
+    }
 });
 
 function viewInvoice(id) {
@@ -150,21 +514,31 @@ function viewInvoice(id) {
 </script>
 
 <style>
-.stat-card .icon {
-    font-size: 2rem;
-    color: #17a2b8;
+.kpi-card {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
 }
 
-.stat-card .value {
-    font-size: 2rem;
-    font-weight: bold;
-    margin-top: 0.5rem;
+.kpi-card .kpi-icon {
+    font-size: 2.5rem;
+    opacity: 0.3;
 }
 
-.stat-card .label {
-    font-size: 0.875rem;
-    color: #6c757d;
-    text-transform: uppercase;
+.bg-gradient-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+}
+
+.bg-gradient-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #f7931a 0%, #ffa500 100%);
 }
 </style>
 {% endblock %}
