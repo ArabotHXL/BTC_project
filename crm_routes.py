@@ -302,9 +302,13 @@ def customer_detail_page(customer_id):
         if not user_id:
             return redirect(url_for('login'))
         
+        # Query customer from database
+        customer = Customer.query.get_or_404(customer_id)
+        
         return render_template('crm/customer_detail.html',
                              title='Customer Detail',
                              page='crm_customer_detail',
+                             customer=customer,
                              customer_id=customer_id)
     except Exception as e:
         logger.error(f"客户详情页面错误: {e}")
@@ -350,8 +354,7 @@ def new_customer_page():
             address=address,
             customer_type=customer_type,
             tags=tags,
-            mining_capacity=mining_capacity,
-            status='active'
+            mining_capacity=mining_capacity
         )
         
         db.session.add(new_customer)
@@ -362,18 +365,19 @@ def new_customer_page():
             access_days = int(request.form.get('access_days', 30))
             # Create user access for calculator
             from models import UserAccess
-            from datetime import datetime, timedelta
             
-            user_access = UserAccess(
-                name=name,
-                email=email,
-                access_days=access_days,
-                expires_at=datetime.now() + timedelta(days=access_days),
-                role='customer',
-                customer_id=new_customer.id
-            )
-            db.session.add(user_access)
-            db.session.commit()
+            # Check if user already exists with this email
+            existing_user = UserAccess.query.filter_by(email=email).first()
+            if not existing_user:
+                user_access = UserAccess(
+                    name=name,
+                    email=email,
+                    access_days=access_days,
+                    role='customer',
+                    notes=f'CRM客户: {name}'
+                )
+                db.session.add(user_access)
+                db.session.commit()
         
         flash(f'客户 {name} 创建成功', 'success')
         return redirect(url_for('crm.customer_detail', customer_id=new_customer.id))
