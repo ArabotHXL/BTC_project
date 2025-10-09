@@ -6041,6 +6041,16 @@ except ImportError as e:
 except Exception as e:
     logging.error(f"Failed to register Intelligence Layer API blueprints: {e}")
 
+# System Monitoring Blueprint
+try:
+    from monitoring_routes import monitoring_bp
+    app.register_blueprint(monitoring_bp)
+    logging.info("System Monitoring API blueprint registered successfully")
+except ImportError as e:
+    logging.warning(f"System Monitoring API blueprint not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register System Monitoring API blueprint: {e}")
+
 # Web3/CRM/Treasury Integration API blueprints
 try:
     from api.web3_sla_api import web3_sla_bp
