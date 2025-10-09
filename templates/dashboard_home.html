@@ -583,7 +583,7 @@ body {
                             <i class="bi bi-file-text me-2 text-info"></i> 
                             {% if current_lang == 'en' %}View Login Records{% else %}查看登录记录{% endif %}
                         </a></li>
-                        <li><a class="dropdown-item text-light" href="{{ url_for('performance_monitor_page') }}" style="border-radius: 10px; margin: 4px;">
+                        <li><a class="dropdown-item text-light" href="/performance-monitor" style="border-radius: 10px; margin: 4px;">
                             <i class="bi bi-speedometer2 me-2 text-success"></i> 
                             {% if current_lang == 'en' %}Performance Monitor{% else %}性能监控{% endif %}
                         </a></li>
@@ -777,7 +777,7 @@ body {
 
         <!-- 性能监控 -->
         {% if session.role in ['owner', 'admin'] %}
-        <div class="dashboard-card performance-item" onclick="location.href='{{ url_for('performance_monitor_page') }}'">
+        <div class="dashboard-card performance-item" onclick="location.href='/performance-monitor'">
             <div class="card-stats">System</div>
             <div class="card-content">
                 <i class="bi bi-speedometer2 card-icon"></i>

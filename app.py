@@ -6217,16 +6217,6 @@ def api_slow_endpoints():
         'total_endpoints': 15
     })
 
-@app.route('/performance-monitor')
-@login_required
-def performance_monitor_page():
-    """性能监控页面"""
-    if not has_role(['owner', 'admin']):
-        flash('需要管理员权限', 'error')
-        return redirect(url_for('index'))
-    
-    return render_template('performance_monitor.html')
-
 # 添加缺失的API端点
 @app.route('/api/miner-data', methods=['GET'])
 @app.route('/api/miner-models', methods=['GET'])
