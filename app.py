@@ -373,6 +373,36 @@ def initialize_database():
             db.create_all()
             logging.info("Database tables created successfully")
             
+            # Execute database migrations (after db.create_all())
+            def run_migrations():
+                """Execute SQL migrations safely and idempotently"""
+                import os
+                migration_dir = os.path.join(os.path.dirname(__file__), 'migrations')
+                
+                if not os.path.exists(migration_dir):
+                    logging.info("No migrations directory found, skipping migrations")
+                    return
+                
+                migration_files = sorted([f for f in os.listdir(migration_dir) if f.endswith('.sql')])
+                
+                for migration_file in migration_files:
+                    try:
+                        migration_path = os.path.join(migration_dir, migration_file)
+                        with open(migration_path, 'r') as f:
+                            migration_sql = f.read()
+                        
+                        # Execute migration within a transaction
+                        db.session.execute(text(migration_sql))
+                        db.session.commit()
+                        logging.info(f"✅ Migration executed: {migration_file}")
+                    except Exception as e:
+                        db.session.rollback()
+                        logging.warning(f"⚠️ Migration {migration_file} failed or already applied: {e}")
+                        # Continue with next migration - this is expected if columns already exist
+            
+            # Run migrations after table creation
+            run_migrations()
+            
             # 🔧 CRITICAL FIX: Enable subscription plans initialization
             try:
                 from billing_routes import create_default_plans

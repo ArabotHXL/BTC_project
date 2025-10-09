@@ -111,11 +111,17 @@ def get_customers():
                 'email': customer.email,
                 'phone': customer.phone,
                 'customer_type': customer.customer_type,
-                'mining_capacity': customer.mining_capacity,
+                'mining_capacity': customer.mining_capacity or 0,
                 'join_date': customer.created_at.strftime('%Y-%m-%d'),
                 'total_revenue': total_revenue,
                 'last_contact': last_contact,
-                'tags': customer.tags
+                'tags': customer.tags,
+                # 新增矿场专属字段
+                'status': getattr(customer, 'status', 'active') or 'active',
+                'electricity_cost': getattr(customer, 'electricity_cost', 0) or 0,
+                'miners_count': getattr(customer, 'miners_count', 0) or 0,
+                'primary_miner_model': getattr(customer, 'primary_miner_model', None) or 'N/A',
+                'monthly_revenue': total_revenue / 12 if total_revenue > 0 else 0
             })
         
         return jsonify({

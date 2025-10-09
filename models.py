@@ -1058,6 +1058,12 @@ class Customer(db.Model):
     customer_type = db.Column(db.String(50), default="企业", nullable=False)  # 企业 或 个人
     mining_capacity = db.Column(db.Float, nullable=True)  # 挖矿容量（MW）
     notes = db.Column(db.Text, nullable=True)  # 客户备注
+    
+    # 矿场专属扩展字段
+    status = db.Column(db.String(20), default='active', nullable=False)  # active, inactive, pending, new
+    electricity_cost = db.Column(db.Float, nullable=True)  # 电费成本 $/kWh
+    miners_count = db.Column(db.Integer, default=0, nullable=False)  # 矿机数量
+    primary_miner_model = db.Column(db.String(100), nullable=True)  # 主要矿机型号（如：Antminer S19 Pro）
 
     # 关联到矿场主
     created_by_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=True)
@@ -1069,7 +1075,8 @@ class Customer(db.Model):
     deals = db.relationship('Deal', backref='customer', lazy=True, cascade="all, delete-orphan")
 
     def __init__(self, name, company=None, email=None, phone=None, address=None, tags=None, 
-                 customer_type="企业", mining_capacity=None, notes=None, created_by_id=None):
+                 customer_type="企业", mining_capacity=None, notes=None, created_by_id=None,
+                 status='active', electricity_cost=None, miners_count=0, primary_miner_model=None):
         self.name = name
         self.company = company
         self.email = email
@@ -1080,6 +1087,10 @@ class Customer(db.Model):
         self.mining_capacity = mining_capacity
         self.notes = notes
         self.created_by_id = created_by_id
+        self.status = status
+        self.electricity_cost = electricity_cost
+        self.miners_count = miners_count
+        self.primary_miner_model = primary_miner_model
 
     def __repr__(self):
         return f"<Customer {self.name} - {self.company}>"
