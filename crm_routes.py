@@ -12,7 +12,7 @@ from sqlalchemy import func
 
 # Import database and models
 from db import db
-from models import Customer, Lead, Deal, Invoice, Asset, Activity, DealStatus, LeadStatus
+from models import Customer, Lead, Deal, Invoice, Asset, Activity, DealStatus, LeadStatus, CommissionRecord
 
 logger = logging.getLogger(__name__)
 
@@ -1095,6 +1095,281 @@ def broker_commissions_page():
     except Exception as e:
         logger.error(f"经纪人佣金页面错误: {e}")
         return redirect(url_for('crm.crm_dashboard'))
+
+# ==================== Broker API Endpoints ====================
+
+@crm_bp.route('/api/broker/stats')
+def broker_stats():
+    """经纪人统计KPI"""
+    try:
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        user_id = session['user_id']
+        
+        # 总交易数（按created_by_id过滤）
+        total_deals = Deal.query.filter(Deal.created_by_id == user_id).count() or 0
+        
+        # 活跃交易数（排除CANCELLED/COMPLETED）
+        active_deals = Deal.query.filter(
+            Deal.created_by_id == user_id,
+            ~Deal.status.in_([DealStatus.CANCELED, DealStatus.COMPLETED])
+        ).count() or 0
+        
+        # 总佣金收入（已支付）
+        total_commission = db.session.query(func.sum(CommissionRecord.commission_amount))\
+            .filter(CommissionRecord.created_by_id == user_id, CommissionRecord.paid == True)\
+            .scalar() or 0
+        
+        # 待结算佣金（未支付）
+        pending_commission = db.session.query(func.sum(CommissionRecord.commission_amount))\
+            .filter(CommissionRecord.created_by_id == user_id, CommissionRecord.paid == False)\
+            .scalar() or 0
+        
+        # 本月佣金收入
+        current_month = datetime.now().strftime('%Y-%m')
+        month_commission = db.session.query(func.sum(CommissionRecord.commission_amount))\
+            .filter(
+                CommissionRecord.created_by_id == user_id,
+                CommissionRecord.paid == True,
+                CommissionRecord.record_month == current_month
+            )\
+            .scalar() or 0
+        
+        # 平均佣金金额
+        avg_commission = db.session.query(func.avg(CommissionRecord.commission_amount))\
+            .filter(CommissionRecord.created_by_id == user_id)\
+            .scalar() or 0
+        
+        logger.info(f"Broker stats: total={total_deals}, active={active_deals}, total_comm={total_commission}")
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'total_deals': int(total_deals),
+                'active_deals': int(active_deals),
+                'total_commission': float(total_commission),
+                'pending_commission': float(pending_commission),
+                'month_commission': float(month_commission),
+                'avg_commission': float(avg_commission)
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取经纪人统计错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/broker/commission-trend')
+def broker_commission_trend():
+    """佣金收入趋势（过去12个月）"""
+    try:
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        user_id = session['user_id']
+        
+        # 使用relativedelta正确计算日历月
+        current_date = datetime.now()
+        months = []
+        paid_amounts = []
+        unpaid_amounts = []
+        
+        for i in range(11, -1, -1):
+            month_date = current_date - relativedelta(months=i)
+            month_key = month_date.strftime('%Y-%m')
+            month_label = month_date.strftime('%b %Y')
+            
+            months.append(month_label)
+            
+            # 已支付金额
+            paid = db.session.query(func.sum(CommissionRecord.commission_amount))\
+                .filter(
+                    CommissionRecord.created_by_id == user_id,
+                    CommissionRecord.record_month == month_key,
+                    CommissionRecord.paid == True
+                )\
+                .scalar() or 0
+            
+            # 未支付金额
+            unpaid = db.session.query(func.sum(CommissionRecord.commission_amount))\
+                .filter(
+                    CommissionRecord.created_by_id == user_id,
+                    CommissionRecord.record_month == month_key,
+                    CommissionRecord.paid == False
+                )\
+                .scalar() or 0
+            
+            paid_amounts.append(float(paid))
+            unpaid_amounts.append(float(unpaid))
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'months': months,
+                'paid': paid_amounts,
+                'unpaid': unpaid_amounts
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取佣金趋势错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/broker/customer-distribution')
+def broker_customer_distribution():
+    """客户分布（按矿场位置分组）"""
+    try:
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        user_id = session['user_id']
+        
+        # 按矿场位置分组
+        distribution = db.session.query(
+            Deal.mining_farm_location,
+            func.count(Deal.id).label('count'),
+            func.sum(Deal.client_investment).label('total_investment')
+        ).filter(Deal.created_by_id == user_id)\
+         .group_by(Deal.mining_farm_location)\
+         .all()
+        
+        locations = []
+        counts = []
+        investments = []
+        
+        for location, count, investment in distribution:
+            # 处理空位置
+            loc_name = location or 'Unknown'
+            locations.append(loc_name)
+            counts.append(int(count))
+            investments.append(float(investment or 0))
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'locations': locations,
+                'counts': counts,
+                'investments': investments
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取客户分布错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/broker/performance-ranking')
+def broker_performance_ranking():
+    """业绩排行（TOP 5客户和矿场）"""
+    try:
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        user_id = session['user_id']
+        
+        # TOP 5客户（按client_investment排序）
+        top_customers_query = db.session.query(
+            Customer.id,
+            Customer.name,
+            func.sum(Deal.client_investment).label('total_investment'),
+            func.sum(Deal.commission_amount).label('total_commission')
+        ).join(Deal, Deal.customer_id == Customer.id)\
+         .filter(Deal.created_by_id == user_id)\
+         .group_by(Customer.id, Customer.name)\
+         .order_by(func.sum(Deal.client_investment).desc())\
+         .limit(5)\
+         .all()
+        
+        top_customers = []
+        for cust_id, name, investment, commission in top_customers_query:
+            top_customers.append({
+                'customer_id': cust_id,
+                'name': name,
+                'investment': float(investment or 0),
+                'commission': float(commission or 0)
+            })
+        
+        # TOP 5矿场（按交易数量和总投资）
+        top_farms_query = db.session.query(
+            Deal.mining_farm_name,
+            func.count(Deal.id).label('deal_count'),
+            func.sum(Deal.client_investment).label('total_investment')
+        ).filter(Deal.created_by_id == user_id)\
+         .group_by(Deal.mining_farm_name)\
+         .order_by(func.sum(Deal.client_investment).desc())\
+         .limit(5)\
+         .all()
+        
+        top_farms = []
+        for farm_name, deal_count, investment in top_farms_query:
+            top_farms.append({
+                'name': farm_name or 'Unknown',
+                'deal_count': int(deal_count),
+                'investment': float(investment or 0)
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'top_customers': top_customers,
+                'top_farms': top_farms
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取业绩排行错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/broker/recent-deals')
+def broker_recent_deals():
+    """最近交易（最近10个broker交易）"""
+    try:
+        # Check authentication
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        user_id = session['user_id']
+        
+        # 查询最近10个交易
+        recent_deals = Deal.query\
+            .filter(Deal.created_by_id == user_id)\
+            .order_by(Deal.created_at.desc())\
+            .limit(10)\
+            .all()
+        
+        deals_data = []
+        for deal in recent_deals:
+            # 获取客户名称
+            customer_name = deal.customer.name if deal.customer else 'Unknown'
+            
+            # 处理状态（枚举类型）
+            status_value = deal.status.value if deal.status else 'Unknown'
+            
+            deals_data.append({
+                'id': deal.id,
+                'customer_id': deal.customer_id,
+                'customer_name': customer_name,
+                'mining_farm_name': deal.mining_farm_name or '-',
+                'mining_farm_location': deal.mining_farm_location or '-',
+                'client_investment': float(deal.client_investment or 0),
+                'commission_type': deal.commission_type,
+                'commission_rate': float(deal.commission_rate or 0),
+                'commission_amount': float(deal.commission_amount or 0),
+                'status': status_value,
+                'created_at': deal.created_at.strftime('%Y-%m-%d') if deal.created_at else None
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': deals_data
+        })
+        
+    except Exception as e:
+        logger.error(f"获取最近交易错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @crm_bp.route('/customer/<int:customer_id>', endpoint='customer_detail')
 def customer_detail_page(customer_id):
