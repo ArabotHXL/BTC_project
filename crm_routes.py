@@ -14,6 +14,15 @@ from sqlalchemy import func
 from db import db
 from models import Customer, Lead, Deal, Invoice, Asset, Activity, DealStatus, LeadStatus, CommissionRecord
 
+# Import CRM service layer
+from crm_services import (
+    BaseService, get_current_user_id, success_response, error_response,
+    success_response_with_polling
+)
+from crm_services.geo import (
+    get_city_coordinates, get_all_cities, is_city_supported, get_region_cities
+)
+
 logger = logging.getLogger(__name__)
 
 # 创建蓝图
@@ -1100,13 +1109,11 @@ def broker_commissions_page():
 
 @crm_bp.route('/api/broker/stats')
 def broker_stats():
-    """经纪人统计KPI"""
+    """经纪人统计KPI - Refactored with service layer"""
     try:
-        # Check authentication
-        if 'user_id' not in session:
-            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
-        
-        user_id = session['user_id']
+        user_id = get_current_user_id()
+        if not user_id:
+            return error_response('Unauthorized', 401)
         
         # 总交易数（按created_by_id过滤）
         total_deals = Deal.query.filter(Deal.created_by_id == user_id).count() or 0
@@ -1117,48 +1124,54 @@ def broker_stats():
             ~Deal.status.in_([DealStatus.CANCELED, DealStatus.COMPLETED])
         ).count() or 0
         
-        # 总佣金收入（已支付）
-        total_commission = db.session.query(func.sum(CommissionRecord.commission_amount))\
-            .filter(CommissionRecord.created_by_id == user_id, CommissionRecord.paid == True)\
-            .scalar() or 0
+        # 总佣金收入（已支付）- 使用BaseService.safe_float安全转换
+        total_commission = BaseService.safe_float(
+            db.session.query(func.sum(CommissionRecord.commission_amount))
+            .filter(CommissionRecord.created_by_id == user_id, CommissionRecord.paid == True)
+            .scalar()
+        )
         
-        # 待结算佣金（未支付）
-        pending_commission = db.session.query(func.sum(CommissionRecord.commission_amount))\
-            .filter(CommissionRecord.created_by_id == user_id, CommissionRecord.paid == False)\
-            .scalar() or 0
+        # 待结算佣金（未支付）- 使用BaseService.safe_float安全转换
+        pending_commission = BaseService.safe_float(
+            db.session.query(func.sum(CommissionRecord.commission_amount))
+            .filter(CommissionRecord.created_by_id == user_id, CommissionRecord.paid == False)
+            .scalar()
+        )
         
         # 本月佣金收入
         current_month = datetime.now().strftime('%Y-%m')
-        month_commission = db.session.query(func.sum(CommissionRecord.commission_amount))\
+        month_commission = BaseService.safe_float(
+            db.session.query(func.sum(CommissionRecord.commission_amount))
             .filter(
                 CommissionRecord.created_by_id == user_id,
                 CommissionRecord.paid == True,
                 CommissionRecord.record_month == current_month
-            )\
-            .scalar() or 0
+            )
+            .scalar()
+        )
         
-        # 平均佣金金额
-        avg_commission = db.session.query(func.avg(CommissionRecord.commission_amount))\
-            .filter(CommissionRecord.created_by_id == user_id)\
-            .scalar() or 0
+        # 平均佣金金额 - 使用BaseService.safe_float安全转换
+        avg_commission = BaseService.safe_float(
+            db.session.query(func.avg(CommissionRecord.commission_amount))
+            .filter(CommissionRecord.created_by_id == user_id)
+            .scalar()
+        )
         
         logger.info(f"Broker stats: total={total_deals}, active={active_deals}, total_comm={total_commission}")
         
-        return jsonify({
-            'success': True,
-            'data': {
-                'total_deals': int(total_deals),
-                'active_deals': int(active_deals),
-                'total_commission': float(total_commission),
-                'pending_commission': float(pending_commission),
-                'month_commission': float(month_commission),
-                'avg_commission': float(avg_commission)
-            }
+        # 使用统一成功响应格式
+        return success_response(data={
+            'total_deals': BaseService.safe_int(total_deals),
+            'active_deals': BaseService.safe_int(active_deals),
+            'total_commission': total_commission,
+            'pending_commission': pending_commission,
+            'month_commission': month_commission,
+            'avg_commission': avg_commission
         })
         
     except Exception as e:
         logger.error(f"获取经纪人统计错误: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return error_response(str(e), 500)
 
 @crm_bp.route('/api/broker/commission-trend')
 def broker_commission_trend():
@@ -1219,13 +1232,11 @@ def broker_commission_trend():
 
 @crm_bp.route('/api/broker/customer-distribution')
 def broker_customer_distribution():
-    """客户分布（按矿场位置分组）"""
+    """客户分布（按矿场位置分组）- Refactored with service layer and geo validation"""
     try:
-        # Check authentication
-        if 'user_id' not in session:
-            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
-        
-        user_id = session['user_id']
+        user_id = get_current_user_id()
+        if not user_id:
+            return error_response('Unauthorized', 401)
         
         # 按矿场位置分组
         distribution = db.session.query(
@@ -1239,26 +1250,33 @@ def broker_customer_distribution():
         locations = []
         counts = []
         investments = []
+        validated_count = 0
         
         for location, count, investment in distribution:
             # 处理空位置
             loc_name = location or 'Unknown'
+            
+            # 使用geo服务验证城市是否支持
+            is_validated = is_city_supported(loc_name) if loc_name != 'Unknown' else False
+            if is_validated:
+                validated_count += 1
+            
             locations.append(loc_name)
-            counts.append(int(count))
-            investments.append(float(investment or 0))
+            counts.append(BaseService.safe_int(count))
+            investments.append(BaseService.safe_float(investment))
         
-        return jsonify({
-            'success': True,
-            'data': {
-                'locations': locations,
-                'counts': counts,
-                'investments': investments
-            }
+        # 使用统一成功响应格式，附带轮询支持
+        return success_response_with_polling(data={
+            'locations': locations,
+            'counts': counts,
+            'investments': investments,
+            'validated_locations': validated_count,
+            'total_locations': len(locations)
         })
         
     except Exception as e:
         logger.error(f"获取客户分布错误: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return error_response(str(e), 500)
 
 @crm_bp.route('/api/broker/performance-ranking')
 def broker_performance_ranking():
@@ -2113,6 +2131,51 @@ def update_customer_notes(customer_id):
         logger.error(f"更新客户备注错误: {e}")
         flash('更新备注失败', 'error')
         return redirect(url_for('crm.customer_detail', customer_id=customer_id))
+
+@crm_bp.route('/api/geo/cities')
+def get_cities():
+    """获取所有支持的城市列表 - Get all supported cities"""
+    try:
+        user_id = get_current_user_id()
+        if not user_id:
+            return error_response('Unauthorized', 401)
+        
+        cities = get_all_cities()
+        
+        return success_response(data={
+            'cities': cities,
+            'count': len(cities),
+            'regions': {
+                'china': get_region_cities('china'),
+                'asia': get_region_cities('asia'),
+                'international': get_region_cities('international')
+            }
+        })
+    except Exception as e:
+        logger.error(f"获取城市列表错误: {e}")
+        return error_response(str(e), 500)
+
+@crm_bp.route('/api/geo/coordinates/<city_name>')
+def get_coordinates(city_name):
+    """获取指定城市的坐标 - Get coordinates for a specific city"""
+    try:
+        user_id = get_current_user_id()
+        if not user_id:
+            return error_response('Unauthorized', 401)
+        
+        if not is_city_supported(city_name):
+            return error_response(f'City {city_name} not supported', 404)
+        
+        coords = get_city_coordinates(city_name)
+        
+        return success_response(data={
+            'city': city_name,
+            'latitude': coords[0],
+            'longitude': coords[1]
+        })
+    except Exception as e:
+        logger.error(f"获取城市坐标错误: {e}")
+        return error_response(str(e), 500)
 
 @crm_bp.route('/api/leads')
 def get_leads():
