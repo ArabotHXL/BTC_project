@@ -284,7 +284,7 @@
             <div class="kpi-icon">
                 <i class="bi bi-people-fill"></i>
             </div>
-            <div class="kpi-value" data-countup="{{ customers_count|default(0) }}">{{ customers_count|default(0) }}</div>
+            <div id="dashboard-customers-kpi" class="kpi-value" data-countup="{{ customers_count|default(0) }}">{{ customers_count|default(0) }}</div>
             <div class="kpi-label">{% if current_lang == 'en' %}Total Customers{% else %}总客户数{% endif %}</div>
             <div class="kpi-trend trend-up">
                 <i class="bi bi-arrow-up-circle-fill"></i>
@@ -299,7 +299,7 @@
             <div class="kpi-icon">
                 <i class="bi bi-cash-stack"></i>
             </div>
-            <div class="kpi-value" data-countup="{{ deals_value|default(0) }}">${{ "{:,.0f}".format(deals_value|default(0)) }}</div>
+            <div id="dashboard-deals-value-kpi" class="kpi-value" data-countup="{{ deals_value|default(0) }}" data-decimals="0" data-prefix="$">${{ "{:,.0f}".format(deals_value|default(0)) }}</div>
             <div class="kpi-label">{% if current_lang == 'en' %}Total Deals Value{% else %}交易总额{% endif %}</div>
             <div class="kpi-trend trend-up">
                 <i class="bi bi-graph-up-arrow"></i>
@@ -314,7 +314,7 @@
             <div class="kpi-icon">
                 <i class="bi bi-lightning-charge-fill"></i>
             </div>
-            <div class="kpi-value" data-countup="85.6">85.6 <small style="font-size:1.2rem;">MW</small></div>
+            <div id="dashboard-capacity-kpi" class="kpi-value" data-countup="85.6" data-decimals="1">85.6 <small style="font-size:1.2rem;">MW</small></div>
             <div class="kpi-label">{% if current_lang == 'en' %}Hosting Capacity{% else %}托管容量{% endif %}</div>
             <div class="kpi-trend trend-up">
                 <i class="bi bi-speedometer"></i>
@@ -329,7 +329,7 @@
             <div class="kpi-icon">
                 <i class="bi bi-activity"></i>
             </div>
-            <div class="kpi-value" data-countup="{{ deals_count|default(0) }}">{{ deals_count|default(0) }}</div>
+            <div id="dashboard-active-deals-kpi" class="kpi-value" data-countup="{{ deals_count|default(0) }}">{{ deals_count|default(0) }}</div>
             <div class="kpi-label">{% if current_lang == 'en' %}Active Deals{% else %}活跃交易{% endif %}</div>
             <div class="kpi-trend trend-up">
                 <i class="bi bi-percent"></i>
@@ -637,35 +637,11 @@
 {% block extra_js %}
 <!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<!-- CountUp.js for number animations -->
-<script src="https://cdn.jsdelivr.net/npm/countup@1.8.2/dist/countUp.min.js"></script>
+<!-- CountUp.js is loaded in base.html -->
 
 <script>
-// 数字滚动动画
-document.addEventListener('DOMContentLoaded', function() {
-    // CountUp animations for KPI values
-    document.querySelectorAll('[data-countup]').forEach(function(el) {
-        const targetValue = parseFloat(el.getAttribute('data-countup'));
-        if (targetValue && !isNaN(targetValue)) {
-            const options = {
-                duration: 2.5,
-                useEasing: true,
-                useGrouping: true,
-                separator: ',',
-                decimal: '.'
-            };
-            
-            if (el.textContent.includes('$')) {
-                options.prefix = '$';
-            }
-            
-            const countUp = new CountUp(el, targetValue, options);
-            if (!countUp.error) {
-                countUp.start();
-            }
-        }
-    });
-});
+// Note: CountUp initialization is handled by base.html's initCountUp function
+// KPI elements have IDs and data-countup attributes for automatic initialization
 
 // Chart.js 配置
 const chartConfig = {

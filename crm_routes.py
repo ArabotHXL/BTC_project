@@ -59,6 +59,12 @@ def crm_dashboard():
         deals_count = Deal.query.count() or 0
         deals_value = Deal.query.with_entities(func.sum(Deal.value)).scalar() or 0
         
+        # DEBUG: Log actual values to diagnose NaN issue
+        logger.info(f"Dashboard Variables: customers_count={customers_count} (type={type(customers_count).__name__})")
+        logger.info(f"Dashboard Variables: leads_count={leads_count} (type={type(leads_count).__name__})")
+        logger.info(f"Dashboard Variables: deals_count={deals_count} (type={type(deals_count).__name__})")
+        logger.info(f"Dashboard Variables: deals_value={deals_value} (type={type(deals_value).__name__})")
+        
         # Get recent activities (limit 10)
         recent_activities = Activity.query.order_by(Activity.created_at.desc()).limit(10).all()
         

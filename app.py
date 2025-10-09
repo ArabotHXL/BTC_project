@@ -56,6 +56,8 @@ security_manager = SecurityManager(app)
 # We use custom CSRF protection in SecurityManager
 app.config['WTF_CSRF_ENABLED'] = False
 app.config['SECRET_KEY'] = app.secret_key  # Ensure SECRET_KEY is set for Flask-WTF
+# Force template reloading to avoid Jinja2 cache issues
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 # Force disable Flask-WTF global CSRF protection that may auto-activate
 try:
