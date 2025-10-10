@@ -22,6 +22,7 @@ from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 import requests
 from flask import current_app
+from sqlalchemy import text
 
 # 区块链相关导入
 from web3 import Web3
@@ -40,6 +41,14 @@ from db import db
 from blockchain_integration import BlockchainIntegration
 
 logger = logging.getLogger(__name__)
+
+# Flask app 实例将在初始化时设置
+_flask_app = None
+
+def set_flask_app(app):
+    """设置 Flask app 实例供后台任务使用"""
+    global _flask_app
+    _flask_app = app
 
 @dataclass
 class NetworkConfig:
@@ -109,6 +118,13 @@ class PaymentMonitorService:
     
     def start_monitoring(self):
         """启动支付监控服务 - 使用SchedulerLock确保单实例"""
+        # 🔧 CRITICAL FIX: 硬性检查 Flask app 是否已初始化
+        if not _flask_app:
+            raise RuntimeError(
+                "Flask app未初始化！必须先调用 set_flask_app(app) 才能启动支付监控服务。"
+                "这是为了确保后台任务能够访问数据库。"
+            )
+        
         if self.running:
             logger.warning("支付监控服务已在运行")
             return
@@ -177,24 +193,29 @@ class PaymentMonitorService:
     
     def _check_pending_payments(self):
         """检查待确认的支付"""
-        try:
-            # 🔧 CRITICAL FIX: 修复is_crypto_payment字段引用
-            # is_crypto_payment是property，不是数据库字段
-            pending_payments = Payment.query.filter(
-                Payment.status.in_([PaymentStatus.PENDING, PaymentStatus.CONFIRMING]),
-                Payment.payment_method_type == PaymentMethodType.CRYPTO
-            ).all()
+        if not _flask_app:
+            logger.error("Flask app未初始化，无法检查支付")
+            return
             
-            logger.info(f"检查 {len(pending_payments)} 个待确认支付")
-            
-            for payment in pending_payments:
-                try:
-                    self._process_payment(payment)
-                except Exception as e:
-                    logger.error(f"处理支付 {payment.id} 时出错: {e}")
-                    
-        except Exception as e:
-            logger.error(f"获取待确认支付失败: {e}")
+        with _flask_app.app_context():
+            try:
+                # 🔧 CRITICAL FIX: 修复is_crypto_payment字段引用
+                # is_crypto_payment是property，不是数据库字段
+                pending_payments = Payment.query.filter(
+                    Payment.status.in_([PaymentStatus.PENDING, PaymentStatus.CONFIRMING]),
+                    Payment.payment_method_type == PaymentMethodType.CRYPTO
+                ).all()
+                
+                logger.info(f"检查 {len(pending_payments)} 个待确认支付")
+                
+                for payment in pending_payments:
+                    try:
+                        self._process_payment(payment)
+                    except Exception as e:
+                        logger.error(f"处理支付 {payment.id} 时出错: {e}")
+                        
+            except Exception as e:
+                logger.error(f"获取待确认支付失败: {e}")
     
     def _process_payment(self, payment: Payment):
         """处理单个支付"""
@@ -608,21 +629,27 @@ class PaymentMonitorService:
                 current_time = datetime.utcnow()
                 self.last_heartbeat = current_time
                 
-                # 刷新锁
-                try:
-                    active_lock = SchedulerLock.get_active_lock(self.lock_key)
-                    if active_lock and active_lock.process_id == self.process_id:
-                        active_lock.refresh_lock(self.lock_timeout)
-                        db.session.commit()
-                        logger.debug(f"💓 心跳更新成功 (PID={self.process_id})")
-                    else:
-                        logger.warning("失去调度器锁，停止心跳")
-                        self.has_lock = False
-                        break
-                except Exception as e:
-                    logger.error(f"心跳更新失败: {e}")
+                # 刷新锁 - 需要应用上下文
+                if not _flask_app:
+                    logger.error("Flask app未初始化，无法刷新锁")
                     self.has_lock = False
                     break
+                
+                with _flask_app.app_context():
+                    try:
+                        active_lock = SchedulerLock.get_active_lock(self.lock_key)
+                        if active_lock and active_lock.process_id == self.process_id:
+                            active_lock.refresh_lock(self.lock_timeout)
+                            db.session.commit()
+                            logger.debug(f"💓 心跳更新成功 (PID={self.process_id})")
+                        else:
+                            logger.warning("失去调度器锁，停止心跳")
+                            self.has_lock = False
+                            break
+                    except Exception as e:
+                        logger.error(f"心跳更新失败: {e}")
+                        self.has_lock = False
+                        break
                     
             except Exception as e:
                 logger.error(f"心跳循环异常: {e}")
@@ -632,29 +659,34 @@ class PaymentMonitorService:
     
     def _health_check(self):
         """健康检查"""
-        try:
-            # 检查数据库连接
-            db.session.execute('SELECT 1')
+        if not _flask_app:
+            logger.error("Flask app未初始化，无法执行健康检查")
+            return
             
-            # 检查锁状态
-            if self.has_lock:
-                active_lock = SchedulerLock.get_active_lock(self.lock_key)
-                if not active_lock or active_lock.process_id != self.process_id:
-                    logger.warning("检测到锁状态异常，停止监控")
-                    self.has_lock = False
-                    self.running = False
-            
-            # 记录服务状态
-            if hasattr(self, '_last_health_check'):
-                elapsed = datetime.utcnow() - self._last_health_check
-                if elapsed.total_seconds() > 300:  # 每5分钟记录一次
-                    logger.info(f"🏥 服务健康检查: PID={self.process_id}, 锁状态={self.has_lock}")
-                    self._last_health_check = datetime.utcnow()
-            else:
-                self._last_health_check = datetime.utcnow()
+        with _flask_app.app_context():
+            try:
+                # 检查数据库连接
+                db.session.execute(text('SELECT 1'))
                 
-        except Exception as e:
-            logger.error(f"健康检查失败: {e}")
+                # 检查锁状态
+                if self.has_lock:
+                    active_lock = SchedulerLock.get_active_lock(self.lock_key)
+                    if not active_lock or active_lock.process_id != self.process_id:
+                        logger.warning("检测到锁状态异常，停止监控")
+                        self.has_lock = False
+                        self.running = False
+                
+                # 记录服务状态
+                if hasattr(self, '_last_health_check'):
+                    elapsed = datetime.utcnow() - self._last_health_check
+                    if elapsed.total_seconds() > 300:  # 每5分钟记录一次
+                        logger.info(f"🏥 服务健康检查: PID={self.process_id}, 锁状态={self.has_lock}")
+                        self._last_health_check = datetime.utcnow()
+                else:
+                    self._last_health_check = datetime.utcnow()
+                    
+            except Exception as e:
+                logger.error(f"健康检查失败: {e}")
 
 # 全局服务实例
 payment_monitor = PaymentMonitorService()

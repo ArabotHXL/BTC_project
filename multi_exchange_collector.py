@@ -123,11 +123,11 @@ class MultiExchangeCollector:
                 if okx_data['code'] == '0' and okx_data['data']:
                     spot_data = okx_data['data'][0]
                     data['spot'] = {
-                        'price': float(spot_data['last']),
-                        'volume_24h': float(spot_data['volCcy24h']),
-                        'price_change_24h': float(spot_data['chg24h']) * 100,
-                        'high_24h': float(spot_data['high24h']),
-                        'low_24h': float(spot_data['low24h'])
+                        'price': float(spot_data.get('last', 0)),
+                        'volume_24h': float(spot_data.get('volCcy24h', 0)),
+                        'price_change_24h': float(spot_data.get('chg24h', 0)) * 100,
+                        'high_24h': float(spot_data.get('high24h', 0)),
+                        'low_24h': float(spot_data.get('low24h', 0))
                     }
             
             # 永续合约数据

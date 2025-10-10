@@ -7127,8 +7127,11 @@ def test_modules_page():
 def init_payment_monitor():
     """安全初始化支付监控服务 - 只有获得锁的worker才会启动"""
     try:
-        from payment_monitor_service import payment_monitor
+        from payment_monitor_service import payment_monitor, set_flask_app
         from config import Config
+        
+        # 设置 Flask app 实例供后台任务使用
+        set_flask_app(app)
         
         if getattr(Config, 'SUBSCRIPTION_ENABLED', False):
             # SchedulerLock机制确保只有一个worker实例启动监控服务
