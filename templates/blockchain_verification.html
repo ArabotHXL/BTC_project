@@ -663,7 +663,7 @@ body {
 </div>
 {% endblock %}
 
-{% block extra_js %}
+{% block scripts %}
 <script src="{{ url_for('static', filename='js/web3_utils.js') }}"></script>
 <script>
 // 区块链数据验证页面JavaScript
@@ -1034,12 +1034,18 @@ function showVerificationModal(message, details = '') {
     if (details) {
         document.getElementById('verificationDetails').textContent = details;
     }
-    $('#verificationModal').modal('show');
+    const modalElement = document.getElementById('verificationModal');
+    const modal = new bootstrap.Modal(modalElement);
+    modal.show();
 }
 
 // 隐藏验证模态框
 function hideVerificationModal() {
-    $('#verificationModal').modal('hide');
+    const modalElement = document.getElementById('verificationModal');
+    const modal = bootstrap.Modal.getInstance(modalElement);
+    if (modal) {
+        modal.hide();
+    }
 }
 
 // 显示警告消息
