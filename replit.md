@@ -1,7 +1,7 @@
 # BTC Mining Calculator System
 
 ## Overview
-The BTC Mining Calculator is an enterprise-grade web application designed for mining farm owners and clients. It provides real-time profitability analysis for Bitcoin mining, integrating real-time data, dual-algorithm verification, and multi-language support (English and Chinese). The system aims to optimize Bitcoin mining investments through comprehensive operational management, CRM, power management, technical analysis, and professional reporting. Key capabilities include support for 17+ miner models, ROI analysis, CRM with 60+ API endpoints, unified system monitoring, and advanced technical analysis.
+HashInsight Enterprise is an enterprise-grade web application designed for mining farm owners and clients. It provides real-time profitability analysis for Bitcoin mining, integrating real-time data, dual-algorithm verification, and multi-language support (English and Chinese). The system aims to optimize Bitcoin mining investments through comprehensive operational management, CRM, Web3 integration, technical analysis, and professional reporting. Key capabilities include support for 19+ ASIC miner models, ROI analysis, full CRM with 60+ API endpoints, unified system monitoring, AI-powered intelligence layer, Web3 blockchain transparency, hosting services management, and treasury management.
 
 ## User Preferences
 - **Communication style**: Simple, everyday language
@@ -20,13 +20,17 @@ The system is built on a Flask backend with SQLAlchemy and PostgreSQL. Redis is 
 - **Database**: PostgreSQL with SQLAlchemy ORM, focusing on `user_access` for authentication and roles, and `users` for business-related user information. Data optimization includes daily data point limits and automatic cleanup.
 
 ### Feature Specifications
-- **Calculator Module**: Dual-algorithm mining profitability analysis supporting 17+ ASIC miner models, real-time BTC price and difficulty integration, ROI analysis, and batch calculation.
-- **CRM System**: A fully re-architected Flask-native CRM with 15 pages, 60+ API endpoints, 56+ animated KPI cards, and 42+ Chart.js visualizations. Includes real-time KPIs, sales funnels, capacity distribution, and specific features for lead management and mining brokers.
-- **System Monitoring**: A unified dashboard providing real-time health checks, performance metrics (P95 latency, success rate), and alerts for all system modules, with automatic refreshes every 5 seconds.
-- **Technical Analysis Platform**: Server-side calculation of indicators like RSI, MACD, SMA, EMA, and Bollinger Bands, historical BTC price analysis, and volatility calculations.
-- **Intelligence Layer**: An event-driven system with a task queue for predictive analytics, anomaly detection, power optimization, and ROI interpretation.
-- **User Management**: An Admin backend for user creation, role assignment, access period management, and system monitoring access.
+- **Calculator Module**: Dual-algorithm mining profitability analysis supporting 19+ ASIC miner models (Antminer S19/S21 series, WhatsMiner M50/M53/M56 series, Avalon), real-time BTC price and difficulty integration, ROI analysis, and batch calculation supporting 5000+ miners.
+- **CRM System**: A fully re-architected Flask-native CRM with 15 pages, 60+ API endpoints, 56+ animated KPI cards, and 42+ Chart.js visualizations. Includes real-time KPIs, sales funnels, capacity distribution, lead management, deal pipeline, invoice generation, payment tracking, asset management, and mining broker features.
+- **System Monitoring**: A unified dashboard providing real-time health checks, performance metrics (P95 latency, success rate), cache performance analysis, and alerts for all system modules, with automatic refreshes every 5 seconds.
+- **Technical Analysis Platform**: Server-side calculation of 10+ technical indicators (RSI, MACD, SMA, EMA, Bollinger Bands), historical BTC price analysis, volatility calculations, Fear & Greed Index, and intelligent signal aggregation from multiple modules.
+- **Intelligence Layer**: An event-driven system with ARIMA forecasting for BTC price and difficulty, anomaly detection for hashrate/power/ROI, power optimization strategies with curtailment scheduling, and intelligent ROI explanation with actionable insights.
+- **User Management**: An Admin backend for user creation, role assignment, RBAC permission control, access period management, and system monitoring access.
 - **Web3 Configuration Wizard**: A secure configuration interface providing three methods for setting up blockchain credentials: (1) MetaMask wallet connection (browser-based, no key sharing), (2) Replit Secrets environment variables (secure server-side storage), and (3) Manual configuration guide (educational reference). Features complete bilingual support and comprehensive security warnings.
+- **Hosting Services Module**: Real-time miner monitoring with telemetry tracking (hashrate, temperature, power, pool data), single/batch miner creation APIs, operational ticketing system, and comprehensive hosting management dashboard.
+- **Treasury Management**: BTC inventory tracking with cost basis analysis, cash coverage monitoring, pre-configured sell strategy templates, signal aggregation from multiple modules, and backtesting engine for strategy evaluation.
+- **Multi-Format Reporting**: Professional report generation in PDF, Excel, and PowerPoint formats. Role-specific dashboards for Investors, Operations, and Finance teams. Automated weekly operations reports and monthly SLA reports.
+- **Landing Page**: Updated enterprise-focused homepage (templates/landing.html) showcasing all live features with accurate statistics: 19+ ASIC models, 9+ data sources, 60+ API endpoints, 5000+ batch processing capacity. Highlights Web3 integration, AI intelligence layer, hosting services, treasury management, and enterprise security features.
 
 ### System Design Choices
 - **Modularity**: Completely page-isolated architecture with modules communicating via the database.
