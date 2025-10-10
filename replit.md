@@ -26,6 +26,7 @@ The system is built on a Flask backend with SQLAlchemy and PostgreSQL. Redis is 
 - **Technical Analysis Platform**: Server-side calculation of indicators like RSI, MACD, SMA, EMA, and Bollinger Bands, historical BTC price analysis, and volatility calculations.
 - **Intelligence Layer**: An event-driven system with a task queue for predictive analytics, anomaly detection, power optimization, and ROI interpretation.
 - **User Management**: An Admin backend for user creation, role assignment, access period management, and system monitoring access.
+- **Web3 Configuration Wizard**: A secure configuration interface providing three methods for setting up blockchain credentials: (1) MetaMask wallet connection (browser-based, no key sharing), (2) Replit Secrets environment variables (secure server-side storage), and (3) Manual configuration guide (educational reference). Features complete bilingual support and comprehensive security warnings.
 
 ### System Design Choices
 - **Modularity**: Completely page-isolated architecture with modules communicating via the database.
