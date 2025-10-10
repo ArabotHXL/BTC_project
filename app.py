@@ -7176,7 +7176,12 @@ def download_redirect():
 def download_package(filename):
     """提供下载包下载"""
     import os
-    if filename in ["BTC-Hosting-Platform-Core.tar.gz", "BTC-Analytics-Suite.tar.gz"]:
+    allowed_files = [
+        "BTC-Hosting-Platform-Core.tar.gz", 
+        "BTC-Analytics-Suite.tar.gz",
+        "BTC_Mining_Calculator_Presentation.pptx"
+    ]
+    if filename in allowed_files:
         return send_from_directory("static", filename, as_attachment=True)
     else:
         return "File not found", 404
@@ -7187,3 +7192,8 @@ def downloads_page():
     with open("download_packages.html", "r", encoding="utf-8") as f:
         return f.read()
 
+@app.route("/presentation")
+@app.route("/ppt")
+def presentation_download():
+    """PPT演示文稿下载页面"""
+    return render_template('presentation_download.html', current_lang=session.get('language', 'en'))
