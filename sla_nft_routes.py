@@ -531,6 +531,57 @@ def get_reports_list():
         )
         
         reports = []
+        
+        # 如果没有数据，返回示例数据
+        if pagination.total == 0:
+            from datetime import datetime
+            current_date = datetime.utcnow()
+            
+            # 创建最近3个月的示例报告
+            for i in range(3):
+                month_offset = i
+                demo_month = current_date.month - month_offset
+                demo_year = current_date.year
+                if demo_month <= 0:
+                    demo_month += 12
+                    demo_year -= 1
+                
+                month_year = demo_year * 100 + demo_month
+                month_names = {
+                    1: 'January', 2: 'February', 3: 'March', 4: 'April',
+                    5: 'May', 6: 'June', 7: 'July', 8: 'August',
+                    9: 'September', 10: 'October', 11: 'November', 12: 'December'
+                }
+                
+                reports.append({
+                    'month_year': month_year,
+                    'display_name': f"{month_names.get(demo_month, demo_month)} {demo_year}",
+                    'generated_at': datetime.utcnow().isoformat(),
+                    'average_sla_score': 99.5 - i * 0.2,
+                    'total_certificates': 45 - i * 5,
+                    'blockchain_recorded': True,
+                    'has_ipfs_report': True,
+                    'audit_status': 'audited',
+                    'is_demo': True
+                })
+            
+            return jsonify({
+                'success': True,
+                'data': {
+                    'reports': reports,
+                    'pagination': {
+                        'page': 1,
+                        'per_page': per_page,
+                        'total': 3,
+                        'pages': 1,
+                        'has_prev': False,
+                        'has_next': False
+                    },
+                    'demo_mode': True
+                }
+            })
+        
+        # 返回真实数据
         for report in pagination.items:
             year = report.month_year // 100
             month = report.month_year % 100
