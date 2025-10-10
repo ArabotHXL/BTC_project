@@ -455,6 +455,98 @@ def create_default_plans():
         logger.error(f"创建默认订阅计划失败: {e}")
         db.session.rollback()
 
+@billing_bp.route('/payment-options')
+@login_required
+def payment_options():
+    """支付方式页面 - 显示和管理支付方式"""
+    try:
+        user_email = session.get('email')
+        user = User.query.filter_by(email=user_email).first()
+        
+        if not user:
+            flash('用户未找到', 'error')
+            return redirect(url_for('index'))
+        
+        # 获取用户的订阅信息
+        active_subscription = UserSubscription.query.filter_by(
+            user_id=user.id,
+            status=SubscriptionStatus.ACTIVE
+        ).first()
+        
+        # 支持的加密货币
+        supported_cryptos = [
+            {
+                'code': 'BTC',
+                'name': 'Bitcoin',
+                'symbol': '₿',
+                'network': 'Bitcoin Mainnet',
+                'description': 'Industry standard, highest security'
+            },
+            {
+                'code': 'ETH',
+                'name': 'Ethereum',
+                'symbol': 'Ξ',
+                'network': 'Ethereum Mainnet',
+                'description': 'Smart contract payments with Web3 integration'
+            },
+            {
+                'code': 'USDC',
+                'name': 'USD Coin',
+                'symbol': '$',
+                'network': 'Multiple chains supported',
+                'description': 'Stable cryptocurrency pegged to USD'
+            }
+        ]
+        
+        return render_template('billing/payment_options.html',
+                             supported_cryptos=supported_cryptos,
+                             active_subscription=active_subscription,
+                             current_lang=session.get('language', 'zh'))
+                             
+    except Exception as e:
+        logger.error(f"访问支付方式页面失败: {e}")
+        flash('访问支付方式页面失败', 'error')
+        return redirect(url_for('index'))
+
+@billing_bp.route('/payment-history')
+@login_required
+def payment_history():
+    """支付历史页面"""
+    try:
+        user_email = session.get('email')
+        user = User.query.filter_by(email=user_email).first()
+        
+        if not user:
+            flash('用户未找到', 'error')
+            return redirect(url_for('index'))
+        
+        # 获取用户的所有支付记录
+        payments = Payment.query.filter_by(user_id=user.id).order_by(
+            Payment.created_at.desc()
+        ).all()
+        
+        # 格式化支付记录
+        payment_records = []
+        for payment in payments:
+            payment_records.append({
+                'id': payment.id,
+                'amount': float(payment.amount_usd),
+                'currency': payment.payment_method.value if payment.payment_method else 'Unknown',
+                'status': payment.status.value if payment.status else 'Unknown',
+                'created_at': payment.created_at.strftime('%Y-%m-%d %H:%M') if payment.created_at else 'N/A',
+                'tx_hash': payment.crypto_tx_hash if payment.crypto_tx_hash else None,
+                'subscription_id': payment.subscription_id
+            })
+        
+        return render_template('billing/payment_history.html',
+                             payments=payment_records,
+                             current_lang=session.get('language', 'zh'))
+                             
+    except Exception as e:
+        logger.error(f"获取支付历史失败: {e}")
+        flash('获取支付历史失败', 'error')
+        return redirect(url_for('index'))
+
 # 初始化时创建默认计划
 try:
     create_default_plans()
