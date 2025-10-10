@@ -47,6 +47,9 @@ class MultiExchangeCollector:
                 'symbol': 'BTCUSDT'
             }
         }
+        
+        # 自动创建数据表
+        self.create_enhanced_table()
     
     def get_connection(self):
         """获取数据库连接"""
@@ -387,7 +390,7 @@ class MultiExchangeCollector:
             create_table_sql = """
                 CREATE TABLE IF NOT EXISTS market_analytics_enhanced (
                     id SERIAL PRIMARY KEY,
-                    recorded_at TIMESTAMP NOT NULL,
+                    recorded_at TIMESTAMP NOT NULL UNIQUE,
                     total_spot_volume BIGINT,
                     total_futures_volume BIGINT,
                     total_options_volume BIGINT,
