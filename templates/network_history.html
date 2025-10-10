@@ -171,7 +171,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 // 图表数据
-const chartData = {{ chart_data | tojsonfilter }};
+const chartData = {{ chart_data | tojson }};
 
 // 价格趋势图表
 const priceCtx = document.getElementById('priceChart').getContext('2d');
