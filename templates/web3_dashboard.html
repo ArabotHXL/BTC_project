@@ -879,7 +879,50 @@ async function connectWallet() {
             alert('Failed to connect wallet: ' + error.message);
         }
     } else {
-        alert('MetaMask is not installed. Please install MetaMask to continue.');
+        const lang = '{{ current_lang }}';
+        const message = lang === 'en' 
+            ? `MetaMask Extension Required
+
+To connect your wallet, please follow these steps:
+
+1. Install MetaMask Extension
+   - Chrome: Visit chrome.google.com/webstore and search for "MetaMask"
+   - Firefox: Visit addons.mozilla.org and search for "MetaMask"
+   - Or visit metamask.io directly
+
+2. Create or Import Wallet
+   - Follow the setup wizard
+   - Securely store your recovery phrase
+
+3. Connect to This App
+   - Click "Connect Wallet" button again
+   - Select your account in MetaMask
+   - Approve the connection request
+
+Need help? Visit: metamask.io/support`
+            : `需要安装 MetaMask 钱包扩展
+
+连接钱包需要以下步骤：
+
+1. 安装 MetaMask 扩展
+   - Chrome: 访问 chrome.google.com/webstore 搜索 "MetaMask"
+   - Firefox: 访问 addons.mozilla.org 搜索 "MetaMask"
+   - 或直接访问 metamask.io
+
+2. 创建或导入钱包
+   - 按照设置向导操作
+   - 安全保存您的恢复短语
+
+3. 连接到本应用
+   - 再次点击"连接钱包"按钮
+   - 在 MetaMask 中选择您的账户
+   - 批准连接请求
+
+需要帮助？访问: metamask.io/support`;
+        
+        if (confirm(message + '\n\n' + (lang === 'en' ? 'Open MetaMask website now?' : '现在打开 MetaMask 官网？'))) {
+            window.open('https://metamask.io', '_blank');
+        }
     }
 }
 
