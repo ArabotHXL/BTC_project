@@ -529,6 +529,12 @@ body {
 <script>
 // 打开配置向导
 function openConfigWizard() {
+    // 重置到MetaMask选项卡
+    const metamaskTab = document.getElementById('metamask-tab');
+    const metamaskTabInstance = new bootstrap.Tab(metamaskTab);
+    metamaskTabInstance.show();
+    
+    // 显示模态框
     const modal = new bootstrap.Modal(document.getElementById('configWizardModal'));
     modal.show();
 }
