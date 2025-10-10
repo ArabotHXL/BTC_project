@@ -170,6 +170,12 @@ body {
                     {{ 'Configured' if config_status.pinata_configured else 'Missing' }}
                 </span>
             </div>
+            <div style="margin-top: 1rem;">
+                <button class="btn-config btn-warning w-100" onclick="openConfigWizard()">
+                    <i class="bi bi-gear-fill"></i>
+                    {% if current_lang == 'en' %}Configure Web3{% else %}配置Web3{% endif %}
+                </button>
+            </div>
         </div>
 
         <!-- 网络状态 -->
@@ -241,4 +247,323 @@ body {
         </a>
     </div>
 </div>
+
+<!-- 配置向导模态框 -->
+<div class="modal fade" id="configWizardModal" tabindex="-1" aria-labelledby="configWizardLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="background: var(--card-bg); border: 1px solid var(--card-border); backdrop-filter: blur(20px);">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <h5 class="modal-title text-white" id="configWizardLabel">
+                    <i class="bi bi-gear-wide-connected me-2"></i>
+                    {% if current_lang == 'en' %}Web3 Configuration Wizard{% else %}Web3配置向导{% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <!-- 选项卡导航 -->
+                <ul class="nav nav-tabs mb-3" id="configTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="metamask-tab" data-bs-toggle="tab" data-bs-target="#metamask-panel" type="button" role="tab">
+                            <i class="bi bi-wallet2 me-2"></i>
+                            {% if current_lang == 'en' %}MetaMask{% else %}MetaMask钱包{% endif %}
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="secrets-tab" data-bs-toggle="tab" data-bs-target="#secrets-panel" type="button" role="tab">
+                            <i class="bi bi-key-fill me-2"></i>
+                            {% if current_lang == 'en' %}Replit Secrets{% else %}Replit密钥{% endif %}
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual-panel" type="button" role="tab">
+                            <i class="bi bi-book-fill me-2"></i>
+                            {% if current_lang == 'en' %}Manual Guide{% else %}手动配置{% endif %}
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- 选项卡内容 -->
+                <div class="tab-content" id="configTabContent">
+                    <!-- MetaMask选项卡 -->
+                    <div class="tab-pane fade show active" id="metamask-panel" role="tabpanel">
+                        <div class="alert alert-success" style="background: rgba(40,167,69,0.1); border: 1px solid #28a745;">
+                            <i class="bi bi-shield-check me-2"></i>
+                            {% if current_lang == 'en' %}<strong>Most Secure Option</strong>{% else %}<strong>最安全的选项</strong>{% endif %}
+                        </div>
+                        
+                        <h6 class="text-white mb-3">
+                            {% if current_lang == 'en' %}Connect with MetaMask Wallet{% else %}使用MetaMask钱包连接{% endif %}
+                        </h6>
+                        
+                        <div class="mb-3 p-3" style="background: rgba(255,255,255,0.03); border-radius: 8px;">
+                            <p class="text-light mb-2">
+                                {% if current_lang == 'en' %}
+                                    ✅ Your private key never leaves your browser<br>
+                                    ✅ No need to share credentials<br>
+                                    ✅ One-click connection
+                                {% else %}
+                                    ✅ 私钥永远不离开您的浏览器<br>
+                                    ✅ 无需分享凭证<br>
+                                    ✅ 一键连接
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <div class="mb-3">
+                            <p class="text-light">
+                                {% if current_lang == 'en' %}
+                                    <strong>How it works:</strong><br>
+                                    1. Install MetaMask browser extension<br>
+                                    2. Create or import your wallet<br>
+                                    3. Click the button below to connect<br>
+                                    4. Approve the connection in MetaMask
+                                {% else %}
+                                    <strong>工作原理：</strong><br>
+                                    1. 安装MetaMask浏览器扩展<br>
+                                    2. 创建或导入您的钱包<br>
+                                    3. 点击下方按钮连接<br>
+                                    4. 在MetaMask中批准连接
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('web3_dashboard') }}" class="btn btn-success btn-lg">
+                                <i class="bi bi-wallet2 me-2"></i>
+                                {% if current_lang == 'en' %}Go to Web3 Dashboard{% else %}前往Web3控制台{% endif %}
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Replit Secrets选项卡 -->
+                    <div class="tab-pane fade" id="secrets-panel" role="tabpanel">
+                        <div class="alert alert-info" style="background: rgba(23,162,184,0.1); border: 1px solid #17a2b8;">
+                            <i class="bi bi-info-circle me-2"></i>
+                            {% if current_lang == 'en' %}<strong>Recommended for Developers</strong>{% else %}<strong>推荐给开发者</strong>{% endif %}
+                        </div>
+                        
+                        <h6 class="text-white mb-3">
+                            {% if current_lang == 'en' %}Configure via Replit Secrets{% else %}通过Replit密钥配置{% endif %}
+                        </h6>
+
+                        <div class="mb-3 p-3" style="background: rgba(255,255,255,0.03); border-radius: 8px;">
+                            <p class="text-light mb-2">
+                                {% if current_lang == 'en' %}
+                                    <strong>Required Environment Variables:</strong><br><br>
+                                    <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">BLOCKCHAIN_PRIVATE_KEY</code> - Your blockchain wallet private key<br>
+                                    <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">PINATA_JWT</code> - Pinata API token for IPFS storage<br>
+                                    <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">BLOCKCHAIN_ENCRYPTION_PASSWORD</code> - Data encryption password
+                                {% else %}
+                                    <strong>需要的环境变量：</strong><br><br>
+                                    <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">BLOCKCHAIN_PRIVATE_KEY</code> - 区块链钱包私钥<br>
+                                    <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">PINATA_JWT</code> - Pinata IPFS存储API令牌<br>
+                                    <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">BLOCKCHAIN_ENCRYPTION_PASSWORD</code> - 数据加密密码
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <div class="mb-3">
+                            <p class="text-light">
+                                {% if current_lang == 'en' %}
+                                    <strong>Steps:</strong><br>
+                                    1. Click "Tools" in left sidebar → "Secrets"<br>
+                                    2. Click "New Secret" button<br>
+                                    3. Enter variable name (e.g., BLOCKCHAIN_PRIVATE_KEY)<br>
+                                    4. Paste your value securely<br>
+                                    5. Restart the application
+                                {% else %}
+                                    <strong>操作步骤：</strong><br>
+                                    1. 点击左侧栏"Tools" → "Secrets"<br>
+                                    2. 点击"New Secret"按钮<br>
+                                    3. 输入变量名（如：BLOCKCHAIN_PRIVATE_KEY）<br>
+                                    4. 安全粘贴您的值<br>
+                                    5. 重启应用
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <div class="alert alert-warning" style="background: rgba(255,193,7,0.1); border: 1px solid #ffc107;">
+                            <i class="bi bi-shield-exclamation me-2"></i>
+                            {% if current_lang == 'en' %}
+                                <strong>Security Note:</strong> Replit automatically encrypts all secrets. Never share your private keys with anyone!
+                            {% else %}
+                                <strong>安全提示：</strong> Replit会自动加密所有密钥。切勿与任何人分享您的私钥！
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- 手动配置选项卡 -->
+                    <div class="tab-pane fade" id="manual-panel" role="tabpanel">
+                        <div class="alert alert-warning" style="background: rgba(255,193,7,0.1); border: 1px solid #ffc107;">
+                            <i class="bi bi-book me-2"></i>
+                            {% if current_lang == 'en' %}<strong>For Reference Only</strong>{% else %}<strong>仅供参考</strong>{% endif %}
+                        </div>
+                        
+                        <h6 class="text-white mb-3">
+                            {% if current_lang == 'en' %}Manual Configuration Guide{% else %}手动配置指南{% endif %}
+                        </h6>
+
+                        <div class="accordion" id="manualConfigAccordion">
+                            <!-- 1. 区块链私钥 -->
+                            <div class="accordion-item" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); margin-bottom: 0.5rem;">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#privateKeyInfo" style="background: rgba(255,255,255,0.05); color: white;">
+                                        {% if current_lang == 'en' %}1. Blockchain Private Key{% else %}1. 区块链私钥{% endif %}
+                                    </button>
+                                </h2>
+                                <div id="privateKeyInfo" class="accordion-collapse collapse" data-bs-parent="#manualConfigAccordion">
+                                    <div class="accordion-body text-light">
+                                        {% if current_lang == 'en' %}
+                                            <strong>What is it?</strong><br>
+                                            Your wallet's private key for signing blockchain transactions.<br><br>
+                                            <strong>How to get it?</strong><br>
+                                            • From MetaMask: Settings → Security & Privacy → Reveal Private Key<br>
+                                            • Keep it absolutely secret!<br><br>
+                                            <strong>Security Warning:</strong><br>
+                                            🚨 Anyone with this key controls your wallet funds<br>
+                                            🚨 Never share it or input it into untrusted applications
+                                        {% else %}
+                                            <strong>这是什么？</strong><br>
+                                            您钱包的私钥，用于签署区块链交易。<br><br>
+                                            <strong>如何获取？</strong><br>
+                                            • 从MetaMask: 设置 → 安全与隐私 → 显示私钥<br>
+                                            • 务必保密！<br><br>
+                                            <strong>安全警告：</strong><br>
+                                            🚨 任何拥有此密钥的人都能控制您的钱包资金<br>
+                                            🚨 切勿分享或输入到不可信的应用中
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2. Pinata JWT -->
+                            <div class="accordion-item" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); margin-bottom: 0.5rem;">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pinataInfo" style="background: rgba(255,255,255,0.05); color: white;">
+                                        {% if current_lang == 'en' %}2. Pinata JWT Token{% else %}2. Pinata JWT令牌{% endif %}
+                                    </button>
+                                </h2>
+                                <div id="pinataInfo" class="accordion-collapse collapse" data-bs-parent="#manualConfigAccordion">
+                                    <div class="accordion-body text-light">
+                                        {% if current_lang == 'en' %}
+                                            <strong>What is it?</strong><br>
+                                            API token for IPFS file storage via Pinata service.<br><br>
+                                            <strong>How to get it?</strong><br>
+                                            1. Visit <a href="https://pinata.cloud" target="_blank" class="text-info">pinata.cloud</a><br>
+                                            2. Sign up for free account<br>
+                                            3. Go to API Keys section<br>
+                                            4. Create new JWT token<br>
+                                            5. Copy and save securely
+                                        {% else %}
+                                            <strong>这是什么？</strong><br>
+                                            用于通过Pinata服务进行IPFS文件存储的API令牌。<br><br>
+                                            <strong>如何获取？</strong><br>
+                                            1. 访问 <a href="https://pinata.cloud" target="_blank" class="text-info">pinata.cloud</a><br>
+                                            2. 注册免费账户<br>
+                                            3. 进入API Keys部分<br>
+                                            4. 创建新的JWT令牌<br>
+                                            5. 复制并安全保存
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 3. 加密密码 -->
+                            <div class="accordion-item" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#encryptionInfo" style="background: rgba(255,255,255,0.05); color: white;">
+                                        {% if current_lang == 'en' %}3. Encryption Password{% else %}3. 加密密码{% endif %}
+                                    </button>
+                                </h2>
+                                <div id="encryptionInfo" class="accordion-collapse collapse" data-bs-parent="#manualConfigAccordion">
+                                    <div class="accordion-body text-light">
+                                        {% if current_lang == 'en' %}
+                                            <strong>What is it?</strong><br>
+                                            A strong password to encrypt blockchain data.<br><br>
+                                            <strong>Requirements:</strong><br>
+                                            • Minimum 16 characters<br>
+                                            • Mix of letters, numbers, and symbols<br>
+                                            • Store it securely (password manager recommended)<br><br>
+                                            <strong>Example format:</strong><br>
+                                            MySecure#Pass2024!Blockchain
+                                        {% else %}
+                                            <strong>这是什么？</strong><br>
+                                            用于加密区块链数据的强密码。<br><br>
+                                            <strong>要求：</strong><br>
+                                            • 至少16个字符<br>
+                                            • 字母、数字和符号混合<br>
+                                            • 安全存储（推荐使用密码管理器）<br><br>
+                                            <strong>示例格式：</strong><br>
+                                            MySecure#Pass2024!Blockchain
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-danger mt-3" style="background: rgba(220,53,69,0.1); border: 1px solid #dc3545;">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            {% if current_lang == 'en' %}
+                                <strong>Critical Security Warning:</strong><br>
+                                This application does NOT collect or store your private keys. Always use MetaMask or Replit Secrets for secure configuration.
+                            {% else %}
+                                <strong>重要安全警告：</strong><br>
+                                本应用不会收集或存储您的私钥。请始终使用MetaMask或Replit Secrets进行安全配置。
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid rgba(255,255,255,0.1);">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Close{% else %}关闭{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 打开配置向导
+function openConfigWizard() {
+    const modal = new bootstrap.Modal(document.getElementById('configWizardModal'));
+    modal.show();
+}
+
+// 自定义选项卡样式
+document.addEventListener('DOMContentLoaded', function() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .nav-tabs {
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+        }
+        .nav-tabs .nav-link {
+            color: #aaa;
+            border: none;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .nav-tabs .nav-link:hover {
+            color: #fff;
+            border-bottom-color: rgba(255,193,7,0.5);
+        }
+        .nav-tabs .nav-link.active {
+            color: #ffc107;
+            background: transparent;
+            border-bottom-color: #ffc107;
+        }
+        .accordion-button:not(.collapsed) {
+            background: rgba(255,193,7,0.1);
+            color: #ffc107;
+        }
+        .w-100 {
+            width: 100%;
+        }
+    `;
+    document.head.appendChild(style);
+});
+</script>
 {% endblock %}
