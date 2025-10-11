@@ -1142,8 +1142,20 @@ def index():
 # 根路径显示介绍页面
 @app.route('/')
 def home():
-    """项目介绍页面"""
-    return render_template('landing.html')
+    """项目介绍页面 - 动态统计数据"""
+    try:
+        # 获取矿机型号数量（活跃的）
+        miner_count = MinerModel.query.filter_by(is_active=True).count()
+        
+        # 如果数据库为空，使用默认值
+        if miner_count == 0:
+            miner_count = 19
+            
+    except Exception as e:
+        logging.warning(f"无法获取矿机数量: {e}")
+        miner_count = 19
+    
+    return render_template('landing.html', miner_count=miner_count)
 
 
 

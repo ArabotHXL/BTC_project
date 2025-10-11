@@ -240,7 +240,7 @@
             <div class="row">
                 <div class="col-md-3 col-6">
                     <div class="stat-item">
-                        <div class="stat-number">19+</div>
+                        <div class="stat-number">{{ miner_count|default(19) }}+</div>
                         <div class="stat-label">
                             {% if current_lang == 'zh' %}ASIC矿机型号{% else %}ASIC Models{% endif %}
                         </div>
@@ -304,9 +304,9 @@
                         </h3>
                         <p class="feature-desc">
                             {% if current_lang == 'zh' %}
-                                支持19+ ASIC矿机型号，双算法交叉验证确保精度，实时BTC价格、难度、算力数据，批量计算支持5000+矿机
+                                支持{{ miner_count|default(19) }}+ ASIC矿机型号，双算法交叉验证确保精度，实时BTC价格、难度、算力数据，批量计算支持5000+矿机
                             {% else %}
-                                Supports 19+ ASIC models with dual-algorithm cross-validation for accuracy. Real-time BTC price, difficulty, hashrate data. Batch processing for 5000+ miners
+                                Supports {{ miner_count|default(19) }}+ ASIC models with dual-algorithm cross-validation for accuracy. Real-time BTC price, difficulty, hashrate data. Batch processing for 5000+ miners
                             {% endif %}
                         </p>
                     </div>

@@ -30,7 +30,7 @@ The system is built on a Flask backend with SQLAlchemy and PostgreSQL. Redis is 
 - **Hosting Services Module**: Real-time miner monitoring with telemetry tracking (hashrate, temperature, power, pool data), single/batch miner creation APIs, operational ticketing system, and comprehensive hosting management dashboard.
 - **Treasury Management**: BTC inventory tracking with cost basis analysis, cash coverage monitoring, pre-configured sell strategy templates, signal aggregation from multiple modules, and backtesting engine for strategy evaluation.
 - **Multi-Format Reporting**: Professional report generation in PDF, Excel, and PowerPoint formats. Role-specific dashboards for Investors, Operations, and Finance teams. Automated weekly operations reports and monthly SLA reports.
-- **Landing Page**: Updated enterprise-focused homepage (templates/landing.html) showcasing all live features with accurate statistics: 19+ ASIC models, 9+ data sources, 60+ API endpoints, 5000+ batch processing capacity. Highlights Web3 integration, AI intelligence layer, hosting services, treasury management, and enterprise security features.
+- **Landing Page**: Updated enterprise-focused homepage (templates/landing.html) showcasing all live features with **dynamic real-time statistics**. The ASIC model count automatically queries the `miner_models` database table to display the current number of active miner models. Other statistics: 9+ data sources, 60+ API endpoints, 5000+ batch processing capacity. Highlights Web3 integration, AI intelligence layer, hosting services, treasury management, and enterprise security features.
 
 ### System Design Choices
 - **Modularity**: Completely page-isolated architecture with modules communicating via the database.
