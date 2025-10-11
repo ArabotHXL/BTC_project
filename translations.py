@@ -8,7 +8,7 @@ import logging
 # 翻译字典
 TRANSLATIONS = {
     'en': {
-        'btc_mining_calculator': 'BTC Mining Calculator',
+        'btc_mining_calculator': 'HashInsight Enterprise',
         'professional_analysis_platform': 'Professional Analysis Platform',
         'language': 'Language',
         'owner': 'Owner',
@@ -413,7 +413,7 @@ TRANSLATIONS = {
         'import_another_file': 'Import Another File',
     },
     'zh': {
-        'btc_mining_calculator': 'BTC挖矿计算器',
+        'btc_mining_calculator': 'HashInsight Enterprise',
         'professional_analysis_platform': '专业分析平台',
         'language': '语言',
         'owner': '所有者',
