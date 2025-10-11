@@ -724,7 +724,7 @@ except ImportError:
 # 在请求前处理设置语言
 @app.before_request
 def before_request():
-    # 如果没有session中的语言，强制设置为中文
+    # 如果没有session中的语言，默认设置为英文
     if 'language' not in session:
         session['language'] = 'en'
     
@@ -732,13 +732,13 @@ def before_request():
     if request.args.get('lang'):
         session['language'] = request.args.get('lang')
     
-    # 设置全局语言变量
-    g.language = session.get('language', 'zh')
+    # 设置全局语言变量（默认值与session默认值一致）
+    g.language = session.get('language', 'en')
     
     # 确保语言值有效
     if g.language not in ['zh', 'en']:
-        g.language = 'zh'
-        session['language'] = 'zh'
+        g.language = 'en'
+        session['language'] = 'en'
     
     # Update enhanced language engine if available
     if ENHANCED_LANGUAGE and language_engine:
