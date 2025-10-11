@@ -831,30 +831,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         var operationCost = document.getElementById('operation-cost');
-        console.log('[DEBUG] operation-cost element:', operationCost);
-        console.log('[DEBUG] data.inputs:', data.inputs);
-        console.log('[DEBUG] maintenance_fee value:', data.inputs ? data.inputs.maintenance_fee : 'inputs is null');
-        if (operationCost && data.inputs && data.inputs.maintenance_fee !== undefined) {
-            var fee = parseFloat(data.inputs.maintenance_fee) || 0;
-            console.log('[DEBUG] Parsed maintenance fee:', fee);
+        if (operationCost && data.maintenance_fee && data.maintenance_fee.monthly !== undefined) {
+            var fee = parseFloat(data.maintenance_fee.monthly) || 0;
             operationCost.textContent = '$' + fee.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            console.log('[DEBUG] operation-cost updated to:', operationCost.textContent);
-        } else {
-            console.log('[DEBUG] Setting operation-cost to $0.00 because:', {
-                hasElement: !!operationCost,
-                hasInputs: !!data.inputs,
-                hasFee: data.inputs && data.inputs.maintenance_fee !== undefined
-            });
-            if (operationCost) {
-                operationCost.textContent = '$0.00';
-            }
+        } else if (operationCost) {
+            operationCost.textContent = '$0.00';
         }
         
         var hostTotalExpenses = document.getElementById('host-total-expenses');
         if (hostTotalExpenses && data.electricity_cost && data.electricity_cost.monthly !== undefined) {
             var totalExpenses = (data.electricity_cost.monthly || 0);
-            if (data.inputs && data.inputs.maintenance_fee) {
-                totalExpenses += (data.inputs.maintenance_fee || 0);
+            if (data.maintenance_fee && data.maintenance_fee.monthly) {
+                totalExpenses += (parseFloat(data.maintenance_fee.monthly) || 0);
             }
             hostTotalExpenses.textContent = '$' + totalExpenses.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         } else if (hostTotalExpenses) {
