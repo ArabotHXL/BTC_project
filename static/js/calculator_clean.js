@@ -823,18 +823,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Host Expenses Section (矿场主支出)
-        var hostMonthlyElectricity = document.getElementById('host-monthly-electricity');
-        if (hostMonthlyElectricity && data.electricity_cost && data.electricity_cost.monthly !== undefined) {
-            hostMonthlyElectricity.textContent = '$' + (data.electricity_cost.monthly || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        } else if (hostMonthlyElectricity) {
-            hostMonthlyElectricity.textContent = '$0.00';
+        var monthlyElectricity = document.getElementById('monthly-electricity');
+        if (monthlyElectricity && data.electricity_cost && data.electricity_cost.monthly !== undefined) {
+            monthlyElectricity.textContent = '$' + (data.electricity_cost.monthly || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        } else if (monthlyElectricity) {
+            monthlyElectricity.textContent = '$0.00';
         }
         
-        var hostOperationCost = document.getElementById('host-operation-cost');
-        if (hostOperationCost && data.inputs && data.inputs.maintenance_fee !== undefined) {
-            hostOperationCost.textContent = '$' + (data.inputs.maintenance_fee || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        } else if (hostOperationCost) {
-            hostOperationCost.textContent = '$0.00';
+        var operationCost = document.getElementById('operation-cost');
+        if (operationCost && data.inputs && data.inputs.maintenance_fee !== undefined) {
+            operationCost.textContent = '$' + (data.inputs.maintenance_fee || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        } else if (operationCost) {
+            operationCost.textContent = '$0.00';
         }
         
         var hostTotalExpenses = document.getElementById('host-total-expenses');
@@ -864,9 +864,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Other Mining Site Information (其他矿场信息)
-        var minerCountDisplay = document.getElementById('miner-count-display');
-        if (minerCountDisplay && data.inputs && data.inputs.miner_count !== undefined) {
-            minerCountDisplay.textContent = (data.inputs.miner_count || 0).toLocaleString('en-US');
+        var minerCountResult = document.getElementById('miner-count-result');
+        if (minerCountResult && data.inputs && data.inputs.miner_count !== undefined) {
+            minerCountResult.textContent = (data.inputs.miner_count || 0).toLocaleString('en-US');
         }
         
         var breakEvenElectricity = document.getElementById('break-even-electricity');
@@ -874,9 +874,9 @@ document.addEventListener('DOMContentLoaded', function() {
             breakEvenElectricity.textContent = '$' + (data.break_even.electricity_cost || 0).toFixed(4) + '/kWh';
         }
         
-        var breakEvenBtcPrice = document.getElementById('break-even-btc-price');
-        if (breakEvenBtcPrice && data.break_even && data.break_even.btc_price !== undefined) {
-            breakEvenBtcPrice.textContent = '$' + (data.break_even.btc_price || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        var breakEvenBtc = document.getElementById('break-even-btc');
+        if (breakEvenBtc && data.break_even && data.break_even.btc_price !== undefined) {
+            breakEvenBtc.textContent = '$' + (data.break_even.btc_price || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
         
         console.log('[CALCULATOR] Results displayed');
