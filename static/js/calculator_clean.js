@@ -831,10 +831,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         var operationCost = document.getElementById('operation-cost');
+        console.log('[DEBUG] operation-cost element:', operationCost);
+        console.log('[DEBUG] data.inputs:', data.inputs);
+        console.log('[DEBUG] maintenance_fee value:', data.inputs ? data.inputs.maintenance_fee : 'inputs is null');
         if (operationCost && data.inputs && data.inputs.maintenance_fee !== undefined) {
-            operationCost.textContent = '$' + (data.inputs.maintenance_fee || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        } else if (operationCost) {
-            operationCost.textContent = '$0.00';
+            var fee = parseFloat(data.inputs.maintenance_fee) || 0;
+            console.log('[DEBUG] Parsed maintenance fee:', fee);
+            operationCost.textContent = '$' + fee.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            console.log('[DEBUG] operation-cost updated to:', operationCost.textContent);
+        } else {
+            console.log('[DEBUG] Setting operation-cost to $0.00 because:', {
+                hasElement: !!operationCost,
+                hasInputs: !!data.inputs,
+                hasFee: data.inputs && data.inputs.maintenance_fee !== undefined
+            });
+            if (operationCost) {
+                operationCost.textContent = '$0.00';
+            }
         }
         
         var hostTotalExpenses = document.getElementById('host-total-expenses');
