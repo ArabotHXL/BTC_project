@@ -789,6 +789,96 @@ document.addEventListener('DOMContentLoaded', function() {
             timestamp.textContent = new Date(data.timestamp).toLocaleString();
         }
         
+        // ============ MINING SITE INFORMATION (Host/矿场主信息) ============
+        // Host Income Section (矿场主收入)
+        // Note: Backend currently returns total host_profit only, not broken down by electric/operation
+        // Using total profit for now - backend should be updated to return detailed breakdown
+        var hostMonthlyProfit = document.getElementById('host-monthly-profit');
+        if (hostMonthlyProfit && data.host_profit && data.host_profit.monthly !== undefined) {
+            // Using total host profit as electric profit (temporary solution)
+            hostMonthlyProfit.textContent = '$' + (data.host_profit.monthly || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        } else if (hostMonthlyProfit) {
+            hostMonthlyProfit.textContent = '$0.00';
+        }
+        
+        var hostSelfProfit = document.getElementById('host-self-profit');
+        if (hostSelfProfit) {
+            // Set to $0.00 for now as backend doesn't provide operation profit separately
+            hostSelfProfit.textContent = '$0.00';
+        }
+        
+        var siteTotalRevenue = document.getElementById('site-total-revenue');
+        if (siteTotalRevenue && data.revenue && data.revenue.monthly !== undefined) {
+            siteTotalRevenue.textContent = '$' + (data.revenue.monthly || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        } else if (siteTotalRevenue) {
+            siteTotalRevenue.textContent = '$0.00';
+        }
+        
+        var hostTotalIncome = document.getElementById('host-total-income');
+        if (hostTotalIncome && data.host_profit && data.host_profit.monthly !== undefined) {
+            var totalIncome = data.host_profit.monthly || 0;
+            hostTotalIncome.textContent = '$' + totalIncome.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        } else if (hostTotalIncome) {
+            hostTotalIncome.textContent = '$0.00';
+        }
+        
+        // Host Expenses Section (矿场主支出)
+        var hostMonthlyElectricity = document.getElementById('host-monthly-electricity');
+        if (hostMonthlyElectricity && data.electricity_cost && data.electricity_cost.monthly !== undefined) {
+            hostMonthlyElectricity.textContent = '$' + (data.electricity_cost.monthly || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        } else if (hostMonthlyElectricity) {
+            hostMonthlyElectricity.textContent = '$0.00';
+        }
+        
+        var hostOperationCost = document.getElementById('host-operation-cost');
+        if (hostOperationCost && data.inputs && data.inputs.maintenance_fee !== undefined) {
+            hostOperationCost.textContent = '$' + (data.inputs.maintenance_fee || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        } else if (hostOperationCost) {
+            hostOperationCost.textContent = '$0.00';
+        }
+        
+        var hostTotalExpenses = document.getElementById('host-total-expenses');
+        if (hostTotalExpenses && data.electricity_cost && data.electricity_cost.monthly !== undefined) {
+            var totalExpenses = (data.electricity_cost.monthly || 0);
+            if (data.inputs && data.inputs.maintenance_fee) {
+                totalExpenses += (data.inputs.maintenance_fee || 0);
+            }
+            hostTotalExpenses.textContent = '$' + totalExpenses.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        } else if (hostTotalExpenses) {
+            hostTotalExpenses.textContent = '$0.00';
+        }
+        
+        // Host Net Profit (矿场主净收益)
+        var hostMonthlyProfitDisplay = document.getElementById('host-monthly-profit-display');
+        if (hostMonthlyProfitDisplay && data.host_profit && data.host_profit.monthly !== undefined) {
+            hostMonthlyProfitDisplay.textContent = '$' + (data.host_profit.monthly || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        } else if (hostMonthlyProfitDisplay) {
+            hostMonthlyProfitDisplay.textContent = '$0.00';
+        }
+        
+        var hostYearlyProfit = document.getElementById('host-yearly-profit');
+        if (hostYearlyProfit && data.host_profit && data.host_profit.yearly !== undefined) {
+            hostYearlyProfit.textContent = '$' + (data.host_profit.yearly || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        } else if (hostYearlyProfit) {
+            hostYearlyProfit.textContent = '$0.00';
+        }
+        
+        // Other Mining Site Information (其他矿场信息)
+        var minerCountDisplay = document.getElementById('miner-count-display');
+        if (minerCountDisplay && data.inputs && data.inputs.miner_count !== undefined) {
+            minerCountDisplay.textContent = (data.inputs.miner_count || 0).toLocaleString('en-US');
+        }
+        
+        var breakEvenElectricity = document.getElementById('break-even-electricity');
+        if (breakEvenElectricity && data.break_even && data.break_even.electricity_cost !== undefined) {
+            breakEvenElectricity.textContent = '$' + (data.break_even.electricity_cost || 0).toFixed(4) + '/kWh';
+        }
+        
+        var breakEvenBtcPrice = document.getElementById('break-even-btc-price');
+        if (breakEvenBtcPrice && data.break_even && data.break_even.btc_price !== undefined) {
+            breakEvenBtcPrice.textContent = '$' + (data.break_even.btc_price || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        
         console.log('[CALCULATOR] Results displayed');
         
         // Generate ROI Charts if chart functionality is available
