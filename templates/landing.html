@@ -167,7 +167,28 @@
             vertical-align: middle;
         }
         
+        /* 导航栏增强样式 */
+        .navbar-brand {
+            letter-spacing: -0.5px;
+        }
+        
+        .navbar-brand:hover {
+            color: #ffcc00 !important;
+            transform: translateY(-1px);
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: #f7931a !important;
+        }
+        
         @media (max-width: 768px) {
+            .navbar-brand {
+                font-size: 1.1rem !important;
+            }
+            .navbar-nav {
+                margin-top: 1rem;
+            }
             .hero-title {
                 font-size: 2.5rem;
             }
@@ -182,17 +203,21 @@
 </head>
 <body>
     <!-- 导航栏 -->
-    <nav class="navbar navbar-expand-lg fixed-top" style="background: rgba(33, 37, 41, 0.95); backdrop-filter: blur(10px);">
+    <nav class="navbar navbar-expand-lg fixed-top" style="background: rgba(33, 37, 41, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(247, 147, 26, 0.2);">
         <div class="container">
-            <a class="navbar-brand" href="#" style="color: #f7931a; font-weight: bold;">
-                <span style="font-size: 1.5rem;">₿</span> BTC Mining Calculator
+            <a class="navbar-brand" href="/" style="color: #f7931a; font-weight: bold; font-size: 1.3rem;">
+                <span style="font-size: 1.5rem;">₿</span> HashInsight Enterprise
             </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="#features" style="color: #adb5bd;">
-                    {% if current_lang == 'zh' %}功能{% else %}Features{% endif %}
+            <div class="navbar-nav ms-auto d-flex align-items-center gap-3">
+                <a class="nav-link" href="#features" style="color: #adb5bd; transition: color 0.3s;">
+                    {% if current_lang == 'zh' %}功能特性{% else %}Features{% endif %}
                 </a>
-                <a href="?lang={{ 'en' if current_lang == 'zh' else 'zh' }}" class="nav-link" style="color: #f7931a;">
-                    <i class="fas fa-globe"></i> {{ '中文' if current_lang == 'en' else 'English' }}
+                <a class="nav-link" href="{{ url_for('login') }}" style="color: #adb5bd; transition: color 0.3s;">
+                    {% if current_lang == 'zh' %}登录{% else %}Login{% endif %}
+                </a>
+                <a href="?lang={{ 'en' if current_lang == 'zh' else 'zh' }}" class="nav-link" style="color: #f7931a; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-globe"></i> 
+                    <span>{{ '中文' if current_lang == 'en' else 'EN' }}</span>
                 </a>
             </div>
         </div>
