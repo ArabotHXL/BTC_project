@@ -212,9 +212,6 @@
                 <a class="nav-link" href="#features" style="color: #adb5bd; transition: color 0.3s;">
                     {% if current_lang == 'zh' %}功能特性{% else %}Features{% endif %}
                 </a>
-                <a class="nav-link" href="{{ url_for('login') }}" style="color: #adb5bd; transition: color 0.3s;">
-                    {% if current_lang == 'zh' %}登录{% else %}Login{% endif %}
-                </a>
                 <a href="?lang={{ 'en' if current_lang == 'zh' else 'zh' }}" class="nav-link" style="color: #f7931a; display: flex; align-items: center; gap: 0.5rem;">
                     <i class="fas fa-globe"></i> 
                     <span>{{ '中文' if current_lang == 'en' else 'EN' }}</span>
