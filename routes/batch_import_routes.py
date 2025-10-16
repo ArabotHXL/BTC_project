@@ -35,6 +35,12 @@ def upload_csv():
     try:
         user_id = session.get('user_id')
         
+        if not user_id:
+            return jsonify({
+                'success': False,
+                'error': 'User not authenticated'
+            }), 401
+        
         if 'file' not in request.files:
             return jsonify({
                 'success': False,
@@ -43,7 +49,7 @@ def upload_csv():
         
         file = request.files['file']
         
-        if file.filename == '':
+        if not file or not file.filename or file.filename == '':
             return jsonify({
                 'success': False,
                 'error': 'No file selected'
@@ -60,7 +66,7 @@ def upload_csv():
         filename = secure_filename(file.filename)
         
         # 创建导入管理器
-        import_manager = BatchImportManager(user_id=user_id)
+        import_manager = BatchImportManager(user_id=int(user_id))
         
         # 执行导入
         result = import_manager.import_csv(csv_content, filename)

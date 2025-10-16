@@ -332,7 +332,9 @@ class BatchImportManager:
             logger.info(f"Starting batch import: {total_rows} rows from {filename}")
             self._send_progress(10, f"Parsed {total_rows} rows")
             
-            # 转换为字典列表
+            # 转换为字典列表 (replace NaN with None for JSON compatibility)
+            df = df.replace({pd.NA: None, float('nan'): None})
+            df = df.where(pd.notna(df), None)
             rows = df.to_dict('records')
             
             # 分批处理
