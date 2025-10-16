@@ -230,14 +230,14 @@
                         {% endif %}
                     </div>
                     <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="downloadTemplate(true)">
+                        <a href="/batch/api/template/download?lang={{ current_lang }}&examples=true" class="btn btn-sm btn-outline-primary" download>
                             <i class="bi bi-download me-1"></i>
                             {% if current_lang == 'en' %}With Examples{% else %}带示例{% endif %}
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="downloadTemplate(false)">
+                        </a>
+                        <a href="/batch/api/template/download?lang={{ current_lang }}&examples=false" class="btn btn-sm btn-outline-secondary" download>
                             <i class="bi bi-file-earmark me-1"></i>
                             {% if current_lang == 'en' %}Blank{% else %}空白模板{% endif %}
-                        </button>
+                        </a>
                     </div>
                 </div>
                 
@@ -536,19 +536,6 @@ function showToast(message, type) {
 }
 
 // 批量导入相关函数
-function downloadTemplate(includeExamples) {
-    const lang = '{{ current_lang }}' || 'en';
-    const url = `/batch/api/template/download?lang=${lang}&examples=${includeExamples}`;
-    
-    // Create a temporary link and trigger download
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `miner_import_template_${lang}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
 function setupBatchImport() {
     const fileInput = document.getElementById('batchFile');
     fileInput.addEventListener('change', handleFileSelect);
