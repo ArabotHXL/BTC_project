@@ -579,24 +579,38 @@ function confirmBatchImport() {
     const formData = new FormData();
     formData.append('file', file);
     
-    fetch('/hosting/api/miners/batch-import', {
+    fetch('/batch/api/upload', {
         method: 'POST',
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('batchImportModal')).hide();
             refreshMiners();
-            showToast(`${getLanguage() === 'en' ? 'Successfully imported' : '成功导入'} ${data.imported} ${getLanguage() === 'en' ? 'miners' : '台矿机'}`, 'success');
+            showToast(`${getLanguage() === 'en' ? 'Successfully imported' : '成功导入'} ${data.imported_count || data.imported || 0} ${getLanguage() === 'en' ? 'miners' : '台矿机'}`, 'success');
         } else {
-            showToast(data.message || (getLanguage() === 'en' ? 'Import failed' : '导入失败'), 'error');
+            showToast(data.error || data.message || (getLanguage() === 'en' ? 'Import failed' : '导入失败'), 'error');
         }
     })
     .catch(error => {
         console.error('Error importing miners:', error);
         showToast(getLanguage() === 'en' ? 'Import failed' : '导入失败', 'error');
     });
+}
+
+// 添加缺失的 showPendingOnly 函数
+function showPendingOnly() {
+    const pendingFilter = document.getElementById('approvalFilter');
+    if (pendingFilter) {
+        pendingFilter.value = 'pending_approval';
+        filterMiners();
+    }
 }
 </script>
 {% endblock %}
