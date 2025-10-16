@@ -196,12 +196,14 @@ class BatchImportManager:
                 # 验证数据
                 is_valid, error_type, error_msg, suggestion = self.validate_row(row, row_number)
                 if not is_valid:
+                    # Clean row data for JSON serialization (remove NaN)
+                    clean_row = {k: (v if pd.notna(v) else None) for k, v in row.items()}
                     error_records.append({
                         'row': row_number,
                         'error_type': error_type,
                         'error': error_msg,
                         'suggestion': suggestion,
-                        'data': row
+                        'data': clean_row
                     })
                     continue
                 
@@ -224,12 +226,14 @@ class BatchImportManager:
                             break
                     
                     if not model:
+                        # Clean row data for JSON serialization (remove NaN)
+                        clean_row = {k: (v if pd.notna(v) else None) for k, v in row.items()}
                         error_records.append({
                             'row': row_number,
                             'error_type': 'model_not_found',
                             'error': f"Model '{row['model_name']}' not found",
                             'suggestion': 'Use auto-identification or provide a valid model name',
-                            'data': row
+                            'data': clean_row
                         })
                         continue
                 else:
@@ -237,12 +241,14 @@ class BatchImportManager:
                     model = self.auto_identify_model(hashrate, power)
                     
                     if not model:
+                        # Clean row data for JSON serialization (remove NaN)
+                        clean_row = {k: (v if pd.notna(v) else None) for k, v in row.items()}
                         error_records.append({
                             'row': row_number,
                             'error_type': 'no_model_match',
                             'error': f"No matching model found for hashrate={hashrate}TH/s, power={power}W",
                             'suggestion': 'Provide model_name explicitly or adjust hashrate/power values',
-                            'data': row
+                            'data': clean_row
                         })
                         continue
                 
@@ -263,12 +269,14 @@ class BatchImportManager:
                 
             except Exception as e:
                 logger.error(f"Error processing row {row_number}: {e}")
+                # Clean row data for JSON serialization (remove NaN)
+                clean_row = {k: (v if pd.notna(v) else None) for k, v in row.items()}
                 error_records.append({
                     'row': row_number,
                     'error_type': 'processing_error',
                     'error': str(e),
                     'suggestion': 'Check data format and values',
-                    'data': row
+                    'data': clean_row
                 })
         
         return success_records, error_records
