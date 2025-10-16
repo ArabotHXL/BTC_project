@@ -219,13 +219,39 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <!-- Download Template Section -->
+                <div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <i class="bi bi-info-circle me-2"></i>
+                        {% if current_lang == 'en' %}
+                            <strong>First time?</strong> Download the CSV template to get started
+                        {% else %}
+                            <strong>第一次使用？</strong> 下载CSV模板开始使用
+                        {% endif %}
+                    </div>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="downloadTemplate(true)">
+                            <i class="bi bi-download me-1"></i>
+                            {% if current_lang == 'en' %}With Examples{% else %}带示例{% endif %}
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="downloadTemplate(false)">
+                            <i class="bi bi-file-earmark me-1"></i>
+                            {% if current_lang == 'en' %}Blank{% else %}空白模板{% endif %}
+                        </button>
+                    </div>
+                </div>
+                
                 <div class="mb-3">
                     <label for="batchFile" class="form-label">
                         {% if current_lang == 'en' %}Select CSV File{% else %}选择CSV文件{% endif %}
                     </label>
                     <input type="file" class="form-control" id="batchFile" accept=".csv">
                     <div class="form-text">
-                        {% if current_lang == 'en' %}Please upload a CSV file with columns: serial_number, miner_model, customer_email, site_name, ip_address, rack_position, notes{% else %}请上传包含以下列的CSV文件：序列号、矿机型号、客户邮箱、站点名称、IP地址、机架位置、备注{% endif %}
+                        {% if current_lang == 'en' %}
+                            Required fields: Hashrate (TH/s), Power (W), Electricity Cost ($/kWh)
+                        {% else %}
+                            必填字段：算力(TH/s)、功耗(W)、电费($/kWh)
+                        {% endif %}
                     </div>
                 </div>
                 <div id="importPreview" class="d-none">
@@ -510,6 +536,19 @@ function showToast(message, type) {
 }
 
 // 批量导入相关函数
+function downloadTemplate(includeExamples) {
+    const lang = '{{ current_lang }}' || 'en';
+    const url = `/batch/api/template/download?lang=${lang}&examples=${includeExamples}`;
+    
+    // Create a temporary link and trigger download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `miner_import_template_${lang}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 function setupBatchImport() {
     const fileInput = document.getElementById('batchFile');
     fileInput.addEventListener('change', handleFileSelect);
