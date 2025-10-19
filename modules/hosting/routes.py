@@ -894,6 +894,53 @@ def reject_miner(miner_id):
             'error': '拒绝矿机申请失败'
         }), 500
 
+@hosting_bp.route('/api/miners/<int:miner_id>', methods=['GET'])
+@login_required
+def get_miner_detail(miner_id):
+    """获取单个矿机详情"""
+    try:
+        user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        
+        miner = HostingMiner.query.get_or_404(miner_id)
+        
+        # 权限检查：托管商可以查看所有，客户只能查看自己的
+        if user_role not in ['owner', 'admin', 'mining_site'] and miner.customer_id != user_id:
+            return jsonify({
+                'success': False,
+                'error': '无权限查看此矿机'
+            }), 403
+        
+        # 构建详细信息
+        miner_data = miner.to_dict()
+        
+        # 添加关联信息
+        if miner.customer:
+            miner_data['customer_name'] = miner.customer.email
+            miner_data['customer_email'] = miner.customer.email
+        
+        if miner.miner_model:
+            miner_data['miner_model_name'] = miner.miner_model.model_name
+        
+        # 获取站点信息
+        if miner.site_id:
+            site = HostingSite.query.get(miner.site_id)
+            if site:
+                miner_data['site_name'] = site.name
+                miner_data['site_location'] = site.location
+        
+        return jsonify({
+            'success': True,
+            'miner': miner_data
+        })
+        
+    except Exception as e:
+        logger.error(f"获取矿机详情失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': '获取矿机详情失败'
+        }), 500
+
 @hosting_bp.route('/api/miners/<int:miner_id>', methods=['PUT'])
 @login_required
 def update_miner(miner_id):
