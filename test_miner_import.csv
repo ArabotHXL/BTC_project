@@ -1,0 +1,6 @@
+Miner Number,Model Name,Hashrate (TH/s),Power (W),Electricity Cost ($/kWh),Machine Price ($),Quantity,Custom Name,Notes
+M001,Antminer S19 Pro,110,3250,0.08,2500,1,Farm A - Rack 1,Testing import
+M002,Antminer S21,200,3550,0.08,3200,2,Farm A - Rack 2,Batch test
+M003,WhatsMiner M53S,226,6554,0.08,4500,1,Farm B - Rack 1,High power unit
+M004,,150,3500,0.07,2800,1,Farm C - Unit 1,Auto-detect model
+M005,Antminer S19 XP,140,3010,0.09,2200,3,Facility D,Multiple units
