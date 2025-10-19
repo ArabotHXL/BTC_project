@@ -7,7 +7,7 @@ from flask import render_template, request, jsonify, session, redirect, url_for,
 from . import hosting_bp
 from auth import login_required
 from decorators import requires_role
-from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingUsageRecord, HostingUsageItem, MinerTelemetry
+from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingUsageRecord, HostingUsageItem, MinerTelemetry, HostingBill, HostingBillItem
 import logging
 import json
 from datetime import datetime, timedelta
