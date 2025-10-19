@@ -1501,6 +1501,10 @@ class HostingMiner(db.Model):
     actual_hashrate = db.Column(db.Float, nullable=False)  # 实际算力 (TH/s)
     actual_power = db.Column(db.Float, nullable=False)  # 实际功耗 (W)
     
+    # 托管费用和备注
+    hosting_fee = db.Column(db.Float, default=0.0, nullable=True)  # 月度托管费用 ($/月)
+    notes = db.Column(db.Text, nullable=True)  # 备注信息
+    
     # 状态管理
     status = db.Column(db.String(20), default='active', nullable=False)  # active/offline/maintenance/error
     health_score = db.Column(db.Integer, default=100, nullable=False)  # 健康度评分 0-100

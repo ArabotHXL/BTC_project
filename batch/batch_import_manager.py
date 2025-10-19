@@ -174,7 +174,7 @@ class BatchImportManager:
         
         return best_match
     
-    def validate_row(self, row: Dict, row_number: int) -> Tuple[bool, Optional[str], Optional[str]]:
+    def validate_row(self, row: Dict, row_number: int) -> Tuple[bool, Optional[str], Optional[str], Optional[str]]:
         """
         验证单行数据 - 托管服务版本
         
@@ -192,10 +192,15 @@ class BatchImportManager:
         try:
             hashrate = float(row['hashrate'])
             power = int(row['power'])
-            hosting_fee = float(row.get('hosting_fee', 0))
+            # 处理可选的托管费字段（空值转为0）
+            hosting_fee_value = row.get('hosting_fee', '')
+            if not hosting_fee_value or hosting_fee_value == '' or pd.isna(hosting_fee_value):
+                hosting_fee = 0.0
+            else:
+                hosting_fee = float(hosting_fee_value)
         except (ValueError, TypeError) as e:
             return False, 'invalid_type', f"Invalid data type: {str(e)}", \
-                   "Ensure hashrate and power are numbers"
+                   "Ensure hashrate, power, and hosting_fee (if provided) are numbers"
         
         # 范围验证
         if hashrate <= 0 or hashrate > 1000:
@@ -248,13 +253,18 @@ class BatchImportManager:
                 # 提取基本数据
                 hashrate = float(row['hashrate'])
                 power = int(row['power'])
-                serial_number = str(row['serial_number'])
-                site_name = str(row['site_name'])
-                client_email = str(row['client_email'])
-                hosting_fee = float(row.get('hosting_fee', 0))
-                rack_position = row.get('rack_position', '')
-                ip_address = row.get('ip_address', '')
-                notes = row.get('notes', '')
+                serial_number = str(row['serial_number']).strip()
+                site_name = str(row['site_name']).strip()
+                client_email = str(row['client_email']).strip()
+                # 处理可选字段（空值安全转换）
+                hosting_fee_value = row.get('hosting_fee', '')
+                if not hosting_fee_value or hosting_fee_value == '' or pd.isna(hosting_fee_value):
+                    hosting_fee = 0.0
+                else:
+                    hosting_fee = float(hosting_fee_value)
+                rack_position = str(row.get('rack_position', '')).strip() if row.get('rack_position') else None
+                ip_address = str(row.get('ip_address', '')).strip() if row.get('ip_address') else None
+                notes = str(row.get('notes', '')).strip() if row.get('notes') else None
                 
                 # 查找站点ID
                 site = HostingSite.query.filter(
@@ -272,8 +282,10 @@ class BatchImportManager:
                     })
                     continue
                 
-                # 查找客户ID
-                customer = UserAccess.query.filter_by(email=client_email).first()
+                # 查找客户ID（大小写不敏感）
+                customer = UserAccess.query.filter(
+                    db.func.lower(UserAccess.email) == client_email.lower()
+                ).first()
                 
                 if not customer:
                     clean_row = {k: (v if pd.notna(v) else None) for k, v in row.items()}
@@ -331,7 +343,7 @@ class BatchImportManager:
                         })
                         continue
                 
-                # 准备HostingMiner插入数据
+                # 准备HostingMiner插入数据（包含托管费）
                 success_records.append({
                     'site_id': site.id,
                     'customer_id': customer.id,
@@ -339,8 +351,10 @@ class BatchImportManager:
                     'serial_number': serial_number,
                     'actual_hashrate': hashrate,
                     'actual_power': power,
+                    'hosting_fee': hosting_fee,  # 添加托管费字段
                     'rack_position': rack_position if rack_position else None,
                     'ip_address': ip_address if ip_address else None,
+                    'notes': notes if notes else None,  # 添加备注字段
                     'status': 'active',
                     'health_score': 100,
                     'approval_status': 'approved',  # 批量导入默认自动审核通过
@@ -453,15 +467,15 @@ class BatchImportManager:
             if unmapped_columns:
                 logger.warning(f"Unmapped columns (will be ignored): {unmapped_columns}")
             
-            # Validate that all required fields exist after mapping
-            required_fields = ['hashrate', 'power', 'electricity_cost']
+            # Validate that all required fields exist after mapping - HOSTING SERVICE VERSION
+            required_fields = ['site_name', 'client_email', 'serial_number', 'hashrate', 'power']
             missing_fields = [field for field in required_fields if field not in df.columns]
             
             if missing_fields:
                 raise ValueError(
                     f"Missing required columns: {', '.join(missing_fields)}. "
                     f"Available columns: {', '.join(df.columns.tolist())}. "
-                    f"Please ensure your CSV has columns: Hashrate (TH/s), Power (W), Electricity Cost ($/kWh)"
+                    f"Please ensure your CSV has columns: Site, Client Email, Serial Number, Hashrate (TH/s), Power (W)"
                 )
             
             # 转换为字典列表 (replace NaN with None for JSON compatibility)

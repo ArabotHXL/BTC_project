@@ -18,29 +18,31 @@ from models import MinerModel
 class CSVTemplateGenerator:
     """CSV模板生成器"""
     
-    # 模板字段定义
+    # 模板字段定义 - 托管服务版本
     TEMPLATE_FIELDS_EN = {
-        'miner_number': {'header': 'Miner Number', 'example': 'M001', 'required': False, 'description': 'Unique identifier for the miner'},
+        'site_name': {'header': 'Site', 'example': 'Texas DC-01', 'required': True, 'description': 'Hosting site name (must exist in system)'},
+        'client_email': {'header': 'Client Email', 'example': 'client@example.com', 'required': True, 'description': 'Customer email address (must be registered)'},
+        'serial_number': {'header': 'Serial Number', 'example': 'SN20240001', 'required': True, 'description': 'Unique device serial number'},
         'model_name': {'header': 'Model Name', 'example': 'Antminer S19 Pro', 'required': False, 'description': 'Auto-detect if left blank'},
         'hashrate': {'header': 'Hashrate (TH/s)', 'example': '110', 'required': True, 'description': 'Mining hashrate in TH/s'},
         'power': {'header': 'Power (W)', 'example': '3250', 'required': True, 'description': 'Power consumption in Watts'},
-        'electricity_cost': {'header': 'Electricity Cost ($/kWh)', 'example': '0.08', 'required': True, 'description': 'Cost per kilowatt-hour'},
-        'machine_price': {'header': 'Machine Price ($)', 'example': '2500', 'required': False, 'description': 'Purchase price of the miner'},
-        'quantity': {'header': 'Quantity', 'example': '1', 'required': False, 'description': 'Number of identical miners'},
-        'custom_name': {'header': 'Custom Name', 'example': 'Farm A - Rack 1', 'required': False, 'description': 'Custom identifier'},
-        'notes': {'header': 'Notes', 'example': 'Purchased 2024-01', 'required': False, 'description': 'Additional notes'}
+        'hosting_fee': {'header': 'Hosting Fee ($/month)', 'example': '150', 'required': False, 'description': 'Monthly hosting fee'},
+        'rack_position': {'header': 'Rack Position', 'example': 'A1-R3-U12', 'required': False, 'description': 'Physical rack location'},
+        'ip_address': {'header': 'IP Address', 'example': '192.168.1.100', 'required': False, 'description': 'Miner IP address'},
+        'notes': {'header': 'Notes', 'example': 'VIP customer', 'required': False, 'description': 'Additional notes'}
     }
     
     TEMPLATE_FIELDS_ZH = {
-        'miner_number': {'header': '矿机编号', 'example': 'M001', 'required': False, 'description': '矿机唯一标识'},
+        'site_name': {'header': '站点', 'example': '德州数据中心-01', 'required': True, 'description': '托管站点名称（必须在系统中存在）'},
+        'client_email': {'header': '客户邮箱', 'example': 'client@example.com', 'required': True, 'description': '客户邮箱地址（必须已注册）'},
+        'serial_number': {'header': '序列号', 'example': 'SN20240001', 'required': True, 'description': '设备唯一序列号'},
         'model_name': {'header': '矿机型号', 'example': 'Antminer S19 Pro', 'required': False, 'description': '留空自动识别'},
         'hashrate': {'header': '算力(TH/s)', 'example': '110', 'required': True, 'description': '挖矿算力'},
         'power': {'header': '功耗(W)', 'example': '3250', 'required': True, 'description': '功率消耗'},
-        'electricity_cost': {'header': '电费($/kWh)', 'example': '0.08', 'required': True, 'description': '每千瓦时电费'},
-        'machine_price': {'header': '矿机价格($)', 'example': '2500', 'required': False, 'description': '购买价格'},
-        'quantity': {'header': '数量', 'example': '1', 'required': False, 'description': '相同矿机数量'},
-        'custom_name': {'header': '自定义名称', 'example': '矿场A-机架1', 'required': False, 'description': '自定义标识'},
-        'notes': {'header': '备注', 'example': '2024-01购买', 'required': False, 'description': '附加备注'}
+        'hosting_fee': {'header': '托管费($/月)', 'example': '150', 'required': False, 'description': '月度托管费用'},
+        'rack_position': {'header': '机架位置', 'example': 'A1-R3-U12', 'required': False, 'description': '物理机架位置'},
+        'ip_address': {'header': 'IP地址', 'example': '192.168.1.100', 'required': False, 'description': '矿机IP地址'},
+        'notes': {'header': '备注', 'example': 'VIP客户', 'required': False, 'description': '附加备注'}
     }
     
     @classmethod
@@ -61,9 +63,9 @@ class CSVTemplateGenerator:
         
         output = io.StringIO()
         
-        # 提取字段顺序
-        field_order = ['miner_number', 'model_name', 'hashrate', 'power', 'electricity_cost', 
-                      'machine_price', 'quantity', 'custom_name', 'notes']
+        # 提取字段顺序 - 托管服务版本
+        field_order = ['site_name', 'client_email', 'serial_number', 'model_name', 'hashrate', 
+                      'power', 'hosting_fee', 'rack_position', 'ip_address', 'notes']
         
         # 写入表头
         headers = [fields[f]['header'] for f in field_order]
@@ -85,15 +87,16 @@ class CSVTemplateGenerator:
             for i in range(min(example_count, len(popular_models))):
                 model = popular_models[i]
                 example_row = [
-                    f'M{str(i+1).zfill(3)}',  # miner_number
-                    model['name'],             # model_name
-                    str(model['hashrate']),    # hashrate
-                    str(model['power']),       # power
-                    '0.08',                    # electricity_cost
-                    str(model['price']),       # machine_price
-                    '1',                       # quantity
-                    f'Farm A - Rack {i+1}' if language == 'en' else f'矿场A-机架{i+1}',  # custom_name
-                    ''                         # notes
+                    'Texas DC-01' if language == 'en' else '德州数据中心-01',  # site_name
+                    f'client{i+1}@example.com',  # client_email
+                    f'SN{str(2024000 + i + 1)}',  # serial_number
+                    model['name'],  # model_name
+                    str(model['hashrate']),  # hashrate
+                    str(model['power']),  # power
+                    '150',  # hosting_fee
+                    f'A1-R{i+1}-U12' if language == 'en' else f'A1-机架{i+1}-U12',  # rack_position
+                    f'192.168.1.{100 + i}',  # ip_address
+                    ''  # notes
                 ]
                 writer.writerow(example_row)
         
@@ -142,7 +145,7 @@ class CSVTemplateGenerator:
                 'example': config['example']
             }
             
-            # 添加特定字段的验证规则
+            # 添加特定字段的验证规则 - 托管服务版本
             if key == 'hashrate':
                 rules[key]['type'] = 'float'
                 rules[key]['min'] = 0
@@ -151,17 +154,19 @@ class CSVTemplateGenerator:
                 rules[key]['type'] = 'int'
                 rules[key]['min'] = 0
                 rules[key]['max'] = 20000
-            elif key == 'electricity_cost':
+            elif key == 'hosting_fee':
                 rules[key]['type'] = 'float'
                 rules[key]['min'] = 0
-                rules[key]['max'] = 1
-            elif key == 'machine_price':
-                rules[key]['type'] = 'float'
-                rules[key]['min'] = 0
-            elif key == 'quantity':
-                rules[key]['type'] = 'int'
-                rules[key]['min'] = 1
                 rules[key]['max'] = 10000
+            elif key == 'site_name':
+                rules[key]['type'] = 'str'
+                rules[key]['note'] = 'Must exist in hosting_sites table'
+            elif key == 'client_email':
+                rules[key]['type'] = 'email'
+                rules[key]['note'] = 'Must be registered customer email'
+            elif key == 'serial_number':
+                rules[key]['type'] = 'str'
+                rules[key]['note'] = 'Must be unique device identifier'
         
         return rules
     
@@ -180,8 +185,8 @@ class CSVTemplateGenerator:
         fields = cls.TEMPLATE_FIELDS_ZH if language == 'zh' else cls.TEMPLATE_FIELDS_EN
         
         output = io.StringIO()
-        field_order = ['miner_number', 'model_name', 'hashrate', 'power', 'electricity_cost', 
-                      'machine_price', 'quantity', 'custom_name', 'notes']
+        field_order = ['site_name', 'client_email', 'serial_number', 'model_name', 'hashrate', 
+                      'power', 'hosting_fee', 'rack_position', 'ip_address', 'notes']
         
         headers = [fields[f]['header'] for f in field_order]
         writer = csv.writer(output)
@@ -194,14 +199,15 @@ class CSVTemplateGenerator:
         for i in range(count):
             model = popular_models[i % len(popular_models)]
             row = [
-                f'M{str(i+1).zfill(5)}',
+                'Texas DC-01' if language == 'en' else '德州数据中心-01',
+                f'client{(i % 100) + 1}@example.com',
+                f'SN{str(2024000 + i + 1).zfill(8)}',
                 model['name'],
                 str(model['hashrate']),
                 str(model['power']),
-                '0.08',
-                str(model['price']),
-                '1',
-                f'Batch-{i // 100 + 1}-{i % 100 + 1}',
+                '150',
+                f'A{(i // 1000) + 1}-R{(i // 100) % 10 + 1}-U{(i % 100) + 1}',
+                f'192.168.{(i // 256) + 1}.{i % 256}',
                 ''
             ]
             writer.writerow(row)
