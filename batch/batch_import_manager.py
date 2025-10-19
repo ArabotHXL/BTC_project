@@ -20,7 +20,7 @@ from typing import List, Dict, Optional, Tuple
 import pandas as pd
 from sqlalchemy import text
 from db import db
-from models import UserMiner, MinerModel
+from models import HostingMiner, MinerModel, UserAccess, HostingSite
 
 logger = logging.getLogger(__name__)
 
@@ -55,35 +55,38 @@ class BatchImportManager:
     # 策略：精确匹配模板列名，避免误匹配风险
     # 用户如果修改列名会收到清晰的错误消息
     COLUMN_MAPPING = {
-        # English template headers (from csv_template_generator.py)
-        'Miner Number': 'miner_number',
+        # English template headers - Hosting Service fields
+        'Site': 'site_name',
+        'Client Email': 'client_email',
+        'Serial Number': 'serial_number',
         'Model Name': 'model_name',
         'Hashrate (TH/s)': 'hashrate',
         'Power (W)': 'power',
-        'Electricity Cost ($/kWh)': 'electricity_cost',
-        'Machine Price ($)': 'machine_price',
-        'Quantity': 'quantity',
-        'Custom Name': 'custom_name',
+        'Hosting Fee ($/month)': 'hosting_fee',
+        'Rack Position': 'rack_position',
+        'IP Address': 'ip_address',
         'Notes': 'notes',
-        # Chinese template headers (from csv_template_generator.py)
-        '矿机编号': 'miner_number',
+        # Chinese template headers - Hosting Service fields
+        '站点': 'site_name',
+        '客户邮箱': 'client_email',
+        '序列号': 'serial_number',
         '矿机型号': 'model_name',
         '算力(TH/s)': 'hashrate',
         '功耗(W)': 'power',
-        '电费($/kWh)': 'electricity_cost',
-        '矿机价格($)': 'machine_price',
-        '数量': 'quantity',
-        '自定义名称': 'custom_name',
+        '托管费($/月)': 'hosting_fee',
+        '机架位置': 'rack_position',
+        'IP地址': 'ip_address',
         '备注': 'notes',
-        # Standard column names (for backward compatibility with old CSVs)
-        'miner_number': 'miner_number',
+        # Standard column names (for backward compatibility)
+        'site_name': 'site_name',
+        'client_email': 'client_email',
+        'serial_number': 'serial_number',
         'model_name': 'model_name',
         'hashrate': 'hashrate',
         'power': 'power',
-        'electricity_cost': 'electricity_cost',
-        'machine_price': 'machine_price',
-        'quantity': 'quantity',
-        'custom_name': 'custom_name',
+        'hosting_fee': 'hosting_fee',
+        'rack_position': 'rack_position',
+        'ip_address': 'ip_address',
         'notes': 'notes',
     }
     
@@ -173,28 +176,26 @@ class BatchImportManager:
     
     def validate_row(self, row: Dict, row_number: int) -> Tuple[bool, Optional[str], Optional[str]]:
         """
-        验证单行数据
+        验证单行数据 - 托管服务版本
         
         Returns:
-            (is_valid, error_type, error_message)
+            (is_valid, error_type, error_message, suggestion)
         """
-        # 必填字段检查
-        required_fields = ['hashrate', 'power', 'electricity_cost']
+        # 必填字段检查 - 托管服务必需字段
+        required_fields = ['site_name', 'client_email', 'serial_number', 'hashrate', 'power']
         for field in required_fields:
             if field not in row or not row[field]:
                 return False, 'missing_field', f"Missing required field: {field}", \
-                       f"Please provide {field} value"
+                       f"Please provide {field} value in CSV"
         
         # 数据类型验证
         try:
             hashrate = float(row['hashrate'])
             power = int(row['power'])
-            electricity_cost = float(row['electricity_cost'])
-            quantity = int(row.get('quantity', 1))
-            machine_price = float(row.get('machine_price', 0))
+            hosting_fee = float(row.get('hosting_fee', 0))
         except (ValueError, TypeError) as e:
             return False, 'invalid_type', f"Invalid data type: {str(e)}", \
-                   "Ensure hashrate, power, electricity_cost are numbers"
+                   "Ensure hashrate and power are numbers"
         
         # 范围验证
         if hashrate <= 0 or hashrate > 1000:
@@ -205,19 +206,21 @@ class BatchImportManager:
             return False, 'invalid_range', f"Power {power} out of valid range (0-20000 W)", \
                    "Provide a realistic power consumption value"
         
-        if electricity_cost < 0 or electricity_cost > 1:
-            return False, 'invalid_range', f"Electricity cost {electricity_cost} out of valid range (0-1 $/kWh)", \
-                   "Provide a realistic electricity cost"
+        if hosting_fee < 0 or hosting_fee > 10000:
+            return False, 'invalid_range', f"Hosting fee {hosting_fee} out of valid range (0-10000 $/month)", \
+                   "Provide a realistic hosting fee"
         
-        if quantity <= 0 or quantity > 10000:
-            return False, 'invalid_range', f"Quantity {quantity} out of valid range (1-10000)", \
-                   "Provide a valid quantity"
+        # 验证邮箱格式
+        email = row['client_email']
+        if '@' not in email or '.' not in email.split('@')[-1]:
+            return False, 'invalid_email', f"Invalid email format: {email}", \
+                   "Provide a valid email address"
         
         return True, None, None, None
     
     def process_batch(self, batch: List[Dict], batch_number: int) -> Tuple[List[Dict], List[Dict]]:
         """
-        处理单个批次
+        处理单个批次 - 托管服务版本
         
         Returns:
             (success_list, error_list)
@@ -232,7 +235,6 @@ class BatchImportManager:
                 # 验证数据
                 is_valid, error_type, error_msg, suggestion = self.validate_row(row, row_number)
                 if not is_valid:
-                    # Clean row data for JSON serialization (remove NaN)
                     clean_row = {k: (v if pd.notna(v) else None) for k, v in row.items()}
                     error_records.append({
                         'row': row_number,
@@ -243,26 +245,69 @@ class BatchImportManager:
                     })
                     continue
                 
-                # 提取数据
+                # 提取基本数据
                 hashrate = float(row['hashrate'])
                 power = int(row['power'])
-                electricity_cost = float(row['electricity_cost'])
-                quantity = int(row.get('quantity', 1))
-                machine_price = float(row.get('machine_price', 0))
-                custom_name = row.get('custom_name', '')
+                serial_number = str(row['serial_number'])
+                site_name = str(row['site_name'])
+                client_email = str(row['client_email'])
+                hosting_fee = float(row.get('hosting_fee', 0))
+                rack_position = row.get('rack_position', '')
+                ip_address = row.get('ip_address', '')
                 notes = row.get('notes', '')
+                
+                # 查找站点ID
+                site = HostingSite.query.filter(
+                    db.func.lower(HostingSite.name) == site_name.lower()
+                ).first()
+                
+                if not site:
+                    clean_row = {k: (v if pd.notna(v) else None) for k, v in row.items()}
+                    error_records.append({
+                        'row': row_number,
+                        'error_type': 'site_not_found',
+                        'error': f"Site '{site_name}' not found",
+                        'suggestion': 'Create the site first or use an existing site name',
+                        'data': clean_row
+                    })
+                    continue
+                
+                # 查找客户ID
+                customer = UserAccess.query.filter_by(email=client_email).first()
+                
+                if not customer:
+                    clean_row = {k: (v if pd.notna(v) else None) for k, v in row.items()}
+                    error_records.append({
+                        'row': row_number,
+                        'error_type': 'customer_not_found',
+                        'error': f"Customer email '{client_email}' not found",
+                        'suggestion': 'Create customer account first or use an existing customer email',
+                        'data': clean_row
+                    })
+                    continue
+                
+                # 检查序列号是否已存在
+                existing_miner = HostingMiner.query.filter_by(serial_number=serial_number).first()
+                if existing_miner:
+                    clean_row = {k: (v if pd.notna(v) else None) for k, v in row.items()}
+                    error_records.append({
+                        'row': row_number,
+                        'error_type': 'duplicate_serial',
+                        'error': f"Serial number '{serial_number}' already exists",
+                        'suggestion': 'Use a unique serial number for each miner',
+                        'data': clean_row
+                    })
+                    continue
                 
                 # 自动识别型号
                 model = None
                 if 'model_name' in row and row['model_name']:
-                    # 如果提供了型号名称，直接查找
                     for m_id, m in self.miner_models_cache.items():
                         if m['model_name'].lower() == row['model_name'].lower():
                             model = m
                             break
                     
                     if not model:
-                        # Clean row data for JSON serialization (remove NaN)
                         clean_row = {k: (v if pd.notna(v) else None) for k, v in row.items()}
                         error_records.append({
                             'row': row_number,
@@ -273,11 +318,9 @@ class BatchImportManager:
                         })
                         continue
                 else:
-                    # 自动识别型号
                     model = self.auto_identify_model(hashrate, power)
                     
                     if not model:
-                        # Clean row data for JSON serialization (remove NaN)
                         clean_row = {k: (v if pd.notna(v) else None) for k, v in row.items()}
                         error_records.append({
                             'row': row_number,
@@ -288,24 +331,27 @@ class BatchImportManager:
                         })
                         continue
                 
-                # 准备插入数据
+                # 准备HostingMiner插入数据
                 success_records.append({
-                    'user_id': self.user_id,
+                    'site_id': site.id,
+                    'customer_id': customer.id,
                     'miner_model_id': model['id'],
+                    'serial_number': serial_number,
                     'actual_hashrate': hashrate,
                     'actual_power': power,
-                    'actual_price': machine_price,
-                    'electricity_cost': electricity_cost,
-                    'quantity': quantity,
-                    'custom_name': custom_name,
-                    'notes': notes,
-                    'original_hashrate': hashrate,
-                    'status': 'active'
+                    'rack_position': rack_position if rack_position else None,
+                    'ip_address': ip_address if ip_address else None,
+                    'status': 'active',
+                    'health_score': 100,
+                    'approval_status': 'approved',  # 批量导入默认自动审核通过
+                    'submitted_by': self.user_id,
+                    'approved_by': self.user_id,
+                    'submitted_at': datetime.utcnow(),
+                    'approved_at': datetime.utcnow()
                 })
                 
             except Exception as e:
                 logger.error(f"Error processing row {row_number}: {e}")
-                # Clean row data for JSON serialization (remove NaN)
                 clean_row = {k: (v if pd.notna(v) else None) for k, v in row.items()}
                 error_records.append({
                     'row': row_number,
@@ -319,7 +365,7 @@ class BatchImportManager:
     
     def bulk_insert_with_retry(self, records: List[Dict], retry_count: int = 0) -> bool:
         """
-        批量插入数据（带重试机制）
+        批量插入数据到HostingMiner表（带重试机制）
         
         Args:
             records: 要插入的记录列表
@@ -329,8 +375,8 @@ class BatchImportManager:
             是否成功
         """
         try:
-            # 使用SQLAlchemy bulk insert
-            db.session.bulk_insert_mappings(UserMiner, records)
+            # 使用SQLAlchemy bulk insert到HostingMiner表
+            db.session.bulk_insert_mappings(HostingMiner, records)
             db.session.commit()
             return True
             
