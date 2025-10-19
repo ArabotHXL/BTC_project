@@ -377,10 +377,10 @@ function displayMiners(miners) {
             <tr>
                 <td><strong>${miner.serial_number}</strong></td>
                 <td>${miner.customer_email || '-'}</td>
-                <td>${miner.miner_model}</td>
+                <td>${miner.miner_model_name || '-'}</td>
                 <td>${miner.site_name || '-'}</td>
-                <td>${miner.hashrate || '-'} TH/s</td>
-                <td>${miner.power_consumption || '-'} W</td>
+                <td>${miner.actual_hashrate || '-'} TH/s</td>
+                <td>${miner.actual_power || '-'} W</td>
                 <td><span class="badge bg-${getStatusColor(miner.status)}">${getStatusText(miner.status)}</span></td>
                 <td><span class="badge bg-${getApprovalColor(miner.approval_status)}">${getApprovalText(miner.approval_status)}</span></td>
                 <td>
@@ -664,6 +664,111 @@ function showPendingOnly() {
         pendingFilter.value = 'pending_approval';
         filterMiners();
     }
+}
+
+// 查看矿机详情
+function viewMiner(minerId) {
+    fetch(`/hosting/api/miners/${minerId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.miner) {
+                const miner = data.miner;
+                const lang = getLanguage();
+                const title = lang === 'en' ? 'Miner Details' : '矿机详情';
+                const content = `
+                    <div class="row g-3">
+                        <div class="col-md-6"><strong>${lang === 'en' ? 'Serial Number' : '序列号'}:</strong> ${miner.serial_number}</div>
+                        <div class="col-md-6"><strong>${lang === 'en' ? 'Status' : '状态'}:</strong> <span class="badge bg-${getStatusColor(miner.status)}">${getStatusText(miner.status)}</span></div>
+                        <div class="col-md-6"><strong>${lang === 'en' ? 'Model' : '型号'}:</strong> ${miner.miner_model_name || '-'}</div>
+                        <div class="col-md-6"><strong>${lang === 'en' ? 'Site' : '站点'}:</strong> ${miner.site_name || '-'}</div>
+                        <div class="col-md-6"><strong>${lang === 'en' ? 'Customer' : '客户'}:</strong> ${miner.customer_email || '-'}</div>
+                        <div class="col-md-6"><strong>${lang === 'en' ? 'Hashrate' : '算力'}:</strong> ${miner.actual_hashrate || '-'} TH/s</div>
+                        <div class="col-md-6"><strong>${lang === 'en' ? 'Power' : '功耗'}:</strong> ${miner.actual_power || '-'} W</div>
+                        <div class="col-md-6"><strong>${lang === 'en' ? 'Rack Position' : '机架位置'}:</strong> ${miner.rack_position || '-'}</div>
+                        <div class="col-md-6"><strong>${lang === 'en' ? 'IP Address' : 'IP地址'}:</strong> ${miner.ip_address || '-'}</div>
+                        <div class="col-md-6"><strong>${lang === 'en' ? 'Approval' : '审核状态'}:</strong> <span class="badge bg-${getApprovalColor(miner.approval_status)}">${getApprovalText(miner.approval_status)}</span></div>
+                    </div>
+                `;
+                showModalDialog(title, content);
+            } else {
+                showToast(data.error || (lang === 'en' ? 'Failed to load miner details' : '加载矿机详情失败'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading miner:', error);
+            const lang = getLanguage();
+            showToast(lang === 'en' ? 'Failed to load miner details' : '加载矿机详情失败', 'error');
+        });
+}
+
+// 编辑矿机
+function editMiner(minerId) {
+    fetch(`/hosting/api/miners/${minerId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.miner) {
+                const miner = data.miner;
+                const lang = getLanguage();
+                
+                // 填充编辑表单
+                document.getElementById('edit_miner_id').value = miner.id;
+                document.getElementById('edit_serial_number').value = miner.serial_number || '';
+                document.getElementById('edit_rack_position').value = miner.rack_position || '';
+                document.getElementById('edit_ip_address').value = miner.ip_address || '';
+                document.getElementById('edit_status').value = miner.status || 'active';
+                
+                // 显示编辑模态框（如果有的话）
+                const editModal = document.getElementById('editMinerModal');
+                if (editModal) {
+                    new bootstrap.Modal(editModal).show();
+                } else {
+                    // 简单的alert作为后备
+                    showToast(lang === 'en' ? 'Edit modal not found. Please contact administrator.' : '编辑模态框未找到，请联系管理员。', 'warning');
+                }
+            } else {
+                const lang = getLanguage();
+                showToast(data.error || (lang === 'en' ? 'Failed to load miner data' : '加载矿机数据失败'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading miner for edit:', error);
+            const lang = getLanguage();
+            showToast(lang === 'en' ? 'Failed to load miner data' : '加载矿机数据失败', 'error');
+        });
+}
+
+// 通用模态对话框
+function showModalDialog(title, content) {
+    const modalHtml = `
+        <div class="modal fade" id="dynamicModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content bg-dark">
+                    <div class="modal-header">
+                        <h5 class="modal-title">${title}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">${content}</div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${getLanguage() === 'en' ? 'Close' : '关闭'}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // 移除旧的动态模态框
+    const oldModal = document.getElementById('dynamicModal');
+    if (oldModal) oldModal.remove();
+    
+    // 添加新模态框
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('dynamicModal'));
+    modal.show();
+    
+    // 关闭后移除DOM
+    document.getElementById('dynamicModal').addEventListener('hidden.bs.modal', function () {
+        this.remove();
+    });
 }
 </script>
 {% endblock %}
