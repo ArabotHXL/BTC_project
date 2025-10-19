@@ -303,6 +303,90 @@
     </div>
 </div>
 
+<!-- 编辑矿机模态框 -->
+<div class="modal fade" id="editMinerModal" tabindex="-1" aria-labelledby="editMinerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
+                <h5 class="modal-title" id="editMinerModalLabel">
+                    <i class="bi bi-pencil me-2"></i>
+                    {% if current_lang == 'en' %}Edit Miner{% else %}编辑矿机{% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editMinerForm">
+                    <input type="hidden" id="edit_miner_id" name="miner_id">
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="edit_serial_number" class="form-label">
+                                {% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="edit_serial_number" readonly>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="edit_rack_position" class="form-label">
+                                {% if current_lang == 'en' %}Rack Position{% else %}机架位置{% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="edit_rack_position" name="rack_position">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="edit_ip_address" class="form-label">
+                                {% if current_lang == 'en' %}IP Address{% else %}IP地址{% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="edit_ip_address" name="ip_address" placeholder="192.168.1.100">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="edit_mac_address" class="form-label">
+                                {% if current_lang == 'en' %}MAC Address{% else %}MAC地址{% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="edit_mac_address" name="mac_address" placeholder="00:1A:2B:3C:4D:5E">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="edit_actual_hashrate" class="form-label">
+                                {% if current_lang == 'en' %}Actual Hashrate (TH/s){% else %}实际算力 (TH/s){% endif %}
+                            </label>
+                            <input type="number" class="form-control" id="edit_actual_hashrate" name="actual_hashrate" step="0.01">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="edit_actual_power" class="form-label">
+                                {% if current_lang == 'en' %}Actual Power (W){% else %}实际功耗 (W){% endif %}
+                            </label>
+                            <input type="number" class="form-control" id="edit_actual_power" name="actual_power" step="1">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="edit_status" class="form-label">
+                                {% if current_lang == 'en' %}Status{% else %}状态{% endif %}
+                            </label>
+                            <select class="form-select" id="edit_status" name="status">
+                                <option value="active">{% if current_lang == 'en' %}Active{% else %}运行中{% endif %}</option>
+                                <option value="inactive">{% if current_lang == 'en' %}Inactive{% else %}停机{% endif %}</option>
+                                <option value="maintenance">{% if current_lang == 'en' %}Maintenance{% else %}维护中{% endif %}</option>
+                                <option value="offline">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                </button>
+                <button type="button" class="btn btn-hosting-primary" onclick="saveMinerEdit()">
+                    {% if current_lang == 'en' %}Save Changes{% else %}保存修改{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -715,14 +799,16 @@ function editMiner(minerId) {
                 document.getElementById('edit_serial_number').value = miner.serial_number || '';
                 document.getElementById('edit_rack_position').value = miner.rack_position || '';
                 document.getElementById('edit_ip_address').value = miner.ip_address || '';
+                document.getElementById('edit_mac_address').value = miner.mac_address || '';
+                document.getElementById('edit_actual_hashrate').value = miner.actual_hashrate || '';
+                document.getElementById('edit_actual_power').value = miner.actual_power || '';
                 document.getElementById('edit_status').value = miner.status || 'active';
                 
-                // 显示编辑模态框（如果有的话）
+                // 显示编辑模态框
                 const editModal = document.getElementById('editMinerModal');
                 if (editModal) {
                     new bootstrap.Modal(editModal).show();
                 } else {
-                    // 简单的alert作为后备
                     showToast(lang === 'en' ? 'Edit modal not found. Please contact administrator.' : '编辑模态框未找到，请联系管理员。', 'warning');
                 }
             } else {
@@ -735,6 +821,46 @@ function editMiner(minerId) {
             const lang = getLanguage();
             showToast(lang === 'en' ? 'Failed to load miner data' : '加载矿机数据失败', 'error');
         });
+}
+
+// 保存矿机编辑
+function saveMinerEdit() {
+    const minerId = document.getElementById('edit_miner_id').value;
+    const formData = {
+        rack_position: document.getElementById('edit_rack_position').value,
+        ip_address: document.getElementById('edit_ip_address').value,
+        mac_address: document.getElementById('edit_mac_address').value,
+        actual_hashrate: parseFloat(document.getElementById('edit_actual_hashrate').value) || null,
+        actual_power: parseInt(document.getElementById('edit_actual_power').value) || null,
+        status: document.getElementById('edit_status').value
+    };
+    
+    fetch(`/hosting/api/miners/${minerId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        const lang = getLanguage();
+        if (data.success) {
+            showToast(data.message || (lang === 'en' ? 'Miner updated successfully' : '矿机更新成功'), 'success');
+            // 关闭模态框
+            const editModal = bootstrap.Modal.getInstance(document.getElementById('editMinerModal'));
+            if (editModal) editModal.hide();
+            // 刷新列表
+            refreshMiners();
+        } else {
+            showToast(data.error || (lang === 'en' ? 'Failed to update miner' : '更新矿机失败'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating miner:', error);
+        const lang = getLanguage();
+        showToast(lang === 'en' ? 'Failed to update miner' : '更新矿机失败', 'error');
+    });
 }
 
 // 通用模态对话框
