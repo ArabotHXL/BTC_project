@@ -625,14 +625,14 @@ def get_miners():
             
             # 添加关联信息
             if miner.customer:
-                miner_data['customer_name'] = miner.customer.display_name
+                miner_data['customer_name'] = miner.customer.email
                 miner_data['customer_email'] = miner.customer.email
             
             if miner.submitter:
-                miner_data['submitted_by_name'] = miner.submitter.display_name
+                miner_data['submitted_by_name'] = miner.submitter.email
             
             if miner.approver:
-                miner_data['approved_by_name'] = miner.approver.display_name
+                miner_data['approved_by_name'] = miner.approver.email
             
             miners_data.append(miner_data)
         
