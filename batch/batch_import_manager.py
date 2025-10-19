@@ -51,6 +51,42 @@ class BatchImportManager:
     HASHRATE_TOLERANCE = 0.15  # 算力误差容忍度 ±15%
     POWER_TOLERANCE = 0.20     # 功耗误差容忍度 ±20%
     
+    # 列名映射：仅映射我们生成的模板列名
+    # 策略：精确匹配模板列名，避免误匹配风险
+    # 用户如果修改列名会收到清晰的错误消息
+    COLUMN_MAPPING = {
+        # English template headers (from csv_template_generator.py)
+        'Miner Number': 'miner_number',
+        'Model Name': 'model_name',
+        'Hashrate (TH/s)': 'hashrate',
+        'Power (W)': 'power',
+        'Electricity Cost ($/kWh)': 'electricity_cost',
+        'Machine Price ($)': 'machine_price',
+        'Quantity': 'quantity',
+        'Custom Name': 'custom_name',
+        'Notes': 'notes',
+        # Chinese template headers (from csv_template_generator.py)
+        '矿机编号': 'miner_number',
+        '矿机型号': 'model_name',
+        '算力(TH/s)': 'hashrate',
+        '功耗(W)': 'power',
+        '电费($/kWh)': 'electricity_cost',
+        '矿机价格($)': 'machine_price',
+        '数量': 'quantity',
+        '自定义名称': 'custom_name',
+        '备注': 'notes',
+        # Standard column names (for backward compatibility with old CSVs)
+        'miner_number': 'miner_number',
+        'model_name': 'model_name',
+        'hashrate': 'hashrate',
+        'power': 'power',
+        'electricity_cost': 'electricity_cost',
+        'machine_price': 'machine_price',
+        'quantity': 'quantity',
+        'custom_name': 'custom_name',
+        'notes': 'notes',
+    }
+    
     def __init__(self, user_id: int, websocket_callback=None):
         """
         初始化批量导入管理器
@@ -339,6 +375,48 @@ class BatchImportManager:
             
             logger.info(f"Starting batch import: {total_rows} rows from {filename}")
             self._send_progress(10, f"Parsed {total_rows} rows")
+            
+            # 标准化列名：将友好的模板列名转换为代码期望的标准列名
+            # 使用严格的alias表 + 大小写不敏感匹配
+            column_mapping_found = {}
+            unmapped_columns = []
+            
+            for col in df.columns:
+                # Try exact match first
+                if col in self.COLUMN_MAPPING:
+                    column_mapping_found[col] = self.COLUMN_MAPPING[col]
+                    continue
+                
+                # Normalize: strip whitespace and try case-insensitive match
+                normalized_col = col.strip()
+                found = False
+                
+                for template_col, standard_name in self.COLUMN_MAPPING.items():
+                    if normalized_col.lower() == template_col.lower():
+                        column_mapping_found[col] = standard_name
+                        found = True
+                        break
+                
+                if not found:
+                    unmapped_columns.append(col)
+            
+            if column_mapping_found:
+                df = df.rename(columns=column_mapping_found)
+                logger.info(f"Normalized {len(column_mapping_found)} column names")
+            
+            if unmapped_columns:
+                logger.warning(f"Unmapped columns (will be ignored): {unmapped_columns}")
+            
+            # Validate that all required fields exist after mapping
+            required_fields = ['hashrate', 'power', 'electricity_cost']
+            missing_fields = [field for field in required_fields if field not in df.columns]
+            
+            if missing_fields:
+                raise ValueError(
+                    f"Missing required columns: {', '.join(missing_fields)}. "
+                    f"Available columns: {', '.join(df.columns.tolist())}. "
+                    f"Please ensure your CSV has columns: Hashrate (TH/s), Power (W), Electricity Cost ($/kWh)"
+                )
             
             # 转换为字典列表 (replace NaN with None for JSON compatibility)
             df = df.replace({pd.NA: None, float('nan'): None})
