@@ -6301,7 +6301,8 @@ def api_calculate():
 
 # 注册页面路由
 @app.route('/register', methods=['GET', 'POST'])
-@rate_limit(max_requests=3, window_minutes=30, feature_name="register")
+# 注册功能移除速率限制，允许用户正常注册
+# @rate_limit(max_requests=3, window_minutes=30, feature_name="register")
 @SecurityManager.csrf_protect
 def register():
     """用户注册页面"""
