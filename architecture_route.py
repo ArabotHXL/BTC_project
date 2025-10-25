@@ -37,5 +37,5 @@ def system_architecture_complete():
     return render_template(
         'system_architecture_complete.html',
         current_lang=current_lang,
-        t=lambda key: keyince we're using inline translations
+        t=lambda key: key  # Simple passthrough since we're using inline translations
     )
