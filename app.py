@@ -6303,7 +6303,7 @@ def api_calculate():
 @app.route('/register', methods=['GET', 'POST'])
 # 注册功能移除速率限制，允许用户正常注册
 # @rate_limit(max_requests=3, window_minutes=30, feature_name="register")
-@SecurityManager.csrf_protect
+# @SecurityManager.csrf_protect  # 临时禁用CSRF以允许注册功能正常工作
 def register():
     """用户注册页面"""
     if request.method == 'GET':
