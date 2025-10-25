@@ -26,5 +26,16 @@ def system_relationships():
     return render_template(
         'system_relationship_diagram.html',
         current_lang=current_lang,
-        t=lambda key: key  # Simple passthrough since we're using inline translations
+        t=lambda key: key
+    )
+
+@app.route('/system-architecture-complete')
+def system_architecture_complete():
+    """Display the complete system architecture / 显示完整系统架构"""
+    current_lang = session.get('language', 'zh')
+    
+    return render_template(
+        'system_architecture_complete.html',
+        current_lang=current_lang,
+        t=lambda key: keyince we're using inline translations
     )
