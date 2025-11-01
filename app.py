@@ -786,16 +786,26 @@ def login():
         if password:
             # 使用密码登录
             from auth import verify_password_login
-            user = verify_password_login(email_or_username, password)
-            if user:
-                login_successful = True
-                email = user.email  # 使用用户的邮箱作为会话标识
-            else:
-                email = email_or_username
+            try:
+                user = verify_password_login(email_or_username, password)
+                if user:
+                    login_successful = True
+                    email = user.email  # 使用用户的邮箱作为会话标识
+                else:
+                    email = email_or_username
+            except Exception as db_error:
+                logging.error(f"数据库连接失败: {db_error}")
+                flash('系统暂时无法连接数据库，请稍后再试。Database connection failed, please try again later.', 'danger')
+                return render_template('login.html')
         else:
             # 向后兼容：无密码时使用邮箱验证
             email = email_or_username
-            login_successful = verify_email(email)
+            try:
+                login_successful = verify_email(email)
+            except Exception as db_error:
+                logging.error(f"数据库连接失败: {db_error}")
+                flash('系统暂时无法连接数据库，请稍后再试。Database connection failed, please try again later.', 'danger')
+                return render_template('login.html')
         
         # 记录登录尝试
         try:
