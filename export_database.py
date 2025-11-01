@@ -1,19 +1,67 @@
 #!/usr/bin/env python3
 """
-完整数据库导出脚本 - 导出所有表的结构和数据到SQL文件
+HashInsight Enterprise - Database Export Utility
+
+SECURITY WARNING:
+This script requires database credentials to be set via environment variables.
+NEVER commit database passwords to version control.
+
+REQUIRED ENVIRONMENT VARIABLES:
+- DB_HOST: Database hostname (e.g., ep-xxx.neon.tech)
+- DB_PORT: Database port (default: 5432)
+- DB_USER: Database username
+- DB_PASSWORD: Database password
+- DB_NAME: Database name
+
+USAGE:
+1. Set environment variables:
+   export DB_HOST="your-host.neon.tech"
+   export DB_USER="your_user"
+   export DB_PASSWORD="your_password"
+   export DB_NAME="your_database"
+
+2. Run the script:
+   python export_database.py
+
+3. The script will create 'database_backup_full.sql' in the current directory.
+
+SAFETY CONSIDERATIONS:
+- Always backup your database before running migrations
+- Review the generated SQL file before importing
+- Ensure sufficient disk space for large databases
+- Test imports on a development database first
+
+OUTPUT:
+- File: database_backup_full.sql
+- Format: PostgreSQL-compatible SQL with DROP/CREATE/INSERT statements
+- Encoding: UTF-8
 """
 import psycopg2
 import os
+import sys
 from datetime import datetime
 
-# 旧数据库连接信息
-OLD_DB_CONFIG = {
-    'host': 'ep-rapid-glitter-a4u95yg1.us-east-1.aws.neon.tech',
-    'port': 5432,
-    'user': 'neondb_owner',
-    'password': os.environ.get('PGPASSWORD', 'npg_b6invzHZaV7y'),
-    'database': 'neondb'
-}
+# Database connection configuration - REQUIRES environment variables
+def get_db_config():
+    """Get database configuration from environment variables."""
+    required_vars = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME']
+    missing_vars = [var for var in required_vars if not os.environ.get(var)]
+    
+    if missing_vars:
+        print("❌ ERROR: Missing required environment variables:")
+        for var in missing_vars:
+            print(f"   - {var}")
+        print("\nPlease set all required environment variables before running this script.")
+        print("See the script header for usage instructions.")
+        sys.exit(1)
+    
+    return {
+        'host': os.environ.get('DB_HOST'),
+        'port': int(os.environ.get('DB_PORT', '5432')),
+        'user': os.environ.get('DB_USER'),
+        'password': os.environ.get('DB_PASSWORD'),
+        'database': os.environ.get('DB_NAME')
+    }
 
 def export_database():
     """导出完整数据库到SQL文件"""
@@ -22,10 +70,13 @@ def export_database():
     print("=" * 80)
     print(f"开始时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
     
+    # Get database configuration
+    db_config = get_db_config()
+    
     try:
-        # 连接到旧数据库
-        print(f"连接到数据库: {OLD_DB_CONFIG['host']}")
-        conn = psycopg2.connect(**OLD_DB_CONFIG)
+        # 连接到数据库
+        print(f"连接到数据库: {db_config['host']}")
+        conn = psycopg2.connect(**db_config)
         cur = conn.cursor()
         
         # 获取所有表
@@ -44,7 +95,8 @@ def export_database():
         # 写入头部注释
         sql_file.write(f"""-- HashInsight Enterprise Database Backup
 -- 导出时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
--- 数据库: {OLD_DB_CONFIG['database']}
+-- 数据库: {db_config['database']}
+-- 主机: {db_config['host']}
 -- 表数量: {len(tables)}
 
 SET client_encoding = 'UTF8';

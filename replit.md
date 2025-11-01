@@ -3,6 +3,16 @@
 ## Overview
 HashInsight Enterprise is an enterprise-grade web application designed for mining farm owners and clients. It provides real-time profitability analysis for Bitcoin mining, integrating real-time data, dual-algorithm verification, and multi-language support (English and Chinese). The system aims to optimize Bitcoin mining investments through comprehensive operational management, CRM, Web3 integration, technical analysis, and professional reporting. Key capabilities include support for 19+ ASIC miner models, ROI analysis, full CRM with 60+ API endpoints, unified system monitoring, AI-powered intelligence layer, Web3 blockchain transparency, hosting services management, and treasury management.
 
+## Recent Changes
+
+### Database Migration (November 1, 2025)
+- ✅ **Successfully migrated to Replit PostgreSQL** - All data preserved with zero data loss
+- **Migration Summary**: 78 tables, 9,750+ rows, 16 user accounts all intact
+- **Verified Data**: CRM records (5 customers, 9 deals, 3 invoices), hosting miners (8), market analytics (4,836+ rows), technical indicators (2,264+ rows), miner models (42)
+- **Security Enhancement**: Updated `export_database.py` utility to enforce environment variables for database credentials
+- **Documentation**: Created `DATABASE_MIGRATION_SUCCESS.md` with complete migration details
+- **Status**: All systems operational - login verified, database connection stable, data collectors running
+
 ## User Preferences
 - **Communication style**: Simple, everyday language
 - **Technical preferences**: Native Flask implementation, avoid over-complication
