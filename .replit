@@ -113,3 +113,9 @@ externalPort = 4200
 
 [agent]
 integrations = ["flask_stripe:1.0.0"]
+
+[userenv]
+
+[userenv.shared]
+TESTING_VITE_STRIPE_PUBLIC_KEY = "pk_test_51RuIKERuMNcZXpDyuwOpqhrPTdnmgaMh0IebSFRVOb2HzLDv6kYcP89W2ygSmmQwbDmV5RfOlrzt7rDLhIn69A1600LJOJt95U"
+TESTING_STRIPE_SECRET_KEY = "sk_test_51RuIKERuMNcZXpDyRldt0vhTKtvxBTB1fJCWm678nf6ZkJ6KmggwmZic6eT0RhjrfCmrC1jmCm45VaNJk1pQg4Xo00evwmsbQH"
