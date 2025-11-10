@@ -48,6 +48,57 @@ class NFTMintStatus(enum.Enum):
     FAILED = "铸造失败"
     VERIFIED = "已验证"
 
+class StrategyType(enum.Enum):
+    """限电策略类型"""
+    PERFORMANCE_PRIORITY = "performance_priority"  # 性能优先
+    CUSTOMER_PRIORITY = "customer_priority"  # 客户优先
+    FAIR_DISTRIBUTION = "fair_distribution"  # 公平分配
+    CUSTOM = "custom"  # 自定义
+
+class ExecutionMode(enum.Enum):
+    """执行模式"""
+    AUTO = "auto"  # 自动执行
+    SEMI_AUTO = "semi_auto"  # 半自动执行
+    MANUAL = "manual"  # 手动执行
+
+class PlanStatus(enum.Enum):
+    """限电计划状态"""
+    PENDING = "pending"  # 待审批
+    APPROVED = "approved"  # 已批准
+    EXECUTING = "executing"  # 执行中
+    COMPLETED = "completed"  # 已完成
+    CANCELLED = "cancelled"  # 已取消
+
+class ExecutionAction(enum.Enum):
+    """执行动作"""
+    SHUTDOWN = "shutdown"  # 关机
+    STARTUP = "startup"  # 开机
+
+class ExecutionStatus(enum.Enum):
+    """执行状态"""
+    SUCCESS = "SUCCESS"  # 成功
+    FAILED = "FAILED"  # 失败
+
+class NotificationType(enum.Enum):
+    """通知类型"""
+    ADVANCE_24H = "advance_24h"  # 提前24小时通知
+    EXECUTION_START = "execution_start"  # 执行开始通知
+    WEEKLY_REPORT = "weekly_report"  # 周报
+
+class DeliveryStatus(enum.Enum):
+    """发送状态"""
+    PENDING = "pending"  # 待发送
+    SENT = "sent"  # 已发送
+    FAILED = "failed"  # 发送失败
+
+class PriceMode(enum.Enum):
+    """电价模式"""
+    FIXED = "fixed"  # 固定电价
+    PEAK_VALLEY = "peak_valley"  # 峰谷电价
+    HOURLY_24 = "hourly_24"  # 24小时电价
+    API_REALTIME = "api_realtime"  # API实时电价
+    MONTHLY_CONTRACT = "monthly_contract"  # 月度合约电价
+
 class SchedulerLock(db.Model):
     """
     🔧 CRITICAL FIX: 调度器领导者锁模型
@@ -2425,5 +2476,451 @@ class OpsSchedule(db.Model):
     
     def __repr__(self):
         return f"<OpsSchedule {self.schedule_date} {self.hour_of_day}:00 - {self.miners_online} online>"
+
+
+# ============================================================================
+# 智能限电管理系统数据模型
+# Smart Power Curtailment Management System Data Models
+# ============================================================================
+
+class MinerPerformanceScore(db.Model):
+    """
+    矿机性能评分历史
+    Miner Performance Score History
+    """
+    __tablename__ = 'miner_performance_scores'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 关联字段
+    miner_id = db.Column(db.Integer, db.ForeignKey('hosting_miners.id'), nullable=False, index=True)
+    
+    # 性能评分 (0-100分)
+    performance_score = db.Column(db.Numeric(5, 2), nullable=False)  # 综合性能评分
+    
+    # 性能指标比例
+    hashrate_ratio = db.Column(db.Numeric(5, 4), nullable=False)  # 实际/额定算力比例
+    power_efficiency_ratio = db.Column(db.Numeric(5, 4), nullable=False)  # 额定/实际功耗比例
+    uptime_ratio = db.Column(db.Numeric(5, 4), nullable=False)  # 在线时长比例
+    
+    # 运行指标
+    temperature_avg = db.Column(db.Numeric(5, 2), nullable=True)  # 平均温度
+    error_rate = db.Column(db.Numeric(5, 4), nullable=True)  # 错误率
+    
+    # 评估周期
+    evaluation_period_hours = db.Column(db.Integer, nullable=False, default=24)  # 评估周期(小时)
+    calculated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)  # 计算时间
+    
+    # 关联关系
+    miner = db.relationship('HostingMiner', backref='performance_scores', foreign_keys=[miner_id])
+    
+    # 索引优化
+    __table_args__ = (
+        db.Index('idx_performance_miner_time', 'miner_id', 'calculated_at'),
+        db.UniqueConstraint('miner_id', 'calculated_at', name='uq_miner_calculated_at'),
+    )
+    
+    def __init__(self, miner_id, performance_score, hashrate_ratio, power_efficiency_ratio, 
+                 uptime_ratio, **kwargs):
+        self.miner_id = miner_id
+        self.performance_score = performance_score
+        self.hashrate_ratio = hashrate_ratio
+        self.power_efficiency_ratio = power_efficiency_ratio
+        self.uptime_ratio = uptime_ratio
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        """转换为字典格式"""
+        return {
+            'id': self.id,
+            'miner_id': self.miner_id,
+            'performance_score': float(self.performance_score),
+            'hashrate_ratio': float(self.hashrate_ratio),
+            'power_efficiency_ratio': float(self.power_efficiency_ratio),
+            'uptime_ratio': float(self.uptime_ratio),
+            'temperature_avg': float(self.temperature_avg) if self.temperature_avg else None,
+            'error_rate': float(self.error_rate) if self.error_rate else None,
+            'evaluation_period_hours': self.evaluation_period_hours,
+            'calculated_at': self.calculated_at.isoformat() if self.calculated_at else None
+        }
+    
+    def __repr__(self):
+        return f"<MinerPerformanceScore Miner#{self.miner_id}: {self.performance_score}/100>"
+
+
+class CurtailmentStrategy(db.Model):
+    """
+    限电策略配置
+    Power Curtailment Strategy Configuration
+    """
+    __tablename__ = 'curtailment_strategies'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 关联字段
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False, index=True)
+    
+    # 策略基本信息
+    name = db.Column(db.String(100), nullable=False)  # 策略名称
+    strategy_type = db.Column(db.Enum(StrategyType), nullable=False, default=StrategyType.PERFORMANCE_PRIORITY)
+    
+    # 权重配置 (三者之和应为1.0)
+    performance_weight = db.Column(db.Numeric(3, 2), nullable=False, default=0.7)  # 性能权重
+    power_efficiency_weight = db.Column(db.Numeric(3, 2), nullable=False, default=0.2)  # 能效权重
+    uptime_weight = db.Column(db.Numeric(3, 2), nullable=False, default=0.1)  # 运行时间权重
+    
+    # 保护规则
+    vip_customer_protection = db.Column(db.Boolean, nullable=False, default=False)  # VIP客户保护
+    min_uptime_threshold = db.Column(db.Numeric(3, 2), nullable=False, default=0.8)  # 最低在线时长阈值
+    
+    # 状态和审计
+    is_active = db.Column(db.Boolean, nullable=False, default=True, index=True)  # 是否启用
+    created_by_id = db.Column(db.Integer, nullable=True)  # 创建人ID
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 关联关系
+    site = db.relationship('HostingSite', backref='curtailment_strategies', foreign_keys=[site_id])
+    
+    # 索引优化
+    __table_args__ = (
+        db.Index('idx_strategy_site', 'site_id'),
+        db.Index('idx_strategy_active', 'is_active'),
+    )
+    
+    def __init__(self, site_id, name, strategy_type, **kwargs):
+        self.site_id = site_id
+        self.name = name
+        self.strategy_type = strategy_type
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        """转换为字典格式"""
+        return {
+            'id': self.id,
+            'site_id': self.site_id,
+            'name': self.name,
+            'strategy_type': self.strategy_type.value,
+            'performance_weight': float(self.performance_weight),
+            'power_efficiency_weight': float(self.power_efficiency_weight),
+            'uptime_weight': float(self.uptime_weight),
+            'vip_customer_protection': self.vip_customer_protection,
+            'min_uptime_threshold': float(self.min_uptime_threshold),
+            'is_active': self.is_active,
+            'created_by_id': self.created_by_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+    
+    def __repr__(self):
+        return f"<CurtailmentStrategy {self.name} ({self.strategy_type.value})>"
+
+
+class CurtailmentPlan(db.Model):
+    """
+    限电计划
+    Power Curtailment Plan
+    """
+    __tablename__ = 'curtailment_plans'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 关联字段
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False, index=True)
+    strategy_id = db.Column(db.Integer, db.ForeignKey('curtailment_strategies.id'), nullable=True)
+    
+    # 计划基本信息
+    plan_name = db.Column(db.String(200), nullable=False)  # 计划名称
+    
+    # 功率削减目标
+    target_power_reduction_kw = db.Column(db.Numeric(12, 2), nullable=False)  # 目标削减功率(kW)
+    calculated_power_reduction_kw = db.Column(db.Numeric(12, 2), nullable=True)  # 计算削减功率(kW)
+    
+    # 执行模式
+    execution_mode = db.Column(db.Enum(ExecutionMode), nullable=False, default=ExecutionMode.SEMI_AUTO)
+    
+    # 时间安排
+    scheduled_start_time = db.Column(db.DateTime, nullable=False, index=True)  # 计划开始时间
+    scheduled_end_time = db.Column(db.DateTime, nullable=True)  # 计划结束时间
+    
+    # 状态管理
+    status = db.Column(db.Enum(PlanStatus), nullable=False, default=PlanStatus.PENDING, index=True)
+    
+    # 审批信息
+    created_by_id = db.Column(db.Integer, nullable=True)  # 创建人ID
+    approved_by_id = db.Column(db.Integer, nullable=True)  # 批准人ID
+    approved_at = db.Column(db.DateTime, nullable=True)  # 批准时间
+    
+    # 时间戳
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 关联关系
+    site = db.relationship('HostingSite', backref='curtailment_plans', foreign_keys=[site_id])
+    strategy = db.relationship('CurtailmentStrategy', backref='plans', foreign_keys=[strategy_id])
+    
+    # 索引优化
+    __table_args__ = (
+        db.Index('idx_plan_site_time', 'site_id', 'scheduled_start_time'),
+        db.Index('idx_plan_status', 'status'),
+    )
+    
+    def __init__(self, site_id, plan_name, target_power_reduction_kw, scheduled_start_time, **kwargs):
+        self.site_id = site_id
+        self.plan_name = plan_name
+        self.target_power_reduction_kw = target_power_reduction_kw
+        self.scheduled_start_time = scheduled_start_time
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        """转换为字典格式"""
+        return {
+            'id': self.id,
+            'site_id': self.site_id,
+            'strategy_id': self.strategy_id,
+            'plan_name': self.plan_name,
+            'target_power_reduction_kw': float(self.target_power_reduction_kw),
+            'calculated_power_reduction_kw': float(self.calculated_power_reduction_kw) if self.calculated_power_reduction_kw else None,
+            'execution_mode': self.execution_mode.value,
+            'scheduled_start_time': self.scheduled_start_time.isoformat() if self.scheduled_start_time else None,
+            'scheduled_end_time': self.scheduled_end_time.isoformat() if self.scheduled_end_time else None,
+            'status': self.status.value,
+            'created_by_id': self.created_by_id,
+            'approved_by_id': self.approved_by_id,
+            'approved_at': self.approved_at.isoformat() if self.approved_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+    
+    def __repr__(self):
+        return f"<CurtailmentPlan {self.plan_name} ({self.status.value})>"
+
+
+class CurtailmentExecution(db.Model):
+    """
+    限电执行记录
+    Power Curtailment Execution Record
+    """
+    __tablename__ = 'curtailment_executions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 关联字段
+    plan_id = db.Column(db.Integer, db.ForeignKey('curtailment_plans.id'), nullable=False, index=True)
+    miner_id = db.Column(db.Integer, db.ForeignKey('hosting_miners.id'), nullable=False, index=True)
+    
+    # 执行信息
+    execution_action = db.Column(db.Enum(ExecutionAction), nullable=False)  # 执行动作
+    executed_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)  # 执行时间
+    execution_status = db.Column(db.Enum(ExecutionStatus), nullable=False)  # 执行状态
+    error_message = db.Column(db.Text, nullable=True)  # 错误信息
+    
+    # 影响数据
+    power_saved_kw = db.Column(db.Numeric(12, 2), nullable=True)  # 节省功率(kW)
+    revenue_lost_usd = db.Column(db.Numeric(12, 2), nullable=True)  # 损失收益($)
+    execution_duration_seconds = db.Column(db.Integer, nullable=True)  # 执行耗时(秒)
+    
+    # 区块链记录
+    blockchain_tx_hash = db.Column(db.String(66), nullable=True)  # 区块链交易哈希
+    
+    # 关联关系
+    plan = db.relationship('CurtailmentPlan', backref='executions', foreign_keys=[plan_id])
+    miner = db.relationship('HostingMiner', backref='curtailment_executions', foreign_keys=[miner_id])
+    
+    # 索引优化
+    __table_args__ = (
+        db.Index('idx_execution_plan_miner', 'plan_id', 'miner_id'),
+        db.Index('idx_execution_time', 'executed_at'),
+    )
+    
+    def __init__(self, plan_id, miner_id, execution_action, execution_status, **kwargs):
+        self.plan_id = plan_id
+        self.miner_id = miner_id
+        self.execution_action = execution_action
+        self.execution_status = execution_status
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        """转换为字典格式"""
+        return {
+            'id': self.id,
+            'plan_id': self.plan_id,
+            'miner_id': self.miner_id,
+            'execution_action': self.execution_action.value,
+            'executed_at': self.executed_at.isoformat() if self.executed_at else None,
+            'execution_status': self.execution_status.value,
+            'error_message': self.error_message,
+            'power_saved_kw': float(self.power_saved_kw) if self.power_saved_kw else None,
+            'revenue_lost_usd': float(self.revenue_lost_usd) if self.revenue_lost_usd else None,
+            'execution_duration_seconds': self.execution_duration_seconds,
+            'blockchain_tx_hash': self.blockchain_tx_hash
+        }
+    
+    def __repr__(self):
+        return f"<CurtailmentExecution Plan#{self.plan_id} Miner#{self.miner_id}: {self.execution_action.value} {self.execution_status.value}>"
+
+
+class CurtailmentNotification(db.Model):
+    """
+    限电通知记录
+    Power Curtailment Notification Record
+    """
+    __tablename__ = 'curtailment_notifications'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 关联字段
+    plan_id = db.Column(db.Integer, db.ForeignKey('curtailment_plans.id'), nullable=False, index=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('crm_customers.id'), nullable=False, index=True)
+    
+    # 通知信息
+    notification_type = db.Column(db.Enum(NotificationType), nullable=False)  # 通知类型
+    sent_at = db.Column(db.DateTime, nullable=True, index=True)  # 发送时间
+    delivery_status = db.Column(db.Enum(DeliveryStatus), nullable=False, default=DeliveryStatus.PENDING)  # 发送状态
+    
+    # 邮件内容
+    email_subject = db.Column(db.String(200), nullable=True)  # 邮件主题
+    email_body = db.Column(db.Text, nullable=True)  # 邮件正文
+    
+    # 影响数据
+    affected_miners_count = db.Column(db.Integer, nullable=True)  # 受影响矿机数量
+    estimated_impact_usd = db.Column(db.Numeric(12, 2), nullable=True)  # 预估影响($)
+    
+    # 关联关系
+    plan = db.relationship('CurtailmentPlan', backref='notifications', foreign_keys=[plan_id])
+    customer = db.relationship('Customer', backref='curtailment_notifications', foreign_keys=[customer_id])
+    
+    # 索引优化
+    __table_args__ = (
+        db.Index('idx_notification_plan_customer', 'plan_id', 'customer_id'),
+        db.Index('idx_notification_sent', 'sent_at'),
+    )
+    
+    def __init__(self, plan_id, customer_id, notification_type, **kwargs):
+        self.plan_id = plan_id
+        self.customer_id = customer_id
+        self.notification_type = notification_type
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        """转换为字典格式"""
+        return {
+            'id': self.id,
+            'plan_id': self.plan_id,
+            'customer_id': self.customer_id,
+            'notification_type': self.notification_type.value,
+            'sent_at': self.sent_at.isoformat() if self.sent_at else None,
+            'delivery_status': self.delivery_status.value,
+            'email_subject': self.email_subject,
+            'email_body': self.email_body,
+            'affected_miners_count': self.affected_miners_count,
+            'estimated_impact_usd': float(self.estimated_impact_usd) if self.estimated_impact_usd else None
+        }
+    
+    def __repr__(self):
+        return f"<CurtailmentNotification Plan#{self.plan_id} Customer#{self.customer_id}: {self.notification_type.value} ({self.delivery_status.value})>"
+
+
+class PowerPriceConfig(db.Model):
+    """
+    电价配置
+    Power Price Configuration
+    """
+    __tablename__ = 'power_price_configs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 关联字段
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False, index=True)
+    
+    # 配置基本信息
+    config_name = db.Column(db.String(100), nullable=False)  # 配置名称
+    price_mode = db.Column(db.Enum(PriceMode), nullable=False, default=PriceMode.FIXED)  # 电价模式
+    
+    # 固定电价
+    fixed_price = db.Column(db.Numeric(10, 6), nullable=True)  # 固定电价($/kWh)
+    
+    # 峰谷电价
+    peak_price = db.Column(db.Numeric(10, 6), nullable=True)  # 峰电价($/kWh)
+    valley_price = db.Column(db.Numeric(10, 6), nullable=True)  # 谷电价($/kWh)
+    peak_hours_start = db.Column(db.Integer, nullable=True)  # 峰时开始小时(0-23)
+    peak_hours_end = db.Column(db.Integer, nullable=True)  # 峰时结束小时(0-23)
+    
+    # 24小时电价
+    hourly_prices = db.Column(db.Text, nullable=True)  # JSON格式存储24小时电价数组
+    
+    # API实时电价
+    api_endpoint = db.Column(db.String(500), nullable=True)  # API端点
+    
+    # 月度合约电价
+    contract_price = db.Column(db.Numeric(10, 6), nullable=True)  # 合约电价($/kWh)
+    
+    # 有效期
+    valid_from = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)  # 生效时间
+    valid_until = db.Column(db.DateTime, nullable=True)  # 失效时间
+    
+    # 状态
+    is_active = db.Column(db.Boolean, nullable=False, default=True, index=True)  # 是否启用
+    
+    # 时间戳
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 关联关系
+    site = db.relationship('HostingSite', backref='power_price_configs', foreign_keys=[site_id])
+    
+    # 索引优化
+    __table_args__ = (
+        db.Index('idx_price_config_site_active', 'site_id', 'is_active'),
+    )
+    
+    def __init__(self, site_id, config_name, price_mode, **kwargs):
+        self.site_id = site_id
+        self.config_name = config_name
+        self.price_mode = price_mode
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        """转换为字典格式"""
+        return {
+            'id': self.id,
+            'site_id': self.site_id,
+            'config_name': self.config_name,
+            'price_mode': self.price_mode.value,
+            'fixed_price': float(self.fixed_price) if self.fixed_price else None,
+            'peak_price': float(self.peak_price) if self.peak_price else None,
+            'valley_price': float(self.valley_price) if self.valley_price else None,
+            'peak_hours_start': self.peak_hours_start,
+            'peak_hours_end': self.peak_hours_end,
+            'hourly_prices': self.hourly_prices,
+            'api_endpoint': self.api_endpoint,
+            'contract_price': float(self.contract_price) if self.contract_price else None,
+            'valid_from': self.valid_from.isoformat() if self.valid_from else None,
+            'valid_until': self.valid_until.isoformat() if self.valid_until else None,
+            'is_active': self.is_active,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+    
+    def __repr__(self):
+        return f"<PowerPriceConfig {self.config_name} ({self.price_mode.value})>"
 
 
