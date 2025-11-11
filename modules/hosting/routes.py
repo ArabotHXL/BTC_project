@@ -2182,10 +2182,10 @@ def get_curtailment_strategies():
             strategies_data.append({
                 'id': s.id,
                 'name': s.name,
-                'description': s.description,
-                'algorithm': s.algorithm.value,
+                'strategy_type': s.strategy_type.value,
                 'site_id': s.site_id,
-                'is_default': s.is_default,
+                'vip_protection': s.vip_customer_protection,
+                'is_active': s.is_active,
                 'created_at': s.created_at.isoformat() if s.created_at else None
             })
         

@@ -225,20 +225,35 @@ function calculatePlan() {
 function displayPlan(plan) {
     const tbody = document.querySelector('#shutdown-list-table tbody');
     tbody.innerHTML = '';
+    
+    if (!plan || !plan.selected_miners || plan.selected_miners.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No miners selected</td></tr>';
+        return;
+    }
+    
     plan.selected_miners.forEach(m => {
+        const perfScore = (m.performance_score !== undefined && m.performance_score !== null) 
+            ? (m.performance_score * 100).toFixed(1) + '%' 
+            : '--';
+        const power = m.power_consumption !== undefined ? m.power_consumption : '--';
+        
         const row = `<tr>
-            <td>${m.serial_number}</td>
-            <td>${m.model}</td>
-            <td>${(m.performance_score * 100).toFixed(1)}%</td>
-            <td>${m.power_consumption}</td>
+            <td>${m.serial_number || '--'}</td>
+            <td>${m.model || '--'}</td>
+            <td>${perfScore}</td>
+            <td>${power}</td>
             <td>${m.customer_name || '--'}</td>
         </tr>`;
         tbody.insertAdjacentHTML('beforeend', row);
     });
     
+    const impact = plan.economic_impact || {};
+    const revenueLost = (impact.revenue_lost_usd !== undefined) ? impact.revenue_lost_usd.toFixed(2) : '0.00';
+    const costSaved = (impact.power_cost_saved_usd !== undefined) ? impact.power_cost_saved_usd.toFixed(2) : '0.00';
+    
     document.getElementById('economic-impact').textContent = 
-        `${currentLang === 'en' ? 'Revenue Lost' : '营收损失'}: $${plan.economic_impact.revenue_lost_usd.toFixed(2)}, ` +
-        `${currentLang === 'en' ? 'Cost Saved' : '成本节省'}: $${plan.economic_impact.power_cost_saved_usd.toFixed(2)}`;
+        `${currentLang === 'en' ? 'Revenue Lost' : '营收损失'}: $${revenueLost}, ` +
+        `${currentLang === 'en' ? 'Cost Saved' : '成本节省'}: $${costSaved}`;
     
     document.getElementById('plan-result').style.display = 'block';
 }
