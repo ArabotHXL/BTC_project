@@ -11,6 +11,7 @@ from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident
 from models import CurtailmentPlan, CurtailmentStrategy, CurtailmentExecution
 from models import ExecutionMode, PlanStatus, ExecutionAction, ExecutionStatus
 from intelligence.curtailment_engine import calculate_curtailment_plan
+from intelligence.curtailment_predictor import predict_optimal_curtailment
 import logging
 import json
 from datetime import datetime, timedelta
@@ -2283,4 +2284,55 @@ def get_curtailment_history():
         })
     except Exception as e:
         logger.error(f"获取执行历史失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@hosting_bp.route('/api/curtailment/predict', methods=['POST'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def predict_curtailment_schedule():
+    """
+    AI预测未来24小时最佳限电策略
+    
+    Request Body:
+        - site_id: 矿场ID (required)
+        - target_reduction_kw: 目标功率削减量(kW) (optional)
+    
+    Returns:
+        - hourly_schedule: 每小时的限电建议
+        - summary: 汇总信息
+        - recommendation: 推荐策略
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        site_id = data.get('site_id')
+        if not site_id:
+            return jsonify({'success': False, 'error': 'site_id is required'}), 400
+        
+        target_reduction_kw = data.get('target_reduction_kw')
+        
+        logger.info(f"开始AI预测 - 站点: {site_id}, 目标削减: {target_reduction_kw} kW")
+        
+        # 调用AI预测引擎
+        prediction_result = predict_optimal_curtailment(
+            site_id=site_id,
+            target_reduction_kw=target_reduction_kw
+        )
+        
+        if not prediction_result.get('success'):
+            error_msg = prediction_result.get('error', 'Prediction failed')
+            logger.error(f"AI预测失败: {error_msg}")
+            return jsonify({
+                'success': False,
+                'error': error_msg
+            }), 500
+        
+        logger.info(f"AI预测成功 - 推荐 {prediction_result['summary']['total_hours_curtailed']} 小时限电")
+        
+        return jsonify(prediction_result)
+        
+    except Exception as e:
+        logger.error(f"AI预测API错误: {str(e)}", exc_info=True)
         return jsonify({'success': False, 'error': str(e)}), 500

@@ -38,6 +38,82 @@
     </div>
 </div>
 
+<!-- AI智能预测板块 -->
+<div class="hosting-card mb-4">
+    <div class="hosting-card-header d-flex justify-content-between align-items-center">
+        <h5 class="hosting-card-title mb-0">
+            <i class="bi bi-robot me-2"></i>{% if current_lang == 'en' %}AI Smart Prediction{% else %}AI智能预测{% endif %}
+        </h5>
+        <button class="btn btn-sm btn-primary" onclick="getAIPrediction()" id="ai-predict-btn">
+            <i class="bi bi-magic me-2"></i>{% if current_lang == 'en' %}Get 24h Prediction{% else %}获取24小时预测{% endif %}
+        </button>
+    </div>
+    <div class="hosting-card-body">
+        <p class="text-muted mb-3">
+            <i class="bi bi-info-circle me-1"></i>
+            {% if current_lang == 'en' %}
+                AI predicts optimal curtailment schedule for next 24 hours based on BTC price forecast, difficulty prediction, and electricity pricing.
+            {% else %}
+                AI预测未来24小时最佳限电时间表，基于BTC价格预测、难度预测和电价分析。
+            {% endif %}
+        </p>
+        
+        <!-- 预测结果显示区域 -->
+        <div id="ai-prediction-result" style="display:none;">
+            <!-- 推荐策略卡片 -->
+            <div class="alert alert-success mb-3" id="ai-recommendation">
+                <h6 class="mb-2">
+                    <i class="bi bi-lightbulb me-2"></i>{% if current_lang == 'en' %}AI Recommendation{% else %}AI推荐策略{% endif %}
+                </h6>
+                <p class="mb-0" id="ai-recommendation-text">--</p>
+            </div>
+            
+            <!-- 汇总统计 -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <div class="text-center p-2 bg-dark rounded">
+                        <small class="text-muted d-block">{% if current_lang == 'en' %}Hours to Curtail{% else %}建议限电时数{% endif %}</small>
+                        <h5 class="text-warning mb-0" id="ai-hours-curtailed">--</h5>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center p-2 bg-dark rounded">
+                        <small class="text-muted d-block">{% if current_lang == 'en' %}Cost Saved{% else %}节省成本{% endif %}</small>
+                        <h5 class="text-success mb-0" id="ai-cost-saved">--</h5>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center p-2 bg-dark rounded">
+                        <small class="text-muted d-block">{% if current_lang == 'en' %}Revenue Lost{% else %}损失收益{% endif %}</small>
+                        <h5 class="text-danger mb-0" id="ai-revenue-lost">--</h5>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center p-2 bg-dark rounded">
+                        <small class="text-muted d-block">{% if current_lang == 'en' %}Net Benefit{% else %}净收益{% endif %}</small>
+                        <h5 class="text-info mb-0" id="ai-net-benefit">--</h5>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 24小时预测图表 -->
+            <div class="bg-dark p-3 rounded">
+                <h6 class="text-white mb-3">
+                    <i class="bi bi-graph-up me-2"></i>{% if current_lang == 'en' %}24-Hour Forecast{% else %}24小时预测曲线{% endif %}
+                </h6>
+                <canvas id="ai-prediction-chart" height="80"></canvas>
+            </div>
+            
+            <!-- 使用AI推荐按钮 -->
+            <div class="mt-3">
+                <button class="btn btn-success" onclick="applyAIRecommendation()" id="apply-ai-btn">
+                    <i class="bi bi-check-circle me-2"></i>{% if current_lang == 'en' %}Apply AI Recommendation{% else %}应用AI推荐{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 限电计算器向导（主要功能卡片） -->
 <div class="hosting-card mb-4">
     <div class="hosting-card-header">
@@ -136,9 +212,14 @@
     </div>
 </div>
 
+<!-- Chart.js for AI prediction visualization -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <script>
 let currentPlan = null;
 let currentLang = '{{ current_lang }}';
+let aiPredictionData = null;
+let predictionChart = null;
 
 // 页面加载时初始化
 document.addEventListener('DOMContentLoaded', function() {
@@ -407,6 +488,192 @@ function viewPlanDetails(planId) {
         .catch(error => {
             console.error('Error loading plan details:', error);
         });
+}
+
+// ========== AI预测相关函数 ==========
+
+// 获取AI预测
+function getAIPrediction() {
+    const siteId = document.getElementById('site-select').value;
+    if (!siteId) {
+        alert(currentLang === 'en' ? 'Please select a site first' : '请先选择站点');
+        return;
+    }
+    
+    const btn = document.getElementById('ai-predict-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + 
+                    (currentLang === 'en' ? 'Predicting...' : '预测中...');
+    
+    fetch('/hosting/api/curtailment/predict', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            site_id: parseInt(siteId),
+            target_reduction_kw: null
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            aiPredictionData = data;
+            displayAIPrediction(data);
+        } else {
+            alert(data.error || (currentLang === 'en' ? 'Prediction failed' : '预测失败'));
+        }
+    })
+    .catch(error => {
+        console.error('Error getting AI prediction:', error);
+        alert(currentLang === 'en' ? 'Error getting AI prediction' : '获取AI预测时出错');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-magic me-2"></i>' + 
+                       (currentLang === 'en' ? 'Get 24h Prediction' : '获取24小时预测');
+    });
+}
+
+// 显示AI预测结果
+function displayAIPrediction(data) {
+    document.getElementById('ai-prediction-result').style.display = 'block';
+    
+    const recommendation = data.recommendation || {};
+    document.getElementById('ai-recommendation-text').textContent = recommendation.reason || '--';
+    
+    const summary = data.summary || {};
+    document.getElementById('ai-hours-curtailed').textContent = summary.total_hours_curtailed || '0';
+    document.getElementById('ai-cost-saved').textContent = summary.total_cost_saved ? 
+        `$${summary.total_cost_saved.toFixed(2)}` : '$0.00';
+    document.getElementById('ai-revenue-lost').textContent = summary.total_revenue_lost ? 
+        `$${summary.total_revenue_lost.toFixed(2)}` : '$0.00';
+    document.getElementById('ai-net-benefit').textContent = summary.net_benefit ? 
+        `$${summary.net_benefit.toFixed(2)}` : '$0.00';
+    
+    renderPredictionChart(data.hourly_schedule || []);
+}
+
+// 渲染预测图表
+function renderPredictionChart(hourlySchedule) {
+    const ctx = document.getElementById('ai-prediction-chart').getContext('2d');
+    
+    if (predictionChart) {
+        predictionChart.destroy();
+    }
+    
+    const labels = hourlySchedule.map(h => `${h.hour_of_day}:00`);
+    const netBenefits = hourlySchedule.map(h => h.net_benefit);
+    const shouldCurtail = hourlySchedule.map(h => h.should_curtail ? h.net_benefit : null);
+    
+    predictionChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: currentLang === 'en' ? 'Net Benefit (USD)' : '净收益 (USD)',
+                    data: netBenefits,
+                    borderColor: '#17a2b8',
+                    backgroundColor: 'rgba(23, 162, 184, 0.1)',
+                    tension: 0.3,
+                    yAxisID: 'y',
+                    fill: true
+                },
+                {
+                    label: currentLang === 'en' ? 'Curtail Recommended' : '建议限电',
+                    data: shouldCurtail,
+                    borderColor: '#28a745',
+                    backgroundColor: '#28a745',
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    showLine: false,
+                    yAxisID: 'y'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        color: '#fff'
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        afterLabel: function(context) {
+                            const index = context.dataIndex;
+                            const hour = hourlySchedule[index];
+                            return [
+                                `BTC: $${hour.btc_price.toFixed(2)}`,
+                                `${currentLang === 'en' ? 'Power Cost' : '电价'}: $${hour.power_cost_per_kwh.toFixed(6)}/kWh`,
+                                `${currentLang === 'en' ? 'Revenue' : '收益'}: $${hour.revenue_usd.toFixed(2)}`,
+                                `${currentLang === 'en' ? 'Cost' : '成本'}: $${hour.power_cost_usd.toFixed(2)}`
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#fff',
+                        callback: function(value) {
+                            return '$' + value.toFixed(0);
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#fff'
+                    }
+                }
+            }
+        }
+    });
+}
+
+// 应用AI推荐
+function applyAIRecommendation() {
+    if (!aiPredictionData || !aiPredictionData.recommendation) {
+        alert(currentLang === 'en' ? 'No AI recommendation available' : '无AI推荐可用');
+        return;
+    }
+    
+    const recommendation = aiPredictionData.recommendation;
+    const summary = aiPredictionData.summary;
+    
+    if (recommendation.action === 'no_curtailment') {
+        alert(currentLang === 'en' ? 
+            'AI recommends NO curtailment. Mining is more profitable.' : 
+            'AI建议不限电，持续挖矿更有利。');
+        return;
+    }
+    
+    const targetPower = summary.total_power_saved_kwh / summary.total_hours_curtailed;
+    if (targetPower > 0) {
+        document.getElementById('target-power').value = targetPower.toFixed(2);
+    }
+    
+    document.querySelector('#curtailment-form').scrollIntoView({ behavior: 'smooth' });
+    
+    alert(currentLang === 'en' ? 
+        `AI recommendation applied! Target power reduction: ${targetPower.toFixed(2)} kW` : 
+        `AI推荐已应用！目标功率削减: ${targetPower.toFixed(2)} kW`);
 }
 </script>
 
