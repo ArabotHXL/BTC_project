@@ -8,6 +8,9 @@ from . import hosting_bp
 from auth import login_required
 from decorators import requires_role
 from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingUsageRecord, HostingUsageItem, MinerTelemetry, HostingBill, HostingBillItem
+from models import CurtailmentPlan, CurtailmentStrategy, CurtailmentExecution
+from models import ExecutionMode, PlanStatus, ExecutionAction, ExecutionStatus
+from intelligence.curtailment_engine import calculate_curtailment_plan
 import logging
 import json
 from datetime import datetime, timedelta
@@ -1621,3 +1624,526 @@ def create_monitoring_incident():
         db.session.rollback()
         logger.error(f"创建监控事件失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+# ==================== 限电管理API Curtailment Management API ====================
+
+@hosting_bp.route('/api/curtailment/calculate', methods=['POST'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def calculate_curtailment():
+    """
+    计算限电方案 Calculate curtailment plan
+    
+    根据指定策略计算最优限电方案
+    Calculate optimal curtailment plan based on specified strategy
+    """
+    data = request.get_json() if request.is_json else request.form
+    user_id = session.get('user_id')
+    
+    # 检查必需参数 Check required parameters
+    required_fields = ['site_id', 'strategy_id', 'target_power_reduction_kw']
+    missing_fields = [f for f in required_fields if f not in data or data.get(f) is None]
+    if missing_fields:
+        logger.warning(f"缺少必需参数 Missing required parameters: {', '.join(missing_fields)}, user_id={user_id}")
+        return jsonify({
+            'success': False,
+            'error': f'缺少必需参数 Missing required parameters: {", ".join(missing_fields)}'
+        }), 400
+    
+    # 参数类型转换和验证 Parameter type conversion and validation
+    try:
+        site_id = int(data['site_id'])
+        strategy_id = int(data['strategy_id'])
+        target_power_reduction_kw = float(data['target_power_reduction_kw'])
+    except (ValueError, TypeError) as e:
+        logger.warning(f"参数格式错误 Parameter format error: {e}, user_id={user_id}")
+        return jsonify({
+            'success': False,
+            'error': '参数格式错误：site_id和strategy_id必须为整数，target_power_reduction_kw必须为数字 Parameter format error: site_id and strategy_id must be integers, target_power_reduction_kw must be a number'
+        }), 400
+    
+    # 数值范围验证 Validate value ranges
+    if site_id <= 0:
+        logger.warning(f"无效的site_id Invalid site_id: {site_id}, user_id={user_id}")
+        return jsonify({
+            'success': False,
+            'error': 'site_id必须大于0 site_id must be greater than 0'
+        }), 400
+    
+    if strategy_id <= 0:
+        logger.warning(f"无效的strategy_id Invalid strategy_id: {strategy_id}, user_id={user_id}")
+        return jsonify({
+            'success': False,
+            'error': 'strategy_id必须大于0 strategy_id must be greater than 0'
+        }), 400
+    
+    if target_power_reduction_kw <= 0:
+        logger.warning(f"无效的target_power_reduction_kw Invalid target_power_reduction_kw: {target_power_reduction_kw}, user_id={user_id}")
+        return jsonify({
+            'success': False,
+            'error': '目标功率削减值必须大于0 target_power_reduction_kw must be greater than 0'
+        }), 400
+    
+    # 可选参数验证 Optional parameters validation
+    btc_price = None
+    electricity_rate = None
+    duration_hours = 24
+    
+    if 'btc_price' in data and data['btc_price'] is not None:
+        try:
+            btc_price = float(data['btc_price'])
+            if btc_price <= 0:
+                logger.warning(f"无效的btc_price Invalid btc_price: {btc_price}, user_id={user_id}")
+                return jsonify({
+                    'success': False,
+                    'error': 'btc_price必须大于0 btc_price must be greater than 0'
+                }), 400
+        except (ValueError, TypeError) as e:
+            logger.warning(f"btc_price格式错误 btc_price format error: {e}, user_id={user_id}")
+            return jsonify({
+                'success': False,
+                'error': 'btc_price必须为数字 btc_price must be a number'
+            }), 400
+    
+    if 'electricity_rate' in data and data['electricity_rate'] is not None:
+        try:
+            electricity_rate = float(data['electricity_rate'])
+            if electricity_rate <= 0:
+                logger.warning(f"无效的electricity_rate Invalid electricity_rate: {electricity_rate}, user_id={user_id}")
+                return jsonify({
+                    'success': False,
+                    'error': 'electricity_rate必须大于0 electricity_rate must be greater than 0'
+                }), 400
+        except (ValueError, TypeError) as e:
+            logger.warning(f"electricity_rate格式错误 electricity_rate format error: {e}, user_id={user_id}")
+            return jsonify({
+                'success': False,
+                'error': 'electricity_rate必须为数字 electricity_rate must be a number'
+            }), 400
+    
+    if 'duration_hours' in data and data['duration_hours'] is not None:
+        try:
+            duration_hours = int(data['duration_hours'])
+            if duration_hours <= 0:
+                logger.warning(f"无效的duration_hours Invalid duration_hours: {duration_hours}, user_id={user_id}")
+                return jsonify({
+                    'success': False,
+                    'error': 'duration_hours必须大于0 duration_hours must be greater than 0'
+                }), 400
+        except (ValueError, TypeError) as e:
+            logger.warning(f"duration_hours格式错误 duration_hours format error: {e}, user_id={user_id}")
+            return jsonify({
+                'success': False,
+                'error': 'duration_hours必须为整数 duration_hours must be an integer'
+            }), 400
+    
+    try:
+        
+        # 验证站点存在性 Validate site exists
+        site = HostingSite.query.get(site_id)
+        if not site:
+            logger.warning(f"站点不存在 Site not found: site_id={site_id}, user_id={user_id}")
+            return jsonify({
+                'success': False,
+                'error': f'站点不存在 Site not found: {site_id}'
+            }), 404
+        
+        # 验证策略存在性 Validate strategy exists
+        strategy = CurtailmentStrategy.query.get(strategy_id)
+        if not strategy:
+            logger.warning(f"策略不存在 Strategy not found: strategy_id={strategy_id}, user_id={user_id}")
+            return jsonify({
+                'success': False,
+                'error': f'策略不存在 Strategy not found: {strategy_id}'
+            }), 404
+        
+        # 验证策略是否属于该站点 Validate strategy belongs to site
+        if strategy.site_id != site_id:
+            logger.warning(f"策略不属于该站点 Strategy does not belong to site: strategy_id={strategy_id}, site_id={site_id}")
+            return jsonify({
+                'success': False,
+                'error': '策略不属于该站点 Strategy does not belong to the specified site'
+            }), 400
+        
+        logger.info(f"开始计算限电方案 Starting curtailment calculation: site_id={site_id}, strategy_id={strategy_id}, target={target_power_reduction_kw}kW, user_id={user_id}")
+        
+        # 调用限电引擎计算方案 Call curtailment engine
+        plan_result = calculate_curtailment_plan(
+            site_id=site_id,
+            strategy_id=strategy_id,
+            target_power_reduction_kw=target_power_reduction_kw,
+            btc_price=btc_price,
+            electricity_rate=electricity_rate,
+            duration_hours=duration_hours
+        )
+        
+        # 检查计算是否成功 Check if calculation succeeded
+        if not plan_result.get('success', False):
+            logger.error(f"限电方案计算失败 Curtailment calculation failed: {plan_result.get('error', 'Unknown error')}")
+            return jsonify({
+                'success': False,
+                'error': plan_result.get('error', '限电方案计算失败 Curtailment calculation failed')
+            }), 500
+        
+        logger.info(f"限电方案计算成功 Curtailment calculation successful: selected_miners={len(plan_result.get('selected_miners', []))}, total_power_saved={plan_result.get('total_power_saved_kw', 0)}kW")
+        
+        return jsonify({
+            'success': True,
+            'plan': {
+                'selected_miners': plan_result.get('selected_miners', []),
+                'total_power_saved': plan_result.get('total_power_saved_kw', 0),
+                'affected_customers': plan_result.get('affected_customers', []),
+                'economic_impact': plan_result.get('economic_impact', {})
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"计算限电方案失败 Calculate curtailment failed: {e}, user_id={session.get('user_id')}")
+        return jsonify({
+            'success': False,
+            'error': f'计算限电方案失败 Calculate curtailment failed: {str(e)}'
+        }), 500
+
+@hosting_bp.route('/api/curtailment/execute', methods=['POST'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def execute_curtailment():
+    """
+    执行限电计划 Execute curtailment plan
+    
+    创建并执行限电计划，根据执行模式决定是否需要审批
+    Create and execute curtailment plan, approval required based on execution mode
+    """
+    data = request.get_json() if request.is_json else request.form
+    user_id = session.get('user_id')
+    
+    # 检查必需参数 Check required parameters
+    required_fields = ['site_id', 'strategy_id', 'target_power_reduction_kw', 'execution_mode']
+    missing_fields = [f for f in required_fields if f not in data or data.get(f) is None]
+    if missing_fields:
+        logger.warning(f"缺少必需参数 Missing required parameters: {', '.join(missing_fields)}, user_id={user_id}")
+        return jsonify({
+            'success': False,
+            'error': f'缺少必需参数 Missing required parameters: {", ".join(missing_fields)}'
+        }), 400
+    
+    # 参数类型转换和验证 Parameter type conversion and validation
+    try:
+        site_id = int(data['site_id'])
+        strategy_id = int(data['strategy_id'])
+        target_power_reduction_kw = float(data['target_power_reduction_kw'])
+    except (ValueError, TypeError) as e:
+        logger.warning(f"参数格式错误 Parameter format error: {e}, user_id={user_id}")
+        return jsonify({
+            'success': False,
+            'error': '参数格式错误：site_id和strategy_id必须为整数，target_power_reduction_kw必须为数字 Parameter format error: site_id and strategy_id must be integers, target_power_reduction_kw must be a number'
+        }), 400
+    
+    # 数值范围验证 Validate value ranges
+    if site_id <= 0:
+        logger.warning(f"无效的site_id Invalid site_id: {site_id}, user_id={user_id}")
+        return jsonify({
+            'success': False,
+            'error': 'site_id必须大于0 site_id must be greater than 0'
+        }), 400
+    
+    if strategy_id <= 0:
+        logger.warning(f"无效的strategy_id Invalid strategy_id: {strategy_id}, user_id={user_id}")
+        return jsonify({
+            'success': False,
+            'error': 'strategy_id必须大于0 strategy_id must be greater than 0'
+        }), 400
+    
+    if target_power_reduction_kw <= 0:
+        logger.warning(f"无效的target_power_reduction_kw Invalid target_power_reduction_kw: {target_power_reduction_kw}, user_id={user_id}")
+        return jsonify({
+            'success': False,
+            'error': '目标功率削减值必须大于0 target_power_reduction_kw must be greater than 0'
+        }), 400
+    
+    # 验证execution_mode Validate execution_mode
+    execution_mode_str = data['execution_mode']
+    if execution_mode_str not in ['auto', 'semi_auto', 'manual']:
+        logger.warning(f"无效的execution_mode Invalid execution_mode: {execution_mode_str}, user_id={user_id}")
+        return jsonify({
+            'success': False,
+            'error': f'无效的执行模式 Invalid execution mode: {execution_mode_str}. 必须是 Valid values: auto, semi_auto, manual'
+        }), 400
+    
+    try:
+        
+        # 验证站点存在性 Validate site exists
+        site = HostingSite.query.get(site_id)
+        if not site:
+            logger.warning(f"站点不存在 Site not found: site_id={site_id}, user_id={user_id}")
+            return jsonify({
+                'success': False,
+                'error': f'站点不存在 Site not found: {site_id}'
+            }), 404
+        
+        # 验证策略存在性 Validate strategy exists
+        strategy = CurtailmentStrategy.query.get(strategy_id)
+        if not strategy:
+            logger.warning(f"策略不存在 Strategy not found: strategy_id={strategy_id}, user_id={user_id}")
+            return jsonify({
+                'success': False,
+                'error': f'策略不存在 Strategy not found: {strategy_id}'
+            }), 404
+        
+        # 解析执行模式 Parse execution mode
+        execution_mode = ExecutionMode(execution_mode_str)
+        
+        # 根据执行模式决定状态 Determine status based on execution mode
+        if execution_mode == ExecutionMode.AUTO:
+            plan_status = PlanStatus.APPROVED
+            status_message = '自动模式，计划已批准 Auto mode, plan approved'
+        elif execution_mode == ExecutionMode.SEMI_AUTO:
+            plan_status = PlanStatus.PENDING
+            status_message = '半自动模式，等待审批 Semi-auto mode, pending approval'
+        else:  # MANUAL
+            plan_status = PlanStatus.PENDING
+            status_message = '手动模式，等待审批 Manual mode, pending approval'
+        
+        logger.info(f"创建限电计划 Creating curtailment plan: site_id={site_id}, strategy_id={strategy_id}, mode={execution_mode_str}, user_id={user_id}")
+        
+        # 创建限电计划 Create curtailment plan
+        plan = CurtailmentPlan(
+            site_id=site_id,
+            strategy_id=strategy_id,
+            plan_name=data.get('plan_name', f'限电计划 Curtailment Plan {datetime.now().strftime("%Y%m%d%H%M%S")}'),
+            target_power_reduction_kw=target_power_reduction_kw,
+            execution_mode=execution_mode,
+            scheduled_start_time=datetime.fromisoformat(data['scheduled_start_time']) if 'scheduled_start_time' in data else datetime.now(),
+            scheduled_end_time=datetime.fromisoformat(data['scheduled_end_time']) if 'scheduled_end_time' in data else None,
+            status=plan_status,
+            created_by_id=user_id,
+            approved_by_id=user_id if execution_mode == ExecutionMode.AUTO else None,
+            approved_at=datetime.now() if execution_mode == ExecutionMode.AUTO else None
+        )
+        
+        db.session.add(plan)
+        db.session.commit()
+        
+        logger.info(f"限电计划创建成功 Curtailment plan created successfully: plan_id={plan.id}, status={plan_status.value}")
+        
+        return jsonify({
+            'success': True,
+            'plan_id': plan.id,
+            'status': plan_status.value,
+            'message': status_message
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"执行限电计划失败 Execute curtailment failed: {e}, user_id={session.get('user_id')}")
+        return jsonify({
+            'success': False,
+            'error': f'执行限电计划失败 Execute curtailment failed: {str(e)}'
+        }), 500
+
+@hosting_bp.route('/api/curtailment/cancel', methods=['POST'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def cancel_curtailment():
+    """
+    取消限电计划 Cancel curtailment plan
+    
+    取消已创建的限电计划
+    Cancel an existing curtailment plan
+    """
+    data = request.get_json() if request.is_json else request.form
+    user_id = session.get('user_id')
+    
+    # 检查必需参数 Check required parameters
+    if 'plan_id' not in data or data.get('plan_id') is None:
+        logger.warning(f"缺少必需参数 Missing required parameter: plan_id, user_id={user_id}")
+        return jsonify({
+            'success': False,
+            'error': '缺少必需参数 Missing required parameter: plan_id'
+        }), 400
+    
+    # 参数类型转换和验证 Parameter type conversion and validation
+    try:
+        plan_id = int(data['plan_id'])
+    except (ValueError, TypeError) as e:
+        logger.warning(f"参数格式错误 Parameter format error: {e}, user_id={user_id}")
+        return jsonify({
+            'success': False,
+            'error': 'plan_id必须为整数 plan_id must be an integer'
+        }), 400
+    
+    # 数值范围验证 Validate value ranges
+    if plan_id <= 0:
+        logger.warning(f"无效的plan_id Invalid plan_id: {plan_id}, user_id={user_id}")
+        return jsonify({
+            'success': False,
+            'error': 'plan_id必须大于0 plan_id must be greater than 0'
+        }), 400
+    
+    try:
+        
+        # 查询计划 Query plan
+        plan = CurtailmentPlan.query.get(plan_id)
+        if not plan:
+            logger.warning(f"限电计划不存在 Curtailment plan not found: plan_id={plan_id}, user_id={user_id}")
+            return jsonify({
+                'success': False,
+                'error': f'限电计划不存在 Curtailment plan not found: {plan_id}'
+            }), 404
+        
+        # 检查计划是否可以取消 Check if plan can be cancelled
+        if plan.status == PlanStatus.COMPLETED:
+            logger.warning(f"已完成的计划不能取消 Completed plan cannot be cancelled: plan_id={plan_id}, user_id={user_id}")
+            return jsonify({
+                'success': False,
+                'error': '已完成的计划不能取消 Completed plan cannot be cancelled'
+            }), 400
+        
+        if plan.status == PlanStatus.CANCELLED:
+            logger.warning(f"计划已被取消 Plan already cancelled: plan_id={plan_id}, user_id={user_id}")
+            return jsonify({
+                'success': False,
+                'error': '计划已被取消 Plan already cancelled'
+            }), 400
+        
+        logger.info(f"取消限电计划 Cancelling curtailment plan: plan_id={plan_id}, previous_status={plan.status.value}, user_id={user_id}")
+        
+        # 更新计划状态 Update plan status
+        plan.status = PlanStatus.CANCELLED
+        plan.cancelled_by_id = user_id
+        plan.cancelled_at = datetime.now()
+        plan.cancellation_reason = data.get('reason', '管理员取消 Cancelled by administrator')
+        
+        db.session.commit()
+        
+        logger.info(f"限电计划已取消 Curtailment plan cancelled: plan_id={plan_id}, user_id={user_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'限电计划已成功取消 Curtailment plan {plan_id} cancelled successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"取消限电计划失败 Cancel curtailment failed: {e}, user_id={session.get('user_id')}")
+        return jsonify({
+            'success': False,
+            'error': f'取消限电计划失败 Cancel curtailment failed: {str(e)}'
+        }), 500
+
+@hosting_bp.route('/api/curtailment/emergency-restore', methods=['POST'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def emergency_restore():
+    """
+    紧急恢复所有矿机 Emergency restore all miners
+    
+    紧急情况下恢复站点所有被限电关闭的矿机
+    Restore all curtailed miners at a site in emergency situations
+    """
+    data = request.get_json() if request.is_json else request.form
+    user_id = session.get('user_id')
+    
+    # 检查必需参数 Check required parameters
+    if 'site_id' not in data or data.get('site_id') is None:
+        logger.warning(f"缺少必需参数 Missing required parameter: site_id, user_id={user_id}")
+        return jsonify({
+            'success': False,
+            'error': '缺少必需参数 Missing required parameter: site_id'
+        }), 400
+    
+    # 参数类型转换和验证 Parameter type conversion and validation
+    try:
+        site_id = int(data['site_id'])
+    except (ValueError, TypeError) as e:
+        logger.warning(f"参数格式错误 Parameter format error: {e}, user_id={user_id}")
+        return jsonify({
+            'success': False,
+            'error': 'site_id必须为整数 site_id must be an integer'
+        }), 400
+    
+    # 数值范围验证 Validate value ranges
+    if site_id <= 0:
+        logger.warning(f"无效的site_id Invalid site_id: {site_id}, user_id={user_id}")
+        return jsonify({
+            'success': False,
+            'error': 'site_id必须大于0 site_id must be greater than 0'
+        }), 400
+    
+    reason = data.get('reason', '紧急恢复 Emergency restore')
+    
+    try:
+        
+        # 验证站点存在性 Validate site exists
+        site = HostingSite.query.get(site_id)
+        if not site:
+            logger.warning(f"站点不存在 Site not found: site_id={site_id}, user_id={user_id}")
+            return jsonify({
+                'success': False,
+                'error': f'站点不存在 Site not found: {site_id}'
+            }), 404
+        
+        logger.info(f"紧急恢复开始 Emergency restore started: site_id={site_id}, reason={reason}, user_id={user_id}")
+        
+        # 查找当前执行中的限电计划 Find currently executing curtailment plans
+        active_plans = CurtailmentPlan.query.filter(
+            CurtailmentPlan.site_id == site_id,
+            CurtailmentPlan.status.in_([PlanStatus.APPROVED, PlanStatus.EXECUTING])
+        ).all()
+        
+        if not active_plans:
+            logger.info(f"没有找到执行中的限电计划 No active curtailment plans found: site_id={site_id}")
+            return jsonify({
+                'success': True,
+                'restored_count': 0,
+                'message': '没有需要恢复的限电计划 No active curtailment plans to restore'
+            })
+        
+        restored_count = 0
+        
+        # 遍历所有活跃的限电计划 Iterate through all active plans
+        for plan in active_plans:
+            # 查找该计划的所有关机执行记录 Find all shutdown executions for this plan
+            shutdown_executions = CurtailmentExecution.query.filter(
+                CurtailmentExecution.plan_id == plan.id,
+                CurtailmentExecution.execution_action == ExecutionAction.SHUTDOWN,
+                CurtailmentExecution.execution_status == ExecutionStatus.SUCCESS
+            ).all()
+            
+            # 为每个被关闭的矿机创建恢复记录 Create restore record for each shutdown miner
+            for execution in shutdown_executions:
+                # 创建恢复执行记录 Create restore execution record
+                restore_execution = CurtailmentExecution(
+                    plan_id=plan.id,
+                    miner_id=execution.miner_id,
+                    execution_action=ExecutionAction.STARTUP,
+                    executed_at=datetime.now(),
+                    execution_status=ExecutionStatus.SUCCESS,
+                    error_message=None
+                )
+                db.session.add(restore_execution)
+                restored_count += 1
+                
+                logger.debug(f"恢复矿机 Restoring miner: miner_id={execution.miner_id}, plan_id={plan.id}")
+            
+            # 更新计划状态为已取消 Update plan status to cancelled
+            plan.status = PlanStatus.CANCELLED
+            plan.cancelled_by_id = user_id
+            plan.cancelled_at = datetime.now()
+            plan.cancellation_reason = f'紧急恢复: {reason} Emergency restore: {reason}'
+        
+        db.session.commit()
+        
+        logger.info(f"紧急恢复完成 Emergency restore completed: site_id={site_id}, restored_count={restored_count}, cancelled_plans={len(active_plans)}, user_id={user_id}")
+        
+        return jsonify({
+            'success': True,
+            'restored_count': restored_count,
+            'cancelled_plans': len(active_plans),
+            'message': f'成功恢复 {restored_count} 个矿机，取消了 {len(active_plans)} 个限电计划 Successfully restored {restored_count} miners and cancelled {len(active_plans)} curtailment plans'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"紧急恢复失败 Emergency restore failed: {e}, user_id={session.get('user_id')}")
+        return jsonify({
+            'success': False,
+            'error': f'紧急恢复失败 Emergency restore failed: {str(e)}'
+        }), 500
