@@ -430,6 +430,12 @@
                             {% if current_lang == 'en' %}Monitoring{% else %}监控管理{% endif %}
                         </a>
                     </div>
+                    <div class="hosting-nav-item">
+                        <a href="/hosting/host/curtailment" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/host/curtailment') }}" data-nav="curtailment">
+                            <i class="bi bi-lightning-charge hosting-nav-icon"></i>
+                            {% if current_lang == 'en' %}Smart Curtailment{% else %}智能限电{% endif %}
+                        </a>
+                    </div>
                 </div>
                 {% else %}
                 <!-- 客户菜单 -->

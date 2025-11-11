@@ -62,6 +62,8 @@ def host_view(subpath='dashboard'):
             return render_template('hosting/event_monitoring.html')
         elif subpath == 'sla':
             return render_template('hosting/sla_management.html')
+        elif subpath == 'curtailment':
+            return render_template('hosting/curtailment_management.html')
         else:
             return render_template('hosting/host_dashboard.html')
     except Exception as e:
@@ -2147,3 +2149,138 @@ def emergency_restore():
             'success': False,
             'error': f'紧急恢复失败 Emergency restore failed: {str(e)}'
         }), 500
+
+# ==================== 限电前端支持API ====================
+
+@hosting_bp.route('/api/sites/list', methods=['GET'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def get_sites_list():
+    """获取站点列表（简化版，用于下拉选择）"""
+    try:
+        sites = HostingSite.query.all()
+        sites_data = [{'id': s.id, 'name': s.name} for s in sites]
+        return jsonify({'success': True, 'sites': sites_data})
+    except Exception as e:
+        logger.error(f"获取站点列表失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@hosting_bp.route('/api/curtailment/strategies', methods=['GET'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def get_curtailment_strategies():
+    """获取限电策略列表"""
+    try:
+        site_id = request.args.get('site_id', type=int)
+        
+        query = CurtailmentStrategy.query
+        if site_id:
+            query = query.filter_by(site_id=site_id)
+        
+        strategies = query.all()
+        
+        strategies_data = []
+        for s in strategies:
+            strategies_data.append({
+                'id': s.id,
+                'name': s.name,
+                'description': s.description,
+                'algorithm': s.algorithm.value,
+                'site_id': s.site_id,
+                'is_default': s.is_default,
+                'created_at': s.created_at.isoformat() if s.created_at else None
+            })
+        
+        return jsonify({'success': True, 'strategies': strategies_data})
+    except Exception as e:
+        logger.error(f"获取策略列表失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@hosting_bp.route('/api/curtailment/kpis', methods=['GET'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def get_curtailment_kpis():
+    """获取限电KPI统计数据"""
+    try:
+        site_id = request.args.get('site_id', type=int)
+        
+        miner_query = HostingMiner.query
+        if site_id:
+            miner_query = miner_query.filter_by(site_id=site_id)
+        
+        total_miners = miner_query.count()
+        
+        curtailed_miners = miner_query.filter_by(status='curtailed').count()
+        
+        curtailed_power_result = db.session.query(
+            db.func.sum(HostingMiner.actual_power)
+        ).filter(
+            HostingMiner.status == 'curtailed'
+        )
+        
+        if site_id:
+            curtailed_power_result = curtailed_power_result.filter(HostingMiner.site_id == site_id)
+        
+        curtailed_power_sum = curtailed_power_result.scalar()
+        power_saved_kw = round((curtailed_power_sum or 0) / 1000, 2)
+        
+        kpis = {
+            'total_miners': total_miners,
+            'curtailed_count': curtailed_miners,
+            'power_saved_kw': power_saved_kw
+        }
+        
+        return jsonify({'success': True, 'kpis': kpis})
+    except Exception as e:
+        logger.error(f"获取KPI失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@hosting_bp.route('/api/curtailment/history', methods=['GET'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def get_curtailment_history():
+    """获取限电执行历史"""
+    try:
+        site_id = request.args.get('site_id', type=int)
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        
+        query = CurtailmentPlan.query
+        if site_id:
+            query = query.filter_by(site_id=site_id)
+        
+        pagination = query.order_by(CurtailmentPlan.created_at.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+        
+        history_data = []
+        for plan in pagination.items:
+            strategy_name = plan.strategy.name if plan.strategy else 'N/A'
+            
+            site_name = plan.site.name if plan.site else 'N/A'
+            
+            history_data.append({
+                'id': plan.id,
+                'site_id': plan.site_id,
+                'site_name': site_name,
+                'strategy_id': plan.strategy_id,
+                'strategy_name': strategy_name,
+                'target_power_reduction_kw': float(plan.target_power_reduction_kw),
+                'actual_power_saved_kw': float(plan.actual_power_saved_kw or 0),
+                'status': plan.status.value,
+                'execution_mode': plan.execution_mode.value,
+                'created_at': plan.created_at.isoformat() if plan.created_at else None,
+                'executed_at': plan.executed_at.isoformat() if plan.executed_at else None
+            })
+        
+        return jsonify({
+            'success': True,
+            'history': history_data,
+            'pagination': {
+                'page': page,
+                'pages': pagination.pages,
+                'per_page': per_page,
+                'total': pagination.total,
+                'has_next': pagination.has_next,
+                'has_prev': pagination.has_prev
+            }
+        })
+    except Exception as e:
+        logger.error(f"获取执行历史失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500

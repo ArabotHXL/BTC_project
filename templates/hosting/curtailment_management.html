@@ -1,0 +1,393 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}{% if current_lang == 'en' %}Smart Power Curtailment{% else %}智能限电管理{% endif %}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}AI-powered performance-based load management{% else %}基于性能的AI智能负载管理{% endif %}{% endblock %}
+
+{% block content %}
+
+<!-- KPI卡片行（3列） -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="hosting-card">
+            <div class="hosting-card-body">
+                <h6 class="text-muted mb-1"><i class="bi bi-cpu me-2"></i>{% if current_lang == 'en' %}Total Miners{% else %}矿机总数{% endif %}</h6>
+                <h3 id="total-miners-count">--</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="hosting-card">
+            <div class="hosting-card-body">
+                <h6 class="text-muted mb-1"><i class="bi bi-power me-2"></i>{% if current_lang == 'en' %}Curtailed{% else %}限电中{% endif %}</h6>
+                <h3 id="curtailed-count" class="text-warning">--</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="hosting-card">
+            <div class="hosting-card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted mb-1"><i class="bi bi-lightning-charge me-2"></i>{% if current_lang == 'en' %}Power Saved{% else %}节省功率{% endif %}</h6>
+                    <h3 id="power-saved" class="text-success">-- kW</h3>
+                </div>
+                <button class="btn btn-danger" id="emergency-restore-btn" onclick="emergencyRestore()">
+                    <i class="bi bi-exclamation-triangle me-2"></i>{% if current_lang == 'en' %}Emergency Restore{% else %}紧急恢复{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 限电计算器向导（主要功能卡片） -->
+<div class="hosting-card mb-4">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-calculator me-2"></i>{% if current_lang == 'en' %}Curtailment Planner{% else %}限电方案计算器{% endif %}
+        </h5>
+    </div>
+    <div class="hosting-card-body">
+        <form id="curtailment-form">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</label>
+                    <select class="form-select" id="site-select" required>
+                        <option value="">{% if current_lang == 'en' %}Select Site{% else %}选择站点{% endif %}</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{% if current_lang == 'en' %}Strategy{% else %}策略{% endif %}</label>
+                    <select class="form-select" id="strategy-select" required>
+                        <option value="">{% if current_lang == 'en' %}Select Strategy{% else %}选择策略{% endif %}</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{% if current_lang == 'en' %}Target Power Reduction (kW){% else %}目标功率削减 (kW){% endif %}</label>
+                    <input type="number" class="form-control" id="target-power" min="1" step="0.1" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{% if current_lang == 'en' %}Execution Mode{% else %}执行模式{% endif %}</label>
+                    <select class="form-select" id="execution-mode" required>
+                        <option value="semi_auto">{% if current_lang == 'en' %}Semi-Auto (Review First){% else %}半自动（先审核）{% endif %}</option>
+                        <option value="auto">{% if current_lang == 'en' %}Auto (Execute Now){% else %}自动（立即执行）{% endif %}</option>
+                        <option value="manual">{% if current_lang == 'en' %}Manual{% else %}手动{% endif %}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-3">
+                <button type="button" class="btn btn-hosting-primary" onclick="calculatePlan()">
+                    <i class="bi bi-cpu me-2"></i>{% if current_lang == 'en' %}Calculate Plan{% else %}计算方案{% endif %}
+                </button>
+                <button type="button" class="btn btn-success ms-2" id="execute-btn" onclick="executePlan()" style="display:none;">
+                    <i class="bi bi-play-circle me-2"></i>{% if current_lang == 'en' %}Execute Plan{% else %}执行方案{% endif %}
+                </button>
+            </div>
+        </form>
+        
+        <!-- 计算结果显示区域 -->
+        <div id="plan-result" class="mt-4" style="display:none;">
+            <hr>
+            <h6>{% if current_lang == 'en' %}Recommended Shutdown List{% else %}建议关机矿机列表{% endif %}</h6>
+            <div class="hosting-table">
+                <table class="table table-sm" id="shutdown-list-table">
+                    <thead>
+                        <tr>
+                            <th>{% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %}</th>
+                            <th>{% if current_lang == 'en' %}Model{% else %}型号{% endif %}</th>
+                            <th>{% if current_lang == 'en' %}Performance Score{% else %}性能评分{% endif %}</th>
+                            <th>{% if current_lang == 'en' %}Power (W){% else %}功耗 (W){% endif %}</th>
+                            <th>{% if current_lang == 'en' %}Customer{% else %}客户{% endif %}</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="alert alert-info">
+                <strong>{% if current_lang == 'en' %}Economic Impact{% else %}经济影响{% endif %}:</strong>
+                <span id="economic-impact">--</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 执行历史表格 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-clock-history me-2"></i>{% if current_lang == 'en' %}Execution History{% else %}执行历史{% endif %}
+        </h5>
+    </div>
+    <div class="hosting-card-body">
+        <div class="hosting-table">
+            <table class="table table-hover" id="history-table">
+                <thead>
+                    <tr>
+                        <th>{% if current_lang == 'en' %}Plan ID{% else %}计划ID{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Strategy{% else %}策略{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Target Power{% else %}目标功率{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Created At{% else %}创建时间{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPlan = null;
+let currentLang = '{{ current_lang }}';
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadSites();
+    loadKPIs();
+    loadHistory();
+});
+
+// 加载站点列表
+function loadSites() {
+    fetch('/hosting/api/sites/list')
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById('site-select');
+            data.sites.forEach(site => {
+                const option = document.createElement('option');
+                option.value = site.id;
+                option.textContent = site.name;
+                select.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading sites:', error);
+        });
+}
+
+// 站点选择变化时加载策略
+document.getElementById('site-select').addEventListener('change', function() {
+    const siteId = this.value;
+    if (!siteId) return;
+    
+    fetch(`/hosting/api/curtailment/strategies?site_id=${siteId}`)
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById('strategy-select');
+            select.innerHTML = '<option value="">' + (currentLang === 'en' ? 'Select Strategy' : '选择策略') + '</option>';
+            data.strategies.forEach(s => {
+                const option = document.createElement('option');
+                option.value = s.id;
+                option.textContent = s.name;
+                select.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading strategies:', error);
+        });
+});
+
+// 计算限电方案
+function calculatePlan() {
+    const data = {
+        site_id: parseInt(document.getElementById('site-select').value),
+        strategy_id: parseInt(document.getElementById('strategy-select').value),
+        target_power_reduction_kw: parseFloat(document.getElementById('target-power').value)
+    };
+    
+    if (!data.site_id || !data.strategy_id || !data.target_power_reduction_kw) {
+        alert(currentLang === 'en' ? 'Please fill in all required fields' : '请填写所有必填字段');
+        return;
+    }
+    
+    fetch('/hosting/api/curtailment/calculate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            currentPlan = result.plan;
+            displayPlan(result.plan);
+            document.getElementById('execute-btn').style.display = 'inline-block';
+        } else {
+            alert(result.error || (currentLang === 'en' ? 'Calculation failed' : '计算失败'));
+        }
+    })
+    .catch(error => {
+        console.error('Error calculating plan:', error);
+        alert(currentLang === 'en' ? 'Error calculating plan' : '计算方案时出错');
+    });
+}
+
+// 显示方案结果
+function displayPlan(plan) {
+    const tbody = document.querySelector('#shutdown-list-table tbody');
+    tbody.innerHTML = '';
+    plan.selected_miners.forEach(m => {
+        const row = `<tr>
+            <td>${m.serial_number}</td>
+            <td>${m.model}</td>
+            <td>${(m.performance_score * 100).toFixed(1)}%</td>
+            <td>${m.power_consumption}</td>
+            <td>${m.customer_name || '--'}</td>
+        </tr>`;
+        tbody.insertAdjacentHTML('beforeend', row);
+    });
+    
+    document.getElementById('economic-impact').textContent = 
+        `${currentLang === 'en' ? 'Revenue Lost' : '营收损失'}: $${plan.economic_impact.revenue_lost_usd.toFixed(2)}, ` +
+        `${currentLang === 'en' ? 'Cost Saved' : '成本节省'}: $${plan.economic_impact.power_cost_saved_usd.toFixed(2)}`;
+    
+    document.getElementById('plan-result').style.display = 'block';
+}
+
+// 执行方案
+function executePlan() {
+    if (!currentPlan) return;
+    
+    const data = {
+        site_id: parseInt(document.getElementById('site-select').value),
+        strategy_id: parseInt(document.getElementById('strategy-select').value),
+        target_power_reduction_kw: parseFloat(document.getElementById('target-power').value),
+        execution_mode: document.getElementById('execution-mode').value
+    };
+    
+    fetch('/hosting/api/curtailment/execute', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            alert(result.message);
+            loadKPIs();
+            loadHistory();
+            document.getElementById('execute-btn').style.display = 'none';
+            document.getElementById('plan-result').style.display = 'none';
+            currentPlan = null;
+        } else {
+            alert(result.error || (currentLang === 'en' ? 'Execution failed' : '执行失败'));
+        }
+    })
+    .catch(error => {
+        console.error('Error executing plan:', error);
+        alert(currentLang === 'en' ? 'Error executing plan' : '执行方案时出错');
+    });
+}
+
+// 紧急恢复
+function emergencyRestore() {
+    const siteId = document.getElementById('site-select').value;
+    if (!siteId) {
+        alert(currentLang === 'en' ? 'Please select a site first' : '请先选择站点');
+        return;
+    }
+    
+    if (!confirm(currentLang === 'en' ? 'Restore all curtailed miners?' : '确认恢复所有限电矿机？')) return;
+    
+    fetch('/hosting/api/curtailment/emergency-restore', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({site_id: parseInt(siteId)})
+    })
+    .then(r => r.json())
+    .then(result => {
+        alert(result.message);
+        loadKPIs();
+        loadHistory();
+    })
+    .catch(error => {
+        console.error('Error during emergency restore:', error);
+        alert(currentLang === 'en' ? 'Error during emergency restore' : '紧急恢复时出错');
+    });
+}
+
+// 加载KPI
+function loadKPIs() {
+    const siteId = document.getElementById('site-select').value;
+    const url = siteId ? `/hosting/api/curtailment/kpis?site_id=${siteId}` : '/hosting/api/curtailment/kpis';
+    
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('total-miners-count').textContent = data.total_miners || '--';
+            document.getElementById('curtailed-count').textContent = data.curtailed_count || '--';
+            document.getElementById('power-saved').textContent = data.power_saved_kw ? `${data.power_saved_kw.toFixed(1)} kW` : '-- kW';
+        })
+        .catch(error => {
+            console.error('Error loading KPIs:', error);
+        });
+}
+
+// 加载历史
+function loadHistory() {
+    const siteId = document.getElementById('site-select').value;
+    const url = siteId ? `/hosting/api/curtailment/history?site_id=${siteId}` : '/hosting/api/curtailment/history';
+    
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            const tbody = document.querySelector('#history-table tbody');
+            tbody.innerHTML = '';
+            
+            if (data.plans && data.plans.length > 0) {
+                data.plans.forEach(plan => {
+                    const statusBadge = getStatusBadge(plan.status);
+                    const row = `<tr>
+                        <td>${plan.id}</td>
+                        <td>${plan.site_name || '--'}</td>
+                        <td>${plan.strategy_name || '--'}</td>
+                        <td>${plan.target_power_kw} kW</td>
+                        <td>${statusBadge}</td>
+                        <td>${new Date(plan.created_at).toLocaleString(currentLang === 'en' ? 'en-US' : 'zh-CN')}</td>
+                        <td>
+                            <button class="btn btn-sm btn-hosting-outline" onclick="viewPlanDetails(${plan.id})">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+                    tbody.insertAdjacentHTML('beforeend', row);
+                });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">${currentLang === 'en' ? 'No execution history' : '暂无执行历史'}</td></tr>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading history:', error);
+        });
+}
+
+// 获取状态徽章
+function getStatusBadge(status) {
+    const badges = {
+        'pending': `<span class="badge bg-warning">${currentLang === 'en' ? 'Pending' : '待处理'}</span>`,
+        'executing': `<span class="badge bg-info">${currentLang === 'en' ? 'Executing' : '执行中'}</span>`,
+        'completed': `<span class="badge bg-success">${currentLang === 'en' ? 'Completed' : '已完成'}</span>`,
+        'failed': `<span class="badge bg-danger">${currentLang === 'en' ? 'Failed' : '失败'}</span>`,
+        'cancelled': `<span class="badge bg-secondary">${currentLang === 'en' ? 'Cancelled' : '已取消'}</span>`
+    };
+    return badges[status] || `<span class="badge bg-secondary">${status}</span>`;
+}
+
+// 查看计划详情
+function viewPlanDetails(planId) {
+    fetch(`/hosting/api/curtailment/plan/${planId}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert(currentLang === 'en' ? 
+                    `Plan Details:\nID: ${data.plan.id}\nSite: ${data.plan.site_name}\nStrategy: ${data.plan.strategy_name}\nTarget Power: ${data.plan.target_power_kw} kW\nStatus: ${data.plan.status}` :
+                    `计划详情:\nID: ${data.plan.id}\n站点: ${data.plan.site_name}\n策略: ${data.plan.strategy_name}\n目标功率: ${data.plan.target_power_kw} kW\n状态: ${data.plan.status}`
+                );
+            }
+        })
+        .catch(error => {
+            console.error('Error loading plan details:', error);
+        });
+}
+</script>
+
+{% endblock %}
