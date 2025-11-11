@@ -328,9 +328,14 @@ function loadKPIs() {
     fetch(url)
         .then(r => r.json())
         .then(data => {
-            document.getElementById('total-miners-count').textContent = data.total_miners || '--';
-            document.getElementById('curtailed-count').textContent = data.curtailed_count || '--';
-            document.getElementById('power-saved').textContent = data.power_saved_kw ? `${data.power_saved_kw.toFixed(1)} kW` : '-- kW';
+            if (data.success && data.kpis) {
+                const kpis = data.kpis;
+                document.getElementById('total-miners-count').textContent = kpis.total_miners || '0';
+                document.getElementById('curtailed-count').textContent = kpis.curtailed_count || '0';
+                document.getElementById('power-saved').textContent = kpis.power_saved_kw !== undefined ? `${kpis.power_saved_kw.toFixed(1)} kW` : '0.0 kW';
+            } else {
+                console.error('KPI data format error:', data);
+            }
         })
         .catch(error => {
             console.error('Error loading KPIs:', error);
