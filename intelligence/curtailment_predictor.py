@@ -341,16 +341,17 @@ class CurtailmentPredictor:
         if hashrate_th <= 0 or difficulty <= 0:
             return 0.0
         
-        # BTC产出公式: (hashrate / difficulty) * block_reward * blocks_per_hour
+        # BTC产出公式: (hashrate / (difficulty * 2^32)) * block_reward * blocks_per_hour
         # block_reward = 3.125 BTC (2024年减半后)
         # blocks_per_hour = 6 (平均10分钟一个区块)
+        # 2^32 是Bitcoin挖矿难度算法的关键常数
         
         hashrate_hs = hashrate_th * 1e12  # TH/s -> H/s
         block_reward = 3.125
         blocks_per_hour = 6
         
-        # 每小时BTC产出
-        btc_per_hour = (hashrate_hs / difficulty) * block_reward * blocks_per_hour
+        # 每小时BTC产出（正确公式包含2^32因子）
+        btc_per_hour = (hashrate_hs / (difficulty * 2**32)) * block_reward * blocks_per_hour
         
         return btc_per_hour
     
