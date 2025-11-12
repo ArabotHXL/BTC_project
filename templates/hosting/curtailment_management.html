@@ -630,7 +630,11 @@ function renderPredictionChart(hourlySchedule) {
                     ticks: {
                         color: '#fff',
                         callback: function(value) {
-                            return '$' + value.toFixed(0);
+                            if (value >= 0) {
+                                return '$' + value.toFixed(2);
+                            } else {
+                                return '-$' + Math.abs(value).toFixed(2);
+                            }
                         }
                     }
                 },
