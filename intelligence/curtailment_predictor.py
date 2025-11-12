@@ -221,12 +221,13 @@ class CurtailmentPredictor:
             if not forecast_result or 'predictions' not in forecast_result:
                 raise ValueError("Difficulty forecast failed")
             
-            # 获取当前难度
+            # 获取当前难度（数据库存储单位：万亿，需要转换为原始值）
             latest_snapshot = NetworkSnapshot.query.filter_by(
                 is_valid=True
             ).order_by(NetworkSnapshot.recorded_at.desc()).first()
             
-            current_diff = float(latest_snapshot.network_difficulty) if latest_snapshot else 60e12
+            current_diff_trillion = float(latest_snapshot.network_difficulty) if latest_snapshot else 60
+            current_diff = current_diff_trillion * 1e12  # 转换为原始值
             
             # 难度变化较慢，使用当前值（24小时内变化不大）
             daily_prediction = forecast_result['predictions'][0]['difficulty']
@@ -243,7 +244,8 @@ class CurtailmentPredictor:
                 is_valid=True
             ).order_by(NetworkSnapshot.recorded_at.desc()).first()
             
-            fallback_diff = float(latest_snapshot.network_difficulty) if latest_snapshot else 60e12
+            fallback_diff_trillion = float(latest_snapshot.network_difficulty) if latest_snapshot else 60
+            fallback_diff = fallback_diff_trillion * 1e12  # 转换为原始值
             return [fallback_diff] * 24
     
     def _get_hourly_power_prices(self) -> List[float]:
@@ -352,6 +354,9 @@ class CurtailmentPredictor:
         
         # 每小时BTC产出（正确公式包含2^32因子）
         btc_per_hour = (hashrate_hs / (difficulty * 2**32)) * block_reward * blocks_per_hour
+        
+        # DEBUG日志
+        logger.info(f"BTC Revenue Calculation: hashrate={hashrate_th}TH/s, difficulty={difficulty}, btc_per_hour={btc_per_hour}")
         
         return btc_per_hour
     
