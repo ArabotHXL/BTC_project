@@ -230,7 +230,9 @@ class CurtailmentPredictor:
             current_diff = current_diff_trillion * 1e12  # 转换为原始值
             
             # 难度变化较慢，使用当前值（24小时内变化不大）
-            daily_prediction = forecast_result['predictions'][0]['difficulty']
+            # ARIMA预测也以万亿为单位，需要转换
+            daily_prediction_trillion = forecast_result['predictions'][0]['difficulty']
+            daily_prediction = daily_prediction_trillion * 1e12  # 转换为原始值
             
             # 生成24小时序列（难度基本恒定）
             hourly_difficulty = [current_diff] * 24
@@ -310,8 +312,16 @@ class CurtailmentPredictor:
                 status='active'
             ).all()
             
-            total_hashrate = sum(m.actual_hashrate or m.rated_hashrate or 0 for m in miners)
-            total_power = sum(m.actual_power or m.rated_power or 0 for m in miners)
+            total_hashrate = sum(
+                m.actual_hashrate or 
+                (m.miner_model.reference_hashrate if m.miner_model else 0) 
+                for m in miners
+            )
+            total_power = sum(
+                m.actual_power or 
+                (m.miner_model.reference_power if m.miner_model else 0) 
+                for m in miners
+            )
             
             return {
                 'total_miners': len(miners),
@@ -343,17 +353,18 @@ class CurtailmentPredictor:
         if hashrate_th <= 0 or difficulty <= 0:
             return 0.0
         
-        # BTC产出公式: (hashrate / (difficulty * 2^32)) * block_reward * blocks_per_hour
-        # block_reward = 3.125 BTC (2024年减半后)
-        # blocks_per_hour = 6 (平均10分钟一个区块)
+        # BTC产出公式: (hashrate / (difficulty * 2^32)) * block_reward * seconds_per_hour
+        # hashrate / (difficulty * 2^32) = blocks_per_second
+        # blocks_per_second * block_reward = BTC_per_second
+        # BTC_per_second * seconds_per_hour = BTC_per_hour
         # 2^32 是Bitcoin挖矿难度算法的关键常数
         
         hashrate_hs = hashrate_th * 1e12  # TH/s -> H/s
         block_reward = 3.125
-        blocks_per_hour = 6
+        seconds_per_hour = 3600  # 每小时3600秒
         
-        # 每小时BTC产出（正确公式包含2^32因子）
-        btc_per_hour = (hashrate_hs / (difficulty * 2**32)) * block_reward * blocks_per_hour
+        # 每小时BTC产出（正确公式包含2^32因子和时间转换）
+        btc_per_hour = (hashrate_hs / (difficulty * 2**32)) * block_reward * seconds_per_hour
         
         # DEBUG日志
         logger.info(f"BTC Revenue Calculation: hashrate={hashrate_th}TH/s, difficulty={difficulty}, btc_per_hour={btc_per_hour}")
