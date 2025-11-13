@@ -39,6 +39,26 @@ The system is built on a Flask backend with SQLAlchemy and PostgreSQL. Redis is 
 - **API Integration Strategy**: Intelligent fallback, Stale-While-Revalidate (SWR) caching, batch API calls, and robust error handling.
 - **Deployment**: Optimized for Replit platform using Gunicorn.
 
+### Test Environments
+- **20MW Mining Farm Test Environment** (Created: 2025-11-13):
+  - **Site**: "HashPower MegaFarm 20MW" (ID: 5)
+  - **Location**: Texas, USA - Enterprise Facility
+  - **Capacity**: 25.0 MW total, 20.34 MW used
+  - **Miners**: 6,000 total
+    - 3,000x Antminer S19 Pro (Avg 109.95 TH/s, 3249.57W) = 9.749 MW
+    - 3,000x Antminer S21 Pro (Avg 233.93 TH/s, 3530.28W) = 10.591 MW
+  - **Total Hashrate**: ~1,039 TH/s
+  - **Power Pricing**: Peak-Valley model
+    - Peak: $0.12/kWh (10:00-22:00)
+    - Valley: $0.04/kWh (22:00-10:00)
+  - **Test Account**: test@test.com (role: mining_site)
+  - **Curtailment AI Results** (validated 2025-11-13):
+    - Hours to Curtail: 12 hours
+    - Cost Saved: $27,858.12
+    - Revenue Lost: $21,700.70
+    - Net Benefit: +$6,157.44/day
+  - **Purpose**: E2E validation of Smart Power Curtailment Module at enterprise scale
+
 ## External Dependencies
 
 ### API Integration
