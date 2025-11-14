@@ -18,6 +18,88 @@ from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
+def get_miner_alerts(miner, lang='zh'):
+    """检测矿机告警状态
+    
+    参数:
+        miner: HostingMiner对象
+        lang: 语言 ('zh' 或 'en')
+    
+    返回格式:
+    {
+        'has_alerts': True/False,
+        'alerts': [
+            {'type': 'temperature', 'severity': 'critical', 'message': '温度过高: 90°C'},
+            {'type': 'hashrate', 'severity': 'warning', 'message': '算力下降25%'},
+            {'type': 'offline', 'severity': 'critical', 'message': '离线6分钟'}
+        ],
+        'count': 告警数量
+    }
+    """
+    alerts = []
+    
+    try:
+        if miner.temperature_max and miner.temperature_max > 85:
+            severity = 'critical' if miner.temperature_max > 90 else 'warning'
+            if lang == 'en':
+                message = f'High Temperature: {miner.temperature_max:.1f}°C'
+            else:
+                message = f'温度过高: {miner.temperature_max:.1f}°C'
+            alerts.append({
+                'type': 'temperature',
+                'severity': severity,
+                'message': message
+            })
+        
+        # 算力下降告警：使用actual_hashrate（populated字段）而不是hashrate_5s
+        if miner.actual_hashrate and miner.miner_model:
+            # 使用miner_model的hashrate作为expected值
+            expected_hashrate = getattr(miner.miner_model, 'hashrate', None) or getattr(miner.miner_model, 'reference_hashrate', None)
+            if expected_hashrate and expected_hashrate > 0 and miner.actual_hashrate > 0:
+                drop_pct = ((expected_hashrate - miner.actual_hashrate) / expected_hashrate) * 100
+                if drop_pct > 20:
+                    if lang == 'en':
+                        message = f'Hashrate Drop: {drop_pct:.1f}%'
+                    else:
+                        message = f'算力下降: {drop_pct:.1f}%'
+                    alerts.append({
+                        'type': 'hashrate',
+                        'severity': 'warning',
+                        'message': message
+                    })
+        
+        if miner.last_seen:
+            offline_duration = datetime.utcnow() - miner.last_seen
+            if offline_duration > timedelta(minutes=5):
+                minutes_offline = int(offline_duration.total_seconds() / 60)
+                if lang == 'en':
+                    message = f'Offline: {minutes_offline} min'
+                else:
+                    message = f'离线: {minutes_offline}分钟'
+                alerts.append({
+                    'type': 'offline',
+                    'severity': 'critical',
+                    'message': message
+                })
+        elif not miner.cgminer_online:
+            if lang == 'en':
+                message = 'Never Online'
+            else:
+                message = '从未在线'
+            alerts.append({
+                'type': 'offline',
+                'severity': 'critical',
+                'message': message
+            })
+    except Exception as e:
+        logger.error(f"获取矿机告警失败: {e}")
+    
+    return {
+        'has_alerts': len(alerts) > 0,
+        'alerts': alerts,
+        'count': len(alerts)
+    }
+
 @hosting_bp.route('/')
 @login_required
 def dashboard():
@@ -625,6 +707,8 @@ def get_miners():
             page=page, per_page=per_page, error_out=False
         )
         
+        current_lang = session.get('language', 'zh')
+        
         miners_data = []
         for miner in pagination.items:
             miner_data = miner.to_dict()
@@ -643,6 +727,10 @@ def get_miners():
             # 添加站点名称
             if miner.site:
                 miner_data['site_name'] = miner.site.name
+            
+            # 添加告警信息
+            alerts_info = get_miner_alerts(miner, lang=current_lang)
+            miner_data['alerts'] = alerts_info
             
             miners_data.append(miner_data)
         

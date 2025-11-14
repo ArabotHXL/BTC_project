@@ -494,9 +494,24 @@ function displayMiners(miners) {
             lastSeenDisplay = `<small class="text-muted" title="${lastSeen}">${timeAgo}</small>`;
         }
         
+        // Format alert badge
+        let alertBadge = '';
+        if (miner.alerts && miner.alerts.has_alerts && miner.alerts.count > 0) {
+            const hasCritical = miner.alerts.alerts.some(a => a.severity === 'critical');
+            const badgeColor = hasCritical ? 'danger' : 'warning';
+            const alertMessages = miner.alerts.alerts.map(a => a.message).join(', ');
+            alertBadge = `
+                <span class="badge bg-${badgeColor} ms-2" 
+                      data-bs-toggle="tooltip" 
+                      data-bs-placement="top"
+                      title="${alertMessages}">
+                    <i class="bi bi-exclamation-triangle"></i> ${miner.alerts.count}
+                </span>`;
+        }
+        
         const row = `
             <tr id="miner-row-${miner.id}">
-                <td><strong>${miner.serial_number}</strong></td>
+                <td><strong>${miner.serial_number}</strong>${alertBadge}</td>
                 <td>${miner.customer_email || '-'}</td>
                 <td>${miner.miner_model_name || '-'}</td>
                 <td>${miner.site_name || '-'}</td>
@@ -535,6 +550,13 @@ function displayMiners(miners) {
         `;
         tbody.insertAdjacentHTML('beforeend', row);
     });
+    
+    initializeTooltips();
+}
+
+function initializeTooltips() {
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 }
 
 function updateCounts(counts) {
