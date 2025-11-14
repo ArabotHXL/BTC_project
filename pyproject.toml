@@ -61,4 +61,6 @@ dependencies = [
     "xgboost>=3.0.5",
     "pulp>=3.3.0",
     "flask-caching>=2.3.1",
+    "apscheduler>=3.11.1",
+    "python-dateutil>=2.9.0.post0",
 ]
