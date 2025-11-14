@@ -1573,6 +1573,22 @@ class HostingMiner(db.Model):
     last_maintenance = db.Column(db.DateTime, nullable=True)  # 上次维护时间
     maintenance_count = db.Column(db.Integer, default=0, nullable=False)
     
+    # CGMiner实时监控数据
+    temperature_avg = db.Column(db.Float, nullable=True)  # 平均温度 (°C)
+    temperature_max = db.Column(db.Float, nullable=True)  # 最高温度 (°C)
+    fan_speeds = db.Column(db.Text, nullable=True)  # 风扇转速JSON数组
+    fan_avg = db.Column(db.Integer, nullable=True)  # 平均风扇转速 (RPM)
+    reject_rate = db.Column(db.Float, nullable=True)  # 拒绝率 (%)
+    hardware_errors = db.Column(db.Integer, default=0)  # 硬件错误数
+    last_seen = db.Column(db.DateTime, nullable=True)  # 最后在线时间
+    cgminer_online = db.Column(db.Boolean, default=False)  # CGMiner是否在线
+    pool_url = db.Column(db.String(255), nullable=True)  # 矿池URL
+    pool_worker = db.Column(db.String(255), nullable=True)  # 矿池工作名
+    uptime_seconds = db.Column(db.Integer, nullable=True)  # 运行时间（秒）
+    hashrate_5s = db.Column(db.Float, nullable=True)  # 5秒算力 (TH/s)
+    accepted_shares = db.Column(db.Integer, default=0)  # 接受份额
+    rejected_shares = db.Column(db.Integer, default=0)  # 拒绝份额
+    
     # 时间戳
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -1597,12 +1613,23 @@ class HostingMiner(db.Model):
                 setattr(self, key, value)
     
     def to_dict(self):
+        import json as json_lib
+        
+        # 安全解析fan_speeds JSON，防止格式错误导致崩溃
+        fan_speeds_parsed = None
+        if self.fan_speeds:
+            try:
+                fan_speeds_parsed = json_lib.loads(self.fan_speeds)
+            except (json_lib.JSONDecodeError, TypeError):
+                fan_speeds_parsed = None  # 格式错误时返回None
+        
         return {
             'id': self.id,
             'site_id': self.site_id,
             'customer_id': self.customer_id,
             'serial_number': self.serial_number,
             'rack_position': self.rack_position,
+            'ip_address': self.ip_address,
             'miner_model_name': self.miner_model.model_name if self.miner_model else None,
             'actual_hashrate': self.actual_hashrate,
             'actual_power': self.actual_power,
@@ -1615,7 +1642,22 @@ class HostingMiner(db.Model):
             'submitted_at': self.submitted_at.isoformat() if self.submitted_at else None,
             'approved_at': self.approved_at.isoformat() if self.approved_at else None,
             'install_date': self.install_date.isoformat() if self.install_date else None,
-            'last_maintenance': self.last_maintenance.isoformat() if self.last_maintenance else None
+            'last_maintenance': self.last_maintenance.isoformat() if self.last_maintenance else None,
+            # CGMiner实时监控数据
+            'temperature_avg': self.temperature_avg,
+            'temperature_max': self.temperature_max,
+            'fan_speeds': fan_speeds_parsed,
+            'fan_avg': self.fan_avg,
+            'reject_rate': self.reject_rate,
+            'hardware_errors': self.hardware_errors,
+            'last_seen': self.last_seen.isoformat() if self.last_seen else None,
+            'cgminer_online': self.cgminer_online,
+            'pool_url': self.pool_url,
+            'pool_worker': self.pool_worker,
+            'uptime_seconds': self.uptime_seconds,
+            'hashrate_5s': self.hashrate_5s,
+            'accepted_shares': self.accepted_shares,
+            'rejected_shares': self.rejected_shares
         }
 
 class MinerTelemetry(db.Model):

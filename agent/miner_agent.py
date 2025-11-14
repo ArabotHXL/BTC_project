@@ -445,6 +445,18 @@ class CommandExecutor:
         target_ip = command.get('target_ip')
         params = command.get('params', {})
         
+        # 验证必需参数并上报错误
+        if not command_id or not command_type or not target_ip:
+            error_msg = "Missing required parameters: command_id, command_type, or target_ip"
+            logger.error(error_msg)
+            error = {"error_code": "INVALID_COMMAND", "message": error_msg}
+            
+            # 如果有command_id，上报失败结果到控制平面
+            if command_id:
+                self.cloud_client.report_command_result(command_id, 'failed', error=error)
+            
+            return {"status": "failed", "error": error}
+        
         logger.info(f"Executing command {command_id}: {command_type} on {target_ip}")
         
         try:
@@ -537,6 +549,7 @@ class MinerAgent:
         # 状态标志
         self.running = False
         self.online = False
+        self.start_time = int(time.time())
         
         # 线程
         self.heartbeat_thread = None
@@ -707,7 +720,7 @@ class MinerAgent:
             "cpu_usage": 0.0,
             "memory_usage": 0.0,
             "disk_usage": 0.0,
-            "uptime_seconds": int(time.time() - self.start_time) if hasattr(self, 'start_time') else 0,
+            "uptime_seconds": int(time.time() - self.start_time),
             "miners": {
                 "total": len(self.miner_ips),
                 "online": 0,  # 需要实际检测
@@ -748,7 +761,6 @@ def main():
     
     # 创建并启动 Agent
     agent = MinerAgent(config_file=args.config)
-    agent.start_time = int(time.time())
     agent.start()
 
 if __name__ == '__main__':

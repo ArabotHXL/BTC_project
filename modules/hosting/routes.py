@@ -2336,3 +2336,192 @@ def predict_curtailment_schedule():
     except Exception as e:
         logger.error(f"AI预测API错误: {str(e)}", exc_info=True)
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ==================== CGMiner 实时监控 API ====================
+
+@hosting_bp.route('/api/miners/<int:miner_id>/telemetry', methods=['POST'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def update_miner_telemetry(miner_id):
+    """
+    更新矿机CGMiner遥测数据
+    
+    接收从CGMiner API采集的实时数据并更新数据库
+    
+    Request Body:
+        {
+            "timestamp": 1699999999,
+            "online": true,
+            "hashrate_5s": 110.5,
+            "hashrate_avg": 109.8,
+            "temperature_avg": 65.2,
+            "temperature_max": 72.3,
+            "fan_speeds": [3600, 3750, 3680, 3720],
+            "fan_avg": 3687,
+            "accepted_shares": 12345,
+            "rejected_shares": 23,
+            "hardware_errors": 0,
+            "reject_rate": 0.19,
+            "uptime_seconds": 86400,
+            "pool_url": "stratum+tcp://btc.example.com:3333",
+            "pool_worker": "worker1",
+            "pool_status": "Alive"
+        }
+    
+    Returns:
+        {
+            "success": true,
+            "message": "Telemetry data updated successfully"
+        }
+    """
+    try:
+        miner = HostingMiner.query.get_or_404(miner_id)
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        # 验证timestamp（可选但推荐）- 使用UTC确保与数据库时间一致
+        timestamp = data.get('timestamp')
+        if timestamp and miner.last_seen:
+            try:
+                data_time = datetime.utcfromtimestamp(timestamp)
+                if data_time < miner.last_seen:
+                    logger.warning(f"矿机 {miner_id} 收到过时数据，忽略")
+                    return jsonify({
+                        'success': False,
+                        'error': 'Stale data (timestamp older than last_seen)'
+                    }), 400
+            except (ValueError, OSError):
+                pass  # 无效时间戳，继续处理
+        
+        # 更新在线状态和last_seen（仅在确认在线时刷新last_seen）
+        if 'online' in data:
+            miner.cgminer_online = data['online']
+            # 只有在线时才更新last_seen，离线时保留旧时间戳用于停机检测
+            if data['online']:
+                miner.last_seen = datetime.utcnow()
+        
+        # 只更新payload中明确提供的字段（避免覆盖现有数据）
+        if data.get('online'):
+            # 在线时才更新性能数据
+            if 'hashrate_5s' in data:
+                miner.hashrate_5s = data['hashrate_5s']
+            if 'hashrate_avg' in data:
+                miner.actual_hashrate = data['hashrate_avg']
+            if 'temperature_avg' in data:
+                miner.temperature_avg = data['temperature_avg']
+            if 'temperature_max' in data:
+                miner.temperature_max = data['temperature_max']
+            
+            # 风扇转速存储为JSON字符串
+            if 'fan_speeds' in data and data['fan_speeds']:
+                miner.fan_speeds = json.dumps(data['fan_speeds'])
+            if 'fan_avg' in data:
+                miner.fan_avg = data['fan_avg']
+            
+            # 份额数据（累计值）
+            if 'accepted_shares' in data:
+                miner.accepted_shares = data['accepted_shares']
+            if 'rejected_shares' in data:
+                miner.rejected_shares = data['rejected_shares']
+            if 'hardware_errors' in data:
+                miner.hardware_errors = data['hardware_errors']
+            if 'reject_rate' in data:
+                miner.reject_rate = data['reject_rate']
+            
+            if 'uptime_seconds' in data:
+                miner.uptime_seconds = data['uptime_seconds']
+            if 'pool_url' in data:
+                miner.pool_url = data['pool_url']
+            if 'pool_worker' in data:
+                miner.pool_worker = data['pool_worker']
+            
+            # 从offline恢复到active（仅当之前是offline）
+            if miner.status == 'offline':
+                miner.status = 'active'
+        else:
+            # 仅当明确标记为offline且超过5分钟未见时才切换状态
+            if data.get('online') is False:
+                time_since_seen = datetime.utcnow() - (miner.last_seen or datetime.utcnow())
+                if miner.status == 'active' and time_since_seen.total_seconds() > 300:
+                    miner.status = 'offline'
+        
+        # 更新时间戳
+        miner.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        logger.info(f"矿机 {miner_id} 遥测数据已更新 - 在线: {miner.cgminer_online}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Telemetry data updated successfully',
+            'miner': miner.to_dict()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"更新矿机遥测数据错误: {str(e)}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/miners/<int:miner_id>/test-connection', methods=['POST'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def test_miner_connection(miner_id):
+    """
+    测试矿机CGMiner连接
+    
+    通过CGMiner API测试矿机是否可达并返回实时数据
+    
+    Returns:
+        {
+            "success": true,
+            "online": true,
+            "telemetry": {...},
+            "message": "Connection successful"
+        }
+    """
+    try:
+        miner = HostingMiner.query.get_or_404(miner_id)
+        
+        if not miner.ip_address:
+            return jsonify({
+                'success': False,
+                'error': 'Miner has no IP address configured'
+            }), 400
+        
+        # 导入CGMiner测试工具
+        import sys
+        import os
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../'))
+        
+        from tools.test_cgminer import CGMinerTester
+        
+        # 创建测试器并获取遥测数据
+        tester = CGMinerTester(miner.ip_address, timeout=5)
+        telemetry = tester.get_telemetry_data()
+        
+        if not telemetry:
+            return jsonify({
+                'success': False,
+                'online': False,
+                'error': 'Failed to connect to CGMiner API',
+                'message': 'Miner is offline or CGMiner API is not accessible'
+            }), 200  # 200状态码，但success=false
+        
+        # 连接成功，返回遥测数据
+        return jsonify({
+            'success': True,
+            'online': True,
+            'telemetry': telemetry,
+            'message': 'Connection successful'
+        })
+        
+    except Exception as e:
+        logger.error(f"测试矿机连接错误: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'online': False,
+            'error': str(e)
+        }), 500
