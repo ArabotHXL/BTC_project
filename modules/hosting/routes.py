@@ -640,11 +640,27 @@ def get_miners():
             if miner.approver:
                 miner_data['approved_by_name'] = miner.approver.email
             
+            # 添加站点名称
+            if miner.site:
+                miner_data['site_name'] = miner.site.name
+            
             miners_data.append(miner_data)
+        
+        # Calculate counts for UI display
+        base_query = HostingMiner.query
+        if user_role not in ['owner', 'admin', 'mining_site']:
+            base_query = base_query.filter_by(customer_id=user_id)
+        
+        counts = {
+            'total': base_query.count(),
+            'active': base_query.filter_by(status='active').count(),
+            'pending': base_query.filter_by(approval_status='pending_approval').count()
+        }
         
         return jsonify({
             'success': True,
             'miners': miners_data,
+            'counts': counts,
             'pagination': {
                 'page': page,
                 'pages': pagination.pages,

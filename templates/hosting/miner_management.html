@@ -106,6 +106,10 @@
                         <th>{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</th>
                         <th>{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</th>
                         <th>{% if current_lang == 'en' %}Power{% else %}功耗{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}CGMiner{% else %}CGMiner{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Temperature{% else %}温度{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Fan{% else %}风扇{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Hashrate (5s){% else %}算力(5s){% endif %}</th>
                         <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
                         <th>{% if current_lang == 'en' %}Approval{% else %}审核状态{% endif %}</th>
                         <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
@@ -447,7 +451,7 @@ function displayMiners(miners) {
     if (!miners || miners.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="9" class="text-center text-muted py-4">
+                <td colspan="13" class="text-center text-muted py-4">
                     <i class="bi bi-cpu fs-1 mb-2 d-block"></i>
                     ${getLanguage() === 'en' ? 'No miners found' : '未找到矿机'}
                 </td>
@@ -457,29 +461,72 @@ function displayMiners(miners) {
     }
     
     miners.forEach(miner => {
+        const cgminerOnline = miner.cgminer_online || false;
+        const tempAvg = miner.temperature_avg || null;
+        const tempMax = miner.temperature_max || null;
+        const fanAvg = miner.fan_avg || null;
+        const hashrate5s = miner.hashrate_5s || null;
+        const lastSeen = miner.last_seen || null;
+        
+        // Format CGMiner online status
+        const cgminerStatus = cgminerOnline 
+            ? '<i class="bi bi-wifi text-success fs-5" title="' + (getLanguage() === 'en' ? 'Online' : '在线') + '"></i>'
+            : '<i class="bi bi-wifi-off text-danger fs-5" title="' + (getLanguage() === 'en' ? 'Offline' : '离线') + '"></i>';
+        
+        // Format temperature with color coding
+        let tempDisplay = '-';
+        let tempClass = '';
+        if (tempAvg !== null && tempMax !== null) {
+            tempClass = tempMax > 85 ? 'text-danger' : (tempMax > 75 ? 'text-warning' : '');
+            tempDisplay = `<span class="${tempClass}" title="${getLanguage() === 'en' ? 'Avg / Max' : '平均 / 最高'}">${tempAvg.toFixed(1)}°C / ${tempMax.toFixed(1)}°C</span>`;
+        }
+        
+        // Format fan speed
+        const fanDisplay = fanAvg !== null ? `${Math.round(fanAvg)} RPM` : '-';
+        
+        // Format 5s hashrate
+        const hashrate5sDisplay = hashrate5s !== null ? `${hashrate5s.toFixed(1)} TH/s` : '-';
+        
+        // Format last seen time
+        let lastSeenDisplay = '-';
+        if (lastSeen) {
+            const timeAgo = getTimeAgo(lastSeen);
+            lastSeenDisplay = `<small class="text-muted" title="${lastSeen}">${timeAgo}</small>`;
+        }
+        
         const row = `
-            <tr>
+            <tr id="miner-row-${miner.id}">
                 <td><strong>${miner.serial_number}</strong></td>
                 <td>${miner.customer_email || '-'}</td>
                 <td>${miner.miner_model_name || '-'}</td>
                 <td>${miner.site_name || '-'}</td>
                 <td>${miner.actual_hashrate || '-'} TH/s</td>
                 <td>${miner.actual_power || '-'} W</td>
+                <td class="text-center">${cgminerStatus}<br>${lastSeenDisplay}</td>
+                <td>${tempDisplay}</td>
+                <td>${fanDisplay}</td>
+                <td>${hashrate5sDisplay}</td>
                 <td><span class="badge bg-${getStatusColor(miner.status)}">${getStatusText(miner.status)}</span></td>
                 <td><span class="badge bg-${getApprovalColor(miner.approval_status)}">${getApprovalText(miner.approval_status)}</span></td>
                 <td>
                     <div class="btn-group btn-group-sm" role="group">
-                        <button class="btn btn-hosting-outline" onclick="viewMiner(${miner.id})">
+                        <button class="btn btn-hosting-outline" onclick="testMinerConnection(${miner.id})" title="${getLanguage() === 'en' ? 'Test Connection' : '测试连接'}">
+                            <i class="bi bi-activity"></i>
+                        </button>
+                        <button class="btn btn-hosting-outline" onclick="refreshMinerData(${miner.id})" title="${getLanguage() === 'en' ? 'Refresh Data' : '刷新数据'}">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                        <button class="btn btn-hosting-outline" onclick="viewMiner(${miner.id})" title="${getLanguage() === 'en' ? 'View' : '查看'}">
                             <i class="bi bi-eye"></i>
                         </button>
-                        <button class="btn btn-hosting-outline" onclick="editMiner(${miner.id})">
+                        <button class="btn btn-hosting-outline" onclick="editMiner(${miner.id})" title="${getLanguage() === 'en' ? 'Edit' : '编辑'}">
                             <i class="bi bi-pencil"></i>
                         </button>
                         ${miner.approval_status === 'pending_approval' ? `
-                        <button class="btn btn-success btn-sm" onclick="approveMiner(${miner.id})">
+                        <button class="btn btn-success btn-sm" onclick="approveMiner(${miner.id})" title="${getLanguage() === 'en' ? 'Approve' : '批准'}">
                             <i class="bi bi-check"></i>
                         </button>
-                        <button class="btn btn-danger btn-sm" onclick="rejectMiner(${miner.id})">
+                        <button class="btn btn-danger btn-sm" onclick="rejectMiner(${miner.id})" title="${getLanguage() === 'en' ? 'Reject' : '拒绝'}">
                             <i class="bi bi-x"></i>
                         </button>` : ''}
                     </div>
@@ -632,18 +679,232 @@ function getLanguage() {
     return document.querySelector('meta[name="language"]').content;
 }
 
-function showToast(message, type) {
-    // 简单的toast通知实现
+function showToast(message, type = 'info') {
+    // Enhanced toast notification with proper Bootstrap toast display
+    let bgColor = 'bg-secondary';
+    let icon = 'bi-info-circle';
+    
+    // Map type to Bootstrap colors and icons
+    if (type === 'success') {
+        bgColor = 'bg-success';
+        icon = 'bi-check-circle';
+    } else if (type === 'error' || type === 'danger') {
+        bgColor = 'bg-danger';
+        icon = 'bi-exclamation-circle';
+    } else if (type === 'warning') {
+        bgColor = 'bg-warning text-dark';
+        icon = 'bi-exclamation-triangle';
+    } else if (type === 'info') {
+        bgColor = 'bg-info text-dark';
+        icon = 'bi-info-circle';
+    }
+    
     const toastHtml = `
-        <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0" role="alert">
+        <div class="toast align-items-center text-white ${bgColor} border-0" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
-                <div class="toast-body">${message}</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                <div class="toast-body">
+                    <i class="bi ${icon} me-2"></i>${message}
+                </div>
+                <button type="button" class="btn-close ${type === 'warning' || type === 'info' ? '' : 'btn-close-white'} me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
         </div>
     `;
-    // 这里可以添加更完善的toast显示逻辑
-    console.log(message);
+    
+    // Get or create toast container
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '9999';
+        document.body.appendChild(toastContainer);
+    }
+    
+    // Add toast to container
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    const toastElement = toastContainer.lastElementChild;
+    
+    // Initialize and show toast
+    const toast = new bootstrap.Toast(toastElement, {
+        autohide: true,
+        delay: type === 'error' || type === 'danger' ? 5000 : 3000
+    });
+    toast.show();
+    
+    // Remove toast element after it's hidden
+    toastElement.addEventListener('hidden.bs.toast', function () {
+        toastElement.remove();
+    });
+}
+
+// Test CGMiner connection
+async function testMinerConnection(minerId) {
+    const lang = getLanguage();
+    const button = event.target.closest('button');
+    const originalHtml = button.innerHTML;
+    
+    // Show loading state
+    button.disabled = true;
+    button.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+    
+    try {
+        const response = await fetch(`/hosting/api/miners/${minerId}/test-connection`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast(
+                lang === 'en' 
+                    ? 'Connection test successful! Refreshing data...' 
+                    : '连接测试成功！正在刷新数据...',
+                'success'
+            );
+            
+            // Auto-refresh the miner row data
+            setTimeout(() => refreshMinerData(minerId), 500);
+        } else {
+            showToast(
+                lang === 'en' 
+                    ? `Connection test failed: ${data.message || 'Unknown error'}` 
+                    : `连接测试失败：${data.message || '未知错误'}`,
+                'error'
+            );
+        }
+    } catch (error) {
+        console.error('Error testing connection:', error);
+        showToast(
+            lang === 'en' 
+                ? 'Error testing connection' 
+                : '测试连接时出错',
+            'error'
+        );
+    } finally {
+        button.disabled = false;
+        button.innerHTML = originalHtml;
+    }
+}
+
+// Refresh individual miner data
+async function refreshMinerData(minerId) {
+    const lang = getLanguage();
+    
+    try {
+        const response = await fetch(`/hosting/api/miners/${minerId}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.miner) {
+            // Update the specific row with new data
+            updateMinerRow(data.miner);
+            showToast(
+                lang === 'en' 
+                    ? 'Miner data refreshed successfully' 
+                    : '矿机数据已刷新',
+                'success'
+            );
+        } else {
+            throw new Error(data.message || 'Failed to fetch miner data');
+        }
+    } catch (error) {
+        console.error('Error refreshing miner data:', error);
+        showToast(
+            lang === 'en' 
+                ? 'Error refreshing miner data' 
+                : '刷新矿机数据时出错',
+            'error'
+        );
+    }
+}
+
+// Update a single miner row with fresh data
+function updateMinerRow(miner) {
+    const row = document.getElementById(`miner-row-${miner.id}`);
+    if (!row) {
+        console.warn(`Row not found for miner ${miner.id}`);
+        return;
+    }
+    
+    const cgminerOnline = miner.cgminer_online || false;
+    const tempAvg = miner.temperature_avg || null;
+    const tempMax = miner.temperature_max || null;
+    const fanAvg = miner.fan_avg || null;
+    const hashrate5s = miner.hashrate_5s || null;
+    const lastSeen = miner.last_seen || null;
+    
+    // Format CGMiner online status
+    const cgminerStatus = cgminerOnline 
+        ? '<i class="bi bi-wifi text-success fs-5" title="' + (getLanguage() === 'en' ? 'Online' : '在线') + '"></i>'
+        : '<i class="bi bi-wifi-off text-danger fs-5" title="' + (getLanguage() === 'en' ? 'Offline' : '离线') + '"></i>';
+    
+    // Format temperature with color coding
+    let tempDisplay = '-';
+    let tempClass = '';
+    if (tempAvg !== null && tempMax !== null) {
+        tempClass = tempMax > 85 ? 'text-danger' : (tempMax > 75 ? 'text-warning' : '');
+        tempDisplay = `<span class="${tempClass}" title="${getLanguage() === 'en' ? 'Avg / Max' : '平均 / 最高'}">${tempAvg.toFixed(1)}°C / ${tempMax.toFixed(1)}°C</span>`;
+    }
+    
+    // Format fan speed
+    const fanDisplay = fanAvg !== null ? `${Math.round(fanAvg)} RPM` : '-';
+    
+    // Format 5s hashrate
+    const hashrate5sDisplay = hashrate5s !== null ? `${hashrate5s.toFixed(1)} TH/s` : '-';
+    
+    // Format last seen time
+    let lastSeenDisplay = '-';
+    if (lastSeen) {
+        const timeAgo = getTimeAgo(lastSeen);
+        lastSeenDisplay = `<small class="text-muted" title="${lastSeen}">${timeAgo}</small>`;
+    }
+    
+    // Update cells (skip first 6 columns that don't change frequently)
+    const cells = row.querySelectorAll('td');
+    if (cells.length >= 13) {
+        cells[6].innerHTML = `<div class="text-center">${cgminerStatus}<br>${lastSeenDisplay}</div>`;
+        cells[7].innerHTML = tempDisplay;
+        cells[8].innerHTML = fanDisplay;
+        cells[9].innerHTML = hashrate5sDisplay;
+        cells[10].innerHTML = `<span class="badge bg-${getStatusColor(miner.status)}">${getStatusText(miner.status)}</span>`;
+    }
+    
+    // Add a brief highlight effect
+    row.classList.add('table-active');
+    setTimeout(() => row.classList.remove('table-active'), 1000);
+}
+
+// Get human-readable time ago
+function getTimeAgo(dateString) {
+    if (!dateString) return '-';
+    
+    const lang = getLanguage();
+    const now = new Date();
+    const past = new Date(dateString);
+    const diffMs = now - past;
+    const diffSecs = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffSecs / 60);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffSecs < 60) {
+        return lang === 'en' ? 'just now' : '刚刚';
+    } else if (diffMins < 60) {
+        return lang === 'en' ? `${diffMins} min ago` : `${diffMins}分钟前`;
+    } else if (diffHours < 24) {
+        return lang === 'en' ? `${diffHours} hour${diffHours > 1 ? 's' : ''} ago` : `${diffHours}小时前`;
+    } else if (diffDays < 7) {
+        return lang === 'en' ? `${diffDays} day${diffDays > 1 ? 's' : ''} ago` : `${diffDays}天前`;
+    } else {
+        return lang === 'en' ? past.toLocaleDateString('en-US') : past.toLocaleDateString('zh-CN');
+    }
 }
 
 // 批量导入相关函数
