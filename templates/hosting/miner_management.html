@@ -510,14 +510,14 @@ function displayMiners(miners) {
                 <td><span class="badge bg-${getApprovalColor(miner.approval_status)}">${getApprovalText(miner.approval_status)}</span></td>
                 <td>
                     <div class="btn-group btn-group-sm" role="group">
+                        <a href="/hosting/miner/${miner.id}/detail" class="btn btn-hosting-primary btn-sm" title="${getLanguage() === 'en' ? 'View Details' : '查看详情'}">
+                            <i class="bi bi-graph-up"></i>
+                        </a>
                         <button class="btn btn-hosting-outline" onclick="testMinerConnection(${miner.id})" title="${getLanguage() === 'en' ? 'Test Connection' : '测试连接'}">
                             <i class="bi bi-activity"></i>
                         </button>
                         <button class="btn btn-hosting-outline" onclick="refreshMinerData(${miner.id})" title="${getLanguage() === 'en' ? 'Refresh Data' : '刷新数据'}">
                             <i class="bi bi-arrow-clockwise"></i>
-                        </button>
-                        <button class="btn btn-hosting-outline" onclick="viewMiner(${miner.id})" title="${getLanguage() === 'en' ? 'View' : '查看'}">
-                            <i class="bi bi-eye"></i>
                         </button>
                         <button class="btn btn-hosting-outline" onclick="editMiner(${miner.id})" title="${getLanguage() === 'en' ? 'Edit' : '编辑'}">
                             <i class="bi bi-pencil"></i>

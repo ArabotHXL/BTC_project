@@ -963,6 +963,64 @@ def get_miner_detail(miner_id):
             'error': '获取矿机详情失败'
         }), 500
 
+@hosting_bp.route('/api/miners/<int:miner_id>/telemetry-history', methods=['GET'])
+@login_required
+def get_miner_telemetry_history(miner_id):
+    """获取矿机24小时遥测历史数据"""
+    try:
+        user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        
+        miner = HostingMiner.query.get_or_404(miner_id)
+        
+        # 权限检查：防御性检查确保session完整性
+        if user_role not in ['owner', 'admin', 'mining_site']:
+            if not user_id or miner.customer_id != user_id:
+                return jsonify({'success': False, 'error': '无权限'}), 403
+        
+        # 查询最近24小时的遥测数据
+        time_24h_ago = datetime.utcnow() - timedelta(hours=24)
+        
+        telemetry_records = MinerTelemetry.query.filter(
+            MinerTelemetry.miner_id == miner_id,
+            MinerTelemetry.recorded_at >= time_24h_ago
+        ).order_by(MinerTelemetry.recorded_at.asc()).all()
+        
+        # 构建时间序列数据
+        data = {
+            'timestamps': [record.recorded_at.strftime('%Y-%m-%d %H:%M:%S') for record in telemetry_records],
+            'hashrate': [record.hashrate for record in telemetry_records],
+            'temperature': [record.temperature for record in telemetry_records],
+            'power_consumption': [record.power_consumption for record in telemetry_records]
+        }
+        
+        return jsonify({'success': True, 'data': data})
+        
+    except Exception as e:
+        logger.error(f"获取遥测历史失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@hosting_bp.route('/hosting/miner/<int:miner_id>/detail')
+@login_required
+def miner_detail_page(miner_id):
+    """矿机详情页面"""
+    try:
+        miner = HostingMiner.query.get_or_404(miner_id)
+        user_role = session.get('role', 'guest')
+        user_id = session.get('user_id')
+        
+        # 权限检查：防御性检查确保session完整性
+        if user_role not in ['owner', 'admin', 'mining_site']:
+            if not user_id or miner.customer_id != user_id:
+                flash('无权限访问' if session.get('language', 'zh') == 'zh' else 'Access denied', 'error')
+                return redirect(url_for('hosting.host_view', subpath='devices'))
+        
+        return render_template('hosting/miner_detail.html', miner=miner, current_lang=session.get('language', 'zh'))
+    except Exception as e:
+        logger.error(f"矿机详情页面错误: {e}")
+        flash('矿机未找到' if session.get('language', 'zh') == 'zh' else 'Miner not found', 'error')
+        return redirect(url_for('hosting.host_view', subpath='devices'))
+
 @hosting_bp.route('/api/miners/<int:miner_id>', methods=['PUT'])
 @login_required
 def update_miner(miner_id):
