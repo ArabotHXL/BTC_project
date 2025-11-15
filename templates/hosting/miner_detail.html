@@ -6,7 +6,7 @@
 {% block header_actions %}
 {{ super() }}
 <div class="btn-group ms-3" role="group">
-    <a href="{{ url_for('hosting.host_view', subpath='devices') }}" class="btn btn-hosting-secondary btn-sm">
+    <a href="{{ url_for('hosting_service_bp.host_view', subpath='devices') }}" class="btn btn-hosting-secondary btn-sm">
         <i class="bi bi-arrow-left me-1"></i>{% if current_lang == 'en' %}Back to List{% else %}返回列表{% endif %}
     </a>
     <button class="btn btn-hosting-primary btn-sm" onclick="refreshData()">
