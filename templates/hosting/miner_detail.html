@@ -93,24 +93,56 @@
     </div>
 </div>
 
-<!-- 24小时趋势图表 -->
-<div class="hosting-card">
+<!-- 性能指标图表 -->
+<div class="hosting-card mb-4">
     <div class="hosting-card-header">
         <h5 class="hosting-card-title">
-            <i class="bi bi-graph-up me-2"></i>{% if current_lang == 'en' %}24-Hour Trends{% else %}24小时趋势{% endif %}
+            <i class="bi bi-speedometer2 me-2"></i>{% if current_lang == 'en' %}Performance Metrics{% else %}性能指标{% endif %}
         </h5>
         <div class="text-muted small">
             <i class="bi bi-info-circle me-1"></i>
-            {% if current_lang == 'en' %}Hashrate (TH/s), Temperature (°C), Power (W) and Efficiency (W/TH){% else %}算力（TH/s）、温度（°C）、功率（W）和能效（W/TH）{% endif %}
+            {% if current_lang == 'en' %}Hashrate (TH/s) and Temperature (°C) - Last 24 Hours{% else %}算力（TH/s）和温度（°C）- 最近24小时{% endif %}
         </div>
     </div>
     <div class="hosting-card-body">
-        <div id="chart-container" style="position: relative; height: 400px;">
-            <canvas id="telemetryChart"></canvas>
+        <div id="performance-chart-container" style="position: relative; height: 350px;">
+            <canvas id="performanceChart"></canvas>
         </div>
         
         <!-- 无数据提示 -->
-        <div id="no-data-message" class="text-center text-muted py-5" style="display: none;">
+        <div id="no-data-message-performance" class="text-center text-muted py-5" style="display: none;">
+            <i class="bi bi-graph-down fs-1 mb-3 d-block opacity-50"></i>
+            <p class="mb-0">
+                {% if current_lang == 'en' %}
+                    No telemetry data available for the last 24 hours.<br>
+                    Data will appear once the miner starts reporting.
+                {% else %}
+                    最近24小时无遥测数据。<br>
+                    矿机开始上报后数据将会显示。
+                {% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- 能耗效率图表 -->
+<div class="hosting-card">
+    <div class="hosting-card-header">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-lightning-charge me-2"></i>{% if current_lang == 'en' %}Energy Efficiency{% else %}能耗效率{% endif %}
+        </h5>
+        <div class="text-muted small">
+            <i class="bi bi-info-circle me-1"></i>
+            {% if current_lang == 'en' %}Power (W) and Efficiency (W/TH) - Last 24 Hours{% else %}功率（W）和能效（W/TH）- 最近24小时{% endif %}
+        </div>
+    </div>
+    <div class="hosting-card-body">
+        <div id="efficiency-chart-container" style="position: relative; height: 350px;">
+            <canvas id="efficiencyChart"></canvas>
+        </div>
+        
+        <!-- 无数据提示 -->
+        <div id="no-data-message-efficiency" class="text-center text-muted py-5" style="display: none;">
             <i class="bi bi-graph-down fs-1 mb-3 d-block opacity-50"></i>
             <p class="mb-0">
                 {% if current_lang == 'en' %}
@@ -149,7 +181,8 @@
     color: var(--hosting-text-primary);
 }
 
-#chart-container {
+#performance-chart-container,
+#efficiency-chart-container {
     background: rgba(0, 0, 0, 0.2);
     border-radius: 8px;
     padding: 1rem;
@@ -163,7 +196,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <script>
-let telemetryChart = null;
+let performanceChart = null;
+let efficiencyChart = null;
 const minerId = {{ miner.id }};
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -178,34 +212,43 @@ function loadTelemetryData() {
                 const data = result.data;
                 
                 if (data.timestamps && data.timestamps.length > 0) {
-                    // 有数据，显示图表
-                    document.getElementById('chart-container').style.display = 'block';
-                    document.getElementById('no-data-message').style.display = 'none';
-                    renderChart(data);
+                    // 有数据，显示两个图表
+                    document.getElementById('performance-chart-container').style.display = 'block';
+                    document.getElementById('no-data-message-performance').style.display = 'none';
+                    document.getElementById('efficiency-chart-container').style.display = 'block';
+                    document.getElementById('no-data-message-efficiency').style.display = 'none';
+                    renderPerformanceChart(data);
+                    renderEfficiencyChart(data);
                 } else {
                     // 无数据，显示提示信息
-                    document.getElementById('chart-container').style.display = 'none';
-                    document.getElementById('no-data-message').style.display = 'block';
+                    document.getElementById('performance-chart-container').style.display = 'none';
+                    document.getElementById('no-data-message-performance').style.display = 'block';
+                    document.getElementById('efficiency-chart-container').style.display = 'none';
+                    document.getElementById('no-data-message-efficiency').style.display = 'block';
                 }
             } else {
                 console.error('Failed to load telemetry data:', result.error);
-                document.getElementById('chart-container').style.display = 'none';
-                document.getElementById('no-data-message').style.display = 'block';
+                document.getElementById('performance-chart-container').style.display = 'none';
+                document.getElementById('no-data-message-performance').style.display = 'block';
+                document.getElementById('efficiency-chart-container').style.display = 'none';
+                document.getElementById('no-data-message-efficiency').style.display = 'block';
             }
         })
         .catch(error => {
             console.error('Error loading telemetry data:', error);
-            document.getElementById('chart-container').style.display = 'none';
-            document.getElementById('no-data-message').style.display = 'block';
+            document.getElementById('performance-chart-container').style.display = 'none';
+            document.getElementById('no-data-message-performance').style.display = 'block';
+            document.getElementById('efficiency-chart-container').style.display = 'none';
+            document.getElementById('no-data-message-efficiency').style.display = 'block';
         });
 }
 
-function renderChart(data) {
-    const ctx = document.getElementById('telemetryChart').getContext('2d');
+function renderPerformanceChart(data) {
+    const ctx = document.getElementById('performanceChart').getContext('2d');
     
     // 销毁旧图表
-    if (telemetryChart) {
-        telemetryChart.destroy();
+    if (performanceChart) {
+        performanceChart.destroy();
     }
     
     // 格式化时间标签（只显示时:分）
@@ -221,19 +264,9 @@ function renderChart(data) {
     const currentLang = '{{ current_lang }}';
     const hashrateLabel = currentLang === 'en' ? 'Hashrate (TH/s)' : '算力 (TH/s)';
     const temperatureLabel = currentLang === 'en' ? 'Temperature (°C)' : '温度 (°C)';
-    const powerLabel = currentLang === 'en' ? 'Power (W)' : '功率 (W)';
-    const efficiencyLabel = currentLang === 'en' ? 'Efficiency (W/TH)' : '能效 (W/TH)';
     
-    // 计算能效比（功率/算力），处理除0情况
-    const efficiency = data.hashrate.map((hashrate, index) => {
-        if (hashrate && hashrate > 0) {
-            return (data.power_consumption[index] / hashrate).toFixed(2);
-        }
-        return null; // 算力为0时返回null，图表会跳过这个点
-    });
-    
-    // 创建新图表
-    telemetryChart = new Chart(ctx, {
+    // 创建性能图表（算力 + 温度）
+    performanceChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: formattedLabels,
@@ -257,30 +290,6 @@ function renderChart(data) {
                     backgroundColor: 'rgba(255, 107, 107, 0.1)',
                     borderWidth: 2,
                     yAxisID: 'y1',
-                    tension: 0.4,
-                    fill: true,
-                    pointRadius: 2,
-                    pointHoverRadius: 5
-                },
-                {
-                    label: powerLabel,
-                    data: data.power_consumption,
-                    borderColor: '#FFB547',
-                    backgroundColor: 'rgba(255, 181, 71, 0.1)',
-                    borderWidth: 2,
-                    yAxisID: 'y2',
-                    tension: 0.4,
-                    fill: true,
-                    pointRadius: 2,
-                    pointHoverRadius: 5
-                },
-                {
-                    label: efficiencyLabel,
-                    data: efficiency,
-                    borderColor: '#9D4EDD',
-                    backgroundColor: 'rgba(157, 78, 221, 0.1)',
-                    borderWidth: 2,
-                    yAxisID: 'y3',
                     tension: 0.4,
                     fill: true,
                     pointRadius: 2,
@@ -341,7 +350,7 @@ function renderChart(data) {
                         text: currentLang === 'en' ? 'Time (24 hours)' : '时间（24小时）',
                         color: '#adb5bd',
                         font: {
-                            size: 12
+                            size: 11
                         }
                     },
                     ticks: {
@@ -365,7 +374,7 @@ function renderChart(data) {
                         text: hashrateLabel,
                         color: '#4ECDC4',
                         font: {
-                            size: 12,
+                            size: 11,
                             weight: 'bold'
                         }
                     },
@@ -389,7 +398,7 @@ function renderChart(data) {
                         text: temperatureLabel,
                         color: '#FF6B6B',
                         font: {
-                            size: 12,
+                            size: 11,
                             weight: 'bold'
                         }
                     },
@@ -403,17 +412,152 @@ function renderChart(data) {
                         drawOnChartArea: false,
                         drawBorder: false
                     }
+                }
+            }
+        }
+    });
+}
+
+function renderEfficiencyChart(data) {
+    const ctx = document.getElementById('efficiencyChart').getContext('2d');
+    
+    // 销毁旧图表
+    if (efficiencyChart) {
+        efficiencyChart.destroy();
+    }
+    
+    // 格式化时间标签（只显示时:分）
+    const formattedLabels = data.timestamps.map(timestamp => {
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString('{{ current_lang }}', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false
+        });
+    });
+    
+    const currentLang = '{{ current_lang }}';
+    const powerLabel = currentLang === 'en' ? 'Power (W)' : '功率 (W)';
+    const efficiencyLabel = currentLang === 'en' ? 'Efficiency (W/TH)' : '能效 (W/TH)';
+    
+    // 计算能效比（功率/算力），处理除0情况
+    const efficiency = data.hashrate.map((hashrate, index) => {
+        if (hashrate && hashrate > 0) {
+            return parseFloat((data.power_consumption[index] / hashrate).toFixed(2));
+        }
+        return null; // 算力为0时返回null，图表会跳过这个点
+    });
+    
+    // 创建能耗效率图表（功率 + 能效）
+    efficiencyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: formattedLabels,
+            datasets: [
+                {
+                    label: powerLabel,
+                    data: data.power_consumption,
+                    borderColor: '#FFB547',
+                    backgroundColor: 'rgba(255, 181, 71, 0.1)',
+                    borderWidth: 2,
+                    yAxisID: 'y',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 2,
+                    pointHoverRadius: 5
                 },
-                y2: {
+                {
+                    label: efficiencyLabel,
+                    data: efficiency,
+                    borderColor: '#9D4EDD',
+                    backgroundColor: 'rgba(157, 78, 221, 0.1)',
+                    borderWidth: 2,
+                    yAxisID: 'y1',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 2,
+                    pointHoverRadius: 5
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: '#fff',
+                        font: {
+                            size: 12
+                        },
+                        padding: 15,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#f7931e',
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: true,
+                    callbacks: {
+                        title: function(context) {
+                            return data.timestamps[context[0].dataIndex];
+                        },
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += context.parsed.y.toFixed(2);
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: currentLang === 'en' ? 'Time (24 hours)' : '时间（24小时）',
+                        color: '#adb5bd',
+                        font: {
+                            size: 11
+                        }
+                    },
+                    ticks: {
+                        color: '#adb5bd',
+                        maxRotation: 45,
+                        minRotation: 45,
+                        autoSkip: true,
+                        maxTicksLimit: 12
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        drawBorder: false
+                    }
+                },
+                y: {
                     type: 'linear',
                     display: true,
-                    position: 'right',
+                    position: 'left',
                     title: {
                         display: true,
                         text: powerLabel,
                         color: '#FFB547',
                         font: {
-                            size: 12,
+                            size: 11,
                             weight: 'bold'
                         }
                     },
@@ -424,11 +568,11 @@ function renderChart(data) {
                         }
                     },
                     grid: {
-                        drawOnChartArea: false,
+                        color: 'rgba(255, 181, 71, 0.1)',
                         drawBorder: false
                     }
                 },
-                y3: {
+                y1: {
                     type: 'linear',
                     display: true,
                     position: 'right',
@@ -437,7 +581,7 @@ function renderChart(data) {
                         text: efficiencyLabel,
                         color: '#9D4EDD',
                         font: {
-                            size: 12,
+                            size: 11,
                             weight: 'bold'
                         }
                     },
