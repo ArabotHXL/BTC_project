@@ -86,6 +86,7 @@
                     <table class="table" id="current-usage-items">
                         <thead>
                             <tr>
+                                <th>#</th>
                                 <th>{% if current_lang == 'en' %}Resource{% else %}资源{% endif %}</th>
                                 <th>{% if current_lang == 'en' %}Description{% else %}描述{% endif %}</th>
                                 <th>{% if current_lang == 'en' %}Consumption{% else %}消耗量{% endif %}</th>
@@ -93,8 +94,9 @@
                                 <th>{% if current_lang == 'en' %}Cost{% else %}成本{% endif %}</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="current-usage-items-tbody">
                             <tr>
+                                <td>1</td>
                                 <td>{% if current_lang == 'en' %}Hosting Service{% else %}托管服务{% endif %}</td>
                                 <td>{% if current_lang == 'en' %}Device hosting{% else %}设备托管{% endif %}</td>
                                 <td id="hosting-quantity">3 units</td>
@@ -102,6 +104,7 @@
                                 <td id="hosting-amount">$150.00</td>
                             </tr>
                             <tr>
+                                <td>2</td>
                                 <td>{% if current_lang == 'en' %}Electricity{% else %}电力消耗{% endif %}</td>
                                 <td>{% if current_lang == 'en' %}Power consumption{% else %}电力消耗{% endif %}</td>
                                 <td id="power-quantity">2,160 kWh</td>
@@ -111,7 +114,7 @@
                         </tbody>
                         <tfoot>
                             <tr class="table-info">
-                                <th colspan="4" class="text-end">{% if current_lang == 'en' %}Total Cost:{% else %}总成本:{% endif %}</th>
+                                <th colspan="5" class="text-end">{% if current_lang == 'en' %}Total Cost:{% else %}总成本:{% endif %}</th>
                                 <th id="total-amount">$322.80</th>
                             </tr>
                         </tfoot>
@@ -276,36 +279,76 @@ function loadUsageData() {
 }
 
 function updateUsageSummary(summary) {
-    document.getElementById('current-month-usage').textContent = `${summary.current_month_energy.toFixed(2)} kWh`;
-    document.getElementById('current-month-cost').textContent = `$${summary.current_month_cost.toFixed(2)}`;
-    document.getElementById('total-usage').textContent = `${summary.total_energy.toFixed(2)} kWh`;
-    document.getElementById('active-devices').textContent = summary.active_devices;
+    if (!summary) return;
+    
+    document.getElementById('current-month-usage').textContent = `${(summary.current_month_energy || 0).toFixed(2)} kWh`;
+    document.getElementById('current-month-cost').textContent = `$${(summary.current_month_cost || 0).toFixed(2)}`;
+    document.getElementById('total-usage').textContent = `${(summary.total_energy || 0).toFixed(2)} kWh`;
+    document.getElementById('active-devices').textContent = summary.active_devices || 0;
     document.getElementById('next-report-date').textContent = summary.next_report_date || '--';
 }
 
-function updateCurrentUsage(usage) {
-    if (!usage) return;
+function updateCurrentUsage(currentUsage) {
+    if (!currentUsage) {
+        return;
+    }
     
-    document.getElementById('report-date').textContent = usage.report_date;
-    document.getElementById('period-end').textContent = usage.period_end;
-    document.getElementById('total-amount').textContent = `$${usage.total_cost.toFixed(2)}`;
+    // 更新基本信息
+    document.getElementById('report-date').textContent = currentUsage.report_date || '--';
+    document.getElementById('period-end').textContent = currentUsage.period_end || '--';
+    document.getElementById('total-amount').textContent = `$${(currentUsage.total_cost || 0).toFixed(2)}`;
     
+    // 更新状态徽章
     const statusBadge = document.getElementById('current-status');
-    statusBadge.textContent = getStatusText(usage.status);
-    statusBadge.className = `badge bg-${getStatusColor(usage.status)} text-white`;
+    statusBadge.textContent = getStatusText(currentUsage.status);
+    statusBadge.className = `badge bg-${getStatusColor(currentUsage.status)} text-white`;
+    
+    // 渲染usage_items表格
+    const tbody = document.getElementById('current-usage-items-tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    if (!currentUsage.usage_items || currentUsage.usage_items.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-muted">
+                    {% if current_lang == 'en' %}No usage data available{% else %}暂无使用数据{% endif %}
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    currentUsage.usage_items.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${item.resource || ''}</td>
+            <td>${item.description || ''}</td>
+            <td>${(item.quantity || 0).toFixed(2)}</td>
+            <td>$${(item.rate || 0).toFixed(4)}</td>
+            <td>$${(item.amount || 0).toFixed(2)}</td>
+        `;
+        tbody.appendChild(row);
+    });
 }
 
 function updateUsageHistory(history) {
+    if (!history) return;
+    
     const tbody = document.querySelector('#usage-history-table tbody');
     tbody.innerHTML = '';
     
     history.forEach(record => {
+        if (!record) return;
+        
         const row = `
             <tr>
-                <td>${record.report_date}</td>
-                <td>${record.period}</td>
-                <td>${record.energy_kwh.toFixed(2)}</td>
-                <td>$${record.total_cost.toFixed(2)}</td>
+                <td>${record.report_date || '--'}</td>
+                <td>${record.period || '--'}</td>
+                <td>${(record.energy_kwh || 0).toFixed(2)}</td>
+                <td>$${(record.total_cost || 0).toFixed(2)}</td>
                 <td><span class="badge bg-${getStatusColor(record.status)}">${getStatusText(record.status)}</span></td>
                 <td>
                     <div class="btn-group btn-group-sm">

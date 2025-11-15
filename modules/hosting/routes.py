@@ -742,7 +742,17 @@ def get_client_usage():
                 'period_end': current_usage_record.usage_period_end.strftime('%Y-%m-%d'),
                 'total_energy_kwh': round(record_energy_kwh, 2),
                 'total_cost': float(current_usage_record.total_amount),
-                'status': current_usage_record.status
+                'status': current_usage_record.status,
+                'usage_items': [
+                    {
+                        'resource': item.item_type,
+                        'description': item.description or f'{item.item_type} usage',
+                        'quantity': float(item.quantity),
+                        'rate': float(item.unit_price),
+                        'amount': float(item.total_price)
+                    }
+                    for item in current_usage_record.usage_items
+                ]
             }
         else:
             # 返回默认数据
@@ -751,7 +761,8 @@ def get_client_usage():
                 'period_end': (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d'),
                 'total_energy_kwh': 0.0,
                 'total_cost': 0.0,
-                'status': 'active'
+                'status': 'active',
+                'usage_items': []
             }
         
         # 获取历史记录（添加eager loading）
@@ -812,7 +823,8 @@ def get_client_usage():
                 'period_end': (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d'),
                 'total_energy_kwh': 0.0,
                 'total_cost': 0.0,
-                'status': 'active'
+                'status': 'active',
+                'usage_items': []
             },
             'history': []
         })
