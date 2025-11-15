@@ -66,6 +66,7 @@ class PlanStatus(enum.Enum):
     PENDING = "pending"  # 待审批
     APPROVED = "approved"  # 已批准
     EXECUTING = "executing"  # 执行中
+    RECOVERY_PENDING = "recovery_pending"  # 恢复待处理
     COMPLETED = "completed"  # 已完成
     CANCELLED = "cancelled"  # 已取消
 

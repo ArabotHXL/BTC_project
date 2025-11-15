@@ -9,7 +9,7 @@ from auth import login_required
 from decorators import requires_role
 from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingUsageRecord, HostingUsageItem, MinerTelemetry, HostingBill, HostingBillItem
 from models import CurtailmentPlan, CurtailmentStrategy, CurtailmentExecution
-from models import ExecutionMode, PlanStatus, ExecutionAction, ExecutionStatus
+from models import ExecutionMode, PlanStatus, ExecutionAction, ExecutionStatus, MinerStatus
 from intelligence.curtailment_engine import calculate_curtailment_plan
 from intelligence.curtailment_predictor import predict_optimal_curtailment
 import logging
@@ -2740,6 +2740,419 @@ def predict_curtailment_schedule():
         
     except Exception as e:
         logger.error(f"AI预测API错误: {str(e)}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ==================== 限电计划管理 API ====================
+
+@hosting_bp.route('/api/curtailment/schedules', methods=['POST'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def create_curtailment_schedule():
+    """
+    创建限电计划
+    
+    Request Body:
+        - site_id: 矿场ID (required)
+        - plan_name: 计划名称 (required)
+        - strategy_id: 策略ID (required)
+        - target_power_reduction_kw: 目标功率削减量(kW) (required)
+        - scheduled_start_time: 开始时间 ISO格式 (required)
+        - scheduled_end_time: 结束时间 ISO格式 (optional)
+        - execution_mode: 执行模式 (auto/semi_auto/manual, default: semi_auto)
+    
+    Returns:
+        - success: 是否成功
+        - schedule: 创建的计划信息
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        # 验证必填字段
+        required_fields = ['site_id', 'plan_name', 'strategy_id', 'target_power_reduction_kw', 'scheduled_start_time']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'success': False, 'error': f'{field} is required'}), 400
+        
+        # 解析开始时间
+        try:
+            start_time = datetime.fromisoformat(data['scheduled_start_time'].replace('Z', '+00:00'))
+        except ValueError as e:
+            return jsonify({'success': False, 'error': f'Invalid scheduled_start_time format: {str(e)}'}), 400
+        
+        # 解析结束时间（可选）
+        end_time = None
+        if data.get('scheduled_end_time'):
+            try:
+                end_time = datetime.fromisoformat(data['scheduled_end_time'].replace('Z', '+00:00'))
+            except ValueError as e:
+                return jsonify({'success': False, 'error': f'Invalid scheduled_end_time format: {str(e)}'}), 400
+        
+        # 验证站点和策略
+        site = HostingSite.query.get(data['site_id'])
+        if not site:
+            return jsonify({'success': False, 'error': 'Site not found'}), 404
+        
+        strategy = CurtailmentStrategy.query.get(data['strategy_id'])
+        if not strategy:
+            return jsonify({'success': False, 'error': 'Strategy not found'}), 404
+        
+        if strategy.site_id != site.id:
+            return jsonify({'success': False, 'error': 'Strategy does not belong to this site'}), 400
+        
+        # 解析执行模式
+        execution_mode_str = data.get('execution_mode', 'semi_auto')
+        try:
+            execution_mode = ExecutionMode[execution_mode_str.upper()]
+        except KeyError:
+            return jsonify({'success': False, 'error': f'Invalid execution_mode: {execution_mode_str}'}), 400
+        
+        # 创建计划
+        plan = CurtailmentPlan(
+            site_id=data['site_id'],
+            plan_name=data['plan_name'],
+            target_power_reduction_kw=data['target_power_reduction_kw'],
+            scheduled_start_time=start_time
+        )
+        plan.scheduled_end_time = end_time
+        plan.strategy_id = data['strategy_id']
+        plan.execution_mode = execution_mode
+        plan.status = PlanStatus.PENDING
+        plan.created_by_id = session.get('user_id')
+        
+        db.session.add(plan)
+        db.session.commit()
+        
+        logger.info(f"✅ 限电计划创建成功: {plan.plan_name} (ID={plan.id})")
+        
+        return jsonify({
+            'success': True,
+            'schedule': plan.to_dict()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"创建限电计划失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/curtailment/schedules', methods=['GET'])
+@requires_role(['owner', 'admin', 'mining_site', 'customer'])
+def get_curtailment_schedules():
+    """
+    获取限电计划列表
+    
+    Query Parameters:
+        - site_id: 矿场ID (required)
+        - status: 状态筛选 (pending/approved/executing/completed/cancelled) (optional)
+        - page: 页码 (default: 1)
+        - per_page: 每页数量 (default: 20)
+    
+    Returns:
+        - success: 是否成功
+        - schedules: 计划列表
+        - pagination: 分页信息
+    """
+    try:
+        site_id = request.args.get('site_id', type=int)
+        if not site_id:
+            return jsonify({'success': False, 'error': 'site_id is required'}), 400
+        
+        status_filter = request.args.get('status')
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        
+        # 构建查询
+        query = CurtailmentPlan.query.filter_by(site_id=site_id)
+        
+        if status_filter:
+            try:
+                status_enum = PlanStatus[status_filter.upper()]
+                query = query.filter_by(status=status_enum)
+            except KeyError:
+                return jsonify({'success': False, 'error': f'Invalid status: {status_filter}'}), 400
+        
+        # 按开始时间倒序排列
+        query = query.order_by(CurtailmentPlan.scheduled_start_time.desc())
+        
+        # 分页
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        
+        schedules_data = []
+        for plan in pagination.items:
+            plan_dict = plan.to_dict()
+            
+            # 添加策略名称
+            if plan.strategy:
+                plan_dict['strategy_name'] = plan.strategy.name
+            
+            # 计算时间差
+            now = datetime.utcnow()
+            if plan.scheduled_start_time > now:
+                plan_dict['time_until_start_minutes'] = int((plan.scheduled_start_time - now).total_seconds() / 60)
+            
+            schedules_data.append(plan_dict)
+        
+        return jsonify({
+            'success': True,
+            'schedules': schedules_data,
+            'pagination': {
+                'page': page,
+                'pages': pagination.pages,
+                'per_page': per_page,
+                'total': pagination.total,
+                'has_next': pagination.has_next,
+                'has_prev': pagination.has_prev
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取限电计划列表失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/curtailment/schedules/<int:schedule_id>/execute', methods=['POST'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def execute_curtailment_schedule(schedule_id):
+    """
+    手动执行限电计划
+    
+    Returns:
+        - success: 是否成功
+        - message: 执行结果消息
+        - execution_summary: 执行汇总信息
+    """
+    try:
+        plan = CurtailmentPlan.query.get_or_404(schedule_id)
+        
+        # 验证计划状态
+        if plan.status not in [PlanStatus.PENDING, PlanStatus.APPROVED]:
+            return jsonify({
+                'success': False,
+                'error': f'Cannot execute plan with status: {plan.status.value}'
+            }), 400
+        
+        logger.info(f"⚡ 手动执行限电计划: {plan.plan_name} (ID={plan.id})")
+        
+        # 更新状态为执行中
+        plan.status = PlanStatus.EXECUTING
+        db.session.commit()
+        
+        # 调用限电引擎
+        from intelligence.curtailment_engine import CurtailmentEngine
+        engine = CurtailmentEngine(site_id=plan.site_id)
+        
+        result = engine.calculate_curtailment_plan(
+            strategy_id=plan.strategy_id,
+            target_reduction_kw=float(plan.target_power_reduction_kw)
+        )
+        
+        if not result or not result.get('selected_miners'):
+            logger.warning(f"计划 {plan.plan_name} 没有选中任何矿机")
+            plan.status = PlanStatus.COMPLETED
+            db.session.commit()
+            return jsonify({
+                'success': True,
+                'message': 'No miners selected for curtailment',
+                'execution_summary': {
+                    'miners_affected': 0,
+                    'power_saved_kw': 0
+                }
+            })
+        
+        selected_miner_ids = result['selected_miners']
+        miners_to_shutdown = HostingMiner.query.filter(
+            HostingMiner.id.in_(selected_miner_ids),
+            HostingMiner.status == MinerStatus.ACTIVE
+        ).all()
+        
+        logger.info(f"🔌 准备关闭 {len(miners_to_shutdown)} 台矿机")
+        
+        success_count = 0
+        failed_count = 0
+        total_power_saved = 0.0
+        
+        for miner in miners_to_shutdown:
+            try:
+                # 更新矿机状态
+                miner.status = MinerStatus.CURTAILED
+                
+                # 计算节省功率
+                power_saved_kw = (miner.actual_power_consumption or 
+                                 miner.miner_model.reference_power_consumption) / 1000.0
+                total_power_saved += power_saved_kw
+                
+                # 创建执行记录
+                execution = CurtailmentExecution(
+                    plan_id=plan.id,
+                    miner_id=miner.id,
+                    execution_action=ExecutionAction.SHUTDOWN,
+                    execution_status=ExecutionStatus.SUCCESS,
+                    power_saved_kw=power_saved_kw
+                )
+                db.session.add(execution)
+                
+                success_count += 1
+                
+            except Exception as e:
+                failed_count += 1
+                logger.error(f"❌ 矿机 {miner.miner_name} 关闭失败: {e}")
+                
+                execution = CurtailmentExecution(
+                    plan_id=plan.id,
+                    miner_id=miner.id,
+                    execution_action=ExecutionAction.SHUTDOWN,
+                    execution_status=ExecutionStatus.FAILED,
+                    error_message=str(e)
+                )
+                db.session.add(execution)
+        
+        # 更新计划
+        plan.calculated_power_reduction_kw = total_power_saved
+        db.session.commit()
+        
+        logger.info(f"✅ 计划执行完成: 成功={success_count}, 失败={failed_count}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Curtailment executed successfully',
+            'execution_summary': {
+                'miners_affected': success_count,
+                'miners_failed': failed_count,
+                'power_saved_kw': float(total_power_saved)
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"执行限电计划失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/curtailment/schedules/<int:schedule_id>', methods=['DELETE'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def cancel_curtailment_schedule(schedule_id):
+    """
+    取消限电计划
+    
+    Returns:
+        - success: 是否成功
+        - message: 取消结果消息
+    """
+    try:
+        plan = CurtailmentPlan.query.get_or_404(schedule_id)
+        
+        # 只能取消pending或approved状态的计划
+        if plan.status not in [PlanStatus.PENDING, PlanStatus.APPROVED]:
+            return jsonify({
+                'success': False,
+                'error': f'Cannot cancel plan with status: {plan.status.value}'
+            }), 400
+        
+        logger.info(f"❌ 取消限电计划: {plan.plan_name} (ID={plan.id})")
+        
+        plan.status = PlanStatus.CANCELLED
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Schedule cancelled successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"取消限电计划失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/curtailment/schedules/<int:schedule_id>/recover', methods=['POST'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def recover_curtailment_schedule(schedule_id):
+    """
+    恢复限电计划的所有矿机
+    
+    Returns:
+        - success: 是否成功
+        - message: 恢复结果消息
+        - recovery_summary: 恢复汇总信息
+    """
+    try:
+        plan = CurtailmentPlan.query.get_or_404(schedule_id)
+        
+        # 只能恢复executing状态的计划
+        if plan.status != PlanStatus.EXECUTING:
+            return jsonify({
+                'success': False,
+                'error': f'Cannot recover plan with status: {plan.status.value}'
+            }), 400
+        
+        logger.info(f"🔄 恢复限电计划: {plan.plan_name} (ID={plan.id})")
+        
+        # 查找所有被此计划限电的矿机
+        curtailed_miners = HostingMiner.query.join(
+            CurtailmentExecution,
+            HostingMiner.id == CurtailmentExecution.miner_id
+        ).filter(
+            CurtailmentExecution.plan_id == plan.id,
+            CurtailmentExecution.execution_action == ExecutionAction.SHUTDOWN,
+            CurtailmentExecution.execution_status == ExecutionStatus.SUCCESS,
+            HostingMiner.status == MinerStatus.CURTAILED
+        ).all()
+        
+        logger.info(f"  找到 {len(curtailed_miners)} 台需要恢复的矿机")
+        
+        success_count = 0
+        failed_count = 0
+        
+        for miner in curtailed_miners:
+            try:
+                # 恢复矿机状态
+                miner.status = MinerStatus.ACTIVE
+                
+                # 创建恢复记录
+                execution = CurtailmentExecution(
+                    plan_id=plan.id,
+                    miner_id=miner.id,
+                    execution_action=ExecutionAction.STARTUP,
+                    execution_status=ExecutionStatus.SUCCESS
+                )
+                db.session.add(execution)
+                
+                success_count += 1
+                
+            except Exception as e:
+                failed_count += 1
+                logger.error(f"❌ 矿机 {miner.miner_name} 恢复失败: {e}")
+                
+                execution = CurtailmentExecution(
+                    plan_id=plan.id,
+                    miner_id=miner.id,
+                    execution_action=ExecutionAction.STARTUP,
+                    execution_status=ExecutionStatus.FAILED,
+                    error_message=str(e)
+                )
+                db.session.add(execution)
+        
+        # 更新计划状态为已完成
+        plan.status = PlanStatus.COMPLETED
+        db.session.commit()
+        
+        logger.info(f"✅ 计划恢复完成: 成功={success_count}, 失败={failed_count}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Miners recovered successfully',
+            'recovery_summary': {
+                'miners_recovered': success_count,
+                'miners_failed': failed_count
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"恢复限电计划失败: {e}", exc_info=True)
         return jsonify({'success': False, 'error': str(e)}), 500
 
 

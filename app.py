@@ -7182,6 +7182,23 @@ def init_cgminer_scheduler():
     except Exception as e:
         logging.warning(f"CGMiner数据采集调度器初始化失败: {e}")
 
+# 🔧 初始化限电调度器 - 使用SchedulerLock机制防止多worker重复启动
+def init_curtailment_scheduler():
+    """安全初始化限电调度器 - 只有获得锁的worker才会启动"""
+    try:
+        from services.curtailment_scheduler import curtailment_scheduler, set_flask_app
+        
+        # 设置 Flask app 实例供后台任务使用
+        set_flask_app(app)
+        
+        # SchedulerLock机制确保只有一个worker实例启动调度器
+        curtailment_scheduler.start_scheduler()
+        logging.info("限电调度器初始化完成 (SchedulerLock机制)")
+        # 注意：调度器停止由atexit.register自动处理，无需teardown hook
+        
+    except Exception as e:
+        logging.warning(f"限电调度器初始化失败: {e}")
+
 # 在worker启动后延迟初始化支付监控
 try:
     init_payment_monitor()
@@ -7193,6 +7210,12 @@ try:
     init_cgminer_scheduler()
 except Exception as e:
     logging.error(f"CGMiner调度器初始化异常: {e}")
+
+# 在worker启动后延迟初始化限电调度器
+try:
+    init_curtailment_scheduler()
+except Exception as e:
+    logging.error(f"限电调度器初始化异常: {e}")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
