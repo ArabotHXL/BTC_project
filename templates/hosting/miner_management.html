@@ -12,6 +12,9 @@
     <button class="btn btn-hosting-secondary btn-sm" onclick="refreshMiners()">
         <i class="bi bi-arrow-clockwise me-1"></i>{% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
     </button>
+    <a href="{{ url_for('hosting.miner_setup_guide') }}" class="btn btn-info btn-sm" target="_blank">
+        <i class="bi bi-book me-1"></i>{% if current_lang == 'en' %}Help Guide{% else %}帮助文档{% endif %}
+    </a>
 </div>
 {% endblock %}
 

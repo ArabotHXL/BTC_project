@@ -2687,3 +2687,263 @@ def test_miner_connection(miner_id):
             'online': False,
             'error': str(e)
         }), 500
+
+
+@hosting_bp.route('/miner-setup-guide')
+@login_required
+def miner_setup_guide():
+    """
+    矿机连接设置指南页面（中英双语）
+    
+    为矿场管理员提供完整的矿机连接操作手册，包括：
+    - CGMiner API配置
+    - 添加矿机到系统
+    - 测试连接
+    - 查看实时数据
+    - 告警系统说明
+    - 故障排查FAQ
+    """
+    current_lang = session.get('language', 'zh')
+    return render_template('hosting/miner_setup_guide.html', current_lang=current_lang)
+
+
+@hosting_bp.route('/miner-setup-guide/pdf')
+@login_required
+def miner_setup_guide_pdf():
+    """
+    生成矿机连接设置指南PDF文件（中英双语）
+    
+    使用ReportLab生成专业的PDF文档，包含所有章节和图片
+    """
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+        from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_JUSTIFY
+        from reportlab.lib import colors
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+        from io import BytesIO
+        from flask import make_response
+        
+        current_lang = session.get('language', 'zh')
+        
+        # 创建PDF缓冲区
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4,
+                               rightMargin=72, leftMargin=72,
+                               topMargin=72, bottomMargin=18)
+        
+        # 尝试动态查找并注册CJK字体
+        import subprocess
+        default_font = 'Helvetica'
+        cjk_font_available = False
+        
+        try:
+            # 使用fc-match查找Noto Sans CJK SC字体路径
+            result = subprocess.run(['fc-match', 'Noto Sans CJK SC', '--format=%{file}'], 
+                                   capture_output=True, text=True, timeout=2)
+            if result.returncode == 0 and result.stdout.strip():
+                font_path = result.stdout.strip()
+                # 注册CJK字体 (subfont index 2 for SC variant)
+                pdfmetrics.registerFont(TTFont('NotoSansCJKSC', font_path, subfontIndex=2))
+                default_font = 'NotoSansCJKSC'
+                cjk_font_available = True
+                logger.info(f"Successfully registered CJK font from: {font_path}")
+            else:
+                # 降级到DejaVu Sans
+                pdfmetrics.registerFont(TTFont('DejaVuSans', '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'))
+                default_font = 'DejaVuSans'
+        except Exception as e:
+            logger.warning(f"Failed to register CJK font: {e}, falling back to Helvetica")
+            default_font = 'Helvetica'
+        
+        # 如果是中文但没有CJK字体支持，切换到英文内容
+        if current_lang == 'zh' and not cjk_font_available:
+            logger.warning("No CJK font available, generating English PDF instead")
+            current_lang = 'en'
+        
+        # 构建PDF内容
+        story = []
+        styles = getSampleStyleSheet()
+        
+        # 自定义样式
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=24,
+            textColor=colors.HexColor('#f7931a'),
+            spaceAfter=30,
+            alignment=TA_CENTER,
+            fontName=default_font
+        )
+        
+        heading_style = ParagraphStyle(
+            'CustomHeading',
+            parent=styles['Heading2'],
+            fontSize=16,
+            textColor=colors.HexColor('#f7931a'),
+            spaceAfter=12,
+            spaceBefore=12,
+            fontName=default_font
+        )
+        
+        body_style = ParagraphStyle(
+            'CustomBody',
+            parent=styles['BodyText'],
+            fontSize=11,
+            spaceAfter=12,
+            alignment=TA_JUSTIFY,
+            fontName=default_font
+        )
+        
+        # 标题页
+        if current_lang == 'en':
+            title_text = "Miner Connection Setup Guide"
+            subtitle_text = "Complete Manual for Mining Farm Administrators"
+        else:
+            title_text = "矿机连接设置指南"
+            subtitle_text = "矿场管理员完整操作手册"
+        
+        story.append(Paragraph(title_text, title_style))
+        story.append(Spacer(1, 0.2*inch))
+        story.append(Paragraph(subtitle_text, body_style))
+        story.append(Spacer(1, 0.5*inch))
+        story.append(Paragraph(f"HashInsight Enterprise - {datetime.now().strftime('%Y-%m-%d')}", body_style))
+        story.append(PageBreak())
+        
+        # 目录
+        if current_lang == 'en':
+            toc_title = "Table of Contents"
+            sections = [
+                "1. Preparation",
+                "2. Adding Miners to the System",
+                "3. Testing CGMiner Connection",
+                "4. Viewing Real-time Monitoring Data",
+                "5. Smart Alert System",
+                "6. Troubleshooting Guide"
+            ]
+        else:
+            toc_title = "目录"
+            sections = [
+                "1. 准备工作",
+                "2. 添加矿机到系统",
+                "3. 测试CGMiner连接",
+                "4. 查看实时监控数据",
+                "5. 智能告警系统",
+                "6. 故障排查指南"
+            ]
+        
+        story.append(Paragraph(toc_title, heading_style))
+        for section in sections:
+            story.append(Paragraph(section, body_style))
+            story.append(Spacer(1, 0.1*inch))
+        
+        story.append(PageBreak())
+        
+        # 简化版内容（主要章节标题和关键信息）
+        if current_lang == 'en':
+            content_sections = [
+                ("1. Preparation", [
+                    "Enable CGMiner API on each miner device",
+                    "Configure network connectivity (port 4028 TCP)",
+                    "Assign static IP addresses to miners",
+                    "Test connectivity using telnet or nc command"
+                ]),
+                ("2. Adding Miners to the System", [
+                    "Navigate to Hosting → Miner Management",
+                    "Click 'Add Miner' button",
+                    "Fill in required fields: Serial Number, Miner Model, Site, IP Address",
+                    "Submit for approval if required"
+                ]),
+                ("3. Testing CGMiner Connection", [
+                    "Use the 'Test' button in the Actions column",
+                    "System connects to CGMiner API (port 4028)",
+                    "Success: real-time data displayed",
+                    "Failure: check network, firewall, and API settings"
+                ]),
+                ("4. Viewing Real-time Monitoring Data", [
+                    "14 telemetry fields collected every 60 seconds",
+                    "Temperature, fan speed, hashrate, pool info",
+                    "24-hour trend charts on miner detail page",
+                    "Automatic background collection"
+                ]),
+                ("5. Smart Alert System", [
+                    "Temperature > 90°C: Critical (red badge)",
+                    "Temperature > 85°C: Warning (yellow badge)",
+                    "Hashrate drop > 20%: Warning",
+                    "Offline > 5 minutes: Critical"
+                ]),
+                ("6. Troubleshooting Guide", [
+                    "Connection timeout: Check network and firewall",
+                    "CGMiner API not responding: Verify API enabled",
+                    "Data not updating: Check background scheduler",
+                    "Permission denied: Verify user role and assignments"
+                ])
+            ]
+        else:
+            content_sections = [
+                ("1. 准备工作", [
+                    "在每台矿机设备上启用CGMiner API",
+                    "配置网络连接（4028端口TCP）",
+                    "为矿机分配静态IP地址",
+                    "使用telnet或nc命令测试连接"
+                ]),
+                ("2. 添加矿机到系统", [
+                    "导航到托管服务 → 矿机管理",
+                    '点击"添加矿机"按钮',
+                    "填写必填字段：序列号、矿机型号、站点、IP地址",
+                    "如需要则提交审批"
+                ]),
+                ("3. 测试CGMiner连接", [
+                    '使用操作列中的"测试"按钮',
+                    "系统连接到CGMiner API（4028端口）",
+                    "成功：显示实时数据",
+                    "失败：检查网络、防火墙和API设置"
+                ]),
+                ("4. 查看实时监控数据", [
+                    "每60秒收集14个遥测字段",
+                    "温度、风扇速度、算力、矿池信息",
+                    "矿机详情页24小时趋势图表",
+                    "自动后台采集"
+                ]),
+                ("5. 智能告警系统", [
+                    "温度 > 90°C：严重（红色徽章）",
+                    "温度 > 85°C：警告（黄色徽章）",
+                    "算力下降 > 20%：警告",
+                    "离线 > 5分钟：严重"
+                ]),
+                ("6. 故障排查指南", [
+                    "连接超时：检查网络和防火墙",
+                    "CGMiner API无响应：验证API已启用",
+                    "数据未更新：检查后台调度器",
+                    "权限被拒绝：验证用户角色和分配"
+                ])
+            ]
+        
+        for section_title, section_items in content_sections:
+            story.append(Paragraph(section_title, heading_style))
+            story.append(Spacer(1, 0.1*inch))
+            
+            for item in section_items:
+                story.append(Paragraph(f"• {item}", body_style))
+            
+            story.append(Spacer(1, 0.3*inch))
+        
+        # 构建PDF
+        doc.build(story)
+        
+        # 准备响应
+        buffer.seek(0)
+        response = make_response(buffer.getvalue())
+        response.headers['Content-Type'] = 'application/pdf'
+        filename = 'Miner_Setup_Guide_EN.pdf' if current_lang == 'en' else 'Miner_Setup_Guide_ZH.pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename={filename}'
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"生成PDF错误: {str(e)}", exc_info=True)
+        flash('Failed to generate PDF', 'error')
+        return redirect(url_for('hosting.miner_setup_guide'))

@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" style="background:#1a1d2e;">
+  <defs>
+    <style>
+      .box { fill: #2d3748; stroke: #f7931a; stroke-width: 2; }
+      .text { fill: #ffffff; font-family: Arial, sans-serif; font-size: 14px; }
+      .title { fill: #f7931a; font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; }
+      .line { stroke: #f7931a; stroke-width: 2; fill: none; }
+      .arrow { fill: #f7931a; }
+    </style>
+  </defs>
+  
+  <!-- Title -->
+  <text x="400" y="30" text-anchor="middle" class="title">Network Topology / 网络拓扑</text>
+  
+  <!-- Miners (Left) -->
+  <rect x="50" y="80" width="150" height="60" class="box" rx="5"/>
+  <text x="125" y="105" text-anchor="middle" class="title">Miner 1</text>
+  <text x="125" y="125" text-anchor="middle" class="text">192.168.1.100</text>
+  
+  <rect x="50" y="160" width="150" height="60" class="box" rx="5"/>
+  <text x="125" y="185" text-anchor="middle" class="title">Miner 2</text>
+  <text x="125" y="205" text-anchor="middle" class="text">192.168.1.101</text>
+  
+  <rect x="50" y="240" width="150" height="60" class="box" rx="5"/>
+  <text x="125" y="265" text-anchor="middle" class="title">Miner 3</text>
+  <text x="125" y="285" text-anchor="middle" class="text">192.168.1.102</text>
+  
+  <!-- Router/Switch (Center) -->
+  <rect x="325" y="160" width="150" height="80" class="box" rx="5"/>
+  <text x="400" y="190" text-anchor="middle" class="title">Router / Switch</text>
+  <text x="400" y="210" text-anchor="middle" class="text">192.168.1.1</text>
+  <text x="400" y="225" text-anchor="middle" class="text" style="font-size:12px;">Port 4028 Open</text>
+  
+  <!-- Management System (Right) -->
+  <rect x="600" y="160" width="150" height="80" class="box" rx="5"/>
+  <text x="675" y="190" text-anchor="middle" class="title">Management</text>
+  <text x="675" y="210" text-anchor="middle" class="title">System</text>
+  <text x="675" y="225" text-anchor="middle" class="text" style="font-size:12px;">HashInsight</text>
+  
+  <!-- Arrows Miner 1 to Router -->
+  <line x1="200" y1="110" x2="325" y2="190" class="line"/>
+  <polygon points="325,190 315,185 315,195" class="arrow"/>
+  
+  <!-- Arrows Miner 2 to Router -->
+  <line x1="200" y1="190" x2="325" y2="200" class="line"/>
+  <polygon points="325,200 315,195 315,205" class="arrow"/>
+  
+  <!-- Arrows Miner 3 to Router -->
+  <line x1="200" y1="270" x2="325" y2="210" class="line"/>
+  <polygon points="325,210 315,205 315,215" class="arrow"/>
+  
+  <!-- Arrow Router to Management System -->
+  <line x1="475" y1="200" x2="600" y2="200" class="line"/>
+  <polygon points="600,200 590,195 590,205" class="arrow"/>
+  
+  <!-- Labels -->
+  <text x="260" y="150" text-anchor="middle" class="text" style="font-size:11px;">TCP 4028</text>
+  <text x="535" y="190" text-anchor="middle" class="text" style="font-size:11px;">CGMiner API</text>
+  
+  <!-- Port info -->
+  <text x="400" y="350" text-anchor="middle" class="text" style="font-size:12px;">All miners must be accessible from management system on port 4028</text>
+  <text x="400" y="370" text-anchor="middle" class="text" style="font-size:12px;">所有矿机必须能从管理系统的4028端口访问</text>
+</svg>
