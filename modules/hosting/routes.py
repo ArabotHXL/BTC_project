@@ -2661,6 +2661,11 @@ def get_curtailment_history():
             
             site_name = plan.site.name if plan.site else 'N/A'
             
+            # 获取第一个执行记录的时间
+            first_execution = CurtailmentExecution.query.filter_by(
+                plan_id=plan.id
+            ).order_by(CurtailmentExecution.executed_at.asc()).first()
+            
             history_data.append({
                 'id': plan.id,
                 'site_id': plan.site_id,
@@ -2668,11 +2673,11 @@ def get_curtailment_history():
                 'strategy_id': plan.strategy_id,
                 'strategy_name': strategy_name,
                 'target_power_reduction_kw': float(plan.target_power_reduction_kw),
-                'actual_power_saved_kw': float(plan.actual_power_saved_kw or 0),
+                'actual_power_saved_kw': float(plan.calculated_power_reduction_kw or 0),
                 'status': plan.status.value,
                 'execution_mode': plan.execution_mode.value,
                 'created_at': plan.created_at.isoformat() if plan.created_at else None,
-                'executed_at': plan.executed_at.isoformat() if plan.executed_at else None
+                'executed_at': first_execution.executed_at.isoformat() if first_execution else None
             })
         
         return jsonify({

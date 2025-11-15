@@ -75,10 +75,8 @@ class CurtailmentPlanService:
             plan.status = PlanStatus.EXECUTING
             db.session.flush()
             
-            # 3. 调用CurtailmentEngine选择矿机
-            from intelligence.curtailment_engine import CurtailmentEngine
-            
-            engine = CurtailmentEngine(site_id=plan.site_id)
+            # 3. 调用curtailment_engine选择矿机
+            from intelligence.curtailment_engine import calculate_curtailment_plan
             
             if not plan.strategy_id:
                 logger.error(f"❌ 计划没有选择策略: {plan.plan_name}")
@@ -88,9 +86,10 @@ class CurtailmentPlanService:
                     'error': 'No strategy selected for plan'
                 }
             
-            result = engine.calculate_curtailment_plan(
+            result = calculate_curtailment_plan(
+                site_id=plan.site_id,
                 strategy_id=plan.strategy_id,
-                target_reduction_kw=float(plan.target_power_reduction_kw)
+                target_power_reduction_kw=float(plan.target_power_reduction_kw)
             )
             
             if not result or not result.get('selected_miners'):
