@@ -1692,6 +1692,59 @@ class MinerTelemetry(db.Model):
             if hasattr(self, key):
                 setattr(self, key, value)
 
+class HostingMinerOperationLog(db.Model):
+    """矿机操作日志表 - 记录所有重要操作（启动、关闭、状态变更等）"""
+    __tablename__ = 'hosting_miner_operation_logs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    miner_id = db.Column(db.Integer, db.ForeignKey('hosting_miners.id'), nullable=False, index=True)
+    
+    # 操作信息
+    operation_type = db.Column(db.String(50), nullable=False, index=True)  # start/shutdown/restart/status_change/approve/reject/delete/edit
+    old_status = db.Column(db.String(20), nullable=True)  # 操作前状态
+    new_status = db.Column(db.String(20), nullable=True)  # 操作后状态
+    
+    # 操作人和备注
+    operator_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=False, index=True)
+    notes = db.Column(db.Text, nullable=True)  # 操作备注
+    
+    # 时间戳
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    
+    # 关联关系
+    miner = db.relationship('HostingMiner', backref='operation_logs')
+    operator = db.relationship('UserAccess', backref='miner_operations')
+    
+    # 索引优化
+    __table_args__ = (
+        db.Index('idx_miner_operation_logs_miner', 'miner_id'),
+        db.Index('idx_miner_operation_logs_operator', 'operator_id'),
+        db.Index('idx_miner_operation_logs_type', 'operation_type'),
+        db.Index('idx_miner_operation_logs_created', 'created_at'),
+    )
+    
+    def __init__(self, miner_id, operation_type, operator_id, **kwargs):
+        self.miner_id = miner_id
+        self.operation_type = operation_type
+        self.operator_id = operator_id
+        
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'miner_id': self.miner_id,
+            'operation_type': self.operation_type,
+            'old_status': self.old_status,
+            'new_status': self.new_status,
+            'operator_id': self.operator_id,
+            'operator_email': self.operator.email if self.operator else None,
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
 class HostingIncident(db.Model):
     """托管事件记录"""
     __tablename__ = 'hosting_incidents'
