@@ -69,43 +69,43 @@ def get_miners_with_performance(site_id: int) -> List[Dict]:
         
         # 子查询：获取每个矿机的最新性能评分
         # Subquery: Get latest performance score for each miner
-        latest_scores_subq = db.session.query(
-            MinerPerformanceScore.miner_id,
-            func.max(MinerPerformanceScore.calculated_at).label('latest_calculated_at')
-        ).group_by(MinerPerformanceScore.miner_id).subquery()
+        latest_scores_subq = db.session.query(  # type: ignore[misc]
+            MinerPerformanceScore.miner_id,  # type: ignore[misc]
+            func.max(MinerPerformanceScore.calculated_at).label('latest_calculated_at')  # type: ignore[misc]
+        ).group_by(MinerPerformanceScore.miner_id).subquery()  # type: ignore[misc]
         
         # 主查询：JOIN所有相关表
         # Main query: JOIN all relevant tables
-        query = db.session.query(
-            HostingMiner.id.label('miner_id'),
-            HostingMiner.serial_number,
-            HostingMiner.customer_id,
-            UserAccess.name.label('customer_name'),
-            UserAccess.subscription_plan.label('customer_tier'),
-            MinerModel.model_name,
-            MinerPerformanceScore.performance_score,
-            HostingMiner.actual_power,
-            HostingMiner.actual_hashrate,
-            HostingMiner.status,
-            HostingMiner.install_date,
-            HostingMiner.last_maintenance,
-            MinerPerformanceScore.uptime_ratio
-        ).join(
-            UserAccess,
-            HostingMiner.customer_id == UserAccess.id
-        ).join(
-            MinerModel,
-            HostingMiner.miner_model_id == MinerModel.id
-        ).outerjoin(
-            latest_scores_subq,
-            HostingMiner.id == latest_scores_subq.c.miner_id
-        ).outerjoin(
-            MinerPerformanceScore,
-            (MinerPerformanceScore.miner_id == HostingMiner.id) &
-            (MinerPerformanceScore.calculated_at == latest_scores_subq.c.latest_calculated_at)
-        ).filter(
-            HostingMiner.site_id == site_id
-        ).all()
+        query = db.session.query(  # type: ignore[misc]
+            HostingMiner.id.label('miner_id'),  # type: ignore[misc]
+            HostingMiner.serial_number,  # type: ignore[misc]
+            HostingMiner.customer_id,  # type: ignore[misc]
+            UserAccess.name.label('customer_name'),  # type: ignore[misc]
+            UserAccess.subscription_plan.label('customer_tier'),  # type: ignore[misc]
+            MinerModel.model_name,  # type: ignore[misc]
+            MinerPerformanceScore.performance_score,  # type: ignore[misc]
+            HostingMiner.actual_power,  # type: ignore[misc]
+            HostingMiner.actual_hashrate,  # type: ignore[misc]
+            HostingMiner.status,  # type: ignore[misc]
+            HostingMiner.install_date,  # type: ignore[misc]
+            HostingMiner.last_maintenance,  # type: ignore[misc]
+            MinerPerformanceScore.uptime_ratio  # type: ignore[misc]
+        ).join(  # type: ignore[misc]
+            UserAccess,  # type: ignore[misc]
+            HostingMiner.customer_id == UserAccess.id  # type: ignore[misc]
+        ).join(  # type: ignore[misc]
+            MinerModel,  # type: ignore[misc]
+            HostingMiner.miner_model_id == MinerModel.id  # type: ignore[misc]
+        ).outerjoin(  # type: ignore[misc]
+            latest_scores_subq,  # type: ignore[misc]
+            HostingMiner.id == latest_scores_subq.c.miner_id  # type: ignore[misc]
+        ).outerjoin(  # type: ignore[misc]
+            MinerPerformanceScore,  # type: ignore[misc]
+            (MinerPerformanceScore.miner_id == HostingMiner.id) &  # type: ignore[misc]
+            (MinerPerformanceScore.calculated_at == latest_scores_subq.c.latest_calculated_at)  # type: ignore[misc]
+        ).filter(  # type: ignore[misc]
+            HostingMiner.site_id == site_id  # type: ignore[misc]
+        ).all()  # type: ignore[misc]
         
         miners_data = []
         for row in query:

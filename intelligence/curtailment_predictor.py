@@ -137,7 +137,7 @@ class CurtailmentPredictor:
             df = pd.DataFrame(hourly_analysis)
             
             # 找出应该限电的时段（净收益为正）
-            curtail_hours = df[df['should_curtail'] == True]
+            curtail_hours = pd.DataFrame(df[df['should_curtail'] == True])
             
             # 汇总统计
             summary = {
@@ -253,6 +253,7 @@ class CurtailmentPredictor:
     def _get_hourly_power_prices(self) -> List[float]:
         """获取未来24小时电价（USD/kWh）"""
         try:
+            assert self.price_config is not None, "price_config must be initialized"
             config = self.price_config
             
             if config.price_mode == PriceMode.FIXED:
