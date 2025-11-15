@@ -71,10 +71,9 @@ class CurtailmentPlanService:
             
             logger.info(f"⚡ 开始执行限电计划: {plan.plan_name} (ID={plan.id})")
             
-            # 2. 更新计划状态为EXECUTING
+            # 2. 更新计划状态为EXECUTING（使用flush而不是commit，以便失败时可以rollback）
             plan.status = PlanStatus.EXECUTING
-            db.session.commit()
-            db.session.refresh(plan)
+            db.session.flush()
             
             # 3. 调用CurtailmentEngine选择矿机
             from intelligence.curtailment_engine import CurtailmentEngine
@@ -83,8 +82,7 @@ class CurtailmentPlanService:
             
             if not plan.strategy_id:
                 logger.error(f"❌ 计划没有选择策略: {plan.plan_name}")
-                plan.status = PlanStatus.PENDING
-                db.session.commit()
+                db.session.rollback()
                 return {
                     'success': False,
                     'error': 'No strategy selected for plan'
@@ -169,8 +167,7 @@ class CurtailmentPlanService:
             # 检查全失败场景：所有矿机都关闭失败
             if success_count == 0 and failed_count > 0:
                 logger.error(f"❌ 计划 {plan.plan_name} 执行失败：所有矿机关闭失败，回滚到PENDING")
-                plan.status = PlanStatus.PENDING
-                db.session.commit()
+                db.session.rollback()
                 
                 return {
                     'success': False,
@@ -179,7 +176,7 @@ class CurtailmentPlanService:
                     'miners_shutdown': 0,
                     'miners_failed': failed_count,
                     'total_power_saved_kw': 0.0,
-                    'plan_status': plan.status.value,
+                    'plan_status': PlanStatus.PENDING.value,
                     'error': 'All miners failed to shutdown'
                 }
             
@@ -217,15 +214,6 @@ class CurtailmentPlanService:
         except Exception as e:
             db.session.rollback()
             logger.error(f"❌ 执行限电计划失败: {e}", exc_info=True)
-            
-            # 尝试将计划状态恢复为PENDING
-            try:
-                plan = CurtailmentPlan.query.get(plan_id)
-                if plan and plan.status == PlanStatus.EXECUTING:
-                    plan.status = PlanStatus.PENDING
-                    db.session.commit()
-            except Exception:
-                pass
             
             return {
                 'success': False,
