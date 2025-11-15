@@ -637,7 +637,7 @@ function addMiner() {
     const form = document.getElementById('addMinerForm');
     const formData = new FormData(form);
     
-    fetch('/hosting/api/miners', {
+    fetch('/hosting/api/miners/create', {
         method: 'POST',
         body: formData
     })
