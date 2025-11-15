@@ -6,10 +6,10 @@
 {% block header_actions %}
 {{ super() }}
 <div class="btn-group ms-3" role="group">
-    <a href="{{ url_for('hosting.miner_setup_guide_pdf') }}" class="btn btn-hosting-primary btn-sm" target="_blank">
+    <a href="{{ url_for('hosting_service_bp.miner_setup_guide_pdf') }}" class="btn btn-hosting-primary btn-sm" target="_blank">
         <i class="bi bi-file-pdf me-1"></i>{% if current_lang == 'en' %}Download PDF{% else %}下载PDF版本{% endif %}
     </a>
-    <a href="{{ url_for('hosting.miner_management') }}" class="btn btn-hosting-secondary btn-sm">
+    <a href="{{ url_for('hosting_service_bp.host_view', view_type='devices') }}" class="btn btn-hosting-secondary btn-sm">
         <i class="bi bi-arrow-left me-1"></i>{% if current_lang == 'en' %}Back{% else %}返回{% endif %}
     </a>
 </div>
