@@ -1088,7 +1088,7 @@ def get_miner_telemetry_history(miner_id):
         logger.error(f"获取遥测历史失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@hosting_bp.route('/hosting/miner/<int:miner_id>/detail')
+@hosting_bp.route('/miner/<int:miner_id>/detail')
 @login_required
 def miner_detail_page(miner_id):
     """矿机详情页面"""
@@ -1101,13 +1101,13 @@ def miner_detail_page(miner_id):
         if user_role not in ['owner', 'admin', 'mining_site']:
             if not user_id or miner.customer_id != user_id:
                 flash('无权限访问' if session.get('language', 'zh') == 'zh' else 'Access denied', 'error')
-                return redirect(url_for('hosting.host_view', subpath='devices'))
+                return redirect(url_for('hosting_service_bp.host_view', view_type='devices'))
         
         return render_template('hosting/miner_detail.html', miner=miner, current_lang=session.get('language', 'zh'))
     except Exception as e:
         logger.error(f"矿机详情页面错误: {e}")
         flash('矿机未找到' if session.get('language', 'zh') == 'zh' else 'Miner not found', 'error')
-        return redirect(url_for('hosting.host_view', subpath='devices'))
+        return redirect(url_for('hosting_service_bp.host_view', view_type='devices'))
 
 @hosting_bp.route('/api/miners/<int:miner_id>', methods=['PUT'])
 @login_required
