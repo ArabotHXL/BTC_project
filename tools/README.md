@@ -212,6 +212,98 @@ GROUP BY hm.status;
 - **Cause**: Database not running or incorrect DATABASE_URL
 - **Solution**: Check `.env` file and ensure PostgreSQL is running
 
+## Data Initialization: Seed Scripts
+
+### Curtailment Strategies Seed Script
+
+**Location**: `seeds/seed_curtailment_strategies.py`
+
+This script initializes default curtailment strategies for HashPower MegaFarm (site_id=5) to ensure the smart power management feature works correctly in any environment (new deployments, database resets, etc.).
+
+#### Usage
+
+```bash
+# Basic usage - creates default strategies for site_id=5
+python seeds/seed_curtailment_strategies.py
+
+# Specify a different site
+python seeds/seed_curtailment_strategies.py --site-id 3
+
+# Force recreate (deletes existing strategies first)
+python seeds/seed_curtailment_strategies.py --force
+
+# Verify existing strategies without creating new ones
+python seeds/seed_curtailment_strategies.py --verify-only
+```
+
+#### Python API
+
+You can also call the seed function from Python code:
+
+```python
+from seeds.seed_curtailment_strategies import seed_megafarm_strategies, verify_strategies
+
+# Create default strategies
+with app.app_context():
+    count = seed_megafarm_strategies(site_id=5, force=False)
+    print(f"Created {count} strategies")
+    
+    # Verify creation
+    verify_strategies(site_id=5)
+```
+
+#### What It Creates
+
+The script creates 4 default curtailment strategies:
+
+1. **Performance Priority** - Optimizes for mining performance (70% weight)
+2. **Customer Priority** - Protects VIP customers (with uptime protection)
+3. **Fair Distribution** - Balanced approach (equal weights)
+4. **Custom Rules** - Flexible custom configuration
+
+#### Features
+
+- **Idempotent**: Safe to run multiple times (skips if strategies exist)
+- **Force mode**: Can recreate strategies with `--force` flag
+- **Validation**: Automatically validates strategy configuration
+- **Weight verification**: Ensures weights sum to 1.0
+
+#### Expected Output
+
+```
+📝 开始创建 4 个限电策略...
+   ✓ Performance Priority - MegaFarm (performance_priority)
+   ✓ Customer Priority - MegaFarm (customer_priority)
+   ✓ Fair Distribution - MegaFarm (fair_distribution)
+   ✓ Custom Rules - MegaFarm (custom)
+✅ 成功为site 5 创建 4 个限电策略
+
+🔍 验证结果:
+   站点ID: 5
+   策略数量: 4
+   ✅ 所有策略类型完整
+   活跃策略: 4/4
+   ✓ 策略 'Performance Priority - MegaFarm' 权重配置正确
+   ✓ 策略 'Customer Priority - MegaFarm' 权重配置正确
+   ✓ 策略 'Fair Distribution - MegaFarm' 权重配置正确
+   ✓ 策略 'Custom Rules - MegaFarm' 权重配置正确
+✅ 验证完成
+```
+
+#### Troubleshooting
+
+**Issue**: Script reports "已有策略，跳过"
+- **Cause**: Strategies already exist for the site
+- **Solution**: Use `--force` flag to recreate, or `--verify-only` to check existing strategies
+
+**Issue**: Database connection error
+- **Cause**: Database not accessible or incorrect DATABASE_URL
+- **Solution**: Check `.env` file and database status
+
+**Issue**: ImportError for models
+- **Cause**: Script not run from project root
+- **Solution**: Run from project root directory or ensure PYTHONPATH is set correctly
+
 ## Support
 
 For questions or issues:
