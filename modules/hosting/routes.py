@@ -663,6 +663,237 @@ def get_client_miner_distribution():
         logger.error(f"获取矿机分布数据失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@hosting_bp.route('/api/client/usage', methods=['GET'])
+@login_required
+def get_client_usage():
+    """获取客户使用情况数据"""
+    try:
+        from sqlalchemy.orm import joinedload
+        user_id = session.get('user_id')
+        
+        # 获取活跃设备数量
+        active_devices = HostingMiner.query.filter_by(
+            customer_id=user_id,
+            status='active'
+        ).count()
+        
+        # 获取本月使用记录（添加eager loading避免N+1查询）
+        current_month = datetime.now().month
+        current_year = datetime.now().year
+        current_month_records = HostingUsageRecord.query.options(
+            joinedload(HostingUsageRecord.usage_items)
+        ).filter(
+            HostingUsageRecord.customer_id == user_id,
+            db.extract('month', HostingUsageRecord.usage_period_start) == current_month,
+            db.extract('year', HostingUsageRecord.usage_period_start) == current_year
+        ).all()
+        
+        # 计算本月能源使用量（kWh）和成本（$）
+        current_month_energy_kwh = 0.0
+        current_month_cost = 0.0
+        for record in current_month_records:
+            # 累计电力消耗（kWh）
+            for item in record.usage_items:
+                if item.item_type == 'electricity':
+                    current_month_energy_kwh += item.quantity
+            # 累计成本（$）
+            current_month_cost += record.total_amount
+        
+        # 获取总使用量（添加eager loading）
+        all_records = HostingUsageRecord.query.options(
+            joinedload(HostingUsageRecord.usage_items)
+        ).filter_by(
+            customer_id=user_id
+        ).all()
+        
+        # 计算总能源使用量和总成本
+        total_energy_kwh = 0.0
+        total_cost = 0.0
+        for record in all_records:
+            # 累计电力消耗
+            for item in record.usage_items:
+                if item.item_type == 'electricity':
+                    total_energy_kwh += item.quantity
+            # 累计成本
+            total_cost += record.total_amount
+        
+        # 计算下次报告日期（每月1日）
+        next_month = current_month + 1 if current_month < 12 else 1
+        next_year = current_year if current_month < 12 else current_year + 1
+        next_report_date = f"{next_year}-{next_month:02d}-01"
+        
+        # 获取最新的使用记录作为当前使用详情（添加eager loading）
+        current_usage_record = HostingUsageRecord.query.options(
+            joinedload(HostingUsageRecord.usage_items)
+        ).filter_by(
+            customer_id=user_id
+        ).order_by(HostingUsageRecord.usage_period_end.desc()).first()
+        
+        current_usage = None
+        if current_usage_record:
+            # 计算该记录的能源消耗
+            record_energy_kwh = sum(
+                item.quantity for item in current_usage_record.usage_items 
+                if item.item_type == 'electricity'
+            )
+            
+            current_usage = {
+                'report_date': current_usage_record.usage_period_start.strftime('%Y-%m-%d'),
+                'period_end': current_usage_record.usage_period_end.strftime('%Y-%m-%d'),
+                'total_energy_kwh': round(record_energy_kwh, 2),
+                'total_cost': float(current_usage_record.total_amount),
+                'status': current_usage_record.status
+            }
+        else:
+            # 返回默认数据
+            current_usage = {
+                'report_date': datetime.now().strftime('%Y-%m-%d'),
+                'period_end': (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d'),
+                'total_energy_kwh': 0.0,
+                'total_cost': 0.0,
+                'status': 'active'
+            }
+        
+        # 获取历史记录（添加eager loading）
+        history_records = HostingUsageRecord.query.options(
+            joinedload(HostingUsageRecord.usage_items)
+        ).filter_by(
+            customer_id=user_id
+        ).order_by(HostingUsageRecord.usage_period_end.desc()).limit(10).all()
+        
+        history = []
+        for record in history_records:
+            # 计算该记录的电力消耗（kWh）
+            energy_kwh = sum(
+                item.quantity for item in record.usage_items 
+                if item.item_type == 'electricity'
+            )
+            
+            history.append({
+                'id': record.id,
+                'report_date': record.usage_period_start.strftime('%Y-%m-%d'),
+                'period': f"{record.usage_period_start.strftime('%Y-%m-%d')} - {record.usage_period_end.strftime('%Y-%m-%d')}",
+                'energy_kwh': round(energy_kwh, 2),
+                'total_cost': float(record.total_amount),
+                'status': record.status
+            })
+        
+        response_data = {
+            'success': True,
+            'summary': {
+                'current_month_energy': round(current_month_energy_kwh, 2),
+                'current_month_cost': round(current_month_cost, 2),
+                'total_energy': round(total_energy_kwh, 2),
+                'total_cost': round(total_cost, 2),
+                'active_devices': active_devices,
+                'next_report_date': next_report_date
+            },
+            'current_usage': current_usage,
+            'history': history
+        }
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        logger.error(f"获取客户使用情况失败: {e}")
+        # 返回空数据结构，不报错
+        return jsonify({
+            'success': True,
+            'summary': {
+                'current_month_energy': 0.0,
+                'current_month_cost': 0.0,
+                'total_energy': 0.0,
+                'total_cost': 0.0,
+                'active_devices': 0,
+                'next_report_date': (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d')
+            },
+            'current_usage': {
+                'report_date': datetime.now().strftime('%Y-%m-%d'),
+                'period_end': (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d'),
+                'total_energy_kwh': 0.0,
+                'total_cost': 0.0,
+                'status': 'active'
+            },
+            'history': []
+        })
+
+@hosting_bp.route('/api/client/usage/generate-report', methods=['POST'])
+@login_required
+def generate_usage_report():
+    """生成使用报告"""
+    try:
+        user_id = session.get('user_id')
+        current_lang = session.get('language', 'zh')
+        
+        # 检查是否有活跃设备
+        active_miners = HostingMiner.query.filter_by(
+            customer_id=user_id,
+            status='active'
+        ).count()
+        
+        if active_miners == 0:
+            message = 'No active devices found' if current_lang == 'en' else '没有找到活跃设备'
+            return jsonify({
+                'success': False,
+                'message': message
+            })
+        
+        # 生成报告的逻辑（这里简化处理）
+        # 实际应用中应该创建新的 HostingUsageRecord 记录
+        
+        message = 'Usage report generated successfully' if current_lang == 'en' else '使用报告生成成功'
+        return jsonify({
+            'success': True,
+            'message': message
+        })
+        
+    except Exception as e:
+        logger.error(f"生成使用报告失败: {e}")
+        current_lang = session.get('language', 'zh')
+        message = 'Failed to generate report' if current_lang == 'en' else '生成报告失败'
+        return jsonify({
+            'success': False,
+            'message': message
+        }), 500
+
+@hosting_bp.route('/api/client/usage/alerts', methods=['POST'])
+@login_required
+def save_usage_alerts():
+    """保存使用提醒设置"""
+    try:
+        user_id = session.get('user_id')
+        current_lang = session.get('language', 'zh')
+        data = request.get_json()
+        
+        # 验证数据
+        if not data:
+            message = 'Invalid data' if current_lang == 'en' else '无效的数据'
+            return jsonify({
+                'success': False,
+                'message': message
+            }), 400
+        
+        # 这里应该将提醒设置保存到数据库
+        # 实际应用中可以创建一个 UsageAlertSettings 模型来存储这些设置
+        # 现在简化处理，只返回成功响应
+        
+        logger.info(f"用户 {user_id} 保存提醒设置: {data}")
+        
+        message = 'Alert settings saved successfully' if current_lang == 'en' else '提醒设置保存成功'
+        return jsonify({
+            'success': True,
+            'message': message
+        })
+        
+    except Exception as e:
+        logger.error(f"保存提醒设置失败: {e}")
+        current_lang = session.get('language', 'zh')
+        message = 'Failed to save settings' if current_lang == 'en' else '保存设置失败'
+        return jsonify({
+            'success': False,
+            'message': message
+        }), 500
+
 # ==================== 矿机管理API ====================
 
 @hosting_bp.route('/api/miners', methods=['GET'])

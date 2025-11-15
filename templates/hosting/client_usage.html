@@ -8,13 +8,18 @@
 <!-- 使用概览统计 -->
 <div class="hosting-stats-grid">
     <div class="hosting-stat-card">
-        <div class="hosting-stat-value" id="current-month-usage">0.00 MW</div>
-        <div class="hosting-stat-label">{% if current_lang == 'en' %}Current Month{% else %}本月使用{% endif %}</div>
+        <div class="hosting-stat-value" id="current-month-usage">0.00 kWh</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Current Month (kWh){% else %}本月使用 (kWh){% endif %}</div>
         <i class="bi bi-activity hosting-stat-icon"></i>
     </div>
     <div class="hosting-stat-card">
-        <div class="hosting-stat-value" id="total-usage">0.00 MW</div>
-        <div class="hosting-stat-label">{% if current_lang == 'en' %}Total Usage{% else %}总使用量{% endif %}</div>
+        <div class="hosting-stat-value" id="current-month-cost">$0.00</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Current Month Cost{% else %}本月成本{% endif %}</div>
+        <i class="bi bi-cash-coin hosting-stat-icon"></i>
+    </div>
+    <div class="hosting-stat-card">
+        <div class="hosting-stat-value" id="total-usage">0.00 kWh</div>
+        <div class="hosting-stat-label">{% if current_lang == 'en' %}Total Energy (kWh){% else %}总使用量 (kWh){% endif %}</div>
         <i class="bi bi-check-circle hosting-stat-icon"></i>
     </div>
     <div class="hosting-stat-card">
@@ -156,7 +161,8 @@
                     <tr>
                         <th>{% if current_lang == 'en' %}Report Date{% else %}报告日期{% endif %}</th>
                         <th>{% if current_lang == 'en' %}Period{% else %}期间{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Usage{% else %}使用量{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Energy (kWh){% else %}能源 (kWh){% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Cost ($){% else %}成本 ($){% endif %}</th>
                         <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
                         <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
                     </tr>
@@ -165,7 +171,8 @@
                     <tr>
                         <td>2024-12-01</td>
                         <td>2024-12-01 - 2024-12-31</td>
-                        <td>2,890 kWh</td>
+                        <td>2,890.00</td>
+                        <td>$322.80</td>
                         <td><span class="badge bg-success">{% if current_lang == 'en' %}Completed{% else %}已完成{% endif %}</span></td>
                         <td>
                             <button class="btn btn-hosting-outline btn-sm" onclick="downloadUsagePdf('2024-12')">
@@ -176,7 +183,8 @@
                     <tr>
                         <td>2024-11-01</td>
                         <td>2024-11-01 - 2024-11-30</td>
-                        <td>2,756 kWh</td>
+                        <td>2,756.00</td>
+                        <td>$308.50</td>
                         <td><span class="badge bg-success">{% if current_lang == 'en' %}Completed{% else %}已完成{% endif %}</span></td>
                         <td>
                             <button class="btn btn-hosting-outline btn-sm" onclick="downloadUsagePdf('2024-11')">
@@ -268,8 +276,9 @@ function loadUsageData() {
 }
 
 function updateUsageSummary(summary) {
-    document.getElementById('current-month-usage').textContent = `${summary.current_month.toFixed(2)} MW`;
-    document.getElementById('total-usage').textContent = `${summary.total_usage.toFixed(2)} MW`;
+    document.getElementById('current-month-usage').textContent = `${summary.current_month_energy.toFixed(2)} kWh`;
+    document.getElementById('current-month-cost').textContent = `$${summary.current_month_cost.toFixed(2)}`;
+    document.getElementById('total-usage').textContent = `${summary.total_energy.toFixed(2)} kWh`;
     document.getElementById('active-devices').textContent = summary.active_devices;
     document.getElementById('next-report-date').textContent = summary.next_report_date || '--';
 }
@@ -295,7 +304,8 @@ function updateUsageHistory(history) {
             <tr>
                 <td>${record.report_date}</td>
                 <td>${record.period}</td>
-                <td>${record.usage} kWh</td>
+                <td>${record.energy_kwh.toFixed(2)}</td>
+                <td>$${record.total_cost.toFixed(2)}</td>
                 <td><span class="badge bg-${getStatusColor(record.status)}">${getStatusText(record.status)}</span></td>
                 <td>
                     <div class="btn-group btn-group-sm">
@@ -396,6 +406,55 @@ function getLanguage() {
 
 function showToast(message, type) {
     console.log(`[${type.toUpperCase()}] ${message}`);
+}
+
+function viewCurrentUsage() {
+    const element = document.querySelector('.hosting-card');
+    if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        const language = getLanguage();
+        const message = language === 'en' ? 'Usage details section not found' : '找不到使用详情区域';
+        showToast(message, 'warning');
+    }
+}
+
+function downloadUsageReport() {
+    const language = getLanguage();
+    const message = language === 'en' ? 'Download feature is not yet implemented' : '下载功能暂未实现';
+    showToast(message, 'info');
+}
+
+function showUsageHistory() {
+    const historyCard = document.querySelector('#usage-history-table');
+    if (historyCard) {
+        historyCard.closest('.hosting-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        const language = getLanguage();
+        const message = language === 'en' ? 'Usage history section not found' : '找不到使用历史区域';
+        showToast(message, 'warning');
+    }
+}
+
+function exportUsageHistory() {
+    const language = getLanguage();
+    const message = language === 'en' ? 'Export feature is not yet implemented' : '导出功能暂未实现';
+    showToast(message, 'info');
+}
+
+function viewUsageDetail(recordId) {
+    if (!recordId) {
+        const language = getLanguage();
+        const message = language === 'en' ? 'Invalid record ID' : '无效的记录ID';
+        showToast(message, 'error');
+        return;
+    }
+    
+    const language = getLanguage();
+    const message = language === 'en' 
+        ? `Viewing details for record ${recordId}` 
+        : `查看记录 ${recordId} 的详情`;
+    showToast(message, 'info');
 }
 </script>
 {% endblock %}
