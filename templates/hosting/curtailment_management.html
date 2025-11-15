@@ -5,6 +5,22 @@
 
 {% block content %}
 
+<!-- 全局站点选择器 -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="hosting-card">
+            <div class="hosting-card-body">
+                <label class="form-label fw-bold">
+                    <i class="bi bi-building me-2"></i>{% if current_lang == 'en' %}Select Mining Site{% else %}选择矿场{% endif %}
+                </label>
+                <select class="form-select" id="site-select" required>
+                    <option value="">{% if current_lang == 'en' %}Select Site{% else %}选择站点{% endif %}</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 标签页导航 -->
 <ul class="nav nav-tabs mb-4" role="tablist">
     <li class="nav-item">
@@ -143,13 +159,7 @@
     <div class="hosting-card-body">
         <form id="curtailment-form">
             <div class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label">{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</label>
-                    <select class="form-select" id="site-select" required>
-                        <option value="">{% if current_lang == 'en' %}Select Site{% else %}选择站点{% endif %}</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label class="form-label">{% if current_lang == 'en' %}Strategy{% else %}策略{% endif %}</label>
                     <select class="form-select" id="strategy-select" required>
                         <option value="">{% if current_lang == 'en' %}Select Strategy{% else %}选择策略{% endif %}</option>
@@ -247,8 +257,15 @@
             <div class="hosting-card-body">
                 <form id="schedule-form">
                     <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label fw-bold">{% if current_lang == 'en' %}Plan Name{% else %}计划名称{% endif %} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="schedule-plan-name" required 
+                                   placeholder="{% if current_lang == 'en' %}e.g., Emergency Curtailment - Nov 15{% else %}例如：紧急限电 - 11月15日{% endif %}">
+                        </div>
+                    </div>
+                    <div class="row">
                         <div class="col-md-6">
-                            <label class="form-label">{% if current_lang == 'en' %}Start Time{% else %}开始时间{% endif %}</label>
+                            <label class="form-label">{% if current_lang == 'en' %}Start Time{% else %}开始时间{% endif %} <span class="text-danger">*</span></label>
                             <input type="datetime-local" class="form-control" id="schedule-start-time" required>
                         </div>
                         <div class="col-md-6">
@@ -259,11 +276,11 @@
                     </div>
                     <div class="row mt-3">
                         <div class="col-md-6">
-                            <label class="form-label">{% if current_lang == 'en' %}Target Reduction (kW){% else %}目标削减功率 (kW){% endif %}</label>
+                            <label class="form-label">{% if current_lang == 'en' %}Target Reduction (kW){% else %}目标削减功率 (kW){% endif %} <span class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="schedule-target-kw" required min="0" step="0.1">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">{% if current_lang == 'en' %}Strategy{% else %}限电策略{% endif %}</label>
+                            <label class="form-label">{% if current_lang == 'en' %}Strategy{% else %}限电策略{% endif %} <span class="text-danger">*</span></label>
                             <select class="form-control" id="schedule-strategy" required>
                                 <option value="">{% if current_lang == 'en' %}Select Strategy{% else %}选择策略{% endif %}</option>
                             </select>
@@ -861,15 +878,17 @@ function createSchedule() {
         return;
     }
     
+    const planName = document.getElementById('schedule-plan-name').value.trim();
     const data = {
         site_id: parseInt(siteId),
+        plan_name: planName,
         strategy_id: parseInt(document.getElementById('schedule-strategy').value),
-        start_time: document.getElementById('schedule-start-time').value,
-        end_time: document.getElementById('schedule-end-time').value || null,
+        scheduled_start_time: document.getElementById('schedule-start-time').value,
+        scheduled_end_time: document.getElementById('schedule-end-time').value || null,
         target_power_reduction_kw: parseFloat(document.getElementById('schedule-target-kw').value)
     };
     
-    if (!data.strategy_id || !data.start_time || !data.target_power_reduction_kw) {
+    if (!planName || !data.strategy_id || !data.scheduled_start_time || !data.target_power_reduction_kw) {
         alert(currentLang === 'en' ? 'Please fill in all required fields' : '请填写所有必填字段');
         return;
     }

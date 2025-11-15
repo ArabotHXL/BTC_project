@@ -2873,10 +2873,12 @@ def get_curtailment_schedules():
         query = CurtailmentPlan.query.filter_by(site_id=site_id)
         
         if status_filter:
+            # 支持逗号分隔的多个状态
+            status_values = [s.strip() for s in status_filter.split(',')]
             try:
-                status_enum = PlanStatus[status_filter.upper()]
-                query = query.filter_by(status=status_enum)
-            except KeyError:
+                status_enums = [PlanStatus[s.upper()] for s in status_values]
+                query = query.filter(CurtailmentPlan.status.in_(status_enums))
+            except KeyError as e:
                 return jsonify({'success': False, 'error': f'Invalid status: {status_filter}'}), 400
         
         # 按开始时间倒序排列
@@ -2888,6 +2890,10 @@ def get_curtailment_schedules():
         schedules_data = []
         for plan in pagination.items:
             plan_dict = plan.to_dict()
+            
+            # 添加兼容性字段名（frontend期待start_time/end_time）
+            plan_dict['start_time'] = plan_dict.get('scheduled_start_time')
+            plan_dict['end_time'] = plan_dict.get('scheduled_end_time')
             
             # 添加策略名称
             if plan.strategy:
