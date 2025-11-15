@@ -101,7 +101,7 @@
         </h5>
         <div class="text-muted small">
             <i class="bi bi-info-circle me-1"></i>
-            {% if current_lang == 'en' %}Hashrate (TH/s), Temperature (°C) and Power (W){% else %}算力（TH/s）、温度（°C）和功率（W）{% endif %}
+            {% if current_lang == 'en' %}Hashrate (TH/s), Temperature (°C), Power (W) and Efficiency (W/TH){% else %}算力（TH/s）、温度（°C）、功率（W）和能效（W/TH）{% endif %}
         </div>
     </div>
     <div class="hosting-card-body">
@@ -222,6 +222,15 @@ function renderChart(data) {
     const hashrateLabel = currentLang === 'en' ? 'Hashrate (TH/s)' : '算力 (TH/s)';
     const temperatureLabel = currentLang === 'en' ? 'Temperature (°C)' : '温度 (°C)';
     const powerLabel = currentLang === 'en' ? 'Power (W)' : '功率 (W)';
+    const efficiencyLabel = currentLang === 'en' ? 'Efficiency (W/TH)' : '能效 (W/TH)';
+    
+    // 计算能效比（功率/算力），处理除0情况
+    const efficiency = data.hashrate.map((hashrate, index) => {
+        if (hashrate && hashrate > 0) {
+            return (data.power_consumption[index] / hashrate).toFixed(2);
+        }
+        return null; // 算力为0时返回null，图表会跳过这个点
+    });
     
     // 创建新图表
     telemetryChart = new Chart(ctx, {
@@ -260,6 +269,18 @@ function renderChart(data) {
                     backgroundColor: 'rgba(255, 181, 71, 0.1)',
                     borderWidth: 2,
                     yAxisID: 'y2',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 2,
+                    pointHoverRadius: 5
+                },
+                {
+                    label: efficiencyLabel,
+                    data: efficiency,
+                    borderColor: '#9D4EDD',
+                    backgroundColor: 'rgba(157, 78, 221, 0.1)',
+                    borderWidth: 2,
+                    yAxisID: 'y3',
                     tension: 0.4,
                     fill: true,
                     pointRadius: 2,
@@ -400,6 +421,30 @@ function renderChart(data) {
                         color: '#FFB547',
                         callback: function(value) {
                             return value.toFixed(0) + ' W';
+                        }
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                        drawBorder: false
+                    }
+                },
+                y3: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: efficiencyLabel,
+                        color: '#9D4EDD',
+                        font: {
+                            size: 12,
+                            weight: 'bold'
+                        }
+                    },
+                    ticks: {
+                        color: '#9D4EDD',
+                        callback: function(value) {
+                            return value.toFixed(1) + ' W/TH';
                         }
                     },
                     grid: {
