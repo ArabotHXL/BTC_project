@@ -127,7 +127,7 @@ class CurtailmentSchedulerService:
         1. 找到状态为PENDING或APPROVED的计划
         2. 检查开始时间是否到达
         3. 执行限电（根据execution_mode）
-        4. 更新计划状态
+        4. 调用CurtailmentPlanService执行
         """
         if not self._app:
             logger.error("Flask应用未设置，无法检查计划")
@@ -135,8 +135,8 @@ class CurtailmentSchedulerService:
         
         try:
             with self._app.app_context():
-                from models import CurtailmentPlan, PlanStatus, ExecutionMode, db
-                from intelligence.curtailment_engine import CurtailmentEngine
+                from models import CurtailmentPlan, PlanStatus, ExecutionMode
+                from services.curtailment_plan_service import CurtailmentPlanService
                 
                 now = datetime.utcnow()
                 
@@ -153,19 +153,30 @@ class CurtailmentSchedulerService:
                 
                 for plan in pending_plans:
                     try:
-                        logger.info(f"⚡ 开始执行限电计划: {plan.plan_name} (ID={plan.id})")
-                        
+                        # 检查执行模式
                         if plan.execution_mode == ExecutionMode.AUTO:
-                            self._execute_plan_auto(plan)
+                            should_execute = True
                         elif plan.execution_mode == ExecutionMode.SEMI_AUTO:
-                            if plan.status == PlanStatus.APPROVED:
-                                self._execute_plan_auto(plan)
-                            else:
+                            should_execute = (plan.status == PlanStatus.APPROVED)
+                            if not should_execute:
                                 logger.info(f"⏸️ 半自动计划需要审批: {plan.plan_name}")
                         else:
+                            should_execute = False
                             logger.info(f"✋ 手动计划不自动执行: {plan.plan_name}")
-                            plan.status = PlanStatus.PENDING
-                            db.session.commit()
+                        
+                        if should_execute:
+                            logger.info(f"⚡ 开始执行限电计划: {plan.plan_name} (ID={plan.id})")
+                            result = CurtailmentPlanService.execute_plan(plan.id)
+                            
+                            if result['success']:
+                                logger.info(
+                                    f"✅ 计划执行成功: {result['plan_name']} | "
+                                    f"关闭={result['miners_shutdown']}, "
+                                    f"失败={result['miners_failed']}, "
+                                    f"节省={result['total_power_saved_kw']}kW"
+                                )
+                            else:
+                                logger.error(f"❌ 计划执行失败: {result.get('error', 'Unknown error')}")
                     
                     except Exception as e:
                         logger.error(f"❌ 执行计划失败 {plan.plan_name}: {e}", exc_info=True)
@@ -173,110 +184,15 @@ class CurtailmentSchedulerService:
         except Exception as e:
             logger.error(f"❌ 检查待执行计划任务异常: {e}", exc_info=True)
     
-    def _execute_plan_auto(self, plan):
-        """
-        自动执行限电计划
-        
-        Args:
-            plan: CurtailmentPlan实例
-        """
-        from models import db, PlanStatus, HostingMiner, MinerStatus, CurtailmentExecution, ExecutionAction, ExecutionStatus
-        from intelligence.curtailment_engine import CurtailmentEngine
-        
-        try:
-            plan.status = PlanStatus.EXECUTING
-            db.session.commit()
-            
-            engine = CurtailmentEngine(site_id=plan.site_id)
-            
-            if not plan.strategy_id:
-                logger.error(f"计划 {plan.plan_name} 没有选择策略，跳过执行")
-                plan.status = PlanStatus.PENDING
-                db.session.commit()
-                return
-            
-            result = engine.calculate_curtailment_plan(
-                strategy_id=plan.strategy_id,
-                target_reduction_kw=float(plan.target_power_reduction_kw)
-            )
-            
-            if not result or not result.get('selected_miners'):
-                logger.warning(f"计划 {plan.plan_name} 没有选中任何矿机")
-                plan.status = PlanStatus.COMPLETED
-                db.session.commit()
-                return
-            
-            selected_miner_ids = result['selected_miners']
-            miners_to_shutdown = HostingMiner.query.filter(  # type: ignore
-                HostingMiner.id.in_(selected_miner_ids),  # type: ignore
-                HostingMiner.status == MinerStatus.ACTIVE  # type: ignore
-            ).all()
-            
-            logger.info(f"🔌 准备关闭 {len(miners_to_shutdown)} 台矿机")
-            
-            success_count = 0
-            failed_count = 0
-            
-            for miner in miners_to_shutdown:
-                try:
-                    miner.status = MinerStatus.CURTAILED
-                    
-                    power_saved_kw = (miner.actual_power_consumption or 
-                                     miner.miner_model.reference_power_consumption) / 1000.0
-                    
-                    execution = CurtailmentExecution(
-                        plan_id=plan.id,
-                        miner_id=miner.id,
-                        execution_action=ExecutionAction.SHUTDOWN,
-                        execution_status=ExecutionStatus.SUCCESS,
-                        power_saved_kw=power_saved_kw
-                    )
-                    db.session.add(execution)
-                    
-                    success_count += 1
-                    logger.debug(f"  ✅ 矿机 {miner.miner_name} 已关闭")
-                    
-                except Exception as e:
-                    failed_count += 1
-                    logger.error(f"  ❌ 矿机 {miner.miner_name} 关闭失败: {e}")
-                    
-                    execution = CurtailmentExecution(
-                        plan_id=plan.id,
-                        miner_id=miner.id,
-                        execution_action=ExecutionAction.SHUTDOWN,
-                        execution_status=ExecutionStatus.FAILED,
-                        error_message=str(e)
-                    )
-                    db.session.add(execution)
-            
-            plan.calculated_power_reduction_kw = result.get('actual_power_saved_kw', 0)
-            # 保持EXECUTING状态，等待手动恢复或自动恢复（如果有scheduled_end_time）
-            db.session.commit()
-            
-            logger.info(
-                f"✅ 计划执行完成: {plan.plan_name} | "
-                f"成功={success_count}, 失败={failed_count}, "
-                f"节省功率={result.get('actual_power_saved_kw', 0)} kW"
-            )
-            
-            if plan.scheduled_end_time:
-                logger.info(f"   等待自动恢复，结束时间={plan.scheduled_end_time}")
-            else:
-                logger.info(f"   需要手动恢复（POST /api/curtailment/schedules/{plan.id}/recover）")
-            
-        except Exception as e:
-            logger.error(f"自动执行计划失败: {e}", exc_info=True)
-            plan.status = PlanStatus.PENDING
-            db.session.commit()
-    
     def _check_recovery_plans(self):
         """
         定时任务：检查需要恢复的限电计划
         
         检查逻辑：
         1. 找到状态为EXECUTING且已过结束时间的计划
-        2. 恢复被限电的矿机
-        3. 更新计划状态为COMPLETED
+        2. 先更新status = RECOVERY_PENDING（标记即将恢复）
+        3. 调用CurtailmentPlanService恢复被限电的矿机
+        4. Service层会根据恢复结果设置最终状态（COMPLETED或RECOVERY_PENDING）
         """
         if not self._app:
             logger.error("Flask应用未设置，无法检查恢复")
@@ -284,7 +200,8 @@ class CurtailmentSchedulerService:
         
         try:
             with self._app.app_context():
-                from models import CurtailmentPlan, PlanStatus, HostingMiner, MinerStatus, CurtailmentExecution, ExecutionAction, ExecutionStatus, db
+                from models import CurtailmentPlan, PlanStatus, db
+                from services.curtailment_plan_service import CurtailmentPlanService
                 
                 now = datetime.utcnow()
                 
@@ -302,58 +219,24 @@ class CurtailmentSchedulerService:
                 
                 for plan in recovery_plans:
                     try:
-                        logger.info(f"🔌 开始恢复计划: {plan.plan_name} (ID={plan.id})")
-                        
-                        curtailed_miners = HostingMiner.query.join(  # type: ignore
-                            CurtailmentExecution,
-                            HostingMiner.id == CurtailmentExecution.miner_id  # type: ignore
-                        ).filter(
-                            CurtailmentExecution.plan_id == plan.id,  # type: ignore
-                            CurtailmentExecution.execution_action == ExecutionAction.SHUTDOWN,  # type: ignore
-                            CurtailmentExecution.execution_status == ExecutionStatus.SUCCESS,  # type: ignore
-                            HostingMiner.status == MinerStatus.CURTAILED  # type: ignore
-                        ).all()
-                        
-                        logger.info(f"  找到 {len(curtailed_miners)} 台需要恢复的矿机")
-                        
-                        success_count = 0
-                        failed_count = 0
-                        
-                        for miner in curtailed_miners:
-                            try:
-                                miner.status = MinerStatus.ACTIVE
-                                
-                                execution = CurtailmentExecution(
-                                    plan_id=plan.id,
-                                    miner_id=miner.id,
-                                    execution_action=ExecutionAction.STARTUP,
-                                    execution_status=ExecutionStatus.SUCCESS
-                                )
-                                db.session.add(execution)
-                                
-                                success_count += 1
-                                logger.debug(f"    ✅ 矿机 {miner.miner_name} 已恢复")
-                                
-                            except Exception as e:
-                                failed_count += 1
-                                logger.error(f"    ❌ 矿机 {miner.miner_name} 恢复失败: {e}")
-                                
-                                execution = CurtailmentExecution(
-                                    plan_id=plan.id,
-                                    miner_id=miner.id,
-                                    execution_action=ExecutionAction.STARTUP,
-                                    execution_status=ExecutionStatus.FAILED,
-                                    error_message=str(e)
-                                )
-                                db.session.add(execution)
-                        
-                        plan.status = PlanStatus.COMPLETED
+                        # 先更新状态为RECOVERY_PENDING（标记即将恢复）
+                        plan.status = PlanStatus.RECOVERY_PENDING
                         db.session.commit()
+                        logger.info(f"  📌 计划状态已更新为RECOVERY_PENDING: {plan.plan_name}")
                         
-                        logger.info(
-                            f"✅ 计划恢复完成: {plan.plan_name} | "
-                            f"成功={success_count}, 失败={failed_count}"
-                        )
+                        # 调用服务层恢复矿机
+                        logger.info(f"🔌 开始恢复计划: {plan.plan_name} (ID={plan.id})")
+                        result = CurtailmentPlanService.recover_plan(plan.id)
+                        
+                        if result['success']:
+                            logger.info(
+                                f"✅ 计划恢复成功: {result['plan_name']} | "
+                                f"恢复={result['miners_recovered']}, "
+                                f"失败={result['miners_failed']}, "
+                                f"最终状态={result['plan_status']}"
+                            )
+                        else:
+                            logger.error(f"❌ 计划恢复失败: {result.get('error', 'Unknown error')}")
                         
                     except Exception as e:
                         logger.error(f"❌ 恢复计划失败 {plan.plan_name}: {e}", exc_info=True)
