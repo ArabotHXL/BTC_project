@@ -101,7 +101,7 @@
         </h5>
         <div class="text-muted small">
             <i class="bi bi-info-circle me-1"></i>
-            {% if current_lang == 'en' %}Hashrate (TH/s) and Temperature (°C){% else %}算力（TH/s）和温度（°C）{% endif %}
+            {% if current_lang == 'en' %}Hashrate (TH/s), Temperature (°C) and Power (W){% else %}算力（TH/s）、温度（°C）和功率（W）{% endif %}
         </div>
     </div>
     <div class="hosting-card-body">
@@ -221,6 +221,7 @@ function renderChart(data) {
     const currentLang = '{{ current_lang }}';
     const hashrateLabel = currentLang === 'en' ? 'Hashrate (TH/s)' : '算力 (TH/s)';
     const temperatureLabel = currentLang === 'en' ? 'Temperature (°C)' : '温度 (°C)';
+    const powerLabel = currentLang === 'en' ? 'Power (W)' : '功率 (W)';
     
     // 创建新图表
     telemetryChart = new Chart(ctx, {
@@ -247,6 +248,18 @@ function renderChart(data) {
                     backgroundColor: 'rgba(255, 107, 107, 0.1)',
                     borderWidth: 2,
                     yAxisID: 'y1',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 2,
+                    pointHoverRadius: 5
+                },
+                {
+                    label: powerLabel,
+                    data: data.power_consumption,
+                    borderColor: '#FFB547',
+                    backgroundColor: 'rgba(255, 181, 71, 0.1)',
+                    borderWidth: 2,
+                    yAxisID: 'y2',
                     tension: 0.4,
                     fill: true,
                     pointRadius: 2,
@@ -363,6 +376,30 @@ function renderChart(data) {
                         color: '#FF6B6B',
                         callback: function(value) {
                             return value.toFixed(1) + '°C';
+                        }
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                        drawBorder: false
+                    }
+                },
+                y2: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: powerLabel,
+                        color: '#FFB547',
+                        font: {
+                            size: 12,
+                            weight: 'bold'
+                        }
+                    },
+                    ticks: {
+                        color: '#FFB547',
+                        callback: function(value) {
+                            return value.toFixed(0) + ' W';
                         }
                     },
                     grid: {
