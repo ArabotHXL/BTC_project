@@ -5,6 +5,25 @@
 
 {% block content %}
 
+<!-- 标签页导航 -->
+<ul class="nav nav-tabs mb-4" role="tablist">
+    <li class="nav-item">
+        <a class="nav-link active" data-bs-toggle="tab" href="#calculator-tab">
+            <i class="bi bi-calculator me-2"></i>{% if current_lang == 'en' %}Calculator{% else %}计算器{% endif %}
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#schedule-tab">
+            <i class="bi bi-calendar-check me-2"></i>{% if current_lang == 'en' %}Schedule Management{% else %}计划管理{% endif %}
+        </a>
+    </li>
+</ul>
+
+<!-- 标签页内容 -->
+<div class="tab-content">
+    <!-- 计算器标签页 -->
+    <div class="tab-pane fade show active" id="calculator-tab" role="tabpanel">
+
 <!-- KPI卡片行（3列） -->
 <div class="row mb-4">
     <div class="col-md-4">
@@ -212,6 +231,110 @@
     </div>
 </div>
 
+    </div>
+    <!-- 计算器标签页结束 -->
+
+    <!-- 计划管理标签页 -->
+    <div class="tab-pane fade" id="schedule-tab" role="tabpanel">
+        
+        <!-- 创建计划表单 -->
+        <div class="hosting-card mb-4">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-calendar-plus me-2"></i>{% if current_lang == 'en' %}Create Schedule{% else %}创建计划{% endif %}
+                </h5>
+            </div>
+            <div class="hosting-card-body">
+                <form id="schedule-form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">{% if current_lang == 'en' %}Start Time{% else %}开始时间{% endif %}</label>
+                            <input type="datetime-local" class="form-control" id="schedule-start-time" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% if current_lang == 'en' %}End Time{% else %}结束时间{% endif %}</label>
+                            <input type="datetime-local" class="form-control" id="schedule-end-time">
+                            <small class="text-muted">{% if current_lang == 'en' %}Leave empty for manual recovery{% else %}留空表示手动恢复{% endif %}</small>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{% if current_lang == 'en' %}Target Reduction (kW){% else %}目标削减功率 (kW){% endif %}</label>
+                            <input type="number" class="form-control" id="schedule-target-kw" required min="0" step="0.1">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% if current_lang == 'en' %}Strategy{% else %}限电策略{% endif %}</label>
+                            <select class="form-control" id="schedule-strategy" required>
+                                <option value="">{% if current_lang == 'en' %}Select Strategy{% else %}选择策略{% endif %}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-calendar-plus me-2"></i>{% if current_lang == 'en' %}Create Schedule{% else %}创建计划{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 活跃计划 -->
+        <div class="hosting-card mb-4">
+            <div class="hosting-card-header">
+                <h5 class="hosting-card-title">
+                    <i class="bi bi-lightning-charge me-2"></i>{% if current_lang == 'en' %}Active Plans{% else %}活跃计划{% endif %}
+                </h5>
+            </div>
+            <div class="hosting-card-body">
+                <div id="active-plans-container">
+                    <p class="text-muted text-center">{% if current_lang == 'en' %}No active plans{% else %}暂无活跃计划{% endif %}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 历史记录表格 -->
+        <div class="hosting-card mb-4">
+            <div class="hosting-card-header d-flex justify-content-between align-items-center">
+                <h5 class="hosting-card-title mb-0">
+                    <i class="bi bi-clock-history me-2"></i>{% if current_lang == 'en' %}History{% else %}历史记录{% endif %}
+                </h5>
+                <select class="form-select form-select-sm" style="width: auto;" id="schedule-history-status-filter">
+                    <option value="">{% if current_lang == 'en' %}All{% else %}全部{% endif %}</option>
+                    <option value="pending">PENDING</option>
+                    <option value="executing">EXECUTING</option>
+                    <option value="completed">COMPLETED</option>
+                    <option value="cancelled">CANCELLED</option>
+                </select>
+            </div>
+            <div class="hosting-card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th>{% if current_lang == 'en' %}Plan Name{% else %}计划名称{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Start Time{% else %}开始时间{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}End Time{% else %}结束时间{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Target (kW){% else %}目标 (kW){% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schedule-history-table-body">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">{% if current_lang == 'en' %}No schedule history{% else %}暂无历史记录{% endif %}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!-- 计划管理标签页结束 -->
+
+</div>
+<!-- 标签页内容结束 -->
+
 <!-- Chart.js for AI prediction visualization -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
@@ -226,6 +349,25 @@ document.addEventListener('DOMContentLoaded', function() {
     loadSites();
     loadKPIs();
     loadHistory();
+    loadScheduleStrategies();
+    loadScheduleHistory();
+    
+    document.getElementById('schedule-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        createSchedule();
+    });
+    
+    document.getElementById('schedule-history-status-filter').addEventListener('change', function() {
+        loadScheduleHistory();
+    });
+    
+    const scheduleTab = document.querySelector('a[href="#schedule-tab"]');
+    if (scheduleTab) {
+        scheduleTab.addEventListener('shown.bs.tab', function() {
+            loadActivePlans();
+            loadScheduleHistory();
+        });
+    }
 });
 
 // 加载站点列表
@@ -308,7 +450,8 @@ function displayPlan(plan) {
     tbody.innerHTML = '';
     
     if (!plan || !plan.selected_miners || plan.selected_miners.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No miners selected</td></tr>';
+        const noMinersText = currentLang === 'en' ? 'No miners selected' : '没有选中矿机';
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center">${noMinersText}</td></tr>`;
         return;
     }
     
@@ -678,6 +821,358 @@ function applyAIRecommendation() {
     alert(currentLang === 'en' ? 
         `AI recommendation applied! Target power reduction: ${targetPower.toFixed(2)} kW` : 
         `AI推荐已应用！目标功率削减: ${targetPower.toFixed(2)} kW`);
+}
+
+// ========== 计划管理相关函数 ==========
+
+let activeScheduleInterval = null;
+
+function loadScheduleStrategies() {
+    const siteId = document.getElementById('site-select').value;
+    if (!siteId) return;
+    
+    fetch(`/hosting/api/curtailment/strategies?site_id=${siteId}`)
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById('schedule-strategy');
+            select.innerHTML = '<option value="">' + (currentLang === 'en' ? 'Select Strategy' : '选择策略') + '</option>';
+            data.strategies.forEach(s => {
+                const option = document.createElement('option');
+                option.value = s.id;
+                option.textContent = s.name;
+                select.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading strategies:', error);
+        });
+}
+
+document.getElementById('site-select').addEventListener('change', function() {
+    loadScheduleStrategies();
+    loadActivePlans();
+    loadScheduleHistory();
+});
+
+function createSchedule() {
+    const siteId = document.getElementById('site-select').value;
+    if (!siteId) {
+        alert(currentLang === 'en' ? 'Please select a site first' : '请先选择站点');
+        return;
+    }
+    
+    const data = {
+        site_id: parseInt(siteId),
+        strategy_id: parseInt(document.getElementById('schedule-strategy').value),
+        start_time: document.getElementById('schedule-start-time').value,
+        end_time: document.getElementById('schedule-end-time').value || null,
+        target_power_reduction_kw: parseFloat(document.getElementById('schedule-target-kw').value)
+    };
+    
+    if (!data.strategy_id || !data.start_time || !data.target_power_reduction_kw) {
+        alert(currentLang === 'en' ? 'Please fill in all required fields' : '请填写所有必填字段');
+        return;
+    }
+    
+    fetch('/hosting/api/curtailment/schedules', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            alert(currentLang === 'en' ? 'Schedule created successfully' : '计划创建成功');
+            document.getElementById('schedule-form').reset();
+            loadActivePlans();
+            loadScheduleHistory();
+        } else {
+            alert(result.error || (currentLang === 'en' ? 'Failed to create schedule' : '创建计划失败'));
+        }
+    })
+    .catch(error => {
+        console.error('Error creating schedule:', error);
+        alert(currentLang === 'en' ? 'Error creating schedule' : '创建计划时出错');
+    });
+}
+
+function loadActivePlans() {
+    const siteId = document.getElementById('site-select').value;
+    const url = siteId ? `/hosting/api/curtailment/schedules?site_id=${siteId}&status=pending,executing` : '/hosting/api/curtailment/schedules?status=pending,executing';
+    
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            const container = document.getElementById('active-plans-container');
+            container.innerHTML = '';
+            
+            if (data.schedules && data.schedules.length > 0) {
+                data.schedules.forEach(schedule => {
+                    const card = createActivePlanCard(schedule);
+                    container.insertAdjacentHTML('beforeend', card);
+                });
+                
+                if (activeScheduleInterval) {
+                    clearInterval(activeScheduleInterval);
+                }
+                activeScheduleInterval = setInterval(updateCountdowns, 1000);
+            } else {
+                container.innerHTML = '<p class="text-muted text-center">' + 
+                    (currentLang === 'en' ? 'No active plans' : '暂无活跃计划') + '</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading active plans:', error);
+        });
+}
+
+function createActivePlanCard(schedule) {
+    const startTime = new Date(schedule.start_time);
+    const endTime = schedule.end_time ? new Date(schedule.end_time) : null;
+    const now = new Date();
+    
+    const statusBadge = schedule.status === 'executing' ? 
+        '<span class="badge bg-info">' + (currentLang === 'en' ? 'Executing' : '执行中') + '</span>' :
+        '<span class="badge bg-warning">' + (currentLang === 'en' ? 'Pending' : '待执行') + '</span>';
+    
+    const countdown = getCountdownText(schedule);
+    
+    return `
+        <div class="alert alert-dark border border-info mb-3">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h6 class="mb-2">
+                        <i class="bi bi-calendar-event me-2"></i>
+                        ${currentLang === 'en' ? 'Schedule' : '计划'} #${schedule.id}
+                        ${statusBadge}
+                    </h6>
+                    <div class="mb-2">
+                        <small class="text-muted">
+                            <i class="bi bi-clock me-1"></i>
+                            ${currentLang === 'en' ? 'Start' : '开始'}: ${startTime.toLocaleString(currentLang === 'en' ? 'en-US' : 'zh-CN')}
+                        </small>
+                        ${endTime ? '<br><small class="text-muted"><i class="bi bi-clock-fill me-1"></i>' + 
+                            (currentLang === 'en' ? 'End' : '结束') + ': ' + endTime.toLocaleString(currentLang === 'en' ? 'en-US' : 'zh-CN') + '</small>' : ''}
+                    </div>
+                    <div class="mb-2">
+                        <small>
+                            <i class="bi bi-lightning me-1"></i>
+                            ${currentLang === 'en' ? 'Target' : '目标'}: ${schedule.target_power_reduction_kw} kW
+                        </small>
+                    </div>
+                    <div class="countdown" data-schedule-id="${schedule.id}" data-start="${schedule.start_time}" data-end="${schedule.end_time || ''}">
+                        <strong>${countdown}</strong>
+                    </div>
+                </div>
+                <div class="btn-group-vertical ms-3">
+                    ${schedule.status === 'pending' ? 
+                        '<button class="btn btn-sm btn-success mb-1" onclick="executeSchedule(' + schedule.id + ')"><i class="bi bi-play-fill"></i></button>' : ''}
+                    <button class="btn btn-sm btn-danger mb-1" onclick="cancelSchedule(${schedule.id})">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                    ${schedule.status === 'executing' ? 
+                        '<button class="btn btn-sm btn-warning" onclick="recoverSchedule(' + schedule.id + ')"><i class="bi bi-arrow-counterclockwise"></i></button>' : ''}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function getCountdownText(schedule) {
+    const now = new Date();
+    const startTime = new Date(schedule.start_time);
+    const endTime = schedule.end_time ? new Date(schedule.end_time) : null;
+    
+    if (schedule.status === 'executing') {
+        if (endTime) {
+            const diff = endTime - now;
+            if (diff > 0) {
+                return (currentLang === 'en' ? 'Ends in: ' : '结束倒计时: ') + formatTimeDiff(diff);
+            }
+            return currentLang === 'en' ? 'Should have ended' : '应该已结束';
+        }
+        return currentLang === 'en' ? 'Manual recovery required' : '需要手动恢复';
+    } else {
+        const diff = startTime - now;
+        if (diff > 0) {
+            return (currentLang === 'en' ? 'Starts in: ' : '开始倒计时: ') + formatTimeDiff(diff);
+        }
+        return currentLang === 'en' ? 'Ready to execute' : '可以执行';
+    }
+}
+
+function formatTimeDiff(ms) {
+    const hours = Math.floor(ms / 3600000);
+    const minutes = Math.floor((ms % 3600000) / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    
+    if (hours > 0) {
+        return `${hours}h ${minutes}m ${seconds}s`;
+    } else if (minutes > 0) {
+        return `${minutes}m ${seconds}s`;
+    } else {
+        return `${seconds}s`;
+    }
+}
+
+function updateCountdowns() {
+    const countdowns = document.querySelectorAll('.countdown');
+    countdowns.forEach(cd => {
+        const scheduleId = cd.dataset.scheduleId;
+        const startTime = new Date(cd.dataset.start);
+        const endTime = cd.dataset.end ? new Date(cd.dataset.end) : null;
+        const now = new Date();
+        
+        const executing = cd.closest('.alert').querySelector('.badge-info, .bg-info');
+        
+        if (executing) {
+            if (endTime) {
+                const diff = endTime - now;
+                if (diff > 0) {
+                    cd.innerHTML = '<strong>' + (currentLang === 'en' ? 'Ends in: ' : '结束倒计时: ') + formatTimeDiff(diff) + '</strong>';
+                } else {
+                    cd.innerHTML = '<strong class="text-warning">' + (currentLang === 'en' ? 'Should have ended' : '应该已结束') + '</strong>';
+                }
+            } else {
+                cd.innerHTML = '<strong>' + (currentLang === 'en' ? 'Manual recovery required' : '需要手动恢复') + '</strong>';
+            }
+        } else {
+            const diff = startTime - now;
+            if (diff > 0) {
+                cd.innerHTML = '<strong>' + (currentLang === 'en' ? 'Starts in: ' : '开始倒计时: ') + formatTimeDiff(diff) + '</strong>';
+            } else {
+                cd.innerHTML = '<strong class="text-success">' + (currentLang === 'en' ? 'Ready to execute' : '可以执行') + '</strong>';
+            }
+        }
+    });
+}
+
+function executeSchedule(scheduleId) {
+    if (!confirm(currentLang === 'en' ? 'Execute this schedule now?' : '确认立即执行此计划？')) return;
+    
+    fetch(`/hosting/api/curtailment/schedules/${scheduleId}/execute`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            alert(result.message || (currentLang === 'en' ? 'Schedule executed successfully' : '计划执行成功'));
+            loadActivePlans();
+            loadScheduleHistory();
+            loadKPIs();
+        } else {
+            alert(result.error || (currentLang === 'en' ? 'Failed to execute schedule' : '执行计划失败'));
+        }
+    })
+    .catch(error => {
+        console.error('Error executing schedule:', error);
+        alert(currentLang === 'en' ? 'Error executing schedule' : '执行计划时出错');
+    });
+}
+
+function cancelSchedule(scheduleId) {
+    if (!confirm(currentLang === 'en' ? 'Cancel this schedule?' : '确认取消此计划？')) return;
+    
+    fetch(`/hosting/api/curtailment/schedules/${scheduleId}`, {
+        method: 'DELETE'
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            alert(result.message || (currentLang === 'en' ? 'Schedule cancelled successfully' : '计划已取消'));
+            loadActivePlans();
+            loadScheduleHistory();
+        } else {
+            alert(result.error || (currentLang === 'en' ? 'Failed to cancel schedule' : '取消计划失败'));
+        }
+    })
+    .catch(error => {
+        console.error('Error cancelling schedule:', error);
+        alert(currentLang === 'en' ? 'Error cancelling schedule' : '取消计划时出错');
+    });
+}
+
+function recoverSchedule(scheduleId) {
+    if (!confirm(currentLang === 'en' ? 'Recover miners from this schedule?' : '确认恢复此计划的矿机？')) return;
+    
+    fetch(`/hosting/api/curtailment/schedules/${scheduleId}/recover`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            alert(result.message || (currentLang === 'en' ? 'Miners recovered successfully' : '矿机已恢复'));
+            loadActivePlans();
+            loadScheduleHistory();
+            loadKPIs();
+        } else {
+            alert(result.error || (currentLang === 'en' ? 'Failed to recover miners' : '恢复矿机失败'));
+        }
+    })
+    .catch(error => {
+        console.error('Error recovering miners:', error);
+        alert(currentLang === 'en' ? 'Error recovering miners' : '恢复矿机时出错');
+    });
+}
+
+function loadScheduleHistory() {
+    const siteId = document.getElementById('site-select').value;
+    const statusFilter = document.getElementById('schedule-history-status-filter').value;
+    
+    let url = '/hosting/api/curtailment/schedules?';
+    if (siteId) url += `site_id=${siteId}&`;
+    if (statusFilter) url += `status=${statusFilter}`;
+    
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            const tbody = document.getElementById('schedule-history-table-body');
+            tbody.innerHTML = '';
+            
+            if (data.schedules && data.schedules.length > 0) {
+                data.schedules.forEach(schedule => {
+                    const startTime = new Date(schedule.start_time);
+                    const endTime = schedule.end_time ? new Date(schedule.end_time) : null;
+                    
+                    const statusBadge = getScheduleStatusBadge(schedule.status);
+                    
+                    const row = `<tr>
+                        <td>${currentLang === 'en' ? 'Schedule' : '计划'} #${schedule.id}</td>
+                        <td>${startTime.toLocaleString(currentLang === 'en' ? 'en-US' : 'zh-CN')}</td>
+                        <td>${endTime ? endTime.toLocaleString(currentLang === 'en' ? 'en-US' : 'zh-CN') : (currentLang === 'en' ? 'Manual' : '手动')}</td>
+                        <td>${schedule.target_power_reduction_kw} kW</td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            ${schedule.status === 'pending' ? 
+                                '<button class="btn btn-sm btn-success me-1" onclick="executeSchedule(' + schedule.id + ')"><i class="bi bi-play-fill"></i></button>' : ''}
+                            ${schedule.status === 'pending' || schedule.status === 'executing' ? 
+                                '<button class="btn btn-sm btn-danger me-1" onclick="cancelSchedule(' + schedule.id + ')"><i class="bi bi-x-circle"></i></button>' : ''}
+                            ${schedule.status === 'executing' ? 
+                                '<button class="btn btn-sm btn-warning" onclick="recoverSchedule(' + schedule.id + ')"><i class="bi bi-arrow-counterclockwise"></i></button>' : ''}
+                        </td>
+                    </tr>`;
+                    tbody.insertAdjacentHTML('beforeend', row);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">' + 
+                    (currentLang === 'en' ? 'No schedule history' : '暂无历史记录') + '</td></tr>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading schedule history:', error);
+        });
+}
+
+function getScheduleStatusBadge(status) {
+    const badges = {
+        'pending': `<span class="badge bg-warning">${currentLang === 'en' ? 'Pending' : '待执行'}</span>`,
+        'executing': `<span class="badge bg-info">${currentLang === 'en' ? 'Executing' : '执行中'}</span>`,
+        'completed': `<span class="badge bg-success">${currentLang === 'en' ? 'Completed' : '已完成'}</span>`,
+        'cancelled': `<span class="badge bg-secondary">${currentLang === 'en' ? 'Cancelled' : '已取消'}</span>`
+    };
+    return badges[status] || `<span class="badge bg-secondary">${status}</span>`;
 }
 </script>
 
