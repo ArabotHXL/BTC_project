@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.triggers.interval import IntervalTrigger
+from gmail_oauth_service import send_curtailment_notification_email
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,8 @@ class CurtailmentSchedulerService:
         self.lock_key = "curtailment_scheduler_lock"
         self.process_id = os.getpid()
         self.hostname = socket.gethostname()
+        self._notified_plans = set()
+        self._notification_failures = {}
     
     def set_flask_app(self, app):
         """设置Flask应用实例"""
@@ -251,7 +254,7 @@ class CurtailmentSchedulerService:
         检查逻辑：
         1. 找到15分钟内即将执行的计划
         2. 检查是否已发送提醒
-        3. 发送提醒通知（Toast + 可选邮件）
+        3. 发送提醒通知（邮件）
         """
         if not self._app:
             logger.error("Flask应用未设置，无法发送通知")
@@ -259,7 +262,7 @@ class CurtailmentSchedulerService:
         
         try:
             with self._app.app_context():
-                from models import CurtailmentPlan, PlanStatus, db
+                from models import CurtailmentPlan, PlanStatus, User, db
                 
                 now = datetime.utcnow()
                 notify_window_start = now
@@ -282,6 +285,51 @@ class CurtailmentSchedulerService:
                     logger.info(
                         f"  ⏰ 计划 {plan.plan_name} 将在 {time_until_start:.0f} 分钟后执行"
                     )
+                    
+                    if plan.id in self._notified_plans:
+                        logger.debug(f"  ✓ 已发送过通知，跳过: {plan.plan_name}")
+                        continue
+                    
+                    if plan.created_by_id:
+                        try:
+                            creator = User.query.get(plan.created_by_id)
+                            if creator and creator.email:
+                                success = send_curtailment_notification_email(
+                                    to_email=creator.email,
+                                    plan=plan,
+                                    time_until_start=time_until_start,
+                                    language='zh'
+                                )
+                                
+                                if success:
+                                    self._notified_plans.add(plan.id)
+                                    if plan.id in self._notification_failures:
+                                        del self._notification_failures[plan.id]
+                                    logger.info(
+                                        f"  ✅ 已发送通知: {plan.plan_name} → {creator.email} "
+                                        f"(将在 {int(time_until_start)} 分钟后执行)"
+                                    )
+                                else:
+                                    self._notification_failures[plan.id] = \
+                                        self._notification_failures.get(plan.id, 0) + 1
+                                    failure_count = self._notification_failures[plan.id]
+                                    
+                                    logger.error(
+                                        f"  ❌ 邮件发送失败 (第{failure_count}次)，将在下次调度器运行时重试: "
+                                        f"{plan.plan_name} → {creator.email}"
+                                    )
+                                    
+                                    if failure_count >= 3:
+                                        logger.warning(
+                                            f"  ⚠️ 计划 {plan.plan_name} 邮件通知已失败 {failure_count} 次，"
+                                            f"请检查SMTP配置或网络连接"
+                                        )
+                            else:
+                                logger.warning(f"  ⚠️ 计划创建者未找到或无邮箱: {plan.plan_name}")
+                        except Exception as e:
+                            logger.error(f"  ❌ 发送邮件通知异常 {plan.plan_name}: {e}")
+                    else:
+                        logger.debug(f"  ℹ️ 计划没有创建者信息，跳过邮件通知: {plan.plan_name}")
                     
         except Exception as e:
             logger.error(f"❌ 发送通知任务异常: {e}", exc_info=True)
