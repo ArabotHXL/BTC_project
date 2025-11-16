@@ -826,9 +826,167 @@ function updateCounts(counts) {
 }
 
 function updatePagination(pagination) {
-    // 分页功能的占位实现
-    console.log('Pagination data:', pagination);
-    // TODO: 实现分页逻辑
+    const paginationEl = document.getElementById('pagination');
+    if (!paginationEl || !pagination) return;
+    
+    const { page, pages, total, has_prev, has_next } = pagination;
+    const lang = getLanguage();
+    
+    // 清空现有分页
+    paginationEl.innerHTML = '';
+    
+    if (pages <= 1) return; // 只有1页时不显示分页
+    
+    // 首页按钮
+    const firstLi = document.createElement('li');
+    firstLi.className = `page-item ${!has_prev ? 'disabled' : ''}`;
+    firstLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="goToPage(1)">${lang === 'en' ? 'First' : '首页'}</a>`;
+    paginationEl.appendChild(firstLi);
+    
+    // 上一页按钮
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${!has_prev ? 'disabled' : ''}`;
+    prevLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="goToPage(${page - 1})">&laquo;</a>`;
+    paginationEl.appendChild(prevLi);
+    
+    // 智能页码显示策略 - 确保总是显示至少5个页码（如果总页数>=5）
+    const delta = 2; // 当前页左右各显示2个页码
+    const range = [];
+    const minVisible = 5; // 最少显示5个页码
+    
+    if (pages <= minVisible + 2) {
+        // 总页数少，显示所有页码
+        for (let i = 1; i <= pages; i++) {
+            range.push(i);
+        }
+    } else {
+        // 计算显示窗口
+        let start, end;
+        
+        if (page <= delta + 1) {
+            // 靠近开始：显示 [1,2,3,4,5,...,pages]
+            start = 1;
+            end = minVisible;
+        } else if (page >= pages - delta) {
+            // 靠近结束：显示 [1,...,pages-4,pages-3,pages-2,pages-1,pages]
+            start = pages - minVisible + 1;
+            end = pages;
+        } else {
+            // 中间：显示 [1,...,page-2,page-1,page,page+1,page+2,...,pages]
+            start = page - delta;
+            end = page + delta;
+        }
+        
+        // 添加第一页（如果不在窗口内）
+        if (start > 1) {
+            range.push(1);
+        }
+        
+        // 添加窗口内的页码
+        for (let i = start; i <= end; i++) {
+            if (i > 1 && i < pages) {
+                range.push(i);
+            } else if (i === 1 || i === pages) {
+                if (!range.includes(i)) {
+                    range.push(i);
+                }
+            }
+        }
+        
+        // 添加最后一页（如果不在窗口内）
+        if (end < pages && !range.includes(pages)) {
+            range.push(pages);
+        }
+        
+        // 排序（确保页码按顺序）
+        range.sort((a, b) => a - b);
+    }
+    
+    // 渲染页码
+    let lastPage = 0;
+    range.forEach(i => {
+        // 如果页码不连续，添加省略号
+        if (lastPage && i > lastPage + 1) {
+            const ellipsisLi = document.createElement('li');
+            ellipsisLi.className = 'page-item disabled';
+            ellipsisLi.innerHTML = '<span class="page-link">...</span>';
+            paginationEl.appendChild(ellipsisLi);
+        }
+        
+        // 添加页码按钮
+        const li = document.createElement('li');
+        li.className = `page-item ${i === page ? 'active' : ''}`;
+        li.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="goToPage(${i})">${i}</a>`;
+        paginationEl.appendChild(li);
+        
+        lastPage = i;
+    });
+    
+    // 下一页按钮
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${!has_next ? 'disabled' : ''}`;
+    nextLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="goToPage(${page + 1})">&raquo;</a>`;
+    paginationEl.appendChild(nextLi);
+    
+    // 末页按钮
+    const lastLi = document.createElement('li');
+    lastLi.className = `page-item ${!has_next ? 'disabled' : ''}`;
+    lastLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="goToPage(${pages})">${lang === 'en' ? 'Last' : '末页'}</a>`;
+    paginationEl.appendChild(lastLi);
+    
+    // 添加页面信息和跳转输入框
+    const infoLi = document.createElement('li');
+    infoLi.className = 'page-item disabled ms-2';
+    infoLi.innerHTML = `<span class="page-link">${lang === 'en' ? `Page ${page}/${pages} (Total: ${total})` : `第 ${page}/${pages} 页 (共 ${total} 条)`}</span>`;
+    paginationEl.appendChild(infoLi);
+    
+    // 页面跳转输入框
+    const jumpLi = document.createElement('li');
+    jumpLi.className = 'page-item ms-2';
+    jumpLi.innerHTML = `
+        <div class="input-group input-group-sm" style="width: 150px;">
+            <input type="number" class="form-control" id="jumpToPage" placeholder="${lang === 'en' ? 'Jump to' : '跳转'}" min="1" max="${pages}">
+            <button class="btn btn-outline-secondary" type="button" onclick="jumpToPage(${pages})">${lang === 'en' ? 'Go' : '跳转'}</button>
+        </div>
+    `;
+    paginationEl.appendChild(jumpLi);
+}
+
+// 跳转到指定页
+function goToPage(pageNum) {
+    // 严格验证页码
+    const num = parseInt(pageNum);
+    if (isNaN(num) || num < 1) return;
+    
+    // 动态获取最大页数（从当前分页数据）
+    const paginationData = window.currentPaginationData || { pages: 301 };
+    const maxPages = paginationData.pages || 301;
+    
+    if (num > maxPages) return;
+    
+    currentPage = num;
+    const filters = getFilters();
+    loadMiners(currentPage, filters);
+}
+
+// 输入框跳转
+function jumpToPage(maxPages) {
+    const input = document.getElementById('jumpToPage');
+    const pageNum = parseInt(input.value);
+    
+    if (!input.value.trim()) {
+        alert(getLanguage() === 'en' ? 'Please enter a page number' : '请输入页码');
+        return;
+    }
+    
+    if (isNaN(pageNum) || pageNum < 1 || pageNum > maxPages) {
+        alert(getLanguage() === 'en' ? `Please enter a valid page number (1-${maxPages})` : `请输入有效的页码 (1-${maxPages})`);
+        input.value = '';
+        return;
+    }
+    
+    goToPage(pageNum);
+    input.value = '';
 }
 
 function refreshMiners() {
