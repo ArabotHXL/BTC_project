@@ -1297,7 +1297,7 @@ def get_miner_detail(miner_id):
 @hosting_bp.route('/api/miners/<int:miner_id>/telemetry-history', methods=['GET'])
 @login_required
 def get_miner_telemetry_history(miner_id):
-    """获取矿机24小时遥测历史数据"""
+    """获取矿机遥测历史数据（优先24小时，回退到最近可用数据）"""
     try:
         user_id = session.get('user_id')
         user_role = session.get('role', 'guest')
@@ -1309,13 +1309,25 @@ def get_miner_telemetry_history(miner_id):
             if not user_id or miner.customer_id != user_id:
                 return jsonify({'success': False, 'error': '无权限'}), 403
         
-        # 查询最近24小时的遥测数据
+        # 优先查询最近24小时的遥测数据
         time_24h_ago = datetime.utcnow() - timedelta(hours=24)
         
         telemetry_records = MinerTelemetry.query.filter(
             MinerTelemetry.miner_id == miner_id,
             MinerTelemetry.recorded_at >= time_24h_ago
         ).order_by(MinerTelemetry.recorded_at.asc()).all()
+        
+        # 如果最近24小时没有数据，回退到最近30天的数据（最多50条）
+        if not telemetry_records:
+            logger.info(f"矿机{miner_id}最近24小时无数据，回退查询最近30天数据")
+            time_30d_ago = datetime.utcnow() - timedelta(days=30)
+            telemetry_records = MinerTelemetry.query.filter(
+                MinerTelemetry.miner_id == miner_id,
+                MinerTelemetry.recorded_at >= time_30d_ago
+            ).order_by(MinerTelemetry.recorded_at.desc()).limit(50).all()
+            
+            # 重新按时间正序排列
+            telemetry_records = sorted(telemetry_records, key=lambda x: x.recorded_at)
         
         # 构建时间序列数据
         data = {
