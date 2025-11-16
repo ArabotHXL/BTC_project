@@ -136,9 +136,7 @@
     }
     
     .hosting-sidebar.collapsed .hosting-brand-title {
-        opacity: 0;
-        height: 0;
-        margin: 0;
+        display: none;
     }
     
     .hosting-brand-icon {
@@ -161,8 +159,7 @@
     }
     
     .hosting-sidebar.collapsed .hosting-brand-subtitle {
-        opacity: 0;
-        height: 0;
+        display: none;
     }
 
     /* Navigation Menu */
@@ -519,7 +516,7 @@
             <div class="hosting-sidebar-brand">
                 <i class="bi bi-building hosting-brand-icon"></i>
                 <h1 class="hosting-brand-title">
-                    <i class="bi bi-building me-2"></i>{% if current_lang == 'en' %}Hosting{% else %}托管管理{% endif %}
+                    {% if current_lang == 'en' %}Hosting{% else %}托管管理{% endif %}
                 </h1>
                 <p class="hosting-brand-subtitle">
                     {% if current_lang == 'en' %}Professional Mining Management{% else %}专业矿机托管平台{% endif %}

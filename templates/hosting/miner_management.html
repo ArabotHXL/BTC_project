@@ -30,6 +30,7 @@
             <div class="kpi-content">
                 <div class="kpi-label">{% if current_lang == 'en' %}Total Miners{% else %}总矿机数{% endif %}</div>
                 <div class="kpi-value" id="kpi-total-miners">-</div>
+                <div class="kpi-unit">&nbsp;</div>
             </div>
         </div>
     </div>
@@ -589,6 +590,7 @@
     display: flex;
     align-items: center;
     gap: 1rem;
+    min-height: 120px;
     transition: transform 0.2s;
 }
 
