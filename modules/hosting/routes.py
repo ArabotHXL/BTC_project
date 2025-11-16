@@ -7,7 +7,7 @@ from flask import render_template, request, jsonify, session, redirect, url_for,
 from . import hosting_bp
 from auth import login_required
 from decorators import requires_role
-from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingUsageRecord, HostingUsageItem, MinerTelemetry, HostingBill, HostingBillItem
+from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingUsageRecord, HostingUsageItem, MinerTelemetry, HostingBill, HostingBillItem, HostingMinerOperationLog
 from models import CurtailmentPlan, CurtailmentStrategy, CurtailmentExecution
 from models import ExecutionMode, PlanStatus, ExecutionAction, ExecutionStatus
 from intelligence.curtailment_engine import calculate_curtailment_plan

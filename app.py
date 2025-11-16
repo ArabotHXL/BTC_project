@@ -368,7 +368,7 @@ def initialize_database():
                     return False
             
             # Import models after database connection is verified
-            from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot, MinerModel
+            from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot, MinerModel, HostingMinerOperationLog
             # 🔧 CRITICAL FIX: Enable models_subscription import for payment system
             import models_subscription  # noqa: F401
             
@@ -485,7 +485,7 @@ if initialize_database_result:
     initialize_data_collectors()
 
 # Import models at module level for global access
-from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot, MinerModel, User
+from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot, MinerModel, User, HostingMinerOperationLog
 import models
 # 🔧 CRITICAL FIX: Enable models_subscription import for payment system
 import models_subscription  # noqa: F401

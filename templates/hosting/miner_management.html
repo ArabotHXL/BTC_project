@@ -660,7 +660,7 @@ function loadMiners(page = 1, filters = {}) {
         ...filters
     });
     
-    fetch(`/hosting/api/miners?${queryParams}`)
+    return fetch(`/hosting/api/miners?${queryParams}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
