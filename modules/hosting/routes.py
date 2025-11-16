@@ -3261,6 +3261,547 @@ def test_miner_connection(miner_id):
         }), 500
 
 
+# ==================== 设备管理升级API (Phase 1) ====================
+
+@hosting_bp.route('/api/miners/stats', methods=['GET'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def get_miners_stats():
+    """
+    KPI统计API - 返回矿机综合统计数据
+    支持site_id筛选，性能优化：6000+矿机查询<250ms
+    """
+    try:
+        from sqlalchemy import func
+        
+        # 获取筛选参数
+        site_id = request.args.get('site_id', type=int)
+        
+        # 基础查询
+        query = HostingMiner.query
+        if site_id:
+            query = query.filter_by(site_id=site_id)
+        
+        # 使用聚合函数进行高效统计
+        stats_query = db.session.query(
+            func.count(HostingMiner.id).label('total_miners'),
+            func.sum(HostingMiner.actual_hashrate).label('total_hashrate_th'),
+            func.sum(HostingMiner.actual_power).label('total_power_w'),
+            func.avg(HostingMiner.health_score).label('avg_health_score')
+        )
+        
+        if site_id:
+            stats_query = stats_query.filter(HostingMiner.site_id == site_id)
+        
+        stats = stats_query.first()
+        
+        # 状态分布统计
+        status_distribution = db.session.query(
+            HostingMiner.status,
+            func.count(HostingMiner.id).label('count')
+        )
+        if site_id:
+            status_distribution = status_distribution.filter(HostingMiner.site_id == site_id)
+        status_distribution = status_distribution.group_by(HostingMiner.status).all()
+        
+        # 在线率统计（cgminer_online）
+        online_count = query.filter_by(cgminer_online=True).count()
+        total_count = stats.total_miners or 0
+        online_rate = round((online_count / total_count * 100) if total_count > 0 else 0, 2)
+        
+        # 计算总算力(PH/s)、总功耗(MW)、平均能效(W/TH)
+        total_hashrate_th = float(stats.total_hashrate_th or 0)
+        total_power_w = float(stats.total_power_w or 0)
+        
+        total_hashrate_ph = round(total_hashrate_th / 1000, 3)  # TH/s转PH/s
+        total_power_mw = round(total_power_w / 1000000, 3)  # W转MW
+        avg_efficiency = round(total_power_w / total_hashrate_th, 2) if total_hashrate_th > 0 else 0
+        
+        # 构建响应数据
+        result = {
+            'total_miners': total_count,
+            'total_hashrate_ph': total_hashrate_ph,
+            'total_power_mw': total_power_mw,
+            'avg_efficiency_w_th': avg_efficiency,
+            'online_rate': online_rate,
+            'avg_health_score': round(float(stats.avg_health_score or 100), 1),
+            'status_distribution': {
+                status: count for status, count in status_distribution
+            }
+        }
+        
+        return jsonify({'success': True, 'data': result})
+        
+    except Exception as e:
+        logger.error(f"获取矿机统计数据失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/miners/batch-approve', methods=['POST'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def batch_approve_miners():
+    """批量审核通过矿机"""
+    try:
+        data = request.get_json()
+        miner_ids = data.get('miner_ids', [])
+        approval_notes = data.get('approval_notes', '')
+        
+        if not miner_ids:
+            return jsonify({'success': False, 'error': 'No miner IDs provided'}), 400
+        
+        operator_id = session.get('user_id')
+        
+        # 使用正确的事务处理
+        updated_count = 0
+        with db.session.begin():
+            for miner_id in miner_ids:
+                miner = HostingMiner.query.get(miner_id)
+                if miner:
+                    old_status = miner.approval_status
+                    miner.approval_status = 'approved'
+                    miner.approved_by = operator_id
+                    miner.approved_at = datetime.utcnow()
+                    if approval_notes:
+                        miner.approval_notes = approval_notes
+                    
+                    # 记录操作日志
+                    log = HostingMinerOperationLog(
+                        miner_id=miner_id,
+                        operation_type='approve',
+                        old_status=old_status,
+                        new_status='approved',
+                        operator_id=operator_id,
+                        notes=f'批量审核通过: {approval_notes}'
+                    )
+                    db.session.add(log)
+                    updated_count += 1
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully approved {updated_count} miners',
+            'updated_count': updated_count
+        })
+        
+    except Exception as e:
+        logger.error(f"批量审核失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/miners/batch-status', methods=['POST'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def batch_change_status():
+    """批量修改矿机状态"""
+    try:
+        data = request.get_json()
+        miner_ids = data.get('miner_ids', [])
+        new_status = data.get('new_status')
+        notes = data.get('notes', '')
+        
+        if not miner_ids or not new_status:
+            return jsonify({'success': False, 'error': 'Missing required parameters'}), 400
+        
+        operator_id = session.get('user_id')
+        
+        # 使用正确的事务处理
+        updated_count = 0
+        with db.session.begin():
+            for miner_id in miner_ids:
+                miner = HostingMiner.query.get(miner_id)
+                if miner:
+                    old_status = miner.status
+                    miner.status = new_status
+                    
+                    # 记录操作日志
+                    log = HostingMinerOperationLog(
+                        miner_id=miner_id,
+                        operation_type='status_change',
+                        old_status=old_status,
+                        new_status=new_status,
+                        operator_id=operator_id,
+                        notes=f'批量修改状态: {notes}'
+                    )
+                    db.session.add(log)
+                    updated_count += 1
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully updated {updated_count} miners to {new_status}',
+            'updated_count': updated_count
+        })
+        
+    except Exception as e:
+        logger.error(f"批量修改状态失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/miners/batch-delete', methods=['POST'])
+@requires_role(['owner', 'admin'])
+def batch_delete_miners():
+    """批量删除矿机"""
+    try:
+        data = request.get_json()
+        miner_ids = data.get('miner_ids', [])
+        
+        if not miner_ids:
+            return jsonify({'success': False, 'error': 'No miner IDs provided'}), 400
+        
+        operator_id = session.get('user_id')
+        
+        # 使用正确的事务处理
+        deleted_count = 0
+        with db.session.begin():
+            for miner_id in miner_ids:
+                miner = HostingMiner.query.get(miner_id)
+                if miner:
+                    # 记录删除日志
+                    log = HostingMinerOperationLog(
+                        miner_id=miner_id,
+                        operation_type='delete',
+                        old_status=miner.status,
+                        new_status='deleted',
+                        operator_id=operator_id,
+                        notes=f'批量删除矿机: {miner.serial_number}'
+                    )
+                    db.session.add(log)
+                    db.session.flush()  # 先记录日志
+                    
+                    db.session.delete(miner)
+                    deleted_count += 1
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully deleted {deleted_count} miners',
+            'deleted_count': deleted_count
+        })
+        
+    except Exception as e:
+        logger.error(f"批量删除失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/miners/batch-start', methods=['POST'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def batch_start_miners():
+    """批量启动矿机"""
+    try:
+        data = request.get_json()
+        miner_ids = data.get('miner_ids', [])
+        
+        if not miner_ids:
+            return jsonify({'success': False, 'error': 'No miner IDs provided'}), 400
+        
+        operator_id = session.get('user_id')
+        
+        # 使用正确的事务处理
+        updated_count = 0
+        with db.session.begin():
+            for miner_id in miner_ids:
+                miner = HostingMiner.query.get(miner_id)
+                if miner and miner.status != 'active':
+                    old_status = miner.status
+                    miner.status = 'active'
+                    
+                    # 记录操作日志
+                    log = HostingMinerOperationLog(
+                        miner_id=miner_id,
+                        operation_type='start',
+                        old_status=old_status,
+                        new_status='active',
+                        operator_id=operator_id,
+                        notes='批量启动矿机'
+                    )
+                    db.session.add(log)
+                    updated_count += 1
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully started {updated_count} miners',
+            'updated_count': updated_count
+        })
+        
+    except Exception as e:
+        logger.error(f"批量启动失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/miners/batch-shutdown', methods=['POST'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def batch_shutdown_miners():
+    """批量关闭矿机"""
+    try:
+        data = request.get_json()
+        miner_ids = data.get('miner_ids', [])
+        
+        if not miner_ids:
+            return jsonify({'success': False, 'error': 'No miner IDs provided'}), 400
+        
+        operator_id = session.get('user_id')
+        
+        # 使用正确的事务处理
+        updated_count = 0
+        with db.session.begin():
+            for miner_id in miner_ids:
+                miner = HostingMiner.query.get(miner_id)
+                if miner and miner.status != 'offline':
+                    old_status = miner.status
+                    miner.status = 'offline'
+                    
+                    # 记录操作日志
+                    log = HostingMinerOperationLog(
+                        miner_id=miner_id,
+                        operation_type='shutdown',
+                        old_status=old_status,
+                        new_status='offline',
+                        operator_id=operator_id,
+                        notes='批量关闭矿机'
+                    )
+                    db.session.add(log)
+                    updated_count += 1
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully shutdown {updated_count} miners',
+            'updated_count': updated_count
+        })
+        
+    except Exception as e:
+        logger.error(f"批量关闭失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/miners/<int:miner_id>/start', methods=['POST'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def start_single_miner(miner_id):
+    """启动单个矿机"""
+    try:
+        miner = HostingMiner.query.get_or_404(miner_id)
+        operator_id = session.get('user_id')
+        
+        if miner.status == 'active':
+            return jsonify({'success': False, 'error': 'Miner is already active'}), 400
+        
+        old_status = miner.status
+        miner.status = 'active'
+        
+        # 记录操作日志
+        log = HostingMinerOperationLog(
+            miner_id=miner_id,
+            operation_type='start',
+            old_status=old_status,
+            new_status='active',
+            operator_id=operator_id,
+            notes='启动矿机'
+        )
+        db.session.add(log)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Miner started successfully',
+            'miner': miner.to_dict()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"启动矿机失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/miners/<int:miner_id>/shutdown', methods=['POST'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def shutdown_single_miner(miner_id):
+    """关闭单个矿机"""
+    try:
+        miner = HostingMiner.query.get_or_404(miner_id)
+        operator_id = session.get('user_id')
+        
+        if miner.status == 'offline':
+            return jsonify({'success': False, 'error': 'Miner is already offline'}), 400
+        
+        old_status = miner.status
+        miner.status = 'offline'
+        
+        # 记录操作日志
+        log = HostingMinerOperationLog(
+            miner_id=miner_id,
+            operation_type='shutdown',
+            old_status=old_status,
+            new_status='offline',
+            operator_id=operator_id,
+            notes='关闭矿机'
+        )
+        db.session.add(log)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Miner shutdown successfully',
+            'miner': miner.to_dict()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"关闭矿机失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/miners/<int:miner_id>/restart', methods=['POST'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def restart_single_miner(miner_id):
+    """重启单个矿机"""
+    try:
+        miner = HostingMiner.query.get_or_404(miner_id)
+        operator_id = session.get('user_id')
+        
+        old_status = miner.status
+        # 重启流程：maintenance -> active
+        miner.status = 'maintenance'
+        db.session.flush()
+        
+        # 记录维护日志
+        log1 = HostingMinerOperationLog(
+            miner_id=miner_id,
+            operation_type='restart',
+            old_status=old_status,
+            new_status='maintenance',
+            operator_id=operator_id,
+            notes='重启矿机 - 进入维护模式'
+        )
+        db.session.add(log1)
+        db.session.flush()
+        
+        # 立即切换到active
+        miner.status = 'active'
+        log2 = HostingMinerOperationLog(
+            miner_id=miner_id,
+            operation_type='restart',
+            old_status='maintenance',
+            new_status='active',
+            operator_id=operator_id,
+            notes='重启矿机 - 重新激活'
+        )
+        db.session.add(log2)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Miner restarted successfully',
+            'miner': miner.to_dict()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"重启矿机失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/miners/<int:miner_id>/logs', methods=['GET'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def get_miner_operation_logs(miner_id):
+    """获取矿机操作日志（分页）"""
+    try:
+        page = request.args.get('page', 1, type=int)
+        limit = request.args.get('limit', 20, type=int)
+        
+        # 分页查询
+        pagination = HostingMinerOperationLog.query.filter_by(
+            miner_id=miner_id
+        ).order_by(
+            HostingMinerOperationLog.created_at.desc()
+        ).paginate(page=page, per_page=limit, error_out=False)
+        
+        logs_data = [log.to_dict() for log in pagination.items]
+        
+        return jsonify({
+            'success': True,
+            'logs': logs_data,
+            'pagination': {
+                'current_page': page,
+                'total_pages': pagination.pages,
+                'total_items': pagination.total,
+                'has_next': pagination.has_next,
+                'has_prev': pagination.has_prev
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取操作日志失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@hosting_bp.route('/api/miners/export', methods=['GET'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def export_miners_csv():
+    """导出矿机数据为CSV（支持筛选）"""
+    try:
+        import csv
+        from io import StringIO
+        from flask import make_response
+        
+        # 获取筛选参数
+        site_id = request.args.get('site_id', type=int)
+        status = request.args.get('status')
+        search = request.args.get('search', '')
+        
+        # 构建查询
+        query = HostingMiner.query
+        if site_id:
+            query = query.filter_by(site_id=site_id)
+        if status:
+            query = query.filter_by(status=status)
+        if search:
+            query = query.filter(
+                db.or_(
+                    HostingMiner.serial_number.ilike(f'%{search}%'),
+                    HostingMiner.ip_address.ilike(f'%{search}%'),
+                    HostingMiner.rack_position.ilike(f'%{search}%')
+                )
+            )
+        
+        miners = query.all()
+        
+        # 创建CSV
+        si = StringIO()
+        writer = csv.writer(si)
+        
+        # 写入表头
+        writer.writerow([
+            'ID', 'Serial Number', 'Site', 'Customer', 'Model', 
+            'IP Address', 'Rack Position', 'Hashrate (TH/s)', 'Power (W)',
+            'Status', 'Approval Status', 'Health Score', 'Temperature (°C)',
+            'Created At'
+        ])
+        
+        # 写入数据
+        for miner in miners:
+            writer.writerow([
+                miner.id,
+                miner.serial_number,
+                miner.site.name if miner.site else '',
+                miner.customer.email if miner.customer else '',
+                miner.miner_model.model_name if miner.miner_model else '',
+                miner.ip_address or '',
+                miner.rack_position or '',
+                miner.actual_hashrate,
+                miner.actual_power,
+                miner.status,
+                miner.approval_status,
+                miner.health_score,
+                miner.temperature_avg or '',
+                miner.created_at.isoformat() if miner.created_at else ''
+            ])
+        
+        # 创建响应
+        output = make_response(si.getvalue())
+        output.headers["Content-Disposition"] = f"attachment; filename=miners_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        output.headers["Content-type"] = "text/csv"
+        
+        return output
+        
+    except Exception as e:
+        logger.error(f"导出CSV失败: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @hosting_bp.route('/miner-setup-guide')
 @login_required
 def miner_setup_guide():

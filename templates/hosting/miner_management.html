@@ -20,23 +20,113 @@
 
 {% block content %}
 
+<!-- KPI卡片区 -->
+<div class="row mb-4" id="kpi-cards">
+    <div class="col-md-3 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="bi bi-cpu"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">{% if current_lang == 'en' %}Total Miners{% else %}总矿机数{% endif %}</div>
+                <div class="kpi-value" id="kpi-total-miners">-</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background: linear-gradient(135deg, #4ECDC4, #44A08D);">
+                <i class="bi bi-speedometer2"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">{% if current_lang == 'en' %}Total Hashrate{% else %}总算力{% endif %}</div>
+                <div class="kpi-value" id="kpi-total-hashrate">-</div>
+                <div class="kpi-unit">PH/s</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background: linear-gradient(135deg, #F7971E, #FFD200);">
+                <i class="bi bi-lightning-charge"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">{% if current_lang == 'en' %}Power & Efficiency{% else %}功耗+能效{% endif %}</div>
+                <div class="kpi-value" id="kpi-total-power">-</div>
+                <div class="kpi-subvalue" id="kpi-avg-efficiency">-</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                <i class="bi bi-heart-pulse"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-label">{% if current_lang == 'en' %}Device Health{% else %}设备健康度{% endif %}</div>
+                <div class="kpi-value" id="kpi-health-score">-</div>
+                <div class="kpi-subvalue">
+                    {% if current_lang == 'en' %}Online Rate:{% else %}在线率:{% endif %} 
+                    <span id="kpi-online-rate">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 操作按钮区 -->
-<div class="d-flex justify-content-center gap-3 mb-4 flex-wrap">
-    <button class="btn btn-hosting-primary" data-bs-toggle="modal" data-bs-target="#batchImportModal">
-        <i class="bi bi-upload me-2"></i>{% if current_lang == 'en' %}Batch Import{% else %}批量导入{% endif %}
-    </button>
-    <button class="btn btn-hosting-secondary" onclick="showPendingOnly()">
-        <i class="bi bi-clock me-2"></i>{% if current_lang == 'en' %}Pending Review{% else %}待审核{% endif %}
-        <span class="badge bg-warning text-dark ms-2" id="pending-count">0</span>
-    </button>
+<div class="d-flex justify-content-between gap-3 mb-4 flex-wrap">
+    <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-hosting-primary" data-bs-toggle="modal" data-bs-target="#batchImportModal">
+            <i class="bi bi-upload me-2"></i>{% if current_lang == 'en' %}Batch Import{% else %}批量导入{% endif %}
+        </button>
+        <button class="btn btn-hosting-secondary" onclick="showPendingOnly()">
+            <i class="bi bi-clock me-2"></i>{% if current_lang == 'en' %}Pending Review{% else %}待审核{% endif %}
+            <span class="badge bg-warning text-dark ms-2" id="pending-count">0</span>
+        </button>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-warning dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="batch-ops-btn" disabled>
+                <i class="bi bi-list-check me-1"></i>{% if current_lang == 'en' %}Batch Operations{% else %}批量操作{% endif %}
+                <span class="badge bg-light text-dark ms-1" id="selected-count">0</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchApprove()">
+                    <i class="bi bi-check-circle me-2"></i>{% if current_lang == 'en' %}Approve{% else %}批量审核通过{% endif %}
+                </a></li>
+                <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchStart()">
+                    <i class="bi bi-play-circle me-2"></i>{% if current_lang == 'en' %}Start{% else %}批量启动{% endif %}
+                </a></li>
+                <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchShutdown()">
+                    <i class="bi bi-stop-circle me-2"></i>{% if current_lang == 'en' %}Shutdown{% else %}批量关闭{% endif %}
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="javascript:void(0)" onclick="batchChangeStatus()">
+                    <i class="bi bi-arrow-left-right me-2"></i>{% if current_lang == 'en' %}Change Status{% else %}批量修改状态{% endif %}
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="batchDelete()">
+                    <i class="bi bi-trash me-2"></i>{% if current_lang == 'en' %}Delete{% else %}批量删除{% endif %}
+                </a></li>
+            </ul>
+        </div>
+        <button class="btn btn-success" onclick="exportCSV()">
+            <i class="bi bi-download me-1"></i>{% if current_lang == 'en' %}Export CSV{% else %}导出CSV{% endif %}
+        </button>
+    </div>
 </div>
 
 <!-- 筛选器 -->
 <div class="hosting-card">
-    <div class="hosting-card-header">
+    <div class="hosting-card-header d-flex justify-content-between align-items-center">
         <h6 class="hosting-card-title mb-0">
             <i class="bi bi-funnel me-2"></i>{% if current_lang == 'en' %}Filter Options{% else %}筛选选项{% endif %}
         </h6>
+        <div class="input-group" style="width: 300px;">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" id="quickSearch" placeholder="{% if current_lang == 'en' %}Search Serial Number/IP/Rack...{% else %}搜索序列号/IP/机架位置...{% endif %}">
+        </div>
     </div>
     <div class="hosting-card-body">
         <form class="row g-3" id="filter-form">
@@ -103,6 +193,7 @@
             <table class="table table-hover" id="miners-table">
                 <thead>
                     <tr>
+                        <th style="width: 40px;"><input type="checkbox" id="selectAll" class="form-check-input"></th>
                         <th>{% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %}</th>
                         <th>{% if current_lang == 'en' %}Customer{% else %}客户{% endif %}</th>
                         <th>{% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %}</th>
@@ -393,6 +484,158 @@
         </div>
     </div>
 </div>
+
+<!-- 批量操作确认Modal -->
+<div class="modal fade" id="batchConfirmModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="batchConfirmTitle">{% if current_lang == 'en' %}Confirm Batch Operation{% else %}确认批量操作{% endif %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <span id="batchConfirmMessage"></span>
+                </div>
+                <div id="batchConfirmList" class="mb-3"></div>
+                <div id="batchNotesInput" class="d-none">
+                    <label class="form-label">{% if current_lang == 'en' %}Notes (Optional){% else %}备注（可选）{% endif %}</label>
+                    <textarea class="form-control" id="batchNotes" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}</button>
+                <button type="button" class="btn btn-warning" id="batchConfirmBtn">{% if current_lang == 'en' %}Confirm{% else %}确认{% endif %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 快速修改状态Modal -->
+<div class="modal fade" id="quickStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header bg-info text-dark">
+                <h5 class="modal-title">{% if current_lang == 'en' %}Change Miner Status{% else %}修改矿机状态{% endif %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="quickStatusMinerId">
+                <div class="mb-3">
+                    <label class="form-label">{% if current_lang == 'en' %}Select New Status{% else %}选择新状态{% endif %}</label>
+                    <select class="form-select" id="quickStatusSelect">
+                        <option value="active">{% if current_lang == 'en' %}Active (Running){% else %}运行中{% endif %}</option>
+                        <option value="offline">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</option>
+                        <option value="maintenance">{% if current_lang == 'en' %}Maintenance{% else %}维护中{% endif %}</option>
+                        <option value="error">{% if current_lang == 'en' %}Error{% else %}故障{% endif %}</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{% if current_lang == 'en' %}Notes (Optional){% else %}备注（可选）{% endif %}</label>
+                    <textarea class="form-control" id="quickStatusNotes" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}</button>
+                <button type="button" class="btn btn-info" onclick="saveQuickStatus()">{% if current_lang == 'en' %}Save{% else %}保存{% endif %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 操作日志Modal -->
+<div class="modal fade" id="operationLogsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content bg-dark">
+            <div class="modal-header bg-secondary">
+                <h5 class="modal-title">{% if current_lang == 'en' %}Operation Logs{% else %}操作日志{% endif %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th>{% if current_lang == 'en' %}Time{% else %}时间{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Operation{% else %}操作类型{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Old Status{% else %}原状态{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}New Status{% else %}新状态{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Operator{% else %}操作人{% endif %}</th>
+                                <th>{% if current_lang == 'en' %}Notes{% else %}备注{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTableBody">
+                            <tr><td colspan="6" class="text-center">{% if current_lang == 'en' %}Loading...{% else %}加载中...{% endif %}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <nav>
+                    <ul class="pagination pagination-sm justify-content-center" id="logsPagination"></ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSS样式 -->
+<style>
+.kpi-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.2s;
+}
+
+.kpi-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+}
+
+.kpi-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+}
+
+.kpi-content {
+    flex: 1;
+}
+
+.kpi-label {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kpi-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.kpi-unit {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.kpi-subvalue {
+    font-size: 0.85rem;
+    opacity: 0.85;
+    margin-top: 0.25rem;
+}
+</style>
 
 {% endblock %}
 
@@ -1182,5 +1425,484 @@ function showModalDialog(title, content) {
         this.remove();
     });
 }
+
+// ========== Phase 3: 设备管理升级 JavaScript ==========
+
+// 全局状态
+let selectedMiners = [];
+
+// 加载KPI统计数据
+async function loadKPIStats() {
+    try {
+        const siteId = document.getElementById('site-filter').value;
+        const url = siteId ? `/hosting/api/miners/stats?site_id=${siteId}` : '/hosting/api/miners/stats';
+        
+        const response = await fetch(url);
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            document.getElementById('kpi-total-miners').textContent = data.total_miners || 0;
+            document.getElementById('kpi-total-hashrate').textContent = data.total_hashrate_ph || '0.00';
+            document.getElementById('kpi-total-power').textContent = `${data.total_power_mw || '0.00'} MW`;
+            document.getElementById('kpi-avg-efficiency').textContent = `${data.avg_efficiency_w_th || '0'} W/TH`;
+            document.getElementById('kpi-health-score').textContent = `${data.avg_health_score || '100'}%`;
+            document.getElementById('kpi-online-rate').textContent = `${data.online_rate || '0'}%`;
+        }
+    } catch (error) {
+        console.error('加载KPI统计失败:', error);
+    }
+}
+
+// 初始化复选框事件
+function initCheckboxes() {
+    document.getElementById('selectAll').addEventListener('change', function() {
+        document.querySelectorAll('.miner-checkbox').forEach(cb => {
+            cb.checked = this.checked;
+        });
+        updateSelectedMiners();
+    });
+    
+    document.querySelectorAll('.miner-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateSelectedMiners);
+    });
+}
+
+// 更新选中的矿机列表
+function updateSelectedMiners() {
+    selectedMiners = Array.from(document.querySelectorAll('.miner-checkbox:checked')).map(cb => parseInt(cb.value));
+    
+    // 更新选中计数显示
+    document.getElementById('selected-count').textContent = selectedMiners.length;
+    
+    // 启用/禁用批量操作按钮
+    const batchOpsBtn = document.getElementById('batch-ops-btn');
+    if (selectedMiners.length > 0) {
+        batchOpsBtn.disabled = false;
+    } else {
+        batchOpsBtn.disabled = true;
+    }
+    
+    // 更新全选checkbox状态
+    const allCheckboxes = document.querySelectorAll('.miner-checkbox');
+    const checkedCount = document.querySelectorAll('.miner-checkbox:checked').length;
+    const selectAllCheckbox = document.getElementById('selectAll');
+    
+    if (checkedCount === 0) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+    } else if (checkedCount === allCheckboxes.length) {
+        selectAllCheckbox.checked = true;
+        selectAllCheckbox.indeterminate = false;
+    } else {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = true;
+    }
+}
+
+// 搜索防抖函数
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), wait);
+    };
+}
+
+// 设置快速搜索
+function setupQuickSearch() {
+    const quickSearch = document.getElementById('quickSearch');
+    const debouncedSearch = debounce(function(query) {
+        const filters = getFilters();
+        filters.search = query;
+        currentPage = 1;
+        loadMiners(currentPage, filters);
+    }, 300);
+    
+    quickSearch.addEventListener('input', (e) => {
+        debouncedSearch(e.target.value);
+    });
+}
+
+// 批量审核通过
+async function batchApprove() {
+    if (selectedMiners.length === 0) {
+        showToast(getLanguage() === 'en' ? 'Please select miners first' : '请先选择矿机', 'warning');
+        return;
+    }
+    
+    showBatchConfirmModal(
+        getLanguage() === 'en' ? 'Batch Approve Miners' : '批量审核通过',
+        getLanguage() === 'en' ? 
+            `You are about to approve ${selectedMiners.length} miners. Continue?` : 
+            `您即将审核通过 ${selectedMiners.length} 台矿机，是否继续？`,
+        selectedMiners,
+        true,
+        async (notes) => {
+            const response = await fetch('/hosting/api/miners/batch-approve', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({miner_ids: selectedMiners, approval_notes: notes})
+            });
+            const result = await response.json();
+            if (result.success) {
+                showToast(result.message || (getLanguage() === 'en' ? 'Batch approve successful' : '批量审核成功'), 'success');
+                refreshMiners();
+                loadKPIStats();
+            } else {
+                showToast(result.error, 'error');
+            }
+        }
+    );
+}
+
+// 批量启动
+async function batchStart() {
+    if (selectedMiners.length === 0) {
+        showToast(getLanguage() === 'en' ? 'Please select miners first' : '请先选择矿机', 'warning');
+        return;
+    }
+    
+    showBatchConfirmModal(
+        getLanguage() === 'en' ? 'Batch Start Miners' : '批量启动矿机',
+        getLanguage() === 'en' ? 
+            `You are about to start ${selectedMiners.length} miners. Continue?` : 
+            `您即将启动 ${selectedMiners.length} 台矿机，是否继续？`,
+        selectedMiners,
+        false,
+        async () => {
+            const response = await fetch('/hosting/api/miners/batch-start', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({miner_ids: selectedMiners})
+            });
+            const result = await response.json();
+            if (result.success) {
+                showToast(result.message || (getLanguage() === 'en' ? 'Batch start successful' : '批量启动成功'), 'success');
+                refreshMiners();
+                loadKPIStats();
+            } else {
+                showToast(result.error, 'error');
+            }
+        }
+    );
+}
+
+// 批量关闭
+async function batchShutdown() {
+    if (selectedMiners.length === 0) {
+        showToast(getLanguage() === 'en' ? 'Please select miners first' : '请先选择矿机', 'warning');
+        return;
+    }
+    
+    showBatchConfirmModal(
+        getLanguage() === 'en' ? 'Batch Shutdown Miners' : '批量关闭矿机',
+        getLanguage() === 'en' ? 
+            `You are about to shutdown ${selectedMiners.length} miners. Continue?` : 
+            `您即将关闭 ${selectedMiners.length} 台矿机，是否继续？`,
+        selectedMiners,
+        false,
+        async () => {
+            const response = await fetch('/hosting/api/miners/batch-shutdown', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({miner_ids: selectedMiners})
+            });
+            const result = await response.json();
+            if (result.success) {
+                showToast(result.message || (getLanguage() === 'en' ? 'Batch shutdown successful' : '批量关闭成功'), 'success');
+                refreshMiners();
+                loadKPIStats();
+            } else {
+                showToast(result.error, 'error');
+            }
+        }
+    );
+}
+
+// 批量修改状态
+async function batchChangeStatus() {
+    if (selectedMiners.length === 0) {
+        showToast(getLanguage() === 'en' ? 'Please select miners first' : '请先选择矿机', 'warning');
+        return;
+    }
+    
+    // 显示快速修改状态Modal，但用于批量操作
+    const modal = new bootstrap.Modal(document.getElementById('quickStatusModal'));
+    document.getElementById('quickStatusMinerId').value = JSON.stringify(selectedMiners);
+    modal.show();
+}
+
+// 批量删除
+async function batchDelete() {
+    if (selectedMiners.length === 0) {
+        showToast(getLanguage() === 'en' ? 'Please select miners first' : '请先选择矿机', 'warning');
+        return;
+    }
+    
+    showBatchConfirmModal(
+        getLanguage() === 'en' ? 'Batch Delete Miners' : '批量删除矿机',
+        getLanguage() === 'en' ? 
+            `WARNING: You are about to DELETE ${selectedMiners.length} miners. This action cannot be undone!` : 
+            `警告：您即将删除 ${selectedMiners.length} 台矿机，此操作无法撤销！`,
+        selectedMiners,
+        false,
+        async () => {
+            const response = await fetch('/hosting/api/miners/batch-delete', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({miner_ids: selectedMiners})
+            });
+            const result = await response.json();
+            if (result.success) {
+                showToast(result.message || (getLanguage() === 'en' ? 'Batch delete successful' : '批量删除成功'), 'success');
+                refreshMiners();
+                loadKPIStats();
+            } else {
+                showToast(result.error, 'error');
+            }
+        }
+    );
+}
+
+// 显示批量操作确认Modal
+function showBatchConfirmModal(title, message, minerIds, showNotes, onConfirm) {
+    const modal = new bootstrap.Modal(document.getElementById('batchConfirmModal'));
+    document.getElementById('batchConfirmTitle').textContent = title;
+    document.getElementById('batchConfirmMessage').textContent = message;
+    
+    // 显示选中的矿机列表
+    const listHTML = `<div class="alert alert-info"><strong>${getLanguage() === 'en' ? 'Selected miners:' : '已选择的矿机：'}</strong> ${minerIds.length} ${getLanguage() === 'en' ? 'items' : '项'}</div>`;
+    document.getElementById('batchConfirmList').innerHTML = listHTML;
+    
+    // 是否显示备注输入框
+    const notesInput = document.getElementById('batchNotesInput');
+    if (showNotes) {
+        notesInput.classList.remove('d-none');
+    } else {
+        notesInput.classList.add('d-none');
+    }
+    
+    // 绑定确认按钮
+    const confirmBtn = document.getElementById('batchConfirmBtn');
+    confirmBtn.onclick = async () => {
+        const notes = showNotes ? document.getElementById('batchNotes').value : '';
+        modal.hide();
+        await onConfirm(notes);
+    };
+    
+    modal.show();
+}
+
+// 单机启动
+async function startMiner(minerId) {
+    const response = await fetch(`/hosting/api/miners/${minerId}/start`, {method: 'POST'});
+    const result = await response.json();
+    if (result.success) {
+        showToast(getLanguage() === 'en' ? 'Miner started successfully' : '矿机启动成功', 'success');
+        refreshMiners();
+        loadKPIStats();
+    } else {
+        showToast(result.error, 'error');
+    }
+}
+
+// 单机关闭
+async function shutdownMiner(minerId) {
+    const response = await fetch(`/hosting/api/miners/${minerId}/shutdown`, {method: 'POST'});
+    const result = await response.json();
+    if (result.success) {
+        showToast(getLanguage() === 'en' ? 'Miner shutdown successfully' : '矿机关闭成功', 'success');
+        refreshMiners();
+        loadKPIStats();
+    } else {
+        showToast(result.error, 'error');
+    }
+}
+
+// 单机重启
+async function restartMiner(minerId) {
+    const response = await fetch(`/hosting/api/miners/${minerId}/restart`, {method: 'POST'});
+    const result = await response.json();
+    if (result.success) {
+        showToast(getLanguage() === 'en' ? 'Miner restarted successfully' : '矿机重启成功', 'success');
+        refreshMiners();
+        loadKPIStats();
+    } else {
+        showToast(result.error, 'error');
+    }
+}
+
+// 快速修改状态
+function quickChangeStatus(minerId) {
+    const modal = new bootstrap.Modal(document.getElementById('quickStatusModal'));
+    document.getElementById('quickStatusMinerId').value = minerId;
+    modal.show();
+}
+
+// 保存快速状态修改
+async function saveQuickStatus() {
+    const minerIdValue = document.getElementById('quickStatusMinerId').value;
+    const newStatus = document.getElementById('quickStatusSelect').value;
+    const notes = document.getElementById('quickStatusNotes').value;
+    
+    try {
+        const minerIds = JSON.parse(minerIdValue);
+        // 批量操作
+        const response = await fetch('/hosting/api/miners/batch-status', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({miner_ids: minerIds, new_status: newStatus, notes: notes})
+        });
+        const result = await response.json();
+        if (result.success) {
+            showToast(result.message || (getLanguage() === 'en' ? 'Status updated successfully' : '状态更新成功'), 'success');
+            bootstrap.Modal.getInstance(document.getElementById('quickStatusModal')).hide();
+            refreshMiners();
+            loadKPIStats();
+        } else {
+            showToast(result.error, 'error');
+        }
+    } catch {
+        // 单个矿机操作
+        const minerId = parseInt(minerIdValue);
+        const response = await fetch(`/hosting/api/miners/${minerId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({status: newStatus, notes: notes})
+        });
+        const result = await response.json();
+        if (result.success) {
+            showToast(getLanguage() === 'en' ? 'Status updated successfully' : '状态更新成功', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('quickStatusModal')).hide();
+            refreshMiners();
+            loadKPIStats();
+        } else {
+            showToast(result.error, 'error');
+        }
+    }
+}
+
+// 显示操作日志
+async function showOperationLogs(minerId) {
+    const modal = new bootstrap.Modal(document.getElementById('operationLogsModal'));
+    modal.show();
+    
+    // 加载日志
+    await loadOperationLogs(minerId, 1);
+}
+
+// 加载操作日志
+async function loadOperationLogs(minerId, page = 1) {
+    try {
+        const response = await fetch(`/hosting/api/miners/${minerId}/logs?page=${page}&limit=20`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const tbody = document.getElementById('logsTableBody');
+            tbody.innerHTML = '';
+            
+            if (result.logs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">${getLanguage() === 'en' ? 'No operation logs' : '暂无操作日志'}</td></tr>`;
+            } else {
+                result.logs.forEach(log => {
+                    const row = `
+                        <tr>
+                            <td>${new Date(log.created_at).toLocaleString()}</td>
+                            <td><span class="badge bg-secondary">${log.operation_type}</span></td>
+                            <td>${log.old_status || '-'}</td>
+                            <td>${log.new_status || '-'}</td>
+                            <td>${log.operator_email || '-'}</td>
+                            <td>${log.notes || '-'}</td>
+                        </tr>
+                    `;
+                    tbody.insertAdjacentHTML('beforeend', row);
+                });
+            }
+            
+            // 更新分页
+            const pagination = result.pagination;
+            const paginationEl = document.getElementById('logsPagination');
+            paginationEl.innerHTML = '';
+            
+            for (let i = 1; i <= pagination.total_pages; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === pagination.current_page ? 'active' : ''}`;
+                li.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="loadOperationLogs(${minerId}, ${i})">${i}</a>`;
+                paginationEl.appendChild(li);
+            }
+        }
+    } catch (error) {
+        console.error('加载操作日志失败:', error);
+    }
+}
+
+// 导出CSV
+function exportCSV() {
+    const siteId = document.getElementById('site-filter').value;
+    const status = document.getElementById('status-filter').value;
+    const search = document.getElementById('quickSearch').value;
+    
+    const params = new URLSearchParams();
+    if (siteId) params.append('site_id', siteId);
+    if (status) params.append('status', status);
+    if (search) params.append('search', search);
+    
+    window.location.href = `/hosting/api/miners/export?${params.toString()}`;
+}
+
+// 初始化时加载KPI和设置事件
+document.addEventListener('DOMContentLoaded', function() {
+    loadKPIStats();
+    setupQuickSearch();
+    
+    // 每次刷新矿机列表后，重新初始化复选框
+    const originalLoadMiners = loadMiners;
+    window.loadMiners = function(...args) {
+        originalLoadMiners.apply(this, args).then(() => {
+            initCheckboxes();
+        });
+    };
+    
+    // 站点筛选器变化时也更新KPI
+    document.getElementById('site-filter').addEventListener('change', function() {
+        loadKPIStats();
+    });
+});
+
+// 增强displayMiners函数：使用DOM操作在现有行添加复选框列
+(function() {
+    const original = window.displayMiners;
+    window.displayMiners = function(miners) {
+        // 先调用原始函数渲染所有列
+        original(miners);
+        
+        // 然后为每一行添加复选框列
+        const tbody = document.querySelector('#miners-table tbody');
+        if (!tbody) return;
+        
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach((row, index) => {
+            // 跳过空状态行
+            if (row.cells.length === 1 && row.cells[0].colSpan > 1) {
+                row.cells[0].colSpan = parseInt(row.cells[0].colSpan) + 1;
+                return;
+            }
+            
+            // 在第一列前插入复选框
+            if (miners && miners[index]) {
+                const checkboxCell = document.createElement('td');
+                checkboxCell.innerHTML = `<input type="checkbox" class="form-check-input miner-checkbox" value="${miners[index].id}">`;
+                row.insertBefore(checkboxCell, row.firstChild);
+            }
+        });
+        
+        // 重新初始化复选框事件
+        setTimeout(() => {
+            initCheckboxes();
+        }, 100);
+    };
+})();
+
 </script>
 {% endblock %}
