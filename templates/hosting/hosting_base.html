@@ -132,27 +132,28 @@
         margin-bottom: 0.5rem;
         white-space: nowrap;
         overflow: hidden;
-        transition: opacity 0.2s ease;
+        transition: font-size 0.3s ease;
     }
     
     .hosting-sidebar.collapsed .hosting-brand-title {
-        display: none;
+        font-size: 0.9rem;
     }
     
     .hosting-brand-icon {
-        font-size: 2rem;
-        display: none;
+        display: inline-block;
         background: var(--hosting-gradient);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
+        transition: all 0.3s ease;
     }
     
     .hosting-sidebar.collapsed .hosting-brand-icon {
-        display: block;
+        display: none;
     }
 
     .hosting-brand-subtitle {
+        display: block;
         font-size: 0.85rem;
         color: var(--hosting-text-secondary);
         transition: opacity 0.2s ease;
@@ -514,9 +515,8 @@
             </button>
             
             <div class="hosting-sidebar-brand">
-                <i class="bi bi-building hosting-brand-icon"></i>
                 <h1 class="hosting-brand-title">
-                    {% if current_lang == 'en' %}Hosting{% else %}托管管理{% endif %}
+                    <i class="bi bi-building me-2 hosting-brand-icon"></i>{% if current_lang == 'en' %}Hosting{% else %}托管管理{% endif %}
                 </h1>
                 <p class="hosting-brand-subtitle">
                     {% if current_lang == 'en' %}Professional Mining Management{% else %}专业矿机托管平台{% endif %}
