@@ -65,8 +65,49 @@
         position: fixed;
         height: 100vh;
         overflow-y: auto;
+        overflow-x: hidden;
         z-index: 1000;
+        transition: width 0.3s ease, padding 0.3s ease;
+    }
+    
+    /* Collapsed Sidebar */
+    .hosting-sidebar.collapsed {
+        width: 80px;
+        padding: 2rem 0.5rem;
+    }
+    
+    /* Sidebar Toggle Button */
+    .sidebar-toggle-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: rgba(255, 193, 7, 0.1);
+        border: 1px solid var(--hosting-secondary);
+        color: var(--hosting-secondary);
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
         transition: var(--hosting-transition);
+        z-index: 10;
+    }
+    
+    .sidebar-toggle-btn:hover {
+        background: var(--hosting-secondary);
+        color: #000;
+        transform: scale(1.1);
+    }
+    
+    .hosting-sidebar.collapsed .sidebar-toggle-btn {
+        right: 50%;
+        transform: translateX(50%);
+    }
+    
+    .hosting-sidebar.collapsed .sidebar-toggle-btn:hover {
+        transform: translateX(50%) scale(1.1);
     }
 
     .hosting-sidebar-brand {
@@ -74,6 +115,11 @@
         padding: 0 2rem 2rem;
         border-bottom: 1px solid var(--hosting-card-border);
         margin-bottom: 2rem;
+        transition: padding 0.3s ease;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-sidebar-brand {
+        padding: 0 0.5rem 2rem;
     }
 
     .hosting-brand-title {
@@ -84,16 +130,49 @@
         -webkit-text-fill-color: transparent;
         background-clip: text;
         margin-bottom: 0.5rem;
+        white-space: nowrap;
+        overflow: hidden;
+        transition: opacity 0.2s ease;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-brand-title {
+        opacity: 0;
+        height: 0;
+        margin: 0;
+    }
+    
+    .hosting-brand-icon {
+        font-size: 2rem;
+        display: none;
+        background: var(--hosting-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-brand-icon {
+        display: block;
     }
 
     .hosting-brand-subtitle {
         font-size: 0.85rem;
         color: var(--hosting-text-secondary);
+        transition: opacity 0.2s ease;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-brand-subtitle {
+        opacity: 0;
+        height: 0;
     }
 
     /* Navigation Menu */
     .hosting-nav {
         padding: 0 1rem;
+        transition: padding 0.3s ease;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-nav {
+        padding: 0 0.5rem;
     }
 
     .hosting-nav-section {
@@ -108,6 +187,16 @@
         letter-spacing: 1px;
         padding: 0 1rem 0.5rem;
         margin-bottom: 0.5rem;
+        white-space: nowrap;
+        overflow: hidden;
+        transition: opacity 0.2s ease;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-nav-title {
+        opacity: 0;
+        height: 0;
+        padding: 0;
+        margin: 0;
     }
 
     .hosting-nav-item {
@@ -123,12 +212,23 @@
         border-radius: var(--hosting-border-radius-sm);
         transition: var(--hosting-transition);
         font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-nav-link {
+        justify-content: center;
+        padding: 0.75rem 0.5rem;
     }
 
     .hosting-nav-link:hover {
         background: rgba(255, 193, 7, 0.1);
         color: var(--hosting-secondary);
         transform: translateX(5px);
+    }
+    
+    .hosting-sidebar.collapsed .hosting-nav-link:hover {
+        transform: none;
     }
 
     .hosting-nav-link.active {
@@ -142,6 +242,21 @@
         font-size: 1.1rem;
         width: 20px;
         text-align: center;
+        flex-shrink: 0;
+        transition: margin 0.3s ease;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-nav-icon {
+        margin-right: 0;
+    }
+    
+    .hosting-nav-text {
+        transition: opacity 0.2s ease;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-nav-text {
+        opacity: 0;
+        width: 0;
     }
 
     /* Main Content Area */
@@ -150,6 +265,11 @@
         margin-left: 280px;
         padding: 2rem;
         min-height: 100vh;
+        transition: margin-left 0.3s ease;
+    }
+    
+    .hosting-main.sidebar-collapsed {
+        margin-left: 80px;
     }
 
     /* Top Header */
@@ -390,7 +510,14 @@
     <div class="hosting-layout">
         <!-- Sidebar Navigation -->
         <nav class="hosting-sidebar" id="hostingSidebar">
+            <!-- Sidebar Toggle Button -->
+            <button class="sidebar-toggle-btn" id="sidebarCollapseBtn" 
+                    title="{% if current_lang == 'en' %}Toggle Sidebar{% else %}折叠侧边栏{% endif %}">
+                <i class="bi bi-chevron-left" id="sidebarToggleIcon"></i>
+            </button>
+            
             <div class="hosting-sidebar-brand">
+                <i class="bi bi-building hosting-brand-icon"></i>
                 <h1 class="hosting-brand-title">
                     <i class="bi bi-building me-2"></i>{% if current_lang == 'en' %}Hosting{% else %}托管管理{% endif %}
                 </h1>
@@ -409,31 +536,31 @@
                     <div class="hosting-nav-item">
                         <a href="/hosting/host" class="hosting-nav-link" data-nav="dashboard">
                             <i class="bi bi-speedometer2 hosting-nav-icon"></i>
-                            {% if current_lang == 'en' %}Dashboard{% else %}仪表板{% endif %}
+                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Dashboard{% else %}仪表板{% endif %}</span>
                         </a>
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/hosting/host/devices" class="hosting-nav-link" data-nav="devices">
                             <i class="bi bi-cpu hosting-nav-icon"></i>
-                            {% if current_lang == 'en' %}Device Management{% else %}设备管理{% endif %}
+                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Device Management{% else %}设备管理{% endif %}</span>
                         </a>
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/hosting/host/sites" class="hosting-nav-link" data-nav="sites">
                             <i class="bi bi-geo-alt hosting-nav-icon"></i>
-                            {% if current_lang == 'en' %}Site Management{% else %}站点管理{% endif %}
+                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Site Management{% else %}站点管理{% endif %}</span>
                         </a>
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/hosting/host/monitoring" class="hosting-nav-link" data-nav="monitoring">
                             <i class="bi bi-activity hosting-nav-icon"></i>
-                            {% if current_lang == 'en' %}Monitoring{% else %}监控管理{% endif %}
+                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Monitoring{% else %}监控管理{% endif %}</span>
                         </a>
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/hosting/host/curtailment" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/host/curtailment') }}" data-nav="curtailment">
                             <i class="bi bi-lightning-charge hosting-nav-icon"></i>
-                            {% if current_lang == 'en' %}Smart Curtailment{% else %}智能限电{% endif %}
+                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Smart Curtailment{% else %}智能限电{% endif %}</span>
                         </a>
                     </div>
                 </div>
@@ -446,25 +573,25 @@
                     <div class="hosting-nav-item">
                         <a href="/hosting/client" class="hosting-nav-link {{ 'active' if request.path == '/hosting/client' or request.path == '/hosting/client/' }}">
                             <i class="bi bi-person-circle hosting-nav-icon"></i>
-                            {% if current_lang == 'en' %}Dashboard{% else %}资产概览{% endif %}
+                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Dashboard{% else %}资产概览{% endif %}</span>
                         </a>
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/hosting/client/miners" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/miners') }}">
                             <i class="bi bi-cpu hosting-nav-icon"></i>
-                            {% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}
+                            <span class="hosting-nav-text">{% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}</span>
                         </a>
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/hosting/client/usage" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/usage') }}">
                             <i class="bi bi-activity hosting-nav-icon"></i>
-                            {% if current_lang == 'en' %}Usage Tracking{% else %}使用记录{% endif %}
+                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Usage Tracking{% else %}使用记录{% endif %}</span>
                         </a>
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/hosting/client/reports" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/reports') }}">
                             <i class="bi bi-graph-up hosting-nav-icon"></i>
-                            {% if current_lang == 'en' %}Reports{% else %}报告分析{% endif %}
+                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Reports{% else %}报告分析{% endif %}</span>
                         </a>
                     </div>
                 </div>
@@ -478,13 +605,13 @@
                     <div class="hosting-nav-item">
                         <a href="/hosting/client/tickets" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/tickets') }}">
                             <i class="bi bi-headset hosting-nav-icon"></i>
-                            {% if current_lang == 'en' %}Support Tickets{% else %}技术支持{% endif %}
+                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Support Tickets{% else %}技术支持{% endif %}</span>
                         </a>
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/hosting/status" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/status') }}">
                             <i class="bi bi-globe hosting-nav-icon"></i>
-                            {% if current_lang == 'en' %}System Status{% else %}系统状态{% endif %}
+                            <span class="hosting-nav-text">{% if current_lang == 'en' %}System Status{% else %}系统状态{% endif %}</span>
                         </a>
                     </div>
                 </div>
@@ -497,7 +624,7 @@
                     <div class="hosting-nav-item">
                         <a href="/main" class="hosting-nav-link">
                             <i class="bi bi-arrow-left hosting-nav-icon"></i>
-                            {% if current_lang == 'en' %}Back to Main{% else %}返回主页{% endif %}
+                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Back to Main{% else %}返回主页{% endif %}</span>
                         </a>
                     </div>
                 </div>
@@ -559,46 +686,87 @@
     {% block scripts %}{% endblock %}
     
     <script>
-    // Mobile Sidebar Toggle
+    // Sidebar Collapse and Mobile Toggle
     document.addEventListener('DOMContentLoaded', function() {
         const sidebarToggle = document.getElementById('sidebarToggle');
         const sidebar = document.getElementById('hostingSidebar');
+        const sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn');
+        const sidebarToggleIcon = document.getElementById('sidebarToggleIcon');
+        const mainContent = document.querySelector('.hosting-main');
+        
+        // Restore sidebar state from localStorage
+        const savedState = localStorage.getItem('hostingSidebarCollapsed');
+        if (savedState === 'true') {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('sidebar-collapsed');
+            sidebarToggleIcon.classList.remove('bi-chevron-left');
+            sidebarToggleIcon.classList.add('bi-chevron-right');
+        }
+        
+        // Sidebar Collapse Toggle (Desktop)
+        sidebarCollapseBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const isCollapsed = sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('sidebar-collapsed');
+            
+            // Toggle icon
+            if (isCollapsed) {
+                sidebarToggleIcon.classList.remove('bi-chevron-left');
+                sidebarToggleIcon.classList.add('bi-chevron-right');
+            } else {
+                sidebarToggleIcon.classList.remove('bi-chevron-right');
+                sidebarToggleIcon.classList.add('bi-chevron-left');
+            }
+            
+            // Save state to localStorage
+            localStorage.setItem('hostingSidebarCollapsed', isCollapsed);
+        });
         
         // Show toggle button on mobile
         function checkScreenSize() {
             if (window.innerWidth <= 992) {
-                sidebarToggle.style.display = 'block';
+                if (sidebarToggle) sidebarToggle.style.display = 'block';
+                // On mobile, remove collapsed state to ensure full sidebar when shown
+                sidebar.classList.remove('collapsed');
+                mainContent.classList.remove('sidebar-collapsed');
             } else {
-                sidebarToggle.style.display = 'none';
+                if (sidebarToggle) sidebarToggle.style.display = 'none';
                 sidebar.classList.remove('show');
+                // Restore collapsed state on desktop
+                if (savedState === 'true') {
+                    sidebar.classList.add('collapsed');
+                    mainContent.classList.add('sidebar-collapsed');
+                }
             }
         }
         
         checkScreenSize();
         window.addEventListener('resize', checkScreenSize);
         
-        // Toggle sidebar
-        sidebarToggle.addEventListener('click', function() {
-            sidebar.classList.toggle('show');
-        });
+        // Mobile Toggle sidebar
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('show');
+            });
+        }
         
-        // Close sidebar when clicking outside
+        // Close sidebar when clicking outside (mobile)
         document.addEventListener('click', function(e) {
             if (window.innerWidth <= 992 && 
                 !sidebar.contains(e.target) && 
-                !sidebarToggle.contains(e.target)) {
+                sidebarToggle && !sidebarToggle.contains(e.target)) {
                 sidebar.classList.remove('show');
             }
         });
         
-        // Set active navigation item - 清除所有并精确匹配
+        // Set active navigation item - 只为没有服务端active类的链接设置
         const currentPath = window.location.pathname;
-        const navLinks = document.querySelectorAll('.hosting-nav-link');
+        const navLinks = document.querySelectorAll('.hosting-nav-link[data-nav]');
         
-        // 先清除所有active类
+        // 只清除带有data-nav的链接（托管商菜单），保留服务端渲染的active类（客户菜单）
         navLinks.forEach(link => link.classList.remove('active'));
         
-        // 精确匹配路径并设置高亮
+        // 精确匹配路径并设置高亮（仅托管商菜单）
         if (currentPath === '/hosting/host' || currentPath === '/hosting/host/') {
             document.querySelector('[data-nav="dashboard"]')?.classList.add('active');
         } else if (currentPath === '/hosting/host/devices' || currentPath.startsWith('/hosting/host/devices/')) {
@@ -607,6 +775,8 @@
             document.querySelector('[data-nav="sites"]')?.classList.add('active');
         } else if (currentPath === '/hosting/host/monitoring' || currentPath.startsWith('/hosting/host/monitoring/')) {
             document.querySelector('[data-nav="monitoring"]')?.classList.add('active');
+        } else if (currentPath === '/hosting/host/curtailment' || currentPath.startsWith('/hosting/host/curtailment/')) {
+            document.querySelector('[data-nav="curtailment"]')?.classList.add('active');
         }
     });
     </script>
