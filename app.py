@@ -767,7 +767,7 @@ def inject_translator():
 # 登录页面
 @app.route('/login', methods=['GET', 'POST'])
 # @rate_limit(max_requests=5, window_minutes=15, feature_name="login")  # 🔧 临时禁用用于调试
-@SecurityManager.csrf_protect
+# @SecurityManager.csrf_protect  # 🔧 临时禁用CSRF保护以修复iframe环境登录问题
 def login():
     """处理用户登录"""
     # 如果用户已经登录，重定向到主页
