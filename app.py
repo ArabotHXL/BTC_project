@@ -956,22 +956,32 @@ def login():
             else:
                 flash('登录成功！欢迎使用BTC挖矿计算器', 'success')
             
-            # 🔐 Safari iframe session fix: 设置加密的user_info cookie作为fallback
-            # 用于在session丢失时显示用户信息（仅用于显示，不用于认证）
-            user_info = {
-                'email': email,
-                'role': user_role
-            }
-            user_info_encoded = base64.b64encode(json.dumps(user_info).encode()).decode()
+            # 🔐 Safari iframe session fix: 创建签名的session assertion token
+            # 检测是否在iframe环境中（通过query参数或User-Agent）
+            from session_assertion import get_assertion_service
             
-            # 重定向到原始请求的URL或主页，并设置cookie
+            is_iframe = request.args.get('iframe') == '1' or \
+                       'replit' in request.headers.get('User-Agent', '').lower()
+            
+            # 重定向到原始请求的URL或主页
             next_url = session.pop('next_url', url_for('index'))
+            
+            if is_iframe:
+                # 为iframe环境创建签名assertion token
+                assertion_service = get_assertion_service()
+                token = assertion_service.create_assertion(
+                    email=email,
+                    role=user_role,
+                    user_id=session.get('user_id')
+                )
+                
+                if token:
+                    # 将token附加到redirect URL
+                    separator = '&' if '?' in next_url else '?'
+                    next_url = f"{next_url}{separator}_sat={token}"
+                    logging.info(f"Safari iframe detected - appended session assertion token")
+            
             response = make_response(redirect(next_url))
-            response.set_cookie('user_info', user_info_encoded, 
-                              max_age=30*24*60*60,  # 30天
-                              secure=True, 
-                              httponly=False,  # 允许JavaScript读取
-                              samesite='None')
             return response
         else:
             # 登录失败
@@ -1142,6 +1152,49 @@ def unauthorized():
     """显示未授权页面"""
     return render_template('unauthorized.html')
 
+@app.route('/api/session/info', methods=['GET'])
+def get_session_info():
+    """
+    安全的会话信息API - 验证签名token后返回用户信息
+    仅用于Safari iframe环境中的UI显示
+    """
+    try:
+        # 获取session assertion token
+        token = request.args.get('_sat') or request.args.get('token')
+        
+        if not token:
+            return jsonify({
+                'success': False,
+                'error': 'Missing session assertion token'
+            }), 400
+        
+        # 验证token
+        from session_assertion import get_assertion_service
+        assertion_service = get_assertion_service()
+        result = assertion_service.verify_assertion(token)
+        
+        if not result.get('valid'):
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Invalid token')
+            }), 401
+        
+        # 返回用户信息
+        return jsonify({
+            'success': True,
+            'email': result.get('email'),
+            'role': result.get('role'),
+            'user_id': result.get('user_id'),
+            'authenticated': True
+        })
+        
+    except Exception as e:
+        logging.error(f"Failed to get session info: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
+
 @app.route('/logout')
 def logout():
     """处理用户登出 / Handle user logout"""
@@ -1152,17 +1205,13 @@ def logout():
     session.clear()
     session['language'] = current_lang
     
-    # 清除用户信息cookie (Safari iframe fallback)
-    response = make_response(redirect(url_for('login')))
-    response.set_cookie('user_info', '', expires=0, secure=True, httponly=False, samesite='None')
-    
     # 闪现消息，基于语言 / Flash message based on language
     if current_lang == 'en':
         flash('You have successfully logged out', 'info')
     else:
         flash('您已成功退出登录', 'info')
         
-    return response
+    return redirect(url_for('login'))
 
 @app.route('/main')
 # @login_required  # 🔧 临时禁用以修复Safari/iPad iframe环境中的session问题

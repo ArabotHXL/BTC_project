@@ -1336,54 +1336,76 @@ style.textContent = `
 document.head.appendChild(style);
 
 // ===== Safari iframe session fix =====
-// 在Safari/iPad iframe环境中，session会丢失，所以使用安全cookie fallback
+// 安全方案：使用签名的session assertion token (JWT)
 (function() {
-    const currentEmail = "{{ session.email or '' }}";
-    const currentRole = "{{ session.role or '' }}";
+    const serverEmail = "{{ session.email or '' }}";
+    const serverRole = "{{ session.role or '' }}";
     
-    // 如果session中没有email，尝试从cookie中读取
-    if (!currentEmail) {
-        console.log('Safari iframe detected - reading user info from cookie...');
+    // 如果服务器session有数据，直接使用（正常情况）
+    if (serverEmail && serverRole) {
+        console.log('Using server session data');
+        return;
+    }
+    
+    // Safari iframe场景：检查URL中的session assertion token
+    const urlParams = new URLSearchParams(window.location.search);
+    const assertionToken = urlParams.get('_sat');
+    
+    if (assertionToken) {
+        console.log('Safari iframe detected - found session assertion token');
         
-        // 读取user_info cookie
-        const userInfoCookie = document.cookie
-            .split('; ')
-            .find(row => row.startsWith('user_info='));
-        
-        if (userInfoCookie) {
-            try {
-                const userInfoEncoded = userInfoCookie.split('=')[1];
-                const userInfoJson = atob(userInfoEncoded);  // base64解码
-                const userInfo = JSON.parse(userInfoJson);
-                
-                console.log('User info from cookie:', userInfo);
-                
-                // 更新页面显示的用户名
-                const userDropdown = document.querySelector('#userDropdown span');
-                if (userDropdown && (userDropdown.textContent.includes('Guest') || userDropdown.textContent.includes('访客'))) {
-                    const displayName = userInfo.email.split('@')[0] + '...';
-                    userDropdown.textContent = displayName;
+        // 调用API验证token并获取用户信息
+        fetch('/api/session/info?_sat=' + encodeURIComponent(assertionToken))
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.authenticated) {
+                    console.log('Session assertion verified:', data.role);
+                    
+                    // 保存token到localStorage以便后续刷新
+                    localStorage.setItem('_session_token', assertionToken);
+                    
+                    // 更新页面显示的用户名
+                    const userDropdown = document.querySelector('#userDropdown span');
+                    if (userDropdown && (userDropdown.textContent.includes('Guest') || userDropdown.textContent.includes('访客'))) {
+                        const displayName = data.email.split('@')[0] + '...';
+                        userDropdown.textContent = displayName;
+                    }
+                    
+                    // 更新"Online"状态为角色名
+                    const systemStatus = document.getElementById('system-status');
+                    if (systemStatus) {
+                        const roleDisplay = {
+                            'owner': '{{ "Owner" if current_lang == "en" else "拥有者" }}',
+                            'admin': '{{ "Admin" if current_lang == "en" else "管理员" }}',
+                            'mining_site': '{{ "Mining Site" if current_lang == "en" else "矿场" }}',
+                            'client': '{{ "Client" if current_lang == "en" else "客户" }}',
+                            'customer': '{{ "Customer" if current_lang == "en" else "客户" }}',
+                            'guest': '{{ "Guest" if current_lang == "en" else "访客" }}'
+                        };
+                        systemStatus.innerHTML = `<span class="badge bg-danger">${roleDisplay[data.role] || data.role}</span>`;
+                    }
+                    
+                    // 清除URL中的token参数（防止泄露）
+                    urlParams.delete('_sat');
+                    const cleanUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+                    window.history.replaceState({}, '', cleanUrl);
+                } else {
+                    console.error('Session assertion validation failed:', data.error);
+                    localStorage.removeItem('_session_token');
                 }
-                
-                // 更新"Online"状态为角色名
-                const systemStatus = document.getElementById('system-status');
-                if (systemStatus && systemStatus.textContent === 'Online') {
-                    // 将角色显示在system status位置
-                    const roleDisplay = {
-                        'owner': '{{ "Owner" if current_lang == "en" else "拥有者" }}',
-                        'admin': '{{ "Admin" if current_lang == "en" else "管理员" }}',
-                        'mining_site': '{{ "Mining Site" if current_lang == "en" else "矿场" }}',
-                        'client': '{{ "Client" if current_lang == "en" else "客户" }}',
-                        'customer': '{{ "Customer" if current_lang == "en" else "客户" }}',
-                        'guest': '{{ "Guest" if current_lang == "en" else "访客" }}'
-                    };
-                    systemStatus.innerHTML = `<span class="badge bg-danger">${roleDisplay[userInfo.role] || userInfo.role}</span>`;
-                }
-            } catch (err) {
-                console.error('Failed to parse user info cookie:', err);
-            }
+            })
+            .catch(err => {
+                console.error('Failed to verify session assertion:', err);
+            });
+    } else {
+        // 尝试使用缓存的token
+        const cachedToken = localStorage.getItem('_session_token');
+        if (cachedToken) {
+            console.log('Using cached session token');
+            // 递归调用（模拟有token的情况）
+            window.location.search = '?_sat=' + cachedToken;
         } else {
-            console.log('No user_info cookie found - user is guest');
+            console.log('No session data available - user is guest');
         }
     }
 })();
