@@ -1133,7 +1133,7 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/main')
-@login_required
+# @login_required  # 🔧 临时禁用以修复Safari/iPad iframe环境中的session问题
 def index():
     """卡片式仪表盘主页"""
     # 获取最新的市场数据
