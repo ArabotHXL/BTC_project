@@ -976,10 +976,9 @@ def login():
                 )
                 
                 if token:
-                    # 将token附加到redirect URL
-                    separator = '&' if '?' in next_url else '?'
-                    next_url = f"{next_url}{separator}_sat={token}"
-                    logging.info(f"Safari iframe detected - appended session assertion token")
+                    # 🔐 使用hash fragment而不是query参数，避免Referer header泄露
+                    next_url = f"{next_url}#_sat={token}"
+                    logging.info(f"Safari iframe detected - appended session assertion token to hash")
             
             response = make_response(redirect(next_url))
             return response

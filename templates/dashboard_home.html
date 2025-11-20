@@ -625,7 +625,9 @@ body {
                     {% endif %}
                     
                     <li><hr class="dropdown-divider border-warning"></li>
-                    <li><a class="dropdown-item text-light" href="{{ url_for('logout') }}" style="border-radius: 10px; margin: 4px;">
+                    <li><a class="dropdown-item text-light" href="{{ url_for('logout') }}" 
+                           onclick="localStorage.removeItem('_session_token'); localStorage.removeItem('_user_email'); localStorage.removeItem('_user_role');" 
+                           style="border-radius: 10px; margin: 4px;">
                         <i class="bi bi-box-arrow-right me-2 text-secondary"></i>
                         {% if current_lang == 'en' %}Logout{% else %}退出登录{% endif %}
                     </a></li>
@@ -1347,12 +1349,20 @@ document.head.appendChild(style);
         return;
     }
     
-    // Safari iframe场景：检查URL中的session assertion token
-    const urlParams = new URLSearchParams(window.location.search);
-    const assertionToken = urlParams.get('_sat');
+    // Safari iframe场景：从hash fragment读取session assertion token（避免Referer泄露）
+    const hash = window.location.hash;
+    let assertionToken = null;
+    
+    if (hash && hash.includes('_sat=')) {
+        const hashParams = new URLSearchParams(hash.substring(1));
+        assertionToken = hashParams.get('_sat');
+    }
     
     if (assertionToken) {
-        console.log('Safari iframe detected - found session assertion token');
+        console.log('Safari iframe detected - found session assertion token in hash');
+        
+        // 立即清除hash中的token（在任何外部请求之前）
+        window.history.replaceState({}, '', window.location.pathname + window.location.search);
         
         // 调用API验证token并获取用户信息
         fetch('/api/session/info?_sat=' + encodeURIComponent(assertionToken))
@@ -1384,11 +1394,6 @@ document.head.appendChild(style);
                         };
                         systemStatus.innerHTML = `<span class="badge bg-danger">${roleDisplay[data.role] || data.role}</span>`;
                     }
-                    
-                    // 清除URL中的token参数（防止泄露）
-                    urlParams.delete('_sat');
-                    const cleanUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
-                    window.history.replaceState({}, '', cleanUrl);
                 } else {
                     console.error('Session assertion validation failed:', data.error);
                     localStorage.removeItem('_session_token');
@@ -1402,8 +1407,9 @@ document.head.appendChild(style);
         const cachedToken = localStorage.getItem('_session_token');
         if (cachedToken) {
             console.log('Using cached session token');
-            // 递归调用（模拟有token的情况）
-            window.location.search = '?_sat=' + cachedToken;
+            // 使用hash fragment重新加载（避免Referer泄露）
+            window.location.hash = '#_sat=' + cachedToken;
+            window.location.reload();
         } else {
             console.log('No session data available - user is guest');
         }
