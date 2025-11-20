@@ -625,9 +625,7 @@ body {
                     {% endif %}
                     
                     <li><hr class="dropdown-divider border-warning"></li>
-                    <li><a class="dropdown-item text-light" href="{{ url_for('logout') }}" 
-                           onclick="localStorage.removeItem('_session_token'); localStorage.removeItem('_user_email'); localStorage.removeItem('_user_role');" 
-                           style="border-radius: 10px; margin: 4px;">
+                    <li><a class="dropdown-item text-light" href="{{ url_for('logout') }}" style="border-radius: 10px; margin: 4px;">
                         <i class="bi bi-box-arrow-right me-2 text-secondary"></i>
                         {% if current_lang == 'en' %}Logout{% else %}退出登录{% endif %}
                     </a></li>
@@ -1336,84 +1334,5 @@ style.textContent = `
 }
 `;
 document.head.appendChild(style);
-
-// ===== Safari iframe session fix =====
-// 安全方案：使用签名的session assertion token (JWT)
-(function() {
-    const serverEmail = "{{ session.email or '' }}";
-    const serverRole = "{{ session.role or '' }}";
-    
-    // 如果服务器session有数据，直接使用（正常情况）
-    if (serverEmail && serverRole) {
-        console.log('Using server session data');
-        return;
-    }
-    
-    // Safari iframe场景：从hash fragment读取session assertion token（避免Referer泄露）
-    const hash = window.location.hash;
-    let assertionToken = null;
-    
-    if (hash && hash.includes('_sat=')) {
-        const hashParams = new URLSearchParams(hash.substring(1));
-        assertionToken = hashParams.get('_sat');
-    }
-    
-    if (assertionToken) {
-        console.log('Safari iframe detected - found session assertion token in hash');
-        
-        // 立即清除hash中的token（在任何外部请求之前）
-        window.history.replaceState({}, '', window.location.pathname + window.location.search);
-        
-        // 调用API验证token并获取用户信息
-        fetch('/api/session/info?_sat=' + encodeURIComponent(assertionToken))
-            .then(res => res.json())
-            .then(data => {
-                if (data.success && data.authenticated) {
-                    console.log('Session assertion verified:', data.role);
-                    
-                    // 保存token到localStorage以便后续刷新
-                    localStorage.setItem('_session_token', assertionToken);
-                    
-                    // 更新页面显示的用户名
-                    const userDropdown = document.querySelector('#userDropdown span');
-                    if (userDropdown && (userDropdown.textContent.includes('Guest') || userDropdown.textContent.includes('访客'))) {
-                        const displayName = data.email.split('@')[0] + '...';
-                        userDropdown.textContent = displayName;
-                    }
-                    
-                    // 更新"Online"状态为角色名
-                    const systemStatus = document.getElementById('system-status');
-                    if (systemStatus) {
-                        const roleDisplay = {
-                            'owner': '{{ "Owner" if current_lang == "en" else "拥有者" }}',
-                            'admin': '{{ "Admin" if current_lang == "en" else "管理员" }}',
-                            'mining_site': '{{ "Mining Site" if current_lang == "en" else "矿场" }}',
-                            'client': '{{ "Client" if current_lang == "en" else "客户" }}',
-                            'customer': '{{ "Customer" if current_lang == "en" else "客户" }}',
-                            'guest': '{{ "Guest" if current_lang == "en" else "访客" }}'
-                        };
-                        systemStatus.innerHTML = `<span class="badge bg-danger">${roleDisplay[data.role] || data.role}</span>`;
-                    }
-                } else {
-                    console.error('Session assertion validation failed:', data.error);
-                    localStorage.removeItem('_session_token');
-                }
-            })
-            .catch(err => {
-                console.error('Failed to verify session assertion:', err);
-            });
-    } else {
-        // 尝试使用缓存的token
-        const cachedToken = localStorage.getItem('_session_token');
-        if (cachedToken) {
-            console.log('Using cached session token');
-            // 使用hash fragment重新加载（避免Referer泄露）
-            window.location.hash = '#_sat=' + cachedToken;
-            window.location.reload();
-        } else {
-            console.log('No session data available - user is guest');
-        }
-    }
-})();
 </script>
 {% endblock %}

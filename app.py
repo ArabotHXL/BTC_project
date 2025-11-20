@@ -1,7 +1,6 @@
 # 标准库导入
 import logging
 import json
-import base64
 import os
 import secrets
 import requests
@@ -13,7 +12,7 @@ import pytz
 
 # 第三方库导入
 import numpy as np
-from flask import Flask, send_from_directory, render_template, request, jsonify, session, redirect, url_for, flash, g, make_response
+from flask import Flask, send_from_directory, render_template, request, jsonify, session, redirect, url_for, flash, g
 from sqlalchemy import text
 
 # 本地模块导入 - 优化为延迟导入模式
@@ -768,7 +767,7 @@ def inject_translator():
 # 登录页面
 @app.route('/login', methods=['GET', 'POST'])
 # @rate_limit(max_requests=5, window_minutes=15, feature_name="login")  # 🔧 临时禁用用于调试
-# @SecurityManager.csrf_protect  # 🔧 禁用CSRF以修复Safari/iPad iframe环境中的session问题
+@SecurityManager.csrf_protect
 def login():
     """处理用户登录"""
     # 如果用户已经登录，重定向到主页
@@ -944,11 +943,8 @@ def login():
             user_role = get_user_role(email)
             session['role'] = user_role
             
-            # 🔧 CRITICAL FIX: Force session modification to ensure cookie is sent in Safari/iPad iframe
-            session.modified = True
-            
-            # 记录成功登录（含session调试信息和role详情）
-            logging.info(f"用户成功登录: {email}, ID: {session.get('user_id')}, Role: {user_role}, Session keys: {list(session.keys())}")
+            # 记录成功登录
+            logging.info(f"用户成功登录: {email}, ID: {session.get('user_id')}")
             
             # 设置闪现成功消息，基于当前语言
             if g.language == 'en':
@@ -956,32 +952,9 @@ def login():
             else:
                 flash('登录成功！欢迎使用BTC挖矿计算器', 'success')
             
-            # 🔐 Safari iframe session fix: 创建签名的session assertion token
-            # 检测是否在iframe环境中（通过query参数或User-Agent）
-            from session_assertion import get_assertion_service
-            
-            is_iframe = request.args.get('iframe') == '1' or \
-                       'replit' in request.headers.get('User-Agent', '').lower()
-            
             # 重定向到原始请求的URL或主页
             next_url = session.pop('next_url', url_for('index'))
-            
-            if is_iframe:
-                # 为iframe环境创建签名assertion token
-                assertion_service = get_assertion_service()
-                token = assertion_service.create_assertion(
-                    email=email,
-                    role=user_role,
-                    user_id=session.get('user_id')
-                )
-                
-                if token:
-                    # 🔐 使用hash fragment而不是query参数，避免Referer header泄露
-                    next_url = f"{next_url}#_sat={token}"
-                    logging.info(f"Safari iframe detected - appended session assertion token to hash")
-            
-            response = make_response(redirect(next_url))
-            return response
+            return redirect(next_url)
         else:
             # 登录失败
             logging.warning(f"用户登录失败: {email}")
@@ -1116,14 +1089,7 @@ def wallet_login():
         if 'next_url' in session:
             del session['next_url']
         
-        # 🔐 Safari iframe session fix: 设置加密的user_info cookie作为fallback
-        user_info = {
-            'email': user.email,
-            'role': user.role
-        }
-        user_info_encoded = base64.b64encode(json.dumps(user_info).encode()).decode()
-        
-        response = make_response(jsonify({
+        return jsonify({
             'success': True,
             'message': 'Wallet login successful',
             'redirect_url': redirect_url,
@@ -1134,13 +1100,7 @@ def wallet_login():
                 'wallet_address': user.wallet_address,
                 'role': user.role
             }
-        }))
-        response.set_cookie('user_info', user_info_encoded, 
-                          max_age=30*24*60*60,  # 30天
-                          secure=True, 
-                          httponly=False,  # 允许JavaScript读取
-                          samesite='None')
-        return response
+        })
         
     except Exception as e:
         logging.error(f"钱包登录失败: {e}")
@@ -1150,49 +1110,6 @@ def wallet_login():
 def unauthorized():
     """显示未授权页面"""
     return render_template('unauthorized.html')
-
-@app.route('/api/session/info', methods=['GET'])
-def get_session_info():
-    """
-    安全的会话信息API - 验证签名token后返回用户信息
-    仅用于Safari iframe环境中的UI显示
-    """
-    try:
-        # 获取session assertion token
-        token = request.args.get('_sat') or request.args.get('token')
-        
-        if not token:
-            return jsonify({
-                'success': False,
-                'error': 'Missing session assertion token'
-            }), 400
-        
-        # 验证token
-        from session_assertion import get_assertion_service
-        assertion_service = get_assertion_service()
-        result = assertion_service.verify_assertion(token)
-        
-        if not result.get('valid'):
-            return jsonify({
-                'success': False,
-                'error': result.get('error', 'Invalid token')
-            }), 401
-        
-        # 返回用户信息
-        return jsonify({
-            'success': True,
-            'email': result.get('email'),
-            'role': result.get('role'),
-            'user_id': result.get('user_id'),
-            'authenticated': True
-        })
-        
-    except Exception as e:
-        logging.error(f"Failed to get session info: {e}")
-        return jsonify({
-            'success': False,
-            'error': 'Internal server error'
-        }), 500
 
 @app.route('/logout')
 def logout():
@@ -1213,7 +1130,7 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/main')
-# @login_required  # 🔧 临时禁用以修复Safari/iPad iframe环境中的session问题
+@login_required
 def index():
     """卡片式仪表盘主页"""
     # 获取最新的市场数据
