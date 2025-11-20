@@ -1,6 +1,7 @@
 # 标准库导入
 import logging
 import json
+import base64
 import os
 import secrets
 import requests
@@ -12,7 +13,7 @@ import pytz
 
 # 第三方库导入
 import numpy as np
-from flask import Flask, send_from_directory, render_template, request, jsonify, session, redirect, url_for, flash, g
+from flask import Flask, send_from_directory, render_template, request, jsonify, session, redirect, url_for, flash, g, make_response
 from sqlalchemy import text
 
 # 本地模块导入 - 优化为延迟导入模式
@@ -955,9 +956,23 @@ def login():
             else:
                 flash('登录成功！欢迎使用BTC挖矿计算器', 'success')
             
-            # 重定向到原始请求的URL或主页
+            # 🔐 Safari iframe session fix: 设置加密的user_info cookie作为fallback
+            # 用于在session丢失时显示用户信息（仅用于显示，不用于认证）
+            user_info = {
+                'email': email,
+                'role': user_role
+            }
+            user_info_encoded = base64.b64encode(json.dumps(user_info).encode()).decode()
+            
+            # 重定向到原始请求的URL或主页，并设置cookie
             next_url = session.pop('next_url', url_for('index'))
-            return redirect(next_url)
+            response = make_response(redirect(next_url))
+            response.set_cookie('user_info', user_info_encoded, 
+                              max_age=30*24*60*60,  # 30天
+                              secure=True, 
+                              httponly=False,  # 允许JavaScript读取
+                              samesite='None')
+            return response
         else:
             # 登录失败
             logging.warning(f"用户登录失败: {email}")
@@ -1092,7 +1107,14 @@ def wallet_login():
         if 'next_url' in session:
             del session['next_url']
         
-        return jsonify({
+        # 🔐 Safari iframe session fix: 设置加密的user_info cookie作为fallback
+        user_info = {
+            'email': user.email,
+            'role': user.role
+        }
+        user_info_encoded = base64.b64encode(json.dumps(user_info).encode()).decode()
+        
+        response = make_response(jsonify({
             'success': True,
             'message': 'Wallet login successful',
             'redirect_url': redirect_url,
@@ -1103,7 +1125,13 @@ def wallet_login():
                 'wallet_address': user.wallet_address,
                 'role': user.role
             }
-        })
+        }))
+        response.set_cookie('user_info', user_info_encoded, 
+                          max_age=30*24*60*60,  # 30天
+                          secure=True, 
+                          httponly=False,  # 允许JavaScript读取
+                          samesite='None')
+        return response
         
     except Exception as e:
         logging.error(f"钱包登录失败: {e}")
@@ -1124,13 +1152,17 @@ def logout():
     session.clear()
     session['language'] = current_lang
     
+    # 清除用户信息cookie (Safari iframe fallback)
+    response = make_response(redirect(url_for('login')))
+    response.set_cookie('user_info', '', expires=0, secure=True, httponly=False, samesite='None')
+    
     # 闪现消息，基于语言 / Flash message based on language
     if current_lang == 'en':
         flash('You have successfully logged out', 'info')
     else:
         flash('您已成功退出登录', 'info')
         
-    return redirect(url_for('login'))
+    return response
 
 @app.route('/main')
 # @login_required  # 🔧 临时禁用以修复Safari/iPad iframe环境中的session问题

@@ -1334,5 +1334,58 @@ style.textContent = `
 }
 `;
 document.head.appendChild(style);
+
+// ===== Safari iframe session fix =====
+// 在Safari/iPad iframe环境中，session会丢失，所以使用安全cookie fallback
+(function() {
+    const currentEmail = "{{ session.email or '' }}";
+    const currentRole = "{{ session.role or '' }}";
+    
+    // 如果session中没有email，尝试从cookie中读取
+    if (!currentEmail) {
+        console.log('Safari iframe detected - reading user info from cookie...');
+        
+        // 读取user_info cookie
+        const userInfoCookie = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('user_info='));
+        
+        if (userInfoCookie) {
+            try {
+                const userInfoEncoded = userInfoCookie.split('=')[1];
+                const userInfoJson = atob(userInfoEncoded);  // base64解码
+                const userInfo = JSON.parse(userInfoJson);
+                
+                console.log('User info from cookie:', userInfo);
+                
+                // 更新页面显示的用户名
+                const userDropdown = document.querySelector('#userDropdown span');
+                if (userDropdown && (userDropdown.textContent.includes('Guest') || userDropdown.textContent.includes('访客'))) {
+                    const displayName = userInfo.email.split('@')[0] + '...';
+                    userDropdown.textContent = displayName;
+                }
+                
+                // 更新"Online"状态为角色名
+                const systemStatus = document.getElementById('system-status');
+                if (systemStatus && systemStatus.textContent === 'Online') {
+                    // 将角色显示在system status位置
+                    const roleDisplay = {
+                        'owner': '{{ "Owner" if current_lang == "en" else "拥有者" }}',
+                        'admin': '{{ "Admin" if current_lang == "en" else "管理员" }}',
+                        'mining_site': '{{ "Mining Site" if current_lang == "en" else "矿场" }}',
+                        'client': '{{ "Client" if current_lang == "en" else "客户" }}',
+                        'customer': '{{ "Customer" if current_lang == "en" else "客户" }}',
+                        'guest': '{{ "Guest" if current_lang == "en" else "访客" }}'
+                    };
+                    systemStatus.innerHTML = `<span class="badge bg-danger">${roleDisplay[userInfo.role] || userInfo.role}</span>`;
+                }
+            } catch (err) {
+                console.error('Failed to parse user info cookie:', err);
+            }
+        } else {
+            console.log('No user_info cookie found - user is guest');
+        }
+    }
+})();
 </script>
 {% endblock %}
