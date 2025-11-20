@@ -67,11 +67,21 @@ class SecurityManager:
                         token = request.headers.get('X-CSRF-Token')
                     elif request.is_json and request.json and 'csrf_token' in request.json:
                         token = request.json['csrf_token']
-                except Exception:
-                    pass  # Continue with token validation
+                except Exception as e:
+                    logger.warning(f"CSRF token extraction error: {e}")
                 
-                if not token or not SecurityManager.validate_csrf_token(token):
-                    abort(403, 'CSRF token validation failed')
+                # Debug logging for CSRF issues
+                has_session_token = 'csrf_token' in session
+                session_keys = list(session.keys()) if session else []
+                logger.warning(f"CSRF Debug - Token from request: {token[:8] if token else 'None'}..., Session has csrf_token: {has_session_token}, Session keys: {session_keys}")
+                
+                if not token:
+                    logger.error(f"CSRF validation failed: No token provided in request")
+                    abort(403, 'CSRF token validation failed: No token provided')
+                
+                if not SecurityManager.validate_csrf_token(token):
+                    logger.error(f"CSRF validation failed: Token mismatch or session missing")
+                    abort(403, 'CSRF token validation failed: Invalid token')
             
             return f(*args, **kwargs)
         return decorated_function
