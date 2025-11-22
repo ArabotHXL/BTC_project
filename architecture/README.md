@@ -50,13 +50,29 @@ This folder contains comprehensive architecture documentation designed for both 
    - Web3 features
    - **Audience**: Integration engineers, technical leads
 
-## 🎨 Architecture Diagrams
+## 🎨 Visual Architecture Diagrams
 
-All documentation includes visual diagrams using Mermaid syntax, which can be rendered in:
-- GitHub/GitLab markdown viewers
+### Standalone Diagram Collection
+
+**📁 [Diagrams Folder](./diagrams/)** - Complete visual diagram collection with 40+ Mermaid diagrams!
+
+This folder contains **6 dedicated diagram documents** covering:
+
+1. **[System Overview Diagram](./diagrams/01-system-overview.md)** - Complete architecture with all components
+2. **[Data Flow Diagrams](./diagrams/02-data-flow-complete.md)** - Request flows and background processing
+3. **[Database ERD](./diagrams/03-database-schema-visual.md)** - Entity relationships and schema design
+4. **[Module Interaction](./diagrams/04-module-interaction.md)** - Module communication and dependencies
+5. **[Authentication Flow](./diagrams/05-authentication-flow.md)** - Complete auth and RBAC flows
+6. **[Deployment Architecture](./diagrams/06-deployment-architecture.md)** - Infrastructure and deployment
+
+### Rendering Options
+
+All diagrams use Mermaid syntax and can be rendered in:
+- GitHub/GitLab markdown viewers (automatic)
 - VS Code with Mermaid extension
-- Online Mermaid editors
+- Online Mermaid editors (https://mermaid.live)
 - Documentation platforms (GitBook, ReadTheDocs, etc.)
+- Export as SVG/PNG for presentations
 
 ## 🚀 Quick Start
 
