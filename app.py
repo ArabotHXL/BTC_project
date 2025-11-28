@@ -6135,6 +6135,26 @@ except ImportError as e:
 except Exception as e:
     logging.error(f"Failed to register RBAC Permission Management API: {e}")
 
+# Edge Collector API (矿机数据采集接收)
+try:
+    from api.collector_api import collector_bp
+    app.register_blueprint(collector_bp)
+    logging.info("Edge Collector API registered successfully")
+except ImportError as e:
+    logging.warning(f"Edge Collector API not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register Edge Collector API: {e}")
+
+# Collector Management Routes (采集器管理界面)
+try:
+    from routes.collector_routes import collector_routes_bp
+    app.register_blueprint(collector_routes_bp)
+    logging.info("Collector Management Routes registered successfully")
+except ImportError as e:
+    logging.warning(f"Collector Management Routes not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register Collector Management Routes: {e}")
+
 # Register calculator module blueprint for modular architecture
 try:
     from modules.config import register_modules
