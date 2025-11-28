@@ -106,3 +106,49 @@ The architecture emphasizes modularity with page-isolated components and databas
 - **Redis**: In-memory data store (cache + task queue).
 - **Python 3.9+**: Runtime.
 - **Replit Platform**: Deployment and hosting.
+
+## Edge Collector Architecture
+
+### Overview
+The Edge Collector system enables real-time miner telemetry collection from on-premises mining farms to cloud infrastructure. It consists of a Python-based edge collector that runs locally at mining farms and a cloud receiver API for data aggregation.
+
+### Components
+
+**Edge Collector (edge_collector/cgminer_collector.py):**
+- Connects to CGMiner API (TCP port 4028) for real-time miner data
+- Batch collection with configurable intervals (default: 30 seconds)
+- Gzip compression for efficient data transfer
+- SQLite offline caching for network resilience
+- SHA256 HMAC authentication for secure uploads
+
+**Cloud Receiver (api/collector_api.py):**
+- `/api/collector/upload` endpoint for telemetry data
+- Site-bound API key authentication
+- Gzip decompression and validation
+- MinerTelemetryLive and MinerTelemetryHistory persistence
+- Payload size limits (10MB max)
+
+**Collector Management UI (routes/collector_routes.py):**
+- API key generation and management
+- Site binding and monitoring
+- Real-time telemetry display
+- Bilingual interface (EN/中文)
+
+### Alert Rules Engine (services/alert_engine.py)
+Automated monitoring with configurable rules:
+- **Temperature Alerts**: Warning at 75°C, critical at 85°C
+- **Offline Detection**: Monitors miner connectivity status
+- **Hashrate Monitoring**: Detects low performance (<50 TH/s default)
+- **Hardware Errors**: Threshold-based error detection
+- **Auto-Resolve**: Clears alerts when conditions normalize
+- **Cooldown System**: 30-minute default to prevent alert flooding
+
+### Database Models
+- `MinerTelemetryLive`: Current state per miner
+- `MinerTelemetryHistory`: Historical telemetry data
+- `CollectorKey`: API key management with site binding
+- `MinerAlert`: Alert records with acknowledgment tracking
+- `MinerAlertRule`: Configurable alert rules per site
+
+### Deployment
+Edge collector runs on local mining farm server. See `edge_collector/README.md` for installation and configuration guide.
