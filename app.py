@@ -5937,17 +5937,107 @@ def analytics_main():
     return render_template('analytics_main.html', technical_indicators=technical_indicators)
 
 @app.route('/technical-analysis')
-@app.route('/technical_analysis') 
+@app.route('/technical_analysis')
+@app.route('/analytics/technical')
 @login_required
 @log_access_attempt('技术分析')
 def technical_analysis():
-    """技术分析页面 - 重定向到分析平台的技术分析标签"""
+    """Technical Analysis page - Renders interactive technical indicators dashboard"""
     if not has_role(['owner', 'manager', 'mining_site']):
-        flash('您没有权限访问此页面', 'danger')
+        current_lang = session.get('language', 'zh')
+        if current_lang == 'en':
+            flash('You do not have permission to access this page', 'danger')
+        else:
+            flash('您没有权限访问此页面', 'danger')
         return redirect(url_for('index'))
     
-    # 重定向到分析仪表盘的技术分析标签
-    return redirect(url_for('analytics_dashboard') + '#technical')
+    current_lang = session.get('language', 'zh')
+    return render_template('technical_analysis.html', current_lang=current_lang)
+
+@app.route('/analytics/network')
+@login_required
+@log_access_attempt('网络分析')
+def analytics_network():
+    """Network Analysis page - Alias for network_history with analytics URL pattern"""
+    if not has_role(['owner', 'admin', 'mining_site']):
+        current_lang = session.get('language', 'zh')
+        if current_lang == 'en':
+            flash('You do not have permission to access this page', 'danger')
+        else:
+            flash('您没有权限访问此页面', 'danger')
+        return redirect(url_for('index'))
+    
+    return network_history()
+
+@app.route('/reports')
+@login_required
+@log_access_attempt('报告管理')
+def reports_page():
+    """Reports management page - Download PDF, Excel, PowerPoint reports"""
+    if not has_role(['owner', 'admin', 'manager', 'mining_site']):
+        current_lang = session.get('language', 'zh')
+        if current_lang == 'en':
+            flash('You do not have permission to access reports', 'danger')
+        else:
+            flash('您没有权限访问报告', 'danger')
+        return redirect(url_for('index'))
+    
+    current_lang = session.get('language', 'zh')
+    user_role = get_user_role(session.get('email'))
+    return render_template('reports.html', current_lang=current_lang, user_role=user_role)
+
+@app.route('/settings')
+@login_required
+@log_access_attempt('用户设置')
+def settings_page():
+    """User settings page - Language, notifications, display preferences"""
+    current_lang = session.get('language', 'zh')
+    user_email = session.get('email')
+    user_role = get_user_role(user_email)
+    
+    user_settings = {
+        'language': session.get('language', 'zh'),
+        'notifications_enabled': session.get('notifications_enabled', True),
+        'email_notifications': session.get('email_notifications', True),
+        'display_currency': session.get('display_currency', 'USD'),
+        'timezone': session.get('timezone', 'UTC'),
+        'theme': session.get('theme', 'dark')
+    }
+    
+    return render_template('settings.html', 
+                         current_lang=current_lang, 
+                         user_role=user_role,
+                         user_settings=user_settings,
+                         user_email=user_email)
+
+@app.route('/settings/save', methods=['POST'])
+@login_required
+def save_settings():
+    """Save user settings to session"""
+    try:
+        data = request.get_json() if request.is_json else request.form
+        
+        if 'language' in data:
+            session['language'] = data['language']
+        if 'notifications_enabled' in data:
+            session['notifications_enabled'] = data['notifications_enabled'] in ['true', True, '1', 1]
+        if 'email_notifications' in data:
+            session['email_notifications'] = data['email_notifications'] in ['true', True, '1', 1]
+        if 'display_currency' in data:
+            session['display_currency'] = data['display_currency']
+        if 'timezone' in data:
+            session['timezone'] = data['timezone']
+        if 'theme' in data:
+            session['theme'] = data['theme']
+        
+        current_lang = session.get('language', 'zh')
+        if current_lang == 'en':
+            return jsonify({'success': True, 'message': 'Settings saved successfully'})
+        else:
+            return jsonify({'success': True, 'message': '设置已保存'})
+    except Exception as e:
+        logging.error(f"Error saving settings: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # 修复专业报告路由
 @app.route('/api/professional-report')
