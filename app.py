@@ -6115,6 +6115,16 @@ except ImportError as e:
 except Exception as e:
     logging.error(f"Failed to register Web3/CRM/Treasury Integration API blueprints: {e}")
 
+# RBAC Permission Management API
+try:
+    from routes.rbac_routes import rbac_bp
+    app.register_blueprint(rbac_bp)
+    logging.info("RBAC Permission Management API registered successfully")
+except ImportError as e:
+    logging.warning(f"RBAC Permission Management API not available: {e}")
+except Exception as e:
+    logging.error(f"Failed to register RBAC Permission Management API: {e}")
+
 # Register calculator module blueprint for modular architecture
 try:
     from modules.config import register_modules

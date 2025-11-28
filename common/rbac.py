@@ -27,6 +27,7 @@ class AccessLevel(Enum):
 
 class Role(Enum):
     """用户角色枚举 - 按权限从高到低排列"""
+    # 新版6角色体系
     OWNER = "owner"                         # 所有者 - 最高权限
     ADMIN = "admin"                         # 管理员
     MINING_SITE_OWNER = "mining_site_owner" # 矿场站点负责人
@@ -40,6 +41,15 @@ class Role(Enum):
     TENANT_OWNER = "tenant_owner"
     MINING_SITE = "mining_site"
     USER = "user"
+    
+    # 旧版功能角色（向后兼容）
+    DEVELOPER = "developer"                 # 开发者
+    API_CLIENT = "api_client"               # API客户端
+    INVESTOR = "investor"                   # 投资人
+    OPERATOR = "operator"                   # 运维人员
+    FINANCE = "finance"                     # 财务人员
+    TRADER = "trader"                       # 交易员
+    READONLY = "readonly"                   # 只读用户
 
 
 # 旧角色到新角色的映射
@@ -55,6 +65,14 @@ ROLE_MIGRATION_MAP = {
     'mining_site_owner': Role.MINING_SITE_OWNER,
     'client': Role.CLIENT,
     'customer': Role.CUSTOMER,
+    # 旧功能角色映射
+    'developer': Role.ADMIN,      # 开发者 -> 管理员权限
+    'api_client': Role.CLIENT,    # API客户端 -> 客户端权限
+    'investor': Role.CLIENT,      # 投资人 -> 客户端权限
+    'operator': Role.MINING_SITE_OWNER,  # 运维人员 -> 矿场站点负责人
+    'finance': Role.ADMIN,        # 财务人员 -> 管理员权限
+    'trader': Role.CLIENT,        # 交易员 -> 客户端权限
+    'readonly': Role.CUSTOMER,    # 只读用户 -> 应用客户
 }
 
 
@@ -742,6 +760,55 @@ class RBACManager:
                     'total_access_count': full_count + read_count
                 })
         return summary
+    
+    # ==================== 向后兼容方法 ====================
+    
+    def has_permission(
+        self,
+        user_role: Role,
+        required_permission: 'Permission',
+        tenant_id: Optional[str] = None
+    ) -> bool:
+        """检查用户是否有指定权限 - 向后兼容旧代码"""
+        # 使用 normalize_role 确保兼容性
+        if isinstance(user_role, str):
+            user_role = normalize_role(user_role)
+        
+        # Owner总是有权限
+        if user_role == Role.OWNER:
+            return True
+        
+        # 将旧Permission转换为新Module检查
+        from common.rbac import PERMISSION_TO_MODULE_MAP
+        module = PERMISSION_TO_MODULE_MAP.get(required_permission)
+        if module:
+            need_full = 'write' in required_permission.value or 'delete' in required_permission.value
+            return self.has_access(user_role, module, require_full=need_full)
+        
+        # 未映射的权限，允许Admin访问
+        return user_role in [Role.OWNER, Role.ADMIN]
+    
+    def has_any_permission(
+        self,
+        user_role: Role,
+        required_permissions: List['Permission']
+    ) -> bool:
+        """检查用户是否有任意一个权限 - 向后兼容旧代码"""
+        return any(
+            self.has_permission(user_role, perm)
+            for perm in required_permissions
+        )
+    
+    def has_all_permissions(
+        self,
+        user_role: Role,
+        required_permissions: List['Permission']
+    ) -> bool:
+        """检查用户是否有所有权限 - 向后兼容旧代码"""
+        return all(
+            self.has_permission(user_role, perm)
+            for perm in required_permissions
+        )
 
 
 # 全局RBAC管理器实例
@@ -888,11 +955,225 @@ def get_user_permissions() -> Dict[str, Any]:
     }
 
 
+# ==================== 向后兼容层 ====================
+# 兼容旧代码使用的Permission枚举
+
+class Permission(Enum):
+    """权限枚举 - 向后兼容旧代码"""
+    
+    # 基础功能
+    CALC_READ = "calculator:read"
+    CALC_WRITE = "calculator:write"
+    CALC_DELETE = "calculator:delete"
+    CALC_EXPORT = "calculator:export"
+    CALC_BATCH = "calculator:batch"
+    
+    # 分析
+    ANALYTICS_READ = "analytics:read"
+    ANALYTICS_ADVANCED = "analytics:advanced"
+    ANALYTICS_EXPORT = "analytics:export"
+    
+    # 用户管理
+    USER_READ = "user:read"
+    USER_WRITE = "user:write"
+    USER_DELETE = "user:delete"
+    USER_ADMIN = "user:admin"
+    
+    # 租户
+    TENANT_READ = "tenant:read"
+    TENANT_WRITE = "tenant:write"
+    TENANT_ADMIN = "tenant:admin"
+    
+    # API密钥
+    API_KEY_READ = "api_key:read"
+    API_KEY_CREATE = "api_key:create"
+    API_KEY_REVOKE = "api_key:revoke"
+    
+    # 区块链
+    BLOCKCHAIN_READ = "blockchain:read"
+    BLOCKCHAIN_WRITE = "blockchain:write"
+    
+    # 报表
+    REPORT_READ = "report:read"
+    REPORT_CREATE = "report:create"
+    REPORT_EXPORT = "report:export"
+    
+    # 系统
+    SYSTEM_CONFIG = "system:config"
+    SYSTEM_ADMIN = "system:admin"
+    SYSTEM_AUDIT = "system:audit"
+    
+    # 计费
+    BILLING_READ = "billing:read"
+    BILLING_WRITE = "billing:write"
+    
+    # Webhook
+    WEBHOOK_READ = "webhook:read"
+    WEBHOOK_WRITE = "webhook:write"
+    
+    # 矿机
+    MINERS_READ = "miners:read"
+    MINERS_WRITE = "miners:write"
+    MINERS_DELETE = "miners:delete"
+    
+    # 智能层
+    INTEL_READ = "intel:read"
+    INTEL_FORECAST = "intel:forecast"
+    INTEL_OPTIMIZE = "intel:optimize"
+    INTEL_EXPLAIN = "intel:explain"
+    
+    # 运营
+    OPS_PLAN = "ops:plan"
+    OPS_APPLY = "ops:apply"
+    OPS_READ = "ops:read"
+    
+    # 财资
+    TREASURY_READ = "treasury:read"
+    TREASURY_TRADE = "treasury:trade"
+    TREASURY_EXECUTE = "treasury:execute"
+    
+    # Web3
+    WEB3_MINT = "web3:mint"
+    WEB3_VERIFY = "web3:verify"
+    WEB3_READ = "web3:read"
+    
+    # CRM
+    CRM_READ = "crm:read"
+    CRM_SYNC = "crm:sync"
+    CRM_WEBHOOK = "crm:webhook"
+    CRM_ADMIN = "crm:admin"
+    
+    # 托管
+    HOSTING_READ = "hosting:read"
+    HOSTING_WRITE = "hosting:write"
+    HOSTING_DELETE = "hosting:delete"
+    HOSTING_ADMIN = "hosting:admin"
+    
+    # 限电
+    CURTAILMENT_READ = "curtailment:read"
+    CURTAILMENT_WRITE = "curtailment:write"
+    CURTAILMENT_EXECUTE = "curtailment:execute"
+    
+    WILDCARD = "*"  # 所有权限
+
+
+# 旧Permission到新Module的映射
+PERMISSION_TO_MODULE_MAP = {
+    Permission.CALC_READ: Module.BASIC_CALCULATOR,
+    Permission.CALC_WRITE: Module.BASIC_CALCULATOR,
+    Permission.CALC_BATCH: Module.ANALYTICS_BATCH_CALC,
+    Permission.ANALYTICS_READ: Module.ANALYTICS_NETWORK,
+    Permission.ANALYTICS_ADVANCED: Module.ANALYTICS_DERIBIT,
+    Permission.USER_READ: Module.USER_LIST_VIEW,
+    Permission.USER_WRITE: Module.USER_EDIT,
+    Permission.USER_DELETE: Module.USER_DELETE,
+    Permission.USER_ADMIN: Module.USER_ROLE_ASSIGN,
+    Permission.SYSTEM_CONFIG: Module.SYSTEM_HEALTH,
+    Permission.SYSTEM_ADMIN: Module.SYSTEM_HEALTH,
+    Permission.SYSTEM_AUDIT: Module.SYSTEM_EVENT,
+    Permission.BILLING_READ: Module.FINANCE_BILLING,
+    Permission.BILLING_WRITE: Module.FINANCE_BILLING,
+    Permission.MINERS_READ: Module.HOSTING_STATUS_MONITOR,
+    Permission.MINERS_WRITE: Module.HOSTING_BATCH_CREATE,
+    Permission.MINERS_DELETE: Module.HOSTING_BATCH_CREATE,
+    Permission.INTEL_READ: Module.AI_BTC_PREDICT,
+    Permission.INTEL_FORECAST: Module.AI_BTC_PREDICT,
+    Permission.INTEL_OPTIMIZE: Module.AI_POWER_OPTIMIZE,
+    Permission.INTEL_EXPLAIN: Module.AI_ROI_EXPLAIN,
+    Permission.OPS_READ: Module.CURTAILMENT_HISTORY,
+    Permission.OPS_PLAN: Module.CURTAILMENT_STRATEGY,
+    Permission.OPS_APPLY: Module.CURTAILMENT_EXECUTE,
+    Permission.TREASURY_READ: Module.FINANCE_BILLING,
+    Permission.TREASURY_TRADE: Module.FINANCE_BTC_SETTLE,
+    Permission.TREASURY_EXECUTE: Module.FINANCE_BTC_SETTLE,
+    Permission.WEB3_READ: Module.WEB3_BLOCKCHAIN_VERIFY,
+    Permission.WEB3_VERIFY: Module.WEB3_TRANSPARENCY,
+    Permission.WEB3_MINT: Module.WEB3_SLA_NFT,
+    Permission.CRM_READ: Module.CRM_CUSTOMER_VIEW,
+    Permission.CRM_SYNC: Module.CRM_CUSTOMER_MGMT,
+    Permission.CRM_WEBHOOK: Module.CRM_ACTIVITY_LOG,
+    Permission.CRM_ADMIN: Module.CRM_CUSTOMER_MGMT,
+    Permission.REPORT_READ: Module.REPORT_PDF,
+    Permission.REPORT_CREATE: Module.REPORT_PDF,
+    Permission.REPORT_EXPORT: Module.REPORT_EXCEL,
+    Permission.BLOCKCHAIN_READ: Module.WEB3_BLOCKCHAIN_VERIFY,
+    Permission.BLOCKCHAIN_WRITE: Module.WEB3_BLOCKCHAIN_VERIFY,
+    Permission.HOSTING_READ: Module.HOSTING_STATUS_MONITOR,
+    Permission.HOSTING_WRITE: Module.HOSTING_BATCH_CREATE,
+    Permission.HOSTING_DELETE: Module.HOSTING_BATCH_CREATE,
+    Permission.HOSTING_ADMIN: Module.HOSTING_SITE_MGMT,
+    Permission.CURTAILMENT_READ: Module.CURTAILMENT_HISTORY,
+    Permission.CURTAILMENT_WRITE: Module.CURTAILMENT_STRATEGY,
+    Permission.CURTAILMENT_EXECUTE: Module.CURTAILMENT_EXECUTE,
+}
+
+
+def require_permission(
+    required_permissions: List[Permission],
+    require_all: bool = False,
+    resource_tenant_field: Optional[str] = None
+):
+    """
+    权限检查装饰器 - 向后兼容旧代码
+    
+    Args:
+        required_permissions: 需要的权限列表
+        require_all: True=需要所有权限, False=需要任意一个权限
+        resource_tenant_field: 如果指定，会检查资源的租户ID
+    """
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            user_role_str = session.get('role', 'guest')
+            user_role = normalize_role(user_role_str)
+            
+            # Owner总是有权限
+            if user_role == Role.OWNER:
+                g.user_role = user_role
+                return f(*args, **kwargs)
+            
+            # 将旧Permission转换为新Module检查
+            has_access = False
+            for perm in required_permissions:
+                module = PERMISSION_TO_MODULE_MAP.get(perm)
+                if module:
+                    # 写操作需要FULL权限
+                    need_full = 'write' in perm.value or 'delete' in perm.value or 'admin' in perm.value
+                    if rbac_manager.has_access(user_role, module, require_full=need_full):
+                        has_access = True
+                        if not require_all:
+                            break
+                    elif require_all:
+                        has_access = False
+                        break
+                else:
+                    # 未映射的权限，允许Owner/Admin访问
+                    if user_role in [Role.OWNER, Role.ADMIN]:
+                        has_access = True
+            
+            if not has_access:
+                logger.warning(
+                    f"Permission denied for role={user_role.value}: "
+                    f"required {[p.value for p in required_permissions]}"
+                )
+                return jsonify({
+                    'success': False,
+                    'error': 'Insufficient permissions',
+                    'required_permissions': [p.value for p in required_permissions]
+                }), 403
+            
+            g.user_role = user_role
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+
 # 导出
 __all__ = [
     'AccessLevel',
     'Role',
     'Module',
+    'Permission',  # 向后兼容
     'PERMISSION_MATRIX',
     'ROLE_DEFINITIONS',
     'RoleDefinition',
@@ -902,5 +1183,7 @@ __all__ = [
     'requires_module_access',
     'requires_any_module_access',
     'requires_role',
-    'get_user_permissions'
+    'require_permission',  # 向后兼容
+    'get_user_permissions',
+    'PERMISSION_TO_MODULE_MAP'
 ]
