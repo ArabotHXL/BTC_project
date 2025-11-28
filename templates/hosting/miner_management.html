@@ -1743,7 +1743,7 @@ async function batchApprove() {
     );
 }
 
-// 批量启动
+// 批量启动 - 发送命令到边缘采集器
 async function batchStart() {
     if (selectedMiners.length === 0) {
         showToast(getLanguage() === 'en' ? 'Please select miners first' : '请先选择矿机', 'warning');
@@ -1765,17 +1765,34 @@ async function batchStart() {
             });
             const result = await response.json();
             if (result.success) {
-                showToast(result.message || (getLanguage() === 'en' ? 'Batch start successful' : '批量启动成功'), 'success');
+                let msg = result.message || (getLanguage() === 'en' ? 'Batch start successful' : '批量启动成功');
+                if (result.commands_queued > 0) {
+                    msg += getLanguage() === 'en' 
+                        ? ` (${result.commands_queued} commands sent to edge collector)` 
+                        : ` (${result.commands_queued}条命令已发送到边缘采集器)`;
+                }
+                if (result.skipped_no_collector > 0) {
+                    msg += getLanguage() === 'en'
+                        ? ` (${result.skipped_no_collector} skipped - no collector)`
+                        : ` (${result.skipped_no_collector}台跳过 - 无采集器)`;
+                }
+                showToast(msg, 'success');
                 refreshMiners();
                 loadKPIStats();
             } else {
-                showToast(result.error, 'error');
+                if (result.skipped_no_collector > 0) {
+                    showToast(getLanguage() === 'en'
+                        ? `${result.skipped_no_collector} miners have no edge collector. Control operations require an active collector.`
+                        : `${result.skipped_no_collector}台矿机无边缘采集器。控制操作需要活跃的采集器。`, 'error');
+                } else {
+                    showToast(result.error, 'error');
+                }
             }
         }
     );
 }
 
-// 批量关闭
+// 批量关闭 - 发送命令到边缘采集器
 async function batchShutdown() {
     if (selectedMiners.length === 0) {
         showToast(getLanguage() === 'en' ? 'Please select miners first' : '请先选择矿机', 'warning');
@@ -1797,11 +1814,28 @@ async function batchShutdown() {
             });
             const result = await response.json();
             if (result.success) {
-                showToast(result.message || (getLanguage() === 'en' ? 'Batch shutdown successful' : '批量关闭成功'), 'success');
+                let msg = result.message || (getLanguage() === 'en' ? 'Batch shutdown successful' : '批量关闭成功');
+                if (result.commands_queued > 0) {
+                    msg += getLanguage() === 'en' 
+                        ? ` (${result.commands_queued} commands sent to edge collector)` 
+                        : ` (${result.commands_queued}条命令已发送到边缘采集器)`;
+                }
+                if (result.skipped_no_collector > 0) {
+                    msg += getLanguage() === 'en'
+                        ? ` (${result.skipped_no_collector} skipped - no collector)`
+                        : ` (${result.skipped_no_collector}台跳过 - 无采集器)`;
+                }
+                showToast(msg, 'success');
                 refreshMiners();
                 loadKPIStats();
             } else {
-                showToast(result.error, 'error');
+                if (result.skipped_no_collector > 0) {
+                    showToast(getLanguage() === 'en'
+                        ? `${result.skipped_no_collector} miners have no edge collector. Control operations require an active collector.`
+                        : `${result.skipped_no_collector}台矿机无边缘采集器。控制操作需要活跃的采集器。`, 'error');
+                } else {
+                    showToast(result.error, 'error');
+                }
             }
         }
     );
@@ -1881,42 +1915,72 @@ function showBatchConfirmModal(title, message, minerIds, showNotes, onConfirm) {
     modal.show();
 }
 
-// 单机启动
+// 单机启动 - 发送命令到边缘采集器
 async function startMiner(minerId) {
     const response = await fetch(`/hosting/api/miners/${minerId}/start`, {method: 'POST'});
     const result = await response.json();
     if (result.success) {
-        showToast(getLanguage() === 'en' ? 'Miner started successfully' : '矿机启动成功', 'success');
+        let msg = getLanguage() === 'en' ? 'Miner started successfully' : '矿机启动成功';
+        if (result.command_queued) {
+            msg += getLanguage() === 'en' ? ' (Command sent to edge collector)' : ' (命令已发送到边缘采集器)';
+        }
+        showToast(msg, 'success');
         refreshMiners();
         loadKPIStats();
     } else {
-        showToast(result.error, 'error');
+        if (result.collector_available === false) {
+            showToast(getLanguage() === 'en' 
+                ? 'No edge collector available. Control operations require an active collector.' 
+                : '无边缘采集器。控制操作需要活跃的采集器。', 'error');
+        } else {
+            showToast(result.error, 'error');
+        }
     }
 }
 
-// 单机关闭
+// 单机关闭 - 发送命令到边缘采集器
 async function shutdownMiner(minerId) {
     const response = await fetch(`/hosting/api/miners/${minerId}/shutdown`, {method: 'POST'});
     const result = await response.json();
     if (result.success) {
-        showToast(getLanguage() === 'en' ? 'Miner shutdown successfully' : '矿机关闭成功', 'success');
+        let msg = getLanguage() === 'en' ? 'Miner shutdown successfully' : '矿机关闭成功';
+        if (result.command_queued) {
+            msg += getLanguage() === 'en' ? ' (Command sent to edge collector)' : ' (命令已发送到边缘采集器)';
+        }
+        showToast(msg, 'success');
         refreshMiners();
         loadKPIStats();
     } else {
-        showToast(result.error, 'error');
+        if (result.collector_available === false) {
+            showToast(getLanguage() === 'en' 
+                ? 'No edge collector available. Control operations require an active collector.' 
+                : '无边缘采集器。控制操作需要活跃的采集器。', 'error');
+        } else {
+            showToast(result.error, 'error');
+        }
     }
 }
 
-// 单机重启
+// 单机重启 - 发送命令到边缘采集器
 async function restartMiner(minerId) {
     const response = await fetch(`/hosting/api/miners/${minerId}/restart`, {method: 'POST'});
     const result = await response.json();
     if (result.success) {
-        showToast(getLanguage() === 'en' ? 'Miner restarted successfully' : '矿机重启成功', 'success');
+        let msg = getLanguage() === 'en' ? 'Miner restarted successfully' : '矿机重启成功';
+        if (result.command_queued) {
+            msg += getLanguage() === 'en' ? ' (Command sent to edge collector)' : ' (命令已发送到边缘采集器)';
+        }
+        showToast(msg, 'success');
         refreshMiners();
         loadKPIStats();
     } else {
-        showToast(result.error, 'error');
+        if (result.collector_available === false) {
+            showToast(getLanguage() === 'en' 
+                ? 'No edge collector available. Control operations require an active collector.' 
+                : '无边缘采集器。控制操作需要活跃的采集器。', 'error');
+        } else {
+            showToast(result.error, 'error');
+        }
     }
 }
 

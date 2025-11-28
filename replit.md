@@ -150,5 +150,39 @@ Automated monitoring with configurable rules:
 - `MinerAlert`: Alert records with acknowledgment tracking
 - `MinerAlertRule`: Configurable alert rules per site
 
+### Bidirectional Command Control System
+Cloud-to-edge miner control through command queue pattern:
+
+**Command Types (7 commands):**
+- `enable`: Start mining / Enable ASIC chips
+- `disable`: Stop mining / Disable ASIC chips
+- `restart`: Restart CGMiner process
+- `reboot`: Full system reboot
+- `set_pool`: Switch mining pool or add new pool
+- `set_fan`: Adjust fan speed (firmware dependent)
+- `set_frequency`: Adjust chip frequency (firmware dependent)
+
+**Architecture Flow:**
+1. Cloud creates MinerCommand with target miner, command type, parameters
+2. Edge collector polls `/api/collector/commands/pending` every 5 seconds
+3. CommandExecutor executes via CGMinerAPI control methods
+4. Results reported back via `/api/collector/commands/{id}/result`
+
+**Command Queue Model (MinerCommand):**
+- Priority-based execution (1-10, higher = more urgent)
+- 5-minute expiration timeout with auto-cleanup
+- Status tracking: pending → sent → executing → completed/failed/expired
+- Full audit trail with operator_id and timestamps
+
+**Integration Points:**
+- Device management page: Start/Shutdown/Restart buttons queue commands
+- Batch operations: Multi-miner commands with aggregated feedback
+- Frontend feedback: Shows when commands are queued to edge collector
+
+**Implementation Files:**
+- `api/collector_api.py`: MinerCommand model, command API endpoints
+- `edge_collector/cgminer_collector.py`: CGMinerAPI control methods, CommandExecutor class
+- `modules/hosting/routes.py`: Integration with miner control endpoints
+
 ### Deployment
 Edge collector runs on local mining farm server. See `edge_collector/README.md` for installation and configuration guide.

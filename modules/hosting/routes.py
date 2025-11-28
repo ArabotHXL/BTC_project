@@ -14,7 +14,7 @@ from common.rbac import (
     rbac_manager, normalize_role
 )
 from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingUsageRecord, HostingUsageItem, MinerTelemetry, HostingBill, HostingBillItem, HostingMinerOperationLog
-from api.collector_api import MinerTelemetryLive
+from api.collector_api import MinerTelemetryLive, MinerCommand, CollectorKey
 from models import CurtailmentPlan, CurtailmentStrategy, CurtailmentExecution
 from models import ExecutionMode, PlanStatus, ExecutionAction, ExecutionStatus
 from intelligence.curtailment_engine import calculate_curtailment_plan
@@ -3627,41 +3627,84 @@ def batch_delete_miners():
 @hosting_bp.route('/api/miners/batch-start', methods=['POST'])
 @requires_role(['owner', 'admin', 'mining_site'])
 def batch_start_miners():
-    """批量启动矿机"""
+    """批量启动矿机 - 发送控制命令到边缘采集器
+    
+    仅当矿机有活跃的边缘采集器时才更新状态，否则跳过
+    """
     try:
         data = request.get_json()
         miner_ids = data.get('miner_ids', [])
+        force_status = data.get('force_status', False)
         
         if not miner_ids:
             return jsonify({'success': False, 'error': 'No miner IDs provided'}), 400
         
         operator_id = session.get('user_id')
         
-        # 使用正确的事务处理
         updated_count = 0
+        commands_created = 0
+        skipped_no_collector = 0
+        site_collectors = {}
+        
         with db.session.begin():
             for miner_id in miner_ids:
                 miner = HostingMiner.query.get(miner_id)
                 if miner and miner.status != 'active':
+                    has_collector = False
+                    
+                    if miner.site_id:
+                        if miner.site_id not in site_collectors:
+                            site_collectors[miner.site_id] = CollectorKey.query.filter_by(
+                                site_id=miner.site_id, is_active=True
+                            ).first()
+                        has_collector = site_collectors[miner.site_id] is not None
+                    
+                    if not has_collector and not force_status:
+                        skipped_no_collector += 1
+                        continue
+                    
                     old_status = miner.status
                     miner.status = 'active'
                     
-                    # 记录操作日志
+                    if has_collector:
+                        command = MinerCommand(
+                            miner_id=miner.miner_id or str(miner.id),
+                            site_id=miner.site_id,
+                            ip_address=miner.ip_address,
+                            command_type='enable',
+                            parameters={},
+                            status='pending',
+                            priority=7,
+                            expires_at=datetime.utcnow() + timedelta(minutes=5),
+                            operator_id=operator_id
+                        )
+                        db.session.add(command)
+                        commands_created += 1
+                    
                     log = HostingMinerOperationLog(
                         miner_id=miner_id,
                         operation_type='start',
                         old_status=old_status,
                         new_status='active',
                         operator_id=operator_id,
-                        notes='批量启动矿机'
+                        notes='批量启动矿机' + (' (命令已队列)' if has_collector else ' (强制状态更新)')
                     )
                     db.session.add(log)
                     updated_count += 1
         
+        if skipped_no_collector > 0 and updated_count == 0:
+            return jsonify({
+                'success': False,
+                'error': f'No miners started. {skipped_no_collector} miners have no edge collector.',
+                'skipped_no_collector': skipped_no_collector
+            }), 400
+        
         return jsonify({
             'success': True,
             'message': f'Successfully started {updated_count} miners',
-            'updated_count': updated_count
+            'updated_count': updated_count,
+            'commands_queued': commands_created,
+            'skipped_no_collector': skipped_no_collector
         })
         
     except Exception as e:
@@ -3672,41 +3715,84 @@ def batch_start_miners():
 @hosting_bp.route('/api/miners/batch-shutdown', methods=['POST'])
 @requires_role(['owner', 'admin', 'mining_site'])
 def batch_shutdown_miners():
-    """批量关闭矿机"""
+    """批量关闭矿机 - 发送控制命令到边缘采集器
+    
+    仅当矿机有活跃的边缘采集器时才更新状态，否则跳过
+    """
     try:
         data = request.get_json()
         miner_ids = data.get('miner_ids', [])
+        force_status = data.get('force_status', False)
         
         if not miner_ids:
             return jsonify({'success': False, 'error': 'No miner IDs provided'}), 400
         
         operator_id = session.get('user_id')
         
-        # 使用正确的事务处理
         updated_count = 0
+        commands_created = 0
+        skipped_no_collector = 0
+        site_collectors = {}
+        
         with db.session.begin():
             for miner_id in miner_ids:
                 miner = HostingMiner.query.get(miner_id)
                 if miner and miner.status != 'offline':
+                    has_collector = False
+                    
+                    if miner.site_id:
+                        if miner.site_id not in site_collectors:
+                            site_collectors[miner.site_id] = CollectorKey.query.filter_by(
+                                site_id=miner.site_id, is_active=True
+                            ).first()
+                        has_collector = site_collectors[miner.site_id] is not None
+                    
+                    if not has_collector and not force_status:
+                        skipped_no_collector += 1
+                        continue
+                    
                     old_status = miner.status
                     miner.status = 'offline'
                     
-                    # 记录操作日志
+                    if has_collector:
+                        command = MinerCommand(
+                            miner_id=miner.miner_id or str(miner.id),
+                            site_id=miner.site_id,
+                            ip_address=miner.ip_address,
+                            command_type='disable',
+                            parameters={},
+                            status='pending',
+                            priority=8,
+                            expires_at=datetime.utcnow() + timedelta(minutes=5),
+                            operator_id=operator_id
+                        )
+                        db.session.add(command)
+                        commands_created += 1
+                    
                     log = HostingMinerOperationLog(
                         miner_id=miner_id,
                         operation_type='shutdown',
                         old_status=old_status,
                         new_status='offline',
                         operator_id=operator_id,
-                        notes='批量关闭矿机'
+                        notes='批量关闭矿机' + (' (命令已队列)' if has_collector else ' (强制状态更新)')
                     )
                     db.session.add(log)
                     updated_count += 1
         
+        if skipped_no_collector > 0 and updated_count == 0:
+            return jsonify({
+                'success': False,
+                'error': f'No miners shutdown. {skipped_no_collector} miners have no edge collector.',
+                'skipped_no_collector': skipped_no_collector
+            }), 400
+        
         return jsonify({
             'success': True,
             'message': f'Successfully shutdown {updated_count} miners',
-            'updated_count': updated_count
+            'updated_count': updated_count,
+            'commands_queued': commands_created,
+            'skipped_no_collector': skipped_no_collector
         })
         
     except Exception as e:
@@ -3717,25 +3803,56 @@ def batch_shutdown_miners():
 @hosting_bp.route('/api/miners/<int:miner_id>/start', methods=['POST'])
 @requires_role(['owner', 'admin', 'mining_site'])
 def start_single_miner(miner_id):
-    """启动单个矿机"""
+    """启动单个矿机 - 发送控制命令到边缘采集器"""
     try:
         miner = HostingMiner.query.get_or_404(miner_id)
         operator_id = session.get('user_id')
+        force_status = request.json.get('force_status', False) if request.is_json else False
         
         if miner.status == 'active':
             return jsonify({'success': False, 'error': 'Miner is already active'}), 400
         
+        collector_available = False
+        command_created = False
+        
+        if miner.site_id:
+            collector_key = CollectorKey.query.filter_by(
+                site_id=miner.site_id, 
+                is_active=True
+            ).first()
+            if collector_key:
+                collector_available = True
+                command = MinerCommand(
+                    miner_id=miner.miner_id or str(miner.id),
+                    site_id=miner.site_id,
+                    ip_address=miner.ip_address,
+                    command_type='enable',
+                    parameters={},
+                    status='pending',
+                    priority=7,
+                    expires_at=datetime.utcnow() + timedelta(minutes=5),
+                    operator_id=operator_id
+                )
+                db.session.add(command)
+                command_created = True
+        
+        if not command_created and not force_status:
+            return jsonify({
+                'success': False,
+                'error': 'No edge collector available. Use force_status=true to update status only.',
+                'collector_available': False
+            }), 400
+        
         old_status = miner.status
         miner.status = 'active'
         
-        # 记录操作日志
         log = HostingMinerOperationLog(
             miner_id=miner_id,
             operation_type='start',
             old_status=old_status,
             new_status='active',
             operator_id=operator_id,
-            notes='启动矿机'
+            notes='启动矿机' + (' (命令已队列)' if command_created else ' (强制状态更新)')
         )
         db.session.add(log)
         db.session.commit()
@@ -3743,6 +3860,8 @@ def start_single_miner(miner_id):
         return jsonify({
             'success': True,
             'message': 'Miner started successfully',
+            'command_queued': command_created,
+            'collector_available': collector_available,
             'miner': miner.to_dict()
         })
         
@@ -3755,25 +3874,56 @@ def start_single_miner(miner_id):
 @hosting_bp.route('/api/miners/<int:miner_id>/shutdown', methods=['POST'])
 @requires_role(['owner', 'admin', 'mining_site'])
 def shutdown_single_miner(miner_id):
-    """关闭单个矿机"""
+    """关闭单个矿机 - 发送控制命令到边缘采集器"""
     try:
         miner = HostingMiner.query.get_or_404(miner_id)
         operator_id = session.get('user_id')
+        force_status = request.json.get('force_status', False) if request.is_json else False
         
         if miner.status == 'offline':
             return jsonify({'success': False, 'error': 'Miner is already offline'}), 400
         
+        collector_available = False
+        command_created = False
+        
+        if miner.site_id:
+            collector_key = CollectorKey.query.filter_by(
+                site_id=miner.site_id, 
+                is_active=True
+            ).first()
+            if collector_key:
+                collector_available = True
+                command = MinerCommand(
+                    miner_id=miner.miner_id or str(miner.id),
+                    site_id=miner.site_id,
+                    ip_address=miner.ip_address,
+                    command_type='disable',
+                    parameters={},
+                    status='pending',
+                    priority=8,
+                    expires_at=datetime.utcnow() + timedelta(minutes=5),
+                    operator_id=operator_id
+                )
+                db.session.add(command)
+                command_created = True
+        
+        if not command_created and not force_status:
+            return jsonify({
+                'success': False,
+                'error': 'No edge collector available. Use force_status=true to update status only.',
+                'collector_available': False
+            }), 400
+        
         old_status = miner.status
         miner.status = 'offline'
         
-        # 记录操作日志
         log = HostingMinerOperationLog(
             miner_id=miner_id,
             operation_type='shutdown',
             old_status=old_status,
             new_status='offline',
             operator_id=operator_id,
-            notes='关闭矿机'
+            notes='关闭矿机' + (' (命令已队列)' if command_created else ' (强制状态更新)')
         )
         db.session.add(log)
         db.session.commit()
@@ -3781,6 +3931,8 @@ def shutdown_single_miner(miner_id):
         return jsonify({
             'success': True,
             'message': 'Miner shutdown successfully',
+            'command_queued': command_created,
+            'collector_available': collector_available,
             'miner': miner.to_dict()
         })
         
@@ -3793,29 +3945,58 @@ def shutdown_single_miner(miner_id):
 @hosting_bp.route('/api/miners/<int:miner_id>/restart', methods=['POST'])
 @requires_role(['owner', 'admin', 'mining_site'])
 def restart_single_miner(miner_id):
-    """重启单个矿机"""
+    """重启单个矿机 - 发送控制命令到边缘采集器"""
     try:
         miner = HostingMiner.query.get_or_404(miner_id)
         operator_id = session.get('user_id')
+        force_status = request.json.get('force_status', False) if request.is_json else False
+        
+        collector_available = False
+        command_created = False
+        
+        if miner.site_id:
+            collector_key = CollectorKey.query.filter_by(
+                site_id=miner.site_id, 
+                is_active=True
+            ).first()
+            if collector_key:
+                collector_available = True
+                command = MinerCommand(
+                    miner_id=miner.miner_id or str(miner.id),
+                    site_id=miner.site_id,
+                    ip_address=miner.ip_address,
+                    command_type='restart',
+                    parameters={},
+                    status='pending',
+                    priority=9,
+                    expires_at=datetime.utcnow() + timedelta(minutes=5),
+                    operator_id=operator_id
+                )
+                db.session.add(command)
+                command_created = True
+        
+        if not command_created and not force_status:
+            return jsonify({
+                'success': False,
+                'error': 'No edge collector available. Use force_status=true to update status only.',
+                'collector_available': False
+            }), 400
         
         old_status = miner.status
-        # 重启流程：maintenance -> active
         miner.status = 'maintenance'
         db.session.flush()
         
-        # 记录维护日志
         log1 = HostingMinerOperationLog(
             miner_id=miner_id,
             operation_type='restart',
             old_status=old_status,
             new_status='maintenance',
             operator_id=operator_id,
-            notes='重启矿机 - 进入维护模式'
+            notes='重启矿机 - 进入维护模式' + (' (命令已队列)' if command_created else ' (强制状态更新)')
         )
         db.session.add(log1)
         db.session.flush()
         
-        # 立即切换到active
         miner.status = 'active'
         log2 = HostingMinerOperationLog(
             miner_id=miner_id,
@@ -3831,6 +4012,8 @@ def restart_single_miner(miner_id):
         return jsonify({
             'success': True,
             'message': 'Miner restarted successfully',
+            'command_queued': command_created,
+            'collector_available': collector_available,
             'miner': miner.to_dict()
         })
         
