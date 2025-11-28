@@ -958,8 +958,9 @@ def get_miners():
             revenue_service = get_revenue_service()
             evaluation_service = get_evaluation_service()
             services_available = True
+            logger.info("收益和评估服务加载成功")
         except Exception as svc_err:
-            logger.warning(f"收益/评估服务加载失败: {svc_err}")
+            logger.warning(f"收益/评估服务加载失败: {svc_err}", exc_info=True)
             services_available = False
         
         miners_data = []
@@ -994,8 +995,8 @@ def get_miners():
                 try:
                     model = miner.miner_model
                     model_name = model.model_name if model else "Unknown"
-                    rated_hashrate = model.hashrate if model else miner.actual_hashrate
-                    rated_power = model.power_consumption if model else miner.actual_power
+                    rated_hashrate = model.reference_hashrate if model else miner.actual_hashrate
+                    rated_power = model.reference_power if model else miner.actual_power
                     
                     revenue_metrics = revenue_service.calculate_miner_revenue(
                         miner_id=miner.id,
@@ -1032,7 +1033,14 @@ def get_miners():
                     miner_data['evaluation_grade'] = evaluation.composite_grade
                     miner_data['evaluation_score'] = evaluation.composite_score
                 except Exception as eval_err:
-                    logger.debug(f"矿机 {miner.id} 评估失败: {eval_err}")
+                    logger.error(f"矿机 {miner.id} 评估失败: {eval_err}", exc_info=True)
+            else:
+                if not services_available:
+                    logger.debug(f"矿机 {miner.id}: 服务不可用")
+                elif not miner.actual_hashrate:
+                    logger.debug(f"矿机 {miner.id}: 无算力数据")
+                elif not miner.actual_power:
+                    logger.debug(f"矿机 {miner.id}: 无功耗数据")
             
             miners_data.append(miner_data)
         
