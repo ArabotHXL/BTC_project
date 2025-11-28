@@ -709,15 +709,22 @@ function displayMiners(miners) {
     }
     
     miners.forEach(miner => {
-        const cgminerOnline = miner.cgminer_online || false;
-        const tempAvg = miner.temperature_avg || null;
-        const tempMax = miner.temperature_max || null;
-        const fanAvg = miner.fan_avg || null;
-        const lastSeen = miner.last_seen || null;
+        const telemetry = miner.telemetry || {live: false};
+        const hasLiveTelemetry = telemetry.live === true;
         
-        // Format CGMiner online status
+        const cgminerOnline = hasLiveTelemetry ? telemetry.online : (miner.cgminer_online || false);
+        const tempAvg = hasLiveTelemetry && telemetry.temperature_avg ? telemetry.temperature_avg : (miner.temperature_avg || null);
+        const tempMax = hasLiveTelemetry && telemetry.temperature_max ? telemetry.temperature_max : (miner.temperature_max || null);
+        const fanAvg = hasLiveTelemetry && telemetry.fan_speeds?.length ? 
+            telemetry.fan_speeds.reduce((a, b) => a + b, 0) / telemetry.fan_speeds.length : (miner.fan_avg || null);
+        const lastSeen = hasLiveTelemetry && telemetry.last_seen ? telemetry.last_seen : (miner.last_seen || null);
+        const liveHashrate = hasLiveTelemetry ? telemetry.hashrate_ths : null;
+        const livePower = hasLiveTelemetry && telemetry.power_consumption ? telemetry.power_consumption : null;
+        
+        // Format CGMiner online status with live indicator
+        const liveIndicator = hasLiveTelemetry ? '<span class="badge bg-success ms-1" style="font-size:0.6rem;">LIVE</span>' : '';
         const cgminerStatus = cgminerOnline 
-            ? '<i class="bi bi-wifi text-success fs-5" title="' + (getLanguage() === 'en' ? 'Online' : '在线') + '"></i>'
+            ? '<i class="bi bi-wifi text-success fs-5" title="' + (getLanguage() === 'en' ? 'Online' : '在线') + '"></i>' + liveIndicator
             : '<i class="bi bi-wifi-off text-danger fs-5" title="' + (getLanguage() === 'en' ? 'Offline' : '离线') + '"></i>';
         
         // Format temperature with color coding
@@ -725,7 +732,9 @@ function displayMiners(miners) {
         let tempClass = '';
         if (tempAvg !== null && tempMax !== null) {
             tempClass = tempMax > 85 ? 'text-danger' : (tempMax > 75 ? 'text-warning' : '');
-            tempDisplay = `<span class="${tempClass}" title="${getLanguage() === 'en' ? 'Avg / Max' : '平均 / 最高'}">${tempAvg.toFixed(1)}°C / ${tempMax.toFixed(1)}°C</span>`;
+            const tempVal = typeof tempAvg === 'number' ? tempAvg.toFixed(1) : tempAvg;
+            const tempMaxVal = typeof tempMax === 'number' ? tempMax.toFixed(1) : tempMax;
+            tempDisplay = `<span class="${tempClass}" title="${getLanguage() === 'en' ? 'Avg / Max' : '平均 / 最高'}">${tempVal}°C / ${tempMaxVal}°C</span>`;
         }
         
         // Format fan speed
@@ -785,8 +794,8 @@ function displayMiners(miners) {
                 <td>${miner.customer_email || '-'}</td>
                 <td>${miner.miner_model_name || '-'}</td>
                 <td>${miner.site_name || '-'}</td>
-                <td>${miner.actual_hashrate || '-'} TH/s</td>
-                <td>${miner.actual_power || '-'} W</td>
+                <td>${liveHashrate !== null ? liveHashrate : (miner.actual_hashrate || '-')} TH/s${hasLiveTelemetry && liveHashrate ? ' <i class="bi bi-broadcast text-success" style="font-size:0.7rem;"></i>' : ''}</td>
+                <td>${livePower !== null ? livePower : (miner.actual_power || '-')} W${hasLiveTelemetry && livePower ? ' <i class="bi bi-broadcast text-success" style="font-size:0.7rem;"></i>' : ''}</td>
                 <td>${profitDisplay}</td>
                 <td class="text-center">${cgminerStatus}<br>${lastSeenDisplay}</td>
                 <td>${tempDisplay}</td>
