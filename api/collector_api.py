@@ -118,6 +118,100 @@ class CollectorUploadLog(db.Model):
     error_message = db.Column(db.Text)
 
 
+class MinerCommand(db.Model):
+    """矿机控制命令队列
+    
+    用于云端向边缘采集器下发控制命令
+    Miner Control Command Queue for cloud-to-edge control
+    """
+    __tablename__ = 'miner_commands'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    miner_id = db.Column(db.String(50), nullable=False, index=True)
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False)
+    ip_address = db.Column(db.String(45))
+    
+    command_type = db.Column(db.String(30), nullable=False, index=True)
+    parameters = db.Column(db.JSON, default={})
+    
+    status = db.Column(db.String(20), default='pending', nullable=False, index=True)
+    priority = db.Column(db.Integer, default=5)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    sent_at = db.Column(db.DateTime)
+    executed_at = db.Column(db.DateTime)
+    
+    result_code = db.Column(db.Integer)
+    result_message = db.Column(db.Text)
+    
+    operator_id = db.Column(db.Integer, db.ForeignKey('user_access.id'))
+    
+    retry_count = db.Column(db.Integer, default=0)
+    max_retries = db.Column(db.Integer, default=3)
+    
+    __table_args__ = (
+        db.Index('ix_miner_commands_site_status', 'site_id', 'status'),
+        db.Index('ix_miner_commands_miner_status', 'miner_id', 'status'),
+        db.Index('ix_miner_commands_expires', 'expires_at'),
+    )
+    
+    COMMAND_TYPES = {
+        'enable': '启动挖矿 / Enable Mining',
+        'disable': '停止挖矿 / Disable Mining',
+        'restart': '重启矿机 / Restart Miner',
+        'reboot': '重启系统 / Reboot System',
+        'set_pool': '切换矿池 / Switch Pool',
+        'set_fan': '设置风扇 / Set Fan Speed',
+        'set_frequency': '调整频率 / Adjust Frequency'
+    }
+    
+    STATUS_TYPES = {
+        'pending': '等待发送',
+        'sent': '已发送',
+        'executing': '执行中',
+        'completed': '已完成',
+        'failed': '执行失败',
+        'expired': '已过期',
+        'cancelled': '已取消'
+    }
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'miner_id': self.miner_id,
+            'site_id': self.site_id,
+            'ip_address': self.ip_address,
+            'command_type': self.command_type,
+            'command_desc': self.COMMAND_TYPES.get(self.command_type, self.command_type),
+            'parameters': self.parameters,
+            'status': self.status,
+            'status_desc': self.STATUS_TYPES.get(self.status, self.status),
+            'priority': self.priority,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'sent_at': self.sent_at.isoformat() if self.sent_at else None,
+            'executed_at': self.executed_at.isoformat() if self.executed_at else None,
+            'result_code': self.result_code,
+            'result_message': self.result_message,
+            'operator_id': self.operator_id,
+            'retry_count': self.retry_count,
+            'max_retries': self.max_retries
+        }
+    
+    def to_command_payload(self):
+        """生成发送给采集器的命令载荷"""
+        return {
+            'command_id': self.id,
+            'miner_id': self.miner_id,
+            'ip_address': self.ip_address,
+            'command': self.command_type,
+            'params': self.parameters or {},
+            'priority': self.priority,
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None
+        }
+
+
 def verify_collector_key(f):
     """验证采集器API密钥"""
     @wraps(f)
@@ -628,7 +722,335 @@ def revoke_collector_key(key_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@collector_bp.route('/commands', methods=['POST'])
+def create_command():
+    """创建矿机控制命令
+    
+    请求体:
+    {
+        "miner_id": "SN123456",
+        "site_id": 1,
+        "ip_address": "192.168.1.100",  // 可选
+        "command_type": "enable|disable|restart|reboot|set_pool|set_fan",
+        "parameters": {},  // 命令参数
+        "priority": 5,  // 1-10, 10最高
+        "ttl_minutes": 30  // 命令有效期（分钟）
+    }
+    """
+    try:
+        from flask import session
+        
+        data = request.get_json()
+        
+        miner_id = data.get('miner_id')
+        site_id = data.get('site_id')
+        command_type = data.get('command_type')
+        
+        if not all([miner_id, site_id, command_type]):
+            return jsonify({'success': False, 'error': 'miner_id, site_id, command_type required'}), 400
+        
+        if command_type not in MinerCommand.COMMAND_TYPES:
+            return jsonify({
+                'success': False, 
+                'error': f'Invalid command_type. Valid types: {list(MinerCommand.COMMAND_TYPES.keys())}'
+            }), 400
+        
+        ttl_minutes = data.get('ttl_minutes', 30)
+        expires_at = datetime.utcnow() + timedelta(minutes=ttl_minutes)
+        
+        command = MinerCommand(
+            miner_id=miner_id,
+            site_id=site_id,
+            ip_address=data.get('ip_address'),
+            command_type=command_type,
+            parameters=data.get('parameters', {}),
+            priority=data.get('priority', 5),
+            expires_at=expires_at,
+            operator_id=session.get('user_id')
+        )
+        
+        db.session.add(command)
+        db.session.commit()
+        
+        logger.info(f"Command created: {command.id} - {command_type} for miner {miner_id}")
+        
+        return jsonify({
+            'success': True,
+            'command': command.to_dict(),
+            'message': 'Command created successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"Create command error: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@collector_bp.route('/commands/batch', methods=['POST'])
+def create_batch_commands():
+    """批量创建矿机控制命令
+    
+    请求体:
+    {
+        "miner_ids": ["SN1", "SN2", ...],
+        "site_id": 1,
+        "command_type": "disable",
+        "parameters": {},
+        "priority": 5,
+        "ttl_minutes": 30
+    }
+    """
+    try:
+        from flask import session
+        
+        data = request.get_json()
+        
+        miner_ids = data.get('miner_ids', [])
+        site_id = data.get('site_id')
+        command_type = data.get('command_type')
+        
+        if not all([miner_ids, site_id, command_type]):
+            return jsonify({'success': False, 'error': 'miner_ids, site_id, command_type required'}), 400
+        
+        if command_type not in MinerCommand.COMMAND_TYPES:
+            return jsonify({
+                'success': False, 
+                'error': f'Invalid command_type. Valid types: {list(MinerCommand.COMMAND_TYPES.keys())}'
+            }), 400
+        
+        ttl_minutes = data.get('ttl_minutes', 30)
+        expires_at = datetime.utcnow() + timedelta(minutes=ttl_minutes)
+        operator_id = session.get('user_id')
+        
+        commands = []
+        for miner_id in miner_ids:
+            command = MinerCommand(
+                miner_id=miner_id,
+                site_id=site_id,
+                command_type=command_type,
+                parameters=data.get('parameters', {}),
+                priority=data.get('priority', 5),
+                expires_at=expires_at,
+                operator_id=operator_id
+            )
+            db.session.add(command)
+            commands.append(command)
+        
+        db.session.commit()
+        
+        logger.info(f"Batch commands created: {len(commands)} {command_type} commands for site {site_id}")
+        
+        return jsonify({
+            'success': True,
+            'count': len(commands),
+            'command_ids': [c.id for c in commands],
+            'message': f'{len(commands)} commands created successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"Create batch commands error: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@collector_bp.route('/commands/pending', methods=['GET'])
+@verify_collector_key
+def fetch_pending_commands():
+    """采集器获取待执行命令
+    
+    边缘采集器轮询此接口获取需要执行的命令
+    返回按优先级排序的待执行命令列表
+    """
+    try:
+        site_id = g.site_id
+        now = datetime.utcnow()
+        
+        expired_count = MinerCommand.query.filter(
+            MinerCommand.site_id == site_id,
+            MinerCommand.status == 'pending',
+            MinerCommand.expires_at < now
+        ).update({'status': 'expired'})
+        
+        if expired_count > 0:
+            db.session.commit()
+            logger.info(f"Marked {expired_count} expired commands for site {site_id}")
+        
+        commands = MinerCommand.query.filter(
+            MinerCommand.site_id == site_id,
+            MinerCommand.status == 'pending',
+            MinerCommand.expires_at >= now
+        ).order_by(
+            MinerCommand.priority.desc(),
+            MinerCommand.created_at.asc()
+        ).limit(50).all()
+        
+        command_payloads = []
+        for cmd in commands:
+            cmd.status = 'sent'
+            cmd.sent_at = now
+            command_payloads.append(cmd.to_command_payload())
+        
+        if commands:
+            db.session.commit()
+            logger.info(f"Sent {len(commands)} commands to collector for site {site_id}")
+        
+        return jsonify({
+            'success': True,
+            'commands': command_payloads,
+            'count': len(command_payloads)
+        })
+        
+    except Exception as e:
+        logger.error(f"Fetch pending commands error: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@collector_bp.route('/commands/<int:command_id>/result', methods=['POST'])
+@verify_collector_key
+def report_command_result(command_id):
+    """采集器报告命令执行结果
+    
+    请求体:
+    {
+        "status": "completed|failed",
+        "result_code": 0,  // 0=成功, 非0=错误
+        "result_message": "Success" 
+    }
+    """
+    try:
+        site_id = g.site_id
+        
+        command = MinerCommand.query.filter_by(
+            id=command_id,
+            site_id=site_id
+        ).first()
+        
+        if not command:
+            return jsonify({'success': False, 'error': 'Command not found'}), 404
+        
+        data = request.get_json()
+        
+        command.status = data.get('status', 'completed')
+        command.result_code = data.get('result_code', 0)
+        command.result_message = data.get('result_message')
+        command.executed_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        logger.info(f"Command {command_id} result: {command.status} - {command.result_message}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Result reported successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"Report command result error: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@collector_bp.route('/commands/<int:command_id>', methods=['DELETE'])
+def cancel_command(command_id):
+    """取消待执行的命令"""
+    try:
+        command = MinerCommand.query.get(command_id)
+        
+        if not command:
+            return jsonify({'success': False, 'error': 'Command not found'}), 404
+        
+        if command.status not in ['pending', 'sent']:
+            return jsonify({
+                'success': False, 
+                'error': f'Cannot cancel command with status: {command.status}'
+            }), 400
+        
+        command.status = 'cancelled'
+        db.session.commit()
+        
+        logger.info(f"Command {command_id} cancelled")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Command cancelled successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"Cancel command error: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@collector_bp.route('/commands/history', methods=['GET'])
+def get_command_history():
+    """获取命令执行历史"""
+    try:
+        site_id = request.args.get('site_id', type=int)
+        miner_id = request.args.get('miner_id')
+        status = request.args.get('status')
+        limit = request.args.get('limit', 50, type=int)
+        
+        query = MinerCommand.query
+        
+        if site_id:
+            query = query.filter(MinerCommand.site_id == site_id)
+        if miner_id:
+            query = query.filter(MinerCommand.miner_id == miner_id)
+        if status:
+            query = query.filter(MinerCommand.status == status)
+        
+        commands = query.order_by(MinerCommand.created_at.desc()).limit(limit).all()
+        
+        return jsonify({
+            'success': True,
+            'commands': [cmd.to_dict() for cmd in commands],
+            'count': len(commands)
+        })
+        
+    except Exception as e:
+        logger.error(f"Get command history error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@collector_bp.route('/commands/stats', methods=['GET'])
+def get_command_stats():
+    """获取命令统计信息"""
+    try:
+        site_id = request.args.get('site_id', type=int)
+        
+        query = db.session.query(
+            MinerCommand.status,
+            func.count(MinerCommand.id).label('count')
+        )
+        
+        if site_id:
+            query = query.filter(MinerCommand.site_id == site_id)
+        
+        stats = query.group_by(MinerCommand.status).all()
+        
+        result = {s.status: s.count for s in stats}
+        
+        pending_count = MinerCommand.query.filter(
+            MinerCommand.status == 'pending',
+            MinerCommand.expires_at >= datetime.utcnow()
+        )
+        if site_id:
+            pending_count = pending_count.filter(MinerCommand.site_id == site_id)
+        
+        return jsonify({
+            'success': True,
+            'stats': result,
+            'active_pending': pending_count.count(),
+            'total': sum(result.values())
+        })
+        
+    except Exception as e:
+        logger.error(f"Get command stats error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 def register_collector_routes(app):
     """注册采集器路由"""
     app.register_blueprint(collector_bp)
-    logger.info("Collector API routes registered successfully")
+    logger.info("Edge Collector API registered successfully")
