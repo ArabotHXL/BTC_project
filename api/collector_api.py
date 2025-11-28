@@ -421,6 +421,213 @@ def generate_collector_key(site_id: int, name: str) -> str:
     return api_key
 
 
+@collector_bp.route('/stats', methods=['GET'])
+def get_collector_stats():
+    """获取采集器总体统计"""
+    from auth import login_required as auth_login_required
+    
+    try:
+        sites = HostingSite.query.all()
+        site_stats = {}
+        total_miners = 0
+        total_online = 0
+        active_collectors = 0
+        
+        for site in sites:
+            stats = db.session.query(
+                func.count(MinerTelemetryLive.id).label('total'),
+                func.sum(db.case((MinerTelemetryLive.online == True, 1), else_=0)).label('online'),
+                func.sum(MinerTelemetryLive.hashrate_ghs).label('hashrate'),
+                func.avg(MinerTelemetryLive.temperature_avg).label('temp')
+            ).filter(MinerTelemetryLive.site_id == site.id).first()
+            
+            last_upload = CollectorUploadLog.query.filter_by(
+                site_id=site.id
+            ).order_by(CollectorUploadLog.upload_time.desc()).first()
+            
+            active_keys = CollectorKey.query.filter_by(
+                site_id=site.id, is_active=True
+            ).count()
+            
+            if active_keys > 0 and last_upload and (datetime.utcnow() - last_upload.upload_time).total_seconds() < 300:
+                active_collectors += 1
+            
+            site_stats[site.id] = {
+                'total_miners': stats.total or 0,
+                'online_miners': int(stats.online or 0),
+                'total_hashrate_ths': (stats.hashrate or 0) / 1000,
+                'avg_temperature': round(stats.temp or 0, 1),
+                'last_upload': last_upload.upload_time.strftime('%Y-%m-%d %H:%M') if last_upload else None
+            }
+            
+            total_miners += stats.total or 0
+            total_online += int(stats.online or 0)
+        
+        try:
+            from services.alert_engine import MinerAlert
+            active_alerts = MinerAlert.query.filter(MinerAlert.resolved_at == None).count()
+        except:
+            active_alerts = 0
+        
+        return jsonify({
+            'success': True,
+            'total_sites': len(sites),
+            'active_collectors': active_collectors,
+            'total_miners': total_miners,
+            'total_online': total_online,
+            'active_alerts': active_alerts,
+            'sites': site_stats
+        })
+        
+    except Exception as e:
+        logger.error(f"Get collector stats error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@collector_bp.route('/alerts', methods=['GET'])
+def get_collector_alerts():
+    """获取告警列表"""
+    try:
+        from services.alert_engine import MinerAlert
+        
+        limit = request.args.get('limit', 20, type=int)
+        site_id = request.args.get('site_id', type=int)
+        
+        query = MinerAlert.query.filter(MinerAlert.resolved_at == None)
+        
+        if site_id:
+            query = query.filter(MinerAlert.site_id == site_id)
+        
+        alerts = query.order_by(MinerAlert.triggered_at.desc()).limit(limit).all()
+        
+        result = []
+        for alert in alerts:
+            result.append({
+                'id': alert.id,
+                'site_id': alert.site_id,
+                'miner_id': alert.miner_id,
+                'alert_type': alert.alert_type,
+                'level': alert.level,
+                'message': alert.message,
+                'message_zh': alert.message_zh,
+                'value': alert.value,
+                'threshold': alert.threshold,
+                'triggered_at': alert.triggered_at.strftime('%Y-%m-%d %H:%M') if alert.triggered_at else None,
+                'acknowledged': alert.acknowledged
+            })
+        
+        return jsonify({
+            'success': True,
+            'alerts': result
+        })
+        
+    except ImportError:
+        return jsonify({'success': True, 'alerts': []})
+    except Exception as e:
+        logger.error(f"Get alerts error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@collector_bp.route('/keys', methods=['GET'])
+def list_collector_keys():
+    """列出站点的采集器密钥"""
+    try:
+        site_id = request.args.get('site_id', type=int)
+        
+        if not site_id:
+            return jsonify({'success': False, 'error': 'site_id required'}), 400
+        
+        keys = CollectorKey.query.filter_by(site_id=site_id).order_by(CollectorKey.created_at.desc()).all()
+        
+        result = []
+        for key in keys:
+            result.append({
+                'id': key.id,
+                'key_id': key.key_hash[:16] + '...',
+                'name': key.name,
+                'is_active': key.is_active,
+                'created_at': key.created_at.strftime('%Y-%m-%d %H:%M') if key.created_at else None,
+                'last_used_at': key.last_used_at.strftime('%Y-%m-%d %H:%M') if key.last_used_at else None
+            })
+        
+        return jsonify({
+            'success': True,
+            'keys': result
+        })
+        
+    except Exception as e:
+        logger.error(f"List keys error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@collector_bp.route('/keys', methods=['POST'])
+def create_collector_key():
+    """创建新的采集器密钥"""
+    import secrets
+    import hashlib
+    
+    try:
+        data = request.get_json()
+        site_id = data.get('site_id')
+        name = data.get('name', f'Key-{datetime.utcnow().strftime("%Y%m%d%H%M%S")}')
+        
+        if not site_id:
+            return jsonify({'success': False, 'error': 'site_id required'}), 400
+        
+        site = HostingSite.query.get(site_id)
+        if not site:
+            return jsonify({'success': False, 'error': 'Site not found'}), 404
+        
+        api_key = f"hsc_{secrets.token_urlsafe(32)}"
+        secret = secrets.token_urlsafe(16)
+        key_hash = hashlib.sha256(api_key.encode()).hexdigest()
+        
+        collector_key = CollectorKey(
+            key_hash=key_hash,
+            site_id=site_id,
+            name=name
+        )
+        db.session.add(collector_key)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'key_id': api_key,
+            'secret': secret,
+            'message': 'API key created successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"Create key error: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@collector_bp.route('/keys/<key_id>', methods=['DELETE'])
+def revoke_collector_key(key_id):
+    """撤销采集器密钥"""
+    try:
+        key = CollectorKey.query.filter(
+            CollectorKey.key_hash.like(f'{key_id}%')
+        ).first()
+        
+        if not key:
+            return jsonify({'success': False, 'error': 'Key not found'}), 404
+        
+        key.is_active = False
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'API key revoked successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"Revoke key error: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 def register_collector_routes(app):
     """注册采集器路由"""
     app.register_blueprint(collector_bp)

@@ -1,0 +1,491 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}
+{% if current_lang == 'en' %}Edge Collector Management{% else %}边缘采集器管理{% endif %}
+{% endblock %}
+
+{% block page_subtitle %}
+{% if current_lang == 'en' %}Real-time miner telemetry collection and monitoring{% else %}实时矿机遥测数据采集与监控{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="hosting-stats-grid mb-4">
+        <div class="hosting-stat-card">
+            <div class="hosting-stat-value" id="totalSites">-</div>
+            <div class="hosting-stat-label">{% if current_lang == 'en' %}Total Sites{% else %}站点总数{% endif %}</div>
+            <i class="bi bi-geo-alt hosting-stat-icon"></i>
+        </div>
+        <div class="hosting-stat-card">
+            <div class="hosting-stat-value" id="activeCollectors">-</div>
+            <div class="hosting-stat-label">{% if current_lang == 'en' %}Active Collectors{% else %}活跃采集器{% endif %}</div>
+            <i class="bi bi-broadcast hosting-stat-icon"></i>
+        </div>
+        <div class="hosting-stat-card">
+            <div class="hosting-stat-value" id="totalMiners">-</div>
+            <div class="hosting-stat-label">{% if current_lang == 'en' %}Monitored Miners{% else %}监控矿机数{% endif %}</div>
+            <i class="bi bi-cpu hosting-stat-icon"></i>
+        </div>
+        <div class="hosting-stat-card">
+            <div class="hosting-stat-value" id="activeAlerts">-</div>
+            <div class="hosting-stat-label">{% if current_lang == 'en' %}Active Alerts{% else %}活动告警{% endif %}</div>
+            <i class="bi bi-exclamation-triangle hosting-stat-icon"></i>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="hosting-card">
+                <div class="hosting-card-header">
+                    <h5 class="hosting-card-title">
+                        <i class="bi bi-geo-alt me-2"></i>
+                        {% if current_lang == 'en' %}Site Collectors{% else %}站点采集器{% endif %}
+                    </h5>
+                    <button class="btn btn-sm btn-hosting-secondary" onclick="refreshData()">
+                        <i class="bi bi-arrow-clockwise me-1"></i>
+                        {% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+                    </button>
+                </div>
+                <div class="hosting-card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Miners{% else %}矿机数{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Online{% else %}在线{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Temp{% else %}温度{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Last Upload{% else %}最后上传{% endif %}</th>
+                                    <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sitesList">
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <div class="spinner-border text-warning" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hosting-card">
+                <div class="hosting-card-header">
+                    <h5 class="hosting-card-title">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        {% if current_lang == 'en' %}Recent Alerts{% else %}最近告警{% endif %}
+                    </h5>
+                </div>
+                <div class="hosting-card-body">
+                    <div id="alertsList">
+                        <p class="text-muted text-center py-3">
+                            {% if current_lang == 'en' %}Loading alerts...{% else %}加载告警中...{% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="hosting-card">
+                <div class="hosting-card-header">
+                    <h5 class="hosting-card-title">
+                        <i class="bi bi-key me-2"></i>
+                        {% if current_lang == 'en' %}API Keys{% else %}API密钥{% endif %}
+                    </h5>
+                </div>
+                <div class="hosting-card-body">
+                    <div class="mb-3">
+                        <label class="form-label">{% if current_lang == 'en' %}Select Site{% else %}选择站点{% endif %}</label>
+                        <select class="form-select bg-dark text-light border-secondary" id="siteSelect">
+                            <option value="">{% if current_lang == 'en' %}-- Select Site --{% else %}-- 选择站点 --{% endif %}</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-hosting-primary w-100 mb-3" onclick="generateKey()" id="generateKeyBtn" disabled>
+                        <i class="bi bi-plus-circle me-2"></i>
+                        {% if current_lang == 'en' %}Generate New Key{% else %}生成新密钥{% endif %}
+                    </button>
+                    <div id="keysList" class="mt-3">
+                        <p class="text-muted text-center small">
+                            {% if current_lang == 'en' %}Select a site to view keys{% else %}选择站点查看密钥{% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hosting-card">
+                <div class="hosting-card-header">
+                    <h5 class="hosting-card-title">
+                        <i class="bi bi-info-circle me-2"></i>
+                        {% if current_lang == 'en' %}Quick Guide{% else %}快速指南{% endif %}
+                    </h5>
+                </div>
+                <div class="hosting-card-body">
+                    <div class="mb-3">
+                        <h6 class="text-warning">
+                            <i class="bi bi-1-circle me-2"></i>
+                            {% if current_lang == 'en' %}Generate API Key{% else %}生成API密钥{% endif %}
+                        </h6>
+                        <p class="small text-muted">
+                            {% if current_lang == 'en' %}Select a site and generate an API key for the edge collector.{% else %}选择站点并生成边缘采集器使用的API密钥。{% endif %}
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="text-warning">
+                            <i class="bi bi-2-circle me-2"></i>
+                            {% if current_lang == 'en' %}Deploy Collector{% else %}部署采集器{% endif %}
+                        </h6>
+                        <p class="small text-muted">
+                            {% if current_lang == 'en' %}Install the Python collector on your mining farm server.{% else %}在矿场服务器上安装Python采集器程序。{% endif %}
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="text-warning">
+                            <i class="bi bi-3-circle me-2"></i>
+                            {% if current_lang == 'en' %}Configure & Run{% else %}配置并运行{% endif %}
+                        </h6>
+                        <p class="small text-muted">
+                            {% if current_lang == 'en' %}Configure the collector with your API key and miner IPs, then start it.{% else %}配置API密钥和矿机IP地址，然后启动采集器。{% endif %}
+                        </p>
+                    </div>
+                    <a href="/collector/guide" class="btn btn-hosting-outline w-100" target="_blank">
+                        <i class="bi bi-book me-2"></i>
+                        {% if current_lang == 'en' %}View Full Documentation{% else %}查看完整文档{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="keyModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-warning">
+                    <i class="bi bi-key me-2"></i>
+                    {% if current_lang == 'en' %}New API Key{% else %}新API密钥{% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    {% if current_lang == 'en' %}Save this key now! It will only be shown once.{% else %}请立即保存此密钥！它只会显示一次。{% endif %}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">API Key</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-dark text-light border-secondary font-monospace" id="newKeyValue" readonly>
+                        <button class="btn btn-outline-warning" onclick="copyKey()">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{% if current_lang == 'en' %}Secret{% else %}密钥{% endif %}</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-dark text-light border-secondary font-monospace" id="newSecretValue" readonly>
+                        <button class="btn btn-outline-warning" onclick="copySecret()">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Close{% else %}关闭{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const currentLang = '{{ current_lang }}';
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadSites();
+    loadCollectorStats();
+    loadAlerts();
+    
+    document.getElementById('siteSelect').addEventListener('change', function() {
+        const siteId = this.value;
+        document.getElementById('generateKeyBtn').disabled = !siteId;
+        if (siteId) {
+            loadSiteKeys(siteId);
+        } else {
+            document.getElementById('keysList').innerHTML = '<p class="text-muted text-center small">' + 
+                (currentLang === 'en' ? 'Select a site to view keys' : '选择站点查看密钥') + '</p>';
+        }
+    });
+});
+
+function loadSites() {
+    fetch('/hosting/api/sites')
+        .then(r => r.json())
+        .then(data => {
+            const sites = data.sites || [];
+            const select = document.getElementById('siteSelect');
+            const tbody = document.getElementById('sitesList');
+            
+            select.innerHTML = '<option value="">' + (currentLang === 'en' ? '-- Select Site --' : '-- 选择站点 --') + '</option>';
+            
+            sites.forEach(site => {
+                const option = document.createElement('option');
+                option.value = site.id;
+                option.textContent = site.name;
+                select.appendChild(option);
+            });
+            
+            if (sites.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">' + 
+                    (currentLang === 'en' ? 'No sites found' : '暂无站点') + '</td></tr>';
+                return;
+            }
+            
+            loadSiteTelemetry(sites);
+        })
+        .catch(err => {
+            console.error('Failed to load sites:', err);
+            document.getElementById('sitesList').innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + 
+                (currentLang === 'en' ? 'Failed to load sites' : '加载站点失败') + '</td></tr>';
+        });
+}
+
+function loadSiteTelemetry(sites) {
+    fetch('/api/collector/stats')
+        .then(r => r.json())
+        .then(stats => {
+            const tbody = document.getElementById('sitesList');
+            tbody.innerHTML = '';
+            
+            let totalMiners = 0;
+            let totalOnline = 0;
+            
+            sites.forEach(site => {
+                const siteStats = stats.sites ? stats.sites[site.id] : null;
+                const miners = siteStats?.total_miners || 0;
+                const online = siteStats?.online_miners || 0;
+                const hashrate = siteStats?.total_hashrate_ths || 0;
+                const temp = siteStats?.avg_temperature || 0;
+                const lastUpload = siteStats?.last_upload || '-';
+                
+                totalMiners += miners;
+                totalOnline += online;
+                
+                const onlineRate = miners > 0 ? Math.round(online / miners * 100) : 0;
+                const onlineClass = onlineRate >= 95 ? 'text-success' : (onlineRate >= 80 ? 'text-warning' : 'text-danger');
+                const tempClass = temp > 80 ? 'text-danger' : (temp > 70 ? 'text-warning' : 'text-success');
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td>
+                            <i class="bi bi-geo-alt text-warning me-2"></i>
+                            ${site.name}
+                        </td>
+                        <td>${miners}</td>
+                        <td class="${onlineClass}">${online} (${onlineRate}%)</td>
+                        <td>${hashrate.toFixed(2)} TH/s</td>
+                        <td class="${tempClass}">${temp.toFixed(1)}°C</td>
+                        <td><small class="text-muted">${lastUpload}</small></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-warning" onclick="viewSiteDetail(${site.id})">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            document.getElementById('totalSites').textContent = sites.length;
+            document.getElementById('totalMiners').textContent = totalMiners;
+        })
+        .catch(err => {
+            console.error('Failed to load telemetry:', err);
+            const tbody = document.getElementById('sitesList');
+            tbody.innerHTML = '';
+            sites.forEach(site => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><i class="bi bi-geo-alt text-warning me-2"></i>${site.name}</td>
+                        <td colspan="5" class="text-muted">-</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-warning" onclick="viewSiteDetail(${site.id})">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            document.getElementById('totalSites').textContent = sites.length;
+        });
+}
+
+function loadCollectorStats() {
+    fetch('/api/collector/stats')
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('activeCollectors').textContent = data.active_collectors || 0;
+            document.getElementById('activeAlerts').textContent = data.active_alerts || 0;
+        })
+        .catch(err => {
+            console.error('Failed to load collector stats:', err);
+            document.getElementById('activeCollectors').textContent = '-';
+            document.getElementById('activeAlerts').textContent = '-';
+        });
+}
+
+function loadAlerts() {
+    fetch('/api/collector/alerts?limit=10')
+        .then(r => r.json())
+        .then(data => {
+            const container = document.getElementById('alertsList');
+            const alerts = data.alerts || [];
+            
+            if (alerts.length === 0) {
+                container.innerHTML = '<p class="text-success text-center py-3"><i class="bi bi-check-circle me-2"></i>' + 
+                    (currentLang === 'en' ? 'No active alerts' : '暂无活动告警') + '</p>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            alerts.forEach(alert => {
+                const levelClass = alert.level === 'critical' ? 'danger' : (alert.level === 'warning' ? 'warning' : 'info');
+                const message = currentLang === 'en' ? alert.message : (alert.message_zh || alert.message);
+                container.innerHTML += `
+                    <div class="alert alert-${levelClass} py-2 mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-${alert.level === 'critical' ? 'x-circle' : 'exclamation-triangle'} me-2"></i>
+                                <strong>${alert.miner_id || 'System'}</strong>: ${message}
+                            </div>
+                            <small class="text-muted">${alert.triggered_at}</small>
+                        </div>
+                    </div>
+                `;
+            });
+        })
+        .catch(err => {
+            console.error('Failed to load alerts:', err);
+            document.getElementById('alertsList').innerHTML = '<p class="text-muted text-center py-3">' + 
+                (currentLang === 'en' ? 'Failed to load alerts' : '加载告警失败') + '</p>';
+        });
+}
+
+function loadSiteKeys(siteId) {
+    fetch(`/api/collector/keys?site_id=${siteId}`)
+        .then(r => r.json())
+        .then(data => {
+            const container = document.getElementById('keysList');
+            const keys = data.keys || [];
+            
+            if (keys.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center small">' + 
+                    (currentLang === 'en' ? 'No API keys for this site' : '此站点暂无API密钥') + '</p>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            keys.forEach(key => {
+                const statusClass = key.is_active ? 'success' : 'secondary';
+                const statusText = key.is_active ? (currentLang === 'en' ? 'Active' : '活跃') : (currentLang === 'en' ? 'Inactive' : '已禁用');
+                container.innerHTML += `
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-dark rounded border border-secondary">
+                        <div>
+                            <code class="text-warning">${key.key_id.substring(0, 12)}...</code>
+                            <span class="badge bg-${statusClass} ms-2">${statusText}</span>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-outline-danger" onclick="revokeKey('${key.key_id}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        })
+        .catch(err => {
+            console.error('Failed to load keys:', err);
+            document.getElementById('keysList').innerHTML = '<p class="text-danger text-center small">' + 
+                (currentLang === 'en' ? 'Failed to load keys' : '加载密钥失败') + '</p>';
+        });
+}
+
+function generateKey() {
+    const siteId = document.getElementById('siteSelect').value;
+    if (!siteId) return;
+    
+    fetch('/api/collector/keys', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({site_id: parseInt(siteId)})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('newKeyValue').value = data.key_id;
+            document.getElementById('newSecretValue').value = data.secret;
+            new bootstrap.Modal(document.getElementById('keyModal')).show();
+            loadSiteKeys(siteId);
+        } else {
+            alert(data.error || (currentLang === 'en' ? 'Failed to generate key' : '生成密钥失败'));
+        }
+    })
+    .catch(err => {
+        console.error('Failed to generate key:', err);
+        alert(currentLang === 'en' ? 'Failed to generate key' : '生成密钥失败');
+    });
+}
+
+function revokeKey(keyId) {
+    if (!confirm(currentLang === 'en' ? 'Are you sure you want to revoke this key?' : '确定要撤销此密钥吗？')) {
+        return;
+    }
+    
+    fetch(`/api/collector/keys/${keyId}`, {method: 'DELETE'})
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const siteId = document.getElementById('siteSelect').value;
+                if (siteId) loadSiteKeys(siteId);
+            } else {
+                alert(data.error || (currentLang === 'en' ? 'Failed to revoke key' : '撤销密钥失败'));
+            }
+        })
+        .catch(err => {
+            console.error('Failed to revoke key:', err);
+            alert(currentLang === 'en' ? 'Failed to revoke key' : '撤销密钥失败');
+        });
+}
+
+function copyKey() {
+    const input = document.getElementById('newKeyValue');
+    input.select();
+    document.execCommand('copy');
+    alert(currentLang === 'en' ? 'API Key copied!' : 'API密钥已复制！');
+}
+
+function copySecret() {
+    const input = document.getElementById('newSecretValue');
+    input.select();
+    document.execCommand('copy');
+    alert(currentLang === 'en' ? 'Secret copied!' : '密钥已复制！');
+}
+
+function viewSiteDetail(siteId) {
+    window.location.href = `/collector/site/${siteId}`;
+}
+
+function refreshData() {
+    loadSites();
+    loadCollectorStats();
+    loadAlerts();
+}
+</script>
+{% endblock %}

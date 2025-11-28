@@ -560,6 +560,12 @@
                             <span class="hosting-nav-text">{% if current_lang == 'en' %}Smart Curtailment{% else %}智能限电{% endif %}</span>
                         </a>
                     </div>
+                    <div class="hosting-nav-item">
+                        <a href="/hosting/host/collectors" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/host/collectors') }}" data-nav="collectors">
+                            <i class="bi bi-broadcast hosting-nav-icon"></i>
+                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Edge Collectors{% else %}边缘采集器{% endif %}</span>
+                        </a>
+                    </div>
                 </div>
                 {% else %}
                 <!-- 客户菜单 -->

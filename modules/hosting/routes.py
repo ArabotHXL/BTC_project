@@ -169,6 +169,8 @@ def host_view(subpath='dashboard'):
             return render_template('hosting/sla_management.html')
         elif subpath == 'curtailment':
             return render_template('hosting/curtailment_management.html')
+        elif subpath == 'collectors':
+            return render_template('hosting/collector_management.html')
         else:
             return render_template('hosting/host_dashboard.html')
     except Exception as e:
