@@ -32,7 +32,7 @@
         HOSTING_BATCH_CREATE: 'hosting:batch_create',
         HOSTING_STATUS_MONITOR: 'hosting:status_monitor',
         HOSTING_TICKET: 'hosting:ticket',
-        HOSTING_USAGE_TRACKING: 'hosting:usage_tracking',
+        HOSTING_USAGE_TRACKING: 'hosting:usage',
         HOSTING_RECONCILIATION: 'hosting:reconciliation',
         
         // Smart Curtailment
@@ -81,8 +81,8 @@
         
         // Finance
         FINANCE_BILLING: 'finance:billing',
-        FINANCE_BTC_SETTLE: 'finance:btc_settle',
-        FINANCE_CRYPTO_PAY: 'finance:crypto_pay',
+        FINANCE_BTC_SETTLE: 'finance:btc_settlement',
+        FINANCE_CRYPTO_PAY: 'finance:crypto_payment',
         
         // Reports
         REPORT_PDF: 'report:pdf',
