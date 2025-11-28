@@ -179,6 +179,13 @@ Cloud-to-edge miner control through command queue pattern:
 - Batch operations: Multi-miner commands with aggregated feedback
 - Frontend feedback: Shows when commands are queued to edge collector
 
+**Safety Gate (Data Integrity):**
+- Control operations require an active CollectorKey for the miner's site
+- Operations without collector return 400 error: "No edge collector available"
+- `force_status=true` parameter allows manual override when truly needed
+- Batch operations skip miners without collectors, reporting `skipped_no_collector` count
+- This prevents cloud state from diverging from hardware reality
+
 **Implementation Files:**
 - `api/collector_api.py`: MinerCommand model, command API endpoints
 - `edge_collector/cgminer_collector.py`: CGMinerAPI control methods, CommandExecutor class
