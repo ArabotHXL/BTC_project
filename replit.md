@@ -14,7 +14,42 @@ HashInsight Enterprise is an enterprise-grade web application designed for minin
 The front-end uses Jinja2 with Bootstrap 5 for a mobile-first, responsive, BTC-themed dark design. Chart.js and CountUp.js are used for data visualization and animations. The system supports dynamic English and Chinese language switching.
 
 ### Technical Implementations
-The system is built on a Flask backend using Blueprints for modularity, custom email authentication, session management, and an RBAC decorator system. SQLAlchemy with PostgreSQL handles data persistence, and Redis is used for caching and task queuing.
+The system is built on a Flask backend using Blueprints for modularity, custom email authentication, session management, and an enterprise RBAC v2.0 system. SQLAlchemy with PostgreSQL handles data persistence, and Redis is used for caching and task queuing.
+
+### RBAC v2.0 Permission System
+Enterprise-grade role-based access control with 6 roles × 11 modules (44 permission points):
+
+**Roles (6 total):**
+- Owner: System owner with complete access to all 44 modules
+- Admin: System administrator with full access to all modules
+- Mining_Site_Owner: Site management focus - full hosting/curtailment access, limited CRM
+- Client: Hosting client - read access to status monitoring, usage tracking, reports
+- Customer: Calculator user - basic functions only (calculator, settings, dashboard)
+- Guest: Public visitor - read-only access to basic calculator and reports
+
+**Modules (11 categories, 44 permissions):**
+1. Basic Functions: Calculator, Settings, Dashboard
+2. Hosting Services: Site Management, Batch Create, Status Monitor, Ticket, Usage, Reconciliation
+3. Smart Curtailment: Strategy, AI Predict, Execute, Emergency, History
+4. CRM: Customer Management, Customer View, Transaction, Invoice, Broker Commission, Activity Log
+5. Analytics: Batch Calculator, Network, Technical, Deribit
+6. AI Layer: BTC Predict, ROI Explain, Anomaly Detect, Power Optimize
+7. User Management: Create, Edit, Delete, Role Assign, List View
+8. System Monitoring: Health, Performance, Event
+9. Web3: Blockchain Verify, Transparency, SLA NFT
+10. Finance: Billing, BTC Settlement, Crypto Payment
+11. Reports: PDF, Excel, PowerPoint
+
+**Access Levels:**
+- FULL: Complete read/write access
+- READ: View-only access
+- NONE: No access (hidden in UI)
+
+**Implementation Files:**
+- `common/rbac.py`: Core RBAC manager, decorators, permission matrix
+- `routes/rbac_routes.py`: API endpoints (/api/rbac/*)
+- `static/js/rbac-permissions.js`: Frontend permission controls
+- `templates/macros/rbac_macros.html`: Jinja2 permission macros
 
 ### Feature Specifications
 - **Calculator Module**: Dual-algorithm profitability analysis for 19+ ASIC models, real-time BTC price/difficulty integration, ROI analysis, and batch calculation.
