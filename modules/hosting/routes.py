@@ -952,6 +952,16 @@ def get_miners():
         
         current_lang = session.get('language', 'zh')
         
+        try:
+            from services.hosting_revenue_service import get_revenue_service
+            from services.miner_evaluation_service import get_evaluation_service
+            revenue_service = get_revenue_service()
+            evaluation_service = get_evaluation_service()
+            services_available = True
+        except Exception as svc_err:
+            logger.warning(f"收益/评估服务加载失败: {svc_err}")
+            services_available = False
+        
         miners_data = []
         for miner in pagination.items:
             miner_data = miner.to_dict()
@@ -968,12 +978,61 @@ def get_miners():
                 miner_data['approved_by_name'] = miner.approver.email
             
             # 添加站点名称
-            if miner.site:
-                miner_data['site_name'] = miner.site.name
+            site = miner.site
+            if site:
+                miner_data['site_name'] = site.name
+                electricity_rate = site.electricity_rate
+            else:
+                electricity_rate = 0.06
             
             # 添加告警信息
             alerts_info = get_miner_alerts(miner, lang=current_lang)
             miner_data['alerts'] = alerts_info
+            
+            # 添加收益和评分数据
+            if services_available and miner.actual_hashrate and miner.actual_power:
+                try:
+                    model = miner.miner_model
+                    model_name = model.model_name if model else "Unknown"
+                    rated_hashrate = model.hashrate if model else miner.actual_hashrate
+                    rated_power = model.power_consumption if model else miner.actual_power
+                    
+                    revenue_metrics = revenue_service.calculate_miner_revenue(
+                        miner_id=miner.id,
+                        serial_number=miner.serial_number,
+                        model_name=model_name,
+                        hashrate_th=miner.actual_hashrate,
+                        power_w=miner.actual_power,
+                        electricity_rate=electricity_rate,
+                        health_score=miner.health_score or 100
+                    )
+                    miner_data['daily_net_profit'] = revenue_metrics.daily_net_profit
+                    miner_data['daily_usd'] = revenue_metrics.daily_usd
+                    miner_data['efficiency_jth'] = revenue_metrics.efficiency_jth
+                    miner_data['efficiency_grade'] = revenue_metrics.efficiency_grade
+                    
+                    evaluation = evaluation_service.evaluate_miner(
+                        miner_id=miner.id,
+                        serial_number=miner.serial_number,
+                        model_name=model_name,
+                        actual_hashrate_th=miner.actual_hashrate or 0,
+                        rated_hashrate_th=rated_hashrate,
+                        actual_power_w=miner.actual_power or 0,
+                        rated_power_w=rated_power,
+                        electricity_rate=electricity_rate,
+                        temp_avg=miner.temperature_avg or 0,
+                        temp_max=miner.temperature_max or 0,
+                        fan_avg=miner.fan_avg or 0,
+                        hardware_errors=miner.hardware_errors or 0,
+                        reject_rate=miner.reject_rate or 0,
+                        uptime_seconds=miner.uptime_seconds or 0,
+                        is_online=miner.status == 'active' or miner.cgminer_online,
+                        expected_daily_usd=revenue_metrics.daily_usd
+                    )
+                    miner_data['evaluation_grade'] = evaluation.composite_grade
+                    miner_data['evaluation_score'] = evaluation.composite_score
+                except Exception as eval_err:
+                    logger.debug(f"矿机 {miner.id} 评估失败: {eval_err}")
             
             miners_data.append(miner_data)
         
@@ -4072,3 +4131,254 @@ def miner_setup_guide_pdf():
         logger.error(f"生成PDF错误: {str(e)}", exc_info=True)
         flash('Failed to generate PDF', 'error')
         return redirect(url_for('hosting.miner_setup_guide'))
+
+
+@hosting_bp.route('/api/revenue/summary', methods=['GET'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def get_revenue_summary():
+    """
+    获取收益预测汇总
+    GET /hosting/api/revenue/summary?site_id=xxx
+    
+    返回:
+    - 按站点或全局汇总的实时收益预测
+    - 包含 BTC 价格、难度、矿机收益等
+    """
+    try:
+        from services.hosting_revenue_service import get_revenue_service
+        
+        site_id = request.args.get('site_id', type=int)
+        
+        revenue_service = get_revenue_service()
+        summary = revenue_service.get_revenue_summary(site_id)
+        
+        return jsonify({
+            'success': True,
+            'data': summary
+        })
+        
+    except Exception as e:
+        logger.error(f"获取收益汇总失败: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message_en': 'Failed to get revenue summary',
+            'message_zh': '获取收益汇总失败',
+            'error': str(e)
+        }), 500
+
+
+@hosting_bp.route('/api/revenue/miners', methods=['GET'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def get_miners_revenue():
+    """
+    获取所有矿机的收益预测列表
+    GET /hosting/api/revenue/miners?site_id=xxx&sort_by=daily_net_profit&sort_desc=true&limit=100
+    """
+    try:
+        from services.hosting_revenue_service import get_revenue_service
+        from dataclasses import asdict
+        
+        site_id = request.args.get('site_id', type=int)
+        sort_by = request.args.get('sort_by', 'daily_net_profit')
+        sort_desc = request.args.get('sort_desc', 'true').lower() == 'true'
+        limit = min(request.args.get('limit', 100, type=int), 500)
+        
+        revenue_service = get_revenue_service()
+        miners = revenue_service.get_all_miners_revenue(
+            site_id=site_id,
+            sort_by=sort_by,
+            sort_desc=sort_desc,
+            limit=limit
+        )
+        
+        return jsonify({
+            'success': True,
+            'data': [asdict(m) for m in miners],
+            'count': len(miners)
+        })
+        
+    except Exception as e:
+        logger.error(f"获取矿机收益列表失败: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message_en': 'Failed to get miners revenue',
+            'message_zh': '获取矿机收益列表失败',
+            'error': str(e)
+        }), 500
+
+
+@hosting_bp.route('/api/revenue/miners/<int:miner_id>/projection', methods=['GET'])
+@requires_role(['owner', 'admin', 'mining_site', 'customer'])
+def get_miner_projection(miner_id):
+    """
+    获取单个矿机的24小时收益预测
+    GET /hosting/api/revenue/miners/123/projection
+    """
+    try:
+        from services.hosting_revenue_service import get_revenue_service
+        
+        revenue_service = get_revenue_service()
+        projection = revenue_service.project_24h_revenue(miner_id)
+        
+        return jsonify({
+            'success': True,
+            'data': projection
+        })
+        
+    except Exception as e:
+        logger.error(f"获取矿机收益预测失败: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message_en': 'Failed to get miner projection',
+            'message_zh': '获取矿机收益预测失败',
+            'error': str(e)
+        }), 500
+
+
+@hosting_bp.route('/api/evaluation/site/<int:site_id>', methods=['GET'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def get_site_evaluation(site_id):
+    """
+    获取站点所有矿机的评估汇总
+    GET /hosting/api/evaluation/site/123
+    
+    返回:
+    - 等级分布 (A/B/C/D/F)
+    - 平均评分
+    - Top performers
+    - 需要关注的矿机
+    """
+    try:
+        from services.miner_evaluation_service import get_evaluation_service
+        
+        evaluation_service = get_evaluation_service()
+        summary = evaluation_service.get_site_evaluation_summary(site_id)
+        
+        return jsonify({
+            'success': True,
+            'data': summary
+        })
+        
+    except Exception as e:
+        logger.error(f"获取站点评估失败: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message_en': 'Failed to get site evaluation',
+            'message_zh': '获取站点评估失败',
+            'error': str(e)
+        }), 500
+
+
+@hosting_bp.route('/api/evaluation/miners', methods=['GET'])
+@requires_role(['owner', 'admin', 'mining_site'])
+def get_miners_evaluation():
+    """
+    获取所有矿机的评估列表
+    GET /hosting/api/evaluation/miners?site_id=xxx
+    """
+    try:
+        from services.miner_evaluation_service import get_evaluation_service
+        
+        site_id = request.args.get('site_id', type=int)
+        
+        if not site_id:
+            return jsonify({
+                'success': False,
+                'message_en': 'Site ID is required',
+                'message_zh': '站点ID必填'
+            }), 400
+        
+        evaluation_service = get_evaluation_service()
+        evaluations = evaluation_service.evaluate_site_miners(site_id)
+        
+        return jsonify({
+            'success': True,
+            'data': [e.to_dict() for e in evaluations],
+            'count': len(evaluations)
+        })
+        
+    except Exception as e:
+        logger.error(f"获取矿机评估列表失败: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message_en': 'Failed to get miners evaluation',
+            'message_zh': '获取矿机评估列表失败',
+            'error': str(e)
+        }), 500
+
+
+@hosting_bp.route('/api/evaluation/miner/<int:miner_id>', methods=['GET'])
+@requires_role(['owner', 'admin', 'mining_site', 'customer'])
+def get_single_miner_evaluation(miner_id):
+    """
+    获取单个矿机的详细评估
+    GET /hosting/api/evaluation/miner/123
+    """
+    try:
+        from services.miner_evaluation_service import get_evaluation_service
+        from services.hosting_revenue_service import get_revenue_service
+        
+        miner = HostingMiner.query.get(miner_id)
+        if not miner:
+            return jsonify({
+                'success': False,
+                'message_en': 'Miner not found',
+                'message_zh': '矿机不存在'
+            }), 404
+        
+        site = HostingSite.query.get(miner.site_id)
+        model = miner.miner_model
+        model_name = model.model_name if model else "Unknown"
+        rated_hashrate = model.hashrate if model else miner.actual_hashrate
+        rated_power = model.power_consumption if model else miner.actual_power
+        electricity_rate = site.electricity_rate if site else 0.06
+        
+        revenue_service = get_revenue_service()
+        revenue_metrics = revenue_service.calculate_miner_revenue(
+            miner_id=miner.id,
+            serial_number=miner.serial_number,
+            model_name=model_name,
+            hashrate_th=rated_hashrate,
+            power_w=rated_power,
+            electricity_rate=electricity_rate,
+            health_score=miner.health_score or 100
+        )
+        
+        evaluation_service = get_evaluation_service()
+        evaluation = evaluation_service.evaluate_miner(
+            miner_id=miner.id,
+            serial_number=miner.serial_number,
+            model_name=model_name,
+            actual_hashrate_th=miner.actual_hashrate or 0,
+            rated_hashrate_th=rated_hashrate,
+            actual_power_w=miner.actual_power or 0,
+            rated_power_w=rated_power,
+            electricity_rate=electricity_rate,
+            temp_avg=miner.temperature_avg or 0,
+            temp_max=miner.temperature_max or 0,
+            fan_avg=miner.fan_avg or 0,
+            hardware_errors=miner.hardware_errors or 0,
+            reject_rate=miner.reject_rate or 0,
+            uptime_seconds=miner.uptime_seconds or 0,
+            is_online=miner.status == 'active' or miner.cgminer_online,
+            expected_daily_usd=revenue_metrics.daily_usd
+        )
+        
+        from dataclasses import asdict
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'evaluation': evaluation.to_dict(),
+                'revenue': asdict(revenue_metrics)
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"获取矿机评估失败: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message_en': 'Failed to get miner evaluation',
+            'message_zh': '获取矿机评估失败',
+            'error': str(e)
+        }), 500

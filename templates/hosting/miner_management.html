@@ -196,17 +196,17 @@
                     <tr>
                         <th style="width: 40px;"><input type="checkbox" id="selectAll" class="form-check-input"></th>
                         <th>{% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Grade{% else %}评级{% endif %}</th>
                         <th>{% if current_lang == 'en' %}Customer{% else %}客户{% endif %}</th>
                         <th>{% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %}</th>
                         <th>{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</th>
                         <th>{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</th>
                         <th>{% if current_lang == 'en' %}Power{% else %}功耗{% endif %}</th>
+                        <th>{% if current_lang == 'en' %}Daily Profit{% else %}日收益{% endif %}</th>
                         <th>{% if current_lang == 'en' %}CGMiner{% else %}CGMiner{% endif %}</th>
                         <th>{% if current_lang == 'en' %}Temperature{% else %}温度{% endif %}</th>
                         <th>{% if current_lang == 'en' %}Fan{% else %}风扇{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Hashrate (5s){% else %}算力(5s){% endif %}</th>
                         <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Approval{% else %}审核状态{% endif %}</th>
                         <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
                     </tr>
                 </thead>
@@ -699,7 +699,7 @@ function displayMiners(miners) {
     if (!miners || miners.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="13" class="text-center text-muted py-4">
+                <td colspan="14" class="text-center text-muted py-4">
                     <i class="bi bi-cpu fs-1 mb-2 d-block"></i>
                     ${getLanguage() === 'en' ? 'No miners found' : '未找到矿机'}
                 </td>
@@ -713,7 +713,6 @@ function displayMiners(miners) {
         const tempAvg = miner.temperature_avg || null;
         const tempMax = miner.temperature_max || null;
         const fanAvg = miner.fan_avg || null;
-        const hashrate5s = miner.hashrate_5s || null;
         const lastSeen = miner.last_seen || null;
         
         // Format CGMiner online status
@@ -731,9 +730,6 @@ function displayMiners(miners) {
         
         // Format fan speed
         const fanDisplay = fanAvg !== null ? `${Math.round(fanAvg)} RPM` : '-';
-        
-        // Format 5s hashrate
-        const hashrate5sDisplay = hashrate5s !== null ? `${hashrate5s.toFixed(1)} TH/s` : '-';
         
         // Format last seen time
         let lastSeenDisplay = '-';
@@ -757,20 +753,45 @@ function displayMiners(miners) {
                 </span>`;
         }
         
+        // Format evaluation grade badge
+        const grade = miner.evaluation_grade || '-';
+        const gradeColors = {
+            'A': 'success',
+            'B': 'info', 
+            'C': 'warning',
+            'D': 'secondary',
+            'F': 'danger'
+        };
+        const gradeColor = gradeColors[grade] || 'secondary';
+        const gradeScore = miner.evaluation_score ? miner.evaluation_score.toFixed(0) : '-';
+        const gradeDisplay = grade !== '-' 
+            ? `<span class="badge bg-${gradeColor} fs-6" data-bs-toggle="tooltip" title="${getLanguage() === 'en' ? 'Score: ' : '评分: '}${gradeScore}">${grade}</span>`
+            : '<span class="badge bg-secondary">-</span>';
+        
+        // Format daily profit
+        const dailyProfit = miner.daily_net_profit;
+        let profitDisplay = '-';
+        if (dailyProfit !== null && dailyProfit !== undefined) {
+            const profitColor = dailyProfit >= 0 ? 'text-success' : 'text-danger';
+            const profitSign = dailyProfit >= 0 ? '+' : '';
+            profitDisplay = `<span class="${profitColor}">${profitSign}$${Math.abs(dailyProfit).toFixed(2)}</span>`;
+        }
+        
         const row = `
             <tr id="miner-row-${miner.id}">
+                <td><input type="checkbox" class="form-check-input miner-checkbox" value="${miner.id}"></td>
                 <td><strong>${miner.serial_number}</strong>${alertBadge}</td>
+                <td class="text-center">${gradeDisplay}</td>
                 <td>${miner.customer_email || '-'}</td>
                 <td>${miner.miner_model_name || '-'}</td>
                 <td>${miner.site_name || '-'}</td>
                 <td>${miner.actual_hashrate || '-'} TH/s</td>
                 <td>${miner.actual_power || '-'} W</td>
+                <td>${profitDisplay}</td>
                 <td class="text-center">${cgminerStatus}<br>${lastSeenDisplay}</td>
                 <td>${tempDisplay}</td>
                 <td>${fanDisplay}</td>
-                <td>${hashrate5sDisplay}</td>
                 <td><span class="badge bg-${getStatusColor(miner.status)}">${getStatusText(miner.status)}</span></td>
-                <td><span class="badge bg-${getApprovalColor(miner.approval_status)}">${getApprovalText(miner.approval_status)}</span></td>
                 <td>
                     <div class="btn-group btn-group-sm" role="group">
                         <a href="/hosting/miner/${miner.id}/detail" class="btn btn-hosting-primary btn-sm" title="${getLanguage() === 'en' ? 'View Details' : '查看详情'}">
@@ -778,9 +799,6 @@ function displayMiners(miners) {
                         </a>
                         <button class="btn btn-hosting-outline" onclick="testMinerConnection(${miner.id})" title="${getLanguage() === 'en' ? 'Test Connection' : '测试连接'}">
                             <i class="bi bi-activity"></i>
-                        </button>
-                        <button class="btn btn-hosting-outline" onclick="refreshMinerData(${miner.id})" title="${getLanguage() === 'en' ? 'Refresh Data' : '刷新数据'}">
-                            <i class="bi bi-arrow-clockwise"></i>
                         </button>
                         <button class="btn btn-hosting-outline" onclick="editMiner(${miner.id})" title="${getLanguage() === 'en' ? 'Edit' : '编辑'}">
                             <i class="bi bi-pencil"></i>
