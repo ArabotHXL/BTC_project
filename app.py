@@ -943,8 +943,18 @@ def login():
             user_role = get_user_role(email)
             session['role'] = user_role
             
+            # 获取并保存用户权限到会话（RBAC v2.0）
+            try:
+                from common.rbac import get_user_permissions
+                user_permissions = get_user_permissions()
+                session['permissions'] = user_permissions.get('permissions', {})
+                logging.info(f"用户权限已加载: {len(session['permissions'])} 个模块权限")
+            except Exception as rbac_error:
+                logging.warning(f"加载用户权限时出错: {rbac_error}")
+                session['permissions'] = {}
+            
             # 记录成功登录
-            logging.info(f"用户成功登录: {email}, ID: {session.get('user_id')}")
+            logging.info(f"用户成功登录: {email}, ID: {session.get('user_id')}, 角色: {user_role}")
             
             # 设置闪现成功消息，基于当前语言
             if g.language == 'en':

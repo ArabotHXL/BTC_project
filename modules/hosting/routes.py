@@ -2,11 +2,17 @@
 """
 托管功能路由
 包含托管商和客户视角的所有功能
+
+RBAC v2.0: 使用模块化权限系统
 """
 from flask import render_template, request, jsonify, session, redirect, url_for, flash
 from . import hosting_bp
 from auth import login_required
 from decorators import requires_role
+from common.rbac import (
+    Module, Role, requires_module_access, requires_role as rbac_requires_role,
+    rbac_manager, normalize_role
+)
 from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingUsageRecord, HostingUsageItem, MinerTelemetry, HostingBill, HostingBillItem, HostingMinerOperationLog
 from models import CurtailmentPlan, CurtailmentStrategy, CurtailmentExecution
 from models import ExecutionMode, PlanStatus, ExecutionAction, ExecutionStatus
@@ -103,10 +109,18 @@ def get_miner_alerts(miner, lang='zh'):
 @hosting_bp.route('/')
 @login_required
 def dashboard():
-    """托管功能主仪表板"""
-    user_role = session.get('role', 'guest')
+    """托管功能主仪表板
     
-    if user_role in ['owner', 'admin', 'mining_site']:
+    RBAC: 根据用户模块权限展示不同视图
+    - HOSTING_SITE_MGMT 完全访问 → 托管商视角
+    - HOSTING_STATUS_MONITOR 只读 → 客户视角
+    """
+    user_role = normalize_role(session.get('role', 'guest'))
+    
+    # 检查用户是否有托管管理权限
+    has_host_access = rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT)
+    
+    if has_host_access:
         # 托管商视角
         return render_template('hosting/host_dashboard.html')
     else:
@@ -114,7 +128,8 @@ def dashboard():
         return render_template('hosting/client_dashboard.html')
 
 @hosting_bp.route('/host/sites/<int:site_id>')
-@requires_role(['owner', 'admin', 'mining_site'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=False)
 def site_detail(site_id):
     """站点详情页面"""
     try:
@@ -131,9 +146,16 @@ def site_detail(site_id):
 
 @hosting_bp.route('/host')
 @hosting_bp.route('/host/<path:subpath>')
-@requires_role(['owner', 'admin', 'mining_site'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=False)
 def host_view(subpath='dashboard'):
-    """托管商视角路由"""
+    """托管商视角路由
+    
+    RBAC: 需要 HOSTING_SITE_MGMT 模块权限
+    - 站点管理: HOSTING_SITE_MGMT (完全访问)
+    - 设备管理: HOSTING_STATUS_MONITOR (只读或完全)
+    - 限电管理: CURTAILMENT_STRATEGY (完全访问)
+    """
     try:
         if subpath == 'dashboard':
             return render_template('hosting/host_dashboard.html')
@@ -161,8 +183,15 @@ def host_view(subpath='dashboard'):
 @hosting_bp.route('/client')
 @hosting_bp.route('/client/<path:subpath>')
 @login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR, require_full=False)
 def client_view(subpath='dashboard'):
-    """客户视角路由"""
+    """客户视角路由
+    
+    RBAC: 需要 HOSTING_STATUS_MONITOR 模块权限（只读即可）
+    - 资产概览: HOSTING_STATUS_MONITOR
+    - 使用记录: HOSTING_USAGE_TRACKING
+    - 报表: REPORT_PDF/REPORT_EXCEL
+    """
     try:
         if subpath == 'dashboard':
             return render_template('hosting/client_dashboard.html')

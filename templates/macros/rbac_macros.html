@@ -1,0 +1,201 @@
+{# RBAC Permission Macros for Jinja2 Templates #}
+{# Use these macros to control UI elements based on user permissions #}
+
+{# ============================================================
+   PERMISSION CHECK MACROS
+   ============================================================ #}
+
+{# Check if user has access to a module (read or full) #}
+{% macro has_access(module) %}
+  {%- if session.permissions and module in session.permissions -%}
+    {%- if session.permissions[module] in ['full', 'read'] -%}
+      true
+    {%- else -%}
+      false
+    {%- endif -%}
+  {%- else -%}
+    false
+  {%- endif -%}
+{% endmacro %}
+
+{# Check if user has full access (write) to a module #}
+{% macro has_full_access(module) %}
+  {%- if session.permissions and module in session.permissions -%}
+    {%- if session.permissions[module] == 'full' -%}
+      true
+    {%- else -%}
+      false
+    {%- endif -%}
+  {%- else -%}
+    false
+  {%- endif -%}
+{% endmacro %}
+
+{# ============================================================
+   CONDITIONAL RENDER MACROS
+   ============================================================ #}
+
+{# Render content only if user has access to module #}
+{% macro if_access(module, caller) %}
+  {% if session.permissions and module in session.permissions %}
+    {% if session.permissions[module] in ['full', 'read'] %}
+      {{ caller() }}
+    {% endif %}
+  {% endif %}
+{% endmacro %}
+
+{# Render content only if user has full access #}
+{% macro if_full_access(module, caller) %}
+  {% if session.permissions and module in session.permissions %}
+    {% if session.permissions[module] == 'full' %}
+      {{ caller() }}
+    {% endif %}
+  {% endif %}
+{% endmacro %}
+
+{# Render content only if user has a specific role #}
+{% macro if_role(roles, caller) %}
+  {% set role_list = roles.split(',') if roles is string else roles %}
+  {% if session.role and session.role|lower in role_list %}
+    {{ caller() }}
+  {% endif %}
+{% endmacro %}
+
+{# ============================================================
+   UI ELEMENT MACROS
+   ============================================================ #}
+
+{# Permission-aware button #}
+{% macro permission_button(text, module, require_full=true, href='#', btn_class='btn-primary', icon='', onclick='', id='', disabled_text='') %}
+  {% set has_perm = (session.permissions and module in session.permissions and 
+                     ((not require_full and session.permissions[module] in ['full', 'read']) or 
+                      (require_full and session.permissions[module] == 'full'))) %}
+  {% if has_perm %}
+    <a href="{{ href }}" class="btn {{ btn_class }}" {% if id %}id="{{ id }}"{% endif %} {% if onclick %}onclick="{{ onclick }}"{% endif %}>
+      {% if icon %}<i class="{{ icon }}"></i> {% endif %}{{ text }}
+    </a>
+  {% else %}
+    <button class="btn {{ btn_class }} disabled" disabled title="{{ disabled_text or 'Insufficient permissions' }}">
+      {% if icon %}<i class="{{ icon }}"></i> {% endif %}{{ text }}
+    </button>
+  {% endif %}
+{% endmacro %}
+
+{# Permission-aware action button (form submit) #}
+{% macro permission_submit(text, module, require_full=true, btn_class='btn-primary', icon='', name='submit', disabled_text='') %}
+  {% set has_perm = (session.permissions and module in session.permissions and 
+                     ((not require_full and session.permissions[module] in ['full', 'read']) or 
+                      (require_full and session.permissions[module] == 'full'))) %}
+  <button type="submit" name="{{ name }}" class="btn {{ btn_class }}" 
+          {% if not has_perm %}disabled title="{{ disabled_text or 'Insufficient permissions' }}"{% endif %}>
+    {% if icon %}<i class="{{ icon }}"></i> {% endif %}{{ text }}
+  </button>
+{% endmacro %}
+
+{# Permission-aware menu item #}
+{% macro permission_menu_item(text, href, module, require_full=false, icon='', active=false) %}
+  {% set has_perm = (session.permissions and module in session.permissions and 
+                     ((not require_full and session.permissions[module] in ['full', 'read']) or 
+                      (require_full and session.permissions[module] == 'full'))) %}
+  {% if has_perm %}
+    <li class="nav-item">
+      <a class="nav-link {% if active %}active{% endif %}" href="{{ href }}">
+        {% if icon %}<i class="{{ icon }}"></i> {% endif %}{{ text }}
+      </a>
+    </li>
+  {% endif %}
+{% endmacro %}
+
+{# Permission-aware dropdown item #}
+{% macro permission_dropdown_item(text, href, module, require_full=false, icon='') %}
+  {% set has_perm = (session.permissions and module in session.permissions and 
+                     ((not require_full and session.permissions[module] in ['full', 'read']) or 
+                      (require_full and session.permissions[module] == 'full'))) %}
+  {% if has_perm %}
+    <a class="dropdown-item" href="{{ href }}">
+      {% if icon %}<i class="{{ icon }} me-2"></i>{% endif %}{{ text }}
+    </a>
+  {% endif %}
+{% endmacro %}
+
+{# Role badge #}
+{% macro role_badge(role=none) %}
+  {% set user_role = role or session.role or 'guest' %}
+  {% set badge_classes = {
+    'owner': 'bg-danger',
+    'admin': 'bg-warning text-dark',
+    'mining_site_owner': 'bg-info',
+    'client': 'bg-success',
+    'customer': 'bg-primary',
+    'guest': 'bg-secondary'
+  } %}
+  {% set role_labels_zh = {
+    'owner': '系统所有者',
+    'admin': '系统管理员',
+    'mining_site_owner': '矿场主',
+    'client': '托管客户',
+    'customer': '计算器用户',
+    'guest': '访客'
+  } %}
+  {% set role_labels_en = {
+    'owner': 'Owner',
+    'admin': 'Admin',
+    'mining_site_owner': 'Site Owner',
+    'client': 'Client',
+    'customer': 'Customer',
+    'guest': 'Guest'
+  } %}
+  <span class="badge {{ badge_classes.get(user_role|lower, 'bg-secondary') }}">
+    {{ role_labels_zh.get(user_role|lower, user_role) }}
+  </span>
+{% endmacro %}
+
+{# Access level indicator #}
+{% macro access_indicator(level) %}
+  {% if level == 'full' %}
+    <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>完全访问</span>
+  {% elif level == 'read' %}
+    <span class="badge bg-info"><i class="bi bi-eye-fill me-1"></i>只读</span>
+  {% else %}
+    <span class="badge bg-danger"><i class="bi bi-x-circle-fill me-1"></i>无权限</span>
+  {% endif %}
+{% endmacro %}
+
+{# ============================================================
+   SCRIPT INITIALIZATION
+   ============================================================ #}
+
+{# Include RBAC JavaScript and initialize permissions #}
+{% macro include_rbac_scripts() %}
+<script src="{{ url_for('static', filename='js/rbac-permissions.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mark body as logged in if user is authenticated
+    {% if session.user_id %}
+    document.body.dataset.loggedIn = 'true';
+    // Pre-populate permissions from server-side session
+    window.RBAC_INITIAL = {
+        role: '{{ session.role|default("guest") }}',
+        permissions: {{ session.permissions|tojson if session.permissions else '{}' }}
+    };
+    {% endif %}
+});
+</script>
+{% endmacro %}
+
+{# ============================================================
+   DATA ATTRIBUTES FOR JS INTEGRATION
+   ============================================================ #}
+
+{# Add data attributes for client-side permission control #}
+{% macro data_require_module(module, require_full=false) %}
+data-require-module="{{ module }}" {% if require_full %}data-require-full="true"{% endif %}
+{% endmacro %}
+
+{% macro data_require_write(module) %}
+data-require-write="{{ module }}"
+{% endmacro %}
+
+{% macro data_require_role(roles) %}
+data-require-role="{{ roles if roles is string else roles|join(',') }}"
+{% endmacro %}
