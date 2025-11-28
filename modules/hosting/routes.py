@@ -14,6 +14,7 @@ from common.rbac import (
     rbac_manager, normalize_role
 )
 from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingUsageRecord, HostingUsageItem, MinerTelemetry, HostingBill, HostingBillItem, HostingMinerOperationLog
+from api.collector_api import MinerTelemetryLive
 from models import CurtailmentPlan, CurtailmentStrategy, CurtailmentExecution
 from models import ExecutionMode, PlanStatus, ExecutionAction, ExecutionStatus
 from intelligence.curtailment_engine import calculate_curtailment_plan
@@ -994,9 +995,44 @@ def get_miners():
             logger.warning(f"收益/评估服务加载失败: {svc_err}", exc_info=True)
             services_available = False
         
+        site_ids = list(set(m.site_id for m in pagination.items if m.site_id))
+        miner_identifiers = [(m.serial_number, m.site_id) for m in pagination.items if m.serial_number and m.site_id]
+        
+        telemetry_map = {}
+        if miner_identifiers:
+            try:
+                telemetry_records = MinerTelemetryLive.query.filter(
+                    MinerTelemetryLive.site_id.in_(site_ids)
+                ).all()
+                for t in telemetry_records:
+                    telemetry_map[(t.miner_id, t.site_id)] = t
+            except Exception as tel_err:
+                logger.warning(f"获取遥测数据失败: {tel_err}")
+        
         miners_data = []
         for miner in pagination.items:
             miner_data = miner.to_dict()
+            
+            telemetry = telemetry_map.get((miner.serial_number, miner.site_id))
+            if telemetry:
+                miner_data['telemetry'] = {
+                    'live': True,
+                    'online': telemetry.online,
+                    'last_seen': telemetry.last_seen.isoformat() if telemetry.last_seen else None,
+                    'hashrate_ths': round(telemetry.hashrate_ghs / 1000, 2) if telemetry.hashrate_ghs else 0,
+                    'hashrate_5s_ths': round(telemetry.hashrate_5s_ghs / 1000, 2) if telemetry.hashrate_5s_ghs else 0,
+                    'temperature_avg': round(telemetry.temperature_avg, 1) if telemetry.temperature_avg else 0,
+                    'temperature_max': round(telemetry.temperature_max, 1) if telemetry.temperature_max else 0,
+                    'fan_speeds': telemetry.fan_speeds or [],
+                    'power_consumption': round(telemetry.power_consumption, 0) if telemetry.power_consumption else 0,
+                    'accepted_shares': telemetry.accepted_shares or 0,
+                    'rejected_shares': telemetry.rejected_shares or 0,
+                    'uptime_hours': round(telemetry.uptime_seconds / 3600, 1) if telemetry.uptime_seconds else 0,
+                    'pool_url': telemetry.pool_url,
+                    'worker_name': telemetry.worker_name
+                }
+            else:
+                miner_data['telemetry'] = {'live': False}
             
             # 添加关联信息
             if miner.customer:
