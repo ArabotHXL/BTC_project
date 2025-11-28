@@ -130,6 +130,109 @@ class CGMinerAPI:
     def get_version(self) -> Optional[Dict]:
         """获取版本信息"""
         return self.send_command("version")
+    
+    def enable_mining(self) -> Tuple[bool, str]:
+        """启用挖矿 - 恢复ASIC芯片运行"""
+        result = self.send_command("ascunlock")
+        if result is None:
+            result = self.send_command("gpuenable", "0")
+        if result is None:
+            result = self.send_command("enablepool", "0")
+        
+        if result and result.get('STATUS', [{}])[0].get('STATUS') in ['S', 'I']:
+            return True, "Mining enabled successfully"
+        return False, f"Enable failed: {result}"
+    
+    def disable_mining(self) -> Tuple[bool, str]:
+        """禁用挖矿 - 停止ASIC芯片"""
+        result = self.send_command("asclock")
+        if result is None:
+            result = self.send_command("gpudisable", "0")
+        if result is None:
+            result = self.send_command("disablepool", "0")
+        
+        if result and result.get('STATUS', [{}])[0].get('STATUS') in ['S', 'I']:
+            return True, "Mining disabled successfully"
+        return False, f"Disable failed: {result}"
+    
+    def restart_miner(self) -> Tuple[bool, str]:
+        """重启CGMiner进程"""
+        result = self.send_command("restart")
+        if result and result.get('STATUS', [{}])[0].get('STATUS') in ['S', 'I']:
+            return True, "CGMiner restarted successfully"
+        return False, f"Restart failed: {result}"
+    
+    def switch_pool(self, pool_id: int = 0) -> Tuple[bool, str]:
+        """切换到指定矿池"""
+        result = self.send_command("switchpool", str(pool_id))
+        if result and result.get('STATUS', [{}])[0].get('STATUS') in ['S', 'I']:
+            return True, f"Switched to pool {pool_id}"
+        return False, f"Switch pool failed: {result}"
+    
+    def add_pool(self, url: str, user: str, password: str = "x") -> Tuple[bool, str]:
+        """添加新矿池"""
+        param = f"{url},{user},{password}"
+        result = self.send_command("addpool", param)
+        if result and result.get('STATUS', [{}])[0].get('STATUS') in ['S', 'I']:
+            return True, f"Pool added: {url}"
+        return False, f"Add pool failed: {result}"
+    
+    def set_fan_speed(self, speed: int) -> Tuple[bool, str]:
+        """设置风扇转速 (需要固件支持)"""
+        result = self.send_command("fanctrl", str(speed))
+        if result is None:
+            return False, "Fan control not supported by this firmware"
+        if result.get('STATUS', [{}])[0].get('STATUS') in ['S', 'I']:
+            return True, f"Fan speed set to {speed}"
+        return False, f"Set fan failed: {result}"
+    
+    def set_frequency(self, freq: int) -> Tuple[bool, str]:
+        """设置频率 (需要固件支持)"""
+        result = self.send_command("setconfig", f"freq={freq}")
+        if result is None:
+            return False, "Frequency control not supported"
+        if result.get('STATUS', [{}])[0].get('STATUS') in ['S', 'I']:
+            return True, f"Frequency set to {freq}"
+        return False, f"Set frequency failed: {result}"
+    
+    def execute_control_command(self, command: str, params: Dict = None) -> Tuple[bool, str]:
+        """执行控制命令
+        
+        Args:
+            command: 命令类型 (enable/disable/restart/reboot/set_pool/set_fan/set_frequency)
+            params: 命令参数
+        
+        Returns:
+            (success, message)
+        """
+        params = params or {}
+        
+        try:
+            if command == 'enable':
+                return self.enable_mining()
+            elif command == 'disable':
+                return self.disable_mining()
+            elif command == 'restart':
+                return self.restart_miner()
+            elif command == 'reboot':
+                return self.restart_miner()
+            elif command == 'set_pool':
+                pool_url = params.get('pool_url')
+                pool_user = params.get('pool_user')
+                if pool_url and pool_user:
+                    return self.add_pool(pool_url, pool_user, params.get('pool_password', 'x'))
+                pool_id = params.get('pool_id', 0)
+                return self.switch_pool(pool_id)
+            elif command == 'set_fan':
+                speed = params.get('speed', 100)
+                return self.set_fan_speed(speed)
+            elif command == 'set_frequency':
+                freq = params.get('frequency', 0)
+                return self.set_frequency(freq)
+            else:
+                return False, f"Unknown command: {command}"
+        except Exception as e:
+            return False, f"Command execution error: {str(e)}"
 
 
 class MinerDataParser:
@@ -325,6 +428,127 @@ class CloudUploader:
             return False
 
 
+class CommandExecutor:
+    """命令执行器 - 从云端获取并执行控制命令"""
+    
+    def __init__(self, api_url: str, api_key: str, site_id: str, miner_map: Dict[str, Dict]):
+        self.api_url = api_url.rstrip('/')
+        self.api_key = api_key
+        self.site_id = site_id
+        self.miner_map = miner_map
+        self.session = requests.Session()
+        self.session.headers.update({
+            'X-Collector-Key': api_key,
+            'X-Site-ID': site_id,
+            'Content-Type': 'application/json'
+        })
+        
+        self.stats = {
+            'commands_fetched': 0,
+            'commands_executed': 0,
+            'commands_failed': 0,
+            'last_poll': None
+        }
+    
+    def fetch_pending_commands(self) -> List[Dict]:
+        """从云端获取待执行命令"""
+        try:
+            response = self.session.get(
+                f"{self.api_url}/api/collector/commands/pending",
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                if result.get('success'):
+                    commands = result.get('commands', [])
+                    self.stats['commands_fetched'] += len(commands)
+                    self.stats['last_poll'] = datetime.utcnow().isoformat()
+                    if commands:
+                        logger.info(f"Fetched {len(commands)} pending commands")
+                    return commands
+            else:
+                logger.warning(f"Fetch commands failed: HTTP {response.status_code}")
+            
+            return []
+            
+        except requests.exceptions.ConnectionError:
+            logger.debug("Cannot reach cloud server for commands")
+            return []
+        except Exception as e:
+            logger.error(f"Fetch commands error: {e}")
+            return []
+    
+    def report_result(self, command_id: int, success: bool, message: str):
+        """报告命令执行结果"""
+        try:
+            response = self.session.post(
+                f"{self.api_url}/api/collector/commands/{command_id}/result",
+                json={
+                    'status': 'completed' if success else 'failed',
+                    'result_code': 0 if success else 1,
+                    'result_message': message
+                },
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                logger.debug(f"Command {command_id} result reported: {success}")
+            else:
+                logger.warning(f"Report result failed: HTTP {response.status_code}")
+                
+        except Exception as e:
+            logger.error(f"Report result error: {e}")
+    
+    def execute_command(self, cmd: Dict) -> Tuple[bool, str]:
+        """执行单个命令"""
+        command_id = cmd.get('command_id')
+        miner_id = cmd.get('miner_id')
+        ip_address = cmd.get('ip_address')
+        command_type = cmd.get('command')
+        params = cmd.get('params', {})
+        
+        if not ip_address and miner_id in self.miner_map:
+            ip_address = self.miner_map[miner_id].get('ip')
+        
+        if not ip_address:
+            return False, f"Cannot find IP for miner {miner_id}"
+        
+        logger.info(f"Executing command {command_id}: {command_type} on {miner_id} ({ip_address})")
+        
+        port = self.miner_map.get(miner_id, {}).get('port', 4028)
+        api = CGMinerAPI(ip_address, port)
+        
+        success, message = api.execute_control_command(command_type, params)
+        
+        if success:
+            self.stats['commands_executed'] += 1
+            logger.info(f"Command {command_id} succeeded: {message}")
+        else:
+            self.stats['commands_failed'] += 1
+            logger.error(f"Command {command_id} failed: {message}")
+        
+        return success, message
+    
+    def process_commands(self) -> int:
+        """处理所有待执行命令"""
+        commands = self.fetch_pending_commands()
+        
+        if not commands:
+            return 0
+        
+        for cmd in commands:
+            command_id = cmd.get('command_id')
+            try:
+                success, message = self.execute_command(cmd)
+                self.report_result(command_id, success, message)
+            except Exception as e:
+                logger.error(f"Command {command_id} execution error: {e}")
+                self.report_result(command_id, False, str(e))
+        
+        return len(commands)
+
+
 class EdgeCollector:
     """边缘采集器主类"""
     
@@ -332,6 +556,7 @@ class EdgeCollector:
         self.config = config
         self.miners = config.get('miners', [])
         self.collection_interval = config.get('collection_interval', 30)
+        self.command_poll_interval = config.get('command_poll_interval', 5)
         self.max_workers = config.get('max_workers', 50)
         self.api_url = config.get('api_url', 'http://localhost:5000')
         self.api_key = config.get('api_key', '')
@@ -340,7 +565,13 @@ class EdgeCollector:
         self.cache = OfflineCache(config.get('cache_dir', './cache'))
         self.uploader = CloudUploader(self.api_url, self.api_key, self.site_id)
         
+        self.miner_map = {m.get('id', m.get('ip')): m for m in self.miners}
+        self.command_executor = CommandExecutor(
+            self.api_url, self.api_key, self.site_id, self.miner_map
+        )
+        
         self.running = False
+        self.enable_commands = config.get('enable_commands', True)
         self.stats = {
             'total_collected': 0,
             'successful': 0,
@@ -466,11 +697,30 @@ class EdgeCollector:
             'timestamp': datetime.utcnow().isoformat()
         }
     
+    def _command_poll_loop(self):
+        """命令轮询线程"""
+        logger.info(f"Command polling started. Interval: {self.command_poll_interval}s")
+        
+        while self.running:
+            try:
+                processed = self.command_executor.process_commands()
+                if processed > 0:
+                    logger.info(f"Processed {processed} commands")
+            except Exception as e:
+                logger.error(f"Command poll error: {e}")
+            
+            time.sleep(self.command_poll_interval)
+    
     def run(self):
         """持续运行采集循环"""
         self.running = True
         logger.info(f"Edge Collector started. Site: {self.site_id}, Miners: {len(self.miners)}")
         logger.info(f"Collection interval: {self.collection_interval}s, Workers: {self.max_workers}")
+        
+        if self.enable_commands:
+            command_thread = threading.Thread(target=self._command_poll_loop, daemon=True)
+            command_thread.start()
+            logger.info("Command execution enabled - polling for control commands")
         
         while self.running:
             try:
@@ -489,6 +739,10 @@ class EdgeCollector:
     def stop(self):
         """停止采集器"""
         self.running = False
+    
+    def get_command_stats(self) -> Dict:
+        """获取命令执行统计"""
+        return self.command_executor.stats
 
 
 def generate_miner_list(ip_range: str, id_prefix: str = "miner") -> List[Dict]:
