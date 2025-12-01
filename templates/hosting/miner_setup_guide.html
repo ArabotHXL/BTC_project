@@ -273,24 +273,39 @@
                             <td>Texas DataCenter A</td>
                         </tr>
                         <tr>
-                            <td><strong>Customer</strong></td>
+                            <td><strong>Customer *</strong></td>
                             <td>Miner owner (for hosted miners)</td>
                             <td>John Smith</td>
                         </tr>
                         <tr>
-                            <td><strong>IP Address *</strong></td>
-                            <td>Network IP address of the miner</td>
+                            <td><strong>Actual Hashrate *</strong></td>
+                            <td>Expected hashrate in TH/s</td>
+                            <td>110</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Actual Power *</strong></td>
+                            <td>Power consumption in Watts</td>
+                            <td>3250</td>
+                        </tr>
+                        <tr>
+                            <td><strong>IP Address</strong></td>
+                            <td>Network IP address of the miner (for CGMiner API connection)</td>
                             <td>192.168.1.100</td>
                         </tr>
                         <tr>
-                            <td><strong>Purchase Date</strong></td>
-                            <td>Date when the miner was purchased</td>
-                            <td>2024-01-15</td>
+                            <td><strong>Rack Position</strong></td>
+                            <td>Physical location in the facility</td>
+                            <td>Row 3, Rack 12, Shelf 5</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MAC Address</strong></td>
+                            <td>Network MAC address for device identification</td>
+                            <td>AA:BB:CC:DD:EE:FF</td>
                         </tr>
                         <tr>
                             <td><strong>Notes</strong></td>
                             <td>Additional information</td>
-                            <td>Row 3, Rack 12, Shelf 5</td>
+                            <td>Firmware v2.1, custom cooling</td>
                         </tr>
                     </tbody>
                 </table>
@@ -299,21 +314,22 @@
             <li class="mb-3">
                 <strong>Submit the Form</strong>
                 <p>Click the <span class="badge bg-warning text-dark">Save Miner</span> button</p>
-                <p>The miner will be added with <span class="badge bg-info">Draft</span> status initially</p>
+                <p>For site owners/admins: The miner is automatically <span class="badge bg-success">Approved</span></p>
+                <p>For clients: The miner will be added with <span class="badge bg-info">Pending Approval</span> status</p>
             </li>
             <li class="mb-3">
-                <strong>Approval Process (for hosted miners)</strong>
+                <strong>Approval Process (for client-submitted miners)</strong>
                 <ul>
-                    <li>Submit for approval by clicking <span class="badge bg-primary">Submit for Approval</span></li>
+                    <li>Client submits miner request via the Add Miner form</li>
                     <li>Admin reviews and approves/rejects the request</li>
-                    <li>Approved miners become <span class="badge bg-success">Active</span></li>
+                    <li>Approved miners become <span class="badge bg-success">Approved</span> and operational</li>
                 </ul>
             </li>
         </ol>
         
         <div class="alert alert-success">
             <i class="bi bi-check-circle-fill me-2"></i>
-            <strong>Best Practice:</strong> Double-check IP address and serial number before submitting to avoid connection issues.
+            <strong>Best Practice:</strong> Double-check serial number and miner specifications before submitting to avoid errors.
         </div>
         
         {% else %}
@@ -362,24 +378,39 @@
                             <td>德州数据中心A</td>
                         </tr>
                         <tr>
-                            <td><strong>客户</strong></td>
+                            <td><strong>客户 *</strong></td>
                             <td>矿机所有者（托管矿机）</td>
                             <td>张三</td>
                         </tr>
                         <tr>
-                            <td><strong>IP地址 *</strong></td>
-                            <td>矿机的网络IP地址</td>
+                            <td><strong>实际算力 *</strong></td>
+                            <td>预期算力（TH/s）</td>
+                            <td>110</td>
+                        </tr>
+                        <tr>
+                            <td><strong>实际功耗 *</strong></td>
+                            <td>功耗（瓦）</td>
+                            <td>3250</td>
+                        </tr>
+                        <tr>
+                            <td><strong>IP地址</strong></td>
+                            <td>矿机的网络IP地址（用于CGMiner API连接）</td>
                             <td>192.168.1.100</td>
                         </tr>
                         <tr>
-                            <td><strong>购买日期</strong></td>
-                            <td>购买矿机的日期</td>
-                            <td>2024-01-15</td>
+                            <td><strong>机架位置</strong></td>
+                            <td>矿场内物理位置</td>
+                            <td>第3排，第12机架，第5层</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MAC地址</strong></td>
+                            <td>网络MAC地址用于设备识别</td>
+                            <td>AA:BB:CC:DD:EE:FF</td>
                         </tr>
                         <tr>
                             <td><strong>备注</strong></td>
                             <td>附加信息</td>
-                            <td>第3排，第12机架，第5层</td>
+                            <td>固件版本v2.1，定制散热</td>
                         </tr>
                     </tbody>
                 </table>
@@ -388,21 +419,22 @@
             <li class="mb-3">
                 <strong>提交表单</strong>
                 <p>点击<span class="badge bg-warning text-dark">保存矿机</span>按钮</p>
-                <p>矿机将以<span class="badge bg-info">草稿</span>状态添加</p>
+                <p>矿场管理员：矿机自动<span class="badge bg-success">已批准</span></p>
+                <p>客户：矿机将以<span class="badge bg-info">待审核</span>状态添加</p>
             </li>
             <li class="mb-3">
-                <strong>审批流程（托管矿机）</strong>
+                <strong>审批流程（客户提交的矿机）</strong>
                 <ul>
-                    <li>点击<span class="badge bg-primary">提交审核</span>提交审批</li>
+                    <li>客户通过添加矿机表单提交申请</li>
                     <li>管理员审核并批准/拒绝请求</li>
-                    <li>已批准的矿机变为<span class="badge bg-success">活跃</span>状态</li>
+                    <li>已批准的矿机变为<span class="badge bg-success">已批准</span>状态并开始运营</li>
                 </ul>
             </li>
         </ol>
         
         <div class="alert alert-success">
             <i class="bi bi-check-circle-fill me-2"></i>
-            <strong>最佳实践：</strong>提交前仔细检查IP地址和序列号，避免连接问题。
+            <strong>最佳实践：</strong>提交前仔细检查序列号和矿机规格，避免错误。
         </div>
         {% endif %}
     </div>
