@@ -1509,19 +1509,27 @@ def update_miner(miner_id):
         
         miner = HostingMiner.query.get_or_404(miner_id)
         
-        # 权限检查
         if user_role not in ['owner', 'admin', 'mining_site'] and miner.customer_id != user_id:
             return jsonify({
                 'success': False,
                 'error': '无权限操作'
             }), 403
         
-        # 更新允许的字段
         updateable_fields = ['rack_position', 'ip_address', 'mac_address', 'actual_hashrate', 'actual_power', 'status']
         
         for field in updateable_fields:
             if field in data:
                 setattr(miner, field, data[field])
+        
+        if 'encrypted_ip' in data:
+            miner.encrypted_ip = data['encrypted_ip']
+            if data['encrypted_ip']:
+                miner.ip_address = None
+        
+        if 'encrypted_mac' in data:
+            miner.encrypted_mac = data['encrypted_mac']
+            if data['encrypted_mac']:
+                miner.mac_address = None
         
         miner.updated_at = datetime.utcnow()
         db.session.commit()
@@ -1538,6 +1546,35 @@ def update_miner(miner_id):
         return jsonify({
             'success': False,
             'error': '更新矿机失败'
+        }), 500
+
+@hosting_bp.route('/api/miners/<int:miner_id>/encrypted-network', methods=['GET'])
+@login_required
+def get_encrypted_network(miner_id):
+    """获取矿机加密的网络信息 (IP/MAC)"""
+    try:
+        user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        
+        miner = HostingMiner.query.get_or_404(miner_id)
+        
+        if user_role not in ['owner', 'admin', 'mining_site'] and miner.customer_id != user_id:
+            return jsonify({
+                'success': False,
+                'error': '无权限操作'
+            }), 403
+        
+        return jsonify({
+            'success': True,
+            'encrypted_ip': miner.encrypted_ip,
+            'encrypted_mac': miner.encrypted_mac
+        })
+        
+    except Exception as e:
+        logger.error(f"获取加密网络信息失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': '获取加密网络信息失败'
         }), 500
 
 @hosting_bp.route('/api/miners/<int:miner_id>', methods=['DELETE'])

@@ -472,6 +472,47 @@
                             </select>
                         </div>
                     </div>
+                    
+                    <hr class="my-4">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <label class="form-label mb-0 fw-bold">
+                                    <i class="bi bi-shield-lock me-2 text-success"></i>
+                                    {% if current_lang == 'en' %}Encryption Settings{% else %}加密设置{% endif %}
+                                </label>
+                                <div id="edit_encryption_status"></div>
+                            </div>
+                            <div class="alert alert-info py-2 mb-3" style="font-size: 0.85rem;">
+                                <i class="bi bi-info-circle me-1"></i>
+                                {% if current_lang == 'en' %}
+                                Enter a passphrase to encrypt IP and MAC addresses. Leave blank to save without encryption.
+                                {% else %}
+                                输入密码短语以加密 IP 和 MAC 地址。留空则不加密保存。
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_passphrase" class="form-label">
+                                {% if current_lang == 'en' %}Encryption Passphrase{% else %}加密密码短语{% endif %}
+                            </label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="edit_passphrase" 
+                                       placeholder="{% if current_lang == 'en' %}Min 8 characters{% else %}至少8个字符{% endif %}">
+                                <button class="btn btn-outline-secondary" type="button" onclick="toggleEditPassphraseVisibility()">
+                                    <i class="bi bi-eye" id="edit-passphrase-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="edit_encrypt_sensitive" checked>
+                                <label class="form-check-label" for="edit_encrypt_sensitive">
+                                    {% if current_lang == 'en' %}Encrypt IP & MAC{% else %}加密 IP 和 MAC{% endif %}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -1602,7 +1643,11 @@ function viewMiner(minerId) {
 }
 
 // 编辑矿机
+let currentEditMinerEncrypted = { ip: null, mac: null };
+
 function editMiner(minerId) {
+    currentEditMinerEncrypted = { ip: null, mac: null };
+    
     fetch(`/hosting/api/miners/${minerId}`)
         .then(response => response.json())
         .then(data => {
@@ -1610,7 +1655,6 @@ function editMiner(minerId) {
                 const miner = data.miner;
                 const lang = getLanguage();
                 
-                // 填充编辑表单
                 document.getElementById('edit_miner_id').value = miner.id;
                 document.getElementById('edit_serial_number').value = miner.serial_number || '';
                 document.getElementById('edit_rack_position').value = miner.rack_position || '';
@@ -1619,8 +1663,23 @@ function editMiner(minerId) {
                 document.getElementById('edit_actual_hashrate').value = miner.actual_hashrate || '';
                 document.getElementById('edit_actual_power').value = miner.actual_power || '';
                 document.getElementById('edit_status').value = miner.status || 'active';
+                document.getElementById('edit_passphrase').value = '';
+                document.getElementById('edit_encrypt_sensitive').checked = true;
                 
-                // 显示编辑模态框
+                const statusEl = document.getElementById('edit_encryption_status');
+                if (miner.has_encrypted_ip || miner.has_encrypted_mac) {
+                    statusEl.innerHTML = `<span class="badge bg-success"><i class="bi bi-shield-lock-fill me-1"></i>${lang === 'en' ? 'Encrypted' : '已加密'}</span>`;
+                    currentEditMinerEncrypted.ip = miner.has_encrypted_ip;
+                    currentEditMinerEncrypted.mac = miner.has_encrypted_mac;
+                    
+                    document.getElementById('edit_ip_address').placeholder = lang === 'en' ? 'Enter passphrase to decrypt' : '输入密码短语解密';
+                    document.getElementById('edit_mac_address').placeholder = lang === 'en' ? 'Enter passphrase to decrypt' : '输入密码短语解密';
+                    document.getElementById('edit_ip_address').value = miner.has_encrypted_ip ? '********' : (miner.ip_address || '');
+                    document.getElementById('edit_mac_address').value = miner.has_encrypted_mac ? '**:**:**:**:**:**' : (miner.mac_address || '');
+                } else {
+                    statusEl.innerHTML = `<span class="badge bg-secondary"><i class="bi bi-shield me-1"></i>${lang === 'en' ? 'Not Encrypted' : '未加密'}</span>`;
+                }
+                
                 const editModal = document.getElementById('editMinerModal');
                 if (editModal) {
                     new bootstrap.Modal(editModal).show();
@@ -1639,44 +1698,146 @@ function editMiner(minerId) {
         });
 }
 
-// 保存矿机编辑
-function saveMinerEdit() {
+function toggleEditPassphraseVisibility() {
+    const input = document.getElementById('edit_passphrase');
+    const icon = document.getElementById('edit-passphrase-eye');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+    }
+}
+
+async function decryptEditFields() {
     const minerId = document.getElementById('edit_miner_id').value;
-    const formData = {
+    const passphrase = document.getElementById('edit_passphrase').value;
+    const lang = getLanguage();
+    
+    if (!passphrase || passphrase.length < 8) {
+        showToast(lang === 'en' ? 'Passphrase must be at least 8 characters' : '密码短语至少需要8个字符', 'warning');
+        return;
+    }
+    
+    if (!window.MinerE2EE || !window.MinerE2EE.isSupported()) {
+        showToast(lang === 'en' ? 'Browser does not support encryption' : '浏览器不支持加密', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/hosting/api/miners/${minerId}/encrypted-network`);
+        const data = await response.json();
+        
+        if (data.success) {
+            if (data.encrypted_ip) {
+                try {
+                    const decryptedIp = await window.MinerE2EE.decryptCredentials(data.encrypted_ip, passphrase);
+                    document.getElementById('edit_ip_address').value = decryptedIp.value || '';
+                } catch (e) {
+                    showToast(lang === 'en' ? 'Failed to decrypt IP' : 'IP解密失败', 'error');
+                    return;
+                }
+            }
+            if (data.encrypted_mac) {
+                try {
+                    const decryptedMac = await window.MinerE2EE.decryptCredentials(data.encrypted_mac, passphrase);
+                    document.getElementById('edit_mac_address').value = decryptedMac.value || '';
+                } catch (e) {
+                    showToast(lang === 'en' ? 'Failed to decrypt MAC' : 'MAC解密失败', 'error');
+                    return;
+                }
+            }
+            showToast(lang === 'en' ? 'Decrypted successfully' : '解密成功', 'success');
+        }
+    } catch (error) {
+        console.error('Decrypt error:', error);
+        showToast(lang === 'en' ? 'Decryption failed' : '解密失败', 'error');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const passphraseInput = document.getElementById('edit_passphrase');
+    if (passphraseInput) {
+        passphraseInput.addEventListener('blur', function() {
+            if ((currentEditMinerEncrypted.ip || currentEditMinerEncrypted.mac) && this.value && this.value.length >= 8) {
+                decryptEditFields();
+            }
+        });
+    }
+});
+
+async function saveMinerEdit() {
+    const minerId = document.getElementById('edit_miner_id').value;
+    const passphrase = document.getElementById('edit_passphrase').value;
+    const shouldEncrypt = document.getElementById('edit_encrypt_sensitive').checked;
+    const ipAddress = document.getElementById('edit_ip_address').value;
+    const macAddress = document.getElementById('edit_mac_address').value;
+    const lang = getLanguage();
+    
+    let formData = {
         rack_position: document.getElementById('edit_rack_position').value,
-        ip_address: document.getElementById('edit_ip_address').value,
-        mac_address: document.getElementById('edit_mac_address').value,
         actual_hashrate: parseFloat(document.getElementById('edit_actual_hashrate').value) || null,
         actual_power: parseInt(document.getElementById('edit_actual_power').value) || null,
         status: document.getElementById('edit_status').value
     };
     
-    fetch(`/hosting/api/miners/${minerId}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        const lang = getLanguage();
+    if (shouldEncrypt && passphrase && passphrase.length >= 8) {
+        if (!window.MinerE2EE || !window.MinerE2EE.isSupported()) {
+            showToast(lang === 'en' ? 'Browser does not support encryption' : '浏览器不支持加密', 'error');
+            return;
+        }
+        
+        try {
+            if (ipAddress && ipAddress !== '********') {
+                const encryptedIp = await window.MinerE2EE.encryptCredentials({ value: ipAddress }, passphrase);
+                formData.encrypted_ip = encryptedIp;
+                formData.ip_address = null;
+            }
+            if (macAddress && macAddress !== '**:**:**:**:**:**') {
+                const encryptedMac = await window.MinerE2EE.encryptCredentials({ value: macAddress }, passphrase);
+                formData.encrypted_mac = encryptedMac;
+                formData.mac_address = null;
+            }
+        } catch (error) {
+            console.error('Encryption error:', error);
+            showToast(lang === 'en' ? 'Encryption failed' : '加密失败', 'error');
+            return;
+        }
+    } else {
+        if (ipAddress !== '********') {
+            formData.ip_address = ipAddress;
+            formData.encrypted_ip = null;
+        }
+        if (macAddress !== '**:**:**:**:**:**') {
+            formData.mac_address = macAddress;
+            formData.encrypted_mac = null;
+        }
+    }
+    
+    try {
+        const response = await fetch(`/hosting/api/miners/${minerId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
         if (data.success) {
             showToast(data.message || (lang === 'en' ? 'Miner updated successfully' : '矿机更新成功'), 'success');
-            // 关闭模态框
             const editModal = bootstrap.Modal.getInstance(document.getElementById('editMinerModal'));
             if (editModal) editModal.hide();
-            // 刷新列表
             refreshMiners();
         } else {
             showToast(data.error || (lang === 'en' ? 'Failed to update miner' : '更新矿机失败'), 'error');
         }
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Error updating miner:', error);
-        const lang = getLanguage();
         showToast(lang === 'en' ? 'Failed to update miner' : '更新矿机失败', 'error');
-    });
+    }
 }
 
 // 通用模态对话框
