@@ -1590,6 +1590,12 @@ class HostingMiner(db.Model):
     accepted_shares = db.Column(db.Integer, default=0)  # 接受份额
     rejected_shares = db.Column(db.Integer, default=0)  # 拒绝份额
     
+    # E2EE (End-to-End Encryption) 字段
+    api_port = db.Column(db.Integer, default=4028, nullable=True)  # CGMiner API端口
+    encrypted_credentials = db.Column(db.JSON, nullable=True)  # Plan A: 加密的凭证 {ciphertext, iv, salt, algo, version}
+    encrypted_connection_full = db.Column(db.JSON, nullable=True)  # Plan B: 完整加密连接信息
+    use_full_e2ee = db.Column(db.Boolean, default=False, nullable=False)  # E2EE模式: False=Plan A, True=Plan B
+    
     # 时间戳
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -1658,7 +1664,12 @@ class HostingMiner(db.Model):
             'uptime_seconds': self.uptime_seconds,
             'hashrate_5s': self.hashrate_5s,
             'accepted_shares': self.accepted_shares,
-            'rejected_shares': self.rejected_shares
+            'rejected_shares': self.rejected_shares,
+            # E2EE 模式信息 (不包含加密数据，只返回模式状态)
+            'api_port': self.api_port,
+            'use_full_e2ee': self.use_full_e2ee,
+            'has_encrypted_credentials': self.encrypted_credentials is not None,
+            'has_encrypted_connection_full': self.encrypted_connection_full is not None
         }
 
 class MinerTelemetry(db.Model):
