@@ -1595,6 +1595,8 @@ class HostingMiner(db.Model):
     encrypted_credentials = db.Column(db.JSON, nullable=True)  # Plan A: 加密的凭证 {ciphertext, iv, salt, algo, version}
     encrypted_connection_full = db.Column(db.JSON, nullable=True)  # Plan B: 完整加密连接信息
     use_full_e2ee = db.Column(db.Boolean, default=False, nullable=False)  # E2EE模式: False=Plan A, True=Plan B
+    encrypted_ip = db.Column(db.Text, nullable=True)  # E2EE加密的IP地址
+    encrypted_mac = db.Column(db.Text, nullable=True)  # E2EE加密的MAC地址
     
     # 时间戳
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -1669,7 +1671,10 @@ class HostingMiner(db.Model):
             'api_port': self.api_port,
             'use_full_e2ee': self.use_full_e2ee,
             'has_encrypted_credentials': self.encrypted_credentials is not None,
-            'has_encrypted_connection_full': self.encrypted_connection_full is not None
+            'has_encrypted_connection_full': self.encrypted_connection_full is not None,
+            'has_encrypted_ip': self.encrypted_ip is not None,
+            'has_encrypted_mac': self.encrypted_mac is not None,
+            'mac_address': self.mac_address
         }
 
 class MinerTelemetry(db.Model):
