@@ -13,7 +13,7 @@ from common.rbac import (
     Module, Role, requires_module_access, requires_role as rbac_requires_role,
     rbac_manager, normalize_role
 )
-from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingUsageRecord, HostingUsageItem, MinerTelemetry, HostingBill, HostingBillItem, HostingMinerOperationLog
+from models import db, HostingSite, HostingMiner, HostingTicket, HostingIncident, HostingUsageRecord, HostingUsageItem, MinerTelemetry, HostingBill, HostingBillItem, HostingMinerOperationLog, HostingOwnerEncryption
 from api.collector_api import MinerTelemetryLive, MinerCommand, CollectorKey
 from models import CurtailmentPlan, CurtailmentStrategy, CurtailmentExecution
 from models import ExecutionMode, PlanStatus, ExecutionAction, ExecutionStatus
@@ -1595,6 +1595,262 @@ def get_encrypted_network(miner_id):
             'success': False,
             'error': '获取加密网络信息失败'
         }), 500
+
+# ==================== 矿场主级别加密 API ====================
+
+@hosting_bp.route('/api/encryption/owner-key', methods=['GET'])
+@login_required
+def get_owner_encryption_status():
+    """获取矿场主加密状态 - 严格按用户范围过滤"""
+    try:
+        user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        
+        if user_role not in ['owner', 'admin', 'mining_site']:
+            return jsonify({'success': False, 'error': '无权限'}), 403
+        
+        owner_enc = HostingOwnerEncryption.query.filter_by(owner_id=user_id).first()
+        
+        base_query = HostingMiner.query.filter(HostingMiner.customer_id == user_id)
+        total_miners = base_query.count()
+        
+        if not owner_enc:
+            return jsonify({
+                'success': True,
+                'has_encryption': False,
+                'total_miners': total_miners,
+                'encrypted_miners': 0
+            })
+        
+        encrypted_count = base_query.filter(
+            HostingMiner.encryption_scope == 'owner'
+        ).count()
+        
+        return jsonify({
+            'success': True,
+            'has_encryption': True,
+            'key_version': owner_enc.key_version,
+            'key_algo': owner_enc.key_algo,
+            'total_miners': total_miners,
+            'encrypted_miners': encrypted_count,
+            'status': owner_enc.status,
+            'created_at': owner_enc.created_at.isoformat() if owner_enc.created_at else None,
+            'last_rotated_at': owner_enc.last_rotated_at.isoformat() if owner_enc.last_rotated_at else None
+        })
+        
+    except Exception as e:
+        logger.error(f"获取矿场主加密状态失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@hosting_bp.route('/api/encryption/owner-key', methods=['POST'])
+@login_required
+def set_owner_encryption_key():
+    """设置矿场主加密密钥"""
+    try:
+        user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        
+        if user_role not in ['owner', 'admin', 'mining_site']:
+            return jsonify({'success': False, 'error': '无权限'}), 403
+        
+        data = request.get_json()
+        encrypted_data_key = data.get('encrypted_data_key')
+        key_salt = data.get('key_salt')
+        
+        if not encrypted_data_key or not key_salt:
+            return jsonify({'success': False, 'error': '缺少必要参数'}), 400
+        
+        owner_enc = HostingOwnerEncryption.query.filter_by(owner_id=user_id).first()
+        
+        if owner_enc:
+            owner_enc.encrypted_data_key = json.dumps(encrypted_data_key) if isinstance(encrypted_data_key, dict) else encrypted_data_key
+            owner_enc.key_salt = key_salt
+            owner_enc.key_version += 1
+            owner_enc.last_rotated_at = datetime.utcnow()
+            owner_enc.updated_at = datetime.utcnow()
+        else:
+            owner_enc = HostingOwnerEncryption(
+                owner_id=user_id,
+                encrypted_data_key=json.dumps(encrypted_data_key) if isinstance(encrypted_data_key, dict) else encrypted_data_key,
+                key_salt=key_salt,
+                key_iterations=data.get('key_iterations', 100000),
+                key_algo=data.get('key_algo', 'AES-256-GCM'),
+                key_version=1,
+                status='active'
+            )
+            db.session.add(owner_enc)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': '加密密钥设置成功',
+            'key_version': owner_enc.key_version
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"设置矿场主加密密钥失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@hosting_bp.route('/api/encryption/owner-key/verify', methods=['POST'])
+@login_required
+def verify_owner_encryption_key():
+    """验证矿场主加密密钥（获取加密的数据密钥用于解密）"""
+    try:
+        user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        
+        if user_role not in ['owner', 'admin', 'mining_site']:
+            return jsonify({'success': False, 'error': '无权限'}), 403
+        
+        owner_enc = HostingOwnerEncryption.query.filter_by(owner_id=user_id).first()
+        
+        if not owner_enc:
+            return jsonify({'success': False, 'error': '未设置加密密钥'}), 404
+        
+        encrypted_data_key = owner_enc.encrypted_data_key
+        if isinstance(encrypted_data_key, str):
+            try:
+                encrypted_data_key = json.loads(encrypted_data_key)
+            except json.JSONDecodeError:
+                pass
+        
+        return jsonify({
+            'success': True,
+            'encrypted_data_key': encrypted_data_key,
+            'key_salt': owner_enc.key_salt,
+            'key_iterations': owner_enc.key_iterations,
+            'key_algo': owner_enc.key_algo,
+            'key_version': owner_enc.key_version
+        })
+        
+    except Exception as e:
+        logger.error(f"验证矿场主加密密钥失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@hosting_bp.route('/api/encryption/bulk-network', methods=['GET'])
+@login_required
+def get_bulk_encrypted_network():
+    """批量获取加密的网络数据 - 严格按用户范围过滤"""
+    try:
+        user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        
+        if user_role not in ['owner', 'admin', 'mining_site']:
+            return jsonify({'success': False, 'error': '无权限'}), 403
+        
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 100, type=int)
+        per_page = min(per_page, 500)
+        
+        query = HostingMiner.query.filter(HostingMiner.customer_id == user_id)
+        
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        
+        miners_data = []
+        for miner in pagination.items:
+            encrypted_ip = None
+            encrypted_mac = None
+            
+            if miner.encrypted_ip:
+                try:
+                    encrypted_ip = json.loads(miner.encrypted_ip) if isinstance(miner.encrypted_ip, str) else miner.encrypted_ip
+                except json.JSONDecodeError:
+                    encrypted_ip = miner.encrypted_ip
+            
+            if miner.encrypted_mac:
+                try:
+                    encrypted_mac = json.loads(miner.encrypted_mac) if isinstance(miner.encrypted_mac, str) else miner.encrypted_mac
+                except json.JSONDecodeError:
+                    encrypted_mac = miner.encrypted_mac
+            
+            miners_data.append({
+                'id': miner.id,
+                'serial_number': miner.serial_number,
+                'ip_address': miner.ip_address,
+                'mac_address': miner.mac_address,
+                'encrypted_ip': encrypted_ip,
+                'encrypted_mac': encrypted_mac,
+                'encryption_scope': miner.encryption_scope
+            })
+        
+        return jsonify({
+            'success': True,
+            'miners': miners_data,
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'page': page,
+            'per_page': per_page
+        })
+        
+    except Exception as e:
+        logger.error(f"批量获取加密网络数据失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@hosting_bp.route('/api/encryption/bulk-encrypt', methods=['POST'])
+@login_required
+def bulk_encrypt_miners():
+    """批量加密矿机网络数据 - 严格按用户范围过滤"""
+    try:
+        user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        
+        if user_role not in ['owner', 'admin', 'mining_site']:
+            return jsonify({'success': False, 'error': '无权限'}), 403
+        
+        data = request.get_json()
+        miners_data = data.get('miners', [])
+        
+        if not miners_data:
+            return jsonify({'success': False, 'error': '没有矿机数据'}), 400
+        
+        updated_count = 0
+        for miner_info in miners_data:
+            miner_id = miner_info.get('id')
+            encrypted_ip = miner_info.get('encrypted_ip')
+            encrypted_mac = miner_info.get('encrypted_mac')
+            
+            miner = HostingMiner.query.get(miner_id)
+            if not miner:
+                continue
+            
+            if miner.customer_id != user_id:
+                continue
+            
+            if encrypted_ip:
+                miner.encrypted_ip = json.dumps(encrypted_ip) if isinstance(encrypted_ip, dict) else encrypted_ip
+                miner.ip_address = None
+            
+            if encrypted_mac:
+                miner.encrypted_mac = json.dumps(encrypted_mac) if isinstance(encrypted_mac, dict) else encrypted_mac
+                miner.mac_address = None
+            
+            miner.encryption_scope = 'owner'
+            miner.updated_at = datetime.utcnow()
+            updated_count += 1
+        
+        owner_enc = HostingOwnerEncryption.query.filter_by(owner_id=user_id).first()
+        if owner_enc:
+            encrypted_count = HostingMiner.query.filter(
+                HostingMiner.customer_id == user_id,
+                HostingMiner.encryption_scope == 'owner'
+            ).count()
+            owner_enc.encrypted_miners_count = encrypted_count
+            owner_enc.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'成功加密 {updated_count} 台矿机',
+            'updated_count': updated_count
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"批量加密矿机失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/miners/<int:miner_id>', methods=['DELETE'])
 @requires_role(['owner', 'admin', 'mining_site'])

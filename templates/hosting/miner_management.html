@@ -75,6 +75,117 @@
     </div>
 </div>
 
+<!-- 加密控制中心 -->
+<div class="hosting-card mb-4" id="encryption-control-center">
+    <div class="hosting-card-header d-flex justify-content-between align-items-center cursor-pointer" 
+         data-bs-toggle="collapse" data-bs-target="#encryptionBody" aria-expanded="false">
+        <h6 class="hosting-card-title mb-0">
+            <i class="bi bi-shield-lock me-2"></i>{% if current_lang == 'en' %}Encryption Control Center{% else %}加密控制中心{% endif %}
+            <span class="badge bg-warning ms-2" id="encryption-status-badge">
+                {% if current_lang == 'en' %}Not Configured{% else %}未配置{% endif %}
+            </span>
+        </h6>
+        <i class="bi bi-chevron-down collapse-icon"></i>
+    </div>
+    <div class="collapse" id="encryptionBody">
+        <div class="hosting-card-body">
+            <div class="row">
+                <!-- 左侧：状态信息 -->
+                <div class="col-md-6">
+                    <div class="encryption-status-panel p-3 rounded" style="background: rgba(247,147,26,0.1); border: 1px solid rgba(247,147,26,0.3);">
+                        <h6 class="mb-3">
+                            <i class="bi bi-info-circle me-2"></i>{% if current_lang == 'en' %}Encryption Status{% else %}加密状态{% endif %}
+                        </h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="mb-2">
+                                    <small class="text-muted">{% if current_lang == 'en' %}Total Miners{% else %}矿机总数{% endif %}</small>
+                                    <div class="fw-bold" id="enc-total-miners">-</div>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-muted">{% if current_lang == 'en' %}Encrypted Miners{% else %}已加密矿机{% endif %}</small>
+                                    <div class="fw-bold" id="enc-encrypted-miners">-</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="mb-2">
+                                    <small class="text-muted">{% if current_lang == 'en' %}Key Version{% else %}密钥版本{% endif %}</small>
+                                    <div class="fw-bold" id="enc-key-version">-</div>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-muted">{% if current_lang == 'en' %}Unlock Status{% else %}解锁状态{% endif %}</small>
+                                    <div id="enc-unlock-status">
+                                        <span class="badge bg-secondary">{% if current_lang == 'en' %}Locked{% else %}已锁定{% endif %}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 进度条 -->
+                        <div class="mt-3" id="enc-progress-container" style="display: none;">
+                            <small class="text-muted">{% if current_lang == 'en' %}Processing...{% else %}处理中...{% endif %}</small>
+                            <div class="progress mt-1" style="height: 20px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" id="enc-progress-bar" 
+                                     style="width: 0%">0%</div>
+                            </div>
+                            <small class="text-muted mt-1" id="enc-progress-text"></small>
+                        </div>
+                    </div>
+                </div>
+                <!-- 右侧：操作按钮 -->
+                <div class="col-md-6">
+                    <div class="p-3">
+                        <h6 class="mb-3">
+                            <i class="bi bi-gear me-2"></i>{% if current_lang == 'en' %}Quick Actions{% else %}快捷操作{% endif %}
+                        </h6>
+                        <!-- 首次设置密码 -->
+                        <div id="enc-setup-section">
+                            <p class="text-muted small mb-2">
+                                {% if current_lang == 'en' %}Set up a master passphrase to encrypt all miners' network data (IP/MAC addresses).{% else %}设置主密码以加密所有矿机的网络数据（IP/MAC地址）。{% endif %}
+                            </p>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text"><i class="bi bi-key"></i></span>
+                                <input type="password" class="form-control" id="enc-setup-passphrase" 
+                                       placeholder="{% if current_lang == 'en' %}Enter master passphrase (min 8 chars){% else %}输入主密码（至少8位）{% endif %}">
+                            </div>
+                            <div class="input-group mb-3">
+                                <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
+                                <input type="password" class="form-control" id="enc-setup-confirm" 
+                                       placeholder="{% if current_lang == 'en' %}Confirm passphrase{% else %}确认密码{% endif %}">
+                            </div>
+                            <button class="btn btn-hosting-primary w-100" onclick="setupOwnerEncryption()">
+                                <i class="bi bi-shield-lock me-2"></i>{% if current_lang == 'en' %}Setup & Encrypt All{% else %}设置并加密所有矿机{% endif %}
+                            </button>
+                        </div>
+                        <!-- 解锁操作 -->
+                        <div id="enc-unlock-section" style="display: none;">
+                            <p class="text-muted small mb-2">
+                                {% if current_lang == 'en' %}Enter your master passphrase to unlock and view encrypted data.{% else %}输入主密码以解锁并查看加密数据。{% endif %}
+                            </p>
+                            <div class="input-group mb-3">
+                                <span class="input-group-text"><i class="bi bi-unlock"></i></span>
+                                <input type="password" class="form-control" id="enc-unlock-passphrase" 
+                                       placeholder="{% if current_lang == 'en' %}Enter master passphrase{% else %}输入主密码{% endif %}">
+                                <button class="btn btn-hosting-primary" onclick="unlockOwnerEncryption()">
+                                    <i class="bi bi-unlock-fill"></i>
+                                </button>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-warning flex-fill" onclick="lockOwnerEncryption()">
+                                    <i class="bi bi-lock me-1"></i>{% if current_lang == 'en' %}Lock{% else %}锁定{% endif %}
+                                </button>
+                                <button class="btn btn-outline-danger flex-fill" onclick="rotateOwnerKey()">
+                                    <i class="bi bi-arrow-repeat me-1"></i>{% if current_lang == 'en' %}Rotate Key{% else %}轮换密钥{% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 操作按钮区 -->
 <div class="d-flex justify-content-between gap-3 mb-4 flex-wrap">
     <div class="d-flex gap-2 flex-wrap">
@@ -775,6 +886,13 @@
     opacity: 0.85;
     margin-top: 0.25rem;
 }
+
+/* 加密控制中心样式 */
+.cursor-pointer { cursor: pointer; }
+.collapse-icon { transition: transform 0.3s ease; }
+.hosting-card-header[aria-expanded="true"] .collapse-icon { transform: rotate(180deg); }
+#encryption-control-center .hosting-card-header { border-bottom: none; }
+#encryption-control-center .hosting-card-header[aria-expanded="true"] { border-bottom: 1px solid rgba(255,255,255,0.1); }
 </style>
 
 {% endblock %}
@@ -1643,10 +1761,10 @@ function viewMiner(minerId) {
 }
 
 // 编辑矿机
-let currentEditMinerEncrypted = { ip: null, mac: null };
+let currentEditMinerEncrypted = { ip: null, mac: null, scope: null };
 
 function editMiner(minerId) {
-    currentEditMinerEncrypted = { ip: null, mac: null };
+    currentEditMinerEncrypted = { ip: null, mac: null, scope: null };
     
     fetch(`/hosting/api/miners/${minerId}`)
         .then(response => response.json())
@@ -1658,8 +1776,6 @@ function editMiner(minerId) {
                 document.getElementById('edit_miner_id').value = miner.id;
                 document.getElementById('edit_serial_number').value = miner.serial_number || '';
                 document.getElementById('edit_rack_position').value = miner.rack_position || '';
-                document.getElementById('edit_ip_address').value = miner.ip_address || '';
-                document.getElementById('edit_mac_address').value = miner.mac_address || '';
                 document.getElementById('edit_actual_hashrate').value = miner.actual_hashrate || '';
                 document.getElementById('edit_actual_power').value = miner.actual_power || '';
                 document.getElementById('edit_status').value = miner.status || 'active';
@@ -1667,17 +1783,38 @@ function editMiner(minerId) {
                 document.getElementById('edit_encrypt_sensitive').checked = true;
                 
                 const statusEl = document.getElementById('edit_encryption_status');
+                const isOwnerEncrypted = miner.encryption_scope === 'owner';
+                const hasCachedKey = window.MinerE2EE && window.MinerE2EE.isCacheValid();
+                
                 if (miner.has_encrypted_ip || miner.has_encrypted_mac) {
-                    statusEl.innerHTML = `<span class="badge bg-success"><i class="bi bi-shield-lock-fill me-1"></i>${lang === 'en' ? 'Encrypted' : '已加密'}</span>`;
                     currentEditMinerEncrypted.ip = miner.has_encrypted_ip;
                     currentEditMinerEncrypted.mac = miner.has_encrypted_mac;
+                    currentEditMinerEncrypted.scope = miner.encryption_scope || 'miner';
                     
-                    document.getElementById('edit_ip_address').placeholder = lang === 'en' ? 'Enter passphrase to decrypt' : '输入密码短语解密';
-                    document.getElementById('edit_mac_address').placeholder = lang === 'en' ? 'Enter passphrase to decrypt' : '输入密码短语解密';
-                    document.getElementById('edit_ip_address').value = miner.has_encrypted_ip ? '********' : (miner.ip_address || '');
-                    document.getElementById('edit_mac_address').value = miner.has_encrypted_mac ? '**:**:**:**:**:**' : (miner.mac_address || '');
+                    if (isOwnerEncrypted && hasCachedKey) {
+                        const cachedData = getDecryptedNetworkData(miner.id);
+                        statusEl.innerHTML = `<span class="badge bg-success"><i class="bi bi-shield-check me-1"></i>${lang === 'en' ? 'Owner Key (Unlocked)' : '矿场主密钥（已解锁）'}</span>`;
+                        document.getElementById('edit_ip_address').value = cachedData.ip || '';
+                        document.getElementById('edit_mac_address').value = cachedData.mac || '';
+                        document.getElementById('edit_ip_address').placeholder = lang === 'en' ? 'IP Address' : 'IP地址';
+                        document.getElementById('edit_mac_address').placeholder = lang === 'en' ? 'MAC Address' : 'MAC地址';
+                    } else if (isOwnerEncrypted) {
+                        statusEl.innerHTML = `<span class="badge bg-warning"><i class="bi bi-shield-lock me-1"></i>${lang === 'en' ? 'Owner Key (Locked)' : '矿场主密钥（已锁定）'}</span>`;
+                        document.getElementById('edit_ip_address').placeholder = lang === 'en' ? 'Unlock in Control Center' : '请在加密控制中心解锁';
+                        document.getElementById('edit_mac_address').placeholder = lang === 'en' ? 'Unlock in Control Center' : '请在加密控制中心解锁';
+                        document.getElementById('edit_ip_address').value = '********';
+                        document.getElementById('edit_mac_address').value = '**:**:**:**:**:**';
+                    } else {
+                        statusEl.innerHTML = `<span class="badge bg-success"><i class="bi bi-shield-lock-fill me-1"></i>${lang === 'en' ? 'Per-Miner Key' : '单机密钥'}</span>`;
+                        document.getElementById('edit_ip_address').placeholder = lang === 'en' ? 'Enter passphrase to decrypt' : '输入密码短语解密';
+                        document.getElementById('edit_mac_address').placeholder = lang === 'en' ? 'Enter passphrase to decrypt' : '输入密码短语解密';
+                        document.getElementById('edit_ip_address').value = miner.has_encrypted_ip ? '********' : (miner.ip_address || '');
+                        document.getElementById('edit_mac_address').value = miner.has_encrypted_mac ? '**:**:**:**:**:**' : (miner.mac_address || '');
+                    }
                 } else {
                     statusEl.innerHTML = `<span class="badge bg-secondary"><i class="bi bi-shield me-1"></i>${lang === 'en' ? 'Not Encrypted' : '未加密'}</span>`;
+                    document.getElementById('edit_ip_address').value = miner.ip_address || '';
+                    document.getElementById('edit_mac_address').value = miner.mac_address || '';
                 }
                 
                 const editModal = document.getElementById('editMinerModal');
@@ -2607,6 +2744,394 @@ async function resetE2EECredentials() {
             : '重置失败: ' + err.message, 'error');
     }
 }
+
+// ==================== 矿场主批量加密控制中心 ====================
+
+let ownerEncryptionStatus = null;
+let decryptedNetworkData = {};
+
+async function loadOwnerEncryptionStatus() {
+    try {
+        const response = await fetch('/hosting/api/encryption/owner-key');
+        const result = await response.json();
+        
+        if (result.success) {
+            ownerEncryptionStatus = result;
+            updateEncryptionUI(result);
+        }
+    } catch (err) {
+        console.error('Failed to load owner encryption status:', err);
+    }
+}
+
+function updateEncryptionUI(status) {
+    const badge = document.getElementById('encryption-status-badge');
+    const setupSection = document.getElementById('enc-setup-section');
+    const unlockSection = document.getElementById('enc-unlock-section');
+    const totalMiners = document.getElementById('enc-total-miners');
+    const encryptedMiners = document.getElementById('enc-encrypted-miners');
+    const keyVersion = document.getElementById('enc-key-version');
+    const unlockStatus = document.getElementById('enc-unlock-status');
+    const lang = getLanguage();
+    
+    totalMiners.textContent = status.total_miners || 0;
+    encryptedMiners.textContent = status.encrypted_miners || 0;
+    
+    if (!status.has_encryption) {
+        badge.className = 'badge bg-warning ms-2';
+        badge.textContent = lang === 'en' ? 'Not Configured' : '未配置';
+        setupSection.style.display = 'block';
+        unlockSection.style.display = 'none';
+        keyVersion.textContent = '-';
+    } else {
+        badge.className = 'badge bg-success ms-2';
+        badge.textContent = lang === 'en' ? 'Configured' : '已配置';
+        setupSection.style.display = 'none';
+        unlockSection.style.display = 'block';
+        keyVersion.textContent = 'v' + (status.key_version || 1);
+    }
+    
+    const isCached = window.MinerE2EE && window.MinerE2EE.isCacheValid();
+    if (isCached) {
+        unlockStatus.innerHTML = `<span class="badge bg-success">${lang === 'en' ? 'Unlocked' : '已解锁'}</span>`;
+    } else {
+        unlockStatus.innerHTML = `<span class="badge bg-secondary">${lang === 'en' ? 'Locked' : '已锁定'}</span>`;
+    }
+}
+
+function showEncryptionProgress(current, total, message) {
+    const container = document.getElementById('enc-progress-container');
+    const bar = document.getElementById('enc-progress-bar');
+    const text = document.getElementById('enc-progress-text');
+    const lang = getLanguage();
+    
+    container.style.display = 'block';
+    const pct = Math.round((current / total) * 100);
+    bar.style.width = pct + '%';
+    bar.textContent = pct + '%';
+    text.textContent = message || (lang === 'en' ? `Processing ${current} / ${total}...` : `处理中 ${current} / ${total}...`);
+}
+
+function hideEncryptionProgress() {
+    document.getElementById('enc-progress-container').style.display = 'none';
+}
+
+async function setupOwnerEncryption() {
+    const passphrase = document.getElementById('enc-setup-passphrase').value;
+    const confirm = document.getElementById('enc-setup-confirm').value;
+    const lang = getLanguage();
+    
+    if (!passphrase || passphrase.length < 8) {
+        alert(lang === 'en' ? 'Passphrase must be at least 8 characters' : '密码至少需要8位字符');
+        return;
+    }
+    
+    if (passphrase !== confirm) {
+        alert(lang === 'en' ? 'Passwords do not match' : '两次输入的密码不一致');
+        return;
+    }
+    
+    if (!window.MinerE2EE || !window.MinerE2EE.isSupported()) {
+        alert(lang === 'en' ? 'Browser does not support encryption' : '浏览器不支持加密');
+        return;
+    }
+    
+    const confirmMsg = lang === 'en'
+        ? 'This will encrypt all miners\' network data (IP/MAC addresses). Make sure to remember your master passphrase - it cannot be recovered! Continue?'
+        : '这将加密所有矿机的网络数据（IP/MAC地址）。请确保记住主密码 - 密码无法恢复！是否继续？';
+    
+    if (!window.confirm(confirmMsg)) return;
+    
+    try {
+        showEncryptionProgress(0, 1, lang === 'en' ? 'Creating encryption key...' : '创建加密密钥...');
+        
+        const keyResult = await window.MinerE2EE.createOwnerKey(passphrase);
+        
+        const saveResponse = await fetch('/hosting/api/encryption/owner-key', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                encrypted_data_key: keyResult.encrypted_data_key,
+                key_salt: keyResult.key_salt
+            })
+        });
+        
+        const saveResult = await saveResponse.json();
+        if (!saveResult.success) {
+            throw new Error(saveResult.error || 'Failed to save key');
+        }
+        
+        window.MinerE2EE.cacheDataKey(keyResult.data_key, 30);
+        
+        showEncryptionProgress(0, 1, lang === 'en' ? 'Loading miners...' : '加载矿机列表...');
+        
+        let allMiners = [];
+        let page = 1;
+        let hasMore = true;
+        
+        while (hasMore) {
+            const response = await fetch(`/hosting/api/encryption/bulk-network?page=${page}&per_page=500`);
+            const data = await response.json();
+            
+            if (data.success && data.miners) {
+                allMiners = allMiners.concat(data.miners.filter(m => m.ip_address || m.mac_address));
+                hasMore = page < data.pages;
+                page++;
+            } else {
+                hasMore = false;
+            }
+        }
+        
+        if (allMiners.length === 0) {
+            hideEncryptionProgress();
+            alert(lang === 'en' ? 'No miners with network data to encrypt' : '没有需要加密的矿机网络数据');
+            loadOwnerEncryptionStatus();
+            return;
+        }
+        
+        showEncryptionProgress(0, allMiners.length, lang === 'en' ? 'Encrypting...' : '加密中...');
+        
+        const encryptedMiners = await window.MinerE2EE.batchEncryptMiners(
+            allMiners,
+            keyResult.data_key,
+            (current, total) => showEncryptionProgress(current, total)
+        );
+        
+        showEncryptionProgress(allMiners.length, allMiners.length, lang === 'en' ? 'Saving encrypted data...' : '保存加密数据...');
+        
+        const batchSize = 100;
+        for (let i = 0; i < encryptedMiners.length; i += batchSize) {
+            const batch = encryptedMiners.slice(i, i + batchSize);
+            await fetch('/hosting/api/encryption/bulk-encrypt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ miners: batch })
+            });
+        }
+        
+        hideEncryptionProgress();
+        alert(lang === 'en' 
+            ? `Successfully encrypted ${encryptedMiners.length} miners!` 
+            : `成功加密 ${encryptedMiners.length} 台矿机！`);
+        
+        loadOwnerEncryptionStatus();
+        refreshMiners();
+        
+    } catch (err) {
+        hideEncryptionProgress();
+        console.error('Setup failed:', err);
+        alert((lang === 'en' ? 'Setup failed: ' : '设置失败: ') + err.message);
+    }
+}
+
+async function unlockOwnerEncryption() {
+    const passphrase = document.getElementById('enc-unlock-passphrase').value;
+    const lang = getLanguage();
+    
+    if (!passphrase) {
+        alert(lang === 'en' ? 'Please enter passphrase' : '请输入密码');
+        return;
+    }
+    
+    try {
+        showEncryptionProgress(0, 1, lang === 'en' ? 'Verifying passphrase...' : '验证密码中...');
+        
+        const response = await fetch('/hosting/api/encryption/owner-key/verify', { method: 'POST' });
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to verify');
+        }
+        
+        const dataKey = await window.MinerE2EE.unlockOwnerKey(result.encrypted_data_key, passphrase);
+        window.MinerE2EE.cacheDataKey(dataKey, 30);
+        
+        showEncryptionProgress(0, 1, lang === 'en' ? 'Decrypting miners...' : '解密矿机数据...');
+        
+        let allMiners = [];
+        let page = 1;
+        let hasMore = true;
+        
+        while (hasMore) {
+            const resp = await fetch(`/hosting/api/encryption/bulk-network?page=${page}&per_page=500`);
+            const data = await resp.json();
+            
+            if (data.success && data.miners) {
+                allMiners = allMiners.concat(data.miners.filter(m => m.encryption_scope === 'owner'));
+                hasMore = page < data.pages;
+                page++;
+            } else {
+                hasMore = false;
+            }
+        }
+        
+        if (allMiners.length > 0) {
+            decryptedNetworkData = await window.MinerE2EE.batchDecryptMiners(
+                allMiners,
+                dataKey,
+                (current, total) => showEncryptionProgress(current, total)
+            );
+        }
+        
+        hideEncryptionProgress();
+        document.getElementById('enc-unlock-passphrase').value = '';
+        updateEncryptionUI(ownerEncryptionStatus);
+        refreshMiners();
+        
+        alert(lang === 'en' 
+            ? `Unlocked! ${Object.keys(decryptedNetworkData).length} miners decrypted.`
+            : `解锁成功！已解密 ${Object.keys(decryptedNetworkData).length} 台矿机。`);
+        
+    } catch (err) {
+        hideEncryptionProgress();
+        console.error('Unlock failed:', err);
+        alert((lang === 'en' ? 'Unlock failed: ' : '解锁失败: ') + err.message);
+    }
+}
+
+function lockOwnerEncryption() {
+    const lang = getLanguage();
+    
+    window.MinerE2EE.clearCachedDataKey();
+    decryptedNetworkData = {};
+    
+    updateEncryptionUI(ownerEncryptionStatus);
+    refreshMiners();
+    
+    alert(lang === 'en' ? 'Encryption locked. Enter passphrase to unlock.' : '已锁定。请输入密码解锁。');
+}
+
+async function rotateOwnerKey() {
+    const lang = getLanguage();
+    
+    const confirmMsg = lang === 'en'
+        ? 'This will create a new encryption key. You will need to re-encrypt all miners. Current passphrase is required. Continue?'
+        : '这将创建新的加密密钥。您需要重新加密所有矿机。需要当前密码。是否继续？';
+    
+    if (!window.confirm(confirmMsg)) return;
+    
+    const currentPassphrase = prompt(lang === 'en' ? 'Enter current passphrase:' : '请输入当前密码:');
+    if (!currentPassphrase) return;
+    
+    const newPassphrase = prompt(lang === 'en' ? 'Enter new passphrase (min 8 chars):' : '请输入新密码（至少8位）:');
+    if (!newPassphrase || newPassphrase.length < 8) {
+        alert(lang === 'en' ? 'New passphrase must be at least 8 characters' : '新密码至少需要8位');
+        return;
+    }
+    
+    const confirmNew = prompt(lang === 'en' ? 'Confirm new passphrase:' : '确认新密码:');
+    if (newPassphrase !== confirmNew) {
+        alert(lang === 'en' ? 'Passwords do not match' : '两次输入的密码不一致');
+        return;
+    }
+    
+    try {
+        showEncryptionProgress(0, 1, lang === 'en' ? 'Verifying current passphrase...' : '验证当前密码...');
+        
+        const verifyResp = await fetch('/hosting/api/encryption/owner-key/verify', { method: 'POST' });
+        const verifyResult = await verifyResp.json();
+        
+        if (!verifyResult.success) {
+            throw new Error(verifyResult.error);
+        }
+        
+        const oldDataKey = await window.MinerE2EE.unlockOwnerKey(verifyResult.encrypted_data_key, currentPassphrase);
+        
+        showEncryptionProgress(0, 1, lang === 'en' ? 'Creating new key...' : '创建新密钥...');
+        
+        const newKeyResult = await window.MinerE2EE.createOwnerKey(newPassphrase);
+        
+        showEncryptionProgress(0, 1, lang === 'en' ? 'Loading miners...' : '加载矿机...');
+        
+        let allMiners = [];
+        let page = 1;
+        let hasMore = true;
+        
+        while (hasMore) {
+            const response = await fetch(`/hosting/api/encryption/bulk-network?page=${page}&per_page=500`);
+            const data = await response.json();
+            
+            if (data.success && data.miners) {
+                allMiners = allMiners.concat(data.miners.filter(m => m.encryption_scope === 'owner'));
+                hasMore = page < data.pages;
+                page++;
+            } else {
+                hasMore = false;
+            }
+        }
+        
+        showEncryptionProgress(0, allMiners.length, lang === 'en' ? 'Decrypting with old key...' : '用旧密钥解密...');
+        
+        const decryptedData = await window.MinerE2EE.batchDecryptMiners(
+            allMiners,
+            oldDataKey,
+            (current, total) => showEncryptionProgress(current, total, lang === 'en' ? 'Decrypting...' : '解密中...')
+        );
+        
+        const minersToReEncrypt = allMiners.map(m => ({
+            id: m.id,
+            ip_address: decryptedData[m.id]?.ip,
+            mac_address: decryptedData[m.id]?.mac
+        })).filter(m => m.ip_address || m.mac_address);
+        
+        showEncryptionProgress(0, minersToReEncrypt.length, lang === 'en' ? 'Re-encrypting with new key...' : '用新密钥重新加密...');
+        
+        const reEncrypted = await window.MinerE2EE.batchEncryptMiners(
+            minersToReEncrypt,
+            newKeyResult.data_key,
+            (current, total) => showEncryptionProgress(current, total, lang === 'en' ? 'Encrypting...' : '加密中...')
+        );
+        
+        await fetch('/hosting/api/encryption/owner-key', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                encrypted_data_key: newKeyResult.encrypted_data_key,
+                key_salt: newKeyResult.key_salt
+            })
+        });
+        
+        const batchSize = 100;
+        for (let i = 0; i < reEncrypted.length; i += batchSize) {
+            const batch = reEncrypted.slice(i, i + batchSize);
+            await fetch('/hosting/api/encryption/bulk-encrypt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ miners: batch })
+            });
+        }
+        
+        window.MinerE2EE.cacheDataKey(newKeyResult.data_key, 30);
+        
+        hideEncryptionProgress();
+        loadOwnerEncryptionStatus();
+        refreshMiners();
+        
+        alert(lang === 'en' 
+            ? `Key rotated successfully! ${reEncrypted.length} miners re-encrypted.`
+            : `密钥轮换成功！已重新加密 ${reEncrypted.length} 台矿机。`);
+        
+    } catch (err) {
+        hideEncryptionProgress();
+        console.error('Key rotation failed:', err);
+        alert((lang === 'en' ? 'Key rotation failed: ' : '密钥轮换失败: ') + err.message);
+    }
+}
+
+function getDecryptedNetworkData(minerId) {
+    return decryptedNetworkData[minerId] || { ip: null, mac: null };
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadOwnerEncryptionStatus();
+    
+    document.getElementById('encryptionBody').addEventListener('show.bs.collapse', function() {
+        document.querySelector('#encryption-control-center .hosting-card-header').setAttribute('aria-expanded', 'true');
+    });
+    document.getElementById('encryptionBody').addEventListener('hide.bs.collapse', function() {
+        document.querySelector('#encryption-control-center .hosting-card-header').setAttribute('aria-expanded', 'false');
+    });
+});
 
 </script>
 {% endblock %}

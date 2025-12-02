@@ -1597,6 +1597,7 @@ class HostingMiner(db.Model):
     use_full_e2ee = db.Column(db.Boolean, default=False, nullable=False)  # E2EE模式: False=Plan A, True=Plan B
     encrypted_ip = db.Column(db.Text, nullable=True)  # E2EE加密的IP地址
     encrypted_mac = db.Column(db.Text, nullable=True)  # E2EE加密的MAC地址
+    encryption_scope = db.Column(db.String(20), default='none', nullable=False)  # none/miner/owner - 加密范围
     
     # 时间戳
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -1674,8 +1675,48 @@ class HostingMiner(db.Model):
             'has_encrypted_connection_full': self.encrypted_connection_full is not None,
             'has_encrypted_ip': self.encrypted_ip is not None,
             'has_encrypted_mac': self.encrypted_mac is not None,
-            'mac_address': self.mac_address
+            'mac_address': self.mac_address,
+            'encryption_scope': self.encryption_scope
         }
+
+class HostingOwnerEncryption(db.Model):
+    """矿场主加密元数据 - 存储矿场主级别的加密密钥信息"""
+    __tablename__ = 'hosting_owner_encryption'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey('user_access.id'), nullable=False, unique=True, index=True)
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=True, index=True)
+    
+    encrypted_data_key = db.Column(db.Text, nullable=False)
+    key_salt = db.Column(db.String(64), nullable=False)
+    key_iterations = db.Column(db.Integer, default=100000, nullable=False)
+    key_algo = db.Column(db.String(32), default='AES-256-GCM', nullable=False)
+    key_version = db.Column(db.Integer, default=1, nullable=False)
+    
+    encrypted_miners_count = db.Column(db.Integer, default=0, nullable=False)
+    status = db.Column(db.String(20), default='active', nullable=False)
+    
+    last_rotated_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    owner = db.relationship('UserAccess', backref='owner_encryption')
+    site = db.relationship('HostingSite', backref='owner_encryption')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'owner_id': self.owner_id,
+            'site_id': self.site_id,
+            'key_algo': self.key_algo,
+            'key_version': self.key_version,
+            'encrypted_miners_count': self.encrypted_miners_count,
+            'status': self.status,
+            'last_rotated_at': self.last_rotated_at.isoformat() if self.last_rotated_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
 
 class MinerTelemetry(db.Model):
     """矿机遥测数据"""
