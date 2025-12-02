@@ -486,6 +486,103 @@
     </div>
 </div>
 
+<!-- E2EE 加密凭证模态框 -->
+<div class="modal fade" id="e2eeCredentialsModal" tabindex="-1" aria-labelledby="e2eeCredentialsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header" style="background: linear-gradient(135deg, #28a745, #218838); color: #fff;">
+                <h5 class="modal-title" id="e2eeCredentialsModalLabel">
+                    <i class="bi bi-shield-lock me-2"></i>
+                    {% if current_lang == 'en' %}Encrypted Connection Settings{% else %}加密连接设置{% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info mb-4">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <span id="e2ee-info-text">
+                        {% if current_lang == 'en' %}
+                        Your credentials are encrypted in your browser using your passphrase. 
+                        The server only stores ciphertext and cannot see your plaintext passwords.
+                        If you lose this passphrase, you will need to re-enter and re-encrypt your credentials.
+                        {% else %}
+                        您的凭证在浏览器中使用密码短语加密。
+                        服务器只存储密文，无法看到您的明文密码。
+                        如果您丢失密码短语，需要重新输入并加密凭证。
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <form id="e2eeCredentialsForm">
+                    <input type="hidden" id="e2ee_miner_id">
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-key me-2"></i>
+                                {% if current_lang == 'en' %}Encryption Passphrase{% else %}加密密码短语{% endif %} <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="e2ee_passphrase" required minlength="8" 
+                                       placeholder="{% if current_lang == 'en' %}Enter a strong passphrase (min 8 characters){% else %}输入强密码短语 (至少8个字符){% endif %}">
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassphraseVisibility()">
+                                    <i class="bi bi-eye" id="passphrase-eye-icon"></i>
+                                </button>
+                            </div>
+                            <div class="form-text text-warning">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                {% if current_lang == 'en' %}Remember this passphrase! It cannot be recovered.{% else %}请牢记此密码短语！无法恢复。{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    <h6 class="mb-3">
+                        <i class="bi bi-person-lock me-2"></i>
+                        {% if current_lang == 'en' %}Miner Credentials{% else %}矿机凭证{% endif %}
+                    </h6>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="e2ee_username" class="form-label">
+                                {% if current_lang == 'en' %}Username{% else %}用户名{% endif %}
+                            </label>
+                            <input type="text" class="form-control" id="e2ee_username" placeholder="admin">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="e2ee_password" class="form-label">
+                                {% if current_lang == 'en' %}Password{% else %}密码{% endif %}
+                            </label>
+                            <input type="password" class="form-control" id="e2ee_password" placeholder="******">
+                        </div>
+                        <div class="col-12">
+                            <label for="e2ee_pool_password" class="form-label">
+                                {% if current_lang == 'en' %}Pool Password{% else %}矿池密码{% endif %}
+                            </label>
+                            <input type="password" class="form-control" id="e2ee_pool_password" placeholder="{% if current_lang == 'en' %}Optional{% else %}可选{% endif %}">
+                        </div>
+                    </div>
+                    
+                    <div id="e2ee-status" class="mt-3"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" onclick="resetE2EECredentials()" id="e2ee-reset-btn" style="display: none;">
+                    <i class="bi bi-x-circle me-1"></i>
+                    {% if current_lang == 'en' %}Reset Credentials{% else %}重置凭证{% endif %}
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                </button>
+                <button type="button" class="btn btn-success" onclick="saveE2EECredentials()">
+                    <i class="bi bi-shield-lock me-1"></i>
+                    {% if current_lang == 'en' %}Encrypt & Save{% else %}加密并保存{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 批量操作确认Modal -->
 <div class="modal fade" id="batchConfirmModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -811,6 +908,9 @@ function displayMiners(miners) {
                         </button>
                         <button class="btn btn-hosting-outline" onclick="editMiner(${miner.id})" title="${getLanguage() === 'en' ? 'Edit' : '编辑'}">
                             <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn ${miner.has_encrypted_credentials ? 'btn-success' : 'btn-outline-secondary'} btn-sm" onclick="openE2EEModal(${miner.id})" title="${getLanguage() === 'en' ? 'Encrypted Credentials' : '加密凭证'}">
+                            <i class="bi bi-shield-lock"></i>
                         </button>
                         ${miner.approval_status === 'pending_approval' ? `
                         <button class="btn btn-success btn-sm" onclick="approveMiner(${miner.id})" title="${getLanguage() === 'en' ? 'Approve' : '批准'}">
@@ -2154,6 +2254,205 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 100);
     };
 })();
+
+// ============================================================================
+// E2EE (End-to-End Encryption) Functions
+// ============================================================================
+
+let currentE2EEMinerId = null;
+let currentEncryptedCredentials = null;
+
+function togglePassphraseVisibility() {
+    const input = document.getElementById('e2ee_passphrase');
+    const icon = document.getElementById('passphrase-eye-icon');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+    }
+}
+
+function showE2EEStatus(message, type = 'info') {
+    const statusEl = document.getElementById('e2ee-status');
+    const alertClass = type === 'error' ? 'alert-danger' : 
+                       type === 'success' ? 'alert-success' : 'alert-info';
+    statusEl.innerHTML = `<div class="alert ${alertClass} mb-0"><i class="bi bi-${type === 'error' ? 'x-circle' : type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>${message}</div>`;
+}
+
+function openE2EEModal(minerId) {
+    currentE2EEMinerId = minerId;
+    currentEncryptedCredentials = null;
+    
+    document.getElementById('e2ee_miner_id').value = minerId;
+    document.getElementById('e2ee_passphrase').value = '';
+    document.getElementById('e2ee_username').value = '';
+    document.getElementById('e2ee_password').value = '';
+    document.getElementById('e2ee_pool_password').value = '';
+    document.getElementById('e2ee-status').innerHTML = '';
+    
+    fetch(`/hosting/api/miners/${minerId}/credentials`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.encrypted_credentials) {
+                currentEncryptedCredentials = data.encrypted_credentials;
+                document.getElementById('e2ee-reset-btn').style.display = 'block';
+                showE2EEStatus(getLanguage() === 'en' 
+                    ? 'Encrypted credentials found. Enter passphrase to decrypt and view.'
+                    : '已找到加密凭证。输入密码短语以解密查看。', 'info');
+            } else {
+                document.getElementById('e2ee-reset-btn').style.display = 'none';
+                showE2EEStatus(getLanguage() === 'en'
+                    ? 'No encrypted credentials. Enter credentials and passphrase to encrypt.'
+                    : '无加密凭证。输入凭证和密码短语进行加密。', 'info');
+            }
+        })
+        .catch(err => {
+            console.error('Failed to load credentials:', err);
+        });
+    
+    const modal = new bootstrap.Modal(document.getElementById('e2eeCredentialsModal'));
+    modal.show();
+}
+
+async function decryptAndFillCredentials() {
+    if (!currentEncryptedCredentials) return;
+    
+    const passphrase = document.getElementById('e2ee_passphrase').value;
+    if (!passphrase) {
+        showE2EEStatus(getLanguage() === 'en' ? 'Please enter passphrase' : '请输入密码短语', 'error');
+        return;
+    }
+    
+    if (!window.MinerE2EE || !window.MinerE2EE.isSupported()) {
+        showE2EEStatus(getLanguage() === 'en' 
+            ? 'Browser does not support encryption'
+            : '浏览器不支持加密', 'error');
+        return;
+    }
+    
+    try {
+        const decrypted = await window.MinerE2EE.decryptCredentials(currentEncryptedCredentials, passphrase);
+        document.getElementById('e2ee_username').value = decrypted.username || '';
+        document.getElementById('e2ee_password').value = decrypted.password || '';
+        document.getElementById('e2ee_pool_password').value = decrypted.pool_password || '';
+        showE2EEStatus(getLanguage() === 'en'
+            ? 'Credentials decrypted successfully!'
+            : '凭证解密成功！', 'success');
+    } catch (err) {
+        showE2EEStatus(getLanguage() === 'en'
+            ? 'Decryption failed. Please check your passphrase.'
+            : '解密失败。请检查密码短语。', 'error');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const passphraseInput = document.getElementById('e2ee_passphrase');
+    if (passphraseInput) {
+        passphraseInput.addEventListener('blur', function() {
+            if (currentEncryptedCredentials && this.value) {
+                decryptAndFillCredentials();
+            }
+        });
+    }
+});
+
+async function saveE2EECredentials() {
+    const minerId = document.getElementById('e2ee_miner_id').value;
+    const passphrase = document.getElementById('e2ee_passphrase').value;
+    const username = document.getElementById('e2ee_username').value;
+    const password = document.getElementById('e2ee_password').value;
+    const poolPassword = document.getElementById('e2ee_pool_password').value;
+    
+    if (!passphrase || passphrase.length < 8) {
+        showE2EEStatus(getLanguage() === 'en' 
+            ? 'Passphrase must be at least 8 characters'
+            : '密码短语至少需要8个字符', 'error');
+        return;
+    }
+    
+    if (!window.MinerE2EE || !window.MinerE2EE.isSupported()) {
+        showE2EEStatus(getLanguage() === 'en'
+            ? 'Browser does not support encryption'
+            : '浏览器不支持加密', 'error');
+        return;
+    }
+    
+    try {
+        showE2EEStatus(getLanguage() === 'en' ? 'Encrypting...' : '加密中...', 'info');
+        
+        const encrypted = await window.MinerE2EE.encryptCredentials({
+            username: username,
+            password: password,
+            pool_password: poolPassword
+        }, passphrase);
+        
+        const response = await fetch(`/hosting/api/miners/${minerId}/credentials`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ encrypted_credentials: encrypted })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showE2EEStatus(getLanguage() === 'en'
+                ? 'Credentials encrypted and saved successfully!'
+                : '凭证加密并保存成功！', 'success');
+            currentEncryptedCredentials = encrypted;
+            document.getElementById('e2ee-reset-btn').style.display = 'block';
+            
+            setTimeout(() => {
+                bootstrap.Modal.getInstance(document.getElementById('e2eeCredentialsModal')).hide();
+            }, 1500);
+        } else {
+            showE2EEStatus(result.message_en || result.message_zh || 'Save failed', 'error');
+        }
+    } catch (err) {
+        console.error('Encryption failed:', err);
+        showE2EEStatus(getLanguage() === 'en'
+            ? 'Encryption failed: ' + err.message
+            : '加密失败: ' + err.message, 'error');
+    }
+}
+
+async function resetE2EECredentials() {
+    const minerId = document.getElementById('e2ee_miner_id').value;
+    
+    const confirmMsg = getLanguage() === 'en'
+        ? 'Are you sure you want to reset encrypted credentials? You will need to re-enter them.'
+        : '确定要重置加密凭证吗？您需要重新输入。';
+    
+    if (!confirm(confirmMsg)) return;
+    
+    try {
+        const response = await fetch(`/hosting/api/miners/${minerId}/credentials/reset`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            currentEncryptedCredentials = null;
+            document.getElementById('e2ee_username').value = '';
+            document.getElementById('e2ee_password').value = '';
+            document.getElementById('e2ee_pool_password').value = '';
+            document.getElementById('e2ee-reset-btn').style.display = 'none';
+            showE2EEStatus(getLanguage() === 'en'
+                ? 'Credentials reset. Please enter new credentials.'
+                : '凭证已重置。请输入新凭证。', 'success');
+        } else {
+            showE2EEStatus(result.message_en || result.message_zh || 'Reset failed', 'error');
+        }
+    } catch (err) {
+        showE2EEStatus(getLanguage() === 'en'
+            ? 'Reset failed: ' + err.message
+            : '重置失败: ' + err.message, 'error');
+    }
+}
 
 </script>
 {% endblock %}
