@@ -6,7 +6,7 @@ packages = ["cairo", "cargo", "ffmpeg-full", "fontconfig", "freetype", "ghostscr
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
+run = ["sh", "-c", "gunicorn --bind 0.0.0.0:$PORT main:app"]
 
 [workflows]
 runButton = "Run Application"
