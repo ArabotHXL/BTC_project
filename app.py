@@ -576,77 +576,56 @@ def has_role(required_roles):
     # 检查用户角色是否在所需角色列表中
     return user_role in required_roles
 
-# Health check route for deployment - no authentication required
+# Health check route for deployment - FAST LIVENESS CHECK (no DB probe)
 @app.route('/health', methods=['GET'])
 def health_check():
-    """Enhanced health check endpoint for deployment monitoring"""
+    """Fast liveness health check for Autoscale deployment - responds immediately without DB check"""
+    # CRITICAL: This must return immediately for Autoscale port detection
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat()
+    }), 200
+
+# Deep health check with database status (for monitoring, not deployment)
+@app.route('/health/deep', methods=['GET'])
+def deep_health_check():
+    """Deep health check endpoint with database status for monitoring"""
     try:
-        # Enhanced health check with detailed database status
         from db import db
         from database_health import db_health_manager
         
-        # Test database connection with detailed status
         database_url = os.environ.get('DATABASE_URL')
         db_status = db_health_manager.check_database_connection(database_url)
         
         if db_status['connected']:
             try:
-                # Additional SQLAlchemy connection test
                 from sqlalchemy import text
-                db.session.execute(text('SELECT version()'))
+                db.session.execute(text('SELECT 1'))
                 db.session.commit()
             except Exception as e:
                 logging.warning(f"SQLAlchemy health check failed: {e}")
                 return jsonify({
                     'status': 'degraded',
-                    'database': {
-                        'status': 'connected_with_issues',
-                        'error': str(e)
-                    },
+                    'database': {'status': 'connected_with_issues', 'error': str(e)},
                     'timestamp': datetime.now().isoformat()
                 }), 200
             
             return jsonify({
                 'status': 'healthy',
-                'database': {
-                    'status': 'connected',
-                    'version': db_status.get('database_version', 'Unknown'),
-                    'connection_test': 'passed'
-                },
-                'services': {
-                    'app': 'running',
-                    'database': 'connected'
-                },
+                'database': {'status': 'connected', 'version': db_status.get('database_version', 'Unknown')},
                 'timestamp': datetime.now().isoformat()
             }), 200
         else:
-            # Database connection failed
             return jsonify({
                 'status': 'unhealthy',
-                'database': {
-                    'status': 'disconnected',
-                    'error': db_status.get('error', 'Unknown error'),
-                    'suggestion': db_status.get('suggestion', 'Check database configuration'),
-                    'neon_specific': db_status.get('neon_specific', False)
-                },
-                'services': {
-                    'app': 'running',
-                    'database': 'failed'
-                },
+                'database': {'status': 'disconnected', 'error': db_status.get('error', 'Unknown')},
                 'timestamp': datetime.now().isoformat()
-            }), 503  # Service Unavailable
+            }), 503
             
     except Exception as e:
         return jsonify({
             'status': 'unhealthy',
-            'database': {
-                'status': 'error',
-                'error': str(e)
-            },
-            'services': {
-                'app': 'running',
-                'database': 'error'
-            },
+            'database': {'status': 'error', 'error': str(e)},
             'timestamp': datetime.now().isoformat()
         }), 500
 
