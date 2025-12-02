@@ -1732,25 +1732,51 @@ async function decryptEditFields() {
         const data = await response.json();
         
         if (data.success) {
+            let decrypted = false;
+            let hasError = false;
+            
             if (data.encrypted_ip) {
-                try {
-                    const decryptedIp = await window.MinerE2EE.decryptCredentials(data.encrypted_ip, passphrase);
-                    document.getElementById('edit_ip_address').value = decryptedIp.value || '';
-                } catch (e) {
-                    showToast(lang === 'en' ? 'Failed to decrypt IP' : 'IP解密失败', 'error');
-                    return;
+                if (!data.encrypted_ip.ciphertext || !data.encrypted_ip.iv || !data.encrypted_ip.salt) {
+                    console.error('Invalid encrypted IP format:', data.encrypted_ip);
+                    showToast(lang === 'en' ? 'Invalid IP encryption format. Please re-encrypt.' : 'IP加密格式无效，请重新加密。', 'warning');
+                    hasError = true;
+                } else {
+                    try {
+                        const decryptedData = await window.MinerE2EE.decryptObject(data.encrypted_ip, passphrase);
+                        document.getElementById('edit_ip_address').value = decryptedData.ip || decryptedData.value || '';
+                        decrypted = true;
+                    } catch (e) {
+                        console.error('IP decryption error:', e);
+                        showToast(lang === 'en' ? 'Wrong passphrase for IP. Try again.' : 'IP密码短语错误，请重试。', 'error');
+                        document.getElementById('edit_passphrase').value = '';
+                        document.getElementById('edit_passphrase').focus();
+                        return;
+                    }
                 }
             }
-            if (data.encrypted_mac) {
-                try {
-                    const decryptedMac = await window.MinerE2EE.decryptCredentials(data.encrypted_mac, passphrase);
-                    document.getElementById('edit_mac_address').value = decryptedMac.value || '';
-                } catch (e) {
-                    showToast(lang === 'en' ? 'Failed to decrypt MAC' : 'MAC解密失败', 'error');
-                    return;
+            
+            if (data.encrypted_mac && !hasError) {
+                if (!data.encrypted_mac.ciphertext || !data.encrypted_mac.iv || !data.encrypted_mac.salt) {
+                    console.error('Invalid encrypted MAC format:', data.encrypted_mac);
+                    showToast(lang === 'en' ? 'Invalid MAC encryption format. Please re-encrypt.' : 'MAC加密格式无效，请重新加密。', 'warning');
+                } else {
+                    try {
+                        const decryptedData = await window.MinerE2EE.decryptObject(data.encrypted_mac, passphrase);
+                        document.getElementById('edit_mac_address').value = decryptedData.mac || decryptedData.value || '';
+                        decrypted = true;
+                    } catch (e) {
+                        console.error('MAC decryption error:', e);
+                        showToast(lang === 'en' ? 'Wrong passphrase for MAC. Try again.' : 'MAC密码短语错误，请重试。', 'error');
+                        document.getElementById('edit_passphrase').value = '';
+                        document.getElementById('edit_passphrase').focus();
+                        return;
+                    }
                 }
             }
-            showToast(lang === 'en' ? 'Decrypted successfully' : '解密成功', 'success');
+            
+            if (decrypted) {
+                showToast(lang === 'en' ? 'Decrypted successfully' : '解密成功', 'success');
+            }
         }
     } catch (error) {
         console.error('Decrypt error:', error);
@@ -1792,12 +1818,12 @@ async function saveMinerEdit() {
         
         try {
             if (ipAddress && ipAddress !== '********') {
-                const encryptedIp = await window.MinerE2EE.encryptCredentials({ value: ipAddress }, passphrase);
+                const encryptedIp = await window.MinerE2EE.encryptObject({ ip: ipAddress }, passphrase);
                 formData.encrypted_ip = encryptedIp;
                 formData.ip_address = null;
             }
             if (macAddress && macAddress !== '**:**:**:**:**:**') {
-                const encryptedMac = await window.MinerE2EE.encryptCredentials({ value: macAddress }, passphrase);
+                const encryptedMac = await window.MinerE2EE.encryptObject({ mac: macAddress }, passphrase);
                 formData.encrypted_mac = encryptedMac;
                 formData.mac_address = null;
             }

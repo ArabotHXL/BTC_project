@@ -1522,14 +1522,18 @@ def update_miner(miner_id):
                 setattr(miner, field, data[field])
         
         if 'encrypted_ip' in data:
-            miner.encrypted_ip = data['encrypted_ip']
             if data['encrypted_ip']:
+                miner.encrypted_ip = json.dumps(data['encrypted_ip']) if isinstance(data['encrypted_ip'], dict) else data['encrypted_ip']
                 miner.ip_address = None
+            else:
+                miner.encrypted_ip = None
         
         if 'encrypted_mac' in data:
-            miner.encrypted_mac = data['encrypted_mac']
             if data['encrypted_mac']:
+                miner.encrypted_mac = json.dumps(data['encrypted_mac']) if isinstance(data['encrypted_mac'], dict) else data['encrypted_mac']
                 miner.mac_address = None
+            else:
+                miner.encrypted_mac = None
         
         miner.updated_at = datetime.utcnow()
         db.session.commit()
@@ -1564,10 +1568,25 @@ def get_encrypted_network(miner_id):
                 'error': '无权限操作'
             }), 403
         
+        encrypted_ip = None
+        encrypted_mac = None
+        
+        if miner.encrypted_ip:
+            try:
+                encrypted_ip = json.loads(miner.encrypted_ip) if isinstance(miner.encrypted_ip, str) else miner.encrypted_ip
+            except json.JSONDecodeError:
+                encrypted_ip = miner.encrypted_ip
+        
+        if miner.encrypted_mac:
+            try:
+                encrypted_mac = json.loads(miner.encrypted_mac) if isinstance(miner.encrypted_mac, str) else miner.encrypted_mac
+            except json.JSONDecodeError:
+                encrypted_mac = miner.encrypted_mac
+        
         return jsonify({
             'success': True,
-            'encrypted_ip': miner.encrypted_ip,
-            'encrypted_mac': miner.encrypted_mac
+            'encrypted_ip': encrypted_ip,
+            'encrypted_mac': encrypted_mac
         })
         
     except Exception as e:
