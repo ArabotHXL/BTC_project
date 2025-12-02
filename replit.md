@@ -1,7 +1,7 @@
 # BTC Mining Calculator System
 
 ## Overview
-HashInsight Enterprise is an enterprise-grade web application designed for mining farm owners and clients. Its core purpose is to provide real-time Bitcoin mining profitability analysis, integrating real-time data, dual-algorithm verification, and multi-language support. The system offers comprehensive operational management, CRM, Web3 integration, technical analysis, professional reporting, and an AI-powered intelligence layer to optimize Bitcoin mining investments and provide transparency through advanced analytics.
+HashInsight Enterprise is an enterprise-grade web application for mining farm owners and clients. It provides real-time Bitcoin mining profitability analysis, integrates real-time data, offers dual-algorithm verification, and supports multiple languages. The system delivers comprehensive operational management, CRM, Web3 integration, technical analysis, professional reporting, and an AI-powered intelligence layer to optimize Bitcoin mining investments and enhance transparency.
 
 ## User Preferences
 - **Communication style**: Simple, everyday language
@@ -11,60 +11,26 @@ HashInsight Enterprise is an enterprise-grade web application designed for minin
 ## System Architecture
 
 ### UI/UX Decisions
-The front-end uses Jinja2 with Bootstrap 5 for a mobile-first, responsive, BTC-themed dark design. Chart.js and CountUp.js are used for data visualization and animations. The system supports dynamic English and Chinese language switching.
+The front-end utilizes Jinja2 with Bootstrap 5 for a mobile-first, responsive, BTC-themed dark design. Chart.js and CountUp.js are used for data visualization and animations. Dynamic English and Chinese language switching is supported.
 
 ### Technical Implementations
-The system is built on a Flask backend using Blueprints for modularity, custom email authentication, session management, and an enterprise RBAC v2.0 system. SQLAlchemy with PostgreSQL handles data persistence, and Redis is used for caching and task queuing.
-
-### RBAC v2.0 Permission System
-Enterprise-grade role-based access control with 6 roles × 11 modules (44 permission points):
-
-**Roles (6 total):**
-- Owner: System owner with complete access to all 44 modules
-- Admin: System administrator with full access to all modules
-- Mining_Site_Owner: Site management focus - full hosting/curtailment access, limited CRM
-- Client: Hosting client - read access to status monitoring, usage tracking, reports
-- Customer: Calculator user - basic functions only (calculator, settings, dashboard)
-- Guest: Public visitor - read-only access to basic calculator and reports
-
-**Modules (11 categories, 44 permissions):**
-1. Basic Functions: Calculator, Settings, Dashboard
-2. Hosting Services: Site Management, Batch Create, Status Monitor, Ticket, Usage, Reconciliation
-3. Smart Curtailment: Strategy, AI Predict, Execute, Emergency, History
-4. CRM: Customer Management, Customer View, Transaction, Invoice, Broker Commission, Activity Log
-5. Analytics: Batch Calculator, Network, Technical, Deribit
-6. AI Layer: BTC Predict, ROI Explain, Anomaly Detect, Power Optimize
-7. User Management: Create, Edit, Delete, Role Assign, List View
-8. System Monitoring: Health, Performance, Event
-9. Web3: Blockchain Verify, Transparency, SLA NFT
-10. Finance: Billing, BTC Settlement, Crypto Payment
-11. Reports: PDF, Excel, PowerPoint
-
-**Access Levels:**
-- FULL: Complete read/write access
-- READ: View-only access
-- NONE: No access (hidden in UI)
-
-**Implementation Files:**
-- `common/rbac.py`: Core RBAC manager, decorators, permission matrix
-- `routes/rbac_routes.py`: API endpoints (/api/rbac/*)
-- `static/js/rbac-permissions.js`: Frontend permission controls
-- `templates/macros/rbac_macros.html`: Jinja2 permission macros
+The system is built on a Flask backend using Blueprints for modularity. It features custom email authentication, session management, and an enterprise RBAC v2.0 system. SQLAlchemy with PostgreSQL handles data persistence, and Redis is used for caching and task queuing.
 
 ### Feature Specifications
 - **Calculator Module**: Dual-algorithm profitability analysis for 19+ ASIC models, real-time BTC price/difficulty integration, ROI analysis, and batch calculation.
-- **CRM System**: Flask-native CRM with lead management, deal pipeline, invoice generation, and asset management, including KPI cards and Chart.js visualizations.
+- **CRM System**: Flask-native CRM with lead management, deal pipeline, invoice generation, and asset management.
 - **System Monitoring**: Unified dashboard for real-time health checks, performance metrics, cache analysis, and alerts.
-- **Technical Analysis Platform**: Server-side calculation of 10+ technical indicators, historical BTC price analysis, and intelligent signal aggregation.
-- **Intelligence Layer**: Event-driven system with ARIMA forecasting for BTC price and difficulty, anomaly detection, power optimization, and intelligent ROI explanations.
+- **Technical Analysis Platform**: Server-side calculation of 10+ technical indicators and historical BTC price analysis.
+- **Intelligence Layer**: Event-driven system with ARIMA forecasting for BTC price/difficulty, anomaly detection, power optimization, and intelligent ROI explanations.
 - **User Management**: Admin backend for user creation, role assignment, RBAC, and access period management.
 - **Web3 Configuration Wizard**: Secure interface for blockchain credential setup.
-- **Hosting Services Module**: Real-time miner monitoring, single/batch miner creation APIs, operational ticketing, and comprehensive hosting management. This includes advanced device management for large-scale operations (6000+ miners) with a KPI dashboard, quick search, batch operations (Approve, Reject, Start, Shutdown, Change Status, Delete), single miner controls, and an operation audit trail. The device management UI features a smart pagination navigation system for 301 pages (20 miners per page) with boundary-aware page number display, First/Last/Previous/Next navigation buttons, page jump input with validation, and bilingual support (EN/中文). The pagination uses a delta=2 strategy to show the current page ±2 neighbors with ellipses for gaps, ensuring optimal UX for large-scale deployments. The hosting interface includes a collapsible sidebar for improved screen space management: toggle button with chevron icon, smooth CSS transitions (280px ↔ 80px width), localStorage state persistence, icon-only collapsed mode, and responsive mobile behavior. The sidebar collapse feature maintains navigation highlighting for both host and client menus across all routes.
-- **Single Miner Dashboard (P0 MVP)**: Comprehensive individual miner detail page at `/hosting/miner/{id}/detail` featuring board-level health tracking and real-time performance metrics. Components include: (1) Header with miner name, status badge (Online/Warning/Offline), model, site location, and Last Seen timestamp; (2) 4 KPI cards displaying Hashrate (actual vs expected TH/s), Temperature range (min-max °C), Power consumption (kW), and Daily Net Profit; (3) Pool Information block showing Pool URL, Worker name, Latency (ms), and 24h share statistics (Accepted/Rejected with percentage); (4) Collapsible Board Health section displaying per-board diagnostics including hashrate, temperature, chip status (OK/Total), and health grade; (5) 24h Performance Chart with dual-axis display (left: hashrate TH/s, right: hourly revenue in USD) using Chart.js. The dashboard integrates with the comprehensive status API endpoint `/api/collector/miners/{id}/status` which aggregates telemetry data, revenue predictions, pool information, and board health into a unified response. Implementation files: `templates/hosting/miner_detail.html`, `api/collector_api.py`, `services/hosting_revenue_service.py`.
-- **Smart Power Curtailment Module**: Bilingual mining farm hosting management platform with automated scheduler for smart energy management. It supports manual curtailment and automatic miner recovery, prioritizing low-efficiency miners using a Performance Priority strategy. Features include a scheduler with background tasks, plan management UI, API endpoints, state management, and AI features like ARIMA forecasting and scenario planning.
+- **Hosting Services Module**: Real-time miner monitoring, single/batch miner creation APIs, operational ticketing, and comprehensive hosting management, including advanced device management (6000+ miners) with KPI dashboard, quick search, batch operations, single miner controls, and an operation audit trail. Features smart pagination and a collapsible sidebar. Includes a detailed Single Miner Dashboard for individual miner health and performance tracking.
+- **Smart Power Curtailment Module**: Bilingual platform with automated scheduler for smart energy management, supporting manual curtailment and automatic miner recovery based on a Performance Priority strategy, integrated with AI forecasting.
 - **Treasury Management**: BTC inventory tracking, cost basis analysis, cash coverage monitoring, sell strategy templates, and a backtesting engine.
 - **Multi-Format Reporting**: Professional report generation in PDF, Excel, and PowerPoint, with role-specific dashboards.
 - **Landing Page**: Enterprise-focused homepage with dynamic real-time statistics.
+- **Edge Collector Architecture**: Enables real-time miner telemetry collection from on-premises mining farms to cloud infrastructure, including a Python-based edge collector, a cloud receiver API, and a management UI. Features an alert rules engine and a bidirectional command control system for cloud-to-edge miner control.
+- **End-to-End Encryption (E2EE)**: Implements zero-knowledge E2EE for sensitive miner connection credentials (e.g., passwords), with encryption/decryption occurring client-side in the browser or on the Edge Collector, utilizing AES-256-GCM. Supports two-tier encryption plans (credentials only or full connection object).
 
 ### System Design Choices
 The architecture emphasizes modularity with page-isolated components and database-centric communication. Authentication is custom email-based with session management and RBAC. API integrations follow a strategy of intelligent fallback, Stale-While-Revalidate (SWR) caching, batch API calls, and robust error handling. The system is optimized for deployment on the Replit platform using Gunicorn.
@@ -78,9 +44,7 @@ The architecture emphasizes modularity with page-isolated components and databas
 - **IP-API**: Geolocation services.
 - **Ankr RPC**: Free Bitcoin RPC service.
 - **Gmail SMTP**: Email services.
-- **Deribit API**: Trading data.
-- **OKX API**: Trading data.
-- **Binance API**: Trading data.
+- **Deribit, OKX, Binance APIs**: Trading data.
 
 ### Python Libraries
 - **Flask**: Web framework.
@@ -95,6 +59,7 @@ The architecture emphasizes modularity with page-isolated components and databas
 - **Flask-Caching**: Performance optimization.
 - **Gunicorn**: WSGI server.
 - **psycopg2-binary**: PostgreSQL adapter.
+- **cryptography**: For E2EE decryption in Edge Collector.
 
 ### JavaScript Libraries
 - **Bootstrap 5**: UI framework.
@@ -107,90 +72,3 @@ The architecture emphasizes modularity with page-isolated components and databas
 - **Redis**: In-memory data store (cache + task queue).
 - **Python 3.9+**: Runtime.
 - **Replit Platform**: Deployment and hosting.
-
-## Edge Collector Architecture
-
-### Overview
-The Edge Collector system enables real-time miner telemetry collection from on-premises mining farms to cloud infrastructure. It consists of a Python-based edge collector that runs locally at mining farms and a cloud receiver API for data aggregation.
-
-### Components
-
-**Edge Collector (edge_collector/cgminer_collector.py):**
-- Connects to CGMiner API (TCP port 4028) for real-time miner data
-- Batch collection with configurable intervals (default: 30 seconds)
-- Gzip compression for efficient data transfer
-- SQLite offline caching for network resilience
-- SHA256 HMAC authentication for secure uploads
-
-**Cloud Receiver (api/collector_api.py):**
-- `/api/collector/upload` endpoint for telemetry data
-- Site-bound API key authentication
-- Gzip decompression and validation
-- MinerTelemetryLive and MinerTelemetryHistory persistence
-- Payload size limits (10MB max)
-
-**Collector Management UI (routes/collector_routes.py):**
-- API key generation and management
-- Site binding and monitoring
-- Real-time telemetry display
-- Bilingual interface (EN/中文)
-
-### Alert Rules Engine (services/alert_engine.py)
-Automated monitoring with configurable rules:
-- **Temperature Alerts**: Warning at 75°C, critical at 85°C
-- **Offline Detection**: Monitors miner connectivity status
-- **Hashrate Monitoring**: Detects low performance (<50 TH/s default)
-- **Hardware Errors**: Threshold-based error detection
-- **Auto-Resolve**: Clears alerts when conditions normalize
-- **Cooldown System**: 30-minute default to prevent alert flooding
-
-### Database Models
-- `MinerTelemetryLive`: Current state per miner
-- `MinerTelemetryHistory`: Historical telemetry data
-- `CollectorKey`: API key management with site binding
-- `MinerAlert`: Alert records with acknowledgment tracking
-- `MinerAlertRule`: Configurable alert rules per site
-
-### Bidirectional Command Control System
-Cloud-to-edge miner control through command queue pattern:
-
-**Command Types (7 commands):**
-- `enable`: Start mining / Enable ASIC chips
-- `disable`: Stop mining / Disable ASIC chips
-- `restart`: Restart CGMiner process
-- `reboot`: Full system reboot
-- `set_pool`: Switch mining pool or add new pool
-- `set_fan`: Adjust fan speed (firmware dependent)
-- `set_frequency`: Adjust chip frequency (firmware dependent)
-
-**Architecture Flow:**
-1. Cloud creates MinerCommand with target miner, command type, parameters
-2. Edge collector polls `/api/collector/commands/pending` every 5 seconds
-3. CommandExecutor executes via CGMinerAPI control methods
-4. Results reported back via `/api/collector/commands/{id}/result`
-
-**Command Queue Model (MinerCommand):**
-- Priority-based execution (1-10, higher = more urgent)
-- 5-minute expiration timeout with auto-cleanup
-- Status tracking: pending → sent → executing → completed/failed/expired
-- Full audit trail with operator_id and timestamps
-
-**Integration Points:**
-- Device management page: Start/Shutdown/Restart buttons queue commands
-- Batch operations: Multi-miner commands with aggregated feedback
-- Frontend feedback: Shows when commands are queued to edge collector
-
-**Safety Gate (Data Integrity):**
-- Control operations require an active CollectorKey for the miner's site
-- Operations without collector return 400 error: "No edge collector available"
-- `force_status=true` parameter allows manual override when truly needed
-- Batch operations skip miners without collectors, reporting `skipped_no_collector` count
-- This prevents cloud state from diverging from hardware reality
-
-**Implementation Files:**
-- `api/collector_api.py`: MinerCommand model, command API endpoints
-- `edge_collector/cgminer_collector.py`: CGMinerAPI control methods, CommandExecutor class
-- `modules/hosting/routes.py`: Integration with miner control endpoints
-
-### Deployment
-Edge collector runs on local mining farm server. See `edge_collector/README.md` for installation and configuration guide.
