@@ -2221,39 +2221,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// 增强displayMiners函数：使用DOM操作在现有行添加复选框列
-(function() {
-    const original = window.displayMiners;
-    window.displayMiners = function(miners) {
-        // 先调用原始函数渲染所有列
-        original(miners);
-        
-        // 然后为每一行添加复选框列
-        const tbody = document.querySelector('#miners-table tbody');
-        if (!tbody) return;
-        
-        const rows = tbody.querySelectorAll('tr');
-        rows.forEach((row, index) => {
-            // 跳过空状态行
-            if (row.cells.length === 1 && row.cells[0].colSpan > 1) {
-                row.cells[0].colSpan = parseInt(row.cells[0].colSpan) + 1;
-                return;
-            }
-            
-            // 在第一列前插入复选框
-            if (miners && miners[index]) {
-                const checkboxCell = document.createElement('td');
-                checkboxCell.innerHTML = `<input type="checkbox" class="form-check-input miner-checkbox" value="${miners[index].id}">`;
-                row.insertBefore(checkboxCell, row.firstChild);
-            }
-        });
-        
-        // 重新初始化复选框事件
-        setTimeout(() => {
-            initCheckboxes();
-        }, 100);
-    };
-})();
 
 // ============================================================================
 // E2EE (End-to-End Encryption) Functions
