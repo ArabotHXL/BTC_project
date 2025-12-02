@@ -594,14 +594,19 @@ function loadHistory() {
             const tbody = document.querySelector('#history-table tbody');
             tbody.innerHTML = '';
             
-            if (data.plans && data.plans.length > 0) {
-                data.plans.forEach(plan => {
+            // API returns 'history' not 'plans'
+            const plans = data.history || data.plans || [];
+            
+            if (plans.length > 0) {
+                plans.forEach(plan => {
                     const statusBadge = getStatusBadge(plan.status);
+                    // API returns 'target_power_reduction_kw' not 'target_power_kw'
+                    const targetPower = plan.target_power_reduction_kw || plan.target_power_kw || 0;
                     const row = `<tr>
                         <td>${plan.id}</td>
                         <td>${plan.site_name || '--'}</td>
                         <td>${plan.strategy_name || '--'}</td>
-                        <td>${plan.target_power_kw} kW</td>
+                        <td>${targetPower} kW</td>
                         <td>${statusBadge}</td>
                         <td>${new Date(plan.created_at).toLocaleString(currentLang === 'en' ? 'en-US' : 'zh-CN')}</td>
                         <td>
