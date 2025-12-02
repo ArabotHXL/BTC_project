@@ -1,7 +1,7 @@
 {% extends "hosting/hosting_base.html" %}
 
-{% block page_title %}{% if current_lang == 'en' %}Miner Details{% else %}矿机详情{% endif %}{% endblock %}
-{% block page_subtitle %}{% if current_lang == 'en' %}24-hour hashrate and temperature trends{% else %}24小时算力和温度趋势{% endif %}{% endblock %}
+{% block page_title %}{% if current_lang == 'en' %}Miner Dashboard{% else %}矿机仪表盘{% endif %}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}Real-time monitoring and performance analytics{% else %}实时监控与性能分析{% endif %}{% endblock %}
 
 {% block header_actions %}
 {{ super() }}
@@ -17,100 +17,115 @@
 
 {% block content %}
 
-<!-- 矿机基本信息卡片 -->
-<div class="hosting-card mb-4">
-    <div class="hosting-card-header">
-        <h5 class="hosting-card-title">
-            <i class="bi bi-cpu me-2"></i>{% if current_lang == 'en' %}Basic Information{% else %}基本信息{% endif %}
-        </h5>
-    </div>
-    <div class="hosting-card-body">
-        <div class="row g-4">
-            <div class="col-md-3">
-                <div class="info-item">
-                    <label class="info-label">{% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %}</label>
-                    <div class="info-value">{{ miner.serial_number }}</div>
-                </div>
+<!-- 1. Header Section - Miner Info Bar -->
+<div class="miner-header-bar mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+            <div class="miner-icon">
+                <i class="bi bi-cpu-fill"></i>
             </div>
-            <div class="col-md-3">
-                <div class="info-item">
-                    <label class="info-label">{% if current_lang == 'en' %}Model{% else %}型号{% endif %}</label>
-                    <div class="info-value">{{ miner.miner_model.model_name if miner.miner_model else '-' }}</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="info-item">
-                    <label class="info-label">{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</label>
-                    <div class="info-value">{{ miner.site.name if miner.site else '-' }}</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="info-item">
-                    <label class="info-label">{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</label>
-                    <div class="info-value">
-                        {% if miner.status == 'active' %}
-                            <span class="badge bg-success">{% if current_lang == 'en' %}Running{% else %}运行中{% endif %}</span>
-                        {% elif miner.status == 'offline' %}
-                            <span class="badge bg-danger">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</span>
-                        {% elif miner.status == 'maintenance' %}
-                            <span class="badge bg-warning">{% if current_lang == 'en' %}Maintenance{% else %}维护中{% endif %}</span>
-                        {% else %}
-                            <span class="badge bg-secondary">{{ miner.status }}</span>
-                        {% endif %}
-                    </div>
+            <div>
+                <h2 class="miner-name mb-1" id="miner-name">{{ miner.name or miner.serial_number }}</h2>
+                <div class="miner-meta d-flex flex-wrap align-items-center gap-2">
+                    <span id="status-badge" class="status-badge status-offline">
+                        <i class="bi bi-circle-fill me-1"></i>
+                        <span id="status-text">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</span>
+                    </span>
+                    <span class="meta-divider">|</span>
+                    <span class="meta-item"><i class="bi bi-box me-1"></i><span id="miner-model">{{ miner.miner_model.model_name if miner.miner_model else '-' }}</span></span>
+                    <span class="meta-divider">|</span>
+                    <span class="meta-item"><i class="bi bi-geo-alt me-1"></i><span id="miner-site">{{ miner.site.name if miner.site else '-' }}</span></span>
+                    <span class="meta-divider">|</span>
+                    <span class="meta-item"><i class="bi bi-clock me-1"></i>{% if current_lang == 'en' %}Last seen:{% else %}最后在线:{% endif %} <span id="last-seen">-</span></span>
                 </div>
             </div>
         </div>
-        
-        <div class="row g-4 mt-2">
-            <div class="col-md-3">
-                <div class="info-item">
-                    <label class="info-label">{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</label>
-                    <div class="info-value text-primary">{{ miner.actual_hashrate or '-' }} TH/s</div>
+        <div class="miner-health-indicator d-none d-md-flex align-items-center gap-2" id="health-indicator">
+            <span class="health-label">{% if current_lang == 'en' %}Health{% else %}健康{% endif %}</span>
+            <span class="health-badge" id="health-badge">-</span>
+        </div>
+    </div>
+</div>
+
+<!-- 2. KPI Cards Row -->
+<div class="row g-4 mb-4">
+    <!-- Hashrate Card -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card kpi-hashrate">
+            <div class="kpi-icon"><i class="bi bi-speedometer2"></i></div>
+            <div class="kpi-content">
+                <div class="kpi-label">{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</div>
+                <div class="kpi-value"><span id="kpi-hashrate">-</span> <small>TH/s</small></div>
+                <div class="kpi-subtitle">{% if current_lang == 'en' %}Expected:{% else %}预期:{% endif %} <span id="kpi-hashrate-expected">-</span> TH/s</div>
+            </div>
+            <div class="kpi-deviation" id="kpi-hashrate-deviation">
+                <span class="deviation-value">-</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Temperature Card -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card kpi-temperature">
+            <div class="kpi-icon"><i class="bi bi-thermometer-half"></i></div>
+            <div class="kpi-content">
+                <div class="kpi-label">{% if current_lang == 'en' %}Temperature{% else %}温度{% endif %}</div>
+                <div class="kpi-value"><span id="kpi-temp-min">-</span> ~ <span id="kpi-temp-max">-</span> <small>°C</small></div>
+                <div class="kpi-subtitle">{% if current_lang == 'en' %}Avg:{% else %}平均:{% endif %} <span id="kpi-temp-avg">-</span>°C</div>
+            </div>
+            <div class="kpi-status-icon" id="kpi-temp-status">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Power Card -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card kpi-power">
+            <div class="kpi-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+            <div class="kpi-content">
+                <div class="kpi-label">{% if current_lang == 'en' %}Power{% else %}功耗{% endif %}</div>
+                <div class="kpi-value"><span id="kpi-power">-</span> <small>kW</small></div>
+                <div class="kpi-subtitle">{% if current_lang == 'en' %}Efficiency:{% else %}能效:{% endif %} <span id="kpi-efficiency">-</span> J/TH</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Daily Net Profit Card -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card kpi-profit">
+            <div class="kpi-icon"><i class="bi bi-currency-bitcoin"></i></div>
+            <div class="kpi-content">
+                <div class="kpi-label">{% if current_lang == 'en' %}Daily Net Profit{% else %}日净收益{% endif %}</div>
+                <div class="kpi-value profit-positive"><span id="kpi-net-profit">$-</span></div>
+                <div class="kpi-subtitle">
+                    {% if current_lang == 'en' %}Revenue{% else %}收入{% endif %} <span id="kpi-revenue">$-</span> - 
+                    {% if current_lang == 'en' %}Power{% else %}电费{% endif %} <span id="kpi-power-cost">$-</span>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="info-item">
-                    <label class="info-label">{% if current_lang == 'en' %}Power{% else %}功耗{% endif %}</label>
-                    <div class="info-value text-warning">{{ miner.actual_power or '-' }} W</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="info-item">
-                    <label class="info-label">{% if current_lang == 'en' %}Temperature{% else %}温度{% endif %}</label>
-                    <div class="info-value {% if miner.temperature_avg and miner.temperature_avg > 85 %}text-danger{% elif miner.temperature_avg and miner.temperature_avg > 75 %}text-warning{% else %}text-success{% endif %}">
-                        {{ miner.temperature_avg|round(1) if miner.temperature_avg else '-' }}°C
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="info-item">
-                    <label class="info-label">{% if current_lang == 'en' %}IP Address{% else %}IP地址{% endif %}</label>
-                    <div class="info-value">{{ miner.ip_address or '-' }}</div>
-                </div>
+            <div class="kpi-margin" id="kpi-margin">
+                <span class="margin-value">-</span>
             </div>
         </div>
     </div>
 </div>
 
-<!-- 性能指标图表 -->
+<!-- 3. 24h Performance Chart -->
 <div class="hosting-card mb-4">
     <div class="hosting-card-header">
         <h5 class="hosting-card-title">
-            <i class="bi bi-speedometer2 me-2"></i>{% if current_lang == 'en' %}Performance Metrics{% else %}性能指标{% endif %}
+            <i class="bi bi-graph-up me-2"></i>{% if current_lang == 'en' %}24h Performance{% else %}24小时性能{% endif %}
         </h5>
         <div class="text-muted small">
             <i class="bi bi-info-circle me-1"></i>
-            {% if current_lang == 'en' %}Hashrate (TH/s) and Temperature (°C) - Last 24 Hours{% else %}算力（TH/s）和温度（°C）- 最近24小时{% endif %}
+            {% if current_lang == 'en' %}Hashrate (TH/s) and Net Profit ($){% else %}算力（TH/s）和净收益（$）{% endif %}
         </div>
     </div>
     <div class="hosting-card-body">
         <div id="performance-chart-container" style="position: relative; height: 350px;">
             <canvas id="performanceChart"></canvas>
         </div>
-        
-        <!-- 无数据提示 -->
-        <div id="no-data-message-performance" class="text-center text-muted py-5" style="display: none;">
+        <div id="no-data-message" class="text-center text-muted py-5" style="display: none;">
             <i class="bi bi-graph-down fs-1 mb-3 d-block opacity-50"></i>
             <p class="mb-0">
                 {% if current_lang == 'en' %}
@@ -125,155 +140,769 @@
     </div>
 </div>
 
-<!-- 能耗效率图表 -->
-<div class="hosting-card">
+<!-- 4. Pool Info Block -->
+<div class="hosting-card mb-4">
     <div class="hosting-card-header">
         <h5 class="hosting-card-title">
-            <i class="bi bi-lightning-charge me-2"></i>{% if current_lang == 'en' %}Energy Efficiency{% else %}能耗效率{% endif %}
+            <i class="bi bi-hdd-network me-2"></i>{% if current_lang == 'en' %}Pool Information{% else %}矿池信息{% endif %}
         </h5>
-        <div class="text-muted small">
-            <i class="bi bi-info-circle me-1"></i>
-            {% if current_lang == 'en' %}Power (W) and Efficiency (W/TH) - Last 24 Hours{% else %}功率（W）和能效（W/TH）- 最近24小时{% endif %}
-        </div>
     </div>
     <div class="hosting-card-body">
-        <div id="efficiency-chart-container" style="position: relative; height: 350px;">
-            <canvas id="efficiencyChart"></canvas>
-        </div>
-        
-        <!-- 无数据提示 -->
-        <div id="no-data-message-efficiency" class="text-center text-muted py-5" style="display: none;">
-            <i class="bi bi-graph-down fs-1 mb-3 d-block opacity-50"></i>
-            <p class="mb-0">
-                {% if current_lang == 'en' %}
-                    No telemetry data available for the last 24 hours.<br>
-                    Data will appear once the miner starts reporting.
-                {% else %}
-                    最近24小时无遥测数据。<br>
-                    矿机开始上报后数据将会显示。
-                {% endif %}
-            </p>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="pool-info-item">
+                    <div class="pool-info-label">{% if current_lang == 'en' %}Pool URL{% else %}矿池地址{% endif %}</div>
+                    <div class="pool-info-value text-truncate" id="pool-url" title="">-</div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="pool-info-item">
+                    <div class="pool-info-label">{% if current_lang == 'en' %}Worker Name{% else %}矿工名称{% endif %}</div>
+                    <div class="pool-info-value" id="pool-worker">-</div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-2">
+                <div class="pool-info-item">
+                    <div class="pool-info-label">{% if current_lang == 'en' %}Latency{% else %}延迟{% endif %}</div>
+                    <div class="pool-info-value"><span id="pool-latency">-</span> ms</div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="pool-info-item">
+                    <div class="pool-info-label">{% if current_lang == 'en' %}24h Shares{% else %}24小时提交{% endif %}</div>
+                    <div class="pool-info-value shares-info">
+                        <span class="shares-accepted"><i class="bi bi-check-circle-fill"></i> <span id="shares-accepted">-</span></span>
+                        <span class="shares-divider">/</span>
+                        <span class="shares-rejected"><i class="bi bi-x-circle-fill"></i> <span id="shares-rejected">-</span></span>
+                        <span class="shares-rate">(<span id="rejected-rate">-</span>%)</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- CSS样式 -->
+<!-- 5. Board Health Collapsible Section -->
+<div class="hosting-card">
+    <div class="hosting-card-header" data-bs-toggle="collapse" data-bs-target="#boards-collapse" role="button" aria-expanded="false" aria-controls="boards-collapse">
+        <h5 class="hosting-card-title">
+            <i class="bi bi-motherboard me-2"></i>{% if current_lang == 'en' %}Board Health{% else %}板卡健康{% endif %}
+            <span class="boards-summary ms-2">
+                (<span id="boards-healthy">-</span>/<span id="boards-total">-</span> {% if current_lang == 'en' %}healthy{% else %}正常{% endif %})
+            </span>
+        </h5>
+        <div class="collapse-indicator">
+            <i class="bi bi-chevron-down"></i>
+        </div>
+    </div>
+    <div class="collapse" id="boards-collapse">
+        <div class="hosting-card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover boards-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>{% if current_lang == 'en' %}Board{% else %}板卡{% endif %}</th>
+                            <th>{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</th>
+                            <th>{% if current_lang == 'en' %}Temperature{% else %}温度{% endif %}</th>
+                            <th>{% if current_lang == 'en' %}Chips{% else %}芯片{% endif %}</th>
+                            <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="boards-table-body">
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                {% if current_lang == 'en' %}Loading board data...{% else %}加载板卡数据中...{% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay">
+    <div class="loading-spinner">
+        <div class="spinner-border text-warning" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="mt-2">{% if current_lang == 'en' %}Loading data...{% else %}加载数据中...{% endif %}</div>
+    </div>
+</div>
+
+<!-- Custom CSS Styles -->
 <style>
-.info-item {
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+:root {
+    --btc-gold: #f7931a;
+    --btc-dark: #1a1d2e;
+    --btc-gradient: linear-gradient(135deg, #f7931a 0%, #ffb84d 100%);
 }
 
-.info-label {
+.miner-header-bar {
+    background: linear-gradient(135deg, rgba(247, 147, 26, 0.15) 0%, rgba(247, 147, 26, 0.05) 100%);
+    border: 2px solid rgba(247, 147, 26, 0.3);
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+}
+
+.miner-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--btc-gradient);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: #000;
+}
+
+.miner-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.miner-meta {
+    color: var(--hosting-text-secondary);
+    font-size: 0.9rem;
+}
+
+.meta-divider {
+    color: rgba(255, 255, 255, 0.2);
+    margin: 0 0.25rem;
+}
+
+.meta-item i {
+    color: var(--btc-gold);
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.status-badge i {
+    font-size: 0.5rem;
+}
+
+.status-online {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.status-warning {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.status-offline {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.health-indicator {
+    text-align: right;
+}
+
+.health-label {
+    color: var(--hosting-text-secondary);
+    font-size: 0.85rem;
+}
+
+.health-badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+    text-transform: capitalize;
+}
+
+.health-badge.unhealthy {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+.health-badge.degraded {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+}
+
+/* KPI Cards */
+.kpi-card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    min-height: 140px;
+}
+
+.kpi-card:hover {
+    border-color: var(--btc-gold);
+    box-shadow: 0 8px 32px rgba(247, 147, 26, 0.15);
+    transform: translateY(-2px);
+}
+
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--btc-gradient);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.kpi-card:hover::before {
+    opacity: 1;
+}
+
+.kpi-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(247, 147, 26, 0.15);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    color: var(--btc-gold);
+    flex-shrink: 0;
+}
+
+.kpi-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.kpi-label {
     font-size: 0.85rem;
     color: var(--hosting-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 0.5rem;
-    display: block;
 }
 
-.info-value {
-    font-size: 1.1rem;
+.kpi-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+}
+
+.kpi-value small {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--hosting-text-secondary);
+}
+
+.kpi-subtitle {
+    font-size: 0.85rem;
+    color: var(--hosting-text-secondary);
+    margin-top: 0.25rem;
+}
+
+.kpi-deviation {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
     font-weight: 600;
-    color: var(--hosting-text-primary);
 }
 
-#performance-chart-container,
-#efficiency-chart-container {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
+.kpi-deviation.positive {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+}
+
+.kpi-deviation.negative {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+.kpi-status-icon {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.2rem;
+}
+
+.kpi-status-icon.good { color: #28a745; }
+.kpi-status-icon.warning { color: #ffc107; }
+.kpi-status-icon.danger { color: #dc3545; }
+
+.kpi-margin {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+}
+
+.kpi-margin.negative {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+.profit-positive { color: #28a745; }
+.profit-negative { color: #dc3545; }
+
+.kpi-hashrate .kpi-icon { background: rgba(78, 205, 196, 0.15); color: #4ECDC4; }
+.kpi-temperature .kpi-icon { background: rgba(255, 107, 107, 0.15); color: #FF6B6B; }
+.kpi-power .kpi-icon { background: rgba(255, 181, 71, 0.15); color: #FFB547; }
+.kpi-profit .kpi-icon { background: rgba(247, 147, 26, 0.15); color: var(--btc-gold); }
+
+/* Pool Info */
+.pool-info-item {
     padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    height: 100%;
+}
+
+.pool-info-label {
+    font-size: 0.8rem;
+    color: var(--hosting-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.pool-info-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.shares-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.shares-accepted {
+    color: #28a745;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.shares-rejected {
+    color: #dc3545;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.shares-divider {
+    color: var(--hosting-text-secondary);
+}
+
+.shares-rate {
+    color: var(--hosting-text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Board Health Section */
+.boards-summary {
+    font-weight: 400;
+    color: var(--hosting-text-secondary);
+    font-size: 0.9rem;
+}
+
+.collapse-indicator {
+    transition: transform 0.3s ease;
+}
+
+[aria-expanded="true"] .collapse-indicator {
+    transform: rotate(180deg);
+}
+
+.boards-table {
+    background: transparent;
+}
+
+.boards-table thead th {
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 2px solid var(--btc-gold);
+    color: var(--hosting-text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    padding: 1rem;
+}
+
+.boards-table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.board-health-badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: capitalize;
+}
+
+.board-health-badge.healthy {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+}
+
+.board-health-badge.degraded {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+}
+
+.board-health-badge.unhealthy {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+/* Chart Container */
+#performance-chart-container {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(26, 29, 46, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.loading-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.loading-spinner {
+    text-align: center;
+    color: var(--hosting-text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .miner-header-bar {
+        padding: 1rem;
+    }
+    
+    .miner-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+    
+    .miner-name {
+        font-size: 1.25rem;
+    }
+    
+    .meta-divider {
+        display: none;
+    }
+    
+    .meta-item {
+        display: block;
+        margin-top: 0.25rem;
+    }
+    
+    .kpi-card {
+        min-height: auto;
+        padding: 1rem;
+    }
+    
+    .kpi-value {
+        font-size: 1.4rem;
+    }
+    
+    .health-indicator {
+        display: none !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .kpi-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
 }
 </style>
 
 {% endblock %}
 
 {% block scripts %}
-<!-- Chart.js v4.4.0 -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <script>
 let performanceChart = null;
-let efficiencyChart = null;
 const minerId = {{ miner.id }};
+const currentLang = '{{ current_lang }}';
+
+const translations = {
+    en: {
+        online: 'Online',
+        offline: 'Offline',
+        warning: 'Warning',
+        healthy: 'Healthy',
+        degraded: 'Degraded',
+        unhealthy: 'Unhealthy',
+        noData: 'No data',
+        board: 'Board',
+        hashrate: 'Hashrate (TH/s)',
+        netProfit: 'Net Profit ($)',
+        loading: 'Loading...'
+    },
+    zh: {
+        online: '在线',
+        offline: '离线',
+        warning: '警告',
+        healthy: '正常',
+        degraded: '性能下降',
+        unhealthy: '异常',
+        noData: '无数据',
+        board: '板卡',
+        hashrate: '算力 (TH/s)',
+        netProfit: '净收益 ($)',
+        loading: '加载中...'
+    }
+};
+
+const t = translations[currentLang] || translations.en;
 
 document.addEventListener('DOMContentLoaded', function() {
-    loadTelemetryData();
+    loadMinerStatus();
 });
 
-function loadTelemetryData() {
-    fetch(`/hosting/api/miners/${minerId}/telemetry-history`)
+function refreshData() {
+    document.getElementById('loading-overlay').classList.remove('hidden');
+    loadMinerStatus();
+}
+
+function loadMinerStatus() {
+    fetch(`/api/collector/miners/${minerId}/status`)
         .then(response => response.json())
         .then(result => {
-            if (result.success && result.data) {
-                const data = result.data;
-                
-                if (data.timestamps && data.timestamps.length > 0) {
-                    // 有数据，显示两个图表
-                    document.getElementById('performance-chart-container').style.display = 'block';
-                    document.getElementById('no-data-message-performance').style.display = 'none';
-                    document.getElementById('efficiency-chart-container').style.display = 'block';
-                    document.getElementById('no-data-message-efficiency').style.display = 'none';
-                    renderPerformanceChart(data);
-                    renderEfficiencyChart(data);
-                } else {
-                    // 无数据，显示提示信息
-                    document.getElementById('performance-chart-container').style.display = 'none';
-                    document.getElementById('no-data-message-performance').style.display = 'block';
-                    document.getElementById('efficiency-chart-container').style.display = 'none';
-                    document.getElementById('no-data-message-efficiency').style.display = 'block';
-                }
+            document.getElementById('loading-overlay').classList.add('hidden');
+            
+            if (result.success) {
+                updateMinerInfo(result.miner);
+                updateKPIs(result.performance, result.revenue);
+                updatePoolInfo(result.pool);
+                updateBoardsHealth(result.boards);
+                updatePerformanceChart(result.history_24h);
             } else {
-                console.error('Failed to load telemetry data:', result.error);
-                document.getElementById('performance-chart-container').style.display = 'none';
-                document.getElementById('no-data-message-performance').style.display = 'block';
-                document.getElementById('efficiency-chart-container').style.display = 'none';
-                document.getElementById('no-data-message-efficiency').style.display = 'block';
+                console.error('Failed to load miner status:', result.error);
+                showError();
             }
         })
         .catch(error => {
-            console.error('Error loading telemetry data:', error);
-            document.getElementById('performance-chart-container').style.display = 'none';
-            document.getElementById('no-data-message-performance').style.display = 'block';
-            document.getElementById('efficiency-chart-container').style.display = 'none';
-            document.getElementById('no-data-message-efficiency').style.display = 'block';
+            document.getElementById('loading-overlay').classList.add('hidden');
+            console.error('Error loading miner status:', error);
+            showError();
         });
 }
 
-function renderPerformanceChart(data) {
+function updateMinerInfo(miner) {
+    document.getElementById('miner-name').textContent = miner.name || '-';
+    document.getElementById('miner-model').textContent = miner.model || '-';
+    document.getElementById('miner-site').textContent = miner.site_name || '-';
+    document.getElementById('last-seen').textContent = miner.last_seen || '-';
+    
+    const statusBadge = document.getElementById('status-badge');
+    const statusText = document.getElementById('status-text');
+    
+    statusBadge.classList.remove('status-online', 'status-offline', 'status-warning');
+    
+    if (miner.online) {
+        if (miner.overall_health === 'degraded') {
+            statusBadge.classList.add('status-warning');
+            statusText.textContent = t.warning;
+        } else {
+            statusBadge.classList.add('status-online');
+            statusText.textContent = t.online;
+        }
+    } else {
+        statusBadge.classList.add('status-offline');
+        statusText.textContent = t.offline;
+    }
+    
+    const healthBadge = document.getElementById('health-badge');
+    healthBadge.textContent = miner.overall_health || 'offline';
+    healthBadge.classList.remove('unhealthy', 'degraded');
+    if (miner.overall_health === 'unhealthy') {
+        healthBadge.classList.add('unhealthy');
+    } else if (miner.overall_health === 'degraded') {
+        healthBadge.classList.add('degraded');
+    }
+}
+
+function updateKPIs(performance, revenue) {
+    document.getElementById('kpi-hashrate').textContent = performance.hashrate_ths?.toFixed(1) || '-';
+    document.getElementById('kpi-hashrate-expected').textContent = performance.hashrate_expected_ths?.toFixed(1) || '-';
+    
+    const deviationEl = document.getElementById('kpi-hashrate-deviation');
+    const deviation = performance.hashrate_deviation_pct || 0;
+    deviationEl.querySelector('.deviation-value').textContent = (deviation >= 0 ? '+' : '') + deviation.toFixed(1) + '%';
+    deviationEl.classList.remove('positive', 'negative');
+    deviationEl.classList.add(deviation >= 0 ? 'positive' : 'negative');
+    
+    document.getElementById('kpi-temp-min').textContent = performance.temp_min_c?.toFixed(0) || '-';
+    document.getElementById('kpi-temp-max').textContent = performance.temp_max_c?.toFixed(0) || '-';
+    document.getElementById('kpi-temp-avg').textContent = performance.temp_avg_c?.toFixed(1) || '-';
+    
+    const tempStatusEl = document.getElementById('kpi-temp-status');
+    const maxTemp = performance.temp_max_c || 0;
+    tempStatusEl.classList.remove('good', 'warning', 'danger');
+    if (maxTemp > 85) {
+        tempStatusEl.classList.add('danger');
+        tempStatusEl.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i>';
+    } else if (maxTemp > 75) {
+        tempStatusEl.classList.add('warning');
+        tempStatusEl.innerHTML = '<i class="bi bi-exclamation-circle-fill"></i>';
+    } else {
+        tempStatusEl.classList.add('good');
+        tempStatusEl.innerHTML = '<i class="bi bi-check-circle-fill"></i>';
+    }
+    
+    document.getElementById('kpi-power').textContent = performance.power_kw?.toFixed(2) || '-';
+    document.getElementById('kpi-efficiency').textContent = performance.efficiency_jths?.toFixed(1) || '-';
+    
+    const netProfit = revenue.net_profit_usd || 0;
+    const netProfitEl = document.getElementById('kpi-net-profit');
+    netProfitEl.textContent = '$' + netProfit.toFixed(2);
+    netProfitEl.parentElement.classList.remove('profit-positive', 'profit-negative');
+    netProfitEl.parentElement.classList.add(netProfit >= 0 ? 'profit-positive' : 'profit-negative');
+    
+    document.getElementById('kpi-revenue').textContent = '$' + (revenue.daily_usd?.toFixed(2) || '0.00');
+    document.getElementById('kpi-power-cost').textContent = '$' + (revenue.power_cost_usd?.toFixed(2) || '0.00');
+    
+    const marginEl = document.getElementById('kpi-margin');
+    const margin = revenue.profit_margin_pct || 0;
+    marginEl.querySelector('.margin-value').textContent = margin.toFixed(0) + '%';
+    marginEl.classList.toggle('negative', margin < 0);
+}
+
+function updatePoolInfo(pool) {
+    const poolUrlEl = document.getElementById('pool-url');
+    poolUrlEl.textContent = pool.url || '-';
+    poolUrlEl.title = pool.url || '';
+    
+    document.getElementById('pool-worker').textContent = pool.worker || '-';
+    document.getElementById('pool-latency').textContent = pool.latency_ms?.toFixed(0) || '-';
+    document.getElementById('shares-accepted').textContent = formatNumber(pool.shares_accepted_24h || 0);
+    document.getElementById('shares-rejected').textContent = formatNumber(pool.shares_rejected_24h || 0);
+    document.getElementById('rejected-rate').textContent = pool.rejected_rate_pct?.toFixed(2) || '0.00';
+}
+
+function updateBoardsHealth(boards) {
+    document.getElementById('boards-healthy').textContent = boards.healthy || 0;
+    document.getElementById('boards-total').textContent = boards.total || 0;
+    
+    const tbody = document.getElementById('boards-table-body');
+    
+    if (!boards.data || boards.data.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                    ${currentLang === 'en' ? 'No board data available' : '无板卡数据'}
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    let html = '';
+    boards.data.forEach((board, index) => {
+        const healthClass = board.health === 'healthy' ? 'healthy' : (board.health === 'degraded' ? 'degraded' : 'unhealthy');
+        const healthText = board.health === 'healthy' ? t.healthy : (board.health === 'degraded' ? t.degraded : t.unhealthy);
+        
+        html += `
+            <tr>
+                <td><span class="fw-semibold">#${board.index !== undefined ? board.index : index}</span></td>
+                <td>${board.hashrate_ths?.toFixed(1) || '-'} TH/s</td>
+                <td class="${board.temp_c > 85 ? 'text-danger' : (board.temp_c > 75 ? 'text-warning' : '')}">${board.temp_c?.toFixed(0) || '-'}°C</td>
+                <td>${board.chips_ok || '-'}/${board.chips_total || '-'}</td>
+                <td><span class="board-health-badge ${healthClass}">${healthText}</span></td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+}
+
+function updatePerformanceChart(history) {
+    const container = document.getElementById('performance-chart-container');
+    const noDataMsg = document.getElementById('no-data-message');
+    
+    if (!history || history.length === 0) {
+        container.style.display = 'none';
+        noDataMsg.style.display = 'block';
+        return;
+    }
+    
+    container.style.display = 'block';
+    noDataMsg.style.display = 'none';
+    
     const ctx = document.getElementById('performanceChart').getContext('2d');
     
-    // 销毁旧图表
     if (performanceChart) {
         performanceChart.destroy();
     }
     
-    // 格式化时间标签（只显示时:分）
-    const formattedLabels = data.timestamps.map(timestamp => {
-        const date = new Date(timestamp);
-        return date.toLocaleTimeString('{{ current_lang }}', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: false
-        });
-    });
+    const labels = history.map(h => h.hour);
+    const hashrateData = history.map(h => h.hashrate_ths);
+    const profitData = history.map(h => h.net_profit_usd);
     
-    const currentLang = '{{ current_lang }}';
-    const hashrateLabel = currentLang === 'en' ? 'Hashrate (TH/s)' : '算力 (TH/s)';
-    const temperatureLabel = currentLang === 'en' ? 'Temperature (°C)' : '温度 (°C)';
-    
-    // 创建性能图表（算力 + 温度）
     performanceChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: formattedLabels,
+            labels: labels,
             datasets: [
                 {
-                    label: hashrateLabel,
-                    data: data.hashrate,
+                    label: t.hashrate,
+                    data: hashrateData,
                     borderColor: '#4ECDC4',
                     backgroundColor: 'rgba(78, 205, 196, 0.1)',
                     borderWidth: 2,
@@ -281,19 +910,25 @@ function renderPerformanceChart(data) {
                     tension: 0.4,
                     fill: true,
                     pointRadius: 2,
-                    pointHoverRadius: 5
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#4ECDC4',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
                 },
                 {
-                    label: temperatureLabel,
-                    data: data.temperature,
-                    borderColor: '#FF6B6B',
-                    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                    label: t.netProfit,
+                    data: profitData,
+                    borderColor: '#f7931a',
+                    backgroundColor: 'rgba(247, 147, 26, 0.1)',
                     borderWidth: 2,
                     yAxisID: 'y1',
                     tension: 0.4,
                     fill: true,
                     pointRadius: 2,
-                    pointHoverRadius: 5
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#f7931a',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
                 }
             ]
         },
@@ -302,7 +937,7 @@ function renderPerformanceChart(data) {
             maintainAspectRatio: false,
             interaction: {
                 mode: 'index',
-                intersect: false,
+                intersect: false
             },
             plugins: {
                 legend: {
@@ -310,32 +945,30 @@ function renderPerformanceChart(data) {
                     position: 'top',
                     labels: {
                         color: '#fff',
-                        font: {
-                            size: 12
-                        },
-                        padding: 15,
-                        usePointStyle: true
+                        font: { size: 12 },
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
                     }
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    backgroundColor: 'rgba(26, 29, 46, 0.95)',
                     titleColor: '#fff',
                     bodyColor: '#fff',
-                    borderColor: '#f7931e',
+                    borderColor: '#f7931a',
                     borderWidth: 1,
                     padding: 12,
+                    cornerRadius: 8,
                     displayColors: true,
                     callbacks: {
-                        title: function(context) {
-                            return data.timestamps[context[0].dataIndex];
-                        },
                         label: function(context) {
                             let label = context.dataset.label || '';
-                            if (label) {
-                                label += ': ';
-                            }
                             if (context.parsed.y !== null) {
-                                label += context.parsed.y.toFixed(2);
+                                if (context.datasetIndex === 0) {
+                                    label += ': ' + context.parsed.y.toFixed(1) + ' TH/s';
+                                } else {
+                                    label += ': $' + context.parsed.y.toFixed(2);
+                                }
                             }
                             return label;
                         }
@@ -345,14 +978,6 @@ function renderPerformanceChart(data) {
             scales: {
                 x: {
                     display: true,
-                    title: {
-                        display: true,
-                        text: currentLang === 'en' ? 'Time (24 hours)' : '时间（24小时）',
-                        color: '#adb5bd',
-                        font: {
-                            size: 11
-                        }
-                    },
                     ticks: {
                         color: '#adb5bd',
                         maxRotation: 45,
@@ -361,7 +986,7 @@ function renderPerformanceChart(data) {
                         maxTicksLimit: 12
                     },
                     grid: {
-                        color: 'rgba(255, 255, 255, 0.1)',
+                        color: 'rgba(255, 255, 255, 0.05)',
                         drawBorder: false
                     }
                 },
@@ -371,17 +996,14 @@ function renderPerformanceChart(data) {
                     position: 'left',
                     title: {
                         display: true,
-                        text: hashrateLabel,
+                        text: t.hashrate,
                         color: '#4ECDC4',
-                        font: {
-                            size: 11,
-                            weight: 'bold'
-                        }
+                        font: { size: 11, weight: 'bold' }
                     },
                     ticks: {
                         color: '#4ECDC4',
                         callback: function(value) {
-                            return value.toFixed(1);
+                            return value.toFixed(0);
                         }
                     },
                     grid: {
@@ -395,17 +1017,14 @@ function renderPerformanceChart(data) {
                     position: 'right',
                     title: {
                         display: true,
-                        text: temperatureLabel,
-                        color: '#FF6B6B',
-                        font: {
-                            size: 11,
-                            weight: 'bold'
-                        }
+                        text: t.netProfit,
+                        color: '#f7931a',
+                        font: { size: 11, weight: 'bold' }
                     },
                     ticks: {
-                        color: '#FF6B6B',
+                        color: '#f7931a',
                         callback: function(value) {
-                            return value.toFixed(1) + '°C';
+                            return '$' + value.toFixed(2);
                         }
                     },
                     grid: {
@@ -418,240 +1037,18 @@ function renderPerformanceChart(data) {
     });
 }
 
-function renderEfficiencyChart(data) {
-    const ctx = document.getElementById('efficiencyChart').getContext('2d');
-    
-    // 销毁旧图表
-    if (efficiencyChart) {
-        efficiencyChart.destroy();
+function formatNumber(num) {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K';
     }
-    
-    // 格式化时间标签（只显示时:分）
-    const formattedLabels = data.timestamps.map(timestamp => {
-        const date = new Date(timestamp);
-        return date.toLocaleTimeString('{{ current_lang }}', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: false
-        });
-    });
-    
-    const currentLang = '{{ current_lang }}';
-    const powerLabel = currentLang === 'en' ? 'Power (W)' : '功率 (W)';
-    const efficiencyLabel = currentLang === 'en' ? 'Efficiency (W/TH)' : '能效 (W/TH)';
-    
-    // 计算能效比（功率/算力），处理除0情况
-    const efficiency = data.hashrate.map((hashrate, index) => {
-        if (hashrate && hashrate > 0) {
-            return parseFloat((data.power_consumption[index] / hashrate).toFixed(2));
-        }
-        return null; // 算力为0时返回null，图表会跳过这个点
-    });
-    
-    // 创建能耗效率图表（功率 + 能效）
-    efficiencyChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: formattedLabels,
-            datasets: [
-                {
-                    label: powerLabel,
-                    data: data.power_consumption,
-                    borderColor: '#FFB547',
-                    backgroundColor: 'rgba(255, 181, 71, 0.1)',
-                    borderWidth: 2,
-                    yAxisID: 'y',
-                    tension: 0.4,
-                    fill: true,
-                    pointRadius: 2,
-                    pointHoverRadius: 5
-                },
-                {
-                    label: efficiencyLabel,
-                    data: efficiency,
-                    borderColor: '#9D4EDD',
-                    backgroundColor: 'rgba(157, 78, 221, 0.1)',
-                    borderWidth: 2,
-                    yAxisID: 'y1',
-                    tension: 0.4,
-                    fill: true,
-                    pointRadius: 2,
-                    pointHoverRadius: 5
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                mode: 'index',
-                intersect: false,
-            },
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        color: '#fff',
-                        font: {
-                            size: 12
-                        },
-                        padding: 15,
-                        usePointStyle: true
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    titleColor: '#fff',
-                    bodyColor: '#fff',
-                    borderColor: '#f7931e',
-                    borderWidth: 1,
-                    padding: 12,
-                    displayColors: true,
-                    callbacks: {
-                        title: function(context) {
-                            return data.timestamps[context[0].dataIndex];
-                        },
-                        label: function(context) {
-                            let label = context.dataset.label || '';
-                            if (label) {
-                                label += ': ';
-                            }
-                            if (context.parsed.y !== null) {
-                                label += context.parsed.y.toFixed(2);
-                            }
-                            return label;
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    display: true,
-                    title: {
-                        display: true,
-                        text: currentLang === 'en' ? 'Time (24 hours)' : '时间（24小时）',
-                        color: '#adb5bd',
-                        font: {
-                            size: 11
-                        }
-                    },
-                    ticks: {
-                        color: '#adb5bd',
-                        maxRotation: 45,
-                        minRotation: 45,
-                        autoSkip: true,
-                        maxTicksLimit: 12
-                    },
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)',
-                        drawBorder: false
-                    }
-                },
-                y: {
-                    type: 'linear',
-                    display: true,
-                    position: 'left',
-                    title: {
-                        display: true,
-                        text: powerLabel,
-                        color: '#FFB547',
-                        font: {
-                            size: 11,
-                            weight: 'bold'
-                        }
-                    },
-                    ticks: {
-                        color: '#FFB547',
-                        callback: function(value) {
-                            return value.toFixed(0) + ' W';
-                        }
-                    },
-                    grid: {
-                        color: 'rgba(255, 181, 71, 0.1)',
-                        drawBorder: false
-                    }
-                },
-                y1: {
-                    type: 'linear',
-                    display: true,
-                    position: 'right',
-                    title: {
-                        display: true,
-                        text: efficiencyLabel,
-                        color: '#9D4EDD',
-                        font: {
-                            size: 11,
-                            weight: 'bold'
-                        }
-                    },
-                    ticks: {
-                        color: '#9D4EDD',
-                        callback: function(value) {
-                            return value.toFixed(1) + ' W/TH';
-                        }
-                    },
-                    grid: {
-                        drawOnChartArea: false,
-                        drawBorder: false
-                    }
-                }
-            }
-        }
-    });
+    return num.toString();
 }
 
-function refreshData() {
-    loadTelemetryData();
-    showToast(
-        '{{ current_lang }}' === 'en' ? 'Data refreshed' : '数据已刷新',
-        'success'
-    );
-}
-
-function showToast(message, type = 'info') {
-    let bgColor = 'bg-secondary';
-    let icon = 'bi-info-circle';
-    
-    if (type === 'success') {
-        bgColor = 'bg-success';
-        icon = 'bi-check-circle';
-    } else if (type === 'error' || type === 'danger') {
-        bgColor = 'bg-danger';
-        icon = 'bi-exclamation-circle';
-    } else if (type === 'warning') {
-        bgColor = 'bg-warning text-dark';
-        icon = 'bi-exclamation-triangle';
-    }
-    
-    const toastHtml = `
-        <div class="toast align-items-center text-white ${bgColor} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="d-flex">
-                <div class="toast-body">
-                    <i class="bi ${icon} me-2"></i>${message}
-                </div>
-                <button type="button" class="btn-close ${type === 'warning' ? '' : 'btn-close-white'} me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-        </div>
-    `;
-    
-    let toastContainer = document.getElementById('toast-container');
-    if (!toastContainer) {
-        toastContainer = document.createElement('div');
-        toastContainer.id = 'toast-container';
-        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
-        toastContainer.style.zIndex = '9999';
-        document.body.appendChild(toastContainer);
-    }
-    
-    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-    const toastElement = toastContainer.lastElementChild;
-    const toast = new bootstrap.Toast(toastElement);
-    toast.show();
-    
-    toastElement.addEventListener('hidden.bs.toast', function() {
-        toastElement.remove();
-    });
+function showError() {
+    document.getElementById('performance-chart-container').style.display = 'none';
+    document.getElementById('no-data-message').style.display = 'block';
 }
 </script>
 {% endblock %}

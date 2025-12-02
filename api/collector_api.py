@@ -35,7 +35,10 @@ class CollectorKey(db.Model):
 
 
 class MinerTelemetryLive(db.Model):
-    """矿机实时遥测数据（最新状态）"""
+    """矿机实时遥测数据（最新状态）
+    
+    Real-time miner telemetry with board-level health tracking
+    """
     __tablename__ = 'miner_telemetry_live'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -48,7 +51,9 @@ class MinerTelemetryLive(db.Model):
     
     hashrate_ghs = db.Column(db.Float, default=0)
     hashrate_5s_ghs = db.Column(db.Float, default=0)
+    hashrate_expected_ghs = db.Column(db.Float, default=0)
     temperature_avg = db.Column(db.Float, default=0)
+    temperature_min = db.Column(db.Float, default=0)
     temperature_max = db.Column(db.Float, default=0)
     temperature_chips = db.Column(db.JSON)
     fan_speeds = db.Column(db.JSON)
@@ -64,8 +69,18 @@ class MinerTelemetryLive(db.Model):
     
     pool_url = db.Column(db.String(255))
     worker_name = db.Column(db.String(100))
+    pool_latency_ms = db.Column(db.Float, default=0)
+    
+    boards_data = db.Column(db.JSON)
+    boards_total = db.Column(db.Integer, default=0)
+    boards_healthy = db.Column(db.Integer, default=0)
+    overall_health = db.Column(db.String(20), default='offline')
+    
+    model = db.Column(db.String(100))
     firmware_version = db.Column(db.String(50))
     error_message = db.Column(db.Text)
+    
+    latency_ms = db.Column(db.Float, default=0)
     
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -76,7 +91,10 @@ class MinerTelemetryLive(db.Model):
 
 
 class MinerTelemetryHistory(db.Model):
-    """矿机历史遥测数据（时序）"""
+    """矿机历史遥测数据（时序）
+    
+    Historical miner telemetry for charts and analysis
+    """
     __tablename__ = 'miner_telemetry_history'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -87,12 +105,20 @@ class MinerTelemetryHistory(db.Model):
     
     hashrate_ghs = db.Column(db.Float, default=0)
     temperature_avg = db.Column(db.Float, default=0)
+    temperature_min = db.Column(db.Float, default=0)
     temperature_max = db.Column(db.Float, default=0)
     fan_speed_avg = db.Column(db.Integer, default=0)
     power_consumption = db.Column(db.Float, default=0)
     accepted_shares = db.Column(db.Integer, default=0)
     rejected_shares = db.Column(db.Integer, default=0)
     online = db.Column(db.Boolean, default=True)
+    
+    boards_healthy = db.Column(db.Integer, default=0)
+    boards_total = db.Column(db.Integer, default=0)
+    overall_health = db.Column(db.String(20), default='offline')
+    
+    net_profit_usd = db.Column(db.Float, default=0)
+    revenue_usd = db.Column(db.Float, default=0)
     
     __table_args__ = (
         db.Index('ix_telemetry_history_miner_time', 'miner_id', 'timestamp'),
@@ -304,7 +330,9 @@ def upload_telemetry():
                 live_record.last_seen = datetime.utcnow() if is_online else live_record.last_seen
                 live_record.hashrate_ghs = miner_data.get('hashrate_ghs', 0)
                 live_record.hashrate_5s_ghs = miner_data.get('hashrate_5s_ghs', 0)
+                live_record.hashrate_expected_ghs = miner_data.get('hashrate_expected_ghs', 0)
                 live_record.temperature_avg = miner_data.get('temperature_avg', 0)
+                live_record.temperature_min = miner_data.get('temperature_min', miner_data.get('temperature_avg', 0))
                 live_record.temperature_max = miner_data.get('temperature_max', 0)
                 live_record.temperature_chips = miner_data.get('temperature_chips', [])
                 live_record.fan_speeds = miner_data.get('fan_speeds', [])
@@ -317,22 +345,36 @@ def upload_telemetry():
                 live_record.efficiency = miner_data.get('efficiency', 0)
                 live_record.pool_url = miner_data.get('pool_url', '')
                 live_record.worker_name = miner_data.get('worker_name', '')
+                live_record.pool_latency_ms = miner_data.get('pool_latency_ms', 0)
+                live_record.boards_data = miner_data.get('boards', [])
+                live_record.boards_total = miner_data.get('boards_total', len(miner_data.get('boards', [])))
+                live_record.boards_healthy = miner_data.get('boards_healthy', 0)
+                live_record.overall_health = miner_data.get('overall_health', 'offline' if not is_online else 'healthy')
+                live_record.model = miner_data.get('model', '')
                 live_record.firmware_version = miner_data.get('firmware_version', '')
                 live_record.error_message = miner_data.get('error_message', '')
+                live_record.latency_ms = miner_data.get('latency_ms', 0)
                 
                 if is_online:
+                    fan_speeds = miner_data.get('fan_speeds', [])
+                    fan_speed_avg = sum(fan_speeds) // max(len(fan_speeds), 1) if fan_speeds else 0
+                    
                     history_record = MinerTelemetryHistory(
                         miner_id=miner_id,
                         site_id=site_id,
                         timestamp=datetime.utcnow(),
                         hashrate_ghs=miner_data.get('hashrate_ghs', 0),
                         temperature_avg=miner_data.get('temperature_avg', 0),
+                        temperature_min=miner_data.get('temperature_min', miner_data.get('temperature_avg', 0)),
                         temperature_max=miner_data.get('temperature_max', 0),
-                        fan_speed_avg=sum(miner_data.get('fan_speeds', [0])) // max(len(miner_data.get('fan_speeds', [1])), 1),
+                        fan_speed_avg=fan_speed_avg,
                         power_consumption=miner_data.get('power_consumption', 0),
                         accepted_shares=miner_data.get('accepted_shares', 0),
                         rejected_shares=miner_data.get('rejected_shares', 0),
-                        online=True
+                        online=True,
+                        boards_healthy=miner_data.get('boards_healthy', 0),
+                        boards_total=miner_data.get('boards_total', 0),
+                        overall_health=miner_data.get('overall_health', 'healthy')
                     )
                     db.session.add(history_record)
                     
@@ -1048,6 +1090,329 @@ def get_command_stats():
     except Exception as e:
         logger.error(f"Get command stats error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@collector_bp.route('/miners/<int:miner_id>/status', methods=['GET'])
+def get_miner_comprehensive_status(miner_id):
+    """获取矿机综合状态 - 整合遥测数据、收益预测、矿池信息、板健康
+    
+    GET /api/collector/miners/{miner_id}/status
+    
+    Returns:
+        {
+            "success": true,
+            "miner": {
+                "id": 3021,
+                "name": "S19-3021",
+                "model": "Antminer S19 Pro",
+                "ip_address": "192.168.1.100",
+                "site_name": "Site A",
+                "online": true,
+                "last_seen": "2 minutes ago",
+                "overall_health": "healthy"
+            },
+            "performance": {
+                "hashrate_ths": 194.3,
+                "hashrate_5s_ths": 193.8,
+                "hashrate_expected_ths": 195.0,
+                "hashrate_deviation_pct": -0.36,
+                "power_kw": 3.25,
+                "efficiency_jths": 16.7,
+                "temp_min_c": 68,
+                "temp_max_c": 75,
+                "temp_avg_c": 71.5,
+                "uptime_hours": 720
+            },
+            "pool": {
+                "url": "stratum+tcp://pool.antpool.com:3333",
+                "worker": "user.worker001",
+                "latency_ms": 45,
+                "shares_accepted_24h": 12456,
+                "shares_rejected_24h": 23,
+                "rejected_rate_pct": 0.18
+            },
+            "boards": {
+                "total": 3,
+                "healthy": 3,
+                "data": [
+                    {"index": 0, "hashrate_ths": 65.2, "temp_c": 72, "chips_ok": 63, "chips_total": 63, "health": "healthy"},
+                    {"index": 1, "hashrate_ths": 64.8, "temp_c": 74, "chips_ok": 63, "chips_total": 63, "health": "healthy"},
+                    {"index": 2, "hashrate_ths": 64.3, "temp_c": 71, "chips_ok": 63, "chips_total": 63, "health": "healthy"}
+                ]
+            },
+            "revenue": {
+                "daily_btc": 0.000275,
+                "daily_usd": 23.50,
+                "power_cost_usd": 11.20,
+                "net_profit_usd": 12.30,
+                "btc_price": 85400,
+                "profit_margin_pct": 52.3,
+                "roi_days": 450
+            },
+            "history_24h": [
+                {"hour": "00:00", "hashrate_ths": 194.1, "net_profit_usd": 0.51},
+                ...
+            ]
+        }
+    """
+    from models import HostingMiner, HostingSite
+    from app import db
+    
+    try:
+        miner = HostingMiner.query.get(miner_id)
+        if not miner:
+            return jsonify({'success': False, 'error': 'Miner not found'}), 404
+        
+        site = HostingSite.query.get(miner.site_id)
+        
+        serial = getattr(miner, 'serial_number', None) or f"MINER-{miner_id}"
+        telemetry = MinerTelemetryLive.query.filter_by(
+            site_id=miner.site_id,
+            miner_id=serial
+        ).first()
+        
+        last_seen_text = "Never"
+        if telemetry and telemetry.last_seen:
+            delta = datetime.utcnow() - telemetry.last_seen
+            if delta.total_seconds() < 60:
+                last_seen_text = "Just now"
+            elif delta.total_seconds() < 3600:
+                last_seen_text = f"{int(delta.total_seconds() // 60)} minutes ago"
+            elif delta.total_seconds() < 86400:
+                last_seen_text = f"{int(delta.total_seconds() // 3600)} hours ago"
+            else:
+                last_seen_text = f"{int(delta.days)} days ago"
+        
+        miner_hashrate = miner.actual_hashrate if hasattr(miner, 'actual_hashrate') and miner.actual_hashrate else 0
+        miner_power = miner.actual_power if hasattr(miner, 'actual_power') and miner.actual_power else 0
+        
+        hashrate_ths = (telemetry.hashrate_ghs / 1000) if telemetry and telemetry.hashrate_ghs else miner_hashrate
+        hashrate_5s_ths = (telemetry.hashrate_5s_ghs / 1000) if telemetry and telemetry.hashrate_5s_ghs else hashrate_ths
+        hashrate_expected_ths = (telemetry.hashrate_expected_ghs / 1000) if telemetry and telemetry.hashrate_expected_ghs else (miner_hashrate if miner_hashrate > 0 else hashrate_ths)
+        
+        if hashrate_expected_ths > 0:
+            hashrate_deviation_pct = ((hashrate_ths - hashrate_expected_ths) / hashrate_expected_ths) * 100
+        else:
+            hashrate_deviation_pct = 0
+        
+        power_kw = (telemetry.power_consumption / 1000) if telemetry and telemetry.power_consumption else (miner_power / 1000 if miner_power else 0)
+        efficiency_jths = (power_kw * 1000 / hashrate_ths) if hashrate_ths > 0 else 0
+        
+        temp_min_c = telemetry.temperature_min if telemetry else 0
+        temp_max_c = telemetry.temperature_max if telemetry else 0
+        temp_avg_c = telemetry.temperature_avg if telemetry else 0
+        
+        uptime_hours = (telemetry.uptime_seconds / 3600) if telemetry and telemetry.uptime_seconds else 0
+        
+        pool_url = telemetry.pool_url if telemetry else ""
+        worker_name = telemetry.worker_name if telemetry else ""
+        pool_latency_ms = telemetry.pool_latency_ms if telemetry else 0
+        shares_accepted = telemetry.accepted_shares if telemetry else 0
+        shares_rejected = telemetry.rejected_shares if telemetry else 0
+        total_shares = shares_accepted + shares_rejected
+        rejected_rate_pct = (shares_rejected / total_shares * 100) if total_shares > 0 else 0
+        
+        raw_boards_data = []
+        if telemetry and telemetry.boards_data:
+            if isinstance(telemetry.boards_data, list):
+                raw_boards_data = telemetry.boards_data
+            elif isinstance(telemetry.boards_data, dict):
+                raw_boards_data = [telemetry.boards_data]
+        
+        boards_total = telemetry.boards_total if telemetry and telemetry.boards_total else 0
+        boards_healthy = telemetry.boards_healthy if telemetry and telemetry.boards_healthy else 0
+        overall_health = telemetry.overall_health if telemetry and telemetry.overall_health else "offline"
+        
+        boards_data = []
+        for board in raw_boards_data:
+            if isinstance(board, dict):
+                boards_data.append({
+                    "index": board.get("board_index", board.get("index", 0)),
+                    "hashrate_ths": board.get("hashrate_ths", 0),
+                    "temp_c": board.get("temperature_c", board.get("temp_c", 0)),
+                    "chips_ok": board.get("chips_ok", 0),
+                    "chips_total": board.get("chips_total", 0),
+                    "health": board.get("health", "offline")
+                })
+        
+        revenue_data = calculate_miner_revenue(
+            hashrate_ths=hashrate_ths,
+            power_kw=power_kw,
+            electricity_rate=miner.electricity_rate if hasattr(miner, 'electricity_rate') and miner.electricity_rate else 0.08
+        )
+        
+        history_24h = get_miner_history_24h(miner.site_id, serial)
+        
+        miner_model_name = "Unknown"
+        try:
+            if telemetry and telemetry.model:
+                miner_model_name = telemetry.model
+            elif hasattr(miner, 'miner_model_id') and miner.miner_model_id:
+                from models import MinerModel
+                model_record = MinerModel.query.get(miner.miner_model_id)
+                if model_record:
+                    miner_model_name = model_record.model_name
+        except Exception as model_err:
+            logger.warning(f"Error fetching miner model: {model_err}")
+            miner_model_name = "Unknown"
+        
+        result = {
+            "success": True,
+            "miner": {
+                "id": miner_id,
+                "name": serial,
+                "model": miner_model_name,
+                "ip_address": telemetry.ip_address if telemetry else (miner.ip_address if hasattr(miner, 'ip_address') else ""),
+                "site_name": site.name if site else "Unknown",
+                "online": telemetry.online if telemetry else False,
+                "last_seen": last_seen_text,
+                "overall_health": overall_health
+            },
+            "performance": {
+                "hashrate_ths": round(hashrate_ths, 2),
+                "hashrate_5s_ths": round(hashrate_5s_ths, 2),
+                "hashrate_expected_ths": round(hashrate_expected_ths, 2),
+                "hashrate_deviation_pct": round(hashrate_deviation_pct, 2),
+                "power_kw": round(power_kw, 2),
+                "efficiency_jths": round(efficiency_jths, 2),
+                "temp_min_c": round(temp_min_c, 1),
+                "temp_max_c": round(temp_max_c, 1),
+                "temp_avg_c": round(temp_avg_c, 1),
+                "uptime_hours": round(uptime_hours, 1),
+                "fan_speeds": telemetry.fan_speeds if telemetry and telemetry.fan_speeds else [],
+                "hardware_errors": telemetry.hardware_errors if telemetry else 0
+            },
+            "pool": {
+                "url": pool_url,
+                "worker": worker_name,
+                "latency_ms": round(pool_latency_ms, 1),
+                "shares_accepted_24h": shares_accepted,
+                "shares_rejected_24h": shares_rejected,
+                "rejected_rate_pct": round(rejected_rate_pct, 2)
+            },
+            "boards": {
+                "total": boards_total,
+                "healthy": boards_healthy,
+                "data": boards_data
+            },
+            "revenue": revenue_data,
+            "history_24h": history_24h
+        }
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"Get miner status error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+def calculate_miner_revenue(hashrate_ths: float, power_kw: float, electricity_rate: float = 0.08) -> dict:
+    """计算矿机收益"""
+    try:
+        from services.hosting_revenue_service import HostingRevenueService
+        service = HostingRevenueService()
+        
+        if hashrate_ths <= 0:
+            return {
+                "daily_btc": 0,
+                "daily_usd": 0,
+                "power_cost_usd": 0,
+                "net_profit_usd": 0,
+                "btc_price": service._btc_price,
+                "profit_margin_pct": 0,
+                "roi_days": 0
+            }
+        
+        hashrate_h = hashrate_ths * 1e12
+        network_hashrate = service._network_hashrate
+        block_reward = service._block_reward
+        btc_price = service._btc_price
+        
+        blocks_per_day = 144
+        daily_btc = (hashrate_h / network_hashrate) * blocks_per_day * block_reward
+        daily_usd = daily_btc * btc_price
+        
+        daily_power_kwh = power_kw * 24
+        power_cost_usd = daily_power_kwh * electricity_rate
+        
+        net_profit_usd = daily_usd - power_cost_usd
+        
+        profit_margin_pct = (net_profit_usd / daily_usd * 100) if daily_usd > 0 else 0
+        
+        miner_cost = 5000
+        roi_days = (miner_cost / net_profit_usd) if net_profit_usd > 0 else 9999
+        
+        return {
+            "daily_btc": round(daily_btc, 8),
+            "daily_usd": round(daily_usd, 2),
+            "power_cost_usd": round(power_cost_usd, 2),
+            "net_profit_usd": round(net_profit_usd, 2),
+            "btc_price": btc_price,
+            "profit_margin_pct": round(profit_margin_pct, 1),
+            "roi_days": round(roi_days, 0)
+        }
+        
+    except Exception as e:
+        logger.error(f"Calculate revenue error: {e}")
+        return {
+            "daily_btc": 0,
+            "daily_usd": 0,
+            "power_cost_usd": 0,
+            "net_profit_usd": 0,
+            "btc_price": 95000,
+            "profit_margin_pct": 0,
+            "roi_days": 0
+        }
+
+
+def get_miner_history_24h(site_id: int, miner_id: str) -> list:
+    """获取矿机24小时历史数据"""
+    try:
+        cutoff = datetime.utcnow() - timedelta(hours=24)
+        
+        history = MinerTelemetryHistory.query.filter(
+            MinerTelemetryHistory.site_id == site_id,
+            MinerTelemetryHistory.miner_id == miner_id,
+            MinerTelemetryHistory.timestamp >= cutoff
+        ).order_by(MinerTelemetryHistory.timestamp.asc()).all()
+        
+        if not history:
+            return []
+        
+        hourly_data = {}
+        for record in history:
+            hour_key = record.timestamp.strftime("%H:00")
+            if hour_key not in hourly_data:
+                hourly_data[hour_key] = {
+                    "hashrate_samples": [],
+                    "net_profit_samples": []
+                }
+            hourly_data[hour_key]["hashrate_samples"].append(record.hashrate_ghs / 1000)
+            if hasattr(record, 'net_profit_usd') and record.net_profit_usd:
+                hourly_data[hour_key]["net_profit_samples"].append(record.net_profit_usd)
+        
+        result = []
+        for hour, data in sorted(hourly_data.items()):
+            avg_hashrate = sum(data["hashrate_samples"]) / len(data["hashrate_samples"]) if data["hashrate_samples"] else 0
+            avg_profit = sum(data["net_profit_samples"]) / len(data["net_profit_samples"]) if data["net_profit_samples"] else 0
+            
+            if avg_profit == 0 and avg_hashrate > 0:
+                revenue_info = calculate_miner_revenue(avg_hashrate, 3.0)
+                avg_profit = revenue_info["net_profit_usd"] / 24
+            
+            result.append({
+                "hour": hour,
+                "hashrate_ths": round(avg_hashrate, 2),
+                "net_profit_usd": round(avg_profit, 4)
+            })
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Get history error: {e}")
+        return []
 
 
 def register_collector_routes(app):
