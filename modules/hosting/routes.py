@@ -4640,3 +4640,364 @@ def get_single_miner_evaluation(miner_id):
             'message_zh': '获取矿机评估失败',
             'error': str(e)
         }), 500
+
+
+# ============================================================================
+# E2EE (End-to-End Encryption) API Endpoints
+# Plan A: Encrypted credentials only (username/password/pool_password)
+# Plan B: Fully encrypted connection (IP/Port + credentials)
+# ============================================================================
+
+def validate_encrypted_block(block):
+    """验证加密块格式是否正确
+    
+    Args:
+        block: 加密块字典
+        
+    Returns:
+        tuple: (is_valid, error_message)
+    """
+    if not block:
+        return False, 'Encrypted block is required'
+    
+    required_fields = ['ciphertext', 'iv', 'salt', 'algo', 'version']
+    for field in required_fields:
+        if field not in block:
+            return False, f'Missing required field: {field}'
+    
+    if block.get('algo') != 'AES-256-GCM':
+        return False, 'Unsupported algorithm. Only AES-256-GCM is supported'
+    
+    if block.get('version') != 1:
+        return False, 'Unsupported version. Only version 1 is supported'
+    
+    return True, None
+
+
+@hosting_bp.route('/api/miners/<int:miner_id>/credentials', methods=['GET'])
+@login_required
+def get_miner_credentials(miner_id):
+    """获取矿机加密凭证 (Plan A)
+    
+    返回加密的凭证块，客户端使用密码短语解密。
+    服务器无法解密此数据。
+    """
+    try:
+        miner = HostingMiner.query.get(miner_id)
+        if not miner:
+            return jsonify({
+                'success': False,
+                'message_en': 'Miner not found',
+                'message_zh': '矿机不存在'
+            }), 404
+        
+        user_id = session.get('user_id')
+        user_role = normalize_role(session.get('role', 'guest'))
+        
+        has_full_access = rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT)
+        is_owner = miner.customer_id == user_id
+        
+        if not has_full_access and not is_owner:
+            return jsonify({
+                'success': False,
+                'message_en': 'Access denied',
+                'message_zh': '没有访问权限'
+            }), 403
+        
+        return jsonify({
+            'success': True,
+            'miner_id': miner_id,
+            'encrypted_credentials': miner.encrypted_credentials
+        })
+        
+    except Exception as e:
+        logger.error(f"获取矿机加密凭证失败: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message_en': 'Failed to get credentials',
+            'message_zh': '获取凭证失败',
+            'error': str(e)
+        }), 500
+
+
+@hosting_bp.route('/api/miners/<int:miner_id>/credentials', methods=['POST'])
+@login_required
+def save_miner_credentials(miner_id):
+    """保存矿机加密凭证 (Plan A)
+    
+    客户端在浏览器中加密凭证后发送密文块。
+    服务器只存储密文，无法解密。
+    
+    请求体:
+    {
+        "encrypted_credentials": {
+            "ciphertext": "base64...",
+            "iv": "base64...",
+            "salt": "base64...",
+            "algo": "AES-256-GCM",
+            "version": 1
+        }
+    }
+    """
+    try:
+        miner = HostingMiner.query.get(miner_id)
+        if not miner:
+            return jsonify({
+                'success': False,
+                'message_en': 'Miner not found',
+                'message_zh': '矿机不存在'
+            }), 404
+        
+        user_id = session.get('user_id')
+        user_role = normalize_role(session.get('role', 'guest'))
+        
+        has_full_access = rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT)
+        is_owner = miner.customer_id == user_id
+        
+        if not has_full_access and not is_owner:
+            return jsonify({
+                'success': False,
+                'message_en': 'Access denied',
+                'message_zh': '没有访问权限'
+            }), 403
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'message_en': 'Request body is required',
+                'message_zh': '请求体不能为空'
+            }), 400
+        
+        encrypted_credentials = data.get('encrypted_credentials')
+        
+        if encrypted_credentials:
+            is_valid, error = validate_encrypted_block(encrypted_credentials)
+            if not is_valid:
+                return jsonify({
+                    'success': False,
+                    'message_en': error,
+                    'message_zh': '加密块格式无效'
+                }), 400
+        
+        miner.encrypted_credentials = encrypted_credentials
+        db.session.commit()
+        
+        logger.info(f"矿机 {miner_id} 加密凭证已保存 (by user {user_id})")
+        
+        return jsonify({
+            'success': True,
+            'message_en': 'Credentials saved successfully',
+            'message_zh': '凭证保存成功',
+            'miner_id': miner_id,
+            'encrypted_credentials': miner.encrypted_credentials
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"保存矿机加密凭证失败: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message_en': 'Failed to save credentials',
+            'message_zh': '保存凭证失败',
+            'error': str(e)
+        }), 500
+
+
+@hosting_bp.route('/api/miners/<int:miner_id>/connection_full', methods=['GET'])
+@login_required
+def get_miner_connection_full(miner_id):
+    """获取矿机完整加密连接信息 (Plan B)
+    
+    返回完整加密连接块(包含IP/Port和凭证)，客户端使用密码短语解密。
+    服务器无法解密此数据。
+    """
+    try:
+        miner = HostingMiner.query.get(miner_id)
+        if not miner:
+            return jsonify({
+                'success': False,
+                'message_en': 'Miner not found',
+                'message_zh': '矿机不存在'
+            }), 404
+        
+        user_id = session.get('user_id')
+        user_role = normalize_role(session.get('role', 'guest'))
+        
+        has_full_access = rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT)
+        is_owner = miner.customer_id == user_id
+        
+        if not has_full_access and not is_owner:
+            return jsonify({
+                'success': False,
+                'message_en': 'Access denied',
+                'message_zh': '没有访问权限'
+            }), 403
+        
+        return jsonify({
+            'success': True,
+            'miner_id': miner_id,
+            'use_full_e2ee': miner.use_full_e2ee,
+            'encrypted_connection_full': miner.encrypted_connection_full
+        })
+        
+    except Exception as e:
+        logger.error(f"获取矿机完整加密连接失败: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message_en': 'Failed to get connection info',
+            'message_zh': '获取连接信息失败',
+            'error': str(e)
+        }), 500
+
+
+@hosting_bp.route('/api/miners/<int:miner_id>/connection_full', methods=['POST'])
+@login_required
+def save_miner_connection_full(miner_id):
+    """保存矿机完整加密连接信息 (Plan B)
+    
+    客户端在浏览器中加密完整连接信息后发送密文块。
+    服务器只存储密文，无法解密。
+    
+    请求体:
+    {
+        "use_full_e2ee": true,
+        "encrypted_connection_full": {
+            "ciphertext": "base64...",
+            "iv": "base64...",
+            "salt": "base64...",
+            "algo": "AES-256-GCM",
+            "version": 1
+        }
+    }
+    
+    设置 use_full_e2ee=false 可禁用完整E2EE模式，回退到Plan A。
+    """
+    try:
+        miner = HostingMiner.query.get(miner_id)
+        if not miner:
+            return jsonify({
+                'success': False,
+                'message_en': 'Miner not found',
+                'message_zh': '矿机不存在'
+            }), 404
+        
+        user_id = session.get('user_id')
+        user_role = normalize_role(session.get('role', 'guest'))
+        
+        has_full_access = rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT)
+        is_owner = miner.customer_id == user_id
+        
+        if not has_full_access and not is_owner:
+            return jsonify({
+                'success': False,
+                'message_en': 'Access denied',
+                'message_zh': '没有访问权限'
+            }), 403
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'message_en': 'Request body is required',
+                'message_zh': '请求体不能为空'
+            }), 400
+        
+        use_full_e2ee = data.get('use_full_e2ee', False)
+        encrypted_connection_full = data.get('encrypted_connection_full')
+        
+        if use_full_e2ee:
+            if not encrypted_connection_full:
+                return jsonify({
+                    'success': False,
+                    'message_en': 'encrypted_connection_full is required when use_full_e2ee is true',
+                    'message_zh': '启用完整E2EE时必须提供加密连接数据'
+                }), 400
+            
+            is_valid, error = validate_encrypted_block(encrypted_connection_full)
+            if not is_valid:
+                return jsonify({
+                    'success': False,
+                    'message_en': error,
+                    'message_zh': '加密块格式无效'
+                }), 400
+        
+        miner.use_full_e2ee = use_full_e2ee
+        miner.encrypted_connection_full = encrypted_connection_full if use_full_e2ee else None
+        db.session.commit()
+        
+        mode = 'Plan B (Full E2EE)' if use_full_e2ee else 'Plan A'
+        logger.info(f"矿机 {miner_id} 连接配置已更新: {mode} (by user {user_id})")
+        
+        return jsonify({
+            'success': True,
+            'message_en': f'Connection saved successfully ({mode})',
+            'message_zh': f'连接信息保存成功 ({mode})',
+            'miner_id': miner_id,
+            'use_full_e2ee': miner.use_full_e2ee,
+            'encrypted_connection_full': miner.encrypted_connection_full
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"保存矿机完整加密连接失败: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message_en': 'Failed to save connection info',
+            'message_zh': '保存连接信息失败',
+            'error': str(e)
+        }), 500
+
+
+@hosting_bp.route('/api/miners/<int:miner_id>/credentials/reset', methods=['DELETE'])
+@login_required
+def reset_miner_credentials(miner_id):
+    """重置矿机加密凭证
+    
+    用于用户忘记密码短语时清除加密数据，之后需要重新输入凭证。
+    """
+    try:
+        miner = HostingMiner.query.get(miner_id)
+        if not miner:
+            return jsonify({
+                'success': False,
+                'message_en': 'Miner not found',
+                'message_zh': '矿机不存在'
+            }), 404
+        
+        user_id = session.get('user_id')
+        user_role = normalize_role(session.get('role', 'guest'))
+        
+        has_full_access = rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT)
+        is_owner = miner.customer_id == user_id
+        
+        if not has_full_access and not is_owner:
+            return jsonify({
+                'success': False,
+                'message_en': 'Access denied',
+                'message_zh': '没有访问权限'
+            }), 403
+        
+        miner.encrypted_credentials = None
+        miner.encrypted_connection_full = None
+        miner.use_full_e2ee = False
+        db.session.commit()
+        
+        logger.info(f"矿机 {miner_id} 加密凭证已重置 (by user {user_id})")
+        
+        return jsonify({
+            'success': True,
+            'message_en': 'Credentials reset successfully. Please re-enter and encrypt your connection details.',
+            'message_zh': '凭证已重置。请重新输入并加密您的连接信息。',
+            'miner_id': miner_id
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"重置矿机加密凭证失败: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message_en': 'Failed to reset credentials',
+            'message_zh': '重置凭证失败',
+            'error': str(e)
+        }), 500
