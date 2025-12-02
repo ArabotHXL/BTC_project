@@ -427,80 +427,90 @@ def initialize_database():
         logging.error(f"Database initialization failed: {e}")
         return False
 
-# Initialize database
-initialize_database_result = initialize_database()
+# =========================================================================
+# 🚀 DEFERRED INITIALIZATION FOR FAST STARTUP (Autoscale optimization)
+# =========================================================================
+# All heavy initialization is deferred to a background thread so Gunicorn
+# can bind to port 5000 immediately and pass health checks.
+# =========================================================================
 
-# Initialize blockchain scheduler after database setup
-def initialize_blockchain_scheduler():
-    """Initialize blockchain scheduler for automated data recording"""
-    try:
-        # Import blockchain modules after database is ready
-        import blockchain_integration  # noqa: F401
-        from scheduler import start_blockchain_scheduler
-        
-        # Check if blockchain is enabled
-        blockchain_enabled = os.environ.get('BLOCKCHAIN_ENABLED', 'false').lower() == 'true'
-        
-        if blockchain_enabled:
-            scheduler = start_blockchain_scheduler()
-            logging.info("Blockchain scheduler initialized and started")
-            return scheduler
-        else:
-            logging.info("Blockchain scheduler disabled (BLOCKCHAIN_ENABLED=false)")
-            return None
-            
-    except ImportError as e:
-        logging.warning(f"Blockchain modules not available: {e}")
-        return None
-    except Exception as e:
-        logging.error(f"Failed to initialize blockchain scheduler: {e}")
-        return None
+import threading
 
-# Initialize blockchain scheduler if database initialization was successful
+# Global state for deferred initialization
+_initialization_complete = False
+_initialization_lock = threading.Lock()
 blockchain_scheduler = None
-if initialize_database_result:
-    blockchain_scheduler = initialize_blockchain_scheduler()
 
-# 🚀 Initialize data collectors manager
-def initialize_data_collectors():
-    """Initialize all data collection pipelines"""
-    try:
-        from data_collectors_manager import start_all_collectors
-        import threading
+def _run_deferred_initialization():
+    """Run all heavy initialization tasks in background after port is open"""
+    global _initialization_complete, blockchain_scheduler
+    
+    with _initialization_lock:
+        if _initialization_complete:
+            return
         
-        # Start collectors in background thread
-        def start_collectors():
-            time.sleep(5)  # Wait for app to be fully ready
-            results = start_all_collectors()
-            logging.info(f"Data collectors started: {results}")
+        logging.info("🚀 Starting deferred initialization (background thread)...")
         
-        collector_thread = threading.Thread(target=start_collectors, daemon=True)
-        collector_thread.start()
-        logging.info("Data collectors manager initialized")
-    except Exception as e:
-        logging.error(f"Failed to initialize data collectors: {e}")
+        # Wait a moment for the server to fully start
+        time.sleep(2)
+        
+        # Step 1: Initialize database
+        initialize_database_result = False
+        try:
+            initialize_database_result = initialize_database()
+            logging.info(f"✅ Database initialization: {'success' if initialize_database_result else 'failed'}")
+        except Exception as e:
+            logging.error(f"❌ Database initialization error: {e}")
+        
+        # Step 2: Initialize blockchain scheduler
+        if initialize_database_result:
+            try:
+                import blockchain_integration  # noqa: F401
+                from scheduler import start_blockchain_scheduler
+                
+                blockchain_enabled = os.environ.get('BLOCKCHAIN_ENABLED', 'false').lower() == 'true'
+                if blockchain_enabled:
+                    blockchain_scheduler = start_blockchain_scheduler()
+                    logging.info("✅ Blockchain scheduler started")
+                else:
+                    logging.info("ℹ️ Blockchain scheduler disabled (BLOCKCHAIN_ENABLED=false)")
+            except ImportError as e:
+                logging.warning(f"⚠️ Blockchain modules not available: {e}")
+            except Exception as e:
+                logging.error(f"❌ Blockchain scheduler error: {e}")
+        
+        # Step 3: Initialize data collectors
+        if initialize_database_result:
+            try:
+                from data_collectors_manager import start_all_collectors
+                time.sleep(3)  # Extra delay for collectors
+                results = start_all_collectors()
+                logging.info(f"✅ Data collectors started: {results}")
+            except Exception as e:
+                logging.error(f"❌ Data collectors error: {e}")
+        
+        # Step 4: Initialize portfolio management
+        if initialize_database_result:
+            try:
+                from user_portfolio_management import portfolio_manager
+                portfolio_manager.create_portfolio_table()
+                logging.info("✅ Portfolio management initialized")
+            except Exception as e:
+                logging.warning(f"⚠️ Portfolio management error: {e}")
+        
+        _initialization_complete = True
+        logging.info("🎉 Deferred initialization complete!")
 
-# Start data collectors if database is ready
-if initialize_database_result:
-    initialize_data_collectors()
+# Start deferred initialization in background thread immediately
+_init_thread = threading.Thread(target=_run_deferred_initialization, daemon=True)
+_init_thread.start()
+logging.info("📦 Background initialization thread started - server will respond immediately")
 
-# Import models at module level for global access
+# Import models at module level for global access (lightweight, no DB operations)
 from models import LoginRecord, UserAccess, Customer, Contact, Lead, Activity, LeadStatus, DealStatus, NetworkSnapshot, MinerModel, User, HostingMinerOperationLog
 import models
-# 🔧 CRITICAL FIX: Enable models_subscription import for payment system
 import models_subscription  # noqa: F401
 logging.info("Models imported successfully at module level")
-
-# 初始化投资组合管理系统
-try:
-    from user_portfolio_management import portfolio_manager
-    portfolio_manager.create_portfolio_table()
-    logging.info("用户投资组合管理系统初始化完成")
-except Exception as e:
-    logging.error(f"投资组合管理系统初始化失败: {e}")
-
-if not initialize_database_result:
-    logging.warning("Database initialization failed - some features may not work correctly")
 
 # Helper functions that use database models - defined AFTER model imports
 def get_user_by_email(email):
