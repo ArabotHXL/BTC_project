@@ -644,9 +644,11 @@ function viewPlanDetails(planId) {
         .then(r => r.json())
         .then(data => {
             if (data.success) {
+                // API returns 'target_power_reduction_kw' not 'target_power_kw'
+                const targetPower = data.plan.target_power_reduction_kw || data.plan.target_power_kw || 0;
                 alert(currentLang === 'en' ? 
-                    `Plan Details:\nID: ${data.plan.id}\nSite: ${data.plan.site_name}\nStrategy: ${data.plan.strategy_name}\nTarget Power: ${data.plan.target_power_kw} kW\nStatus: ${data.plan.status}` :
-                    `计划详情:\nID: ${data.plan.id}\n站点: ${data.plan.site_name}\n策略: ${data.plan.strategy_name}\n目标功率: ${data.plan.target_power_kw} kW\n状态: ${data.plan.status}`
+                    `Plan Details:\nID: ${data.plan.id}\nSite: ${data.plan.site_name}\nStrategy: ${data.plan.strategy_name}\nTarget Power: ${targetPower} kW\nStatus: ${data.plan.status}` :
+                    `计划详情:\nID: ${data.plan.id}\n站点: ${data.plan.site_name}\n策略: ${data.plan.strategy_name}\n目标功率: ${targetPower} kW\n状态: ${data.plan.status}`
                 );
             }
         })
