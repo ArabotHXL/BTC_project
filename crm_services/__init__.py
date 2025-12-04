@@ -31,7 +31,11 @@ from .utils import (
     get_current_user_id,
     calculate_monthly_trend,
     get_polling_interval,
-    success_response_with_polling
+    success_response_with_polling,
+    can_access_all_data,
+    apply_tenant_filter,
+    get_tenant_filter,
+    verify_resource_access
 )
 
 __all__ = [
@@ -44,7 +48,11 @@ __all__ = [
     'get_current_user_id',
     'calculate_monthly_trend',
     'get_polling_interval',
-    'success_response_with_polling'
+    'success_response_with_polling',
+    'can_access_all_data',
+    'apply_tenant_filter',
+    'get_tenant_filter',
+    'verify_resource_access'
 ]
 
 __version__ = '1.0.0'

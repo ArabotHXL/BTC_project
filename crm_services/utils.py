@@ -122,6 +122,100 @@ def get_current_user_id():
     return session.get('user_id')
 
 
+def can_access_all_data():
+    """
+    检查当前用户是否可以访问所有数据（Owner/Admin）
+    Check if current user can access all data (Owner/Admin roles)
+    
+    Returns:
+        bool: True if user can access all data
+    """
+    role = session.get('role', 'guest')
+    return role in ['owner', 'admin']
+
+
+def apply_tenant_filter(query, model, user_id=None):
+    """
+    应用租户隔离过滤器
+    Apply tenant isolation filter to query
+    
+    如果用户是Owner/Admin，返回原始查询（可以看到所有数据）
+    否则只返回用户自己创建的数据
+    
+    Args:
+        query: SQLAlchemy查询对象
+        model: 模型类（必须有created_by_id字段）
+        user_id: 用户ID（如果不提供，从session获取）
+        
+    Returns:
+        SQLAlchemy查询对象（已过滤）
+    """
+    if can_access_all_data():
+        return query
+    
+    if user_id is None:
+        user_id = get_current_user_id()
+    
+    if user_id is None:
+        return query.filter(False)
+    
+    if hasattr(model, 'created_by_id'):
+        return query.filter(model.created_by_id == user_id)
+    
+    return query
+
+
+def get_tenant_filter(model, user_id=None):
+    """
+    获取租户过滤条件（用于计数等场景）
+    Get tenant filter condition for count queries etc.
+    
+    Args:
+        model: 模型类（必须有created_by_id字段）
+        user_id: 用户ID（如果不提供，从session获取）
+        
+    Returns:
+        SQLAlchemy过滤条件或None（如果是Owner/Admin）
+    """
+    if can_access_all_data():
+        return None
+    
+    if user_id is None:
+        user_id = get_current_user_id()
+    
+    if user_id is None or not hasattr(model, 'created_by_id'):
+        return None
+    
+    return model.created_by_id == user_id
+
+
+def verify_resource_access(resource, user_id=None):
+    """
+    验证用户是否有权访问特定资源
+    Verify if user has access to a specific resource
+    
+    Args:
+        resource: 数据库资源对象（必须有created_by_id字段）
+        user_id: 用户ID（如果不提供，从session获取）
+        
+    Returns:
+        bool: True if user has access
+    """
+    if can_access_all_data():
+        return True
+    
+    if user_id is None:
+        user_id = get_current_user_id()
+    
+    if user_id is None:
+        return False
+    
+    if hasattr(resource, 'created_by_id'):
+        return resource.created_by_id == user_id
+    
+    return True
+
+
 def calculate_monthly_trend(db_session, model, amount_field, date_field, user_id_field, user_id, months=12):
     """
     计算月度趋势（通用函数）

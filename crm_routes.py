@@ -17,7 +17,8 @@ from models import Customer, Lead, Deal, Invoice, Asset, Activity, DealStatus, L
 # Import CRM service layer
 from crm_services import (
     BaseService, get_current_user_id, success_response, error_response,
-    success_response_with_polling
+    success_response_with_polling, apply_tenant_filter, get_tenant_filter,
+    verify_resource_access, can_access_all_data
 )
 from crm_services.geo import (
     get_city_coordinates, get_all_cities, is_city_supported, get_region_cities
@@ -53,11 +54,19 @@ def crm_dashboard():
         if not user_id:
             return redirect(url_for('login'))
         
-        # Query real statistics from database
-        customers_count = Customer.query.count() or 0
-        leads_count = Lead.query.count() or 0
-        deals_count = Deal.query.count() or 0
-        deals_value = Deal.query.with_entities(func.sum(Deal.value)).scalar() or 0
+        # Query real statistics from database - WITH TENANT ISOLATION
+        tenant_filter = get_tenant_filter(Customer, user_id)
+        if tenant_filter is not None:
+            customers_count = Customer.query.filter(tenant_filter).count() or 0
+            leads_count = Lead.query.filter(Lead.created_by_id == user_id).count() or 0
+            deals_count = Deal.query.filter(Deal.created_by_id == user_id).count() or 0
+            deals_value = Deal.query.filter(Deal.created_by_id == user_id).with_entities(func.sum(Deal.value)).scalar() or 0
+        else:
+            # Owner/Admin can see all data
+            customers_count = Customer.query.count() or 0
+            leads_count = Lead.query.count() or 0
+            deals_count = Deal.query.count() or 0
+            deals_value = Deal.query.with_entities(func.sum(Deal.value)).scalar() or 0
         
         # DEBUG: Log actual values to diagnose NaN issue
         logger.info(f"Dashboard Variables: customers_count={customers_count} (type={type(customers_count).__name__})")
@@ -65,11 +74,13 @@ def crm_dashboard():
         logger.info(f"Dashboard Variables: deals_count={deals_count} (type={type(deals_count).__name__})")
         logger.info(f"Dashboard Variables: deals_value={deals_value} (type={type(deals_value).__name__})")
         
-        # Get recent activities (limit 10)
-        recent_activities = Activity.query.order_by(Activity.created_at.desc()).limit(10).all()
+        # Get recent activities (limit 10) - WITH TENANT ISOLATION
+        activities_query = Activity.query.order_by(Activity.created_at.desc())
+        recent_activities = apply_tenant_filter(activities_query, Activity, user_id).limit(10).all()
         
-        # Get leads with follow-up dates
-        follow_up_leads = Lead.query.filter(Lead.next_follow_up.isnot(None)).order_by(Lead.next_follow_up).limit(10).all()
+        # Get leads with follow-up dates - WITH TENANT ISOLATION
+        leads_query = Lead.query.filter(Lead.next_follow_up.isnot(None)).order_by(Lead.next_follow_up)
+        follow_up_leads = apply_tenant_filter(leads_query, Lead, user_id).limit(10).all()
         
         return render_template('crm/dashboard_new.html',
                              title='CRM Dashboard',
@@ -102,14 +113,17 @@ def customers_list():
 
 @crm_bp.route('/api/customers')
 def get_customers():
-    """获取客户列表 - 从数据库读取真实数据"""
+    """获取客户列表 - 从数据库读取真实数据 (WITH TENANT ISOLATION)"""
     try:
         # Check authentication
         if 'user_id' not in session:
             return jsonify({'success': False, 'error': 'Not authenticated'}), 401
         
-        # Fetch customers from database
-        customers = Customer.query.order_by(Customer.created_at.desc()).all()
+        user_id = session.get('user_id')
+        
+        # Fetch customers from database - WITH TENANT ISOLATION
+        customers_query = Customer.query.order_by(Customer.created_at.desc())
+        customers = apply_tenant_filter(customers_query, Customer, user_id).all()
         
         customers_data = []
         for customer in customers:
@@ -157,7 +171,7 @@ def get_customers():
 
 @crm_bp.route('/api/customer/<int:customer_id>')
 def get_customer_details(customer_id):
-    """获取客户详情"""
+    """获取客户详情 (WITH TENANT ISOLATION)"""
     try:
         # Check authentication
         if 'user_id' not in session:
@@ -165,6 +179,10 @@ def get_customer_details(customer_id):
         
         # Query real customer from database
         customer = Customer.query.get_or_404(customer_id)
+        
+        # Verify tenant access
+        if not verify_resource_access(customer):
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
         
         # Get real deals for this customer
         deals = Deal.query.filter_by(customer_id=customer_id).all()
@@ -245,6 +263,10 @@ def get_customer_revenue_trend(customer_id):
         # Query customer
         customer = Customer.query.get_or_404(customer_id)
         
+        # Verify tenant access
+        if not verify_resource_access(customer):
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
         # Get all deals for this customer
         deals = Deal.query.filter_by(customer_id=customer_id).order_by(Deal.created_at.asc()).all()
         
@@ -324,6 +346,10 @@ def get_customer_assets(customer_id):
         # Query customer
         customer = Customer.query.get_or_404(customer_id)
         
+        # Verify tenant access
+        if not verify_resource_access(customer):
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
         # Query assets for this customer
         assets = Asset.query.filter_by(customer_id=customer_id).all()
         
@@ -391,6 +417,10 @@ def get_customer_deals(customer_id):
         
         # Query customer
         customer = Customer.query.get_or_404(customer_id)
+        
+        # Verify tenant access
+        if not verify_resource_access(customer):
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
         
         # Query deals for this customer
         deals = Deal.query.filter_by(customer_id=customer_id).order_by(Deal.created_at.desc()).all()
@@ -469,6 +499,10 @@ def get_customer_activities(customer_id):
         # Query customer
         customer = Customer.query.get_or_404(customer_id)
         
+        # Verify tenant access
+        if not verify_resource_access(customer):
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
         # Get pagination parameters
         page = request.args.get('page', 1, type=int)
         per_page = 30
@@ -525,12 +559,14 @@ def leads_page():
         if status_filter:
             leads_query = leads_query.filter(Lead.status == LeadStatus[status_filter])
         
-        leads = leads_query.order_by(Lead.created_at.desc()).all()
+        # Apply tenant isolation
+        leads = apply_tenant_filter(leads_query.order_by(Lead.created_at.desc()), Lead, user_id).all()
         
         today = datetime.now().date()
-        today_followups = Lead.query.filter(
+        today_followups_query = Lead.query.filter(
             func.date(Lead.next_follow_up) == today
-        ).order_by(Lead.next_follow_up).all()
+        ).order_by(Lead.next_follow_up)
+        today_followups = apply_tenant_filter(today_followups_query, Lead, user_id).all()
         
         all_statuses = [status.name for status in LeadStatus]
         
@@ -567,25 +603,51 @@ def deals_kpi():
         if 'user_id' not in session:
             return jsonify({'success': False, 'error': 'Not authenticated'}), 401
         
+        user_id = session.get('user_id')
         from sqlalchemy.orm import joinedload
         
-        # 总交易数量
-        total_deals = Deal.query.count() or 0
+        # Apply tenant filter for all queries
+        tenant_filter = get_tenant_filter(Deal, user_id)
         
-        # 总交易价值
-        total_value = Deal.query.with_entities(func.sum(Deal.value)).scalar() or 0
-        
-        # 活跃项目数（状态非COMPLETED/CANCELED）
-        active_projects = Deal.query.filter(
-            ~Deal.status.in_([DealStatus.COMPLETED, DealStatus.CANCELED])
-        ).count() or 0
-        
-        # 计算平均成交周期（已完成的交易）
-        completed_deals = Deal.query.filter(
-            Deal.status == DealStatus.COMPLETED,
-            Deal.closed_date.isnot(None),
-            Deal.created_at.isnot(None)
-        ).all()
+        if tenant_filter is not None:
+            # 总交易数量
+            total_deals = Deal.query.filter(tenant_filter).count() or 0
+            
+            # 总交易价值
+            total_value = Deal.query.filter(tenant_filter).with_entities(func.sum(Deal.value)).scalar() or 0
+            
+            # 活跃项目数（状态非COMPLETED/CANCELED）
+            active_projects = Deal.query.filter(
+                tenant_filter,
+                ~Deal.status.in_([DealStatus.COMPLETED, DealStatus.CANCELED])
+            ).count() or 0
+            
+            # 计算平均成交周期（已完成的交易）
+            completed_deals = Deal.query.filter(
+                tenant_filter,
+                Deal.status == DealStatus.COMPLETED,
+                Deal.closed_date.isnot(None),
+                Deal.created_at.isnot(None)
+            ).all()
+        else:
+            # Owner/Admin can see all data
+            # 总交易数量
+            total_deals = Deal.query.count() or 0
+            
+            # 总交易价值
+            total_value = Deal.query.with_entities(func.sum(Deal.value)).scalar() or 0
+            
+            # 活跃项目数（状态非COMPLETED/CANCELED）
+            active_projects = Deal.query.filter(
+                ~Deal.status.in_([DealStatus.COMPLETED, DealStatus.CANCELED])
+            ).count() or 0
+            
+            # 计算平均成交周期（已完成的交易）
+            completed_deals = Deal.query.filter(
+                Deal.status == DealStatus.COMPLETED,
+                Deal.closed_date.isnot(None),
+                Deal.created_at.isnot(None)
+            ).all()
         
         if completed_deals:
             total_days = sum([
@@ -620,6 +682,8 @@ def deals_revenue_trend():
         if 'user_id' not in session:
             return jsonify({'success': False, 'error': 'Not authenticated'}), 401
         
+        user_id = session.get('user_id')
+        
         # 获取最近6个月的数据
         now = datetime.now()
         months_data = []
@@ -635,11 +699,12 @@ def deals_revenue_trend():
             else:
                 month_end = month_start.replace(month=month_start.month + 1)
             
-            # 查询该月所有交易
-            month_deals = Deal.query.filter(
+            # 查询该月所有交易 - with tenant filter
+            month_deals_query = Deal.query.filter(
                 Deal.created_at >= month_start,
                 Deal.created_at < month_end
-            ).all()
+            )
+            month_deals = apply_tenant_filter(month_deals_query, Deal, user_id).all()
             
             # 计算总收入和已完成收入
             total_revenue = sum([deal.value or 0 for deal in month_deals])
@@ -674,11 +739,14 @@ def deals_mining_stats():
         if 'user_id' not in session:
             return jsonify({'success': False, 'error': 'Not authenticated'}), 401
         
-        # 获取所有有挖矿容量的交易
-        mining_deals = Deal.query.filter(
+        user_id = session.get('user_id')
+        
+        # 获取所有有挖矿容量的交易 - with tenant filter
+        mining_deals_query = Deal.query.filter(
             Deal.mining_capacity.isnot(None),
             Deal.mining_capacity > 0
-        ).all()
+        )
+        mining_deals = apply_tenant_filter(mining_deals_query, Deal, user_id).all()
         
         # 托管容量统计
         total_capacity = sum([deal.mining_capacity or 0 for deal in mining_deals])
@@ -739,10 +807,12 @@ def deals_kanban():
         if 'user_id' not in session:
             return jsonify({'success': False, 'error': 'Not authenticated'}), 401
         
+        user_id = session.get('user_id')
         from sqlalchemy.orm import joinedload
         
-        # 预加载customer关系，防止N+1查询
-        all_deals = Deal.query.options(joinedload(Deal.customer)).all()
+        # 预加载customer关系，防止N+1查询 - with tenant filter
+        deals_query = Deal.query.options(joinedload(Deal.customer))
+        all_deals = apply_tenant_filter(deals_query, Deal, user_id).all()
         
         # 按状态分组
         kanban_data = {}
@@ -791,10 +861,12 @@ def deals_top_investments():
         if 'user_id' not in session:
             return jsonify({'success': False, 'error': 'Not authenticated'}), 401
         
+        user_id = session.get('user_id')
         from sqlalchemy.orm import joinedload
         
-        # 获取所有交易，预加载客户关系
-        all_deals = Deal.query.options(joinedload(Deal.customer)).all()
+        # 获取所有交易，预加载客户关系 - with tenant filter
+        deals_query = Deal.query.options(joinedload(Deal.customer))
+        all_deals = apply_tenant_filter(deals_query, Deal, user_id).all()
         
         # 按客户聚合投资额
         customer_investments = {}
@@ -862,45 +934,89 @@ def get_activities_stats():
         if 'user_id' not in session:
             return jsonify({'success': False, 'error': 'Not authenticated'}), 401
         
+        user_id = session.get('user_id')
         from collections import Counter
         
         today = datetime.now().date()
         week_start = today - timedelta(days=today.weekday())
         month_start = today.replace(day=1)
         
-        total_activities = Activity.query.count() or 0
+        # Get tenant filter for Activity
+        activity_filter = get_tenant_filter(Activity, user_id)
+        customer_filter = get_tenant_filter(Customer, user_id)
         
-        today_activities = Activity.query.filter(
-            func.date(Activity.created_at) == today
-        ).count() or 0
-        
-        week_activities = Activity.query.filter(
-            Activity.created_at >= week_start
-        ).count() or 0
-        
-        month_activities = Activity.query.filter(
-            Activity.created_at >= month_start
-        ).count() or 0
-        
-        customer_activity_counts = db.session.query(
-            Customer.name,
-            func.count(Activity.id).label('activity_count')
-        ).join(Activity, Activity.customer_id == Customer.id)\
-         .group_by(Customer.id, Customer.name)\
-         .order_by(func.count(Activity.id).desc())\
-         .first()
+        if activity_filter is not None:
+            total_activities = Activity.query.filter(activity_filter).count() or 0
+            
+            today_activities = Activity.query.filter(
+                activity_filter,
+                func.date(Activity.created_at) == today
+            ).count() or 0
+            
+            week_activities = Activity.query.filter(
+                activity_filter,
+                Activity.created_at >= week_start
+            ).count() or 0
+            
+            month_activities = Activity.query.filter(
+                activity_filter,
+                Activity.created_at >= month_start
+            ).count() or 0
+            
+            customer_activity_query = db.session.query(
+                Customer.name,
+                func.count(Activity.id).label('activity_count')
+            ).join(Activity, Activity.customer_id == Customer.id)
+            
+            if customer_filter is not None:
+                customer_activity_query = customer_activity_query.filter(customer_filter)
+            
+            customer_activity_counts = customer_activity_query\
+             .group_by(Customer.id, Customer.name)\
+             .order_by(func.count(Activity.id).desc())\
+             .first()
+            
+            type_counts = db.session.query(
+                Activity.type,
+                func.count(Activity.id).label('count')
+            ).filter(activity_filter)\
+             .group_by(Activity.type)\
+             .order_by(func.count(Activity.id).desc())\
+             .first()
+        else:
+            total_activities = Activity.query.count() or 0
+            
+            today_activities = Activity.query.filter(
+                func.date(Activity.created_at) == today
+            ).count() or 0
+            
+            week_activities = Activity.query.filter(
+                Activity.created_at >= week_start
+            ).count() or 0
+            
+            month_activities = Activity.query.filter(
+                Activity.created_at >= month_start
+            ).count() or 0
+            
+            customer_activity_counts = db.session.query(
+                Customer.name,
+                func.count(Activity.id).label('activity_count')
+            ).join(Activity, Activity.customer_id == Customer.id)\
+             .group_by(Customer.id, Customer.name)\
+             .order_by(func.count(Activity.id).desc())\
+             .first()
+            
+            type_counts = db.session.query(
+                Activity.type,
+                func.count(Activity.id).label('count')
+            ).group_by(Activity.type)\
+             .order_by(func.count(Activity.id).desc())\
+             .first()
         
         most_active_customer = {
             'name': customer_activity_counts[0] if customer_activity_counts else 'N/A',
             'count': int(customer_activity_counts[1]) if customer_activity_counts else 0
         }
-        
-        type_counts = db.session.query(
-            Activity.type,
-            func.count(Activity.id).label('count')
-        ).group_by(Activity.type)\
-         .order_by(func.count(Activity.id).desc())\
-         .first()
         
         most_active_type = {
             'type': type_counts[0] if type_counts else '备注',
@@ -928,11 +1044,21 @@ def get_activities_heatmap():
         if 'user_id' not in session:
             return jsonify({'success': False, 'error': 'Not authenticated'}), 401
         
-        customer_activities = db.session.query(
+        user_id = session.get('user_id')
+        
+        # Get tenant filter
+        customer_filter = get_tenant_filter(Customer, user_id)
+        
+        customer_activities_query = db.session.query(
             Customer.id,
             Customer.name,
             func.count(Activity.id).label('activity_count')
-        ).join(Activity, Activity.customer_id == Customer.id)\
+        ).join(Activity, Activity.customer_id == Customer.id)
+        
+        if customer_filter is not None:
+            customer_activities_query = customer_activities_query.filter(customer_filter)
+        
+        customer_activities = customer_activities_query\
          .group_by(Customer.id, Customer.name)\
          .order_by(func.count(Activity.id).desc())\
          .limit(10)\
@@ -985,9 +1111,10 @@ def get_activities_timeline():
                 'types': {}
             }
         
-        activities = Activity.query.filter(
+        activities_query = Activity.query.filter(
             Activity.created_at >= start_date
-        ).all()
+        )
+        activities = apply_tenant_filter(activities_query, Activity, session.get('user_id')).all()
         
         for activity in activities:
             date_key = activity.created_at.strftime('%Y-%m-%d')
@@ -1006,7 +1133,9 @@ def get_activities_timeline():
             })
         
         milestones = []
-        first_contact = Activity.query.order_by(Activity.created_at.asc()).first()
+        user_id = session.get('user_id')
+        first_contact_query = Activity.query.order_by(Activity.created_at.asc())
+        first_contact = apply_tenant_filter(first_contact_query, Activity, user_id).first()
         if first_contact:
             milestones.append({
                 'date': first_contact.created_at.strftime('%Y-%m-%d'),
@@ -1014,10 +1143,11 @@ def get_activities_timeline():
                 'description': first_contact.summary
             })
         
-        recent_deals = Deal.query.filter(
+        recent_deals_query = Deal.query.filter(
             Deal.status == DealStatus.COMPLETED,
             Deal.created_at >= start_date
-        ).order_by(Deal.created_at.desc()).limit(3).all()
+        ).order_by(Deal.created_at.desc()).limit(3)
+        recent_deals = apply_tenant_filter(recent_deals_query, Deal, user_id).all()
         
         for deal in recent_deals:
             milestones.append({
@@ -1043,10 +1173,14 @@ def get_activities_type_trend():
         if 'user_id' not in session:
             return jsonify({'success': False, 'error': 'Not authenticated'}), 401
         
+        user_id = session.get('user_id')
         end_date = datetime.now().date()
         start_date = end_date - timedelta(days=6)
         
         activity_types = ['备注', '电话', '会议', '邮件', '现场拜访', '创建', '其他']
+        
+        # Get tenant filter
+        activity_filter = get_tenant_filter(Activity, user_id)
         
         trend_data = {
             'dates': [],
@@ -1058,10 +1192,17 @@ def get_activities_type_trend():
             trend_data['dates'].append(date.strftime('%m-%d'))
             
             for activity_type in activity_types:
-                count = Activity.query.filter(
-                    func.date(Activity.created_at) == date,
-                    Activity.type == activity_type
-                ).count() or 0
+                if activity_filter is not None:
+                    count = Activity.query.filter(
+                        activity_filter,
+                        func.date(Activity.created_at) == date,
+                        Activity.type == activity_type
+                    ).count() or 0
+                else:
+                    count = Activity.query.filter(
+                        func.date(Activity.created_at) == date,
+                        Activity.type == activity_type
+                    ).count() or 0
                 
                 trend_data['types'][activity_type].append(int(count))
         
@@ -1827,6 +1968,11 @@ def customer_detail_page(customer_id):
         # Query customer from database
         customer = Customer.query.get_or_404(customer_id)
         
+        # Verify tenant access
+        if not verify_resource_access(customer):
+            flash('Access denied', 'error')
+            return redirect(url_for('crm.customers'))
+        
         return render_template('crm/customer_detail.html',
                              title='Customer Detail',
                              page='crm_customer_detail',
@@ -1938,6 +2084,11 @@ def lead_detail_page(lead_id):
         from sqlalchemy.orm import joinedload
         lead = Lead.query.options(joinedload(Lead.activities)).get_or_404(lead_id)
         
+        # Verify tenant access
+        if not verify_resource_access(lead):
+            flash('Access denied', 'error')
+            return redirect(url_for('crm.leads'))
+        
         return render_template('crm/lead_detail.html',
                              title=f'Lead Detail - {lead.title}',
                              page='crm_lead_detail',
@@ -1956,6 +2107,11 @@ def update_lead_status(lead_id):
             return redirect(url_for('login'))
         
         lead = Lead.query.get_or_404(lead_id)
+        
+        # Verify tenant access
+        if not verify_resource_access(lead):
+            flash('Access denied', 'error')
+            return redirect(url_for('crm.leads'))
         
         # 获取表单数据
         new_status_name = request.form.get('status')
@@ -2043,6 +2199,11 @@ def new_lead_page(customer_id):
         # Query customer object for template breadcrumb
         customer = Customer.query.get_or_404(customer_id)
         
+        # Verify tenant access
+        if not verify_resource_access(customer):
+            flash('Access denied', 'error')
+            return redirect(url_for('crm.customers'))
+        
         return render_template('crm/lead_form.html',
                              title='New Lead',
                              page='crm_new_lead',
@@ -2078,6 +2239,11 @@ def deal_detail_page(deal_id):
         
         deal = Deal.query.get_or_404(deal_id)
         
+        # Verify tenant access
+        if not verify_resource_access(deal):
+            flash('Access denied', 'error')
+            return redirect(url_for('crm.deals'))
+        
         return render_template('crm/deal_detail.html',
                              title='Deal Detail',
                              page='crm_deal_detail',
@@ -2096,6 +2262,11 @@ def new_deal_page(customer_id):
         
         # Query customer object for template breadcrumb
         customer = Customer.query.get_or_404(customer_id)
+        
+        # Verify tenant access
+        if not verify_resource_access(customer):
+            flash('Access denied', 'error')
+            return redirect(url_for('crm.customers'))
         
         return render_template('crm/deal_form.html',
                              title='New Deal',
@@ -2116,6 +2287,11 @@ def new_contact_page(customer_id):
         
         # Query customer object for template breadcrumb
         customer = Customer.query.get_or_404(customer_id)
+        
+        # Verify tenant access
+        if not verify_resource_access(customer):
+            flash('Access denied', 'error')
+            return redirect(url_for('crm.customers'))
         
         return render_template('crm/contact_form.html',
                              title='New Contact',
@@ -2211,8 +2387,9 @@ def get_leads():
         if 'user_id' not in session:
             return jsonify({'success': False, 'error': 'Not authenticated'}), 401
         
-        # Query real leads from database
-        leads = Lead.query.order_by(Lead.created_at.desc()).all()
+        # Query real leads from database - with tenant filter
+        user_id = session.get('user_id')
+        leads = apply_tenant_filter(Lead.query.order_by(Lead.created_at.desc()), Lead, user_id).all()
         
         leads_data = []
         for lead in leads:
@@ -2254,32 +2431,65 @@ def get_sales_stats():
         if 'user_id' not in session:
             return jsonify({'success': False, 'error': 'Not authenticated'}), 401
         
-        # Calculate real statistics from database
+        user_id = session.get('user_id')
+        
+        # Calculate real statistics from database with tenant filter
         # Get current month's date range
         now = datetime.now()
         first_day_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         
-        # Monthly revenue from deals closed this month
-        monthly_revenue = Deal.query.filter(
-            Deal.created_at >= first_day_of_month
-        ).with_entities(func.sum(Deal.value)).scalar() or 0
+        # Get tenant filters
+        deal_filter = get_tenant_filter(Deal, user_id)
+        customer_filter = get_tenant_filter(Customer, user_id)
+        lead_filter = get_tenant_filter(Lead, user_id)
         
-        # Active customers count
-        active_customers = Customer.query.filter_by(status='active').count() or 0
+        if deal_filter is not None:
+            # Monthly revenue from deals closed this month
+            monthly_revenue = Deal.query.filter(
+                deal_filter,
+                Deal.created_at >= first_day_of_month
+            ).with_entities(func.sum(Deal.value)).scalar() or 0
+            
+            # Total pipeline value (all deals)
+            pipeline_value = Deal.query.filter(deal_filter).with_entities(func.sum(Deal.value)).scalar() or 0
+            
+            # Average deal size
+            total_deals = Deal.query.filter(deal_filter).count() or 1
+        else:
+            # Monthly revenue from deals closed this month
+            monthly_revenue = Deal.query.filter(
+                Deal.created_at >= first_day_of_month
+            ).with_entities(func.sum(Deal.value)).scalar() or 0
+            
+            # Total pipeline value (all deals)
+            pipeline_value = Deal.query.with_entities(func.sum(Deal.value)).scalar() or 0
+            
+            # Average deal size
+            total_deals = Deal.query.count() or 1
         
-        # New leads this month
-        new_leads = Lead.query.filter(Lead.created_at >= first_day_of_month).count() or 0
-        
-        # Total pipeline value (all deals)
-        pipeline_value = Deal.query.with_entities(func.sum(Deal.value)).scalar() or 0
-        
-        # Average deal size
-        total_deals = Deal.query.count() or 1
         average_deal_size = pipeline_value / total_deals if total_deals > 0 else 0
         
-        # Conversion rate (won deals / total leads)
-        won_deals_count = Lead.query.filter_by(status='WON').count() or 0
-        total_leads = Lead.query.count() or 1
+        if customer_filter is not None:
+            # Active customers count
+            active_customers = Customer.query.filter(customer_filter, Customer.status == 'active').count() or 0
+        else:
+            # Active customers count
+            active_customers = Customer.query.filter_by(status='active').count() or 0
+        
+        if lead_filter is not None:
+            # New leads this month
+            new_leads = Lead.query.filter(lead_filter, Lead.created_at >= first_day_of_month).count() or 0
+            
+            # Conversion rate (won deals / total leads)
+            won_deals_count = Lead.query.filter(lead_filter).filter_by(status='WON').count() or 0
+            total_leads = Lead.query.filter(lead_filter).count() or 1
+        else:
+            # New leads this month
+            new_leads = Lead.query.filter(Lead.created_at >= first_day_of_month).count() or 0
+            
+            # Conversion rate (won deals / total leads)
+            won_deals_count = Lead.query.filter_by(status='WON').count() or 0
+            total_leads = Lead.query.count() or 1
         conversion_rate = won_deals_count / total_leads if total_leads > 0 else 0
         
         # Top performers (customers by revenue)
@@ -2985,13 +3195,25 @@ def kpi_customers():
         if 'user_id' not in session:
             return jsonify({'error': 'Unauthorized'}), 401
         
-        # 计算总客户数
-        total_customers = Customer.query.count() or 0
+        user_id = session.get('user_id')
+        tenant_filter = get_tenant_filter(Customer, user_id)
         
-        # 计算本月新增客户
-        now = datetime.now()
-        first_day_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        this_month_customers = Customer.query.filter(Customer.created_at >= first_day_of_month).count() or 0
+        if tenant_filter is not None:
+            # 计算总客户数
+            total_customers = Customer.query.filter(tenant_filter).count() or 0
+            
+            # 计算本月新增客户
+            now = datetime.now()
+            first_day_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            this_month_customers = Customer.query.filter(tenant_filter, Customer.created_at >= first_day_of_month).count() or 0
+        else:
+            # 计算总客户数
+            total_customers = Customer.query.count() or 0
+            
+            # 计算本月新增客户
+            now = datetime.now()
+            first_day_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            this_month_customers = Customer.query.filter(Customer.created_at >= first_day_of_month).count() or 0
         
         # 计算增长率
         growth_rate = (this_month_customers / total_customers * 100) if total_customers > 0 else 0
@@ -3016,16 +3238,32 @@ def kpi_deals():
         if 'user_id' not in session:
             return jsonify({'error': 'Unauthorized'}), 401
         
-        # 计算总交易价值和数量
-        total_value = Deal.query.with_entities(func.sum(Deal.value)).scalar() or 0
-        total_count = Deal.query.count() or 0
+        user_id = session.get('user_id')
+        tenant_filter = get_tenant_filter(Deal, user_id)
         
-        # 计算本月交易价值
-        now = datetime.now()
-        first_day_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        this_month_value = Deal.query.filter(
-            Deal.created_at >= first_day_of_month
-        ).with_entities(func.sum(Deal.value)).scalar() or 0
+        if tenant_filter is not None:
+            # 计算总交易价值和数量
+            total_value = Deal.query.filter(tenant_filter).with_entities(func.sum(Deal.value)).scalar() or 0
+            total_count = Deal.query.filter(tenant_filter).count() or 0
+            
+            # 计算本月交易价值
+            now = datetime.now()
+            first_day_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            this_month_value = Deal.query.filter(
+                tenant_filter,
+                Deal.created_at >= first_day_of_month
+            ).with_entities(func.sum(Deal.value)).scalar() or 0
+        else:
+            # 计算总交易价值和数量
+            total_value = Deal.query.with_entities(func.sum(Deal.value)).scalar() or 0
+            total_count = Deal.query.count() or 0
+            
+            # 计算本月交易价值
+            now = datetime.now()
+            first_day_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            this_month_value = Deal.query.filter(
+                Deal.created_at >= first_day_of_month
+            ).with_entities(func.sum(Deal.value)).scalar() or 0
         
         logger.info(f"KPI Deals: total_value={total_value}, count={total_count}")
         
@@ -3047,13 +3285,27 @@ def kpi_capacity():
         if 'user_id' not in session:
             return jsonify({'error': 'Unauthorized'}), 401
         
-        # 计算总容量
-        total_mw = Customer.query.with_entities(func.sum(Customer.mining_capacity)).scalar() or 0
+        user_id = session.get('user_id')
+        customer_filter = get_tenant_filter(Customer, user_id)
+        deal_filter = get_tenant_filter(Deal, user_id)
         
-        # 计算已使用容量（从交易中）
-        used_capacity = Deal.query.filter(
-            Deal.mining_capacity.isnot(None)
-        ).with_entities(func.sum(Deal.mining_capacity)).scalar() or 0
+        if customer_filter is not None:
+            # 计算总容量
+            total_mw = Customer.query.filter(customer_filter).with_entities(func.sum(Customer.mining_capacity)).scalar() or 0
+        else:
+            total_mw = Customer.query.with_entities(func.sum(Customer.mining_capacity)).scalar() or 0
+        
+        if deal_filter is not None:
+            # 计算已使用容量（从交易中）
+            used_capacity = Deal.query.filter(
+                deal_filter,
+                Deal.mining_capacity.isnot(None)
+            ).with_entities(func.sum(Deal.mining_capacity)).scalar() or 0
+        else:
+            # 计算已使用容量（从交易中）
+            used_capacity = Deal.query.filter(
+                Deal.mining_capacity.isnot(None)
+            ).with_entities(func.sum(Deal.mining_capacity)).scalar() or 0
         
         # 计算利用率和可用容量
         utilization_rate = (used_capacity / total_mw * 100) if total_mw > 0 else 0
@@ -3079,17 +3331,25 @@ def kpi_active_deals():
         if 'user_id' not in session:
             return jsonify({'error': 'Unauthorized'}), 401
         
-        # 计算活跃交易数量
-        active_deals = Deal.query.filter(
+        user_id = session.get('user_id')
+        
+        # 计算活跃交易数量 - with tenant filter
+        active_deals_query = Deal.query.filter(
             Deal.status.in_([DealStatus.PENDING, DealStatus.APPROVED, DealStatus.SIGNED])
-        ).all()
+        )
+        active_deals = apply_tenant_filter(active_deals_query, Deal, user_id).all()
         
         active_count = len(active_deals)
         pending_value = sum([deal.value for deal in active_deals if deal.value]) or 0
         
-        # 计算转化率
-        total_leads = Lead.query.count() or 0
-        won_leads = Lead.query.filter(Lead.status == LeadStatus.WON).count() or 0
+        # 计算转化率 - with tenant filter
+        lead_filter = get_tenant_filter(Lead, user_id)
+        if lead_filter is not None:
+            total_leads = Lead.query.filter(lead_filter).count() or 0
+            won_leads = Lead.query.filter(lead_filter, Lead.status == LeadStatus.WON).count() or 0
+        else:
+            total_leads = Lead.query.count() or 0
+            won_leads = Lead.query.filter(Lead.status == LeadStatus.WON).count() or 0
         conversion_rate = (won_leads / total_leads * 100) if total_leads > 0 else 0
         
         logger.info(f"KPI Active Deals: count={active_count}, conversion_rate={conversion_rate}%")
@@ -3171,14 +3431,26 @@ def analytics_sales_funnel():
         if 'user_id' not in session:
             return jsonify({'error': 'Unauthorized'}), 401
         
-        # 统计各状态的线索数量
-        funnel_data = {
-            LeadStatus.NEW.value: Lead.query.filter_by(status=LeadStatus.NEW).count() or 0,
-            LeadStatus.CONTACTED.value: Lead.query.filter_by(status=LeadStatus.CONTACTED).count() or 0,
-            LeadStatus.QUALIFIED.value: Lead.query.filter_by(status=LeadStatus.QUALIFIED).count() or 0,
-            LeadStatus.NEGOTIATION.value: Lead.query.filter_by(status=LeadStatus.NEGOTIATION).count() or 0,
-            LeadStatus.WON.value: Lead.query.filter_by(status=LeadStatus.WON).count() or 0
-        }
+        # 统计各状态的线索数量 - with tenant filter
+        user_id = session.get('user_id')
+        lead_filter = get_tenant_filter(Lead, user_id)
+        
+        if lead_filter is not None:
+            funnel_data = {
+                LeadStatus.NEW.value: Lead.query.filter(lead_filter).filter_by(status=LeadStatus.NEW).count() or 0,
+                LeadStatus.CONTACTED.value: Lead.query.filter(lead_filter).filter_by(status=LeadStatus.CONTACTED).count() or 0,
+                LeadStatus.QUALIFIED.value: Lead.query.filter(lead_filter).filter_by(status=LeadStatus.QUALIFIED).count() or 0,
+                LeadStatus.NEGOTIATION.value: Lead.query.filter(lead_filter).filter_by(status=LeadStatus.NEGOTIATION).count() or 0,
+                LeadStatus.WON.value: Lead.query.filter(lead_filter).filter_by(status=LeadStatus.WON).count() or 0
+            }
+        else:
+            funnel_data = {
+                LeadStatus.NEW.value: Lead.query.filter_by(status=LeadStatus.NEW).count() or 0,
+                LeadStatus.CONTACTED.value: Lead.query.filter_by(status=LeadStatus.CONTACTED).count() or 0,
+                LeadStatus.QUALIFIED.value: Lead.query.filter_by(status=LeadStatus.QUALIFIED).count() or 0,
+                LeadStatus.NEGOTIATION.value: Lead.query.filter_by(status=LeadStatus.NEGOTIATION).count() or 0,
+                LeadStatus.WON.value: Lead.query.filter_by(status=LeadStatus.WON).count() or 0
+            }
         
         labels = list(funnel_data.keys())
         data = list(funnel_data.values())
@@ -3202,11 +3474,13 @@ def analytics_capacity_distribution():
         if 'user_id' not in session:
             return jsonify({'error': 'Unauthorized'}), 401
         
-        # 获取TOP 10容量客户
-        top_customers = Customer.query.filter(
+        # 获取TOP 10容量客户 - with tenant filter
+        user_id = session.get('user_id')
+        top_customers_query = Customer.query.filter(
             Customer.mining_capacity.isnot(None),
             Customer.mining_capacity > 0
-        ).order_by(Customer.mining_capacity.desc()).limit(10).all()
+        ).order_by(Customer.mining_capacity.desc())
+        top_customers = apply_tenant_filter(top_customers_query, Customer, user_id).limit(10).all()
         
         labels = []
         data = []
@@ -3318,11 +3592,13 @@ def rankings_customer_capacity():
         if 'user_id' not in session:
             return jsonify({'error': 'Unauthorized'}), 401
         
-        # 获取TOP 5容量客户
-        top_customers = Customer.query.filter(
+        # 获取TOP 5容量客户 - with tenant filter
+        user_id = session.get('user_id')
+        top_customers_query = Customer.query.filter(
             Customer.mining_capacity.isnot(None),
             Customer.mining_capacity > 0
-        ).order_by(Customer.mining_capacity.desc()).limit(5).all()
+        ).order_by(Customer.mining_capacity.desc())
+        top_customers = apply_tenant_filter(top_customers_query, Customer, user_id).limit(5).all()
         
         customers = []
         for customer in top_customers:
@@ -3356,11 +3632,13 @@ def followups_today():
         if 'user_id' not in session:
             return jsonify({'error': 'Unauthorized'}), 401
         
-        # 获取今日跟进的线索
+        # 获取今日跟进的线索 - with tenant filter
+        user_id = session.get('user_id')
         today = datetime.now().date()
-        today_followups = Lead.query.filter(
+        today_followups_query = Lead.query.filter(
             func.date(Lead.next_follow_up) == today
-        ).all()
+        )
+        today_followups = apply_tenant_filter(today_followups_query, Lead, user_id).all()
         
         leads = []
         for lead in today_followups:
@@ -3393,14 +3671,16 @@ def alerts_urgent():
         alerts = []
         now = datetime.now()
         seven_days_later = now + timedelta(days=7)
+        user_id = session.get('user_id')
         
-        # 检查即将到期的交易
-        expiring_deals = Deal.query.filter(
+        # 检查即将到期的交易 - with tenant filter
+        expiring_deals_query = Deal.query.filter(
             Deal.expected_close_date.isnot(None),
             Deal.expected_close_date <= seven_days_later,
             Deal.expected_close_date >= now,
             Deal.status.in_([DealStatus.PENDING, DealStatus.APPROVED])
-        ).all()
+        )
+        expiring_deals = apply_tenant_filter(expiring_deals_query, Deal, user_id).all()
         
         for deal in expiring_deals:
             days_left = (deal.expected_close_date - now).days
@@ -3443,6 +3723,10 @@ def deal_overview(deal_id):
             return jsonify({'success': False, 'error': 'Not authenticated'}), 401
         
         deal = Deal.query.get_or_404(deal_id)
+        
+        # Verify tenant access
+        if not verify_resource_access(deal):
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
         
         deal_value = float(deal.value) if deal.value else 0
         client_investment = float(deal.client_investment) if deal.client_investment else 0
@@ -3497,6 +3781,10 @@ def deal_timeline(deal_id):
             return jsonify({'success': False, 'error': 'Not authenticated'}), 401
         
         deal = Deal.query.get_or_404(deal_id)
+        
+        # Verify tenant access
+        if not verify_resource_access(deal):
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
         
         milestones = []
         
@@ -3562,6 +3850,10 @@ def deal_profitability(deal_id):
         
         deal = Deal.query.get_or_404(deal_id)
         
+        # Verify tenant access
+        if not verify_resource_access(deal):
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
         mining_capacity = float(deal.mining_capacity) if deal.mining_capacity else 0
         electricity_cost = float(deal.electricity_cost) if deal.electricity_cost else 0.05
         
@@ -3608,6 +3900,10 @@ def deal_power_analysis(deal_id):
         
         deal = Deal.query.get_or_404(deal_id)
         
+        # Verify tenant access
+        if not verify_resource_access(deal):
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
         mining_capacity = float(deal.mining_capacity) if deal.mining_capacity else 0
         electricity_cost = float(deal.electricity_cost) if deal.electricity_cost else 0.05
         
@@ -3646,6 +3942,10 @@ def deal_sensitivity(deal_id):
             return jsonify({'success': False, 'error': 'Not authenticated'}), 401
         
         deal = Deal.query.get_or_404(deal_id)
+        
+        # Verify tenant access
+        if not verify_resource_access(deal):
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
         
         mining_capacity = float(deal.mining_capacity) if deal.mining_capacity else 0
         electricity_cost = float(deal.electricity_cost) if deal.electricity_cost else 0.05
