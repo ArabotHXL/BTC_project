@@ -22,8 +22,74 @@
     <link rel="stylesheet" href="/static/css/responsive.css">
     {% block extra_css %}{% endblock %}
     {% block extra_head %}{% endblock %}
+    
+    <!-- Global Language Switcher Styles -->
+    <style>
+        .global-lang-switcher {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 9999;
+            display: flex;
+            gap: 4px;
+            background: rgba(26, 29, 46, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid #f7931a;
+            border-radius: 25px;
+            padding: 4px;
+            box-shadow: 0 4px 15px rgba(247, 147, 26, 0.2);
+        }
+        .global-lang-switcher .lang-btn {
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .global-lang-switcher .lang-btn.inactive {
+            background: transparent;
+            color: #adb5bd;
+        }
+        .global-lang-switcher .lang-btn.inactive:hover {
+            background: rgba(247, 147, 26, 0.15);
+            color: #f7931a;
+        }
+        .global-lang-switcher .lang-btn.active {
+            background: linear-gradient(135deg, #f7931a 0%, #ffc107 100%);
+            color: #000;
+        }
+        @media (max-width: 576px) {
+            .global-lang-switcher {
+                top: 10px;
+                right: 10px;
+                padding: 3px;
+            }
+            .global-lang-switcher .lang-btn {
+                padding: 5px 10px;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
 </head>
 <body>
+    <!-- Global Language Switcher -->
+    <div class="global-lang-switcher">
+        <a href="{{ url_for('set_language', lang='zh', return_url=request.url) }}" 
+           class="lang-btn {{ 'active' if current_lang == 'zh' else 'inactive' }}">
+            中文
+        </a>
+        <a href="{{ url_for('set_language', lang='en', return_url=request.url) }}" 
+           class="lang-btn {{ 'active' if current_lang == 'en' else 'inactive' }}">
+            EN
+        </a>
+    </div>
+
     <div class="container-fluid">
         <!-- Header navigation removed -->
 

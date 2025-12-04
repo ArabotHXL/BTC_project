@@ -646,6 +646,15 @@
                 </div>
                 <div class="hosting-header-actions">
                     {% block header_actions %}
+                    <!-- Language Switcher -->
+                    <div class="lang-switcher me-2" style="display: inline-flex; gap: 4px;">
+                        <a href="{{ url_for('set_language', lang='zh', return_url=request.url) }}" 
+                           class="btn btn-sm {{ 'btn-warning' if current_lang == 'zh' else 'btn-outline-secondary' }}" 
+                           style="padding: 4px 10px; font-size: 0.8rem;">中文</a>
+                        <a href="{{ url_for('set_language', lang='en', return_url=request.url) }}" 
+                           class="btn btn-sm {{ 'btn-warning' if current_lang == 'en' else 'btn-outline-secondary' }}" 
+                           style="padding: 4px 10px; font-size: 0.8rem;">EN</a>
+                    </div>
                     <span class="badge bg-success">
                         <i class="bi bi-person-check me-1"></i>{{ session.username or session.email }}
                     </span>
