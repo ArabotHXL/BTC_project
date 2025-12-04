@@ -1873,6 +1873,23 @@ def welcome():
 @app.route('/set_language')
 def set_language():
     """设置界面语言"""
+    from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
+    
+    def is_safe_url(url):
+        """验证URL是否安全（同站点或相对路径）"""
+        if not url:
+            return False
+        parsed = urlparse(url)
+        # 相对路径是安全的
+        if not parsed.netloc:
+            return True
+        # 同站点URL是安全的
+        return (
+            parsed.netloc == request.host or
+            parsed.netloc.endswith('.replit.dev') or
+            parsed.netloc.endswith('.repl.co')
+        )
+    
     lang = request.args.get('lang', 'zh')
     if lang not in ['zh', 'en']:
         lang = 'zh'
@@ -1880,18 +1897,41 @@ def set_language():
     # 强制清空并重新设置语言
     session.pop('language', None)  # 清空旧设置
     session['language'] = lang
+    session.modified = True  # 确保session被保存
     g.language = lang
     
-    # 获取返回页面，默认回到来源页
-    return_url = request.args.get('return_url', request.referrer)
-    if not return_url or not return_url.startswith(request.host_url):
-        return_url = url_for('analytics_dashboard')
+    # 获取返回页面 - 优先使用return_url参数，其次使用referrer
+    return_url = request.args.get('return_url')
     
-    # 确保URL中包含语言参数
-    if '?' in return_url:
-        return_url = f"{return_url}&lang={lang}"
-    else:
-        return_url = f"{return_url}?lang={lang}"
+    # 验证return_url
+    if not is_safe_url(return_url):
+        return_url = None
+    
+    # 如果return_url无效，尝试使用referrer
+    if not return_url:
+        referrer = request.referrer
+        if is_safe_url(referrer):
+            return_url = referrer
+    
+    # 如果仍然没有有效URL，使用安全的默认页面
+    if not return_url:
+        return_url = url_for('index')
+    
+    # 清理URL中已有的lang参数，避免重复
+    parsed = urlparse(return_url)
+    query_params = parse_qs(parsed.query, keep_blank_values=True)
+    query_params.pop('lang', None)  # 移除旧的lang参数
+    
+    # 重建URL（不添加lang参数，因为语言已存储在session中）
+    new_query = urlencode(query_params, doseq=True)
+    return_url = urlunparse((
+        parsed.scheme,
+        parsed.netloc,
+        parsed.path,
+        parsed.params,
+        new_query,
+        parsed.fragment
+    ))
     
     return redirect(return_url)
 
