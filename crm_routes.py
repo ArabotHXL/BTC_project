@@ -3983,6 +3983,110 @@ def deal_sensitivity(deal_id):
         logger.error(f"获取敏感性分析错误: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# ============================================
+# CRM-Hosting Integration API
+# ============================================
+
+@crm_bp.route('/api/customer/<int:customer_id>/hosting-stats')
+def get_customer_hosting_stats(customer_id):
+    """获取客户的托管矿机统计数据"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        customer = Customer.query.get_or_404(customer_id)
+        
+        if not verify_resource_access(customer):
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
+        from crm_services.hosting_integration import crm_hosting_service
+        stats = crm_hosting_service.get_customer_hosting_stats(customer_id)
+        
+        return jsonify({
+            'success': True,
+            'data': stats
+        })
+        
+    except Exception as e:
+        logger.error(f"获取客户托管统计错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/customer/<int:customer_id>/hosting-miners')
+def get_customer_hosting_miners(customer_id):
+    """获取客户的托管矿机列表"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        customer = Customer.query.get_or_404(customer_id)
+        
+        if not verify_resource_access(customer):
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
+        status = request.args.get('status')
+        
+        from crm_services.hosting_integration import crm_hosting_service
+        miners = crm_hosting_service.get_customer_miners_list(customer_id, status)
+        
+        return jsonify({
+            'success': True,
+            'data': miners
+        })
+        
+    except Exception as e:
+        logger.error(f"获取客户矿机列表错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/customer/<int:customer_id>/sync-hosting', methods=['POST'])
+def sync_customer_hosting(customer_id):
+    """同步客户的托管数据到CRM"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        customer = Customer.query.get_or_404(customer_id)
+        
+        if not verify_resource_access(customer):
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
+        from crm_services.hosting_integration import crm_hosting_service
+        success = crm_hosting_service.sync_customer_from_hosting(customer_id)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': '托管数据同步成功'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': '未找到关联的托管账户或无矿机数据'
+            }), 404
+        
+    except Exception as e:
+        logger.error(f"同步客户托管数据错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@crm_bp.route('/api/sync-all-hosting', methods=['POST'])
+def sync_all_hosting():
+    """批量同步所有客户的托管数据"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        from crm_services.hosting_integration import crm_hosting_service
+        results = crm_hosting_service.sync_all_customers()
+        
+        return jsonify({
+            'success': True,
+            'data': results,
+            'message': f"已同步 {results['synced']} 个客户的托管数据"
+        })
+        
+    except Exception as e:
+        logger.error(f"批量同步托管数据错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 def init_crm_routes(app):
     """初始化CRM路由到应用"""
     try:
