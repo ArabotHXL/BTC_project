@@ -280,19 +280,26 @@ def get_hosting_overview():
 @hosting_bp.route('/api/sites', methods=['GET'])
 @login_required
 def get_sites():
-    """获取托管站点列表"""
+    """获取托管站点列表（性能优化版）"""
     try:
+        # 使用单个聚合查询获取所有站点的设备统计，避免N+1问题
+        device_counts = db.session.query(
+            HostingMiner.site_id,
+            db.func.count(HostingMiner.id).label('total'),
+            db.func.sum(db.case((HostingMiner.status == 'active', 1), else_=0)).label('active')
+        ).group_by(HostingMiner.site_id).all()
+        
+        # 转换为字典方便查找
+        counts_map = {row.site_id: {'total': row.total, 'active': int(row.active or 0)} for row in device_counts}
+        
         sites = HostingSite.query.all()
         sites_data = []
         
         for site in sites:
-            # 计算设备数量
-            devices_count = HostingMiner.query.filter_by(site_id=site.id).count()
-            active_devices = HostingMiner.query.filter_by(site_id=site.id, status='active').count()
-            
             site_data = site.to_dict()
-            site_data['devices_count'] = devices_count
-            site_data['active_devices'] = active_devices
+            counts = counts_map.get(site.id, {'total': 0, 'active': 0})
+            site_data['devices_count'] = counts['total']
+            site_data['active_devices'] = counts['active']
             sites_data.append(site_data)
         
         return jsonify({'success': True, 'sites': sites_data})
@@ -551,18 +558,28 @@ def get_client_miners():
 @hosting_bp.route('/api/client/dashboard', methods=['GET'])
 @login_required
 def get_client_dashboard():
-    """获取客户仪表板数据"""
+    """获取客户仪表板数据（性能优化版）"""
     try:
         user_id = session.get('user_id')
         
-        # 获取客户矿机统计
-        miners = HostingMiner.query.filter_by(customer_id=user_id).all()
-        total_miners = len(miners)
-        active_miners = len([m for m in miners if m.status == 'active'])
+        # 使用聚合查询获取统计数据，避免加载所有矿机记录
+        stats = db.session.query(
+            db.func.count(HostingMiner.id).label('total'),
+            db.func.sum(db.case((HostingMiner.status == 'active', 1), else_=0)).label('active'),
+            db.func.sum(db.case(
+                (HostingMiner.status == 'active', HostingMiner.actual_hashrate), 
+                else_=0
+            )).label('total_hashrate'),
+            db.func.sum(db.case(
+                (HostingMiner.status == 'active', HostingMiner.actual_power), 
+                else_=0
+            )).label('total_power')
+        ).filter(HostingMiner.customer_id == user_id).first()
         
-        # 计算算力和功耗
-        total_hashrate = sum(m.actual_hashrate or 0 for m in miners if m.status == 'active')
-        total_power = sum(m.actual_power or 0 for m in miners if m.status == 'active')
+        total_miners = stats.total or 0
+        active_miners = int(stats.active or 0)
+        total_hashrate = float(stats.total_hashrate or 0)
+        total_power = float(stats.total_power or 0)
         
         # 估算收益（简化计算）
         daily_revenue = total_hashrate * 0.000005 * 110000  # 估算日收益
@@ -658,23 +675,33 @@ def get_client_revenue_chart():
 @hosting_bp.route('/api/client/miner-distribution', methods=['GET'])
 @login_required
 def get_client_miner_distribution():
-    """获取客户矿机分布数据"""
+    """获取客户矿机分布数据（性能优化版）"""
     try:
         user_id = session.get('user_id')
         
-        # 按站点统计矿机分布
-        miners = HostingMiner.query.filter_by(customer_id=user_id).all()
+        # 使用聚合查询直接获取分布数据，避免N+1问题
+        distribution = db.session.query(
+            HostingSite.name.label('site_name'),
+            db.func.count(HostingMiner.id).label('count')
+        ).outerjoin(
+            HostingMiner, HostingMiner.site_id == HostingSite.id
+        ).filter(
+            HostingMiner.customer_id == user_id
+        ).group_by(HostingSite.id, HostingSite.name).all()
         
-        site_distribution = {}
-        for miner in miners:
-            site_name = miner.site.name if miner.site else 'Unknown'
-            if site_name not in site_distribution:
-                site_distribution[site_name] = 0
-            site_distribution[site_name] += 1
+        # 添加没有站点的矿机数量
+        unknown_count = HostingMiner.query.filter(
+            HostingMiner.customer_id == user_id,
+            HostingMiner.site_id == None
+        ).count()
         
         # 转换为图表数据格式
-        labels = list(site_distribution.keys())
-        data = list(site_distribution.values())
+        labels = [row.site_name or 'Unknown' for row in distribution]
+        data = [row.count for row in distribution]
+        
+        if unknown_count > 0:
+            labels.append('Unknown')
+            data.append(unknown_count)
         
         # 颜色方案
         colors = ['#FFB800', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57']
