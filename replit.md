@@ -4,17 +4,36 @@
 HashInsight Enterprise is an enterprise-grade web application for mining farm owners and clients. It provides real-time Bitcoin mining profitability analysis, integrates real-time data, offers dual-algorithm verification, and supports multiple languages. The system delivers comprehensive operational management, CRM, Web3 integration, technical analysis, professional reporting, and an AI-powered intelligence layer to optimize Bitcoin mining investments and enhance transparency.
 
 ## User Preferences
-- **Communication style**: Simple, everyday language
+- **Communication style**: Simple, everyday language (中文/English)
 - **Technical preferences**: Native Flask implementation, avoid over-complication
 - **Design preferences**: BTC themed dark UI (#1a1d2e background, #f7931a gold accent)
+
+## Recent Updates (December 2025)
+
+### Performance Optimizations
+- **Hosting API N+1 Query Fix**: Optimized `/api/sites`, `/api/client/dashboard`, and `/api/client/miner-distribution` routes using SQL aggregation queries instead of N+1 queries, significantly improving load times for 6000+ miners.
+- **Database Query Optimization**: Replaced Python-side loops with `db.func.count()`, `db.func.sum()`, and `db.case()` for efficient server-side aggregation.
+
+### Security Fixes
+- **Open Redirect Vulnerability Fix**: Language switcher (`/set_language`) now validates referrer URLs to prevent external redirect attacks. Only same-origin URLs are allowed.
+
+### Language System Enhancements
+- **434+ Translation Keys**: Comprehensive bilingual support across all modules (homepage, CRM, hosting, calculator, etc.)
+- **Session-Based Persistence**: Language preference stored in Flask session with browser auto-detection fallback
+- **Security-Validated Switching**: Language endpoint validates redirect URLs against allowed domains
+
+### CRM-Hosting Integration
+- **Deep Integration Architecture**: Customer.email ↔ UserAccess.email → UserMiner relationship enables mine owners to view customer mining operations directly in CRM
+- **4 API Endpoints**: `/crm/api/hosting/customer-miners`, `/crm/api/hosting/customer-stats`, `/crm/api/hosting/customer-performance`, `/crm/api/hosting/customer-revenue`
+- **Real-Time Data Display**: CRM customer detail pages show live miner status, hashrate, and revenue data
 
 ## System Architecture
 
 ### UI/UX Decisions
-The front-end utilizes Jinja2 with Bootstrap 5 for a mobile-first, responsive, BTC-themed dark design. Chart.js and CountUp.js are used for data visualization and animations. Dynamic English and Chinese language switching is supported.
+The front-end utilizes Jinja2 with Bootstrap 5 for a mobile-first, responsive, BTC-themed dark design. Chart.js and CountUp.js are used for data visualization and animations. Dynamic English and Chinese language switching is supported with 434+ translation keys.
 
 ### Technical Implementations
-The system is built on a Flask backend using Blueprints for modularity. It features custom email authentication, session management, and an enterprise RBAC v2.0 system. SQLAlchemy with PostgreSQL handles data persistence, and Redis is used for caching and task queuing.
+The system is built on a Flask backend using Blueprints for modularity. It features custom email authentication, session management, and an enterprise RBAC v2.0 system. SQLAlchemy with PostgreSQL handles data persistence, and Redis is used for caching and task queuing. Performance-critical routes use SQL aggregation to avoid N+1 query patterns.
 
 ### Feature Specifications
 - **Calculator Module**: Dual-algorithm profitability analysis for 19+ ASIC models, real-time BTC price/difficulty integration, ROI analysis, and batch calculation.
