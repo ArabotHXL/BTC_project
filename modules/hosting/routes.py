@@ -220,35 +220,88 @@ def client_view(subpath='dashboard'):
 @hosting_bp.route('/api/overview', methods=['GET'])
 @login_required
 def get_hosting_overview():
-    """获取托管商总览数据"""
+    """获取托管商总览数据（权限过滤版）"""
     try:
-        # 站点统计
-        total_sites = HostingSite.query.count()
-        online_sites = HostingSite.query.filter_by(status='online').count()
+        user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        user_email = session.get('email', '')
         
-        # 矿机统计
-        total_miners = HostingMiner.query.count()
-        active_miners = HostingMiner.query.filter_by(status='active').count()
-        
-        # 容量统计
-        capacity_stats = db.session.query(
-            db.func.sum(HostingSite.capacity_mw).label('total_capacity'),
-            db.func.sum(HostingSite.used_capacity_mw).label('used_capacity')
-        ).first()
+        # 权限控制 - 确定可访问的站点和矿机范围
+        if user_role == 'admin':
+            # 管理员看所有数据
+            total_sites = HostingSite.query.count()
+            online_sites = HostingSite.query.filter_by(status='online').count()
+            total_miners = HostingMiner.query.count()
+            active_miners = HostingMiner.query.filter_by(status='active').count()
+            capacity_stats = db.session.query(
+                db.func.sum(HostingSite.capacity_mw).label('total_capacity'),
+                db.func.sum(HostingSite.used_capacity_mw).label('used_capacity')
+            ).first()
+            recent_incidents = HostingIncident.query.filter(
+                HostingIncident.created_at >= datetime.now() - timedelta(days=7)
+            ).count()
+            pending_tickets = HostingTicket.query.filter(
+                HostingTicket.status.in_(['open', 'assigned', 'in_progress'])
+            ).count()
+        elif user_role == 'mining_site':
+            # 矿场运营方只看管理站点的数据
+            managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            managed_site_ids = [s.id for s in managed_sites]
+            total_sites = len(managed_sites)
+            online_sites = sum(1 for s in managed_sites if s.status == 'online')
+            if managed_site_ids:
+                total_miners = HostingMiner.query.filter(HostingMiner.site_id.in_(managed_site_ids)).count()
+                active_miners = HostingMiner.query.filter(
+                    HostingMiner.site_id.in_(managed_site_ids),
+                    HostingMiner.status == 'active'
+                ).count()
+                capacity_stats = db.session.query(
+                    db.func.sum(HostingSite.capacity_mw).label('total_capacity'),
+                    db.func.sum(HostingSite.used_capacity_mw).label('used_capacity')
+                ).filter(HostingSite.id.in_(managed_site_ids)).first()
+                recent_incidents = HostingIncident.query.filter(
+                    HostingIncident.site_id.in_(managed_site_ids),
+                    HostingIncident.created_at >= datetime.now() - timedelta(days=7)
+                ).count()
+                pending_tickets = HostingTicket.query.filter(
+                    HostingTicket.site_id.in_(managed_site_ids),
+                    HostingTicket.status.in_(['open', 'assigned', 'in_progress'])
+                ).count()
+            else:
+                total_miners = active_miners = 0
+                capacity_stats = None
+                recent_incidents = pending_tickets = 0
+        else:
+            # owner/customer 只看自己矿机的数据
+            from sqlalchemy import distinct
+            user_site_ids = db.session.query(distinct(HostingMiner.site_id)).filter(
+                HostingMiner.customer_id == user_id,
+                HostingMiner.site_id != None
+            ).all()
+            site_ids = [row[0] for row in user_site_ids]
+            total_sites = len(site_ids)
+            online_sites = HostingSite.query.filter(
+                HostingSite.id.in_(site_ids),
+                HostingSite.status == 'online'
+            ).count() if site_ids else 0
+            total_miners = HostingMiner.query.filter_by(customer_id=user_id).count()
+            active_miners = HostingMiner.query.filter_by(customer_id=user_id, status='active').count()
+            if site_ids:
+                capacity_stats = db.session.query(
+                    db.func.sum(HostingSite.capacity_mw).label('total_capacity'),
+                    db.func.sum(HostingSite.used_capacity_mw).label('used_capacity')
+                ).filter(HostingSite.id.in_(site_ids)).first()
+            else:
+                capacity_stats = None
+            recent_incidents = 0  # 客户一般不需要看事件
+            pending_tickets = HostingTicket.query.filter(
+                HostingTicket.customer_id == user_id,
+                HostingTicket.status.in_(['open', 'assigned', 'in_progress'])
+            ).count()
         
         total_capacity = float(capacity_stats[0] or 0) if capacity_stats and capacity_stats[0] else 0
         used_capacity = float(capacity_stats[1] or 0) if capacity_stats and capacity_stats[1] else 0
         utilization_rate = round((used_capacity / total_capacity * 100) if total_capacity > 0 else 0, 1)
-        
-        # 近期事件
-        recent_incidents = HostingIncident.query.filter(
-            HostingIncident.created_at >= datetime.now() - timedelta(days=7)
-        ).count()
-        
-        # 待处理工单
-        pending_tickets = HostingTicket.query.filter(
-            HostingTicket.status.in_(['open', 'assigned', 'in_progress'])
-        ).count()
         
         overview_data = {
             'sites': {
@@ -280,21 +333,64 @@ def get_hosting_overview():
 @hosting_bp.route('/api/sites', methods=['GET'])
 @login_required
 def get_sites():
-    """获取托管站点列表（性能优化版）"""
+    """获取托管站点列表（性能优化版 + 权限过滤）"""
     try:
-        # 使用单个聚合查询获取所有站点的设备统计，避免N+1问题
-        device_counts = db.session.query(
-            HostingMiner.site_id,
-            db.func.count(HostingMiner.id).label('total'),
-            db.func.sum(db.case((HostingMiner.status == 'active', 1), else_=0)).label('active')
-        ).group_by(HostingMiner.site_id).all()
+        user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        user_email = session.get('email', '')
+        
+        # 权限控制 - 角色级别数据隔离
+        if user_role == 'admin':
+            # 管理员可以查看所有站点
+            sites = HostingSite.query.all()
+            site_ids = [s.id for s in sites]
+        elif user_role == 'mining_site':
+            # 矿场运营方只能查看自己管理的站点
+            sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            site_ids = [s.id for s in sites]
+        else:
+            # owner/customer 只能查看自己有矿机的站点
+            from sqlalchemy import distinct
+            user_site_ids = db.session.query(distinct(HostingMiner.site_id)).filter(
+                HostingMiner.customer_id == user_id,
+                HostingMiner.site_id != None
+            ).all()
+            site_ids = [row[0] for row in user_site_ids]
+            sites = HostingSite.query.filter(HostingSite.id.in_(site_ids)).all() if site_ids else []
+        
+        if not site_ids:
+            return jsonify({'success': True, 'sites': []})
+        
+        # 使用单个聚合查询获取站点的设备统计，只统计用户有权限的矿机
+        if user_role == 'admin':
+            # 管理员看所有矿机统计
+            device_counts = db.session.query(
+                HostingMiner.site_id,
+                db.func.count(HostingMiner.id).label('total'),
+                db.func.sum(db.case((HostingMiner.status == 'active', 1), else_=0)).label('active')
+            ).filter(HostingMiner.site_id.in_(site_ids)).group_by(HostingMiner.site_id).all()
+        elif user_role == 'mining_site':
+            # 矿场运营方看管理站点的所有矿机统计
+            device_counts = db.session.query(
+                HostingMiner.site_id,
+                db.func.count(HostingMiner.id).label('total'),
+                db.func.sum(db.case((HostingMiner.status == 'active', 1), else_=0)).label('active')
+            ).filter(HostingMiner.site_id.in_(site_ids)).group_by(HostingMiner.site_id).all()
+        else:
+            # owner/customer 只看自己的矿机统计
+            device_counts = db.session.query(
+                HostingMiner.site_id,
+                db.func.count(HostingMiner.id).label('total'),
+                db.func.sum(db.case((HostingMiner.status == 'active', 1), else_=0)).label('active')
+            ).filter(
+                HostingMiner.customer_id == user_id,
+                HostingMiner.site_id.in_(site_ids)
+            ).group_by(HostingMiner.site_id).all()
         
         # 转换为字典方便查找
         counts_map = {row.site_id: {'total': row.total, 'active': int(row.active or 0)} for row in device_counts}
         
-        sites = HostingSite.query.all()
         sites_data = []
-        
         for site in sites:
             site_data = site.to_dict()
             counts = counts_map.get(site.id, {'total': 0, 'active': 0})
@@ -3828,17 +3924,52 @@ def get_miners_stats():
     """
     KPI统计API - 返回矿机综合统计数据
     支持site_id筛选，性能优化：6000+矿机查询<250ms
+    权限过滤：按用户角色显示不同范围的数据
     """
     try:
         from sqlalchemy import func
         
+        user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        user_email = session.get('email', '')
+        
         # 获取筛选参数
         site_id = request.args.get('site_id', type=int)
         
+        # 权限控制 - 确定可访问的站点范围
+        allowed_site_ids = None  # None表示不限制
+        if user_role == 'admin':
+            # 管理员可以查看所有矿机
+            allowed_site_ids = None
+        elif user_role == 'mining_site':
+            # 矿场运营方只能查看自己管理站点的矿机
+            managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            allowed_site_ids = [s.id for s in managed_sites]
+        else:
+            # owner/customer - 不使用站点限制，而是使用customer_id
+            pass
+        
         # 基础查询
         query = HostingMiner.query
-        if site_id:
-            query = query.filter_by(site_id=site_id)
+        
+        # 应用权限过滤
+        if user_role == 'admin':
+            if site_id:
+                query = query.filter_by(site_id=site_id)
+        elif user_role == 'mining_site':
+            if allowed_site_ids:
+                if site_id and site_id in allowed_site_ids:
+                    query = query.filter_by(site_id=site_id)
+                else:
+                    query = query.filter(HostingMiner.site_id.in_(allowed_site_ids))
+            else:
+                # 没有管理任何站点
+                query = query.filter(HostingMiner.id == -1)
+        else:
+            # owner/customer 只能查看自己的矿机
+            query = query.filter_by(customer_id=user_id)
+            if site_id:
+                query = query.filter_by(site_id=site_id)
         
         # 使用聚合函数进行高效统计
         stats_query = db.session.query(
@@ -3848,18 +3979,45 @@ def get_miners_stats():
             func.avg(HostingMiner.health_score).label('avg_health_score')
         )
         
-        if site_id:
-            stats_query = stats_query.filter(HostingMiner.site_id == site_id)
+        # 应用相同的权限过滤到统计查询
+        if user_role == 'admin':
+            if site_id:
+                stats_query = stats_query.filter(HostingMiner.site_id == site_id)
+        elif user_role == 'mining_site':
+            if allowed_site_ids:
+                if site_id and site_id in allowed_site_ids:
+                    stats_query = stats_query.filter(HostingMiner.site_id == site_id)
+                else:
+                    stats_query = stats_query.filter(HostingMiner.site_id.in_(allowed_site_ids))
+            else:
+                stats_query = stats_query.filter(HostingMiner.id == -1)
+        else:
+            stats_query = stats_query.filter(HostingMiner.customer_id == user_id)
+            if site_id:
+                stats_query = stats_query.filter(HostingMiner.site_id == site_id)
         
         stats = stats_query.first()
         
-        # 状态分布统计
+        # 状态分布统计 - 也需要应用权限过滤
         status_distribution = db.session.query(
             HostingMiner.status,
             func.count(HostingMiner.id).label('count')
         )
-        if site_id:
-            status_distribution = status_distribution.filter(HostingMiner.site_id == site_id)
+        if user_role == 'admin':
+            if site_id:
+                status_distribution = status_distribution.filter(HostingMiner.site_id == site_id)
+        elif user_role == 'mining_site':
+            if allowed_site_ids:
+                if site_id and site_id in allowed_site_ids:
+                    status_distribution = status_distribution.filter(HostingMiner.site_id == site_id)
+                else:
+                    status_distribution = status_distribution.filter(HostingMiner.site_id.in_(allowed_site_ids))
+            else:
+                status_distribution = status_distribution.filter(HostingMiner.id == -1)
+        else:
+            status_distribution = status_distribution.filter(HostingMiner.customer_id == user_id)
+            if site_id:
+                status_distribution = status_distribution.filter(HostingMiner.site_id == site_id)
         status_distribution = status_distribution.group_by(HostingMiner.status).all()
         
         # 在线率统计（cgminer_online）
