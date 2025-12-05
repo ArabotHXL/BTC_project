@@ -1,16 +1,16 @@
 {% extends "hosting/hosting_base.html" %}
 
-{% block page_title %}{% if current_lang == 'en' %}Miner Dashboard{% else %}矿机仪表盘{% endif %}{% endblock %}
-{% block page_subtitle %}{% if current_lang == 'en' %}Real-time monitoring and performance analytics{% else %}实时监控与性能分析{% endif %}{% endblock %}
+{% block page_title %}<span data-i18n="hosting.miner_dashboard">Miner Dashboard</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="hosting.realtime_monitoring">Real-time monitoring and performance analytics</span>{% endblock %}
 
 {% block header_actions %}
 {{ super() }}
 <div class="btn-group ms-3" role="group">
     <a href="{{ url_for('hosting_service_bp.host_view', subpath='devices') }}" class="btn btn-hosting-secondary btn-sm">
-        <i class="bi bi-arrow-left me-1"></i>{% if current_lang == 'en' %}Back to List{% else %}返回列表{% endif %}
+        <i class="bi bi-arrow-left me-1"></i><span data-i18n="hosting.back_to_list">Back to List</span>
     </a>
     <button class="btn btn-hosting-primary btn-sm" onclick="refreshData()">
-        <i class="bi bi-arrow-clockwise me-1"></i>{% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+        <i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="common.refresh">Refresh</span>
     </button>
 </div>
 {% endblock %}
@@ -29,19 +29,19 @@
                 <div class="miner-meta d-flex flex-wrap align-items-center gap-2">
                     <span id="status-badge" class="status-badge status-offline">
                         <i class="bi bi-circle-fill me-1"></i>
-                        <span id="status-text">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</span>
+                        <span id="status-text" data-i18n="hosting.offline">Offline</span>
                     </span>
                     <span class="meta-divider">|</span>
                     <span class="meta-item"><i class="bi bi-box me-1"></i><span id="miner-model">{{ miner.miner_model.model_name if miner.miner_model else '-' }}</span></span>
                     <span class="meta-divider">|</span>
                     <span class="meta-item"><i class="bi bi-geo-alt me-1"></i><span id="miner-site">{{ miner.site.name if miner.site else '-' }}</span></span>
                     <span class="meta-divider">|</span>
-                    <span class="meta-item"><i class="bi bi-clock me-1"></i>{% if current_lang == 'en' %}Last seen:{% else %}最后在线:{% endif %} <span id="last-seen">-</span></span>
+                    <span class="meta-item"><i class="bi bi-clock me-1"></i><span data-i18n="hosting.last_seen">Last seen</span>: <span id="last-seen">-</span></span>
                 </div>
             </div>
         </div>
         <div class="miner-health-indicator d-none d-md-flex align-items-center gap-2" id="health-indicator">
-            <span class="health-label">{% if current_lang == 'en' %}Health{% else %}健康{% endif %}</span>
+            <span class="health-label" data-i18n="hosting.health">Health</span>
             <span class="health-badge" id="health-badge">-</span>
         </div>
     </div>
@@ -54,9 +54,9 @@
         <div class="kpi-card kpi-hashrate">
             <div class="kpi-icon"><i class="bi bi-speedometer2"></i></div>
             <div class="kpi-content">
-                <div class="kpi-label">{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</div>
+                <div class="kpi-label" data-i18n="hosting.hashrate">Hashrate</div>
                 <div class="kpi-value"><span id="kpi-hashrate">-</span> <small>TH/s</small></div>
-                <div class="kpi-subtitle">{% if current_lang == 'en' %}Expected:{% else %}预期:{% endif %} <span id="kpi-hashrate-expected">-</span> TH/s</div>
+                <div class="kpi-subtitle"><span data-i18n="hosting.expected">Expected</span>: <span id="kpi-hashrate-expected">-</span> TH/s</div>
             </div>
             <div class="kpi-deviation" id="kpi-hashrate-deviation">
                 <span class="deviation-value">-</span>
@@ -69,9 +69,9 @@
         <div class="kpi-card kpi-temperature">
             <div class="kpi-icon"><i class="bi bi-thermometer-half"></i></div>
             <div class="kpi-content">
-                <div class="kpi-label">{% if current_lang == 'en' %}Temperature{% else %}温度{% endif %}</div>
+                <div class="kpi-label" data-i18n="hosting.temperature">Temperature</div>
                 <div class="kpi-value"><span id="kpi-temp-min">-</span> ~ <span id="kpi-temp-max">-</span> <small>°C</small></div>
-                <div class="kpi-subtitle">{% if current_lang == 'en' %}Avg:{% else %}平均:{% endif %} <span id="kpi-temp-avg">-</span>°C</div>
+                <div class="kpi-subtitle"><span data-i18n="hosting.avg">Avg</span>: <span id="kpi-temp-avg">-</span>°C</div>
             </div>
             <div class="kpi-status-icon" id="kpi-temp-status">
                 <i class="bi bi-check-circle-fill"></i>
@@ -84,9 +84,9 @@
         <div class="kpi-card kpi-power">
             <div class="kpi-icon"><i class="bi bi-lightning-charge-fill"></i></div>
             <div class="kpi-content">
-                <div class="kpi-label">{% if current_lang == 'en' %}Power{% else %}功耗{% endif %}</div>
+                <div class="kpi-label" data-i18n="hosting.power">Power</div>
                 <div class="kpi-value"><span id="kpi-power">-</span> <small>kW</small></div>
-                <div class="kpi-subtitle">{% if current_lang == 'en' %}Efficiency:{% else %}能效:{% endif %} <span id="kpi-efficiency">-</span> J/TH</div>
+                <div class="kpi-subtitle"><span data-i18n="hosting.efficiency">Efficiency</span>: <span id="kpi-efficiency">-</span> J/TH</div>
             </div>
         </div>
     </div>
@@ -96,11 +96,11 @@
         <div class="kpi-card kpi-profit">
             <div class="kpi-icon"><i class="bi bi-currency-bitcoin"></i></div>
             <div class="kpi-content">
-                <div class="kpi-label">{% if current_lang == 'en' %}Daily Net Profit{% else %}日净收益{% endif %}</div>
+                <div class="kpi-label" data-i18n="hosting.daily_net_profit">Daily Net Profit</div>
                 <div class="kpi-value profit-positive"><span id="kpi-net-profit">$-</span></div>
                 <div class="kpi-subtitle">
-                    {% if current_lang == 'en' %}Revenue{% else %}收入{% endif %} <span id="kpi-revenue">$-</span> - 
-                    {% if current_lang == 'en' %}Power{% else %}电费{% endif %} <span id="kpi-power-cost">$-</span>
+                    <span data-i18n="hosting.revenue">Revenue</span> <span id="kpi-revenue">$-</span> - 
+                    <span data-i18n="hosting.power">Power</span> <span id="kpi-power-cost">$-</span>
                 </div>
             </div>
             <div class="kpi-margin" id="kpi-margin">
@@ -114,11 +114,11 @@
 <div class="hosting-card mb-4">
     <div class="hosting-card-header">
         <h5 class="hosting-card-title">
-            <i class="bi bi-graph-up me-2"></i>{% if current_lang == 'en' %}24h Performance{% else %}24小时性能{% endif %}
+            <i class="bi bi-graph-up me-2"></i><span data-i18n="hosting.24h_performance">24h Performance</span>
         </h5>
         <div class="text-muted small">
             <i class="bi bi-info-circle me-1"></i>
-            {% if current_lang == 'en' %}Hashrate (TH/s) and Power Efficiency (TH/kW){% else %}算力（TH/s）和算力效率（TH/kW）{% endif %}
+            <span data-i18n="hosting.hashrate_efficiency">Hashrate (TH/s) and Power Efficiency (TH/kW)</span>
         </div>
     </div>
     <div class="hosting-card-body">
@@ -128,13 +128,8 @@
         <div id="no-data-message" class="text-center text-muted py-5" style="display: none;">
             <i class="bi bi-graph-down fs-1 mb-3 d-block opacity-50"></i>
             <p class="mb-0">
-                {% if current_lang == 'en' %}
-                    No telemetry data available for the last 24 hours.<br>
-                    Data will appear once the miner starts reporting.
-                {% else %}
-                    最近24小时无遥测数据。<br>
-                    矿机开始上报后数据将会显示。
-                {% endif %}
+                <span data-i18n="hosting.no_telemetry_data">No telemetry data available for the last 24 hours.</span><br>
+                <span data-i18n="hosting.data_will_appear">Data will appear once the miner starts reporting.</span>
             </p>
         </div>
     </div>
@@ -144,32 +139,32 @@
 <div class="hosting-card mb-4">
     <div class="hosting-card-header">
         <h5 class="hosting-card-title">
-            <i class="bi bi-hdd-network me-2"></i>{% if current_lang == 'en' %}Pool Information{% else %}矿池信息{% endif %}
+            <i class="bi bi-hdd-network me-2"></i><span data-i18n="hosting.pool_information">Pool Information</span>
         </h5>
     </div>
     <div class="hosting-card-body">
         <div class="row g-4">
             <div class="col-md-6 col-lg-3">
                 <div class="pool-info-item">
-                    <div class="pool-info-label">{% if current_lang == 'en' %}Pool URL{% else %}矿池地址{% endif %}</div>
+                    <div class="pool-info-label" data-i18n="hosting.pool_url">Pool URL</div>
                     <div class="pool-info-value text-truncate" id="pool-url" title="">-</div>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">
                 <div class="pool-info-item">
-                    <div class="pool-info-label">{% if current_lang == 'en' %}Worker Name{% else %}矿工名称{% endif %}</div>
+                    <div class="pool-info-label" data-i18n="hosting.worker_name">Worker Name</div>
                     <div class="pool-info-value" id="pool-worker">-</div>
                 </div>
             </div>
             <div class="col-md-6 col-lg-2">
                 <div class="pool-info-item">
-                    <div class="pool-info-label">{% if current_lang == 'en' %}Latency{% else %}延迟{% endif %}</div>
+                    <div class="pool-info-label" data-i18n="hosting.latency">Latency</div>
                     <div class="pool-info-value"><span id="pool-latency">-</span> ms</div>
                 </div>
             </div>
             <div class="col-md-6 col-lg-4">
                 <div class="pool-info-item">
-                    <div class="pool-info-label">{% if current_lang == 'en' %}24h Shares{% else %}24小时提交{% endif %}</div>
+                    <div class="pool-info-label" data-i18n="hosting.24h_shares">24h Shares</div>
                     <div class="pool-info-value shares-info">
                         <span class="shares-accepted"><i class="bi bi-check-circle-fill"></i> <span id="shares-accepted">-</span></span>
                         <span class="shares-divider">/</span>
@@ -186,9 +181,9 @@
 <div class="hosting-card">
     <div class="hosting-card-header" data-bs-toggle="collapse" data-bs-target="#boards-collapse" role="button" aria-expanded="false" aria-controls="boards-collapse">
         <h5 class="hosting-card-title">
-            <i class="bi bi-motherboard me-2"></i>{% if current_lang == 'en' %}Board Health{% else %}板卡健康{% endif %}
+            <i class="bi bi-motherboard me-2"></i><span data-i18n="hosting.board_health">Board Health</span>
             <span class="boards-summary ms-2">
-                (<span id="boards-healthy">-</span>/<span id="boards-total">-</span> {% if current_lang == 'en' %}healthy{% else %}正常{% endif %})
+                (<span id="boards-healthy">-</span>/<span id="boards-total">-</span> <span data-i18n="hosting.healthy">healthy</span>)
             </span>
         </h5>
         <div class="collapse-indicator">
@@ -201,17 +196,17 @@
                 <table class="table table-dark table-hover boards-table mb-0">
                     <thead>
                         <tr>
-                            <th>{% if current_lang == 'en' %}Board{% else %}板卡{% endif %}</th>
-                            <th>{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</th>
-                            <th>{% if current_lang == 'en' %}Temperature{% else %}温度{% endif %}</th>
-                            <th>{% if current_lang == 'en' %}Chips{% else %}芯片{% endif %}</th>
-                            <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                            <th data-i18n="hosting.board">Board</th>
+                            <th data-i18n="hosting.hashrate">Hashrate</th>
+                            <th data-i18n="hosting.temperature">Temperature</th>
+                            <th data-i18n="hosting.chips">Chips</th>
+                            <th data-i18n="hosting.status">Status</th>
                         </tr>
                     </thead>
                     <tbody id="boards-table-body">
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-4">
-                                {% if current_lang == 'en' %}Loading board data...{% else %}加载板卡数据中...{% endif %}
+                            <td colspan="5" class="text-center text-muted py-4" data-i18n="hosting.loading_board_data">
+                                Loading board data...
                             </td>
                         </tr>
                     </tbody>
@@ -227,7 +222,7 @@
         <div class="spinner-border text-warning" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
-        <div class="mt-2">{% if current_lang == 'en' %}Loading data...{% else %}加载数据中...{% endif %}</div>
+        <div class="mt-2" data-i18n="hosting.loading_data">Loading data...</div>
     </div>
 </div>
 
