@@ -1,7 +1,7 @@
 {% extends "hosting/hosting_base.html" %}
 
-{% block page_title %}{% if current_lang == 'en' %}Host Dashboard{% else %}托管商仪表板{% endif %}{% endblock %}
-{% block page_subtitle %}{% if current_lang == 'en' %}Manage hosting sites, devices and customers{% else %}管理托管站点、设备和客户{% endif %}{% endblock %}
+{% block page_title %}<span data-i18n="hosting.host_dashboard">Host Dashboard</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="hosting.manage_sites_devices">Manage hosting sites, devices and customers</span>{% endblock %}
 
 {% block content %}
 
@@ -9,22 +9,22 @@
 <div class="hosting-stats-grid">
     <div class="hosting-stat-card">
         <div class="hosting-stat-value" id="total-sites">--</div>
-        <div class="hosting-stat-label">{% if current_lang == 'en' %}Hosting Sites{% else %}托管站点{% endif %}</div>
+        <div class="hosting-stat-label" data-i18n="hosting.hosting_sites">Hosting Sites</div>
         <i class="bi bi-geo-alt hosting-stat-icon"></i>
     </div>
     <div class="hosting-stat-card">
         <div class="hosting-stat-value" id="total-devices">--</div>
-        <div class="hosting-stat-label">{% if current_lang == 'en' %}Hosted Devices{% else %}托管设备{% endif %}</div>
+        <div class="hosting-stat-label" data-i18n="hosting.hosted_devices">Hosted Devices</div>
         <i class="bi bi-cpu hosting-stat-icon"></i>
     </div>
     <div class="hosting-stat-card">
         <div class="hosting-stat-value" id="total-capacity">--</div>
-        <div class="hosting-stat-label">{% if current_lang == 'en' %}Total Capacity (MW){% else %}总容量 (MW){% endif %}</div>
+        <div class="hosting-stat-label" data-i18n="hosting.total_capacity_mw">Total Capacity (MW)</div>
         <i class="bi bi-lightning hosting-stat-icon"></i>
     </div>
     <div class="hosting-stat-card">
         <div class="hosting-stat-value" id="monthly-revenue">--</div>
-        <div class="hosting-stat-label">{% if current_lang == 'en' %}Monthly Revenue{% else %}月度收入{% endif %}</div>
+        <div class="hosting-stat-label" data-i18n="hosting.monthly_revenue">Monthly Revenue</div>
         <i class="bi bi-currency-dollar hosting-stat-icon"></i>
     </div>
 </div>
@@ -33,14 +33,14 @@
 <div class="hosting-card">
     <div class="hosting-card-header">
         <h5 class="hosting-card-title">
-            <i class="bi bi-building me-2"></i>{% if current_lang == 'en' %}Sites Overview{% else %}站点总览{% endif %}
+            <i class="bi bi-building me-2"></i><span data-i18n="hosting.sites_overview">Sites Overview</span>
         </h5>
         <div class="btn-group" role="group">
             <button class="btn btn-hosting-secondary btn-sm" onclick="refreshSites()">
-                <i class="bi bi-arrow-clockwise me-1"></i>{% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+                <i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="common.refresh">Refresh</span>
             </button>
             <a href="/hosting/host/devices" class="btn btn-hosting-primary btn-sm">
-                <i class="bi bi-cpu me-1"></i>{% if current_lang == 'en' %}Miner Management{% else %}矿机管理{% endif %}
+                <i class="bi bi-cpu me-1"></i><span data-i18n="hosting.miner_management">Miner Management</span>
             </a>
         </div>
     </div>
@@ -49,13 +49,13 @@
             <table class="table table-hover" id="sites-table">
                 <thead>
                     <tr>
-                        <th>{% if current_lang == 'en' %}Site Name{% else %}站点名称{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Location{% else %}位置{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Capacity{% else %}容量{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Used{% else %}已用{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Devices{% else %}设备数{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                        <th data-i18n="hosting.site_name">Site Name</th>
+                        <th data-i18n="hosting.location">Location</th>
+                        <th data-i18n="hosting.capacity">Capacity</th>
+                        <th data-i18n="hosting.used">Used</th>
+                        <th data-i18n="hosting.devices">Devices</th>
+                        <th data-i18n="hosting.status">Status</th>
+                        <th data-i18n="hosting.actions">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -70,14 +70,14 @@
 <div class="hosting-card">
     <div class="hosting-card-header">
         <h5 class="hosting-card-title">
-            <i class="bi bi-exclamation-triangle me-2"></i>{% if current_lang == 'en' %}Recent Events{% else %}最新事件{% endif %}
+            <i class="bi bi-exclamation-triangle me-2"></i><span data-i18n="hosting.recent_events">Recent Events</span>
         </h5>
     </div>
     <div class="hosting-card-body">
         <div id="events-list">
             <div class="text-center text-muted py-4">
                 <i class="bi bi-clock-history fs-1 mb-3"></i>
-                <p>{% if current_lang == 'en' %}No recent events{% else %}暂无最新事件{% endif %}</p>
+                <p data-i18n="hosting.no_recent_events">No recent events</p>
             </div>
         </div>
     </div>
@@ -89,6 +89,13 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     loadDashboardData();
+    
+    // 监听语言变化，重新渲染表格
+    if (window.I18n) {
+        I18n.onLangChange(function(newLang, oldLang) {
+            loadSitesOverview();
+        });
+    }
 });
 
 function loadDashboardData() {
@@ -120,7 +127,7 @@ function loadSitesOverview() {
                     <td><span class="badge bg-${site.status === 'active' ? 'success' : 'warning'}">${getStatusText(site.status)}</span></td>
                     <td>
                         <a href="/hosting/host/sites/${site.id}" class="btn btn-hosting-outline btn-sm">
-                            <i class="bi bi-eye"></i> ${getLanguage() === 'en' ? 'View' : '查看'}
+                            <i class="bi bi-eye"></i> <span data-i18n="hosting.view">${window.I18n ? I18n.t('hosting.view') : 'View'}</span>
                         </a>
                     </td>
                 `;
@@ -153,9 +160,17 @@ function refreshSites() {
 }
 
 function getStatusText(status) {
+    if (window.I18n) {
+        const statusMap = {
+            'active': I18n.t('hosting.online'),
+            'maintenance': I18n.t('hosting.maintenance'),
+            'offline': I18n.t('hosting.offline')
+        };
+        return statusMap[status] || status;
+    }
     const language = getLanguage();
     const statusMap = {
-        'active': language === 'en' ? 'Active' : '运行中',
+        'active': language === 'en' ? 'Online' : '在线',
         'maintenance': language === 'en' ? 'Maintenance' : '维护中',
         'offline': language === 'en' ? 'Offline' : '离线'
     };
@@ -163,6 +178,9 @@ function getStatusText(status) {
 }
 
 function getLanguage() {
+    if (window.I18n) {
+        return I18n.getCurrentLang();
+    }
     return document.querySelector('meta[name="language"]').content;
 }
 </script>
