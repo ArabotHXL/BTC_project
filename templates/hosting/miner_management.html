@@ -902,6 +902,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     loadMiners();
     loadSitesForDropdown();
+    loadCustomersForDropdown();
     setupFilterForm();
     setupBatchImport();
 });
@@ -1319,6 +1320,25 @@ function loadSitesForDropdown() {
                     if (siteSelect) siteSelect.insertAdjacentHTML('beforeend', option);
                 });
             }
+        });
+}
+
+function loadCustomersForDropdown() {
+    fetch('/hosting/api/customers')
+        .then(response => response.json())
+        .then(data => {
+            const customerFilter = document.getElementById('customer-filter');
+            
+            if (data.success && data.customers && customerFilter) {
+                data.customers.forEach(customer => {
+                    const displayName = customer.name || customer.email;
+                    const option = `<option value="${customer.id}">${displayName}</option>`;
+                    customerFilter.insertAdjacentHTML('beforeend', option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading customers:', error);
         });
 }
 

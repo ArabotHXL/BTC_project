@@ -403,6 +403,60 @@ def get_sites():
         logger.error(f"获取站点列表失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
+@hosting_bp.route('/api/customers', methods=['GET'])
+@login_required
+def get_customers():
+    """获取有托管矿机的客户列表（用于下拉筛选）
+    
+    返回格式:
+    {
+        "success": true,
+        "customers": [
+            {"id": 1, "name": "张三", "email": "zhangsan@example.com"},
+            {"id": 2, "name": "李四", "email": "lisi@example.com"}
+        ]
+    }
+    """
+    from models import UserAccess
+    
+    try:
+        user_role = session.get('role', 'guest')
+        user_id = session.get('user_id')
+        
+        # 查询有矿机的客户（去重）
+        if user_role in ['admin', 'mining_site']:
+            # 管理员和矿场运营方可以看到所有客户
+            customers = db.session.query(
+                UserAccess.id,
+                UserAccess.name,
+                UserAccess.email
+            ).join(
+                HostingMiner, HostingMiner.customer_id == UserAccess.id
+            ).distinct().order_by(UserAccess.name).all()
+        else:
+            # 其他用户只能看到自己
+            customers = db.session.query(
+                UserAccess.id,
+                UserAccess.name,
+                UserAccess.email
+            ).filter(UserAccess.id == user_id).all()
+        
+        customers_data = [
+            {
+                'id': c.id,
+                'name': c.name or c.email.split('@')[0],
+                'email': c.email
+            }
+            for c in customers
+        ]
+        
+        return jsonify({'success': True, 'customers': customers_data})
+    except Exception as e:
+        logger.error(f"获取客户列表失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @hosting_bp.route('/api/sites', methods=['POST'])
 @login_required
 def create_site():
