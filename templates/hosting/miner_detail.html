@@ -118,7 +118,7 @@
         </h5>
         <div class="text-muted small">
             <i class="bi bi-info-circle me-1"></i>
-            {% if current_lang == 'en' %}Hashrate (TH/s) and Net Profit ($){% else %}算力（TH/s）和净收益（$）{% endif %}
+            {% if current_lang == 'en' %}Hashrate (TH/s) and Power Efficiency (TH/kW){% else %}算力（TH/s）和算力效率（TH/kW）{% endif %}
         </div>
     </div>
     <div class="hosting-card-body">
@@ -691,7 +691,8 @@ const translations = {
         noData: 'No data',
         board: 'Board',
         hashrate: 'Hashrate (TH/s)',
-        netProfit: 'Net Profit ($)',
+        efficiency: 'Efficiency (TH/kW)',
+        efficiencyNote: 'Note: Power efficiency is calculated from real-time hashrate and power data, reflecting the effective hashrate per kilowatt. Higher values indicate better energy efficiency.',
         loading: 'Loading...'
     },
     zh: {
@@ -704,7 +705,8 @@ const translations = {
         noData: '无数据',
         board: '板卡',
         hashrate: '算力 (TH/s)',
-        netProfit: '净收益 ($)',
+        efficiency: '算力效率 (TH/kW)',
+        efficiencyNote: '预估说明：算力效率基于实时算力与功率数据计算，反映每千瓦电力可提供的有效算力，数值越高能效越好。',
         loading: '加载中...'
     }
 };
@@ -893,7 +895,7 @@ function updatePerformanceChart(history) {
     
     const labels = history.map(h => h.hour);
     const hashrateData = history.map(h => h.hashrate_ths);
-    const profitData = history.map(h => h.net_profit_usd);
+    const efficiencyData = history.map(h => h.efficiency_thkw);
     
     performanceChart = new Chart(ctx, {
         type: 'line',
@@ -916,8 +918,8 @@ function updatePerformanceChart(history) {
                     pointBorderWidth: 2
                 },
                 {
-                    label: t.netProfit,
-                    data: profitData,
+                    label: t.efficiency,
+                    data: efficiencyData,
                     borderColor: '#f7931a',
                     backgroundColor: 'rgba(247, 147, 26, 0.1)',
                     borderWidth: 2,
@@ -955,11 +957,17 @@ function updatePerformanceChart(history) {
                     backgroundColor: 'rgba(26, 29, 46, 0.95)',
                     titleColor: '#fff',
                     bodyColor: '#fff',
+                    footerColor: 'rgba(255, 255, 255, 0.7)',
                     borderColor: '#f7931a',
                     borderWidth: 1,
                     padding: 12,
                     cornerRadius: 8,
                     displayColors: true,
+                    footerFont: {
+                        size: 10,
+                        style: 'italic'
+                    },
+                    footerMarginTop: 8,
                     callbacks: {
                         label: function(context) {
                             let label = context.dataset.label || '';
@@ -967,10 +975,16 @@ function updatePerformanceChart(history) {
                                 if (context.datasetIndex === 0) {
                                     label += ': ' + context.parsed.y.toFixed(1) + ' TH/s';
                                 } else {
-                                    label += ': $' + context.parsed.y.toFixed(2);
+                                    label += ': ' + context.parsed.y.toFixed(2) + ' TH/kW';
                                 }
                             }
                             return label;
+                        },
+                        footer: function(tooltipItems) {
+                            if (tooltipItems.length > 0) {
+                                return t.efficiencyNote;
+                            }
+                            return '';
                         }
                     }
                 }
@@ -1017,14 +1031,14 @@ function updatePerformanceChart(history) {
                     position: 'right',
                     title: {
                         display: true,
-                        text: t.netProfit,
+                        text: t.efficiency,
                         color: '#f7931a',
                         font: { size: 11, weight: 'bold' }
                     },
                     ticks: {
                         color: '#f7931a',
                         callback: function(value) {
-                            return '$' + value.toFixed(2);
+                            return value.toFixed(1);
                         }
                     },
                     grid: {

@@ -1395,7 +1395,13 @@ def calculate_miner_revenue(hashrate_ths: float, power_kw: float, electricity_ra
 
 
 def get_miner_history_24h(site_id: int, miner_id: str) -> list:
-    """获取矿机24小时历史数据"""
+    """获取矿机24小时历史数据 (含算力效率)
+    
+    Returns hourly data with:
+    - hashrate_ths: Average hashrate in TH/s
+    - power_w: Average power consumption in watts
+    - efficiency_thkw: Power efficiency in TH/kW (higher is better)
+    """
     try:
         cutoff = datetime.utcnow() - timedelta(hours=24)
         
@@ -1414,25 +1420,24 @@ def get_miner_history_24h(site_id: int, miner_id: str) -> list:
             if hour_key not in hourly_data:
                 hourly_data[hour_key] = {
                     "hashrate_samples": [],
-                    "net_profit_samples": []
+                    "power_samples": []
                 }
             hourly_data[hour_key]["hashrate_samples"].append(record.hashrate_ghs / 1000)
-            if hasattr(record, 'net_profit_usd') and record.net_profit_usd:
-                hourly_data[hour_key]["net_profit_samples"].append(record.net_profit_usd)
+            if record.power_consumption and record.power_consumption > 0:
+                hourly_data[hour_key]["power_samples"].append(record.power_consumption)
         
         result = []
         for hour, data in sorted(hourly_data.items()):
             avg_hashrate = sum(data["hashrate_samples"]) / len(data["hashrate_samples"]) if data["hashrate_samples"] else 0
-            avg_profit = sum(data["net_profit_samples"]) / len(data["net_profit_samples"]) if data["net_profit_samples"] else 0
+            avg_power = sum(data["power_samples"]) / len(data["power_samples"]) if data["power_samples"] else 3300
             
-            if avg_profit == 0 and avg_hashrate > 0:
-                revenue_info = calculate_miner_revenue(avg_hashrate, 3.0)
-                avg_profit = revenue_info["net_profit_usd"] / 24
+            efficiency_thkw = (avg_hashrate * 1000 / avg_power) if avg_power > 0 else 0
             
             result.append({
                 "hour": hour,
                 "hashrate_ths": round(avg_hashrate, 2),
-                "net_profit_usd": round(avg_profit, 4)
+                "power_w": round(avg_power, 0),
+                "efficiency_thkw": round(efficiency_thkw, 2)
             })
         
         return result

@@ -464,6 +464,10 @@ TRANSLATIONS = {
         'hosting.online': 'Online',
         'hosting.offline': 'Offline',
         'hosting.maintenance': 'Maintenance',
+        'hosting.24h_performance': '24h Performance',
+        'hosting.hashrate_efficiency': 'Hashrate (TH/s) and Power Efficiency (TH/kW)',
+        'hosting.efficiency_thkw': 'Efficiency (TH/kW)',
+        'hosting.efficiency_note': 'Note: Power efficiency is calculated from real-time hashrate and power data, reflecting the effective hashrate per kilowatt. Higher values indicate better energy efficiency.',
         'common.refresh': 'Refresh',
     },
     'zh': {
@@ -1031,6 +1035,10 @@ TRANSLATIONS = {
         'hosting.online': '在线',
         'hosting.offline': '离线',
         'hosting.maintenance': '维护中',
+        'hosting.24h_performance': '24小时性能',
+        'hosting.hashrate_efficiency': '算力（TH/s）和算力效率（TH/kW）',
+        'hosting.efficiency_thkw': '算力效率 (TH/kW)',
+        'hosting.efficiency_note': '预估说明：算力效率基于实时算力与功率数据计算，反映每千瓦电力可提供的有效算力，数值越高能效越好。',
         'common.refresh': '刷新',
     }
 }
