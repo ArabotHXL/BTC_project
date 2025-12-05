@@ -673,43 +673,19 @@
 <script>
 let performanceChart = null;
 const minerId = {{ miner.id }};
-const currentLang = '{{ current_lang }}';
 
-const translations = {
-    en: {
-        online: 'Online',
-        offline: 'Offline',
-        warning: 'Warning',
-        healthy: 'Healthy',
-        degraded: 'Degraded',
-        unhealthy: 'Unhealthy',
-        noData: 'No data',
-        board: 'Board',
-        hashrate: 'Hashrate (TH/s)',
-        efficiency: 'Efficiency (TH/kW)',
-        efficiencyNote: 'Note: Power efficiency is calculated from real-time hashrate and power data, reflecting the effective hashrate per kilowatt. Higher values indicate better energy efficiency.',
-        loading: 'Loading...'
-    },
-    zh: {
-        online: '在线',
-        offline: '离线',
-        warning: '警告',
-        healthy: '正常',
-        degraded: '性能下降',
-        unhealthy: '异常',
-        noData: '无数据',
-        board: '板卡',
-        hashrate: '算力 (TH/s)',
-        efficiency: '算力效率 (TH/kW)',
-        efficiencyNote: '预估说明：算力效率基于实时算力与功率数据计算，反映每千瓦电力可提供的有效算力，数值越高能效越好。',
-        loading: '加载中...'
-    }
-};
-
-const t = translations[currentLang] || translations.en;
+function t(key) {
+    return window.I18n ? window.I18n.t(key) : key;
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     loadMinerStatus();
+    
+    if (window.I18n && window.I18n.onLanguageChange) {
+        window.I18n.onLanguageChange.push(function() {
+            loadMinerStatus();
+        });
+    }
 });
 
 function refreshData() {
@@ -755,14 +731,14 @@ function updateMinerInfo(miner) {
     if (miner.online) {
         if (miner.overall_health === 'degraded') {
             statusBadge.classList.add('status-warning');
-            statusText.textContent = t.warning;
+            statusText.textContent = t('hosting.warning');
         } else {
             statusBadge.classList.add('status-online');
-            statusText.textContent = t.online;
+            statusText.textContent = t('hosting.online');
         }
     } else {
         statusBadge.classList.add('status-offline');
-        statusText.textContent = t.offline;
+        statusText.textContent = t('hosting.offline');
     }
     
     const healthBadge = document.getElementById('health-badge');
@@ -843,7 +819,7 @@ function updateBoardsHealth(boards) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="5" class="text-center text-muted py-4">
-                    ${currentLang === 'en' ? 'No board data available' : '无板卡数据'}
+                    ${t('hosting.no_board_data')}
                 </td>
             </tr>
         `;
@@ -853,7 +829,7 @@ function updateBoardsHealth(boards) {
     let html = '';
     boards.data.forEach((board, index) => {
         const healthClass = board.health === 'healthy' ? 'healthy' : (board.health === 'degraded' ? 'degraded' : 'unhealthy');
-        const healthText = board.health === 'healthy' ? t.healthy : (board.health === 'degraded' ? t.degraded : t.unhealthy);
+        const healthText = board.health === 'healthy' ? t('hosting.healthy') : (board.health === 'degraded' ? t('hosting.degraded') : t('hosting.unhealthy'));
         
         html += `
             <tr>
@@ -898,7 +874,7 @@ function updatePerformanceChart(history) {
             labels: labels,
             datasets: [
                 {
-                    label: t.hashrate,
+                    label: t('hosting.hashrate_ths'),
                     data: hashrateData,
                     borderColor: '#4ECDC4',
                     backgroundColor: 'rgba(78, 205, 196, 0.1)',
@@ -913,7 +889,7 @@ function updatePerformanceChart(history) {
                     pointBorderWidth: 2
                 },
                 {
-                    label: t.efficiency,
+                    label: t('hosting.efficiency_thkw'),
                     data: efficiencyData,
                     borderColor: '#f7931a',
                     backgroundColor: 'rgba(247, 147, 26, 0.1)',
@@ -977,7 +953,7 @@ function updatePerformanceChart(history) {
                         },
                         footer: function(tooltipItems) {
                             if (tooltipItems.length > 0) {
-                                return t.efficiencyNote;
+                                return t('hosting.efficiency_note');
                             }
                             return '';
                         }
@@ -1005,7 +981,7 @@ function updatePerformanceChart(history) {
                     position: 'left',
                     title: {
                         display: true,
-                        text: t.hashrate,
+                        text: t('hosting.hashrate_ths'),
                         color: '#4ECDC4',
                         font: { size: 11, weight: 'bold' }
                     },
@@ -1026,7 +1002,7 @@ function updatePerformanceChart(history) {
                     position: 'right',
                     title: {
                         display: true,
-                        text: t.efficiency,
+                        text: t('hosting.efficiency_thkw'),
                         color: '#f7931a',
                         font: { size: 11, weight: 'bold' }
                     },
