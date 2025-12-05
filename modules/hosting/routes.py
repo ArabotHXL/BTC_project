@@ -541,10 +541,26 @@ def get_client_miners():
     """获取客户矿机列表"""
     try:
         user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        user_email = session.get('email', '')
         
-        miners = HostingMiner.query.filter_by(customer_id=user_id).all()
+        # 权限控制 - 角色级别数据隔离
+        if user_role == 'admin':
+            # 管理员可以查看所有矿机
+            miners = HostingMiner.query.all()
+        elif user_role == 'mining_site':
+            # 矿场运营方只能查看自己管理站点的矿机
+            managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            managed_site_ids = [s.id for s in managed_sites]
+            if managed_site_ids:
+                miners = HostingMiner.query.filter(HostingMiner.site_id.in_(managed_site_ids)).all()
+            else:
+                miners = []
+        else:
+            # owner/customer 只能查看自己名下的矿机
+            miners = HostingMiner.query.filter_by(customer_id=user_id).all()
+        
         miners_data = []
-        
         for miner in miners:
             miner_data = miner.to_dict()
             miner_data['site_name'] = miner.site.name if miner.site else 'Unknown'
@@ -561,9 +577,11 @@ def get_client_dashboard():
     """获取客户仪表板数据（性能优化版）"""
     try:
         user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        user_email = session.get('email', '')
         
-        # 使用聚合查询获取统计数据，避免加载所有矿机记录
-        stats = db.session.query(
+        # 构建基础查询
+        base_query = db.session.query(
             db.func.count(HostingMiner.id).label('total'),
             db.func.sum(db.case((HostingMiner.status == 'active', 1), else_=0)).label('active'),
             db.func.sum(db.case(
@@ -574,12 +592,35 @@ def get_client_dashboard():
                 (HostingMiner.status == 'active', HostingMiner.actual_power), 
                 else_=0
             )).label('total_power')
-        ).filter(HostingMiner.customer_id == user_id).first()
+        )
         
-        total_miners = stats.total or 0
-        active_miners = int(stats.active or 0)
-        total_hashrate = float(stats.total_hashrate or 0)
-        total_power = float(stats.total_power or 0)
+        # 权限控制 - 角色级别数据隔离
+        if user_role == 'admin':
+            # 管理员可以查看所有矿机
+            stats = base_query.first()
+        elif user_role == 'mining_site':
+            # 矿场运营方只能查看自己管理站点的矿机
+            managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            managed_site_ids = [s.id for s in managed_sites]
+            if managed_site_ids:
+                stats = base_query.filter(HostingMiner.site_id.in_(managed_site_ids)).first()
+            else:
+                stats = None
+        else:
+            # owner/customer 只能查看自己名下的矿机
+            stats = base_query.filter(HostingMiner.customer_id == user_id).first()
+        
+        # 处理空结果
+        if stats:
+            total_miners = stats.total or 0
+            active_miners = int(stats.active or 0)
+            total_hashrate = float(stats.total_hashrate or 0)
+            total_power = float(stats.total_power or 0)
+        else:
+            total_miners = 0
+            active_miners = 0
+            total_hashrate = 0.0
+            total_power = 0.0
         
         # 估算收益（简化计算）
         daily_revenue = total_hashrate * 0.000005 * 110000  # 估算日收益
@@ -678,22 +719,43 @@ def get_client_miner_distribution():
     """获取客户矿机分布数据（性能优化版）"""
     try:
         user_id = session.get('user_id')
+        user_role = session.get('role', 'guest')
+        user_email = session.get('email', '')
         
-        # 使用聚合查询直接获取分布数据，避免N+1问题
-        distribution = db.session.query(
+        # 构建基础查询
+        base_query = db.session.query(
             HostingSite.name.label('site_name'),
             db.func.count(HostingMiner.id).label('count')
         ).outerjoin(
             HostingMiner, HostingMiner.site_id == HostingSite.id
-        ).filter(
-            HostingMiner.customer_id == user_id
-        ).group_by(HostingSite.id, HostingSite.name).all()
+        )
         
-        # 添加没有站点的矿机数量
-        unknown_count = HostingMiner.query.filter(
-            HostingMiner.customer_id == user_id,
-            HostingMiner.site_id == None
-        ).count()
+        # 权限控制 - 角色级别数据隔离
+        if user_role == 'admin':
+            # 管理员可以查看所有矿机分布
+            distribution = base_query.group_by(HostingSite.id, HostingSite.name).all()
+            unknown_count = HostingMiner.query.filter(HostingMiner.site_id == None).count()
+        elif user_role == 'mining_site':
+            # 矿场运营方只能查看自己管理站点的矿机
+            managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            managed_site_ids = [s.id for s in managed_sites]
+            if managed_site_ids:
+                distribution = base_query.filter(
+                    HostingSite.id.in_(managed_site_ids)
+                ).group_by(HostingSite.id, HostingSite.name).all()
+                unknown_count = 0  # 矿场运营方不关心没有站点的矿机
+            else:
+                distribution = []
+                unknown_count = 0
+        else:
+            # owner/customer 只能查看自己名下的矿机分布
+            distribution = base_query.filter(
+                HostingMiner.customer_id == user_id
+            ).group_by(HostingSite.id, HostingSite.name).all()
+            unknown_count = HostingMiner.query.filter(
+                HostingMiner.customer_id == user_id,
+                HostingMiner.site_id == None
+            ).count()
         
         # 转换为图表数据格式
         labels = [row.site_name or 'Unknown' for row in distribution]
@@ -986,12 +1048,22 @@ def get_miners():
         # 构建查询
         query = HostingMiner.query
         
-        # 权限控制
-        if user_role in ['owner', 'admin', 'mining_site']:
-            # 托管商可以查看所有矿机
+        # 权限控制 - 角色级别数据隔离
+        if user_role == 'admin':
+            # 管理员可以查看所有矿机
             pass
+        elif user_role == 'mining_site':
+            # 矿场运营方只能查看自己管理站点的矿机
+            user_email = session.get('email', '')
+            managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            managed_site_ids = [s.id for s in managed_sites]
+            if managed_site_ids:
+                query = query.filter(HostingMiner.site_id.in_(managed_site_ids))
+            else:
+                # 没有管理任何站点，返回空结果
+                query = query.filter(HostingMiner.id == -1)
         else:
-            # 客户只能查看自己的矿机
+            # owner/customer 只能查看自己名下的矿机
             query = query.filter_by(customer_id=user_id)
         
         # 应用筛选条件
@@ -1001,7 +1073,8 @@ def get_miners():
             query = query.filter_by(approval_status=approval_status)
         if site_id:
             query = query.filter_by(site_id=site_id)
-        if customer_id and user_role in ['owner', 'admin', 'mining_site']:
+        if customer_id and user_role == 'admin':
+            # 只有管理员可以按客户ID筛选
             query = query.filter_by(customer_id=customer_id)
         
         # 分页
