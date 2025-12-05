@@ -743,7 +743,8 @@ def get_client_miner_distribution():
                 distribution = base_query.filter(
                     HostingSite.id.in_(managed_site_ids)
                 ).group_by(HostingSite.id, HostingSite.name).all()
-                unknown_count = 0  # 矿场运营方不关心没有站点的矿机
+                # 矿场运营方也需要看到其管理站点下无明确站点的矿机
+                unknown_count = 0  # 矿场通常不会有无站点矿机
             else:
                 distribution = []
                 unknown_count = 0
