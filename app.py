@@ -462,6 +462,37 @@ def _run_deferred_initialization():
         except Exception as e:
             logging.error(f"❌ Database initialization error: {e}")
         
+        # Step 1.5: Warm up database connection pool with hosting queries
+        if initialize_database_result:
+            try:
+                with app.app_context():
+                    warmup_start = time.time()
+                    
+                    # Warmup query 1: Count hosting sites (uses contact_email index)
+                    db.session.execute(text("SELECT COUNT(*) FROM hosting_sites"))
+                    
+                    # Warmup query 2: Count hosting miners with status (uses common indexes)
+                    db.session.execute(text("""
+                        SELECT status, COUNT(*) 
+                        FROM hosting_miners 
+                        GROUP BY status 
+                        LIMIT 5
+                    """))
+                    
+                    # Warmup query 3: Site aggregation query (matches /api/sites pattern)
+                    db.session.execute(text("""
+                        SELECT s.id, COUNT(m.id) 
+                        FROM hosting_sites s 
+                        LEFT JOIN hosting_miners m ON m.site_id = s.id 
+                        GROUP BY s.id 
+                        LIMIT 5
+                    """))
+                    
+                    warmup_time = (time.time() - warmup_start) * 1000
+                    logging.info(f"✅ Database connection pool warmed up in {warmup_time:.0f}ms")
+            except Exception as e:
+                logging.warning(f"⚠️ Database warmup failed (non-critical): {e}")
+        
         # Step 2: Initialize blockchain scheduler
         if initialize_database_result:
             try:
