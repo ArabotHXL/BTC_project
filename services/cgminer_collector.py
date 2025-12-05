@@ -1,55 +1,101 @@
 import logging
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from tools.test_cgminer import CGMinerTester
 from models import db, HostingMiner
 
 logger = logging.getLogger(__name__)
 
-def collect_all_miners_telemetry():
+MINER_TIMEOUT = 1
+MAX_CONCURRENT_POLLS = 20
+SKIP_OFFLINE_HOURS = 24
+
+def poll_single_miner(miner_id, ip_address, serial_number):
     """
-    采集所有矿机的CGMiner遥测数据
+    采集单台矿机数据（线程安全）
     
-    查询所有有IP地址的矿机（排除维护中状态），使用CGMinerTester采集遥测数据
-    并更新数据库。
+    Args:
+        miner_id: 矿机ID
+        ip_address: IP地址
+        serial_number: 序列号
     
     Returns:
-        dict: {'success': int, 'failed': int} 成功和失败的数量
+        tuple: (miner_id, telemetry_data or None, error_msg or None)
     """
     try:
+        tester = CGMinerTester(ip_address, timeout=MINER_TIMEOUT)
+        telemetry = tester.get_telemetry_data()
+        return (miner_id, telemetry, None)
+    except Exception as e:
+        return (miner_id, None, str(e))
+
+def collect_all_miners_telemetry():
+    """
+    采集所有矿机的CGMiner遥测数据（并发优化版）
+    
+    使用线程池并发采集，每台矿机1秒超时，跳过长期离线矿机
+    
+    Returns:
+        dict: {'success': int, 'failed': int, 'skipped': int}
+    """
+    try:
+        skip_threshold = datetime.utcnow() - timedelta(hours=SKIP_OFFLINE_HOURS)
+        
         miners = HostingMiner.query.filter(
             HostingMiner.ip_address.isnot(None),
-            HostingMiner.status != 'maintenance'
+            HostingMiner.status != 'maintenance',
+            db.or_(
+                HostingMiner.status != 'offline',
+                HostingMiner.last_seen > skip_threshold,
+                HostingMiner.last_seen.is_(None)
+            )
         ).all()
         
-        logger.info(f"开始采集 {len(miners)} 台矿机的CGMiner数据")
+        total_miners = HostingMiner.query.filter(
+            HostingMiner.ip_address.isnot(None),
+            HostingMiner.status != 'maintenance'
+        ).count()
+        
+        skipped = total_miners - len(miners)
+        
+        logger.info(f"开始采集 {len(miners)} 台矿机的CGMiner数据 (跳过{skipped}台长期离线)")
+        
+        if not miners:
+            return {'success': 0, 'failed': 0, 'skipped': skipped}
+        
+        miner_map = {m.id: m for m in miners}
+        poll_tasks = [(m.id, m.ip_address, m.serial_number) for m in miners]
         
         success_count = 0
         fail_count = 0
         
-        for miner in miners:
-            try:
-                db.session.refresh(miner)
-                
-                tester = CGMinerTester(miner.ip_address, timeout=3)
-                telemetry = tester.get_telemetry_data()
-                
-                if telemetry:
-                    update_miner_telemetry_data(miner, telemetry)
-                    success_count += 1
-                    logger.debug(f"矿机 {miner.serial_number} 数据采集成功")
-                else:
-                    mark_miner_offline(miner)
-                    fail_count += 1
-                    logger.debug(f"矿机 {miner.serial_number} 无法连接")
-            except Exception as e:
-                logger.error(f"采集矿机 {miner.serial_number} 失败: {e}")
+        with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_POLLS) as executor:
+            futures = {
+                executor.submit(poll_single_miner, mid, ip, sn): mid 
+                for mid, ip, sn in poll_tasks
+            }
+            
+            for future in as_completed(futures, timeout=30):
                 try:
-                    db.session.refresh(miner)
-                except:
-                    pass
-                mark_miner_offline(miner)
-                fail_count += 1
+                    miner_id, telemetry, error = future.result(timeout=2)
+                    miner = miner_map.get(miner_id)
+                    
+                    if not miner:
+                        continue
+                    
+                    if telemetry:
+                        update_miner_telemetry_data(miner, telemetry)
+                        success_count += 1
+                    else:
+                        mark_miner_offline(miner)
+                        fail_count += 1
+                        if error:
+                            logger.debug(f"❌ 连接超时: {miner.ip_address}:4028")
+                            
+                except Exception as e:
+                    fail_count += 1
+                    logger.debug(f"采集任务异常: {e}")
         
         try:
             db.session.commit()
@@ -57,8 +103,8 @@ def collect_all_miners_telemetry():
             logger.error(f"数据库提交失败: {e}")
             db.session.rollback()
         
-        logger.info(f"CGMiner数据采集完成: {success_count}成功, {fail_count}失败")
-        return {'success': success_count, 'failed': fail_count}
+        logger.info(f"CGMiner数据采集完成: {success_count}成功, {fail_count}失败, {skipped}跳过")
+        return {'success': success_count, 'failed': fail_count, 'skipped': skipped}
         
     except Exception as e:
         db.session.rollback()
