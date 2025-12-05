@@ -1224,8 +1224,8 @@ def get_miners():
             query = query.filter_by(approval_status=approval_status)
         if site_id:
             query = query.filter_by(site_id=site_id)
-        if customer_id and user_role == 'admin':
-            # 只有管理员可以按客户ID筛选
+        if customer_id and user_role in ['admin', 'mining_site']:
+            # 管理员和矿场运营方可以按客户ID筛选
             query = query.filter_by(customer_id=customer_id)
         
         # 分页
