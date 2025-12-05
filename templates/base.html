@@ -20,6 +20,8 @@
     <link rel="stylesheet" href="/static/css/animations.css">
     <!-- Responsive CSS -->
     <link rel="stylesheet" href="/static/css/responsive.css">
+    <!-- i18n 无刷新语言切换 -->
+    <script src="/static/js/i18n.js"></script>
     {% block extra_css %}{% endblock %}
     {% block extra_head %}{% endblock %}
     
@@ -78,16 +80,16 @@
     </style>
 </head>
 <body>
-    <!-- Global Language Switcher -->
+    <!-- Global Language Switcher (无刷新切换) -->
     <div class="global-lang-switcher">
-        <a href="{{ url_for('set_language', lang='zh', return_url=request.url) }}" 
-           class="lang-btn {{ 'active' if current_lang == 'zh' else 'inactive' }}">
+        <button type="button" data-lang-switch="zh" data-lang="zh"
+           class="lang-btn lang-switch-btn {{ 'active' if current_lang == 'zh' else 'inactive' }}">
             中文
-        </a>
-        <a href="{{ url_for('set_language', lang='en', return_url=request.url) }}" 
-           class="lang-btn {{ 'active' if current_lang == 'en' else 'inactive' }}">
+        </button>
+        <button type="button" data-lang-switch="en" data-lang="en"
+           class="lang-btn lang-switch-btn {{ 'active' if current_lang == 'en' else 'inactive' }}">
             EN
-        </a>
+        </button>
     </div>
 
     <div class="container-fluid">
@@ -138,5 +140,25 @@
     </div>
 
     {% block scripts %}{% endblock %}
+    
+    <!-- Language Switcher Handler -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.I18n) {
+            I18n.onLangChange(function(newLang, oldLang) {
+                // 更新全局语言切换按钮样式
+                document.querySelectorAll('.lang-switch-btn').forEach(btn => {
+                    if (btn.dataset.lang === newLang) {
+                        btn.classList.remove('inactive');
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                        btn.classList.add('inactive');
+                    }
+                });
+            });
+        }
+    });
+    </script>
 </body>
 </html>

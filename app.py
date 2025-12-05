@@ -1966,6 +1966,53 @@ def set_language():
     
     return redirect(return_url)
 
+# =========================================================================
+# 🌐 i18n API - 无刷新语言切换
+# =========================================================================
+
+@app.route('/api/i18n/translations')
+def api_get_translations():
+    """获取所有翻译数据 (JSON格式)"""
+    from translations import TRANSLATIONS
+    current_lang = session.get('language', g.get('language', 'zh'))
+    
+    return jsonify({
+        'success': True,
+        'current_lang': current_lang,
+        'translations': TRANSLATIONS
+    })
+
+@app.route('/api/i18n/set-language', methods=['POST'])
+def api_set_language():
+    """设置语言 (AJAX方式，无刷新)"""
+    try:
+        data = request.get_json() or {}
+        lang = data.get('lang', 'zh')
+        
+        if lang not in ['zh', 'en']:
+            lang = 'zh'
+        
+        # 更新session
+        session['language'] = lang
+        session.modified = True
+        g.language = lang
+        
+        # 更新语言引擎
+        if ENHANCED_LANGUAGE and language_engine:
+            language_engine.set_language(lang)
+        
+        return jsonify({
+            'success': True,
+            'lang': lang,
+            'message': 'Language updated successfully'
+        })
+    except Exception as e:
+        logging.error(f"Error setting language via API: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/admin/login_records')
 @app.route('/login-records')
 @login_required

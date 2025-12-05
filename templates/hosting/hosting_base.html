@@ -15,6 +15,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- E2EE Crypto Module -->
     <script src="/static/js/crypto_miner_e2ee.js"></script>
+    <!-- i18n 无刷新语言切换 -->
+    <script src="/static/js/i18n.js"></script>
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/static/css/styles.css">
     
@@ -518,9 +520,9 @@
             
             <div class="hosting-sidebar-brand">
                 <h1 class="hosting-brand-title">
-                    <i class="bi bi-building me-2 hosting-brand-icon"></i>{% if current_lang == 'en' %}Hosting{% else %}托管管理{% endif %}
+                    <i class="bi bi-building me-2 hosting-brand-icon"></i><span data-i18n="hosting">{% if current_lang == 'en' %}Hosting{% else %}托管管理{% endif %}</span>
                 </h1>
-                <p class="hosting-brand-subtitle">
+                <p class="hosting-brand-subtitle" data-i18n="professional_mining_management">
                     {% if current_lang == 'en' %}Professional Mining Management{% else %}专业矿机托管平台{% endif %}
                 </p>
             </div>
@@ -529,74 +531,74 @@
                 {% if session.role in ['owner', 'admin', 'mining_site'] %}
                 <!-- 托管商菜单 -->
                 <div class="hosting-nav-section">
-                    <div class="hosting-nav-title">
+                    <div class="hosting-nav-title" data-i18n="host_management">
                         {% if current_lang == 'en' %}Host Management{% else %}托管商管理{% endif %}
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/hosting/host" class="hosting-nav-link" data-nav="dashboard">
                             <i class="bi bi-speedometer2 hosting-nav-icon"></i>
-                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Dashboard{% else %}仪表板{% endif %}</span>
+                            <span class="hosting-nav-text" data-i18n="dashboard">{% if current_lang == 'en' %}Dashboard{% else %}仪表板{% endif %}</span>
                         </a>
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/hosting/host/devices" class="hosting-nav-link" data-nav="devices">
                             <i class="bi bi-cpu hosting-nav-icon"></i>
-                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Device Management{% else %}设备管理{% endif %}</span>
+                            <span class="hosting-nav-text" data-i18n="device_management">{% if current_lang == 'en' %}Device Management{% else %}设备管理{% endif %}</span>
                         </a>
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/hosting/host/sites" class="hosting-nav-link" data-nav="sites">
                             <i class="bi bi-geo-alt hosting-nav-icon"></i>
-                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Site Management{% else %}站点管理{% endif %}</span>
+                            <span class="hosting-nav-text" data-i18n="site_management">{% if current_lang == 'en' %}Site Management{% else %}站点管理{% endif %}</span>
                         </a>
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/hosting/host/monitoring" class="hosting-nav-link" data-nav="monitoring">
                             <i class="bi bi-activity hosting-nav-icon"></i>
-                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Monitoring{% else %}监控管理{% endif %}</span>
+                            <span class="hosting-nav-text" data-i18n="monitoring">{% if current_lang == 'en' %}Monitoring{% else %}监控管理{% endif %}</span>
                         </a>
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/hosting/host/curtailment" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/host/curtailment') }}" data-nav="curtailment">
                             <i class="bi bi-lightning-charge hosting-nav-icon"></i>
-                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Smart Curtailment{% else %}智能限电{% endif %}</span>
+                            <span class="hosting-nav-text" data-i18n="smart_curtailment">{% if current_lang == 'en' %}Smart Curtailment{% else %}智能限电{% endif %}</span>
                         </a>
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/hosting/host/collectors" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/host/collectors') }}" data-nav="collectors">
                             <i class="bi bi-broadcast hosting-nav-icon"></i>
-                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Edge Collectors{% else %}边缘采集器{% endif %}</span>
+                            <span class="hosting-nav-text" data-i18n="edge_collectors">{% if current_lang == 'en' %}Edge Collectors{% else %}边缘采集器{% endif %}</span>
                         </a>
                     </div>
                 </div>
                 {% else %}
                 <!-- 客户菜单 -->
                 <div class="hosting-nav-section">
-                    <div class="hosting-nav-title">
+                    <div class="hosting-nav-title" data-i18n="my_assets">
                         {% if current_lang == 'en' %}My Assets{% else %}我的资产{% endif %}
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/hosting/client" class="hosting-nav-link {{ 'active' if request.path == '/hosting/client' or request.path == '/hosting/client/' }}">
                             <i class="bi bi-person-circle hosting-nav-icon"></i>
-                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Dashboard{% else %}资产概览{% endif %}</span>
+                            <span class="hosting-nav-text" data-i18n="asset_overview">{% if current_lang == 'en' %}Dashboard{% else %}资产概览{% endif %}</span>
                         </a>
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/hosting/client/miners" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/miners') }}">
                             <i class="bi bi-cpu hosting-nav-icon"></i>
-                            <span class="hosting-nav-text">{% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}</span>
+                            <span class="hosting-nav-text" data-i18n="my_devices">{% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}</span>
                         </a>
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/hosting/client/usage" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/usage') }}">
                             <i class="bi bi-activity hosting-nav-icon"></i>
-                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Usage Tracking{% else %}使用记录{% endif %}</span>
+                            <span class="hosting-nav-text" data-i18n="usage_tracking">{% if current_lang == 'en' %}Usage Tracking{% else %}使用记录{% endif %}</span>
                         </a>
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/hosting/client/reports" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/reports') }}">
                             <i class="bi bi-graph-up hosting-nav-icon"></i>
-                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Reports{% else %}报告分析{% endif %}</span>
+                            <span class="hosting-nav-text" data-i18n="reports">{% if current_lang == 'en' %}Reports{% else %}报告分析{% endif %}</span>
                         </a>
                     </div>
                 </div>
@@ -604,32 +606,32 @@
                 
                 <!-- 公共菜单 -->
                 <div class="hosting-nav-section">
-                    <div class="hosting-nav-title">
+                    <div class="hosting-nav-title" data-i18n="support">
                         {% if current_lang == 'en' %}Support{% else %}支持服务{% endif %}
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/hosting/client/tickets" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/tickets') }}">
                             <i class="bi bi-headset hosting-nav-icon"></i>
-                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Support Tickets{% else %}技术支持{% endif %}</span>
+                            <span class="hosting-nav-text" data-i18n="support_tickets">{% if current_lang == 'en' %}Support Tickets{% else %}技术支持{% endif %}</span>
                         </a>
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/hosting/status" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/status') }}">
                             <i class="bi bi-globe hosting-nav-icon"></i>
-                            <span class="hosting-nav-text">{% if current_lang == 'en' %}System Status{% else %}系统状态{% endif %}</span>
+                            <span class="hosting-nav-text" data-i18n="system_status">{% if current_lang == 'en' %}System Status{% else %}系统状态{% endif %}</span>
                         </a>
                     </div>
                 </div>
                 
                 <!-- 返回主系统 -->
                 <div class="hosting-nav-section">
-                    <div class="hosting-nav-title">
+                    <div class="hosting-nav-title" data-i18n="navigation">
                         {% if current_lang == 'en' %}Navigation{% else %}导航{% endif %}
                     </div>
                     <div class="hosting-nav-item">
                         <a href="/main" class="hosting-nav-link">
                             <i class="bi bi-arrow-left hosting-nav-icon"></i>
-                            <span class="hosting-nav-text">{% if current_lang == 'en' %}Back to Main{% else %}返回主页{% endif %}</span>
+                            <span class="hosting-nav-text" data-i18n="back_to_main">{% if current_lang == 'en' %}Back to Main{% else %}返回主页{% endif %}</span>
                         </a>
                     </div>
                 </div>
@@ -646,14 +648,16 @@
                 </div>
                 <div class="hosting-header-actions">
                     {% block header_actions %}
-                    <!-- Language Switcher -->
+                    <!-- Language Switcher (无刷新切换) -->
                     <div class="lang-switcher me-2" style="display: inline-flex; gap: 4px;">
-                        <a href="{{ url_for('set_language', lang='zh', return_url=request.url) }}" 
-                           class="btn btn-sm {{ 'btn-warning' if current_lang == 'zh' else 'btn-outline-secondary' }}" 
-                           style="padding: 4px 10px; font-size: 0.8rem;">中文</a>
-                        <a href="{{ url_for('set_language', lang='en', return_url=request.url) }}" 
-                           class="btn btn-sm {{ 'btn-warning' if current_lang == 'en' else 'btn-outline-secondary' }}" 
-                           style="padding: 4px 10px; font-size: 0.8rem;">EN</a>
+                        <button type="button" 
+                           data-lang-switch="zh" data-lang="zh"
+                           class="btn btn-sm lang-switch-btn {{ 'btn-warning' if current_lang == 'zh' else 'btn-outline-secondary' }}" 
+                           style="padding: 4px 10px; font-size: 0.8rem;">中文</button>
+                        <button type="button"
+                           data-lang-switch="en" data-lang="en"
+                           class="btn btn-sm lang-switch-btn {{ 'btn-warning' if current_lang == 'en' else 'btn-outline-secondary' }}" 
+                           style="padding: 4px 10px; font-size: 0.8rem;">EN</button>
                     </div>
                     <span class="badge bg-success">
                         <i class="bi bi-person-check me-1"></i>{{ session.username or session.email }}
@@ -791,6 +795,67 @@
             document.querySelector('[data-nav="monitoring"]')?.classList.add('active');
         } else if (currentPath === '/hosting/host/curtailment' || currentPath.startsWith('/hosting/host/curtailment/')) {
             document.querySelector('[data-nav="curtailment"]')?.classList.add('active');
+        }
+        
+        // 无刷新语言切换 - 更新按钮样式
+        if (window.I18n) {
+            I18n.onLangChange(function(newLang, oldLang) {
+                // 更新语言切换按钮样式
+                document.querySelectorAll('.lang-switch-btn').forEach(btn => {
+                    if (btn.dataset.lang === newLang) {
+                        btn.classList.remove('btn-outline-secondary');
+                        btn.classList.add('btn-warning');
+                    } else {
+                        btn.classList.remove('btn-warning');
+                        btn.classList.add('btn-outline-secondary');
+                    }
+                });
+                
+                // 更新需要翻译的动态元素
+                updateDynamicTranslations(newLang);
+            });
+        }
+        
+        // 更新动态翻译文本
+        function updateDynamicTranslations(lang) {
+            const translations = {
+                // 品牌标题
+                'hosting': { zh: '托管管理', en: 'Hosting' },
+                'professional_mining_management': { zh: '专业矿机托管平台', en: 'Professional Mining Management' },
+                // 托管商菜单
+                'host_management': { zh: '托管商管理', en: 'Host Management' },
+                'dashboard': { zh: '仪表板', en: 'Dashboard' },
+                'device_management': { zh: '设备管理', en: 'Device Management' },
+                'site_management': { zh: '站点管理', en: 'Site Management' },
+                'monitoring': { zh: '监控管理', en: 'Monitoring' },
+                'smart_curtailment': { zh: '智能限电', en: 'Smart Curtailment' },
+                'edge_collectors': { zh: '边缘采集器', en: 'Edge Collectors' },
+                // 客户菜单
+                'my_assets': { zh: '我的资产', en: 'My Assets' },
+                'asset_overview': { zh: '资产概览', en: 'Dashboard' },
+                'my_devices': { zh: '我的设备', en: 'My Devices' },
+                'usage_tracking': { zh: '使用记录', en: 'Usage Tracking' },
+                'reports': { zh: '报告分析', en: 'Reports' },
+                // 公共菜单
+                'support': { zh: '支持服务', en: 'Support' },
+                'support_tickets': { zh: '技术支持', en: 'Support Tickets' },
+                'system_status': { zh: '系统状态', en: 'System Status' },
+                'navigation': { zh: '导航', en: 'Navigation' },
+                'back_to_main': { zh: '返回主页', en: 'Back to Main' },
+                // 角色
+                'owner': { zh: '业主', en: 'Owner' },
+                'admin': { zh: '管理员', en: 'Admin' },
+                'site_manager': { zh: '站点管理员', en: 'Site Manager' },
+                'client': { zh: '客户', en: 'Client' }
+            };
+            
+            // 更新带有 data-i18n 属性的元素
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.dataset.i18n;
+                if (translations[key] && translations[key][lang]) {
+                    el.textContent = translations[key][lang];
+                }
+            });
         }
     });
     </script>
