@@ -27,6 +27,12 @@ HashInsight Enterprise is an enterprise-grade web application for mining farm ow
 - **4 API Endpoints**: `/crm/api/hosting/customer-miners`, `/crm/api/hosting/customer-stats`, `/crm/api/hosting/customer-performance`, `/crm/api/hosting/customer-revenue`
 - **Real-Time Data Display**: CRM customer detail pages show live miner status, hashrate, and revenue data
 
+### Power Efficiency Metrics (Engineering-Focused)
+- **24h Hashrate & Efficiency Chart**: Replaced net revenue chart with dual-axis performance visualization
+- **TH/kW Efficiency Metric**: Power efficiency calculated as `hashrate_TH/s × 1000 / power_W` (higher is better)
+- **Dual Y-Axis**: Left axis (cyan): Hashrate in TH/s, Right axis (orange): Efficiency in TH/kW
+- **Bilingual Support**: Full English/Chinese translations for chart title, axis labels, legend, and tooltip notes
+
 ## System Architecture
 
 ### UI/UX Decisions
