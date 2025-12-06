@@ -1156,7 +1156,7 @@ def get_client_reports():
         total_miners = len(miners)
         active_miners = sum(1 for m in miners if m.status == 'active')
         total_hashrate = sum(m.actual_hashrate or 0 for m in miners if m.status == 'active')
-        total_power = sum(m.power_consumption or 0 for m in miners if m.status == 'active')
+        total_power = sum(m.actual_power or 0 for m in miners if m.status == 'active')
         
         # 计算收益
         daily_revenue_per_th = 0.055
