@@ -797,7 +797,7 @@ def get_client_dashboard():
         # 格式化最近矿机数据
         recent_miners = []
         for miner in recent_miners_query:
-            miner_model_name = miner.model.model_name if miner.model else 'Unknown'
+            miner_model_name = miner.miner_model.model_name if miner.miner_model else 'Unknown'
             site_name = miner.site.name if miner.site else 'Unknown'
             daily_miner_revenue = miner.actual_hashrate * 0.000005 * 110000 if miner.status == 'active' else 0
             recent_miners.append({
