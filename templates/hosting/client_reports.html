@@ -228,8 +228,8 @@ function loadReportsData() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                updateReportsSummary(data.summary);
-                updateReportsHistory(data.history);
+                updateReportsSummary(data.stats);
+                updateReportsHistory(data.reports || []);
             }
         })
         .catch(error => {
@@ -237,11 +237,14 @@ function loadReportsData() {
         });
 }
 
-function updateReportsSummary(summary) {
-    document.getElementById('monthly-uptime').textContent = `${summary.monthly_uptime}%`;
-    document.getElementById('average-hashrate').textContent = `${summary.average_hashrate} TH/s`;
-    document.getElementById('total-revenue').textContent = `$${summary.total_revenue.toFixed(2)}`;
-    document.getElementById('efficiency-ratio').textContent = `${summary.efficiency_ratio}%`;
+function updateReportsSummary(stats) {
+    if (!stats) return;
+    document.getElementById('monthly-uptime').textContent = `${stats.monthly_uptime || 0}%`;
+    const hashrate = parseFloat(stats.average_hashrate || 0).toLocaleString(undefined, {maximumFractionDigits: 1});
+    document.getElementById('average-hashrate').textContent = `${hashrate} TH/s`;
+    const revenue = parseFloat(stats.total_revenue || 0).toLocaleString(undefined, {maximumFractionDigits: 0});
+    document.getElementById('total-revenue').textContent = `$${revenue}`;
+    document.getElementById('efficiency-ratio').textContent = `${stats.efficiency || 0} TH/kW`;
 }
 
 function updateReportsHistory(history) {
@@ -530,10 +533,25 @@ function loadPerformanceChart(period) {
     fetch(`/hosting/api/client/reports/chart?period=${period}`)
         .then(response => response.json())
         .then(data => {
-            window.performanceChart.data.labels = data.labels;
-            window.performanceChart.data.datasets[0].data = data.hashrate;
-            window.performanceChart.data.datasets[1].data = data.revenue;
-            window.performanceChart.update();
+            if (data.success) {
+                window.performanceChart.data.labels = data.labels;
+                window.performanceChart.data.datasets[0].data = data.hashrate;
+                window.performanceChart.data.datasets[1].data = data.revenue;
+                window.performanceChart.update();
+                
+                // 更新收益构成图表
+                if (data.breakdown) {
+                    window.revenueBreakdownChart.data.datasets[0].data = [
+                        data.breakdown.mining_revenue,
+                        data.breakdown.pool_fees
+                    ];
+                    window.revenueBreakdownChart.update();
+                    
+                    // 更新文字显示
+                    document.getElementById('mining-revenue').textContent = '$' + data.breakdown.mining_revenue.toLocaleString();
+                    document.getElementById('pool-fees').textContent = '$' + data.breakdown.pool_fees.toLocaleString();
+                }
+            }
         })
         .catch(error => {
             console.error('Error loading performance chart:', error);
