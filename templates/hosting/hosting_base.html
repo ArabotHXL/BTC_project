@@ -260,6 +260,73 @@
         opacity: 0;
         width: 0;
     }
+    
+    /* Collapsible Submenu Styles */
+    .hosting-nav-parent {
+        position: relative;
+    }
+    
+    .hosting-nav-toggle {
+        cursor: pointer;
+        justify-content: flex-start;
+    }
+    
+    .hosting-nav-arrow {
+        margin-left: auto;
+        font-size: 0.75rem;
+        transition: transform 0.3s ease;
+    }
+    
+    .hosting-nav-toggle[aria-expanded="true"] .hosting-nav-arrow {
+        transform: rotate(180deg);
+    }
+    
+    .hosting-sidebar.collapsed .hosting-nav-arrow {
+        display: none;
+    }
+    
+    .hosting-submenu {
+        padding-left: 0.5rem;
+        margin-top: 0.25rem;
+        border-left: 2px solid rgba(247, 147, 26, 0.3);
+        margin-left: 1.5rem;
+    }
+    
+    .hosting-nav-child {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+        color: var(--hosting-text-muted);
+    }
+    
+    .hosting-nav-child:hover {
+        color: var(--hosting-secondary);
+        background: rgba(255, 193, 7, 0.05);
+    }
+    
+    .hosting-nav-child.active {
+        color: var(--hosting-secondary);
+        background: rgba(247, 147, 26, 0.15);
+        font-weight: 600;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-submenu {
+        display: none !important;
+    }
+    
+    .hosting-sidebar.collapsed .hosting-nav-parent .hosting-nav-toggle:hover + .hosting-submenu {
+        display: block !important;
+        position: absolute;
+        left: 100%;
+        top: 0;
+        background: var(--hosting-card-bg);
+        border: 1px solid var(--hosting-card-border);
+        border-radius: var(--hosting-border-radius-sm);
+        padding: 0.5rem;
+        margin-left: 0;
+        border-left: none;
+        min-width: 180px;
+        z-index: 1000;
+    }
 
     /* Main Content Area */
     .hosting-main {
@@ -550,45 +617,76 @@
                     <div class="hosting-nav-title" data-i18n="host_management">
                         {% if current_lang == 'en' %}Host Management{% else %}托管商管理{% endif %}
                     </div>
+                    <!-- 仪表盘 (独立项) -->
                     <div class="hosting-nav-item">
-                        <a href="/hosting/host" class="hosting-nav-link" data-nav="dashboard">
+                        <a href="/hosting/host" class="hosting-nav-link {{ 'active' if request.path == '/hosting/host' or request.path == '/hosting/host/' }}" data-nav="dashboard">
                             <i class="bi bi-speedometer2 hosting-nav-icon"></i>
-                            <span class="hosting-nav-text" data-i18n="dashboard">{% if current_lang == 'en' %}Dashboard{% else %}仪表板{% endif %}</span>
+                            <span class="hosting-nav-text" data-i18n="dashboard">{% if current_lang == 'en' %}Dashboard{% else %}仪表盘{% endif %}</span>
                         </a>
                     </div>
-                    <div class="hosting-nav-item">
-                        <a href="/hosting/host/devices" class="hosting-nav-link" data-nav="devices">
+                    
+                    <!-- 设备与监控 (可折叠) -->
+                    <div class="hosting-nav-item hosting-nav-parent">
+                        <a href="javascript:void(0)" class="hosting-nav-link hosting-nav-toggle" data-bs-toggle="collapse" data-bs-target="#submenu-devices" aria-expanded="{{ 'true' if request.path.startswith('/hosting/host/devices') or request.path.startswith('/hosting/host/monitoring') else 'false' }}" aria-controls="submenu-devices">
                             <i class="bi bi-cpu hosting-nav-icon"></i>
-                            <span class="hosting-nav-text" data-i18n="device_management">{% if current_lang == 'en' %}Device Management{% else %}设备管理{% endif %}</span>
+                            <span class="hosting-nav-text" data-i18n="devices_monitoring">{% if current_lang == 'en' %}Devices & Monitoring{% else %}设备与监控{% endif %}</span>
+                            <i class="bi bi-chevron-down hosting-nav-arrow"></i>
                         </a>
+                        <div class="collapse hosting-submenu {{ 'show' if request.path.startswith('/hosting/host/devices') or request.path.startswith('/hosting/host/monitoring') }}" id="submenu-devices">
+                            <a href="/hosting/host/devices" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/host/devices') }}">
+                                <span class="hosting-nav-text" data-i18n="device_management">{% if current_lang == 'en' %}Device Management{% else %}设备管理{% endif %}</span>
+                            </a>
+                            <a href="/hosting/host/monitoring" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/host/monitoring') }}">
+                                <span class="hosting-nav-text" data-i18n="monitoring">{% if current_lang == 'en' %}Monitoring{% else %}监控管理{% endif %}</span>
+                            </a>
+                        </div>
                     </div>
-                    <div class="hosting-nav-item">
-                        <a href="/hosting/host/sites" class="hosting-nav-link" data-nav="sites">
-                            <i class="bi bi-geo-alt hosting-nav-icon"></i>
-                            <span class="hosting-nav-text" data-i18n="site_management">{% if current_lang == 'en' %}Site Management{% else %}站点管理{% endif %}</span>
+                    
+                    <!-- 站点运营 (可折叠) -->
+                    <div class="hosting-nav-item hosting-nav-parent">
+                        <a href="javascript:void(0)" class="hosting-nav-link hosting-nav-toggle" data-bs-toggle="collapse" data-bs-target="#submenu-operations" aria-expanded="{{ 'true' if request.path.startswith('/hosting/host/sites') or request.path.startswith('/hosting/host/curtailment') or request.path.startswith('/hosting/host/collectors') else 'false' }}" aria-controls="submenu-operations">
+                            <i class="bi bi-gear hosting-nav-icon"></i>
+                            <span class="hosting-nav-text" data-i18n="site_operations">{% if current_lang == 'en' %}Site Operations{% else %}站点运营{% endif %}</span>
+                            <i class="bi bi-chevron-down hosting-nav-arrow"></i>
                         </a>
+                        <div class="collapse hosting-submenu {{ 'show' if request.path.startswith('/hosting/host/sites') or request.path.startswith('/hosting/host/curtailment') or request.path.startswith('/hosting/host/collectors') }}" id="submenu-operations">
+                            <a href="/hosting/host/sites" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/host/sites') }}">
+                                <span class="hosting-nav-text" data-i18n="site_management">{% if current_lang == 'en' %}Site Management{% else %}站点管理{% endif %}</span>
+                            </a>
+                            <a href="/hosting/host/curtailment" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/host/curtailment') }}">
+                                <span class="hosting-nav-text" data-i18n="smart_curtailment">{% if current_lang == 'en' %}Smart Curtailment{% else %}智能限电{% endif %}</span>
+                            </a>
+                            <a href="/hosting/host/collectors" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/host/collectors') }}">
+                                <span class="hosting-nav-text" data-i18n="edge_collectors">{% if current_lang == 'en' %}Edge Collectors{% else %}边缘采集器{% endif %}</span>
+                            </a>
+                        </div>
                     </div>
-                    <div class="hosting-nav-item">
-                        <a href="/hosting/host/monitoring" class="hosting-nav-link" data-nav="monitoring">
-                            <i class="bi bi-activity hosting-nav-icon"></i>
-                            <span class="hosting-nav-text" data-i18n="monitoring">{% if current_lang == 'en' %}Monitoring{% else %}监控管理{% endif %}</span>
+                    
+                    <!-- 我的资产 (可折叠) -->
+                    <div class="hosting-nav-item hosting-nav-parent">
+                        <a href="javascript:void(0)" class="hosting-nav-link hosting-nav-toggle" data-bs-toggle="collapse" data-bs-target="#submenu-assets" aria-expanded="{{ 'true' if request.path.startswith('/hosting/client') or request.path == '/hosting/' else 'false' }}" aria-controls="submenu-assets">
+                            <i class="bi bi-wallet2 hosting-nav-icon"></i>
+                            <span class="hosting-nav-text" data-i18n="my_assets">{% if current_lang == 'en' %}My Assets{% else %}我的资产{% endif %}</span>
+                            <i class="bi bi-chevron-down hosting-nav-arrow"></i>
                         </a>
-                    </div>
-                    <div class="hosting-nav-item">
-                        <a href="/hosting/host/curtailment" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/host/curtailment') }}" data-nav="curtailment">
-                            <i class="bi bi-lightning-charge hosting-nav-icon"></i>
-                            <span class="hosting-nav-text" data-i18n="smart_curtailment">{% if current_lang == 'en' %}Smart Curtailment{% else %}智能限电{% endif %}</span>
-                        </a>
-                    </div>
-                    <div class="hosting-nav-item">
-                        <a href="/hosting/host/collectors" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/host/collectors') }}" data-nav="collectors">
-                            <i class="bi bi-broadcast hosting-nav-icon"></i>
-                            <span class="hosting-nav-text" data-i18n="edge_collectors">{% if current_lang == 'en' %}Edge Collectors{% else %}边缘采集器{% endif %}</span>
-                        </a>
+                        <div class="collapse hosting-submenu {{ 'show' if request.path.startswith('/hosting/client') or request.path == '/hosting/' }}" id="submenu-assets">
+                            <a href="/hosting/" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path == '/hosting/' }}">
+                                <span class="hosting-nav-text" data-i18n="asset_overview">{% if current_lang == 'en' %}Overview{% else %}资产概览{% endif %}</span>
+                            </a>
+                            <a href="/hosting/client/assets" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/client/assets') }}">
+                                <span class="hosting-nav-text" data-i18n="my_devices">{% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}</span>
+                            </a>
+                            <a href="/hosting/client/usage" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/client/usage') }}">
+                                <span class="hosting-nav-text" data-i18n="usage_tracking">{% if current_lang == 'en' %}Usage Tracking{% else %}使用记录{% endif %}</span>
+                            </a>
+                            <a href="/hosting/client/reports" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/client/reports') }}">
+                                <span class="hosting-nav-text" data-i18n="revenue_reports">{% if current_lang == 'en' %}Revenue Reports{% else %}收益报告{% endif %}</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
                 {% else %}
-                <!-- 客户菜单 -->
+                <!-- 客户菜单 (非管理员角色) -->
                 <div class="hosting-nav-section">
                     <div class="hosting-nav-title" data-i18n="my_assets">
                         {% if current_lang == 'en' %}My Assets{% else %}我的资产{% endif %}
@@ -596,11 +694,11 @@
                     <div class="hosting-nav-item">
                         <a href="/hosting/client" class="hosting-nav-link {{ 'active' if request.path == '/hosting/client' or request.path == '/hosting/client/' }}">
                             <i class="bi bi-person-circle hosting-nav-icon"></i>
-                            <span class="hosting-nav-text" data-i18n="asset_overview">{% if current_lang == 'en' %}Dashboard{% else %}资产概览{% endif %}</span>
+                            <span class="hosting-nav-text" data-i18n="asset_overview">{% if current_lang == 'en' %}Overview{% else %}资产概览{% endif %}</span>
                         </a>
                     </div>
                     <div class="hosting-nav-item">
-                        <a href="/hosting/client/miners" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/miners') }}">
+                        <a href="/hosting/client/assets" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/assets') }}">
                             <i class="bi bi-cpu hosting-nav-icon"></i>
                             <span class="hosting-nav-text" data-i18n="my_devices">{% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}</span>
                         </a>
@@ -614,7 +712,7 @@
                     <div class="hosting-nav-item">
                         <a href="/hosting/client/reports" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/reports') }}">
                             <i class="bi bi-graph-up hosting-nav-icon"></i>
-                            <span class="hosting-nav-text" data-i18n="reports">{% if current_lang == 'en' %}Reports{% else %}报告分析{% endif %}</span>
+                            <span class="hosting-nav-text" data-i18n="revenue_reports">{% if current_lang == 'en' %}Revenue Reports{% else %}收益报告{% endif %}</span>
                         </a>
                     </div>
                 </div>
