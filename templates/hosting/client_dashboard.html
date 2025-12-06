@@ -234,10 +234,12 @@ function loadClientDashboard() {
 }
 
 function updateDashboardStats(stats) {
-    document.getElementById('total-miners').textContent = stats.total_miners || 0;
-    document.getElementById('active-miners').textContent = stats.active_miners || 0;
-    document.getElementById('total-hashrate').textContent = (stats.total_hashrate || 0) + ' TH/s';
-    document.getElementById('monthly-revenue').textContent = '$' + (stats.monthly_revenue || 0).toLocaleString();
+    document.getElementById('total-miners').textContent = (stats.total_miners || 0).toLocaleString();
+    document.getElementById('active-miners').textContent = (stats.active_miners || 0).toLocaleString();
+    // 格式化算力：大数值用逗号分隔，保留1位小数
+    const hashrate = parseFloat(stats.total_hashrate || 0).toLocaleString(undefined, {maximumFractionDigits: 1});
+    document.getElementById('total-hashrate').textContent = hashrate + ' TH/s';
+    document.getElementById('monthly-revenue').textContent = '$' + parseFloat(stats.monthly_revenue || 0).toLocaleString(undefined, {maximumFractionDigits: 0});
 }
 
 function displayRecentMiners(miners) {
