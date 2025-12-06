@@ -26,6 +26,9 @@
             await this.loadTranslations();
             this.initialized = true;
             
+            // 立即翻译页面上的所有元素
+            this.updatePageTranslations();
+            
             console.log('[i18n] Initialized with language:', this.currentLang);
         },
 

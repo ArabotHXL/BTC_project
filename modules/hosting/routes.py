@@ -354,6 +354,8 @@ def get_sites():
         user_role = session.get('role', 'guest')
         user_email = session.get('email', '')
         
+        logger.info(f"[get_sites] user_id={user_id}, role={user_role}, email={user_email}")
+        
         # 权限控制 + 聚合查询合并为单一高效查询
         if user_role == 'admin':
             # 管理员：直接查询所有站点及其矿机统计
@@ -390,12 +392,15 @@ def get_sites():
             ).group_by(HostingSite.id).all()
         
         # 构建响应数据
+        logger.info(f"[get_sites] Query returned {len(results)} results")
         sites_data = []
         for row in results:
             site = row[0]
             site_data = site.to_dict()
-            site_data['devices_count'] = row.total or 0
+            site_data['device_count'] = row.total or 0
+            site_data['devices_count'] = row.total or 0  # 兼容旧代码
             site_data['active_devices'] = int(row.active or 0)
+            logger.info(f"[get_sites] Site: {site.name}, device_count={row.total}")
             sites_data.append(site_data)
         
         return jsonify({'success': True, 'sites': sites_data})
