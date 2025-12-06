@@ -204,6 +204,8 @@ def client_view(subpath='dashboard'):
             return render_template('hosting/client_usage.html')
         elif subpath == 'reports':
             return render_template('hosting/client_reports.html')
+        elif subpath == 'tickets':
+            return render_template('hosting/client_tickets.html')
         else:
             return render_template('hosting/client_dashboard.html')
     except Exception as e:
@@ -2357,6 +2359,101 @@ def public_site_status(site_slug):
             return jsonify({'success': False, 'error': str(e)}), 500
         else:
             return render_template('hosting/public_status.html', status=None)
+
+# ==================== 全局状态API ====================
+
+@hosting_bp.route('/api/global/status')
+def get_global_status_api():
+    """全局状态API - 供前端动态加载"""
+    try:
+        # 获取所有站点统计
+        all_sites = HostingSite.query.all()
+        online_sites = [s for s in all_sites if s.status == 'online']
+        
+        total_capacity = sum(s.capacity_mw or 0 for s in all_sites)
+        total_used = sum(s.used_capacity_mw or 0 for s in all_sites)
+        
+        # 获取活跃矿机数
+        active_miners = HostingMiner.query.filter_by(status='active').count()
+        
+        # 计算全局可用率（基于站点在线比例和近期事故）
+        recent_incidents = HostingIncident.query.filter(
+            HostingIncident.created_at >= datetime.now() - timedelta(days=30)
+        ).count()
+        global_uptime = max(0, 99.9 - (recent_incidents * 0.1))
+        
+        # 格式化站点数据供前端使用
+        sites_data = []
+        for site in all_sites:
+            site_miner_count = HostingMiner.query.filter_by(site_id=site.id, status='active').count()
+            sites_data.append({
+                'name': site.name,
+                'location': site.location or '未知',
+                'status': site.status,
+                'capacity': site.capacity_mw or 0,
+                'devices': site_miner_count,
+                'uptime': 99.5 if site.status == 'online' else 0,
+                'utilization': int(site.utilization_rate or 0),
+                'last_update': datetime.now().strftime('%Y-%m-%d %H:%M')
+            })
+        
+        # 近期事件
+        incidents = HostingIncident.query.filter(
+            HostingIncident.created_at >= datetime.now() - timedelta(days=7)
+        ).order_by(HostingIncident.created_at.desc()).limit(5).all()
+        
+        incidents_data = [{
+            'title': inc.title,
+            'severity': inc.severity,
+            'status': inc.status,
+            'created_at': inc.created_at.isoformat()
+        } for inc in incidents]
+        
+        return jsonify({
+            'success': True,
+            'stats': {
+                'total_sites': len(all_sites),
+                'online_sites': len(online_sites),
+                'total_capacity': round(total_capacity, 1),
+                'global_uptime': round(global_uptime, 1)
+            },
+            'sites': sites_data,
+            'incidents': incidents_data
+        })
+    except Exception as e:
+        logger.error(f"获取全局状态API失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@hosting_bp.route('/api/global/metrics')
+def get_global_metrics_api():
+    """全局实时指标API - 供图表使用"""
+    try:
+        # 生成最近24小时的模拟数据点（实际应用应从监控系统获取）
+        from datetime import timedelta
+        import random
+        
+        labels = []
+        response_times = []
+        connections = []
+        
+        now = datetime.now()
+        for i in range(24, 0, -1):
+            time_point = now - timedelta(hours=i)
+            labels.append(time_point.strftime('%H:00'))
+            # 模拟响应时间 1.5-3.5秒
+            response_times.append(round(random.uniform(1.5, 3.5) * 1000, 0))
+            # 模拟活跃连接数
+            connections.append(random.randint(100, 500))
+        
+        return jsonify({
+            'success': True,
+            'labels': labels,
+            'response_times': response_times,
+            'connections': connections
+        })
+    except Exception as e:
+        logger.error(f"获取全局指标API失败: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # 全局状态页面（所有站点概览）
 @hosting_bp.route('/status')
