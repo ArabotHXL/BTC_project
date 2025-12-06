@@ -777,32 +777,48 @@ def get_client_dashboard():
         daily_revenue = total_hashrate * 0.000005 * 110000  # 估算日收益
         monthly_revenue = daily_revenue * 30
         
-        # 估算成本
-        daily_power_cost = total_power * 24 * 0.08 / 1000  # 估算电费
-        monthly_power_cost = daily_power_cost * 30
+        # 获取最近矿机列表
+        if user_role == 'admin':
+            recent_miners_query = HostingMiner.query.order_by(HostingMiner.id.desc()).limit(10).all()
+        elif user_role == 'mining_site':
+            managed_sites = HostingSite.query.filter_by(contact_email=user_email).all()
+            managed_site_ids = [s.id for s in managed_sites]
+            if managed_site_ids:
+                recent_miners_query = HostingMiner.query.filter(
+                    HostingMiner.site_id.in_(managed_site_ids)
+                ).order_by(HostingMiner.id.desc()).limit(10).all()
+            else:
+                recent_miners_query = []
+        else:
+            recent_miners_query = HostingMiner.query.filter_by(
+                customer_id=user_id
+            ).order_by(HostingMiner.id.desc()).limit(10).all()
         
-        dashboard_data = {
-            'miners': {
-                'total': total_miners,
-                'active': active_miners,
-                'offline': total_miners - active_miners
-            },
-            'performance': {
-                'total_hashrate': round(total_hashrate, 2),
-                'total_power': round(total_power, 0),
-                'efficiency': round(total_hashrate / (total_power / 1000), 2) if total_power > 0 else 0
-            },
-            'revenue': {
-                'daily': round(daily_revenue, 2),
-                'monthly': round(monthly_revenue, 2),
-                'daily_cost': round(daily_power_cost, 2),
-                'monthly_cost': round(monthly_power_cost, 2),
-                'daily_profit': round(daily_revenue - daily_power_cost, 2),
-                'monthly_profit': round(monthly_revenue - monthly_power_cost, 2)
-            }
+        # 格式化最近矿机数据
+        recent_miners = []
+        for miner in recent_miners_query:
+            miner_model_name = miner.model.model_name if miner.model else 'Unknown'
+            site_name = miner.site.name if miner.site else 'Unknown'
+            daily_miner_revenue = miner.actual_hashrate * 0.000005 * 110000 if miner.status == 'active' else 0
+            recent_miners.append({
+                'id': miner.id,
+                'serial_number': miner.serial_number,
+                'miner_model': miner_model_name,
+                'site_name': site_name,
+                'hashrate': miner.actual_hashrate,
+                'status': miner.status,
+                'daily_revenue': round(daily_miner_revenue, 2)
+            })
+        
+        # 返回格式匹配JavaScript期望的结构
+        stats = {
+            'total_miners': total_miners,
+            'active_miners': active_miners,
+            'total_hashrate': round(total_hashrate, 2),
+            'monthly_revenue': round(monthly_revenue, 2)
         }
         
-        return jsonify({'success': True, 'data': dashboard_data})
+        return jsonify({'success': True, 'stats': stats, 'recent_miners': recent_miners})
     except Exception as e:
         logger.error(f"获取客户仪表板数据失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
