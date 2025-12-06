@@ -420,39 +420,43 @@
         backdrop-filter: blur(10px);
         border: 2px solid var(--hosting-card-border);
         border-radius: var(--hosting-border-radius);
-        padding: 2rem;
+        padding: 1rem 1.25rem;
         text-align: center;
         transition: var(--hosting-transition);
         position: relative;
         overflow: hidden;
+        min-height: 80px;
     }
 
     .hosting-stat-card:hover {
         border-color: var(--hosting-card-border-hover);
         box-shadow: var(--hosting-shadow-glow);
-        transform: translateY(-5px);
+        transform: translateY(-3px);
     }
 
     .hosting-stat-value {
-        font-size: 2.5rem;
+        font-size: clamp(1.2rem, 2.5vw, 1.8rem);
         font-weight: 700;
         color: var(--hosting-secondary);
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .hosting-stat-label {
         color: var(--hosting-text-secondary);
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         font-weight: 500;
     }
 
     .hosting-stat-icon {
         position: absolute;
-        right: 1.5rem;
+        right: 1rem;
         top: 50%;
         transform: translateY(-50%);
-        font-size: 3rem;
-        opacity: 0.3;
+        font-size: 2rem;
+        opacity: 0.25;
         color: var(--hosting-secondary);
     }
 
