@@ -857,25 +857,8 @@ def get_client_revenue_chart():
             revenue_data.append(round(base_revenue, 2))
             cost_data.append(round(base_cost, 2))
         
-        chart_data = {
-            'labels': labels,
-            'datasets': [
-                {
-                    'label': 'Revenue',
-                    'data': revenue_data,
-                    'borderColor': 'rgb(255, 193, 7)',
-                    'backgroundColor': 'rgba(255, 193, 7, 0.1)'
-                },
-                {
-                    'label': 'Cost',
-                    'data': cost_data,
-                    'borderColor': 'rgb(220, 53, 69)',
-                    'backgroundColor': 'rgba(220, 53, 69, 0.1)'
-                }
-            ]
-        }
-        
-        return jsonify({'success': True, 'chart': chart_data})
+        # 返回格式匹配JavaScript期望的结构 (data.labels, data.data)
+        return jsonify({'success': True, 'labels': labels, 'data': revenue_data})
     except Exception as e:
         logger.error(f"获取收益图表数据失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -933,21 +916,8 @@ def get_client_miner_distribution():
             labels.append('Unknown')
             data.append(unknown_count)
         
-        # 颜色方案
-        colors = ['#FFB800', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57']
-        background_colors = [colors[i % len(colors)] for i in range(len(labels))]
-        
-        chart_data = {
-            'labels': labels,
-            'datasets': [{
-                'data': data,
-                'backgroundColor': background_colors,
-                'borderWidth': 2,
-                'borderColor': '#2c3e50'
-            }]
-        }
-        
-        return jsonify({'success': True, 'chart': chart_data})
+        # 返回格式匹配JavaScript期望的结构 (data.labels, data.data)
+        return jsonify({'success': True, 'labels': labels, 'data': data})
     except Exception as e:
         logger.error(f"获取矿机分布数据失败: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
