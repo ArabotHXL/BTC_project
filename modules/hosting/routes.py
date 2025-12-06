@@ -773,8 +773,11 @@ def get_client_dashboard():
             total_hashrate = 0.0
             total_power = 0.0
         
-        # 估算收益（简化计算）
-        daily_revenue = total_hashrate * 0.000005 * 110000  # 估算日收益
+        # 估算收益（基于当前市场数据的合理估算）
+        # 1 TH/s 大约每天产出 0.000000055 BTC，BTC价格约 $100,000
+        # 即每 TH/s 每天约 $0.055 收益
+        daily_revenue_per_th = 0.055  # 每TH/s每天的收益（美元）
+        daily_revenue = total_hashrate * daily_revenue_per_th
         monthly_revenue = daily_revenue * 30
         
         # 获取最近矿机列表
@@ -799,7 +802,7 @@ def get_client_dashboard():
         for miner in recent_miners_query:
             miner_model_name = miner.miner_model.model_name if miner.miner_model else 'Unknown'
             site_name = miner.site.name if miner.site else 'Unknown'
-            daily_miner_revenue = miner.actual_hashrate * 0.000005 * 110000 if miner.status == 'active' else 0
+            daily_miner_revenue = miner.actual_hashrate * 0.055 if miner.status == 'active' else 0
             recent_miners.append({
                 'id': miner.id,
                 'serial_number': miner.serial_number,
