@@ -532,24 +532,8 @@ a, a:hover, a:focus, a:active {
                     
                     <div class="card-body">
                         <h5 class="card-title text-center mb-4" data-i18n="email_verification_login">{{ t('email_verification_login') }}</h5>
-                        <!-- Web3 Wallet Login Section -->
-                        <div class="wallet-login-section mb-4">
-                            <div class="text-center mb-3">
-                                <button type="button" id="connect-wallet-btn" class="btn btn-warning btn-lg w-100" onclick="connectWallet()">
-                                    <i class="bi bi-wallet2 me-2"></i>
-                                    <span data-i18n="connect_wallet_login">{{ t('connect_wallet_login') }}</span>
-                                </button>
-                            </div>
-                            <div id="wallet-status" class="text-center text-muted small mb-3" style="display:none;"></div>
-                            
-                            <!-- Login divider -->
-                            <div class="divider-section text-center my-4">
-                                <span class="text-muted" data-i18n="or_login_with_email">{{ t('or_login_with_email') }}</span>
-                                <hr style="margin: 10px 0; border-color: rgba(255,255,255,0.2);">
-                            </div>
-                        </div>
 
-                        <!-- Traditional Email/Password Login -->
+                        <!-- Email/Password Login -->
                         <form class="login-form" method="post" action="{{ url_for('login') }}">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
                             <div class="mb-3">
