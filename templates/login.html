@@ -506,7 +506,7 @@ a, a:hover, a:focus, a:active {
                 <div class="login-container">
                     <div class="login-logo">
                         <div class="btc-icon">₿</div>
-                        <div class="login-title">{{ t('btc_mining_calculator') }}</div>
+                        <div class="login-title" data-i18n="btc_mining_calculator">{{ t('btc_mining_calculator') }}</div>
                     </div>
                     
                     <!-- 语言切换 / Language Switcher (无刷新即时切换) -->
@@ -531,22 +531,20 @@ a, a:hover, a:focus, a:active {
                     {% endwith %}
                     
                     <div class="card-body">
-                        <h5 class="card-title text-center mb-4">{{ t('email_verification_login') }}</h5>
+                        <h5 class="card-title text-center mb-4" data-i18n="email_verification_login">{{ t('email_verification_login') }}</h5>
                         <!-- Web3 Wallet Login Section -->
                         <div class="wallet-login-section mb-4">
                             <div class="text-center mb-3">
                                 <button type="button" id="connect-wallet-btn" class="btn btn-warning btn-lg w-100" onclick="connectWallet()">
                                     <i class="bi bi-wallet2 me-2"></i>
-                                    {% if current_lang == 'zh' %}连接钱包登录{% else %}Connect Wallet to Login{% endif %}
+                                    <span data-i18n="connect_wallet_login">{{ t('connect_wallet_login') }}</span>
                                 </button>
                             </div>
                             <div id="wallet-status" class="text-center text-muted small mb-3" style="display:none;"></div>
                             
                             <!-- Login divider -->
                             <div class="divider-section text-center my-4">
-                                <span class="text-muted">
-                                    {% if current_lang == 'zh' %}或使用邮箱登录{% else %}Or login with email{% endif %}
-                                </span>
+                                <span class="text-muted" data-i18n="or_login_with_email">{{ t('or_login_with_email') }}</span>
                                 <hr style="margin: 10px 0; border-color: rgba(255,255,255,0.2);">
                             </div>
                         </div>
@@ -555,24 +553,24 @@ a, a:hover, a:focus, a:active {
                         <form class="login-form" method="post" action="{{ url_for('login') }}">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
                             <div class="mb-3">
-                                <label for="email" class="form-label">{{ t('email_or_username') }}</label>
+                                <label for="email" class="form-label" data-i18n="email_or_username">{{ t('email_or_username') }}</label>
                                 <input type="text" class="form-control" id="email" name="email" 
-                                       placeholder="{{ t('email_placeholder') }}" required>
+                                       placeholder="{{ t('email_placeholder') }}" data-i18n-placeholder="email_placeholder" required>
                             </div>
                             <div class="mb-3">
-                                <label for="password" class="form-label">{{ t('password') }}</label>
+                                <label for="password" class="form-label" data-i18n="password">{{ t('password') }}</label>
                                 <input type="password" class="form-control" id="password" name="password" 
-                                       placeholder="{{ t('password_placeholder') }}">
-                                <div class="form-text text-muted">{{ t('new_user_register') }}</div>
+                                       placeholder="{{ t('password_placeholder') }}" data-i18n-placeholder="password_placeholder">
+                                <div class="form-text text-muted" data-i18n="new_user_register">{{ t('new_user_register') }}</div>
                             </div>
                             <div class="d-grid">
-                                <button type="submit" class="btn btn-primary">{{ t('login') }}</button>
+                                <button type="submit" class="btn btn-primary" data-i18n="login">{{ t('login') }}</button>
                             </div>
                         </form>
                         <div class="text-center mt-4">
                             <p class="text-muted">
-                                {{ t('no_account') }} 
-                                <a href="{{ url_for('register') }}" class="text-primary text-decoration-none">
+                                <span data-i18n="no_account">{{ t('no_account') }}</span> 
+                                <a href="{{ url_for('register') }}" class="text-primary text-decoration-none" data-i18n="register_now">
                                     {{ t('register_now') }}
                                 </a>
                             </p>
