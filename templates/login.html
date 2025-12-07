@@ -509,11 +509,13 @@ a, a:hover, a:focus, a:active {
                         <div class="login-title">{{ t('btc_mining_calculator') }}</div>
                     </div>
                     
-                    <!-- 语言切换 / Language Switcher -->
+                    <!-- 语言切换 / Language Switcher (无刷新即时切换) -->
                     <div class="text-center mb-3">
                         <div class="btn-group btn-group-sm" role="group" aria-label="{{ t('language') }}">
-                            <a href="{{ url_for('login', lang='zh') }}" class="btn btn-outline-light {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
-                            <a href="{{ url_for('login', lang='en') }}" class="btn btn-outline-light {{ 'active' if current_lang == 'en' else '' }}">English</a>
+                            <button type="button" data-lang-switch="zh" data-lang="zh" 
+                                    class="btn btn-outline-light lang-switch-btn {{ 'active' if current_lang == 'zh' else '' }}">中文</button>
+                            <button type="button" data-lang-switch="en" data-lang="en" 
+                                    class="btn btn-outline-light lang-switch-btn {{ 'active' if current_lang == 'en' else '' }}">English</button>
                         </div>
                     </div>
                     

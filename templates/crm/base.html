@@ -711,12 +711,12 @@
             <div class="d-flex align-items-center">
                 <!-- Language Switcher -->
                 <div class="lang-switcher me-3">
-                    <a href="{{ url_for('set_language', lang='zh', return_url=request.url) }}" 
-                       class="btn btn-sm {{ 'btn-warning' if current_lang == 'zh' else 'btn-outline-secondary' }}" 
-                       style="padding: 4px 10px; font-size: 0.8rem;">中文</a>
-                    <a href="{{ url_for('set_language', lang='en', return_url=request.url) }}" 
-                       class="btn btn-sm {{ 'btn-warning' if current_lang == 'en' else 'btn-outline-secondary' }}" 
-                       style="padding: 4px 10px; font-size: 0.8rem;">EN</a>
+                    <button type="button" data-lang-switch="zh" data-lang="zh" 
+                       class="btn btn-sm {{ 'btn-warning' if current_lang == 'zh' else 'btn-outline-secondary' }} lang-switch-btn" 
+                       style="padding: 4px 10px; font-size: 0.8rem;">中文</button>
+                    <button type="button" data-lang-switch="en" data-lang="en" 
+                       class="btn btn-sm {{ 'btn-warning' if current_lang == 'en' else 'btn-outline-secondary' }} lang-switch-btn" 
+                       style="padding: 4px 10px; font-size: 0.8rem;">EN</button>
                 </div>
                 
                 <!-- Notification Bell -->

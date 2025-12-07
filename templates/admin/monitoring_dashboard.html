@@ -365,8 +365,8 @@
             </div>
             
             <div class="language-switcher me-2 d-inline-flex">
-                <a href="{{ url_for('set_language', lang='zh', return_url=request.url) }}" class="btn btn-sm {{ 'active' if current_lang == 'zh' else '' }}">中文</a>
-                <a href="{{ url_for('set_language', lang='en', return_url=request.url) }}" class="btn btn-sm {{ 'active' if current_lang == 'en' else '' }}">English</a>
+                <button type="button" data-lang-switch="zh" data-lang="zh" class="btn btn-sm {{ 'active' if current_lang == 'zh' else '' }} lang-switch-btn">中文</button>
+                <button type="button" data-lang-switch="en" data-lang="en" class="btn btn-sm {{ 'active' if current_lang == 'en' else '' }} lang-switch-btn">English</button>
             </div>
             
             <a href="{{ url_for('admin_user_list') }}" class="btn btn-outline-light btn-sm">
