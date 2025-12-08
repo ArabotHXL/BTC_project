@@ -143,7 +143,7 @@ def site_detail(site_id):
             flash('Site not found', 'error')
         else:
             flash('站点未找到', 'error')
-        return redirect(url_for('hosting.dashboard'))
+        return redirect(url_for('hosting_service_bp.client_view'))
 
 @hosting_bp.route('/host')
 @hosting_bp.route('/host/<path:subpath>')
@@ -181,7 +181,7 @@ def host_view(subpath='dashboard'):
             flash('Page loading failed', 'error')
         else:
             flash('页面加载失败', 'error')
-        return redirect(url_for('hosting.dashboard'))
+        return redirect(url_for('hosting_service_bp.client_view'))
 
 @hosting_bp.route('/client')
 @hosting_bp.route('/client/<path:subpath>')
@@ -199,7 +199,7 @@ def client_view(subpath='dashboard'):
         if subpath == 'dashboard':
             return render_template('hosting/client_dashboard.html')
         elif subpath == 'assets':
-            return render_template('hosting/asset_overview.html')
+            return render_template('hosting/client_dashboard.html')
         elif subpath == 'usage':
             return render_template('hosting/client_usage.html')
         elif subpath == 'reports':
@@ -215,7 +215,7 @@ def client_view(subpath='dashboard'):
             flash('Page loading failed', 'error')
         else:
             flash('页面加载失败', 'error')
-        return redirect(url_for('hosting.dashboard'))
+        return redirect(url_for('hosting_service_bp.client_view'))
 
 # ==================== 托管商API路由 ====================
 
