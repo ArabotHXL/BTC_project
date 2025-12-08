@@ -148,11 +148,11 @@ def decrypt_object(block: Dict[str, Any], passphrase: str) -> Dict[str, Any]:
 
 def decrypt_credentials(block: Dict[str, Any], passphrase: str) -> Dict[str, str]:
     """
-    Decrypt miner credentials (Plan A)
+    Decrypt miner credentials
     
     Args:
         block: Encrypted credentials block
-        passphrase: Decryption passphrase
+        passphrase: Site master passphrase
         
     Returns:
         Dictionary with username, password, pool_password
@@ -162,11 +162,11 @@ def decrypt_credentials(block: Dict[str, Any], passphrase: str) -> Dict[str, str
 
 def decrypt_connection_full(block: Dict[str, Any], passphrase: str) -> Dict[str, Any]:
     """
-    Decrypt full miner connection (Plan B)
+    Decrypt full miner connection info
     
     Args:
         block: Encrypted connection block
-        passphrase: Decryption passphrase
+        passphrase: Site master passphrase
         
     Returns:
         Dictionary with ip_address, port, username, password, pool_url, pool_user, pool_password
@@ -181,7 +181,7 @@ def get_passphrase_from_env() -> Optional[str]:
     Returns:
         Passphrase string or None if not set
     """
-    return os.environ.get('MINER_E2EE_PASSPHRASE')
+    return os.environ.get('SITE_MASTER_PASSPHRASE')
 
 
 def prompt_passphrase() -> str:
@@ -265,7 +265,7 @@ class E2EEManager:
         """
         Get decrypted connection info for a miner
         
-        Automatically handles Plan A vs Plan B based on use_full_e2ee flag.
+        Handles both credentials-only and full connection encryption modes.
         
         Args:
             miner_data: Miner data dict with encryption fields
