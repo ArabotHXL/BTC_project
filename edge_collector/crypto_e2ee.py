@@ -3,26 +3,39 @@
 Edge Collector E2EE (End-to-End Encryption) Module
 
 Provides Python-side decryption for miner connection credentials
-encrypted by the browser using Web Crypto API.
+encrypted by the site owner using the Owner-Level Encryption feature.
 
-Algorithm: AES-256-GCM with PBKDF2 key derivation
+=== Owner-Level Encryption (矿场主级加密) ===
+
+Architecture:
+    - Site owner sets ONE master passphrase for the entire site
+    - All miners at the site are encrypted with this passphrase
+    - Customers CANNOT see or modify encryption settings
+    - Edge Collector uses the master passphrase to decrypt all miners
+
+Algorithm: AES-256-GCM with PBKDF2 key derivation (100,000 iterations)
 Compatible with: static/js/crypto_miner_e2ee.js
 
 Usage:
     from crypto_e2ee import decrypt_credentials, decrypt_connection_full
     
-    # Plan A: Decrypt credentials only
+    # Decrypt miner credentials using site master passphrase
+    passphrase = os.environ.get('SITE_MASTER_PASSPHRASE')
     creds = decrypt_credentials(encrypted_block, passphrase)
     print(creds['username'], creds['password'])
     
-    # Plan B: Decrypt full connection
+    # Decrypt full connection info
     conn = decrypt_connection_full(encrypted_block, passphrase)
     print(conn['ip_address'], conn['port'], conn['username'])
 
+Environment Variables:
+    SITE_MASTER_PASSPHRASE - The site owner's master passphrase (required)
+    
 Security:
     - Passphrase should be provided at Edge Collector startup
-    - Can use environment variable MINER_E2EE_PASSPHRASE
-    - Never log or store the passphrase
+    - Use environment variable SITE_MASTER_PASSPHRASE
+    - Never log or store the passphrase in plain text
+    - Only site owners (not customers) can set up encryption
 """
 
 import base64
