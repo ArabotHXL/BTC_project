@@ -373,3 +373,151 @@ This is an automated email, please do not reply.
     except Exception as e:
         logging.error(f"❌ 发送限电计划提醒邮件失败: {e}")
         return False
+
+def send_password_reset_email(to_email, reset_url, language='zh'):
+    """
+    发送密码重置邮件
+    
+    Args:
+        to_email: 接收邮箱
+        reset_url: 密码重置链接
+        language: 语言 ('zh' 中文, 'en' 英文)
+    
+    Returns:
+        bool: 发送成功返回True，失败返回False
+    """
+    service = GmailSMTPService()
+    
+    if language == 'zh':
+        subject = "BTC Mining Calculator - 密码重置"
+        
+        text_content = f"""
+密码重置 - BTC Mining Calculator
+
+您好！
+
+我们收到了您的密码重置请求。请点击以下链接重置您的密码：
+{reset_url}
+
+注意：
+- 此链接1小时内有效
+- 如果您没有请求重置密码，请忽略此邮件
+- 您的账户密码不会被更改，除非您点击链接并设置新密码
+
+© 2025 BTC Mining Calculator
+此邮件为自动发送，请勿回复。
+"""
+        
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+        <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="margin: 0; color: #ffc107;">🔑 密码重置</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">BTC Mining Calculator</p>
+        </div>
+        <div style="padding: 30px; background: #f9f9f9;">
+            <h2 style="color: #1a1a2e;">您好！</h2>
+            <p>我们收到了您的密码重置请求。请点击下方按钮重置您的密码：</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{reset_url}" style="display: inline-block; background: linear-gradient(135deg, #ffc107, #e67e22); color: #1a1a2e; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">重置密码</a>
+            </div>
+            
+            <p style="color: #666; font-size: 14px;">如果按钮无法点击，请复制以下链接到浏览器：</p>
+            <p style="word-break: break-all; background: #e9ecef; padding: 10px; border-radius: 5px; font-size: 12px;">
+                {reset_url}
+            </p>
+            
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">
+                <p style="margin: 0;"><strong>⚠️ 安全提示：</strong></p>
+                <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+                    <li>此链接1小时内有效</li>
+                    <li>如果您没有请求重置密码，请忽略此邮件</li>
+                    <li>切勿将此链接分享给他人</li>
+                </ul>
+            </div>
+        </div>
+        <div style="padding: 15px; text-align: center; color: #666; font-size: 12px; border-top: 1px solid #ddd;">
+            <p>© 2025 BTC Mining Calculator. All rights reserved.</p>
+            <p>此邮件为自动发送，请勿回复。</p>
+        </div>
+    </div>
+</body>
+</html>
+"""
+    else:
+        subject = "BTC Mining Calculator - Password Reset"
+        
+        text_content = f"""
+Password Reset - BTC Mining Calculator
+
+Hello!
+
+We received a request to reset your password. Please click the link below to reset your password:
+{reset_url}
+
+Notice:
+- This link is valid for 1 hour
+- If you did not request a password reset, please ignore this email
+- Your account password will not be changed unless you click the link and set a new password
+
+© 2025 BTC Mining Calculator
+This is an automated email, please do not reply.
+"""
+        
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+        <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="margin: 0; color: #ffc107;">🔑 Password Reset</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">BTC Mining Calculator</p>
+        </div>
+        <div style="padding: 30px; background: #f9f9f9;">
+            <h2 style="color: #1a1a2e;">Hello!</h2>
+            <p>We received a request to reset your password. Please click the button below to reset your password:</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{reset_url}" style="display: inline-block; background: linear-gradient(135deg, #ffc107, #e67e22); color: #1a1a2e; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Reset Password</a>
+            </div>
+            
+            <p style="color: #666; font-size: 14px;">If the button doesn't work, please copy and paste the following link into your browser:</p>
+            <p style="word-break: break-all; background: #e9ecef; padding: 10px; border-radius: 5px; font-size: 12px;">
+                {reset_url}
+            </p>
+            
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">
+                <p style="margin: 0;"><strong>⚠️ Security Notice:</strong></p>
+                <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+                    <li>This link is valid for 1 hour</li>
+                    <li>If you did not request a password reset, please ignore this email</li>
+                    <li>Never share this link with anyone</li>
+                </ul>
+            </div>
+        </div>
+        <div style="padding: 15px; text-align: center; color: #666; font-size: 12px; border-top: 1px solid #ddd;">
+            <p>© 2025 BTC Mining Calculator. All rights reserved.</p>
+            <p>This is an automated email, please do not reply.</p>
+        </div>
+    </div>
+</body>
+</html>
+"""
+    
+    try:
+        result = service.send_email(to_email, subject, text_content, html_content)
+        if result:
+            logging.info(f"✅ 已发送密码重置邮件给 {to_email}")
+        return result
+    except Exception as e:
+        logging.error(f"❌ 发送密码重置邮件失败: {e}")
+        return False

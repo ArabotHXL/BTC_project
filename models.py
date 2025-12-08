@@ -1170,6 +1170,31 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.email}>'
 
+class PasswordResetToken(db.Model):
+    """密码重置令牌模型"""
+    __tablename__ = 'password_reset_tokens'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    token = db.Column(db.String(128), unique=True, nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used = db.Column(db.Boolean, default=False, nullable=False)
+
+    user = db.relationship('User', backref=db.backref('reset_tokens', lazy='dynamic'))
+
+    def __init__(self, user_id, token, expires_at):
+        self.user_id = user_id
+        self.token = token
+        self.expires_at = expires_at
+
+    def is_valid(self):
+        """检查令牌是否有效"""
+        return not self.used and datetime.utcnow() < self.expires_at
+
+    def __repr__(self):
+        return f'<PasswordResetToken {self.token[:8]}... for user {self.user_id}>'
+
 class Contact(db.Model):
     """客户联系人"""
     __tablename__ = 'crm_contacts'

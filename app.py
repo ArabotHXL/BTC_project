@@ -1006,6 +1006,133 @@ def login():
     # 显示登录表单
     return render_template('login.html')
 
+# 忘记密码页面
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    """处理忘记密码请求"""
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        
+        if not email:
+            if g.language == 'en':
+                flash('Please enter your email address', 'danger')
+            else:
+                flash('请输入邮箱地址', 'danger')
+            return render_template('forgot_password.html')
+        
+        # 无论邮箱是否存在，都显示相同消息（安全考虑）
+        try:
+            from models import User, PasswordResetToken
+            user = User.query.filter_by(email=email).first()
+            
+            if user:
+                # 生成重置令牌
+                token = secrets.token_urlsafe(64)
+                expires_at = datetime.utcnow() + timedelta(hours=1)
+                
+                # 删除该用户之前未使用的令牌
+                PasswordResetToken.query.filter_by(user_id=user.id, used=False).delete()
+                
+                # 创建新令牌
+                reset_token = PasswordResetToken(
+                    user_id=user.id,
+                    token=token,
+                    expires_at=expires_at
+                )
+                db.session.add(reset_token)
+                db.session.commit()
+                
+                # 发送重置邮件
+                reset_url = url_for('reset_password', token=token, _external=True)
+                from gmail_oauth_service import send_password_reset_email
+                send_password_reset_email(email, reset_url, g.language)
+                
+                logging.info(f"密码重置链接已发送至: {email}")
+            else:
+                logging.info(f"忘记密码请求 - 邮箱不存在: {email}")
+        except Exception as e:
+            logging.error(f"处理忘记密码请求时出错: {e}")
+        
+        # 无论成功失败，都显示相同消息
+        if g.language == 'en':
+            flash('If the email exists in our system, you will receive a password reset link shortly.', 'info')
+        else:
+            flash('如果该邮箱已注册，您将很快收到密码重置链接。', 'info')
+        
+        return render_template('forgot_password.html')
+    
+    return render_template('forgot_password.html')
+
+# 重置密码页面
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    """处理密码重置"""
+    from models import PasswordResetToken, User
+    from werkzeug.security import generate_password_hash
+    
+    # 验证令牌
+    reset_token = PasswordResetToken.query.filter_by(token=token).first()
+    valid_token = reset_token and reset_token.is_valid()
+    
+    if request.method == 'POST':
+        if not valid_token:
+            if g.language == 'en':
+                flash('Invalid or expired reset link. Please request a new one.', 'danger')
+            else:
+                flash('重置链接无效或已过期，请重新申请。', 'danger')
+            return render_template('reset_password.html', valid_token=False, token=token)
+        
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        
+        # 验证密码
+        if len(password) < 8:
+            if g.language == 'en':
+                flash('Password must be at least 8 characters long', 'danger')
+            else:
+                flash('密码长度至少为8个字符', 'danger')
+            return render_template('reset_password.html', valid_token=True, token=token)
+        
+        if password != confirm_password:
+            if g.language == 'en':
+                flash('Passwords do not match', 'danger')
+            else:
+                flash('两次输入的密码不一致', 'danger')
+            return render_template('reset_password.html', valid_token=True, token=token)
+        
+        try:
+            # 更新用户密码
+            user = User.query.get(reset_token.user_id)
+            if user:
+                user.password_hash = generate_password_hash(password)
+                reset_token.used = True
+                db.session.commit()
+                
+                logging.info(f"用户密码重置成功: {user.email}")
+                
+                if g.language == 'en':
+                    flash('Password reset successful! Please login with your new password.', 'success')
+                else:
+                    flash('密码重置成功！请使用新密码登录。', 'success')
+                
+                return redirect(url_for('login'))
+            else:
+                if g.language == 'en':
+                    flash('User not found', 'danger')
+                else:
+                    flash('用户不存在', 'danger')
+        except Exception as e:
+            logging.error(f"密码重置失败: {e}")
+            db.session.rollback()
+            if g.language == 'en':
+                flash('Failed to reset password. Please try again.', 'danger')
+            else:
+                flash('密码重置失败，请重试。', 'danger')
+        
+        return render_template('reset_password.html', valid_token=True, token=token)
+    
+    return render_template('reset_password.html', valid_token=valid_token, token=token)
+
 # Web3钱包认证API端点
 @app.route('/api/wallet/nonce', methods=['POST'])
 @rate_limit(max_requests=5, window_minutes=15, feature_name="wallet_nonce")
