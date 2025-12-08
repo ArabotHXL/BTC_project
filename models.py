@@ -1153,16 +1153,14 @@ class User(db.Model):
 
     id = db.Column(db.String, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    username = db.Column(db.String(80), unique=True, nullable=True)
+    name = db.Column(db.String(80), nullable=True)
     password_hash = db.Column(db.String(256), nullable=False)
-
-    # 用户状态
-    is_active = db.Column(db.Boolean, default=True)
-    is_verified = db.Column(db.Boolean, default=False)
+    role_id = db.Column(db.String, nullable=True)
+    status = db.Column(db.String(20), nullable=True)
 
     # 时间戳
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    last_login = db.Column(db.DateTime, nullable=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # 用户角色
     role = db.Column(db.String(20), default='user')  # user, admin, manager
