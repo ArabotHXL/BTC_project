@@ -75,7 +75,8 @@
     </div>
 </div>
 
-<!-- 加密控制中心 -->
+<!-- 加密控制中心 - 仅矿场主/管理员可见 -->
+{% if session.get('role') in ['owner', 'admin', 'mining_site'] %}
 <div class="hosting-card mb-4" id="encryption-control-center">
     <div class="hosting-card-header d-flex justify-content-between align-items-center cursor-pointer" 
          data-bs-toggle="collapse" data-bs-target="#encryptionBody" aria-expanded="false">
@@ -185,6 +186,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 <!-- 操作按钮区 -->
 <div class="d-flex justify-content-between gap-3 mb-4 flex-wrap">
@@ -2662,14 +2664,18 @@ function getDecryptedNetworkData(minerId) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    loadOwnerEncryptionStatus();
-    
-    document.getElementById('encryptionBody').addEventListener('show.bs.collapse', function() {
-        document.querySelector('#encryption-control-center .hosting-card-header').setAttribute('aria-expanded', 'true');
-    });
-    document.getElementById('encryptionBody').addEventListener('hide.bs.collapse', function() {
-        document.querySelector('#encryption-control-center .hosting-card-header').setAttribute('aria-expanded', 'false');
-    });
+    // 加密控制中心 - 仅矿场主/管理员可见
+    const encryptionBody = document.getElementById('encryptionBody');
+    if (encryptionBody) {
+        loadOwnerEncryptionStatus();
+        
+        encryptionBody.addEventListener('show.bs.collapse', function() {
+            document.querySelector('#encryption-control-center .hosting-card-header').setAttribute('aria-expanded', 'true');
+        });
+        encryptionBody.addEventListener('hide.bs.collapse', function() {
+            document.querySelector('#encryption-control-center .hosting-card-header').setAttribute('aria-expanded', 'false');
+        });
+    }
 });
 
 </script>
