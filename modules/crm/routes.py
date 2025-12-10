@@ -4,6 +4,8 @@ CRM模块路由
 """
 from flask import render_template, request, jsonify, session
 from flask_login import login_required, current_user
+from sqlalchemy.orm import joinedload
+from sqlalchemy import func, case
 from . import crm_bp
 from models import Customer, Deal, db
 import logging
@@ -20,16 +22,20 @@ def index():
 @crm_bp.route('/api/customers')
 @login_required
 def get_customers():
-    """获取客户列表API"""
+    """获取客户列表API - 支持分页"""
     try:
-        # 根据用户权限筛选客户 - admin可以看所有，其他角色只看自己创建的
-        if current_user.role == 'admin':
-            customers = Customer.query.all()
-        else:
-            customers = Customer.query.filter_by(created_by_id=current_user.id).all()
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 50, type=int)
+        per_page = min(per_page, 100)
+        
+        query = Customer.query
+        if current_user.role != 'admin':
+            query = query.filter_by(created_by_id=current_user.id)
+        
+        paginated = query.paginate(page=page, per_page=per_page, error_out=False)
         
         customers_data = []
-        for customer in customers:
+        for customer in paginated.items:
             customers_data.append({
                 'id': customer.id,
                 'name': customer.name,
@@ -40,7 +46,18 @@ def get_customers():
                 'created_at': customer.created_at.isoformat() if customer.created_at else None
             })
         
-        return jsonify({'success': True, 'customers': customers_data})
+        return jsonify({
+            'success': True,
+            'customers': customers_data,
+            'pagination': {
+                'page': paginated.page,
+                'per_page': paginated.per_page,
+                'total': paginated.total,
+                'pages': paginated.pages,
+                'has_next': paginated.has_next,
+                'has_prev': paginated.has_prev
+            }
+        })
         
     except Exception as e:
         logger.error(f"获取客户列表失败: {e}")
@@ -53,7 +70,6 @@ def create_customer():
     try:
         data = request.get_json()
         
-        # 创建客户记录
         customer = Customer(
             name=data.get('name'),
             email=data.get('email'),
@@ -80,16 +96,20 @@ def create_customer():
 @crm_bp.route('/api/deals')
 @login_required
 def get_deals():
-    """获取交易列表"""
+    """获取交易列表 - 支持分页，使用eager loading避免N+1"""
     try:
-        # 根据权限获取交易 - admin可以看所有，其他角色只看自己创建的
-        if current_user.role == 'admin':
-            deals = Deal.query.all()
-        else:
-            deals = Deal.query.filter_by(created_by_id=current_user.id).all()
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 50, type=int)
+        per_page = min(per_page, 100)
+        
+        query = Deal.query.options(joinedload(Deal.customer))
+        if current_user.role != 'admin':
+            query = query.filter_by(created_by_id=current_user.id)
+        
+        paginated = query.paginate(page=page, per_page=per_page, error_out=False)
         
         deals_data = []
-        for deal in deals:
+        for deal in paginated.items:
             deals_data.append({
                 'id': deal.id,
                 'title': deal.title,
@@ -101,7 +121,18 @@ def get_deals():
                 'expected_close': deal.expected_close.isoformat() if deal.expected_close else None
             })
         
-        return jsonify({'success': True, 'deals': deals_data})
+        return jsonify({
+            'success': True,
+            'deals': deals_data,
+            'pagination': {
+                'page': paginated.page,
+                'per_page': paginated.per_page,
+                'total': paginated.total,
+                'pages': paginated.pages,
+                'has_next': paginated.has_next,
+                'has_prev': paginated.has_prev
+            }
+        })
         
     except Exception as e:
         logger.error(f"获取交易列表失败: {e}")
@@ -110,24 +141,33 @@ def get_deals():
 @crm_bp.route('/api/stats')
 @login_required
 def get_stats():
-    """获取CRM统计数据"""
+    """获取CRM统计数据 - 优化为单次查询"""
     try:
-        # 从数据库获取统计数据 - admin可以看所有，其他角色只看自己创建的
         if current_user.role == 'admin':
-            total_customers = Customer.query.count()
-            active_deals = Deal.query.filter_by(stage='negotiation').count()
-            won_deals = Deal.query.filter_by(stage='won').count()
+            customer_count = db.session.query(
+                func.count(Customer.id).label('total_customers')
+            ).scalar() or 0
+            
+            deal_stats = db.session.query(
+                func.sum(case((Deal.stage == 'negotiation', 1), else_=0)).label('active'),
+                func.sum(case((Deal.stage == 'won', 1), else_=0)).label('won')
+            ).first()
         else:
-            total_customers = Customer.query.filter_by(created_by_id=current_user.id).count()
-            active_deals = Deal.query.filter_by(created_by_id=current_user.id, stage='negotiation').count()
-            won_deals = Deal.query.filter_by(created_by_id=current_user.id, stage='won').count()
+            customer_count = db.session.query(
+                func.count(Customer.id).label('total_customers')
+            ).filter(Customer.created_by_id == current_user.id).scalar() or 0
+            
+            deal_stats = db.session.query(
+                func.sum(case((Deal.stage == 'negotiation', 1), else_=0)).label('active'),
+                func.sum(case((Deal.stage == 'won', 1), else_=0)).label('won')
+            ).filter(Deal.created_by_id == current_user.id).first()
         
         return jsonify({
             'success': True,
             'stats': {
-                'total_customers': total_customers,
-                'active_deals': active_deals,
-                'won_deals': won_deals
+                'total_customers': customer_count,
+                'active_deals': int(deal_stats.active or 0) if deal_stats else 0,
+                'won_deals': int(deal_stats.won or 0) if deal_stats else 0
             }
         })
         
