@@ -14,6 +14,9 @@
     <!-- Leaflet CSS (for maps) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
+    <!-- i18n 无刷新语言切换 -->
+    <script src="/static/js/i18n.js"></script>
+    
     <!-- Custom CSS -->
     <style>
         /* ==================== Design System Variables ==================== */
@@ -1083,6 +1086,22 @@
         
         /* ==================== DOM Ready ==================== */
         document.addEventListener('DOMContentLoaded', function() {
+            // Language switcher functionality
+            if (window.I18n) {
+                // Update button styles when language changes
+                I18n.onLangChange(function(newLang, oldLang) {
+                    document.querySelectorAll('.lang-switch-btn').forEach(btn => {
+                        if (btn.dataset.lang === newLang) {
+                            btn.classList.remove('btn-outline-secondary');
+                            btn.classList.add('btn-warning');
+                        } else {
+                            btn.classList.remove('btn-warning');
+                            btn.classList.add('btn-outline-secondary');
+                        }
+                    });
+                });
+            }
+            
             // Mobile sidebar toggle
             const toggleBtn = document.querySelector('.toggle-sidebar');
             const sidebar = document.querySelector('.sidebar');
