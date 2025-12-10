@@ -759,6 +759,22 @@ body {
         </div>
         {% endif %}
 
+        <!-- CRM客户管理 -->
+        {% if session.role in ['owner', 'admin', 'mining_site'] %}
+        <div class="dashboard-card crm-item" onclick="location.href='/crm/'">
+            <div class="card-stats">CRM</div>
+            <div class="card-content">
+                <i class="bi bi-people card-icon" style="color: #3498db;"></i>
+                <h3 class="card-title">
+                    {% if current_lang == 'en' %}CRM{% else %}客户管理{% endif %}
+                </h3>
+                <p class="card-description">
+                    {% if current_lang == 'en' %}Complete customer relationship management with lead tracking, deal pipeline, and commission calculation{% else %}完整的客户关系管理，包含线索跟踪、交易管道和佣金计算{% endif %}
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- 用户管理 (管理员功能) -->
         {% if session.role in ['owner', 'admin'] %}
         <div class="dashboard-card user-item" onclick="location.href='{{ url_for('user_access') }}'">
