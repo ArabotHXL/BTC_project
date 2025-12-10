@@ -1,16 +1,16 @@
 {% extends "crm/base.html" %}
 
-{% block title %}{{ t('invoices') if current_lang == 'zh' else 'Invoice Dashboard' }} | BTC Mining CRM{% endblock %}
+{% block title %}<span data-i18n="invoice_dashboard">{{ t('invoice_dashboard') }}</span> | BTC Mining CRM{% endblock %}
 
-{% block page_title %}{{ t('invoices') if current_lang == 'zh' else 'Invoice Dashboard' }}{% endblock %}
+{% block page_title %}<span data-i18n="invoice_dashboard">{{ t('invoice_dashboard') }}</span>{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item active" aria-current="page">{{ t('invoices') if current_lang == 'zh' else 'Invoices' }}</li>
+<li class="breadcrumb-item active" aria-current="page"><span data-i18n="invoices">{{ t('invoices') }}</span></li>
 {% endblock %}
 
 {% block action_buttons %}
 <a href="{{ url_for('crm.customers') }}" class="btn btn-primary">
-    <i class="bi bi-plus-circle me-1"></i> {{ t('create_invoice') if current_lang == 'zh' else 'Create Invoice' }}
+    <i class="bi bi-plus-circle me-1"></i> <span data-i18n="create_invoice">{{ t('create_invoice') }}</span>
 </a>
 {% endblock %}
 
@@ -22,7 +22,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <p class="text-white-50 mb-1">{{ t('total_revenue') if current_lang == 'zh' else 'Total Revenue' }}</p>
+                        <p class="text-white-50 mb-1"><span data-i18n="total_revenue">{{ t('total_revenue') }}</span></p>
                         <h3 class="mb-0 text-white">$<span id="kpi-total-revenue" data-countup="0">0</span></h3>
                     </div>
                     <div class="kpi-icon">
@@ -38,7 +38,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <p class="text-white-50 mb-1">{{ t('accounts_receivable') if current_lang == 'zh' else 'Accounts Receivable' }}</p>
+                        <p class="text-white-50 mb-1"><span data-i18n="accounts_receivable">{{ t('accounts_receivable') }}</span></p>
                         <h3 class="mb-0 text-white">$<span id="kpi-receivable" data-countup="0">0</span></h3>
                     </div>
                     <div class="kpi-icon">
@@ -54,7 +54,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <p class="text-white-50 mb-1">{{ t('overdue_amount') if current_lang == 'zh' else 'Overdue Amount' }}</p>
+                        <p class="text-white-50 mb-1"><span data-i18n="overdue_amount">{{ t('overdue_amount') }}</span></p>
                         <h3 class="mb-0 text-white">$<span id="kpi-overdue" data-countup="0">0</span></h3>
                     </div>
                     <div class="kpi-icon">
@@ -70,7 +70,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <p class="text-white-50 mb-1">{{ t('monthly_revenue') if current_lang == 'zh' else 'This Month' }}</p>
+                        <p class="text-white-50 mb-1"><span data-i18n="monthly_revenue">{{ t('monthly_revenue') }}</span></p>
                         <h3 class="mb-0 text-white">$<span id="kpi-monthly" data-countup="0">0</span></h3>
                     </div>
                     <div class="kpi-icon">
@@ -87,22 +87,22 @@
     <div class="card-body">
         <div class="d-flex flex-wrap gap-2">
             <a href="{{ url_for('crm.invoices') }}" class="btn btn-sm btn-dark">
-                {{ t('all_invoices') if current_lang == 'zh' else 'All Invoices' }}
+                <span data-i18n="all_invoices">{{ t('all_invoices') }}</span>
             </a>
             <a href="{{ url_for('crm.invoices', status='draft') }}" class="btn btn-sm btn-outline-secondary">
-                {{ t('draft') if current_lang == 'zh' else 'Draft' }}
+                <span data-i18n="draft">{{ t('draft') }}</span>
             </a>
             <a href="{{ url_for('crm.invoices', status='sent') }}" class="btn btn-sm btn-outline-info">
-                {{ t('sent') if current_lang == 'zh' else 'Sent' }}
+                <span data-i18n="sent">{{ t('sent') }}</span>
             </a>
             <a href="{{ url_for('crm.invoices', status='paid') }}" class="btn btn-sm btn-outline-success">
-                {{ t('paid') if current_lang == 'zh' else 'Paid' }}
+                <span data-i18n="paid">{{ t('paid') }}</span>
             </a>
             <a href="{{ url_for('crm.invoices', status='overdue') }}" class="btn btn-sm btn-outline-danger">
-                {{ t('overdue') if current_lang == 'zh' else 'Overdue' }}
+                <span data-i18n="overdue">{{ t('overdue') }}</span>
             </a>
             <a href="{{ url_for('crm.invoices', status='cancelled') }}" class="btn btn-sm btn-outline-warning">
-                {{ t('cancelled') if current_lang == 'zh' else 'Cancelled' }}
+                <span data-i18n="cancelled">{{ t('cancelled') }}</span>
             </a>
         </div>
     </div>
@@ -116,7 +116,7 @@
         <div class="card mb-4">
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">{{ t('invoice_list') if current_lang == 'zh' else 'Invoice List' }}</h5>
+                    <h5 class="mb-0"><span data-i18n="invoice_list">{{ t('invoice_list') }}</span></h5>
                     <span class="badge bg-info" id="invoice-count">0</span>
                 </div>
             </div>
@@ -125,20 +125,20 @@
                     <table class="table table-dark table-hover mb-0" id="invoices-table">
                         <thead>
                             <tr>
-                                <th>{{ t('invoice_number') if current_lang == 'zh' else 'Invoice #' }}</th>
-                                <th>{{ t('customer') if current_lang == 'zh' else 'Customer' }}</th>
-                                <th>{{ t('status') if current_lang == 'zh' else 'Status' }}</th>
-                                <th>{{ t('amount') if current_lang == 'zh' else 'Amount' }}</th>
-                                <th>{{ t('issue_date') if current_lang == 'zh' else 'Issue Date' }}</th>
-                                <th>{{ t('due_date') if current_lang == 'zh' else 'Due Date' }}</th>
-                                <th>{{ t('actions') if current_lang == 'zh' else 'Actions' }}</th>
+                                <th><span data-i18n="invoice_number">{{ t('invoice_number') }}</span></th>
+                                <th><span data-i18n="customer">{{ t('customer') }}</span></th>
+                                <th><span data-i18n="status">{{ t('status') }}</span></th>
+                                <th><span data-i18n="amount">{{ t('amount') }}</span></th>
+                                <th><span data-i18n="issue_date">{{ t('issue_date') }}</span></th>
+                                <th><span data-i18n="due_date">{{ t('due_date') }}</span></th>
+                                <th><span data-i18n="actions">{{ t('actions') }}</span></th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td colspan="7" class="text-center py-4">
                                     <div class="spinner-border text-info" role="status">
-                                        <span class="visually-hidden">{{ t('loading') if current_lang == 'zh' else 'Loading...' }}</span>
+                                        <span class="visually-hidden" data-i18n="loading">{{ t('loading') }}</span>
                                     </div>
                                 </td>
                             </tr>
@@ -151,7 +151,7 @@
         <!-- Aging Analysis Chart -->
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0">{{ t('aging_analysis') if current_lang == 'zh' else 'Aging Analysis' }}</h5>
+                <h5 class="mb-0"><span data-i18n="aging_analysis">{{ t('aging_analysis') }}</span></h5>
             </div>
             <div class="card-body">
                 <canvas id="aging-chart" height="100"></canvas>
@@ -164,7 +164,7 @@
         <!-- Revenue Trend Chart -->
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0">{{ t('revenue_trend') if current_lang == 'zh' else 'Revenue Trend (12M)' }}</h5>
+                <h5 class="mb-0"><span data-i18n="revenue_trend">{{ t('revenue_trend') }}</span></h5>
             </div>
             <div class="card-body">
                 <canvas id="revenue-trend-chart" height="200"></canvas>
@@ -174,7 +174,7 @@
         <!-- Top 5 Customers Chart -->
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0">{{ t('top_customers') if current_lang == 'zh' else 'Top 5 Customers' }}</h5>
+                <h5 class="mb-0"><span data-i18n="top_customers">{{ t('top_customers') }}</span></h5>
             </div>
             <div class="card-body">
                 <canvas id="top-customers-chart" height="200"></canvas>
@@ -184,19 +184,19 @@
         <!-- Quick Stats Card -->
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0">{{ t('quick_stats') if current_lang == 'zh' else 'Quick Stats' }}</h5>
+                <h5 class="mb-0"><span data-i18n="quick_stats">{{ t('quick_stats') }}</span></h5>
             </div>
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom border-secondary">
                     <div>
-                        <p class="text-muted mb-0">{{ t('avg_invoice') if current_lang == 'zh' else 'Avg Invoice' }}</p>
+                        <p class="text-muted mb-0"><span data-i18n="avg_invoice">{{ t('avg_invoice') }}</span></p>
                         <h5 class="mb-0">$<span id="stat-avg-invoice">0</span></h5>
                     </div>
                     <i class="bi bi-calculator text-info" style="font-size: 2rem;"></i>
                 </div>
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <p class="text-muted mb-0">{{ t('overdue_rate') if current_lang == 'zh' else 'Overdue Rate' }}</p>
+                        <p class="text-muted mb-0"><span data-i18n="overdue_rate">{{ t('overdue_rate') }}</span></p>
                         <h5 class="mb-0"><span id="stat-overdue-rate">0</span>%</h5>
                     </div>
                     <i class="bi bi-speedometer text-warning" style="font-size: 2rem;"></i>
@@ -266,8 +266,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     invoiceCount.textContent = data.data.length;
                     
-                    // Pre-define translated text
-                    const noInvoicesText = '{{ t("no_invoices") if current_lang == "zh" else "No invoices found" }}';
+                    // Pre-define translated text with data-i18n for instant switching
+                    const noInvoicesText = '<span data-i18n="no_invoices">{{ t("no_invoices") }}</span>';
                     
                     if (data.data.length === 0) {
                         tbody.innerHTML = `
@@ -315,8 +315,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error loading invoices:', error);
                 const tbody = document.querySelector('#invoices-table tbody');
                 
-                // Pre-define translated error text
-                const errorText = '{{ t("error_loading") if current_lang == "zh" else "Error loading invoices" }}';
+                // Pre-define translated error text with data-i18n for instant switching
+                const errorText = '<span data-i18n="error_loading">{{ t("error_loading") }}</span>';
                 
                 tbody.innerHTML = `
                     <tr>
@@ -342,7 +342,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         data: {
                             labels: labels,
                             datasets: [{
-                                label: '{{ t("revenue") if current_lang == "zh" else "Revenue" }}',
+                                label: '{{ t("revenue") }}',
                                 data: revenues,
                                 borderColor: '#f7931a',
                                 backgroundColor: 'rgba(247, 147, 26, 0.1)',
@@ -400,7 +400,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         data: {
                             labels: ['0-30 Days', '31-60 Days', '61-90 Days', '90+ Days'],
                             datasets: [{
-                                label: '{{ t("amount") if current_lang == "zh" else "Amount" }}',
+                                label: '{{ t("amount") }}',
                                 data: [
                                     parseFloat(data.aging_0_30.amount) || 0,
                                     parseFloat(data.aging_31_60.amount) || 0,
@@ -464,7 +464,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         data: {
                             labels: labels,
                             datasets: [{
-                                label: '{{ t("total_paid") if current_lang == "zh" else "Total Paid" }}',
+                                label: '{{ t("total_paid") }}',
                                 data: amounts,
                                 backgroundColor: '#17a2b8',
                                 borderRadius: 6

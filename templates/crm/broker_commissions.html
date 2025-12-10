@@ -1,6 +1,6 @@
 {% extends "crm/base.html" %}
 
-{% block title %}{% if current_lang == 'en' %}Commission Management{% else %}佣金收入管理{% endif %}{% endblock %}
+{% block title %}{{ t('commission_management') }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid px-4 py-4">
@@ -8,10 +8,10 @@
         <div>
             <h2 class="mb-1">
                 <i class="bi bi-cash-coin me-2 text-warning"></i>
-                {% if current_lang == 'en' %}Commission Management{% else %}佣金收入管理{% endif %}
+                <span data-i18n="commission_management">{{ t('commission_management') }}</span>
             </h2>
             <p class="text-muted mb-0">
-                {% if current_lang == 'en' %}Track your broker commission income and settlements{% else %}追踪您的中介佣金收入和结算{% endif %}
+                <span data-i18n="commission_tracking_desc">{{ t('commission_tracking_desc') }}</span>
             </p>
         </div>
     </div>
@@ -23,7 +23,7 @@
                     <i class="bi bi-cash-stack"></i>
                 </div>
                 <div class="kpi-content">
-                    <div class="kpi-label">{% if current_lang == 'en' %}Total Commission{% else %}总佣金收入{% endif %}</div>
+                    <div class="kpi-label"><span data-i18n="total_commission">{{ t('total_commission') }}</span></div>
                     <div class="kpi-value">$<span id="total-commission-value">0</span></div>
                 </div>
             </div>
@@ -35,7 +35,7 @@
                     <i class="bi bi-check-circle"></i>
                 </div>
                 <div class="kpi-content">
-                    <div class="kpi-label">{% if current_lang == 'en' %}Paid Commission{% else %}已支付佣金{% endif %}</div>
+                    <div class="kpi-label"><span data-i18n="paid_commission">{{ t('paid_commission') }}</span></div>
                     <div class="kpi-value">$<span id="paid-commission-value">0</span></div>
                 </div>
             </div>
@@ -47,7 +47,7 @@
                     <i class="bi bi-clock-history"></i>
                 </div>
                 <div class="kpi-content">
-                    <div class="kpi-label">{% if current_lang == 'en' %}Pending Commission{% else %}待支付佣金{% endif %}</div>
+                    <div class="kpi-label"><span data-i18n="pending_commission">{{ t('pending_commission') }}</span></div>
                     <div class="kpi-value">$<span id="unpaid-commission-value">0</span></div>
                 </div>
             </div>
@@ -59,7 +59,7 @@
                     <i class="bi bi-calendar-month"></i>
                 </div>
                 <div class="kpi-content">
-                    <div class="kpi-label">{% if current_lang == 'en' %}This Month{% else %}本月佣金{% endif %}</div>
+                    <div class="kpi-label"><span data-i18n="this_month_commission">{{ t('this_month_commission') }}</span></div>
                     <div class="kpi-value">$<span id="month-commission-value">0</span></div>
                 </div>
             </div>
@@ -70,15 +70,15 @@
         <div class="btn-group" role="group" aria-label="Payment status filter">
             <button type="button" class="btn btn-outline-primary active" data-filter="all" onclick="filterCommissions('all')">
                 <i class="bi bi-list-ul me-1"></i>
-                {% if current_lang == 'en' %}All{% else %}全部{% endif %}
+                <span data-i18n="all">{{ t('all') }}</span>
             </button>
             <button type="button" class="btn btn-outline-success" data-filter="paid" onclick="filterCommissions('paid')">
                 <i class="bi bi-check-circle me-1"></i>
-                {% if current_lang == 'en' %}Paid{% else %}已支付{% endif %}
+                <span data-i18n="paid">{{ t('paid') }}</span>
             </button>
             <button type="button" class="btn btn-outline-warning" data-filter="unpaid" onclick="filterCommissions('unpaid')">
                 <i class="bi bi-clock-history me-1"></i>
-                {% if current_lang == 'en' %}Unpaid{% else %}待支付{% endif %}
+                <span data-i18n="unpaid">{{ t('unpaid') }}</span>
             </button>
         </div>
     </div>
@@ -89,7 +89,7 @@
                 <div class="card-header bg-transparent border-0 py-3">
                     <h5 class="mb-0">
                         <i class="bi bi-graph-up me-2"></i>
-                        {% if current_lang == 'en' %}Commission Trend (12 Months){% else %}佣金趋势（过去12个月）{% endif %}
+                        <span data-i18n="commission_trend_12m">{{ t('commission_trend_12m') }}</span>
                     </h5>
                 </div>
                 <div class="card-body">
@@ -101,7 +101,7 @@
                 <div class="card-header bg-transparent border-0 py-3">
                     <h5 class="mb-0">
                         <i class="bi bi-table me-2"></i>
-                        {% if current_lang == 'en' %}Commission Records{% else %}佣金记录{% endif %}
+                        <span data-i18n="commission_records">{{ t('commission_records') }}</span>
                         <span class="badge bg-secondary ms-2" id="records-count">0</span>
                     </h5>
                 </div>
@@ -110,12 +110,12 @@
                         <table class="table table-hover" id="commissions-table">
                             <thead>
                                 <tr>
-                                    <th>{% if current_lang == 'en' %}Customer{% else %}客户{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Mining Farm{% else %}矿场{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Amount{% else %}佣金金额{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Month{% else %}结算月份{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Status{% else %}支付状态{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Payment Date{% else %}支付日期{% endif %}</th>
+                                    <th><span data-i18n="customer">{{ t('customer') }}</span></th>
+                                    <th><span data-i18n="mining_farm">{{ t('mining_farm') }}</span></th>
+                                    <th><span data-i18n="commission_amount">{{ t('commission_amount') }}</span></th>
+                                    <th><span data-i18n="settlement_month">{{ t('settlement_month') }}</span></th>
+                                    <th><span data-i18n="payment_status">{{ t('payment_status') }}</span></th>
+                                    <th><span data-i18n="payment_date">{{ t('payment_date') }}</span></th>
                                 </tr>
                             </thead>
                             <tbody id="commissions-tbody">
@@ -138,7 +138,7 @@
                 <div class="card-header bg-transparent border-0 py-3">
                     <h5 class="mb-0">
                         <i class="bi bi-pie-chart me-2"></i>
-                        {% if current_lang == 'en' %}Settlement Status{% else %}结算状态{% endif %}
+                        <span data-i18n="settlement_status">{{ t('settlement_status') }}</span>
                     </h5>
                 </div>
                 <div class="card-body">
@@ -150,7 +150,7 @@
                 <div class="card-header bg-transparent border-0 py-3">
                     <h5 class="mb-0">
                         <i class="bi bi-star me-2"></i>
-                        {% if current_lang == 'en' %}Top 5 Months{% else %}月度TOP 5{% endif %}
+                        <span data-i18n="top_5_months">{{ t('top_5_months') }}</span>
                     </h5>
                 </div>
                 <div class="card-body">
@@ -168,19 +168,19 @@
                 <div class="card-header bg-transparent border-0 py-3">
                     <h5 class="mb-0">
                         <i class="bi bi-graph-up-arrow me-2"></i>
-                        {% if current_lang == 'en' %}Income Forecast{% else %}收入预测{% endif %}
+                        <span data-i18n="income_forecast">{{ t('income_forecast') }}</span>
                     </h5>
                 </div>
                 <div class="card-body">
                     <div class="text-center">
                         <div class="forecast-label text-muted mb-2">
-                            {% if current_lang == 'en' %}Next Month Estimated{% else %}下月预计收入{% endif %}
+                            <span data-i18n="next_month_estimated">{{ t('next_month_estimated') }}</span>
                         </div>
                         <div class="forecast-value text-warning display-6 fw-bold">
                             $<span id="forecast-value">0</span>
                         </div>
                         <small class="text-muted d-block mt-2">
-                            {% if current_lang == 'en' %}Based on 12-month average{% else %}基于过去12个月平均值{% endif %}
+                            <span data-i18n="based_on_12m_average">{{ t('based_on_12m_average') }}</span>
                         </small>
                     </div>
                 </div>
@@ -251,7 +251,7 @@ async function loadCommissionTrend() {
                     labels: data.months || [],
                     datasets: [
                         {
-                            label: {% if current_lang == 'en' %}'Paid'{% else %}'已支付'{% endif %},
+                            label: window.getTranslation ? window.getTranslation('paid') : 'Paid',
                             data: (data.paid || []).map(v => parseFloat(v) || 0),
                             borderColor: '#10b981',
                             backgroundColor: 'rgba(16, 185, 129, 0.1)',
@@ -259,7 +259,7 @@ async function loadCommissionTrend() {
                             fill: true
                         },
                         {
-                            label: {% if current_lang == 'en' %}'Unpaid'{% else %}'待支付'{% endif %},
+                            label: window.getTranslation ? window.getTranslation('unpaid') : 'Unpaid',
                             data: (data.unpaid || []).map(v => parseFloat(v) || 0),
                             borderColor: '#f59e0b',
                             backgroundColor: 'rgba(245, 158, 11, 0.1)',
@@ -411,7 +411,8 @@ function renderCommissionsTable(data) {
     document.getElementById('records-count').textContent = data.length;
     
     if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">{% if current_lang == "en" %}No commission records found{% else %}暂无佣金记录{% endif %}</td></tr>';
+        const noRecordsMsg = window.getTranslation ? window.getTranslation('no_commission_records') : 'No commission records found';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">' + noRecordsMsg + '</td></tr>';
         return;
     }
     
@@ -427,8 +428,8 @@ function renderCommissionsTable(data) {
             <td>${record.record_month || '-'}</td>
             <td>
                 ${record.paid 
-                    ? '<span class="badge bg-success">{% if current_lang == "en" %}Paid{% else %}已支付{% endif %}</span>' 
-                    : '<span class="badge bg-warning">{% if current_lang == "en" %}Unpaid{% else %}待支付{% endif %}</span>'}
+                    ? '<span class="badge bg-success" data-i18n="paid">' + (window.getTranslation ? window.getTranslation('paid') : 'Paid') + '</span>' 
+                    : '<span class="badge bg-warning" data-i18n="unpaid">' + (window.getTranslation ? window.getTranslation('unpaid') : 'Unpaid') + '</span>'}
             </td>
             <td>${record.payment_date || '-'}</td>
         </tr>
@@ -453,7 +454,8 @@ function loadTopMonths(data) {
     const container = document.getElementById('top-months-list');
     
     if (sortedMonths.length === 0) {
-        container.innerHTML = '<p class="text-muted text-center">{% if current_lang == "en" %}No data available{% else %}暂无数据{% endif %}</p>';
+        const noDataMsg = window.getTranslation ? window.getTranslation('no_data_available') : 'No data available';
+        container.innerHTML = '<p class="text-muted text-center">' + noDataMsg + '</p>';
         return;
     }
     

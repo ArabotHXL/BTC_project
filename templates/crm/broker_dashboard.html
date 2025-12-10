@@ -1,6 +1,6 @@
 {% extends "crm/base.html" %}
 
-{% block title %}{% if current_lang == 'en' %}Broker Dashboard{% else %}经纪人仪表盘{% endif %}{% endblock %}
+{% block title %}<span data-i18n="broker_dashboard">{{ t('broker_dashboard') }}</span>{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -8,11 +8,11 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">
             <i class="bi bi-graph-up-arrow me-2"></i>
-            {% if current_lang == 'en' %}Broker Business Dashboard{% else %}经纪人业务仪表盘{% endif %}
+            <span data-i18n="broker_business_dashboard">{{ t('broker_business_dashboard') }}</span>
         </h2>
         <a href="{{ url_for('crm.deals') }}" class="btn btn-gradient-primary">
             <i class="bi bi-plus-circle me-2"></i>
-            {% if current_lang == 'en' %}New Deal{% else %}创建新交易{% endif %}
+            <span data-i18n="new_deal">{{ t('new_deal') }}</span>
         </a>
     </div>
 
@@ -25,7 +25,7 @@
                 </div>
                 <div class="kpi-content">
                     <div class="kpi-label">
-                        {% if current_lang == 'en' %}Total Deals{% else %}总交易数{% endif %}
+                        <span data-i18n="total_deals">{{ t('total_deals') }}</span>
                     </div>
                     <div class="kpi-value" id="kpi-total-deals">0</div>
                 </div>
@@ -39,7 +39,7 @@
                 </div>
                 <div class="kpi-content">
                     <div class="kpi-label">
-                        {% if current_lang == 'en' %}Active Deals{% else %}活跃交易{% endif %}
+                        <span data-i18n="active_deals">{{ t('active_deals') }}</span>
                     </div>
                     <div class="kpi-value" id="kpi-active-deals">0</div>
                 </div>
@@ -53,7 +53,7 @@
                 </div>
                 <div class="kpi-content">
                     <div class="kpi-label">
-                        {% if current_lang == 'en' %}Total Commission{% else %}总佣金收入{% endif %}
+                        <span data-i18n="total_commission">{{ t('total_commission') }}</span>
                     </div>
                     <div class="kpi-value" id="kpi-total-commission">$0</div>
                 </div>
@@ -67,7 +67,7 @@
                 </div>
                 <div class="kpi-content">
                     <div class="kpi-label">
-                        {% if current_lang == 'en' %}Pending Commission{% else %}待结算佣金{% endif %}
+                        <span data-i18n="pending_commission">{{ t('pending_commission') }}</span>
                     </div>
                     <div class="kpi-value" id="kpi-pending-commission">$0</div>
                 </div>
@@ -84,7 +84,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
                         <i class="bi bi-graph-up me-2"></i>
-                        {% if current_lang == 'en' %}Commission Trend (12 Months){% else %}佣金收入趋势（12个月）{% endif %}
+                        <span data-i18n="commission_trend_12_months">{{ t('commission_trend_12_months') }}</span>
                     </h5>
                 </div>
                 <div class="card-body">
@@ -97,10 +97,10 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
                         <i class="bi bi-clock-history me-2"></i>
-                        {% if current_lang == 'en' %}Recent Deals{% else %}最近交易{% endif %}
+                        <span data-i18n="recent_deals">{{ t('recent_deals') }}</span>
                     </h5>
                     <a href="{{ url_for('crm.broker_deals') }}" class="btn btn-sm btn-outline-primary">
-                        {% if current_lang == 'en' %}View All{% else %}查看全部{% endif %}
+                        <span data-i18n="view_all">{{ t('view_all') }}</span>
                     </a>
                 </div>
                 <div class="card-body p-0">
@@ -108,13 +108,13 @@
                         <table class="table table-hover mb-0" id="recentDealsTable">
                             <thead>
                                 <tr>
-                                    <th>{% if current_lang == 'en' %}Customer{% else %}客户{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Farm{% else %}矿场{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Investment{% else %}投资金额{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Type{% else %}类型{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Commission{% else %}佣金{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Date{% else %}日期{% endif %}</th>
+                                    <th><span data-i18n="customer">{{ t('customer') }}</span></th>
+                                    <th><span data-i18n="farm">{{ t('farm') }}</span></th>
+                                    <th><span data-i18n="investment">{{ t('investment') }}</span></th>
+                                    <th><span data-i18n="type">{{ t('type') }}</span></th>
+                                    <th><span data-i18n="commission">{{ t('commission') }}</span></th>
+                                    <th><span data-i18n="status">{{ t('status') }}</span></th>
+                                    <th><span data-i18n="date">{{ t('date') }}</span></th>
                                 </tr>
                             </thead>
                             <tbody id="recentDealsBody">
@@ -139,7 +139,7 @@
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="bi bi-geo-alt me-2"></i>
-                        {% if current_lang == 'en' %}Customer Distribution Map{% else %}客户地理分布{% endif %}
+                        <span data-i18n="customer_distribution_map">{{ t('customer_distribution_map') }}</span>
                     </h5>
                 </div>
                 <div class="card-body">
@@ -152,7 +152,7 @@
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="bi bi-trophy me-2"></i>
-                        {% if current_lang == 'en' %}Top Customers{% else %}TOP 5 客户{% endif %}
+                        <span data-i18n="top_customers">{{ t('top_customers') }}</span>
                     </h5>
                 </div>
                 <div class="card-body p-0">
@@ -171,7 +171,7 @@
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="bi bi-lightning-charge me-2"></i>
-                        {% if current_lang == 'en' %}Top Mining Farms{% else %}TOP 5 矿场{% endif %}
+                        <span data-i18n="top_mining_farms">{{ t('top_mining_farms') }}</span>
                     </h5>
                 </div>
                 <div class="card-body p-0">
@@ -455,7 +455,7 @@ async function loadCommissionTrend() {
                     labels: data.months,
                     datasets: [
                         {
-                            label: '{% if current_lang == "en" %}Paid{% else %}已支付{% endif %}',
+                            label: window.getTranslation ? window.getTranslation('paid') : '{{ t("paid") }}',
                             data: data.paid,
                             borderColor: '#10b981',
                             backgroundColor: 'rgba(16, 185, 129, 0.1)',
@@ -463,7 +463,7 @@ async function loadCommissionTrend() {
                             fill: true
                         },
                         {
-                            label: '{% if current_lang == "en" %}Unpaid{% else %}未支付{% endif %}',
+                            label: window.getTranslation ? window.getTranslation('unpaid') : '{{ t("unpaid") }}',
                             data: data.unpaid,
                             borderColor: '#f59e0b',
                             backgroundColor: 'rgba(245, 158, 11, 0.1)',
@@ -587,11 +587,15 @@ async function loadCustomerDistribution() {
             const counts = data.counts || [];
             const investments = data.investments || [];
             
+            const noDataText = window.getTranslation ? window.getTranslation('no_customer_data_available') : '{{ t("no_customer_data_available") }}';
+            const customersText = window.getTranslation ? window.getTranslation('customer_count') : '{{ t("customer_count") }}';
+            const investmentText = window.getTranslation ? window.getTranslation('investment_amount') : '{{ t("investment_amount") }}';
+            
             if (locations.length === 0) {
                 // Show message if no data
                 const popup = L.popup()
                     .setLatLng([35.0, 105.0])
-                    .setContent('{% if current_lang == "en" %}No customer data available{% else %}暂无客户数据{% endif %}')
+                    .setContent(noDataText)
                     .openOn(map);
             } else {
                 locations.forEach((location, index) => {
@@ -632,8 +636,8 @@ async function loadCustomerDistribution() {
                         // Add popup with location info
                         const popupContent = `
                             <b>${location}</b><br>
-                            {% if current_lang == "en" %}Customers{% else %}客户数{% endif %}: ${count}<br>
-                            {% if current_lang == "en" %}Investment{% else %}投资额{% endif %}: $${investment.toLocaleString()}
+                            ${customersText}: ${count}<br>
+                            ${investmentText}: $${investment.toLocaleString()}
                         `;
                         
                         circle.bindPopup(popupContent);
@@ -664,8 +668,12 @@ async function loadPerformanceRanking() {
             const customersContainer = document.getElementById('topCustomersRanking');
             const farmsContainer = document.getElementById('topMiningFarmsRanking');
             
+            const noDataText = window.getTranslation ? window.getTranslation('no_data_available') : '{{ t("no_data_available") }}';
+            const investmentText = window.getTranslation ? window.getTranslation('investment') : '{{ t("investment") }}';
+            const dealsText = window.getTranslation ? window.getTranslation('deal_count') : '{{ t("deal_count") }}';
+            
             if (customers.length === 0) {
-                customersContainer.innerHTML = '<p class="text-center text-muted py-3">{% if current_lang == "en" %}No data available{% else %}暂无数据{% endif %}</p>';
+                customersContainer.innerHTML = '<p class="text-center text-muted py-3">' + noDataText + '</p>';
             } else {
                 let customerHtml = '';
                 customers.forEach((customer, index) => {
@@ -675,7 +683,7 @@ async function loadPerformanceRanking() {
                             <div class="ranking-info">
                                 <div class="ranking-name">${customer.name}</div>
                                 <div class="ranking-amount">
-                                    {% if current_lang == "en" %}Investment{% else %}投资{% endif %}: $${customer.investment.toLocaleString()}
+                                    ${investmentText}: $${customer.investment.toLocaleString()}
                                 </div>
                             </div>
                             <div class="ranking-value">$${customer.commission.toLocaleString()}</div>
@@ -686,7 +694,7 @@ async function loadPerformanceRanking() {
             }
             
             if (miningFarms.length === 0) {
-                farmsContainer.innerHTML = '<p class="text-center text-muted py-3">{% if current_lang == "en" %}No data available{% else %}暂无数据{% endif %}</p>';
+                farmsContainer.innerHTML = '<p class="text-center text-muted py-3">' + noDataText + '</p>';
             } else {
                 let farmHtml = '';
                 miningFarms.forEach((farm, index) => {
@@ -696,7 +704,7 @@ async function loadPerformanceRanking() {
                             <div class="ranking-info">
                                 <div class="ranking-name">${farm.name}</div>
                                 <div class="ranking-amount">
-                                    {% if current_lang == "en" %}Deals{% else %}交易数{% endif %}: ${farm.deal_count}
+                                    ${dealsText}: ${farm.deal_count}
                                 </div>
                             </div>
                             <div class="ranking-value">${farm.deal_count}</div>
@@ -721,12 +729,16 @@ async function loadRecentDeals() {
             const deals = result.data;
             const tbody = document.getElementById('recentDealsBody');
             
+            const noDealsText = window.getTranslation ? window.getTranslation('no_deals_yet') : '{{ t("no_deals_yet") }}';
+            const percentageText = window.getTranslation ? window.getTranslation('percentage') : '{{ t("percentage") }}';
+            const fixedText = window.getTranslation ? window.getTranslation('fixed') : '{{ t("fixed") }}';
+            
             if (deals.length === 0) {
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="7" class="text-center py-4">
                             <i class="bi bi-inbox display-4 text-muted"></i>
-                            <p class="text-muted mt-2">{% if current_lang == "en" %}No deals yet{% else %}暂无交易记录{% endif %}</p>
+                            <p class="text-muted mt-2">${noDealsText}</p>
                         </td>
                     </tr>
                 `;
@@ -757,9 +769,9 @@ async function loadRecentDeals() {
                 // Commission type badge
                 let commissionBadge = '';
                 if (deal.commission_type === 'percentage') {
-                    commissionBadge = '<span class="badge bg-primary">{% if current_lang == "en" %}Percentage{% else %}百分比{% endif %}</span>';
+                    commissionBadge = '<span class="badge bg-primary">' + percentageText + '</span>';
                 } else if (deal.commission_type === 'fixed') {
-                    commissionBadge = '<span class="badge bg-success">{% if current_lang == "en" %}Fixed{% else %}固定{% endif %}</span>';
+                    commissionBadge = '<span class="badge bg-success">' + fixedText + '</span>';
                 }
                 
                 html += `

@@ -1,16 +1,16 @@
 {% extends "crm/base.html" %}
 
-{% block title %}{{ t('assets') if current_lang == 'zh' else 'Assets' }} | BTC Mining CRM{% endblock %}
+{% block title %}<span data-i18n="assets">{{ t('assets') }}</span> | BTC Mining CRM{% endblock %}
 
-{% block page_title %}{{ t('assets') if current_lang == 'zh' else 'Assets' }}{% endblock %}
+{% block page_title %}<span data-i18n="assets">{{ t('assets') }}</span>{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item active" aria-current="page">{{ t('assets') if current_lang == 'zh' else 'Assets' }}</li>
+<li class="breadcrumb-item active" aria-current="page"><span data-i18n="assets">{{ t('assets') }}</span></li>
 {% endblock %}
 
 {% block action_buttons %}
 <a href="{{ url_for('crm.customers') }}" class="btn btn-primary">
-    <i class="bi bi-plus-circle me-1"></i> {{ t('create_asset') if current_lang == 'zh' else 'Create Asset' }}
+    <i class="bi bi-plus-circle me-1"></i> <span data-i18n="create_asset">{{ t('create_asset') }}</span>
 </a>
 {% endblock %}
 
@@ -23,7 +23,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <p class="text-white-50 mb-1 small">{{ t('total_assets') if current_lang == 'zh' else 'Total Assets' }}</p>
+                        <p class="text-white-50 mb-1 small"><span data-i18n="total_assets">{{ t('total_assets') }}</span></p>
                         <h3 class="text-white mb-0" id="total-assets-kpi">0</h3>
                     </div>
                     <div class="text-white-50">
@@ -40,7 +40,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <p class="text-white-50 mb-1 small">{{ t('active_assets') if current_lang == 'zh' else 'Active Assets' }}</p>
+                        <p class="text-white-50 mb-1 small"><span data-i18n="active_assets">{{ t('active_assets') }}</span></p>
                         <h3 class="text-white mb-0" id="active-assets-kpi">0</h3>
                     </div>
                     <div class="text-white-50">
@@ -57,7 +57,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <p class="text-dark mb-1 small">{{ t('maintenance') if current_lang == 'zh' else 'Maintenance' }}</p>
+                        <p class="text-dark mb-1 small"><span data-i18n="maintenance">{{ t('maintenance') }}</span></p>
                         <h3 class="text-dark mb-0" id="maintenance-assets-kpi">0</h3>
                     </div>
                     <div class="text-dark opacity-50">
@@ -74,7 +74,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <p class="text-white-50 mb-1 small">{{ t('total_value') if current_lang == 'zh' else 'Total Value' }}</p>
+                        <p class="text-white-50 mb-1 small"><span data-i18n="total_value">{{ t('total_value') }}</span></p>
                         <h3 class="text-white mb-0">$<span id="total-value-kpi">0</span></h3>
                     </div>
                     <div class="text-white-50">
@@ -91,36 +91,36 @@
     <div class="card-body">
         <div class="row">
             <div class="col-md-6">
-                <label class="form-label small text-muted">{{ t('asset_type') if current_lang == 'zh' else 'Asset Type' }}</label>
+                <label class="form-label small text-muted"><span data-i18n="asset_type">{{ t('asset_type') }}</span></label>
                 <div class="d-flex flex-wrap gap-2">
                     <a href="{{ url_for('crm.assets') }}" class="btn btn-sm btn-dark">
-                        {{ t('all_types') if current_lang == 'zh' else 'All Types' }}
+                        <span data-i18n="all_types">{{ t('all_types') }}</span>
                     </a>
                     <a href="{{ url_for('crm.assets', type='miner') }}" class="btn btn-sm btn-outline-info">
-                        {{ t('miner') if current_lang == 'zh' else 'Miner' }}
+                        <span data-i18n="miner">{{ t('miner') }}</span>
                     </a>
                     <a href="{{ url_for('crm.assets', type='hosting_slot') }}" class="btn btn-sm btn-outline-primary">
-                        {{ t('hosting_slot') if current_lang == 'zh' else 'Hosting Slot' }}
+                        <span data-i18n="hosting_slot">{{ t('hosting_slot') }}</span>
                     </a>
                     <a href="{{ url_for('crm.assets', type='equipment') }}" class="btn btn-sm btn-outline-warning">
-                        {{ t('equipment') if current_lang == 'zh' else 'Equipment' }}
+                        <span data-i18n="equipment">{{ t('equipment') }}</span>
                     </a>
                 </div>
             </div>
             <div class="col-md-6">
-                <label class="form-label small text-muted">{{ t('status') if current_lang == 'zh' else 'Status' }}</label>
+                <label class="form-label small text-muted"><span data-i18n="status">{{ t('status') }}</span></label>
                 <div class="d-flex flex-wrap gap-2">
                     <a href="{{ url_for('crm.assets', status='active') }}" class="btn btn-sm btn-outline-success">
-                        {{ t('active') if current_lang == 'zh' else 'Active' }}
+                        <span data-i18n="active">{{ t('active') }}</span>
                     </a>
                     <a href="{{ url_for('crm.assets', status='inactive') }}" class="btn btn-sm btn-outline-secondary">
-                        {{ t('inactive') if current_lang == 'zh' else 'Inactive' }}
+                        <span data-i18n="inactive">{{ t('inactive') }}</span>
                     </a>
                     <a href="{{ url_for('crm.assets', status='maintenance') }}" class="btn btn-sm btn-outline-warning">
-                        {{ t('maintenance') if current_lang == 'zh' else 'Maintenance' }}
+                        <span data-i18n="maintenance">{{ t('maintenance') }}</span>
                     </a>
                     <a href="{{ url_for('crm.assets', status='sold') }}" class="btn btn-sm btn-outline-danger">
-                        {{ t('sold') if current_lang == 'zh' else 'Sold' }}
+                        <span data-i18n="sold">{{ t('sold') }}</span>
                     </a>
                 </div>
             </div>
@@ -136,7 +136,7 @@
         <div class="card mb-4">
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">{{ t('asset_list') if current_lang == 'zh' else 'Asset List' }}</h5>
+                    <h5 class="mb-0"><span data-i18n="asset_list">{{ t('asset_list') }}</span></h5>
                     <span class="badge bg-info" id="asset-count">0</span>
                 </div>
             </div>
@@ -145,19 +145,19 @@
                     <table class="table table-dark table-hover mb-0" id="assets-table">
                         <thead>
                             <tr>
-                                <th>{{ t('asset_name') if current_lang == 'zh' else 'Asset Name' }}</th>
-                                <th>{{ t('type') if current_lang == 'zh' else 'Type' }}</th>
-                                <th>{{ t('customer') if current_lang == 'zh' else 'Customer' }}</th>
-                                <th>{{ t('status') if current_lang == 'zh' else 'Status' }}</th>
-                                <th>{{ t('current_value') if current_lang == 'zh' else 'Value' }}</th>
-                                <th>{{ t('actions') if current_lang == 'zh' else 'Actions' }}</th>
+                                <th><span data-i18n="asset_name">{{ t('asset_name') }}</span></th>
+                                <th><span data-i18n="type">{{ t('type') }}</span></th>
+                                <th><span data-i18n="customer">{{ t('customer') }}</span></th>
+                                <th><span data-i18n="status">{{ t('status') }}</span></th>
+                                <th><span data-i18n="current_value">{{ t('current_value') }}</span></th>
+                                <th><span data-i18n="actions">{{ t('actions') }}</span></th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td colspan="6" class="text-center py-4">
                                     <div class="spinner-border text-info" role="status">
-                                        <span class="visually-hidden">{{ t('loading') if current_lang == 'zh' else 'Loading...' }}</span>
+                                        <span class="visually-hidden"><span data-i18n="loading">{{ t('loading') }}</span></span>
                                     </div>
                                 </td>
                             </tr>
@@ -170,7 +170,7 @@
         <!-- Inventory Distribution Chart -->
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0">{{ t('inventory_distribution') if current_lang == 'zh' else 'Inventory Distribution' }}</h5>
+                <h5 class="mb-0"><span data-i18n="inventory_distribution">{{ t('inventory_distribution') }}</span></h5>
             </div>
             <div class="card-body">
                 <canvas id="inventory-chart" height="100"></canvas>
@@ -185,14 +185,14 @@
             <div class="card-header bg-warning text-dark">
                 <h5 class="mb-0">
                     <i class="bi bi-exclamation-triangle me-2"></i>
-                    {{ t('maintenance_alerts') if current_lang == 'zh' else 'Maintenance Alerts' }}
+                    <span data-i18n="maintenance_alerts">{{ t('maintenance_alerts') }}</span>
                 </h5>
             </div>
             <div class="card-body p-0">
                 <div class="list-group list-group-flush" id="maintenance-alerts">
                     <div class="list-group-item bg-dark text-center py-4">
                         <div class="spinner-border spinner-border-sm text-warning" role="status">
-                            <span class="visually-hidden">{{ t('loading') if current_lang == 'zh' else 'Loading...' }}</span>
+                            <span class="visually-hidden"><span data-i18n="loading">{{ t('loading') }}</span></span>
                         </div>
                     </div>
                 </div>
@@ -202,7 +202,7 @@
         <!-- Asset Value by Type Chart -->
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0">{{ t('value_by_type') if current_lang == 'zh' else 'Value by Type' }}</h5>
+                <h5 class="mb-0"><span data-i18n="value_by_type">{{ t('value_by_type') }}</span></h5>
             </div>
             <div class="card-body">
                 <canvas id="value-chart" height="200"></canvas>
@@ -212,7 +212,7 @@
         <!-- Status Distribution Chart -->
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0">{{ t('status_distribution') if current_lang == 'zh' else 'Status Distribution' }}</h5>
+                <h5 class="mb-0"><span data-i18n="status_distribution">{{ t('status_distribution') }}</span></h5>
             </div>
             <div class="card-body">
                 <canvas id="status-chart" height="200"></canvas>
@@ -223,9 +223,11 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Pre-define translation strings to avoid template evaluation issues
-    const noAssetsText = '{{ t("no_assets") if current_lang == "zh" else "No assets found" }}';
-    const noAlertsText = '{{ t("no_maintenance") if current_lang == "zh" else "No maintenance alerts" }}';
+    // Pre-define translation strings using data attributes for instant switching
+    const noAssetsText = '{{ t("no_assets") }}';
+    const noAlertsText = '{{ t("no_maintenance") }}';
+    const errorLoadingText = '{{ t("error_loading") }}';
+    const valueText = '{{ t("value") }}';
     
     // Initialize charts variables
     let inventoryChart = null;
@@ -303,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <tr>
                                 <td colspan="6" class="text-center py-4">
                                     <i class="bi bi-box-seam text-secondary mb-3" style="font-size: 2rem;"></i>
-                                    <p class="text-muted mb-0">${noAssetsText}</p>
+                                    <p class="text-muted mb-0"><span data-i18n="no_assets">${noAssetsText}</span></p>
                                 </td>
                             </tr>
                         `;
@@ -350,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.querySelector('#assets-table tbody').innerHTML = `
                     <tr>
                         <td colspan="6" class="text-center text-danger py-4">
-                            {{ t('error_loading') if current_lang == 'zh' else 'Error loading data' }}
+                            <span data-i18n="error_loading">${errorLoadingText}</span>
                         </td>
                     </tr>
                 `;
@@ -420,7 +422,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             data: {
                                 labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1).replace('_', ' ')),
                                 datasets: [{
-                                    label: '{{ t("value") if current_lang == "zh" else "Value" }} ($)',
+                                    label: valueText + ' ($)',
                                     data: values,
                                     backgroundColor: '#f7931a',
                                     borderColor: '#ffa500',

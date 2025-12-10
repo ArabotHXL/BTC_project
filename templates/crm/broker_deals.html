@@ -1,6 +1,6 @@
 {% extends "crm/base.html" %}
 
-{% block title %}{% if current_lang == 'en' %}Broker Deals Management{% else %}经纪人交易管理{% endif %} | BTC Mining CRM{% endblock %}
+{% block title %}<span data-i18n="broker_deals_management">{{ t('broker_deals_management') }}</span> | BTC Mining CRM{% endblock %}
 
 {% block content %}
 <div class="container-fluid px-4 py-4">
@@ -9,13 +9,13 @@
         <div>
             <h2 class="h3 mb-1 text-white">
                 <i class="bi bi-building me-2" style="color: var(--btc-gold);"></i>
-                {% if current_lang == 'en' %}Broker Deals{% else %}矿场中介交易{% endif %}
+                <span data-i18n="broker_deals">{{ t('broker_deals') }}</span>
             </h2>
-            <p class="text-muted mb-0">{% if current_lang == 'en' %}Mining project management and commission tracking{% else %}矿场项目管理与佣金追踪{% endif %}</p>
+            <p class="text-muted mb-0"><span data-i18n="broker_deals_description">{{ t('broker_deals_description') }}</span></p>
         </div>
         <a href="{{ url_for('crm.deals') }}" class="btn btn-warning">
             <i class="bi bi-plus-circle me-1"></i>
-            {% if current_lang == 'en' %}New Deal{% else %}创建新交易{% endif %}
+            <span data-i18n="new_deal">{{ t('new_deal') }}</span>
         </a>
     </div>
 
@@ -27,7 +27,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="text-white-50 mb-2">{% if current_lang == 'en' %}Total Deals{% else %}总交易数{% endif %}</h6>
+                            <h6 class="text-white-50 mb-2"><span data-i18n="total_deals">{{ t('total_deals') }}</span></h6>
                             <h3 class="mb-0 text-white" id="kpi-total-deals">-</h3>
                         </div>
                         <div class="kpi-icon">
@@ -44,7 +44,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="text-white-50 mb-2">{% if current_lang == 'en' %}Active Deals{% else %}活跃交易{% endif %}</h6>
+                            <h6 class="text-white-50 mb-2"><span data-i18n="active_deals">{{ t('active_deals') }}</span></h6>
                             <h3 class="mb-0 text-white" id="kpi-active-deals">-</h3>
                         </div>
                         <div class="kpi-icon">
@@ -61,7 +61,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="text-white-50 mb-2">{% if current_lang == 'en' %}Total Investment{% else %}总投资金额{% endif %}</h6>
+                            <h6 class="text-white-50 mb-2"><span data-i18n="total_investment">{{ t('total_investment') }}</span></h6>
                             <h3 class="mb-0 text-white" id="kpi-total-investment">-</h3>
                         </div>
                         <div class="kpi-icon">
@@ -78,7 +78,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="text-white-50 mb-2">{% if current_lang == 'en' %}Total Commission{% else %}总佣金收入{% endif %}</h6>
+                            <h6 class="text-white-50 mb-2"><span data-i18n="total_commission">{{ t('total_commission') }}</span></h6>
                             <h3 class="mb-0 text-white" id="kpi-total-commission">-</h3>
                         </div>
                         <div class="kpi-icon">
@@ -94,24 +94,24 @@
     <div class="card mb-4">
         <div class="card-body">
             <div class="d-flex flex-wrap gap-2 align-items-center">
-                <span class="text-muted me-2">{% if current_lang == 'en' %}Filter by Status:{% else %}按状态筛选:{% endif %}</span>
+                <span class="text-muted me-2"><span data-i18n="filter_by_status">{{ t('filter_by_status') }}</span></span>
                 <button class="btn btn-sm btn-outline-secondary filter-btn active" data-status="">
-                    {% if current_lang == 'en' %}All{% else %}全部{% endif %}
+                    <span data-i18n="all">{{ t('all') }}</span>
                 </button>
                 <button class="btn btn-sm btn-outline-secondary filter-btn" data-status="DRAFT">
-                    {% if current_lang == 'en' %}Draft{% else %}草稿{% endif %}
+                    <span data-i18n="draft">{{ t('draft') }}</span>
                 </button>
                 <button class="btn btn-sm btn-outline-warning filter-btn" data-status="PENDING">
-                    {% if current_lang == 'en' %}Pending{% else %}待定{% endif %}
+                    <span data-i18n="pending">{{ t('pending') }}</span>
                 </button>
                 <button class="btn btn-sm btn-outline-info filter-btn" data-status="SIGNED">
-                    {% if current_lang == 'en' %}Signed{% else %}已签约{% endif %}
+                    <span data-i18n="signed">{{ t('signed') }}</span>
                 </button>
                 <button class="btn btn-sm btn-outline-success filter-btn" data-status="COMPLETED">
-                    {% if current_lang == 'en' %}Completed{% else %}已完成{% endif %}
+                    <span data-i18n="completed">{{ t('completed') }}</span>
                 </button>
                 <button class="btn btn-sm btn-outline-danger filter-btn" data-status="CANCELED">
-                    {% if current_lang == 'en' %}Cancelled{% else %}已取消{% endif %}
+                    <span data-i18n="cancelled">{{ t('cancelled') }}</span>
                 </button>
             </div>
         </div>
@@ -126,7 +126,7 @@
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="bi bi-table me-2"></i>
-                        {% if current_lang == 'en' %}Deals List{% else %}交易列表{% endif %}
+                        <span data-i18n="deals_list">{{ t('deals_list') }}</span>
                     </h5>
                 </div>
                 <div class="card-body">
@@ -134,13 +134,13 @@
                         <table class="table table-hover" id="deals-table">
                             <thead>
                                 <tr>
-                                    <th>{% if current_lang == 'en' %}Customer{% else %}客户{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Mining Farm{% else %}矿场{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Investment{% else %}投资金额{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Commission{% else %}佣金{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Date{% else %}日期{% endif %}</th>
-                                    <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                                    <th><span data-i18n="customer">{{ t('customer') }}</span></th>
+                                    <th><span data-i18n="mining_farm">{{ t('mining_farm') }}</span></th>
+                                    <th><span data-i18n="investment">{{ t('investment') }}</span></th>
+                                    <th><span data-i18n="commission">{{ t('commission') }}</span></th>
+                                    <th><span data-i18n="status">{{ t('status') }}</span></th>
+                                    <th><span data-i18n="date">{{ t('date') }}</span></th>
+                                    <th><span data-i18n="actions">{{ t('actions') }}</span></th>
                                 </tr>
                             </thead>
                             <tbody id="deals-tbody">
@@ -149,7 +149,7 @@
                                         <div class="spinner-border text-warning" role="status">
                                             <span class="visually-hidden">Loading...</span>
                                         </div>
-                                        <p class="text-muted mt-2">{% if current_lang == 'en' %}Loading deals...{% else %}加载中...{% endif %}</p>
+                                        <p class="text-muted mt-2"><span data-i18n="loading_deals">{{ t('loading_deals') }}</span></p>
                                     </td>
                                 </tr>
                             </tbody>
@@ -163,7 +163,7 @@
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="bi bi-graph-up me-2"></i>
-                        {% if current_lang == 'en' %}Revenue Trend (12 Months){% else %}收益趋势（12个月）{% endif %}
+                        <span data-i18n="revenue_trend_12_months">{{ t('revenue_trend_12_months') }}</span>
                     </h5>
                 </div>
                 <div class="card-body">
@@ -179,7 +179,7 @@
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="bi bi-pie-chart me-2"></i>
-                        {% if current_lang == 'en' %}Capacity by Farm{% else %}矿场容量分布{% endif %}
+                        <span data-i18n="capacity_by_farm">{{ t('capacity_by_farm') }}</span>
                     </h5>
                 </div>
                 <div class="card-body">
@@ -192,13 +192,13 @@
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="bi bi-trophy me-2"></i>
-                        {% if current_lang == 'en' %}Top 5 Farms{% else %}矿场排行 TOP 5{% endif %}
+                        <span data-i18n="top_5_farms">{{ t('top_5_farms') }}</span>
                     </h5>
                 </div>
                 <div class="card-body" id="farm-ranking">
                     <div class="text-center py-3">
                         <div class="spinner-border text-warning spinner-border-sm" role="status"></div>
-                        <p class="text-muted small mt-2">{% if current_lang == 'en' %}Loading...{% else %}加载中...{% endif %}</p>
+                        <p class="text-muted small mt-2"><span data-i18n="loading">{{ t('loading') }}</span></p>
                     </div>
                 </div>
             </div>
@@ -321,7 +321,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <tr>
                 <td colspan="7" class="text-center py-4">
                     <div class="spinner-border text-warning" role="status"></div>
-                    <p class="text-muted mt-2">{% if current_lang == 'en' %}Loading deals...{% else %}加载中...{% endif %}</p>
+                    <p class="text-muted mt-2"><span data-i18n="loading_deals">${getTranslation('loading_deals')}</span></p>
                 </td>
             </tr>
         `;
@@ -339,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <tr>
                                 <td colspan="7" class="text-center py-4">
                                     <i class="bi bi-inbox display-4 text-muted"></i>
-                                    <p class="text-muted mt-3">{% if current_lang == 'en' %}No deals found{% else %}暂无交易记录{% endif %}</p>
+                                    <p class="text-muted mt-3"><span data-i18n="no_deals_found">${getTranslation('no_deals_found')}</span></p>
                                 </td>
                             </tr>
                         `;
@@ -369,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <td>${deal.created_at}</td>
                                 <td>
                                     <a href="/crm/deal/${deal.id}" class="btn btn-sm btn-outline-warning">
-                                        <i class="bi bi-eye"></i> {% if current_lang == 'en' %}View{% else %}查看{% endif %}
+                                        <i class="bi bi-eye"></i> <span data-i18n="view">${getTranslation('view')}</span>
                                     </a>
                                 </td>
                             </tr>
@@ -392,12 +392,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get Status Badge HTML
     function getStatusBadge(status) {
         const badges = {
-            'DRAFT': '<span class="badge bg-secondary">{% if current_lang == "en" %}Draft{% else %}草稿{% endif %}</span>',
-            'PENDING': '<span class="badge bg-warning">{% if current_lang == "en" %}Pending{% else %}待定{% endif %}</span>',
-            'APPROVED': '<span class="badge bg-info">{% if current_lang == "en" %}Approved{% else %}已批准{% endif %}</span>',
-            'SIGNED': '<span class="badge bg-info">{% if current_lang == "en" %}Signed{% else %}已签约{% endif %}</span>',
-            'COMPLETED': '<span class="badge bg-success">{% if current_lang == "en" %}Completed{% else %}已完成{% endif %}</span>',
-            'CANCELED': '<span class="badge bg-danger">{% if current_lang == "en" %}Cancelled{% else %}已取消{% endif %}</span>'
+            'DRAFT': `<span class="badge bg-secondary" data-i18n="draft">${getTranslation('draft')}</span>`,
+            'PENDING': `<span class="badge bg-warning" data-i18n="pending">${getTranslation('pending')}</span>`,
+            'APPROVED': `<span class="badge bg-info" data-i18n="approved">${getTranslation('approved')}</span>`,
+            'SIGNED': `<span class="badge bg-info" data-i18n="signed">${getTranslation('signed')}</span>`,
+            'COMPLETED': `<span class="badge bg-success" data-i18n="completed">${getTranslation('completed')}</span>`,
+            'CANCELED': `<span class="badge bg-danger" data-i18n="cancelled">${getTranslation('cancelled')}</span>`
         };
         return badges[status] || `<span class="badge bg-secondary">${status}</span>`;
     }
@@ -416,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             labels: data.months,
                             datasets: [
                                 {
-                                    label: '{% if current_lang == "en" %}Investment{% else %}投资金额{% endif %}',
+                                    label: getTranslation('investment'),
                                     data: data.investment,
                                     borderColor: '#10b981',
                                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
@@ -424,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     fill: true
                                 },
                                 {
-                                    label: '{% if current_lang == "en" %}Commission{% else %}佣金收入{% endif %}',
+                                    label: getTranslation('commission_income'),
                                     data: data.commission,
                                     borderColor: '#f7931a',
                                     backgroundColor: 'rgba(247, 147, 26, 0.1)',
@@ -532,7 +532,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (data.farms.length === 0) {
             container.innerHTML = `
                 <div class="text-center py-3">
-                    <p class="text-muted">{% if current_lang == 'en' %}No data available{% else %}暂无数据{% endif %}</p>
+                    <p class="text-muted"><span data-i18n="no_data_available">${getTranslation('no_data_available')}</span></p>
                 </div>
             `;
             return;
@@ -552,7 +552,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span class="farm-rank">${idx + 1}</span>
                         <div>
                             <div class="fw-bold">${farm.name}</div>
-                            <small class="text-muted">${farm.deals} {% if current_lang == 'en' %}deals{% else %}笔交易{% endif %}</small>
+                            <small class="text-muted">${farm.deals} <span data-i18n="deals_count">${getTranslation('deals_count')}</span></small>
                         </div>
                     </div>
                     <div class="text-end">
