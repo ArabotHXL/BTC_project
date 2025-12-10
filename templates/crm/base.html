@@ -738,14 +738,14 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" href="{{ url_for('index') }}">
-                            <i class="bi bi-house-door me-2"></i>{% if current_lang == 'en' %}Home{% else %}主页{% endif %}
+                            <i class="bi bi-house-door me-2"></i><span data-i18n="home">{{ t('home') }}</span>
                         </a></li>
                         <li><a class="dropdown-item" href="{{ url_for('index') }}">
-                            <i class="bi bi-calculator me-2"></i>{{ t('mining_calculator') }}
+                            <i class="bi bi-calculator me-2"></i><span data-i18n="mining_calculator">{{ t('mining_calculator') }}</span>
                         </a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{{ url_for('logout') }}">
-                            <i class="bi bi-box-arrow-right me-2"></i>{{ t('logout') }}
+                            <i class="bi bi-box-arrow-right me-2"></i><span data-i18n="logout">{{ t('logout') }}</span>
                         </a></li>
                     </ul>
                 </div>
@@ -759,85 +759,85 @@
             <!-- Main Navigation -->
             <a href="{{ url_for('crm.crm_dashboard') }}" class="nav-link {% if request.endpoint == 'crm.crm_dashboard' %}active{% endif %}">
                 <i class="bi bi-speedometer2"></i>
-                <span>{{ t('dashboard') }}</span>
+                <span data-i18n="dashboard">{{ t('dashboard') }}</span>
             </a>
             
             <!-- Customer Management -->
-            <div class="sidebar-section-title">
+            <div class="sidebar-section-title" data-i18n="customer_management_section">
                 {% if current_lang == 'en' %}Customer Management{% else %}客户管理{% endif %}
             </div>
             <a href="{{ url_for('crm.customers') }}" class="nav-link {% if 'customers' in request.endpoint %}active{% endif %}">
                 <i class="bi bi-people-fill"></i>
-                <span>{{ t('customer_management') }}</span>
+                <span data-i18n="customer_management">{{ t('customer_management') }}</span>
             </a>
             <a href="{{ url_for('crm.leads') }}" class="nav-link {% if 'leads' in request.endpoint %}active{% endif %}">
                 <i class="bi bi-lightbulb-fill"></i>
-                <span>{{ t('leads') }}</span>
+                <span data-i18n="leads">{{ t('leads') }}</span>
             </a>
             
             <!-- Deal Management -->
-            <div class="sidebar-section-title">
+            <div class="sidebar-section-title" data-i18n="deal_management_section">
                 {% if current_lang == 'en' %}Deal Management{% else %}交易管理{% endif %}
             </div>
             <a href="{{ url_for('crm.deals') }}" class="nav-link {% if 'deals' in request.endpoint %}active{% endif %}">
                 <i class="bi bi-currency-dollar"></i>
-                <span>{{ t('deals') }}</span>
+                <span data-i18n="deals">{{ t('deals') }}</span>
             </a>
             <a href="{{ url_for('crm.invoices') }}" class="nav-link {% if 'invoices' in request.endpoint %}active{% endif %}">
                 <i class="bi bi-receipt"></i>
-                <span>{{ t('invoices') if current_lang == 'zh' else 'Invoices' }}</span>
+                <span data-i18n="invoices">{{ t('invoices') }}</span>
             </a>
             
             <!-- Asset Management -->
-            <div class="sidebar-section-title">
+            <div class="sidebar-section-title" data-i18n="asset_management_section">
                 {% if current_lang == 'en' %}Asset Management{% else %}资产管理{% endif %}
             </div>
             <a href="{{ url_for('crm.assets') }}" class="nav-link {% if 'assets' in request.endpoint %}active{% endif %}">
                 <i class="bi bi-box-seam-fill"></i>
-                <span>{{ t('assets') if current_lang == 'zh' else 'Assets' }}</span>
+                <span data-i18n="assets">{{ t('assets') }}</span>
             </a>
             
             <!-- Activities -->
-            <div class="sidebar-section-title">
+            <div class="sidebar-section-title" data-i18n="activity_records_section">
                 {% if current_lang == 'en' %}Activity Records{% else %}活动记录{% endif %}
             </div>
             <a href="{{ url_for('crm.activities') }}" class="nav-link {% if request.endpoint == 'crm.activities' %}active{% endif %}">
                 <i class="bi bi-journal-text"></i>
-                <span>{{ t('activities') }}</span>
+                <span data-i18n="activities">{{ t('activities') }}</span>
             </a>
             
             <!-- Broker Business (Owner Only) -->
             {% if session.role == 'owner' %}
             <div class="sidebar-divider"></div>
-            <div class="sidebar-section-title">
+            <div class="sidebar-section-title" data-i18n="broker_business_section">
                 {% if current_lang == 'en' %}Broker Business{% else %}经纪人专区{% endif %}
             </div>
             <a href="{{ url_for('crm.broker_dashboard') }}" class="nav-link {% if 'broker' in request.endpoint and 'dashboard' in request.endpoint %}active{% endif %}">
                 <i class="bi bi-graph-up-arrow"></i>
-                <span>{{ t('broker_dashboard') }}</span>
+                <span data-i18n="broker_dashboard">{{ t('broker_dashboard') }}</span>
             </a>
             <a href="{{ url_for('crm.broker_deals') }}" class="nav-link {% if request.endpoint == 'crm.broker_deals' %}active{% endif %}">
                 <i class="bi bi-building"></i>
-                <span>{{ t('mining_farm_deals') }}</span>
+                <span data-i18n="mining_farm_deals">{{ t('mining_farm_deals') }}</span>
             </a>
             <a href="{{ url_for('crm.broker_commissions') }}" class="nav-link {% if request.endpoint == 'crm.broker_commissions' %}active{% endif %}">
                 <i class="bi bi-cash-coin"></i>
-                <span>{{ t('commission_management') }}</span>
+                <span data-i18n="commission_management">{{ t('commission_management') }}</span>
             </a>
             {% endif %}
             
             <!-- Quick Links -->
             <div class="sidebar-divider"></div>
-            <div class="sidebar-section-title">
+            <div class="sidebar-section-title" data-i18n="quick_links_section">
                 {% if current_lang == 'en' %}Quick Links{% else %}快捷链接{% endif %}
             </div>
             <a href="{{ url_for('index') }}" class="nav-link">
                 <i class="bi bi-house-door"></i>
-                <span>{{ t('home') }}</span>
+                <span data-i18n="home">{{ t('home') }}</span>
             </a>
             <a href="{{ url_for('index') }}" class="nav-link">
                 <i class="bi bi-calculator"></i>
-                <span>{{ t('btc_mining_calculator') }}</span>
+                <span data-i18n="btc_mining_calculator">{{ t('btc_mining_calculator') }}</span>
             </a>
         </div>
     </div>
