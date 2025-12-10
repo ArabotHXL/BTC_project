@@ -684,6 +684,14 @@
                             </a>
                         </div>
                     </div>
+                    
+                    <!-- CRM客户管理 (仅管理员/站点管理员) -->
+                    <div class="hosting-nav-item">
+                        <a href="/crm" class="hosting-nav-link {{ 'active' if request.path.startswith('/crm') }}">
+                            <i class="bi bi-people hosting-nav-icon"></i>
+                            <span class="hosting-nav-text" data-i18n="crm_management">{% if current_lang == 'en' %}CRM{% else %}客户管理{% endif %}</span>
+                        </a>
+                    </div>
                 </div>
                 {% else %}
                 <!-- 客户菜单 (非管理员角色) -->

@@ -22,11 +22,11 @@ def index():
 def get_customers():
     """获取客户列表API"""
     try:
-        # 根据用户权限筛选客户
+        # 根据用户权限筛选客户 - admin可以看所有，其他角色只看自己创建的
         if current_user.role == 'admin':
             customers = Customer.query.all()
         else:
-            customers = Customer.query.filter_by(owner_id=current_user.id).all()
+            customers = Customer.query.filter_by(created_by_id=current_user.id).all()
         
         customers_data = []
         for customer in customers:
@@ -59,8 +59,7 @@ def create_customer():
             email=data.get('email'),
             phone=data.get('phone'),
             company=data.get('company'),
-            owner_id=current_user.id,
-            source=data.get('source', 'manual'),
+            created_by_id=current_user.id,
             status='lead'
         )
         
@@ -83,11 +82,11 @@ def create_customer():
 def get_deals():
     """获取交易列表"""
     try:
-        # 根据权限获取交易
+        # 根据权限获取交易 - admin可以看所有，其他角色只看自己创建的
         if current_user.role == 'admin':
             deals = Deal.query.all()
         else:
-            deals = Deal.query.filter_by(owner_id=current_user.id).all()
+            deals = Deal.query.filter_by(created_by_id=current_user.id).all()
         
         deals_data = []
         for deal in deals:
@@ -113,15 +112,15 @@ def get_deals():
 def get_stats():
     """获取CRM统计数据"""
     try:
-        # 从数据库获取统计数据
+        # 从数据库获取统计数据 - admin可以看所有，其他角色只看自己创建的
         if current_user.role == 'admin':
             total_customers = Customer.query.count()
             active_deals = Deal.query.filter_by(stage='negotiation').count()
             won_deals = Deal.query.filter_by(stage='won').count()
         else:
-            total_customers = Customer.query.filter_by(owner_id=current_user.id).count()
-            active_deals = Deal.query.filter_by(owner_id=current_user.id, stage='negotiation').count()
-            won_deals = Deal.query.filter_by(owner_id=current_user.id, stage='won').count()
+            total_customers = Customer.query.filter_by(created_by_id=current_user.id).count()
+            active_deals = Deal.query.filter_by(created_by_id=current_user.id, stage='negotiation').count()
+            won_deals = Deal.query.filter_by(created_by_id=current_user.id, stage='won').count()
         
         return jsonify({
             'success': True,
