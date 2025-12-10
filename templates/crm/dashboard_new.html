@@ -2,7 +2,7 @@
 
 {% block title %}{{ t('dashboard') }} | BTC Mining CRM{% endblock %}
 
-{% block page_title %}{{ t('dashboard') }} - {% if current_lang == 'en' %}Mining Intelligence{% else %}矿场智能中心{% endif %}{% endblock %}
+{% block page_title %}<span data-i18n="dashboard">{{ t('dashboard') }}</span> - <span data-i18n="mining_intelligence">{% if current_lang == 'en' %}Mining Intelligence{% else %}矿场智能中心{% endif %}</span>{% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item active" aria-current="page">{{ t('dashboard') }}</li>
@@ -285,7 +285,7 @@
                 <i class="bi bi-people-fill"></i>
             </div>
             <div id="dashboard-customers-kpi" class="kpi-value" data-countup="{{ customers_count|default(0) }}">{{ customers_count|default(0) }}</div>
-            <div class="kpi-label">{% if current_lang == 'en' %}Total Customers{% else %}总客户数{% endif %}</div>
+            <div class="kpi-label" data-i18n="total_customers">{{ t('total_customers') }}</div>
             <div class="kpi-trend trend-up">
                 <i class="bi bi-arrow-up-circle-fill"></i>
                 <span>+{{ (customers_count * 0.12)|int }} {% if current_lang == 'en' %}This Month{% else %}本月新增{% endif %}</span>
@@ -300,7 +300,7 @@
                 <i class="bi bi-cash-stack"></i>
             </div>
             <div id="dashboard-deals-value-kpi" class="kpi-value" data-countup="{{ deals_value|default(0) }}" data-decimals="0" data-prefix="$">${{ "{:,.0f}".format(deals_value|default(0)) }}</div>
-            <div class="kpi-label">{% if current_lang == 'en' %}Total Deals Value{% else %}交易总额{% endif %}</div>
+            <div class="kpi-label" data-i18n="total_deals_value">{{ t('total_deals_value') }}</div>
             <div class="kpi-trend trend-up">
                 <i class="bi bi-graph-up-arrow"></i>
                 <span>{% if current_lang == 'en' %}+15.3% YoY{% else %}年同比 +15.3%{% endif %}</span>
@@ -315,7 +315,7 @@
                 <i class="bi bi-lightning-charge-fill"></i>
             </div>
             <div id="dashboard-capacity-kpi" class="kpi-value" data-countup="85.6" data-decimals="1">85.6 <small style="font-size:1.2rem;">MW</small></div>
-            <div class="kpi-label">{% if current_lang == 'en' %}Hosting Capacity{% else %}托管容量{% endif %}</div>
+            <div class="kpi-label" data-i18n="hosting_capacity">{{ t('hosting_capacity') }}</div>
             <div class="kpi-trend trend-up">
                 <i class="bi bi-speedometer"></i>
                 <span>{% if current_lang == 'en' %}92% Utilization{% else %}利用率 92%{% endif %}</span>
@@ -330,7 +330,7 @@
                 <i class="bi bi-activity"></i>
             </div>
             <div id="dashboard-active-deals-kpi" class="kpi-value" data-countup="{{ deals_count|default(0) }}">{{ deals_count|default(0) }}</div>
-            <div class="kpi-label">{% if current_lang == 'en' %}Active Deals{% else %}活跃交易{% endif %}</div>
+            <div class="kpi-label" data-i18n="active_deals">{{ t('active_deals') }}</div>
             <div class="kpi-trend trend-up">
                 <i class="bi bi-percent"></i>
                 <span>{% if current_lang == 'en' %}68% Conversion{% else %}转化率 68%{% endif %}</span>
@@ -344,7 +344,7 @@
     <div class="col-12">
         <h4 class="section-title">
             <i class="bi bi-graph-up me-2" style="color: var(--btc-gold);"></i>
-            {% if current_lang == 'en' %}Data Analytics Center{% else %}数据可视化中心{% endif %}
+            <span data-i18n="data_analytics_center">{{ t('data_analytics_center') }}</span>
         </h4>
     </div>
     
@@ -354,7 +354,7 @@
             <div class="card-header bg-transparent border-0">
                 <h6 class="mb-0">
                     <i class="bi bi-graph-up-arrow me-2" style="color: var(--btc-gold);"></i>
-                    {% if current_lang == 'en' %}Revenue Trend Analysis{% else %}收入趋势分析{% endif %}
+                    <span data-i18n="revenue_trend_analysis">{{ t('revenue_trend_analysis') }}</span>
                 </h6>
             </div>
             <div class="card-body">
@@ -371,7 +371,7 @@
             <div class="card-header bg-transparent border-0">
                 <h6 class="mb-0">
                     <i class="bi bi-funnel-fill me-2" style="color: var(--btc-gold);"></i>
-                    {% if current_lang == 'en' %}Sales Funnel{% else %}销售漏斗{% endif %}
+                    <span data-i18n="sales_funnel">{{ t('sales_funnel') }}</span>
                 </h6>
             </div>
             <div class="card-body">
@@ -388,7 +388,7 @@
             <div class="card-header bg-transparent border-0">
                 <h6 class="mb-0">
                     <i class="bi bi-pie-chart-fill me-2" style="color: var(--btc-gold);"></i>
-                    {% if current_lang == 'en' %}Capacity Distribution{% else %}矿场容量分布{% endif %}
+                    <span data-i18n="capacity_distribution">{{ t('capacity_distribution') }}</span>
                 </h6>
             </div>
             <div class="card-body">
@@ -405,7 +405,7 @@
             <div class="card-header bg-transparent border-0">
                 <h6 class="mb-0">
                     <i class="bi bi-diagram-3-fill me-2" style="color: var(--btc-gold);"></i>
-                    {% if current_lang == 'en' %}Customer Type Distribution{% else %}客户类型分布{% endif %}
+                    <span data-i18n="customer_type_distribution">{{ t('customer_type_distribution') }}</span>
                 </h6>
             </div>
             <div class="card-body">
