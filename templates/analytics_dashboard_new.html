@@ -1648,8 +1648,8 @@
             // Update global language variable
             currentLang = lang;
             
-            // Navigate to set language
-            window.location.href = '/set_language?lang=' + lang + '&return_url=' + encodeURIComponent(window.location.href);
+            // Use instant language switching
+            I18n.setLanguage(lang);
         }
         
         // Initialize dropdown manually if Bootstrap doesn't work
@@ -3247,5 +3247,6 @@ Generate this order?
         });
 
     </script>
+    <script src="/static/js/i18n.js"></script>
 </body>
 </html>

@@ -212,10 +212,20 @@
                 <a class="nav-link" href="#features" style="color: #adb5bd; transition: color 0.3s;">
                     {% if current_lang == 'zh' %}功能特性{% else %}Features{% endif %}
                 </a>
-                <a href="?lang={{ 'en' if current_lang == 'zh' else 'zh' }}" class="nav-link" style="color: #f7931a; display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="fas fa-globe"></i> 
-                    <span>{{ '中文' if current_lang == 'en' else 'EN' }}</span>
-                </a>
+                <div class="d-flex align-items-center gap-1">
+                    <i class="fas fa-globe" style="color: #f7931a;"></i>
+                    <button type="button" data-lang-switch="zh" data-lang="zh" 
+                            class="btn btn-link nav-link {{ 'active' if current_lang == 'zh' else '' }}" 
+                            style="color: #f7931a; padding: 0;">
+                        中文
+                    </button>
+                    <span style="color: #666; margin: 0 0.3rem;">|</span>
+                    <button type="button" data-lang-switch="en" data-lang="en" 
+                            class="btn btn-link nav-link {{ 'active' if current_lang == 'en' else '' }}" 
+                            style="color: #f7931a; padding: 0;">
+                        EN
+                    </button>
+                </div>
             </div>
         </div>
     </nav>
@@ -659,5 +669,6 @@
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/i18n.js"></script>
 </body>
 </html>

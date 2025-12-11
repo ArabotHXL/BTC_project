@@ -501,21 +501,23 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-lg" style="border-radius: 12px; border: none; min-width: 180px;">
                         <li>
-                            <a class="dropdown-item d-flex align-items-center py-2 {{ 'active bg-primary text-white' if current_lang == 'zh' else '' }}" 
-                               href="/batch-calculator?lang=zh" style="border-radius: 8px; margin: 4px;">
+                            <button type="button" data-lang-switch="zh" data-lang="zh"
+                                    class="dropdown-item d-flex align-items-center py-2 {{ 'active bg-primary text-white' if current_lang == 'zh' else '' }}"
+                                    style="border-radius: 8px; margin: 4px; border: none; background: transparent; width: calc(100% - 8px); text-align: left;">
                                 <i class="bi bi-translate me-3"></i>
                                 <span class="fw-semibold">中文 (简体)</span>
                                 {% if current_lang == 'zh' %}<i class="bi bi-check-lg ms-auto"></i>{% endif %}
-                            </a>
+                            </button>
                         </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                            <a class="dropdown-item d-flex align-items-center py-2 {{ 'active bg-primary text-white' if current_lang == 'en' else '' }}" 
-                               href="/batch-calculator?lang=en" style="border-radius: 8px; margin: 4px;">
+                            <button type="button" data-lang-switch="en" data-lang="en"
+                                    class="dropdown-item d-flex align-items-center py-2 {{ 'active bg-primary text-white' if current_lang == 'en' else '' }}"
+                                    style="border-radius: 8px; margin: 4px; border: none; background: transparent; width: calc(100% - 8px); text-align: left;">
                                 <i class="bi bi-globe-americas me-3"></i>
                                 <span class="fw-semibold">English</span>
                                 {% if current_lang == 'en' %}<i class="bi bi-check-lg ms-auto"></i>{% endif %}
-                            </a>
+                            </button>
                         </li>
                     </ul>
                 </div>
@@ -2361,6 +2363,7 @@ Antminer S19j Pro,9,3068,2300,0.08,100,0.5`;
 {% endblock %}
 
 {% block extra_js %}
+<script src="/static/js/i18n.js"></script>
 <script>
 // Additional JavaScript specific to batch calculator
 // (already included above in the main script block)
