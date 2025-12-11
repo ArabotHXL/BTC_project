@@ -2097,10 +2097,14 @@ def set_language():
 # 🌐 i18n API - 无刷新语言切换
 # =========================================================================
 
-# Translation cache for performance optimization
-_translation_cache = {
-    'en': {'data': None, 'timestamp': None},
-    'zh': {'data': None, 'timestamp': None}
+# Translation data cache (not Response objects) - FIX: cache dictionary data only
+_translation_data_cache = {
+    'en': None,
+    'zh': None
+}
+_translation_cache_time = {
+    'en': None,
+    'zh': None
 }
 TRANSLATION_CACHE_TTL = 300  # 5 minutes
 
@@ -2110,30 +2114,28 @@ def api_get_translations():
     from translations import TRANSLATIONS
     current_lang = session.get('language', g.get('language', 'zh'))
     
-    # Check cache
+    # Check if we have cached data for this language
     now = datetime.now()
-    cache_entry = _translation_cache.get(current_lang, {})
-    if cache_entry.get('data') and cache_entry.get('timestamp'):
-        if (now - cache_entry['timestamp']).total_seconds() < TRANSLATION_CACHE_TTL:
-            return cache_entry['data']
+    cache_time = _translation_cache_time.get(current_lang)
+    cached_data = _translation_data_cache.get(current_lang)
     
-    # Build response with only current language translations
-    response_data = {
+    if cached_data and cache_time and (now - cache_time).total_seconds() < TRANSLATION_CACHE_TTL:
+        # Use cached translation data
+        translations_for_lang = cached_data
+    else:
+        # Build and cache translation data
+        translations_for_lang = TRANSLATIONS.get(current_lang, {})
+        _translation_data_cache[current_lang] = translations_for_lang
+        _translation_cache_time[current_lang] = now
+    
+    # Always build fresh response (jsonify is fast)
+    return jsonify({
         'success': True,
         'current_lang': current_lang,
         'translations': {
-            current_lang: TRANSLATIONS.get(current_lang, {})
+            current_lang: translations_for_lang
         }
-    }
-    
-    # Cache the response
-    response = jsonify(response_data)
-    _translation_cache[current_lang] = {
-        'data': response,
-        'timestamp': now
-    }
-    
-    return response
+    })
 
 @app.route('/api/i18n/set-language', methods=['POST'])
 def api_set_language():

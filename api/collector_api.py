@@ -389,6 +389,8 @@ def upload_telemetry():
                         'boards_healthy': miner_data.get('boards_healthy', 0),
                         'boards_total': miner_data.get('boards_total', 0),
                         'overall_health': miner_data.get('overall_health', 'healthy'),
+                        'net_profit_usd': 0.0,
+                        'revenue_usd': 0.0,
                     })
                     
             except Exception as e:
