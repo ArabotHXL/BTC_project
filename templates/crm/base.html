@@ -707,7 +707,7 @@
             
             <!-- Global Search Bar -->
             <div class="global-search d-none d-lg-block mx-auto">
-                <input type="text" class="form-control" placeholder="{% if current_lang == 'en' %}Search customers, deals...{% else %}搜索客户、交易...{% endif %}" id="globalSearch">
+                <input type="text" class="form-control" placeholder="{{ t('search_placeholder') }}" data-i18n-placeholder="search_placeholder" id="globalSearch">
                 <i class="bi bi-search search-icon"></i>
             </div>
             

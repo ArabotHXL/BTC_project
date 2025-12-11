@@ -597,7 +597,8 @@
         <nav class="hosting-sidebar" id="hostingSidebar">
             <!-- Sidebar Toggle Button -->
             <button class="sidebar-toggle-btn" id="sidebarCollapseBtn" 
-                    title="{% if current_lang == 'en' %}Toggle Sidebar{% else %}折叠侧边栏{% endif %}">
+                    title="{% if current_lang == 'en' %}Toggle Sidebar{% else %}折叠侧边栏{% endif %}"
+                    data-i18n-title="toggle_sidebar">
                 <i class="bi bi-chevron-left" id="sidebarToggleIcon"></i>
             </button>
             
@@ -777,10 +778,10 @@
                         <i class="bi bi-person-check me-1"></i>{{ session.username or session.email }}
                     </span>
                     <span class="badge bg-warning text-dark">
-                        {% if session.role == 'owner' %}{% if current_lang == 'en' %}Owner{% else %}业主{% endif %}
-                        {% elif session.role == 'admin' %}{% if current_lang == 'en' %}Admin{% else %}管理员{% endif %}
-                        {% elif session.role == 'mining_site' %}{% if current_lang == 'en' %}Site Manager{% else %}站点管理员{% endif %}
-                        {% else %}{% if current_lang == 'en' %}Client{% else %}客户{% endif %}{% endif %}
+                        {% if session.role == 'owner' %}<span data-i18n="owner">{% if current_lang == 'en' %}Owner{% else %}业主{% endif %}</span>
+                        {% elif session.role == 'admin' %}<span data-i18n="admin">{% if current_lang == 'en' %}Admin{% else %}管理员{% endif %}</span>
+                        {% elif session.role == 'mining_site' %}<span data-i18n="site_manager">{% if current_lang == 'en' %}Site Manager{% else %}站点管理员{% endif %}</span>
+                        {% else %}<span data-i18n="client">{% if current_lang == 'en' %}Client{% else %}客户{% endif %}</span>{% endif %}
                     </span>
                     {% endblock %}
                 </div>
@@ -938,29 +939,83 @@
                 'professional_mining_management': { zh: '专业矿机托管平台', en: 'Professional Mining Management' },
                 // 托管商菜单
                 'host_management': { zh: '托管商管理', en: 'Host Management' },
-                'dashboard': { zh: '仪表板', en: 'Dashboard' },
+                'dashboard': { zh: '仪表盘', en: 'Dashboard' },
+                'devices_monitoring': { zh: '设备与监控', en: 'Devices & Monitoring' },
                 'device_management': { zh: '设备管理', en: 'Device Management' },
-                'site_management': { zh: '站点管理', en: 'Site Management' },
                 'monitoring': { zh: '监控管理', en: 'Monitoring' },
+                'site_operations': { zh: '站点运营', en: 'Site Operations' },
+                'site_management': { zh: '站点管理', en: 'Site Management' },
                 'smart_curtailment': { zh: '智能限电', en: 'Smart Curtailment' },
                 'edge_collectors': { zh: '边缘采集器', en: 'Edge Collectors' },
                 // 客户菜单
                 'my_assets': { zh: '我的资产', en: 'My Assets' },
-                'asset_overview': { zh: '资产概览', en: 'Dashboard' },
+                'asset_overview': { zh: '资产概览', en: 'Overview' },
                 'my_devices': { zh: '我的设备', en: 'My Devices' },
                 'usage_tracking': { zh: '使用记录', en: 'Usage Tracking' },
-                'reports': { zh: '报告分析', en: 'Reports' },
+                'revenue_reports': { zh: '收益报告', en: 'Revenue Reports' },
                 // 公共菜单
                 'support': { zh: '支持服务', en: 'Support' },
                 'support_tickets': { zh: '技术支持', en: 'Support Tickets' },
                 'system_status': { zh: '系统状态', en: 'System Status' },
                 'navigation': { zh: '导航', en: 'Navigation' },
                 'back_to_main': { zh: '返回主页', en: 'Back to Main' },
+                'toggle_sidebar': { zh: '折叠侧边栏', en: 'Toggle Sidebar' },
                 // 角色
                 'owner': { zh: '业主', en: 'Owner' },
                 'admin': { zh: '管理员', en: 'Admin' },
                 'site_manager': { zh: '站点管理员', en: 'Site Manager' },
-                'client': { zh: '客户', en: 'Client' }
+                'client': { zh: '客户', en: 'Client' },
+                // 通用词汇
+                'status': { zh: '状态', en: 'Status' },
+                'actions': { zh: '操作', en: 'Actions' },
+                // 矿机管理相关
+                'miner_management': { zh: '矿机管理', en: 'Miner Management' },
+                'add_miner': { zh: '添加矿机', en: 'Add Miner' },
+                'refresh': { zh: '刷新', en: 'Refresh' },
+                'help_guide': { zh: '帮助文档', en: 'Help Guide' },
+                'total_miners': { zh: '总矿机数', en: 'Total Miners' },
+                'total_hashrate': { zh: '总算力', en: 'Total Hashrate' },
+                'power_efficiency': { zh: '功耗+能效', en: 'Power & Efficiency' },
+                'device_health': { zh: '设备健康度', en: 'Device Health' },
+                'online_rate': { zh: '在线率', en: 'Online Rate' },
+                'online': { zh: '在线', en: 'Online' },
+                'offline': { zh: '离线', en: 'Offline' },
+                'hashrate': { zh: '算力', en: 'Hashrate' },
+                'temperature': { zh: '温度', en: 'Temperature' },
+                'power': { zh: '功耗', en: 'Power' },
+                'curtailment': { zh: '限电', en: 'Curtailment' },
+                'sites': { zh: '站点', en: 'Sites' },
+                'miners': { zh: '矿机', en: 'Miners' },
+                // 批量操作
+                'batch_import': { zh: '批量导入', en: 'Batch Import' },
+                'pending_review': { zh: '待审核', en: 'Pending Review' },
+                'batch_operations': { zh: '批量操作', en: 'Batch Operations' },
+                'approve': { zh: '批量审核通过', en: 'Approve' },
+                'start': { zh: '批量启动', en: 'Start' },
+                'shutdown': { zh: '批量关闭', en: 'Shutdown' },
+                'change_status': { zh: '批量修改状态', en: 'Change Status' },
+                'delete': { zh: '批量删除', en: 'Delete' },
+                'export_csv': { zh: '导出CSV', en: 'Export CSV' },
+                // 筛选器
+                'filter_options': { zh: '筛选选项', en: 'Filter Options' },
+                'all_status': { zh: '全部状态', en: 'All Status' },
+                'running': { zh: '运行中', en: 'Running' },
+                'maintenance': { zh: '维护中', en: 'Maintenance' },
+                'error': { zh: '故障', en: 'Error' },
+                'approval_status': { zh: '审核状态', en: 'Approval Status' },
+                'draft': { zh: '草稿', en: 'Draft' },
+                'approved': { zh: '已通过', en: 'Approved' },
+                'rejected': { zh: '已拒绝', en: 'Rejected' },
+                'all_sites': { zh: '全部站点', en: 'All Sites' },
+                'all_customers': { zh: '全部客户', en: 'All Customers' },
+                'customer': { zh: '客户', en: 'Customer' },
+                'site': { zh: '站点', en: 'Site' },
+                // 列表
+                'miner_list': { zh: '矿机列表', en: 'Miner List' },
+                'serial_number': { zh: '序列号', en: 'Serial Number' },
+                'grade': { zh: '评级', en: 'Grade' },
+                'daily_profit': { zh: '日收益', en: 'Daily Profit' },
+                'fan': { zh: '风扇', en: 'Fan' }
             };
             
             // 更新带有 data-i18n 属性的元素

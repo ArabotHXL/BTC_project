@@ -16,7 +16,7 @@
             <div class="card-body text-center">
                 <i class="bi bi-building icon"></i>
                 <div class="value">{{ customers_count }}</div>
-                <div class="label">{{ t('customers') }}</div>
+                <div class="label" data-i18n="customers">{{ t('customers') }}</div>
             </div>
         </div>
     </div>
@@ -25,7 +25,7 @@
             <div class="card-body text-center">
                 <i class="bi bi-lightbulb icon"></i>
                 <div class="value">{{ leads_count }}</div>
-                <div class="label">{{ t('leads') }}</div>
+                <div class="label" data-i18n="leads">{{ t('leads') }}</div>
             </div>
         </div>
     </div>
@@ -34,7 +34,7 @@
             <div class="card-body text-center">
                 <i class="bi bi-currency-dollar icon"></i>
                 <div class="value">{{ deals_count }}</div>
-                <div class="label">{{ t('deals') }}</div>
+                <div class="label" data-i18n="deals">{{ t('deals') }}</div>
             </div>
         </div>
     </div>
@@ -43,7 +43,7 @@
             <div class="card-body text-center">
                 <i class="bi bi-cash-stack icon"></i>
                 <div class="value">${{ "{:,.2f}".format(deals_value) }}</div>
-                <div class="label">{{ t('total_value') }}</div>
+                <div class="label" data-i18n="total_value">{{ t('total_value') }}</div>
             </div>
         </div>
     </div>
@@ -55,7 +55,7 @@
     <div class="col-md-6">
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>{{ t('recent_activities') }}</h5>
+                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i><span data-i18n="recent_activities">{{ t('recent_activities') }}</span></h5>
             </div>
             <div class="card-body p-0">
                 <div class="list-group list-group-flush">
@@ -88,12 +88,12 @@
                     {% else %}
                         <div class="list-group-item bg-dark text-center py-5">
                             <i class="bi bi-calendar-x text-secondary mb-3" style="font-size: 2rem;"></i>
-                            <p class="text-muted mb-0">{{ t('no_activities') if current_lang == 'zh' else 'No activity records' }}</p>
+                            <p class="text-muted mb-0" data-i18n="no_activities">{{ t('no_activities') }}</p>
                         </div>
                     {% endif %}
                 </div>
                 <div class="card-footer text-center">
-                    <a href="{{ url_for('crm.activities') }}" class="btn btn-sm btn-outline-info">{{ t('view_all_activities') if current_lang == 'zh' else 'View All Activities' }}</a>
+                    <a href="{{ url_for('crm.activities') }}" class="btn btn-sm btn-outline-info" data-i18n="view_all_activities">{{ t('view_all_activities') }}</a>
                 </div>
             </div>
         </div>
@@ -103,7 +103,7 @@
     <div class="col-md-6">
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>{{ t('follow_up_leads') if current_lang == 'zh' else 'Follow-up Leads' }}</h5>
+                <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i><span data-i18n="follow_up_leads">{{ t('follow_up_leads') }}</span></h5>
             </div>
             <div class="card-body p-0">
                 <div class="list-group list-group-flush">
@@ -117,7 +117,7 @@
                                     </a>
                                 </h6>
                                 <small class="text-muted">
-                                    跟进日期: {{ lead.next_follow_up.strftime('%Y-%m-%d') if lead.next_follow_up else '未设置' }}
+                                    <span data-i18n="follow_up_date">{{ t('follow_up_date') }}</span>: {{ lead.next_follow_up.strftime('%Y-%m-%d') if lead.next_follow_up else t('not_set') }}
                                 </small>
                             </div>
                             <p class="mb-1 small">
@@ -128,29 +128,29 @@
                                     'warning' if lead.status.name == 'NEGOTIATION' else 
                                     'secondary' 
                                 }}">{{ lead.status.value }}</span>
-                                客户: 
+                                <span data-i18n="customer">{{ t('customer') }}</span>: 
                                 {% if lead.customer %}
                                     <a href="{{ url_for('crm.customer_detail', customer_id=lead.customer.id) }}" class="text-info">
                                         {{ lead.customer.name }}
                                     </a>
                                 {% else %}
-                                    未知客户
+                                    <span data-i18n="unknown_customer">{{ t('unknown_customer') }}</span>
                                 {% endif %}
                             </p>
                             {% if lead.assigned_to %}
-                            <small class="text-muted">负责人: {{ lead.assigned_to }}</small>
+                            <small class="text-muted"><span data-i18n="assigned_to">{{ t('assigned_to') }}</span>: {{ lead.assigned_to }}</small>
                             {% endif %}
                         </div>
                         {% endfor %}
                     {% else %}
                         <div class="list-group-item bg-dark text-center py-5">
                             <i class="bi bi-check-circle text-secondary mb-3" style="font-size: 2rem;"></i>
-                            <p class="text-muted mb-0">暂无待跟进商机</p>
+                            <p class="text-muted mb-0" data-i18n="no_follow_up_leads">{{ t('no_follow_up_leads') }}</p>
                         </div>
                     {% endif %}
                 </div>
                 <div class="card-footer text-center">
-                    <a href="{{ url_for('crm.leads') }}" class="btn btn-sm btn-outline-info">查看所有商机</a>
+                    <a href="{{ url_for('crm.leads') }}" class="btn btn-sm btn-outline-info" data-i18n="view_all_leads">{{ t('view_all_leads') }}</a>
                 </div>
             </div>
         </div>
@@ -162,19 +162,19 @@
     <div class="col-12">
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-currency-dollar me-2"></i>近期交易</h5>
+                <h5 class="mb-0"><i class="bi bi-currency-dollar me-2"></i><span data-i18n="recent_deals">{{ t('recent_deals') }}</span></h5>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-dark table-hover mb-0">
                         <thead>
                             <tr>
-                                <th>交易名称</th>
-                                <th>客户</th>
-                                <th>状态</th>
-                                <th>金额</th>
-                                <th>预计完成日期</th>
-                                <th>负责人</th>
+                                <th data-i18n="deal_name">{{ t('deal_name') }}</th>
+                                <th data-i18n="customer">{{ t('customer') }}</th>
+                                <th data-i18n="status">{{ t('status') }}</th>
+                                <th data-i18n="amount">{{ t('amount') }}</th>
+                                <th data-i18n="expected_close_date">{{ t('expected_close_date') }}</th>
+                                <th data-i18n="assigned_to">{{ t('assigned_to') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -192,7 +192,7 @@
                                             {{ deal.customer.name }}
                                         </a>
                                         {% else %}
-                                        未知客户
+                                        <span data-i18n="unknown_customer">{{ t('unknown_customer') }}</span>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -206,15 +206,15 @@
                                         }}">{{ deal.status.value }}</span>
                                     </td>
                                     <td>${{ "{:,.2f}".format(deal.value) }}</td>
-                                    <td>{{ deal.expected_close_date.strftime('%Y-%m-%d') if deal.expected_close_date else '未设置' }}</td>
-                                    <td>{{ deal.assigned_to if deal.assigned_to else '未分配' }}</td>
+                                    <td>{{ deal.expected_close_date.strftime('%Y-%m-%d') if deal.expected_close_date else t('not_set') }}</td>
+                                    <td>{{ deal.assigned_to if deal.assigned_to else t('not_assigned') }}</td>
                                 </tr>
                                 {% endfor %}
                             {% else %}
                                 <tr>
                                     <td colspan="6" class="text-center py-4">
                                         <i class="bi bi-cash-coin text-secondary mb-3" style="font-size: 2rem;"></i>
-                                        <p class="text-muted mb-0">暂无交易数据</p>
+                                        <p class="text-muted mb-0" data-i18n="no_deals">{{ t('no_deals') }}</p>
                                     </td>
                                 </tr>
                             {% endif %}
@@ -222,7 +222,7 @@
                     </table>
                 </div>
                 <div class="card-footer text-center">
-                    <a href="{{ url_for('crm.deals') }}" class="btn btn-sm btn-outline-info">查看所有交易</a>
+                    <a href="{{ url_for('crm.deals') }}" class="btn btn-sm btn-outline-info" data-i18n="view_all_deals">{{ t('view_all_deals') }}</a>
                 </div>
             </div>
         </div>
@@ -233,13 +233,13 @@
 <div class="row my-4">
     <div class="col-12 text-center">
         <a href="{{ url_for('crm.customers') }}" class="btn btn-outline-primary mx-2">
-            <i class="bi bi-building me-2"></i>管理客户
+            <i class="bi bi-building me-2"></i><span data-i18n="manage_customers">{{ t('manage_customers') }}</span>
         </a>
         <a href="{{ url_for('crm.leads') }}" class="btn btn-outline-info mx-2">
-            <i class="bi bi-lightbulb me-2"></i>查看商机
+            <i class="bi bi-lightbulb me-2"></i><span data-i18n="view_leads">{{ t('view_leads') }}</span>
         </a>
         <a href="{{ url_for('crm.deals') }}" class="btn btn-outline-success mx-2">
-            <i class="bi bi-currency-dollar me-2"></i>管理交易
+            <i class="bi bi-currency-dollar me-2"></i><span data-i18n="manage_deals">{{ t('manage_deals') }}</span>
         </a>
     </div>
 </div>

@@ -469,7 +469,7 @@
                 <a href="{{ url_for('index') }}" class="btn btn-light btn-lg shadow-sm d-flex align-items-center text-decoration-none" 
                    style="border-radius: 12px; padding: 0.75rem 1.5rem; transition: all 0.3s ease; background: rgba(255,255,255,0.95);">
                     <i class="bi bi-house-door-fill me-2 text-primary" style="font-size: 1.2rem;"></i>
-                    <span class="fw-bold text-dark">{{ t('home') }}</span>
+                    <span class="fw-bold text-dark" data-i18n="home">{{ t('home') }}</span>
                 </a>
             </div>
             
@@ -478,13 +478,13 @@
                 <div class="d-flex align-items-center">
                     <h4 class="mb-0 text-white fw-bold d-flex align-items-center me-4">
                         <i class="bi bi-calculator me-2"></i>
-                        {{ t('batch_mining_calculator') }}
+                        <span data-i18n="batch_mining_calculator">{{ t('batch_mining_calculator') }}</span>
                     </h4>
                     <!-- 快速导航到单机计算器 -->
                     <a href="/mining-calculator" class="btn btn-outline-light btn-sm d-flex align-items-center"
                        style="border-radius: 8px; padding: 0.5rem 1rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3);">
                         <i class="bi bi-cpu me-2"></i>
-                        {% if current_lang == 'en' %}Single Mode{% else %}单机模式{% endif %}
+                        <span data-i18n="single_mode">{{ t('single_mode') }}</span>
                     </a>
                 </div>
             </div>
@@ -496,7 +496,7 @@
                             data-bs-toggle="dropdown" aria-expanded="false"
                             style="border-radius: 12px; padding: 0.75rem 1.25rem; background: rgba(255,255,255,0.95); border: none;">
                         <i class="bi bi-globe me-2 text-primary"></i>
-                        <span class="fw-semibold text-dark">{{ t('language') }}</span>
+                        <span class="fw-semibold text-dark" data-i18n="language">{{ t('language') }}</span>
                         <span class="ms-2 badge bg-primary">{{ 'CN' if current_lang == 'zh' else 'EN' }}</span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-lg" style="border-radius: 12px; border: none; min-width: 180px;">
@@ -532,10 +532,8 @@
                 <div class="d-flex align-items-center">
                     <i class="bi bi-info-circle text-info me-3" style="font-size: 1.5rem;"></i>
                     <div>
-                        <h6 class="alert-heading mb-1 text-info fw-bold">{{ t('batch_calculation') }}</h6>
-                        <p class="mb-0 text-muted">
-                            {% if current_lang == 'en' %}Calculate profitability for multiple miners at once with real-time network data{% else %}使用实时网络数据一次性计算多台矿机的盈利能力{% endif %}
-                        </p>
+                        <h6 class="alert-heading mb-1 text-info fw-bold" data-i18n="batch_calculation">{{ t('batch_calculation') }}</h6>
+                        <p class="mb-0 text-muted" data-i18n="batch_calc_description">{{ t('batch_calc_description') }}</p>
                     </div>
                 </div>
             </div>
@@ -550,15 +548,13 @@
                     <div class="card-header">
                         <h6 class="mb-0">
                             <i class="bi bi-gear me-2"></i>
-                            {% if current_lang == 'en' %}Global Settings{% else %}全局设置{% endif %}
+                            <span data-i18n="global_settings">{{ t('global_settings') }}</span>
                         </h6>
                     </div>
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
-                                <label class="form-label">
-                                    {% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}
-                                </label>
+                                <label class="form-label" data-i18n="btc_price">{{ t('btc_price') }}</label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
                                     <input type="number" class="form-control" id="globalBtcPrice" 
@@ -566,14 +562,10 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">
-                                    {% if current_lang == 'en' %}Use Real-time Data{% else %}使用实时数据{% endif %}
-                                </label>
+                                <label class="form-label" data-i18n="use_realtime_data">{{ t('use_realtime_data') }}</label>
                                 <div class="form-check form-switch mt-2">
                                     <input class="form-check-input" type="checkbox" id="useRealTimeData" checked onchange="handleRealtimeToggle()">
-                                    <label class="form-check-label" for="useRealTimeData">
-                                        {% if current_lang == 'en' %}Auto-update prices and difficulty{% else %}自动更新价格和难度{% endif %}
-                                    </label>
+                                    <label class="form-check-label" for="useRealTimeData" data-i18n="auto_update_prices">{{ t('auto_update_prices') }}</label>
                                 </div>
                             </div>
                         </div>
@@ -582,39 +574,31 @@
                         <div class="mt-4 pt-3 border-top">
                             <h6 class="text-muted mb-3">
                                 <i class="bi bi-globe2 me-2"></i>
-                                {% if current_lang == 'en' %}Network Status{% else %}网络状态{% endif %}
+                                <span data-i18n="network_status">{{ t('network_status') }}</span>
                                 <span id="dataUpdateTime" class="small text-success ms-2"></span>
                             </h6>
                             <div class="row g-3">
                                 <div class="col-md-3 col-6">
                                     <div class="text-center p-2 bg-dark rounded">
-                                        <div class="small text-muted">
-                                            {% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}
-                                        </div>
+                                        <div class="small text-muted" data-i18n="btc_price">{{ t('btc_price') }}</div>
                                         <div class="fw-bold text-warning" id="currentBtcPrice">$116,644</div>
                                     </div>
                                 </div>
                                 <div class="col-md-3 col-6">
                                     <div class="text-center p-2 bg-dark rounded">
-                                        <div class="small text-muted">
-                                            {% if current_lang == 'en' %}Difficulty{% else %}难度{% endif %}
-                                        </div>
+                                        <div class="small text-muted" data-i18n="difficulty">{{ t('difficulty') }}</div>
                                         <div class="fw-bold text-info" id="currentDifficulty">129.4T</div>
                                     </div>
                                 </div>
                                 <div class="col-md-3 col-6">
                                     <div class="text-center p-2 bg-dark rounded">
-                                        <div class="small text-muted">
-                                            {% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}
-                                        </div>
+                                        <div class="small text-muted" data-i18n="hashrate">{{ t('hashrate') }}</div>
                                         <div class="fw-bold text-primary" id="currentHashrate">752.81 EH/s</div>
                                     </div>
                                 </div>
                                 <div class="col-md-3 col-6">
                                     <div class="text-center p-2 bg-dark rounded">
-                                        <div class="small text-muted">
-                                            {% if current_lang == 'en' %}Block Reward{% else %}区块奖励{% endif %}
-                                        </div>
+                                        <div class="small text-muted" data-i18n="block_reward">{{ t('block_reward') }}</div>
                                         <div class="fw-bold text-success" id="currentBlockReward">3.125 BTC</div>
                                     </div>
                                 </div>
@@ -628,7 +612,7 @@
                 <div class="text-center mb-3">
                     <button class="btn btn-primary btn-lg" onclick="calculateBatchProfitability()" id="calculateBtn">
                         <i class="bi bi-calculator me-2"></i>
-                        {% if current_lang == 'en' %}Calculate Batch Profitability{% else %}计算批量收益{% endif %}
+                        <span data-i18n="calculate_batch_profitability">{{ t('calculate_batch_profitability') }}</span>
                     </button>
                 </div>
                 
@@ -637,25 +621,25 @@
                     <div class="card-header">
                         <h6 class="mb-0">
                             <i class="bi bi-download me-2"></i>
-                            {% if current_lang == 'en' %}Export Results{% else %}导出结果{% endif %}
+                            <span data-i18n="export_results">{{ t('export_results') }}</span>
                         </h6>
                     </div>
                     <div class="card-body">
                         <div class="d-grid gap-2">
                             <button class="btn btn-outline-success btn-sm" onclick="exportToCSV()">
                                 <i class="bi bi-file-earmark-spreadsheet me-1"></i>
-                                {% if current_lang == 'en' %}Export CSV{% else %}导出CSV{% endif %}
+                                <span data-i18n="export_csv">{{ t('export_csv') }}</span>
                             </button>
                             {% if user_plan.id != 'free' %}
                             <button class="btn btn-outline-primary btn-sm" onclick="exportToExcel()">
                                 <i class="bi bi-file-earmark-excel me-1"></i>
-                                {% if current_lang == 'en' %}Export Excel{% else %}导出Excel{% endif %}
+                                <span data-i18n="export_excel">{{ t('export_excel') }}</span>
                             </button>
                             {% endif %}
                             {% if user_plan.allow_advanced_analytics %}
                             <button class="btn btn-outline-danger btn-sm" onclick="exportToPDF()">
                                 <i class="bi bi-file-earmark-pdf me-1"></i>
-                                {% if current_lang == 'en' %}Export PDF Report{% else %}导出PDF报告{% endif %}
+                                <span data-i18n="export_pdf_report">{{ t('export_pdf_report') }}</span>
                             </button>
                             {% endif %}
                         </div>
@@ -673,18 +657,18 @@
                             <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3 w-100">
                                 <h5 class="mb-0">
                                     <i class="bi bi-table me-2 text-warning"></i>
-                                    {% if current_lang == 'en' %}Miners Configuration{% else %}矿机配置{% endif %}
+                                    <span data-i18n="miners_configuration">{{ t('miners_configuration') }}</span>
                                 </h5>
                                 
                                 <!-- 操作按钮组 -->
                                 <div class="d-flex flex-wrap gap-2">
                                     <button type="button" class="btn btn-outline-primary btn-sm" onclick="addMinerRow()">
                                         <i class="bi bi-plus-circle me-1"></i>
-                                        {% if current_lang == 'en' %}Add Miner{% else %}添加矿机{% endif %}
+                                        <span data-i18n="add_miner">{{ t('add_miner') }}</span>
                                     </button>
                                     <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllMiners()">
                                         <i class="bi bi-trash me-1"></i>
-                                        {% if current_lang == 'en' %}Clear All{% else %}清空所有{% endif %}
+                                        <span data-i18n="clear_all">{{ t('clear_all') }}</span>
                                     </button>
                                 </div>
                             </div>
@@ -692,7 +676,7 @@
                             <!-- 统计信息 -->
                             <div class="d-flex align-items-center gap-3 text-nowrap">
                                 <div class="badge bg-primary">
-                                    {% if current_lang == 'en' %}Miners: {% else %}矿机数: {% endif %}
+                                    <span data-i18n="miners_label">{{ t('miners_label') }}</span>
                                     <span id="currentCount">0</span>/<span>{{ user_plan.max_miners }}</span>
                                 </div>
                                 <div class="progress" style="width: 100px; height: 8px;">
@@ -708,27 +692,19 @@
                                 <div class="col-md-6">
                                     <label class="form-label">
                                         <i class="bi bi-file-earmark-spreadsheet me-1"></i>
-                                        {% if current_lang == 'en' %}Upload CSV File{% else %}上传CSV文件{% endif %}
+                                        <span data-i18n="upload_csv_file">{{ t('upload_csv_file') }}</span>
                                     </label>
                                     <div class="input-group mb-2">
                                         <input type="file" class="form-control" id="csvFile" accept=".csv" onchange="processCsvFile(event)">
                                         <button class="btn btn-outline-success" type="button" onclick="downloadTemplate()">
                                             <i class="bi bi-download me-1"></i>
-                                            {% if current_lang == 'en' %}Template{% else %}模板{% endif %}
+                                            <span data-i18n="template">{{ t('template') }}</span>
                                         </button>
                                     </div>
-                                    <div class="form-text">
-                                        {% if current_lang == 'en' %}
-                                        Format: Model, Quantity, Power (W), Price ($), Electricity ($/kWh), Decay Rate (%/month), Hashrate (TH/s)
-                                        {% else %}
-                                        格式: 型号, 数量, 功耗(W), 价格($), 电费($/kWh), 衰减率(%/月), 算力(TH/s)
-                                        {% endif %}
-                                    </div>
+                                    <div class="form-text" data-i18n="csv_format_help">{{ t('csv_format_help') }}</div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">
-                                        {% if current_lang == 'en' %}Sample CSV{% else %}CSV示例{% endif %}
-                                    </label>
+                                    <label class="form-label" data-i18n="sample_csv">{{ t('sample_csv') }}</label>
                                     <div class="bg-dark p-2 rounded small">
                                         <code style="font-size: 0.85rem;">
                                             Model,Quantity,Power,Price,Electricity,Hashrate,DecayRate<br>
@@ -744,30 +720,14 @@
                             <table class="table table-dark table-striped" id="minersTable">
                                 <thead>
                                     <tr>
-                                        <th class="text-center">
-                                            {% if current_lang == 'en' %}#{% else %}编号{% endif %}
-                                        </th>
-                                        <th>
-                                            {% if current_lang == 'en' %}Model{% else %}型号{% endif %}
-                                        </th>
-                                        <th class="text-center">
-                                            {% if current_lang == 'en' %}Qty{% else %}数量{% endif %}
-                                        </th>
-                                        <th class="text-center">
-                                            {% if current_lang == 'en' %}Power (W){% else %}功耗(W){% endif %}
-                                        </th>
-                                        <th class="text-center">
-                                            {% if current_lang == 'en' %}Price ($){% else %}价格($){% endif %}
-                                        </th>
-                                        <th class="text-center">
-                                            {% if current_lang == 'en' %}Electric{% else %}电费{% endif %}
-                                        </th>
-                                        <th class="text-center">
-                                            {% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}
-                                        </th>
-                                        <th class="text-center">
-                                            {% if current_lang == 'en' %}Decay{% else %}衰减{% endif %}
-                                        </th>
+                                        <th class="text-center" data-i18n="row_number">{{ t('row_number') }}</th>
+                                        <th data-i18n="model">{{ t('model') }}</th>
+                                        <th class="text-center" data-i18n="qty">{{ t('qty') }}</th>
+                                        <th class="text-center" data-i18n="power_w">{{ t('power_w') }}</th>
+                                        <th class="text-center" data-i18n="price_usd">{{ t('price_usd') }}</th>
+                                        <th class="text-center" data-i18n="electric">{{ t('electric') }}</th>
+                                        <th class="text-center" data-i18n="hashrate">{{ t('hashrate') }}</th>
+                                        <th class="text-center" data-i18n="decay">{{ t('decay') }}</th>
                                         <th class="text-center">
                                             <i class="bi bi-gear"></i>
                                         </th>
@@ -782,12 +742,10 @@
                         <!-- Add first row button when table is empty -->
                         <div id="emptyState" class="text-center py-4">
                             <i class="bi bi-table text-muted" style="font-size: 3rem;"></i>
-                            <p class="text-muted mt-2">
-                                {% if current_lang == 'en' %}No miners configured. Add your first miner to get started.{% else %}暂无矿机配置，添加第一台矿机开始计算。{% endif %}
-                            </p>
+                            <p class="text-muted mt-2" data-i18n="no_miners_configured">{{ t('no_miners_configured') }}</p>
                             <button class="btn btn-primary" onclick="addMinerRow()">
                                 <i class="bi bi-plus-circle me-2"></i>
-                                {% if current_lang == 'en' %}Add First Miner{% else %}添加第一台矿机{% endif %}
+                                <span data-i18n="add_first_miner">{{ t('add_first_miner') }}</span>
                             </button>
                         </div>
                     </div>
@@ -800,15 +758,13 @@
                     <div class="card-header">
                         <h6 class="mb-0">
                             <i class="bi bi-bar-chart me-2"></i>
-                            {% if current_lang == 'en' %}Batch Results{% else %}批量结果{% endif %}
+                            <span data-i18n="batch_results">{{ t('batch_results') }}</span>
                         </h6>
                     </div>
                     <div class="card-body" id="resultsSection">
                         <div class="text-center text-muted py-4">
                             <i class="bi bi-calculator" style="font-size: 2rem;"></i>
-                            <p class="mt-2">
-                                {% if current_lang == 'en' %}Configure miners and click calculate to see results{% else %}配置矿机并点击计算查看结果{% endif %}
-                            </p>
+                            <p class="mt-2" data-i18n="configure_and_calculate">{{ t('configure_and_calculate') }}</p>
                         </div>
                     </div>
                 </div>
@@ -823,34 +779,22 @@
                 <div class="modal-header">
                     <h5 class="modal-title">
                         <i class="bi bi-star me-2"></i>
-                        {% if current_lang == 'en' %}Upgrade Required{% else %}需要升级套餐{% endif %}
+                        <span data-i18n="upgrade_required">{{ t('upgrade_required') }}</span>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="text-center">
                         <i class="bi bi-exclamation-circle text-warning" style="font-size: 3rem;"></i>
-                        <h6 class="mt-3">{% if current_lang == 'en' %}Quota Exceeded{% else %}超过配额限制{% endif %}</h6>
-                        <p class="text-muted" id="upgradeMessage">
-                            {% if current_lang == 'en' %}
-                            You're trying to process more miners than your current plan allows.
-                            {% else %}
-                            您正在尝试处理超过当前套餐允许的矿机数量。
-                            {% endif %}
-                        </p>
+                        <h6 class="mt-3" data-i18n="quota_exceeded">{{ t('quota_exceeded') }}</h6>
+                        <p class="text-muted" id="upgradeMessage"></p>
                         
                         <!-- One-time bypass option for Basic+ users -->
                         {% if user_plan.id != 'free' %}
                         <div class="alert alert-info">
                             <i class="bi bi-gift me-2"></i>
-                            <strong>{% if current_lang == 'en' %}One-time Bypass Available{% else %}一次性放行可用{% endif %}</strong>
-                            <p class="mb-0 small">
-                                {% if current_lang == 'en' %}
-                                We can process this request once this month as a courtesy.
-                                {% else %}
-                                作为礼遇，本月可为您处理一次超限请求。
-                                {% endif %}
-                            </p>
+                            <strong data-i18n="one_time_bypass_available">{{ t('one_time_bypass_available') }}</strong>
+                            <p class="mb-0 small" data-i18n="one_time_bypass_description">{{ t('one_time_bypass_description') }}</p>
                         </div>
                         {% endif %}
                     </div>
@@ -859,12 +803,12 @@
                     {% if user_plan.id != 'free' %}
                     <button type="button" class="btn btn-outline-secondary" onclick="useBypassOnce()">
                         <i class="bi bi-shield-check me-1"></i>
-                        {% if current_lang == 'en' %}Use One-time Bypass{% else %}使用一次性放行{% endif %}
+                        <span data-i18n="use_one_time_bypass">{{ t('use_one_time_bypass') }}</span>
                     </button>
                     {% endif %}
                     <a href="#" onclick="alert('订阅计划功能暂时维护中')" class="btn btn-primary">
                         <i class="bi bi-arrow-up-circle me-1"></i>
-                        {% if current_lang == 'en' %}Upgrade Plan{% else %}升级套餐{% endif %}
+                        <span data-i18n="upgrade_plan">{{ t('upgrade_plan') }}</span>
                     </a>
                 </div>
             </div>
