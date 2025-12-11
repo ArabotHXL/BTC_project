@@ -2097,17 +2097,43 @@ def set_language():
 # 🌐 i18n API - 无刷新语言切换
 # =========================================================================
 
+# Translation cache for performance optimization
+_translation_cache = {
+    'en': {'data': None, 'timestamp': None},
+    'zh': {'data': None, 'timestamp': None}
+}
+TRANSLATION_CACHE_TTL = 300  # 5 minutes
+
 @app.route('/api/i18n/translations')
 def api_get_translations():
-    """获取所有翻译数据 (JSON格式)"""
+    """获取翻译数据 (JSON格式) - 性能优化版"""
     from translations import TRANSLATIONS
     current_lang = session.get('language', g.get('language', 'zh'))
     
-    return jsonify({
+    # Check cache
+    now = datetime.now()
+    cache_entry = _translation_cache.get(current_lang, {})
+    if cache_entry.get('data') and cache_entry.get('timestamp'):
+        if (now - cache_entry['timestamp']).total_seconds() < TRANSLATION_CACHE_TTL:
+            return cache_entry['data']
+    
+    # Build response with only current language translations
+    response_data = {
         'success': True,
         'current_lang': current_lang,
-        'translations': TRANSLATIONS
-    })
+        'translations': {
+            current_lang: TRANSLATIONS.get(current_lang, {})
+        }
+    }
+    
+    # Cache the response
+    response = jsonify(response_data)
+    _translation_cache[current_lang] = {
+        'data': response,
+        'timestamp': now
+    }
+    
+    return response
 
 @app.route('/api/i18n/set-language', methods=['POST'])
 def api_set_language():

@@ -40,9 +40,13 @@
                 const response = await fetch('/api/i18n/translations');
                 if (response.ok) {
                     const data = await response.json();
-                    this.translations = data.translations || {};
+                    // Support both old (both languages) and new (single language) format
+                    if (data.translations) {
+                        // Merge with existing translations
+                        Object.assign(this.translations, data.translations);
+                    }
                     this.currentLang = data.current_lang || this.currentLang;
-                    console.log('[i18n] Loaded', Object.keys(this.translations.en || {}).length, 'translation keys');
+                    console.log('[i18n] Loaded translations for', this.currentLang);
                 }
             } catch (error) {
                 console.error('[i18n] Failed to load translations:', error);
@@ -99,6 +103,9 @@
                 if (response.ok) {
                     const oldLang = this.currentLang;
                     this.currentLang = lang;
+                    
+                    // Reload translations for new language (since API now returns single language)
+                    await this.loadTranslations();
                     
                     // 更新页面上的所有翻译元素
                     this.updatePageTranslations();
