@@ -210,7 +210,7 @@
                     <a href="/main" class="btn btn-light btn-lg shadow-sm d-flex align-items-center text-decoration-none" 
                        style="border-radius: 12px; padding: 0.75rem 1.5rem; transition: all 0.3s ease; background: rgba(255,255,255,0.95);">
                         <i class="bi bi-house-door-fill me-2 text-primary" style="font-size: 1.2rem;"></i>
-                        <span class="fw-bold text-dark">{{ t('home') }}</span>
+                        <span class="fw-bold text-dark" data-i18n="home">{{ t('home') }}</span>
                     </a>
                 </div>
                 
@@ -219,7 +219,7 @@
                     <div class="d-flex align-items-center">
                         <h4 class="mb-0 text-white fw-bold d-flex align-items-center me-4">
                             <i class="bi bi-cpu me-2"></i>
-                            {% if current_lang == 'en' %}Mining Calculator{% else %}挖矿计算器{% endif %}
+                            <span data-i18n="mining_calculator">{% if current_lang == 'en' %}Mining Calculator{% else %}挖矿计算器{% endif %}</span>
                         </h4>
                     </div>
                 </div>
@@ -231,7 +231,7 @@
                                 data-bs-toggle="dropdown" aria-expanded="false"
                                 style="border-radius: 12px; padding: 0.75rem 1.25rem; background: rgba(255,255,255,0.95); border: none;">
                             <i class="bi bi-globe me-2 text-primary"></i>
-                            <span class="fw-semibold text-dark">{{ t('language') }}</span>
+                            <span class="fw-semibold text-dark" data-i18n="language">{{ t('language') }}</span>
                             <span class="ms-2 badge bg-primary">{{ 'CN' if current_lang == 'zh' else 'EN' }}</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow-lg" style="border-radius: 12px; border: none; min-width: 180px;">
@@ -267,23 +267,23 @@
                     <div class="col-12">
                         <h6 class="alert-heading mb-2 text-info fw-bold d-flex align-items-center">
                             <i class="bi bi-globe2 me-2"></i>
-                            {% if current_lang == 'en' %}Real-time Network Status{% else %}实时网络状态{% endif %}
+                            <span data-i18n="real_time_network_status">{% if current_lang == 'en' %}Real-time Network Status{% else %}实时网络状态{% endif %}</span>
                         </h6>
                         <div id="network-stats-container" class="d-flex gap-3 text-center flex-wrap justify-content-center">
                             <div class="stats-item d-flex align-items-center">
-                                <span class="badge bg-warning text-dark me-2">{% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}</span>
+                                <span class="badge bg-warning text-dark me-2" data-i18n="btc_price">{% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}</span>
                                 <strong id="btc-price" class="text-warning fs-6">$112,834</strong>
                             </div>
                             <div class="stats-item d-flex align-items-center">
-                                <span class="badge bg-info text-dark me-2">{% if current_lang == 'en' %}Difficulty{% else %}难度{% endif %}</span>
+                                <span class="badge bg-info text-dark me-2" data-i18n="difficulty">{% if current_lang == 'en' %}Difficulty{% else %}难度{% endif %}</span>
                                 <strong id="network-difficulty" class="text-info fs-6">129.44T</strong>
                             </div>
                             <div class="stats-item d-flex align-items-center">
-                                <span class="badge bg-danger text-white me-2">{% if current_lang == 'en' %}Network Hashrate{% else %}网络算力{% endif %}</span>
+                                <span class="badge bg-danger text-white me-2" data-i18n="network_hashrate">{% if current_lang == 'en' %}Network Hashrate{% else %}网络算力{% endif %}</span>
                                 <strong id="network-hashrate" class="text-danger fs-6">868.63 EH/s</strong>
                             </div>
                             <div class="stats-item d-flex align-items-center">
-                                <span class="badge bg-success text-white me-2">{% if current_lang == 'en' %}Block Reward{% else %}区块奖励{% endif %}</span>
+                                <span class="badge bg-success text-white me-2" data-i18n="block_reward">{% if current_lang == 'en' %}Block Reward{% else %}区块奖励{% endif %}</span>
                                 <strong id="block-reward" class="text-success fs-6">3.15445019 BTC</strong>
                             </div>
                         </div>
@@ -308,12 +308,12 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <h6 class="mb-0">
                             <i class="bi bi-graph-up-arrow me-2"></i>
-                            {% if current_lang == 'en' %}Analytics Dashboard{% else %}数据分析仪表盘{% endif %}
+                            <span data-i18n="analytics_dashboard">{% if current_lang == 'en' %}Analytics Dashboard{% else %}数据分析仪表盘{% endif %}</span>
                         </h6>
                         <div class="btn-group btn-group-sm">
                             <a href="/analytics" class="btn btn-outline-primary btn-sm">
                                 <i class="bi bi-fullscreen"></i> 
-                                {% if current_lang == 'en' %}Full Dashboard{% else %}完整仪表盘{% endif %}
+                                <span data-i18n="full_dashboard">{% if current_lang == 'en' %}Full Dashboard{% else %}完整仪表盘{% endif %}</span>
                             </a>
                             <button class="btn btn-outline-light btn-sm" onclick="refreshAnalyticsWidget()">
                                 <i class="bi bi-arrow-clockwise"></i>
@@ -327,7 +327,7 @@
                         <div class="col-md-3">
                             <div class="text-center">
                                 <div class="h5 mb-1" id="widget-btc-price">--</div>
-                                <small class="text-muted">{% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}</small>
+                                <small class="text-muted" data-i18n="btc_price">{% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}</small>
                                 <div class="small" id="widget-price-change">--</div>
                             </div>
                         </div>
@@ -335,7 +335,7 @@
                         <div class="col-md-3">
                             <div class="text-center">
                                 <div class="h5 mb-1" id="widget-hashrate">--</div>
-                                <small class="text-muted">{% if current_lang == 'en' %}Network Hashrate{% else %}网络算力{% endif %}</small>
+                                <small class="text-muted" data-i18n="network_hashrate">{% if current_lang == 'en' %}Network Hashrate{% else %}网络算力{% endif %}</small>
                                 <div class="small text-success">EH/s</div>
                             </div>
                         </div>
@@ -343,7 +343,7 @@
                         <div class="col-md-3">
                             <div class="text-center">
                                 <div class="h5 mb-1" id="widget-fear-greed">--</div>
-                                <small class="text-muted">{% if current_lang == 'en' %}Fear & Greed{% else %}恐惧贪婪指数{% endif %}</small>
+                                <small class="text-muted" data-i18n="fear_greed_index">{% if current_lang == 'en' %}Fear & Greed{% else %}恐惧贪婪指数{% endif %}</small>
                                 <div class="small" id="widget-sentiment">--</div>
                             </div>
                         </div>
@@ -352,11 +352,11 @@
                             <div class="d-grid gap-1">
                                 <button class="btn btn-sm btn-outline-info" onclick="showLatestReport()">
                                     <i class="bi bi-file-text"></i> 
-                                    {% if current_lang == 'en' %}Latest Report{% else %}最新报告{% endif %}
+                                    <span data-i18n="latest_report">{% if current_lang == 'en' %}Latest Report{% else %}最新报告{% endif %}</span>
                                 </button>
                                 <button class="btn btn-sm btn-outline-warning" onclick="showTechnicalIndicators()">
                                     <i class="bi bi-bar-chart"></i> 
-                                    {% if current_lang == 'en' %}Indicators{% else %}技术指标{% endif %}
+                                    <span data-i18n="indicators">{% if current_lang == 'en' %}Indicators{% else %}技术指标{% endif %}</span>
                                 </button>
                             </div>
                         </div>
@@ -364,7 +364,7 @@
                     
                     <!-- Quick Insights Panel -->
                     <div class="mt-3 pt-3 border-top">
-                        <div id="widget-insights" class="small text-muted">
+                        <div id="widget-insights" class="small text-muted" data-i18n="loading_market_insights">
                             {% if current_lang == 'en' %}Loading market insights...{% else %}正在加载市场洞察...{% endif %}
                         </div>
                     </div>
@@ -422,29 +422,29 @@
                 <div class="col-lg-5">
                     <div class="card shadow">
                         <div class="card-header bg-primary bg-opacity-10">
-                            <h5 class="mb-0"><i class="bi bi-gear me-1"></i>{% if current_lang == 'en' %}Miner Settings{% else %}矿机设置{% endif %}</h5>
+                            <h5 class="mb-0"><i class="bi bi-gear me-1"></i><span data-i18n="miner_settings">{% if current_lang == 'en' %}Miner Settings{% else %}矿机设置{% endif %}</span></h5>
                         </div>
                         <div class="card-body">
                             <form id="mining-calculator-form">
                                 <!-- Mining hardware selection -->
                                 <div class="mb-3">
-                                    <label for="miner-model" class="form-label">{% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %}</label>
+                                    <label for="miner-model" class="form-label" data-i18n="miner_model">{% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %}</label>
                                     <select class="form-select" id="miner-model" name="miner_model">
-                                        <option value="">{% if current_lang == 'en' %}Select Miner{% else %}选择矿机{% endif %}</option>
+                                        <option value="" data-i18n="select_miner">{% if current_lang == 'en' %}Select Miner{% else %}选择矿机{% endif %}</option>
                                         <!-- Miner options will be loaded dynamically -->
                                     </select>
                                 </div>
 
                                 <!-- Site Power Consumption (MW) -->
                                 <div class="mb-3">
-                                    <label for="site-power-mw" class="form-label">{% if current_lang == 'en' %}Site Power (MW){% else %}矿场功率 (MW){% endif %}</label>
+                                    <label for="site-power-mw" class="form-label" data-i18n="site_power_mw">{% if current_lang == 'en' %}Site Power (MW){% else %}矿场功率 (MW){% endif %}</label>
                                     <input type="number" class="form-control" id="site-power-mw" name="site_power_mw" value="1" min="0" step="0.001">
                                     <div class="form-text">{% if current_lang == 'en' %}Total site power capacity in megawatts (MW). Adjusting this will recalculate the number of miners.{% else %}矿场总功率，单位为兆瓦特(MW)。调整此值会重新计算矿机数量。{% endif %}</div>
                                 </div>
                                 
                                 <!-- Miner count (can be manually adjusted) -->
                                 <div class="mb-3">
-                                    <label for="miner-count" class="form-label">{% if current_lang == 'en' %}Miner Count{% else %}矿机数量{% endif %}</label>
+                                    <label for="miner-count" class="form-label" data-i18n="miner_count">{% if current_lang == 'en' %}Miner Count{% else %}矿机数量{% endif %}</label>
                                     <input type="number" class="form-control" id="miner-count" name="miner_count" value="1" min="1" oninput="updateSitePowerDirectly()">
                                     <div class="form-text">{% if current_lang == 'en' %}Number of miners. Adjusting this will recalculate the site power.{% else %}矿机数量。调整此值会重新计算矿场功率。{% endif %}</div>
                                     <script>
@@ -474,7 +474,7 @@
                                 <input type="hidden" id="total-hashrate" name="total_hashrate" value="0">
                                 <!-- {% if current_lang == 'en' %}Total hashrate display only{% else %}仅用于显示的总算力{% endif %} -->
                                 <div class="mb-3">
-                                    <label for="total-hashrate-display" class="form-label">{% if current_lang == 'en' %}Total Hashrate (TH/s){% else %}总算力 (TH/s){% endif %}</label>
+                                    <label for="total-hashrate-display" class="form-label" data-i18n="total_hashrate">{% if current_lang == 'en' %}Total Hashrate (TH/s){% else %}总算力 (TH/s){% endif %}</label>
                                     <input type="number" class="form-control" id="total-hashrate-display" readonly>
                                     <div class="form-text">{% if current_lang == 'en' %}Total hashrate = Single miner hashrate × Miner count{% else %}总算力 = 单台算力 × 矿机数量{% endif %}</div>
                                 </div>
@@ -483,7 +483,7 @@
                                 <input type="hidden" id="total-power" name="total_power" value="0">
                                 <!-- {% if current_lang == 'en' %}Total power consumption display only{% else %}仅用于显示的总功耗{% endif %} -->
                                 <div class="mb-3">
-                                    <label for="total-power-display" class="form-label">{% if current_lang == 'en' %}Total Power (W){% else %}总功耗 (W){% endif %}</label>
+                                    <label for="total-power-display" class="form-label" data-i18n="total_power">{% if current_lang == 'en' %}Total Power (W){% else %}总功耗 (W){% endif %}</label>
                                     <input type="number" class="form-control" id="total-power-display" readonly>
                                     <div class="form-text">{% if current_lang == 'en' %}Total power = Single miner power × Miner count{% else %}总功耗 = 单台功耗 × 矿机数量{% endif %}</div>
                                 </div>
@@ -510,7 +510,7 @@
                                 <!-- {% if current_lang == 'en' %}Maintenance Fee - only shown to mining site administrators{% else %}Maintenance Fee - 仅对矿场管理员显示{% endif %} -->
                                 {% if session.role in ['owner', 'admin', 'mining_site'] %}
                                 <div class="mb-3">
-                                    <label for="maintenance-fee" class="form-label">{% if current_lang == 'en' %}Maintenance Fee{% else %}矿场维护费{% endif %}</label>
+                                    <label for="maintenance-fee" class="form-label" data-i18n="maintenance_fee">{% if current_lang == 'en' %}Maintenance Fee{% else %}矿场维护费{% endif %}</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="maintenance-fee" name="maintenance_fee" value="5000" step="1" min="0">
                                         <span class="input-group-text">$</span>
@@ -522,7 +522,7 @@
                                 
                                 <!-- Host Investment Amount -->
                                 <div class="mb-3">
-                                    <label for="host-investment" class="form-label">{% if current_lang == 'en' %}Host Investment{% else %}矿场主投资金额{% endif %}</label>
+                                    <label for="host-investment" class="form-label" data-i18n="host_investment">{% if current_lang == 'en' %}Host Investment{% else %}矿场主投资金额{% endif %}</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="host-investment" name="host_investment" value="0" step="1" min="0">
                                         <span class="input-group-text">$</span>
@@ -557,16 +557,16 @@
 
                                 <!-- Network Hashrate Source Selection -->
                                 <div class="mb-3">
-                                    <label class="form-label">{% if current_lang == 'en' %}Network Hashrate Source{% else %}全网算力来源{% endif %}</label>
+                                    <label class="form-label" data-i18n="network_hashrate_source">{% if current_lang == 'en' %}Network Hashrate Source{% else %}全网算力来源{% endif %}</label>
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="hashrate_source" id="hashrate-api" value="api" checked onchange="toggleHashrateInput()">
-                                        <label class="form-check-label" for="hashrate-api">
+                                        <label class="form-check-label" for="hashrate-api" data-i18n="use_api_data">
                                             {% if current_lang == 'en' %}Use API Data{% else %}使用API获取{% endif %}
                                         </label>
                                     </div>
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="hashrate_source" id="hashrate-manual" value="manual" onchange="toggleHashrateInput()">
-                                        <label class="form-check-label" for="hashrate-manual">
+                                        <label class="form-check-label" for="hashrate-manual" data-i18n="manual_input">
                                             {% if current_lang == 'en' %}Manual Input{% else %}手动输入{% endif %}
                                         </label>
                                     </div>
@@ -574,7 +574,7 @@
 
                                 <!-- Manual Network Hashrate Input -->
                                 <div class="mb-3" id="manual-hashrate-container" style="display: none;">
-                                    <label for="manual-hashrate" class="form-label">{% if current_lang == 'en' %}Network Hashrate{% else %}全网算力{% endif %}</label>
+                                    <label for="manual-hashrate" class="form-label" data-i18n="network_hashrate">{% if current_lang == 'en' %}Network Hashrate{% else %}全网算力{% endif %}</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="manual-hashrate" name="manual_hashrate" value="997.31" step="0.1">
                                         <span class="input-group-text">EH/s</span>
@@ -584,16 +584,16 @@
 
                                 <!-- Network Difficulty Source Selection -->
                                 <div class="mb-3">
-                                    <label class="form-label">{% if current_lang == 'en' %}Network Difficulty Source{% else %}网络难度来源{% endif %}</label>
+                                    <label class="form-label" data-i18n="network_difficulty_source">{% if current_lang == 'en' %}Network Difficulty Source{% else %}网络难度来源{% endif %}</label>
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="difficulty_source" id="difficulty-api" value="api" checked onchange="toggleDifficultyInput()">
-                                        <label class="form-check-label" for="difficulty-api">
+                                        <label class="form-check-label" for="difficulty-api" data-i18n="use_api_data">
                                             {% if current_lang == 'en' %}Use API Data{% else %}使用API获取{% endif %}
                                         </label>
                                     </div>
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="difficulty_source" id="difficulty-manual" value="manual" onchange="toggleDifficultyInput()">
-                                        <label class="form-check-label" for="difficulty-manual">
+                                        <label class="form-check-label" for="difficulty-manual" data-i18n="manual_input">
                                             {% if current_lang == 'en' %}Manual Input{% else %}手动输入{% endif %}
                                         </label>
                                     </div>
@@ -601,7 +601,7 @@
 
                                 <!-- Manual Network Difficulty Input -->
                                 <div class="mb-3" id="manual-difficulty-container" style="display: none;">
-                                    <label for="manual-difficulty" class="form-label">{% if current_lang == 'en' %}Network Difficulty{% else %}网络难度{% endif %}</label>
+                                    <label for="manual-difficulty" class="form-label" data-i18n="network_difficulty">{% if current_lang == 'en' %}Network Difficulty{% else %}网络难度{% endif %}</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="manual-difficulty" name="manual_difficulty" value="129435235580344" step="1">
                                         <span class="input-group-text">T</span>
@@ -611,7 +611,7 @@
 
                                 <!-- ENHANCED: Pool fee configuration per expert recommendations -->
                                 <div class="mb-3">
-                                    <label for="pool-fee" class="form-label">{% if current_lang == 'en' %}Pool Fee{% else %}矿池费率{% endif %}</label>
+                                    <label for="pool-fee" class="form-label" data-i18n="pool_fee">{% if current_lang == 'en' %}Pool Fee{% else %}矿池费率{% endif %}</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="pool-fee" name="pool_fee" value="2.5" step="0.1" min="0" max="10">
                                         <span class="input-group-text">%</span>
@@ -622,11 +622,11 @@
                                 <!-- Real-time data option -->
                                 <div class="form-check form-switch mb-3">
                                     <input class="form-check-input" type="checkbox" id="use-real-time" name="use_real_time" checked>
-                                    <label class="form-check-label" for="use-real-time">{% if current_lang == 'en' %}Use Real Time Data{% else %}使用实时数据{% endif %}</label>
+                                    <label class="form-check-label" for="use-real-time" data-i18n="use_real_time_data">{% if current_lang == 'en' %}Use Real Time Data{% else %}使用实时数据{% endif %}</label>
                                 </div>
 
                                 <button type="submit" class="btn btn-primary w-100">
-                                    <i class="bi bi-calculator me-1"></i>{{ t('calculate') }}
+                                    <i class="bi bi-calculator me-1"></i><span data-i18n="calculate">{{ t('calculate') }}</span>
                                 </button>
                             </form>
                         </div>
@@ -638,7 +638,7 @@
                     <!-- Results summary -->
                     <div class="card shadow mb-4" id="results-card" style="display: none;">
                         <div class="card-header bg-success bg-opacity-10 d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0"><i class="bi bi-currency-bitcoin me-1"></i>{{ t('results') }}</h5>
+                            <h5 class="mb-0"><i class="bi bi-currency-bitcoin me-1"></i><span data-i18n="results">{{ t('results') }}</span></h5>
                             <span id="results-timestamp" class="text-muted small"></span>
                         </div>
                         <div class="card-body">
@@ -2136,7 +2136,7 @@
                             <div style="max-width: 280px;">
                                 <div class="p-3 rounded bg-white bg-opacity-10">
                                     <i class="bi bi-calculator display-6 text-warning mb-2"></i>
-                                    <h5 class="text-warning">
+                                    <h5 class="text-warning" data-i18n="batch_calculator">
                                         {% if current_lang == 'zh' %}批量计算器{% else %}Batch Calculator{% endif %}
                                     </h5>
                                     <p class="small text-light">
@@ -2168,7 +2168,7 @@
                             <div style="max-width: 280px;">
                                 <div class="p-3 rounded bg-white bg-opacity-10">
                                     <i class="bi bi-file-earmark-pdf display-6 text-success mb-2"></i>
-                                    <h5 class="text-success">
+                                    <h5 class="text-success" data-i18n="professional_reports">
                                         {% if current_lang == 'zh' %}专业报告{% else %}Professional Reports{% endif %}
                                     </h5>
                                     <p class="small text-light">
@@ -2217,12 +2217,12 @@
             <div class="text-muted">
                 <a href="{{ url_for('legal_terms') }}" class="text-warning text-decoration-none me-3" style="font-weight: 500;">
                     <i class="bi bi-shield-check me-1"></i>
-                    {% if current_lang == 'zh' %}服务条款和隐私政策{% else %}Terms of Use & Privacy Notice{% endif %}
+                    <span data-i18n="terms_privacy">{% if current_lang == 'zh' %}服务条款和隐私政策{% else %}Terms of Use & Privacy Notice{% endif %}</span>
                 </a>
                 <span class="mx-2">|</span>
                 <a href="mailto:cryptocalculator123@gmail.com" class="text-info text-decoration-none me-3">
                     <i class="bi bi-envelope me-1"></i>
-                    {% if current_lang == 'zh' %}联系我们{% else %}Contact Us{% endif %}
+                    <span data-i18n="contact_us">{% if current_lang == 'zh' %}联系我们{% else %}Contact Us{% endif %}</span>
                 </a>
                 <div class="mt-2">
                     <small>© 2025 HashInsight Mining Intelligence. {% if current_lang == 'zh' %}最后更新{% else %}Last Updated{% endif %}: 22 August 2025</small>

@@ -167,7 +167,6 @@
             vertical-align: middle;
         }
         
-        /* 导航栏增强样式 */
         .navbar-brand {
             letter-spacing: -0.5px;
         }
@@ -202,14 +201,13 @@
     </style>
 </head>
 <body>
-    <!-- 导航栏 -->
     <nav class="navbar navbar-expand-lg fixed-top" style="background: rgba(33, 37, 41, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(247, 147, 26, 0.2);">
         <div class="container">
             <a class="navbar-brand" href="/" style="color: #f7931a; font-weight: bold; font-size: 1.3rem;">
-                <span style="font-size: 1.5rem;">₿</span> HashInsight Enterprise
+                <span style="font-size: 1.5rem;">₿</span> <span data-i18n="btc_mining_calculator">HashInsight Enterprise</span>
             </a>
             <div class="navbar-nav ms-auto d-flex align-items-center gap-3">
-                <a class="nav-link" href="#features" style="color: #adb5bd; transition: color 0.3s;">
+                <a class="nav-link" href="#features" style="color: #adb5bd; transition: color 0.3s;" data-i18n="landing_features">
                     {% if current_lang == 'zh' %}功能特性{% else %}Features{% endif %}
                 </a>
                 <div class="d-flex align-items-center gap-1">
@@ -230,18 +228,11 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
     <section class="hero-section">
         <div class="container">
             <div class="btc-logo">₿</div>
-            <h1 class="hero-title">
-                {% if current_lang == 'zh' %}
-                    HashInsight Enterprise
-                {% else %}
-                    HashInsight Enterprise
-                {% endif %}
-            </h1>
-            <p class="hero-subtitle">
+            <h1 class="hero-title" data-i18n="btc_mining_calculator">HashInsight Enterprise</h1>
+            <p class="hero-subtitle" data-i18n="landing_hero_subtitle">
                 {% if current_lang == 'zh' %}
                     企业级比特币挖矿智能分析平台 | 实时数据·精准计算·Web3透明度
                 {% else %}
@@ -252,28 +243,27 @@
             <div class="mt-4">
                 <a href="{{ url_for('calculator') }}" class="cta-button">
                     <i class="fas fa-calculator"></i> 
-                    {% if current_lang == 'zh' %}开始计算{% else %}Start Calculator{% endif %}
+                    <span data-i18n="landing_start_calculator">{% if current_lang == 'zh' %}开始计算{% else %}Start Calculator{% endif %}</span>
                 </a>
                 <a href="{{ url_for('login') }}" class="cta-button cta-button-outline">
                     <i class="fas fa-sign-in-alt"></i> 
-                    {% if current_lang == 'zh' %}立即登录{% else %}Login Now{% endif %}
+                    <span data-i18n="landing_login_now">{% if current_lang == 'zh' %}立即登录{% else %}Login Now{% endif %}</span>
                 </a>
                 <a href="#features" class="cta-button cta-button-outline">
                     <i class="fas fa-info-circle"></i> 
-                    {% if current_lang == 'zh' %}了解更多{% else %}Learn More{% endif %}
+                    <span data-i18n="landing_learn_more">{% if current_lang == 'zh' %}了解更多{% else %}Learn More{% endif %}</span>
                 </a>
             </div>
         </div>
     </section>
 
-    <!-- Stats Section -->
     <section class="stats-section">
         <div class="container">
             <div class="row">
                 <div class="col-md-3 col-6">
                     <div class="stat-item">
                         <div class="stat-number">{{ miner_count|default(19) }}+</div>
-                        <div class="stat-label">
+                        <div class="stat-label" data-i18n="landing_asic_models">
                             {% if current_lang == 'zh' %}ASIC矿机型号{% else %}ASIC Models{% endif %}
                         </div>
                     </div>
@@ -281,7 +271,7 @@
                 <div class="col-md-3 col-6">
                     <div class="stat-item">
                         <div class="stat-number">9+</div>
-                        <div class="stat-label">
+                        <div class="stat-label" data-i18n="landing_data_sources">
                             {% if current_lang == 'zh' %}实时数据源{% else %}Data Sources{% endif %}
                         </div>
                     </div>
@@ -289,7 +279,7 @@
                 <div class="col-md-3 col-6">
                     <div class="stat-item">
                         <div class="stat-number">60+</div>
-                        <div class="stat-label">
+                        <div class="stat-label" data-i18n="landing_api_endpoints">
                             {% if current_lang == 'zh' %}API端点{% else %}API Endpoints{% endif %}
                         </div>
                     </div>
@@ -297,7 +287,7 @@
                 <div class="col-md-3 col-6">
                     <div class="stat-item">
                         <div class="stat-number">5000+</div>
-                        <div class="stat-label">
+                        <div class="stat-label" data-i18n="landing_batch_processing">
                             {% if current_lang == 'zh' %}批量计算能力{% else %}Batch Processing{% endif %}
                         </div>
                     </div>
@@ -306,15 +296,14 @@
         </div>
     </section>
 
-    <!-- Core Features Section -->
     <section class="features-section" id="features">
         <div class="container">
             <div class="row text-center mb-5">
                 <div class="col-12">
-                    <h2 class="display-4 mb-3" style="color: #f7931a;">
+                    <h2 class="display-4 mb-3" style="color: #f7931a;" data-i18n="landing_core_features">
                         {% if current_lang == 'zh' %}核心功能{% else %}Core Features{% endif %}
                     </h2>
-                    <p class="lead" style="color: #adb5bd;">
+                    <p class="lead" style="color: #adb5bd;" data-i18n="landing_core_features_desc">
                         {% if current_lang == 'zh' %}
                             全栈企业级挖矿管理解决方案
                         {% else %}
@@ -325,16 +314,15 @@
             </div>
             
             <div class="row justify-content-center">
-                <!-- Mining Calculator -->
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="feature-card">
                         <div class="feature-icon">
                             <i class="fas fa-calculator"></i>
                         </div>
-                        <h3 class="feature-title">
+                        <h3 class="feature-title" data-i18n="landing_dual_algorithm">
                             {% if current_lang == 'zh' %}双算法挖矿计算器{% else %}Dual-Algorithm Mining Calculator{% endif %}
                         </h3>
-                        <p class="feature-desc">
+                        <p class="feature-desc" data-i18n="landing_dual_algorithm_desc">
                             {% if current_lang == 'zh' %}
                                 支持{{ miner_count|default(19) }}+ ASIC矿机型号，双算法交叉验证确保精度，实时BTC价格、难度、算力数据，批量计算支持5000+矿机
                             {% else %}
@@ -344,17 +332,16 @@
                     </div>
                 </div>
                 
-                <!-- CRM System -->
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="feature-card">
                         <div class="feature-icon">
                             <i class="fas fa-users"></i>
                         </div>
                         <h3 class="feature-title">
-                            {% if current_lang == 'zh' %}企业级CRM系统{% else %}Enterprise CRM System{% endif %}
+                            <span data-i18n="landing_enterprise_crm">{% if current_lang == 'zh' %}企业级CRM系统{% else %}Enterprise CRM System{% endif %}</span>
                             <span class="badge-new">LIVE</span>
                         </h3>
-                        <p class="feature-desc">
+                        <p class="feature-desc" data-i18n="landing_enterprise_crm_desc">
                             {% if current_lang == 'zh' %}
                                 15个专业页面，60+ API端点，完整客户生命周期管理，销售漏斗跟踪，自动发票生成，佣金追踪
                             {% else %}
@@ -364,17 +351,16 @@
                     </div>
                 </div>
                 
-                <!-- Technical Analysis -->
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="feature-card">
                         <div class="feature-icon">
                             <i class="fas fa-chart-line"></i>
                         </div>
                         <h3 class="feature-title">
-                            {% if current_lang == 'zh' %}专业技术分析{% else %}Professional Technical Analysis{% endif %}
+                            <span data-i18n="landing_tech_analysis">{% if current_lang == 'zh' %}专业技术分析{% else %}Professional Technical Analysis{% endif %}</span>
                             <span class="badge-new">LIVE</span>
                         </h3>
-                        <p class="feature-desc">
+                        <p class="feature-desc" data-i18n="landing_tech_analysis_desc">
                             {% if current_lang == 'zh' %}
                                 RSI、MACD、布林带等10+技术指标，市场情绪分析，恐惧贪婪指数，智能信号聚合系统
                             {% else %}
@@ -387,29 +373,27 @@
         </div>
     </section>
 
-    <!-- Advanced Features Section -->
     <section class="features-section" style="background-color: rgba(33, 37, 41, 0.7);">
         <div class="container">
             <div class="row text-center mb-5">
                 <div class="col-12">
-                    <h2 class="display-4 mb-3" style="color: #f7931a;">
+                    <h2 class="display-4 mb-3" style="color: #f7931a;" data-i18n="landing_advanced_features">
                         {% if current_lang == 'zh' %}高级功能{% else %}Advanced Features{% endif %}
                     </h2>
                 </div>
             </div>
             
             <div class="row justify-content-center">
-                <!-- Web3 Integration -->
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="feature-card">
                         <div class="feature-icon">
                             <i class="fas fa-cube"></i>
                         </div>
                         <h3 class="feature-title">
-                            {% if current_lang == 'zh' %}Web3区块链集成{% else %}Web3 Blockchain Integration{% endif %}
+                            <span data-i18n="landing_web3_integration">{% if current_lang == 'zh' %}Web3区块链集成{% else %}Web3 Blockchain Integration{% endif %}</span>
                             <span class="badge-new">LIVE</span>
                         </h3>
-                        <p class="feature-desc">
+                        <p class="feature-desc" data-i18n="landing_web3_integration_desc">
                             {% if current_lang == 'zh' %}
                                 Base L2网络透明度记录，SLA NFT证书铸造，IPFS去中心化存储，MetaMask钱包连接，加密货币支付
                             {% else %}
@@ -419,17 +403,16 @@
                     </div>
                 </div>
                 
-                <!-- Intelligence Layer -->
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="feature-card">
                         <div class="feature-icon">
                             <i class="fas fa-brain"></i>
                         </div>
                         <h3 class="feature-title">
-                            {% if current_lang == 'zh' %}AI智能分析层{% else %}AI Intelligence Layer{% endif %}
+                            <span data-i18n="landing_ai_intelligence">{% if current_lang == 'zh' %}AI智能分析层{% else %}AI Intelligence Layer{% endif %}</span>
                             <span class="badge-new">LIVE</span>
                         </h3>
-                        <p class="feature-desc">
+                        <p class="feature-desc" data-i18n="landing_ai_intelligence_desc">
                             {% if current_lang == 'zh' %}
                                 ARIMA价格预测，异常检测系统，电力优化策略，ROI智能解释，事件驱动架构
                             {% else %}
@@ -439,17 +422,16 @@
                     </div>
                 </div>
                 
-                <!-- Hosting Services -->
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="feature-card">
                         <div class="feature-icon">
                             <i class="fas fa-server"></i>
                         </div>
                         <h3 class="feature-title">
-                            {% if current_lang == 'zh' %}托管服务管理{% else %}Hosting Services Management{% endif %}
+                            <span data-i18n="landing_hosting_services">{% if current_lang == 'zh' %}托管服务管理{% else %}Hosting Services Management{% endif %}</span>
                             <span class="badge-new">LIVE</span>
                         </h3>
-                        <p class="feature-desc">
+                        <p class="feature-desc" data-i18n="landing_hosting_services_desc">
                             {% if current_lang == 'zh' %}
                                 实时矿机监控（算力、温度、功率），单机/批量创建API，遥测数据追踪，运维工单系统
                             {% else %}
@@ -459,17 +441,16 @@
                     </div>
                 </div>
                 
-                <!-- System Monitoring -->
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="feature-card">
                         <div class="feature-icon">
                             <i class="fas fa-tachometer-alt"></i>
                         </div>
                         <h3 class="feature-title">
-                            {% if current_lang == 'zh' %}统一系统监控{% else %}Unified System Monitoring{% endif %}
+                            <span data-i18n="landing_unified_monitoring">{% if current_lang == 'zh' %}统一系统监控{% else %}Unified System Monitoring{% endif %}</span>
                             <span class="badge-new">LIVE</span>
                         </h3>
-                        <p class="feature-desc">
+                        <p class="feature-desc" data-i18n="landing_unified_monitoring_desc">
                             {% if current_lang == 'zh' %}
                                 实时健康检查，P95延迟监控，成功率追踪，缓存性能分析，端点级统计数据
                             {% else %}
@@ -479,17 +460,16 @@
                     </div>
                 </div>
                 
-                <!-- Treasury Management -->
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="feature-card">
                         <div class="feature-icon">
                             <i class="fas fa-coins"></i>
                         </div>
                         <h3 class="feature-title">
-                            {% if current_lang == 'zh' %}财资管理系统{% else %}Treasury Management{% endif %}
+                            <span data-i18n="landing_treasury_management">{% if current_lang == 'zh' %}财资管理系统{% else %}Treasury Management{% endif %}</span>
                             <span class="badge-new">LIVE</span>
                         </h3>
-                        <p class="feature-desc">
+                        <p class="feature-desc" data-i18n="landing_treasury_management_desc">
                             {% if current_lang == 'zh' %}
                                 BTC库存追踪，成本基础分析，预配置卖出策略，策略回测引擎，现金覆盖率监控
                             {% else %}
@@ -499,17 +479,16 @@
                     </div>
                 </div>
                 
-                <!-- Reporting System -->
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="feature-card">
                         <div class="feature-icon">
                             <i class="fas fa-file-pdf"></i>
                         </div>
                         <h3 class="feature-title">
-                            {% if current_lang == 'zh' %}多格式报告系统{% else %}Multi-Format Reporting{% endif %}
+                            <span data-i18n="landing_multi_format_reporting">{% if current_lang == 'zh' %}多格式报告系统{% else %}Multi-Format Reporting{% endif %}</span>
                             <span class="badge-new">LIVE</span>
                         </h3>
-                        <p class="feature-desc">
+                        <p class="feature-desc" data-i18n="landing_multi_format_reporting_desc">
                             {% if current_lang == 'zh' %}
                                 PDF/Excel/PPT多格式导出，角色专用仪表盘（投资者/运营/财务），周报月报自动生成
                             {% else %}
@@ -522,12 +501,11 @@
         </div>
     </section>
 
-    <!-- Security & Infrastructure -->
     <section class="features-section" style="background-color: rgba(247, 147, 26, 0.03); border-top: 1px solid rgba(247, 147, 26, 0.1);">
         <div class="container">
             <div class="row text-center mb-5">
                 <div class="col-12">
-                    <h2 class="display-4 mb-3" style="color: #f7931a;">
+                    <h2 class="display-4 mb-3" style="color: #f7931a;" data-i18n="landing_security_infrastructure">
                         {% if current_lang == 'zh' %}安全与基础设施{% else %}Security & Infrastructure{% endif %}
                     </h2>
                 </div>
@@ -539,10 +517,10 @@
                         <div class="feature-icon">
                             <i class="fas fa-shield-alt"></i>
                         </div>
-                        <h3 class="feature-title">
+                        <h3 class="feature-title" data-i18n="landing_enterprise_security">
                             {% if current_lang == 'zh' %}企业级安全{% else %}Enterprise Security{% endif %}
                         </h3>
-                        <p class="feature-desc">
+                        <p class="feature-desc" data-i18n="landing_enterprise_security_desc">
                             {% if current_lang == 'zh' %}
                                 KMS密钥管理，mTLS双向认证，WireGuard VPN，审计日志，SOC 2/GDPR/PCI DSS合规
                             {% else %}
@@ -557,10 +535,10 @@
                         <div class="feature-icon">
                             <i class="fas fa-rocket"></i>
                         </div>
-                        <h3 class="feature-title">
+                        <h3 class="feature-title" data-i18n="landing_performance">
                             {% if current_lang == 'zh' %}性能优化{% else %}Performance Optimization{% endif %}
                         </h3>
-                        <p class="feature-desc">
+                        <p class="feature-desc" data-i18n="landing_performance_desc">
                             {% if current_lang == 'zh' %}
                                 请求合并（9.8x性能提升），多层缓存架构，连接池优化，流式响应处理
                             {% else %}
@@ -575,10 +553,10 @@
                         <div class="feature-icon">
                             <i class="fas fa-user-shield"></i>
                         </div>
-                        <h3 class="feature-title">
+                        <h3 class="feature-title" data-i18n="landing_rbac">
                             {% if current_lang == 'zh' %}RBAC权限系统{% else %}RBAC Permission System{% endif %}
                         </h3>
-                        <p class="feature-desc">
+                        <p class="feature-desc" data-i18n="landing_rbac_desc">
                             {% if current_lang == 'zh' %}
                                 细粒度权限控制，角色继承体系，多租户隔离，API密钥管理
                             {% else %}
@@ -591,12 +569,11 @@
         </div>
     </section>
 
-    <!-- Technology Stack -->
     <section class="features-section" style="background-color: rgba(33, 37, 41, 0.5);">
         <div class="container">
             <div class="row text-center mb-4">
                 <div class="col-12">
-                    <h2 class="display-5 mb-3" style="color: #f7931a;">
+                    <h2 class="display-5 mb-3" style="color: #f7931a;" data-i18n="landing_tech_stack">
                         {% if current_lang == 'zh' %}技术栈{% else %}Technology Stack{% endif %}
                     </h2>
                 </div>
@@ -630,17 +607,16 @@
         </div>
     </section>
 
-    <!-- CTA Section -->
     <section class="cta-section">
         <div class="container">
-            <h2 class="display-5 mb-4" style="color: #f7931a;">
+            <h2 class="display-5 mb-4" style="color: #f7931a;" data-i18n="landing_cta_title">
                 {% if current_lang == 'zh' %}
                     开始您的企业级挖矿分析之旅
                 {% else %}
                     Start Your Enterprise Mining Analysis Journey
                 {% endif %}
             </h2>
-            <p class="lead mb-4" style="color: #adb5bd;">
+            <p class="lead mb-4" style="color: #adb5bd;" data-i18n="landing_cta_subtitle">
                 {% if current_lang == 'zh' %}
                     立即体验全栈企业级比特币挖矿管理平台
                 {% else %}
@@ -649,21 +625,20 @@
             </p>
             <a href="{{ url_for('login') }}" class="cta-button">
                 <i class="fas fa-rocket"></i> 
-                {% if current_lang == 'zh' %}立即开始{% else %}Get Started{% endif %}
+                <span data-i18n="landing_get_started">{% if current_lang == 'zh' %}立即开始{% else %}Get Started{% endif %}</span>
             </a>
             <a href="/ppt" class="cta-button cta-button-outline">
                 <i class="fas fa-file-powerpoint"></i> 
-                {% if current_lang == 'zh' %}下载演示文稿{% else %}Download PPT{% endif %}
+                <span data-i18n="landing_download_ppt">{% if current_lang == 'zh' %}下载演示文稿{% else %}Download PPT{% endif %}</span>
             </a>
         </div>
     </section>
 
-    <!-- Footer -->
     <footer class="text-center py-4" style="background: rgba(33, 37, 41, 0.8); border-top: 1px solid rgba(247, 147, 26, 0.2);">
         <div class="container">
             <p class="mb-0" style="color: #adb5bd;">
                 © 2025 HashInsight Enterprise | 
-                {% if current_lang == 'zh' %}企业级比特币挖矿智能分析平台{% else %}Enterprise Bitcoin Mining Intelligence Platform{% endif %}
+                <span data-i18n="landing_footer">{% if current_lang == 'zh' %}企业级比特币挖矿智能分析平台{% else %}Enterprise Bitcoin Mining Intelligence Platform{% endif %}</span>
             </p>
         </div>
     </footer>
