@@ -823,10 +823,13 @@ function displayMiners(miners) {
             <tr>
                 <td colspan="14" class="text-center text-muted py-4">
                     <i class="bi bi-cpu fs-1 mb-2 d-block"></i>
-                    ${getLanguage() === 'en' ? 'No miners found' : '未找到矿机'}
+                    <span data-i18n="hosting.no_miners_found">${getLanguage() === 'en' ? 'No miners found' : '未找到矿机'}</span>
                 </td>
             </tr>
         `;
+        if (window.I18n) {
+            I18n.updatePageTranslations();
+        }
         return;
     }
     
@@ -949,6 +952,10 @@ function displayMiners(miners) {
     });
     
     initializeTooltips();
+    
+    if (window.I18n) {
+        I18n.updatePageTranslations();
+    }
 }
 
 function initializeTooltips() {
@@ -1250,6 +1257,12 @@ function getApprovalColor(approval) {
 }
 
 function getStatusText(status) {
+    if (window.I18n && I18n.initialized) {
+        const translated = I18n.t('hosting.status.' + status);
+        if (translated !== 'hosting.status.' + status) {
+            return translated;
+        }
+    }
     const language = getLanguage();
     const statusMap = {
         'active': language === 'en' ? 'Running' : '运行中',
@@ -1261,6 +1274,12 @@ function getStatusText(status) {
 }
 
 function getApprovalText(approval) {
+    if (window.I18n && I18n.initialized) {
+        const translated = I18n.t('hosting.approval.' + approval);
+        if (translated !== 'hosting.approval.' + approval) {
+            return translated;
+        }
+    }
     const language = getLanguage();
     const approvalMap = {
         'draft': language === 'en' ? 'Draft' : '草稿',
@@ -1272,6 +1291,9 @@ function getApprovalText(approval) {
 }
 
 function getLanguage() {
+    if (window.I18n && I18n.initialized) {
+        return I18n.getLang();
+    }
     return document.querySelector('meta[name="language"]').content;
 }
 

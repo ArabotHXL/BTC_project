@@ -140,14 +140,20 @@
          * 更新页面上所有带 data-i18n 属性的元素
          */
         updatePageTranslations() {
+            const elementCount = document.querySelectorAll('[data-i18n]').length;
+            let updatedCount = 0;
+            
             // 更新文本内容
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.dataset.i18n;
                 const translated = this.t(key);
-                if (translated !== key) {
+                if (translated && translated !== key) {
                     el.textContent = translated;
+                    updatedCount++;
                 }
             });
+            
+            console.log(`[i18n] Updated ${updatedCount}/${elementCount} elements for ${this.currentLang}`);
 
             // 更新placeholder
             document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {

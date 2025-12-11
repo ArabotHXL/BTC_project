@@ -275,14 +275,17 @@ function displayMiners(miners) {
             <tr>
                 <td colspan="9" class="text-center text-muted py-4">
                     <i class="bi bi-inbox fs-1 mb-2 d-block"></i>
-                    ${getLanguage() === 'en' ? 'No devices found' : '未找到设备'}
+                    <span data-i18n="hosting.no_devices_found">${getLanguage() === 'en' ? 'No devices found' : '未找到设备'}</span>
                     <br>
                     <button class="btn btn-hosting-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#registerMinerModal">
-                        ${getLanguage() === 'en' ? 'Register Your First Miner' : '注册您的第一台矿机'}
+                        <span data-i18n="hosting.register_first_miner">${getLanguage() === 'en' ? 'Register Your First Miner' : '注册您的第一台矿机'}</span>
                     </button>
                 </td>
             </tr>
         `;
+        if (window.I18n) {
+            I18n.updatePageTranslations();
+        }
         return;
     }
     
@@ -294,15 +297,15 @@ function displayMiners(miners) {
                 <td>${miner.site_name || '-'}</td>
                 <td>${miner.hashrate || '-'} TH/s</td>
                 <td>${miner.power_consumption || '-'} W</td>
-                <td><span class="badge bg-${getStatusColor(miner.status)}">${getStatusText(miner.status)}</span></td>
+                <td><span class="badge bg-${getStatusColor(miner.status)}" data-i18n="hosting.status.${miner.status}">${getStatusText(miner.status)}</span></td>
                 <td>$${(miner.daily_revenue || 0).toFixed(2)}</td>
                 <td>${miner.uptime || '-'}</td>
                 <td>
                     <div class="btn-group btn-group-sm" role="group">
-                        <button class="btn btn-hosting-outline" onclick="showDeviceDetail(${miner.id})" title="${getLanguage() === 'en' ? 'View Details' : '查看详情'}">
+                        <button class="btn btn-hosting-outline" onclick="showDeviceDetail(${miner.id})" data-i18n-title="hosting.view_details" title="${getLanguage() === 'en' ? 'View Details' : '查看详情'}">
                             <i class="bi bi-eye"></i>
                         </button>
-                        <button class="btn btn-hosting-outline" onclick="restartDevice(${miner.id})" title="${getLanguage() === 'en' ? 'Restart' : '重启'}">
+                        <button class="btn btn-hosting-outline" onclick="restartDevice(${miner.id})" data-i18n-title="hosting.restart" title="${getLanguage() === 'en' ? 'Restart' : '重启'}">
                             <i class="bi bi-arrow-clockwise"></i>
                         </button>
                     </div>
@@ -311,6 +314,10 @@ function displayMiners(miners) {
         `;
         tbody.insertAdjacentHTML('beforeend', row);
     });
+    
+    if (window.I18n) {
+        I18n.updatePageTranslations();
+    }
 }
 
 function updateStats(stats) {
@@ -422,43 +429,43 @@ function displayDeviceDetail(device) {
     content.innerHTML = `
         <div class="row g-4">
             <div class="col-md-6">
-                <h6 class="text-warning mb-3">${getLanguage() === 'en' ? 'Basic Information' : '基本信息'}</h6>
+                <h6 class="text-warning mb-3" data-i18n="hosting.basic_info">${getLanguage() === 'en' ? 'Basic Information' : '基本信息'}</h6>
                 <table class="table table-borderless">
                     <tr>
-                        <td class="text-muted">${getLanguage() === 'en' ? 'Serial Number' : '序列号'}:</td>
+                        <td class="text-muted"><span data-i18n="hosting.serial_number">${getLanguage() === 'en' ? 'Serial Number' : '序列号'}</span>:</td>
                         <td><strong>${device.serial_number}</strong></td>
                     </tr>
                     <tr>
-                        <td class="text-muted">${getLanguage() === 'en' ? 'Model' : '型号'}:</td>
+                        <td class="text-muted"><span data-i18n="hosting.model">${getLanguage() === 'en' ? 'Model' : '型号'}</span>:</td>
                         <td>${device.miner_model}</td>
                     </tr>
                     <tr>
-                        <td class="text-muted">${getLanguage() === 'en' ? 'Site' : '站点'}:</td>
+                        <td class="text-muted"><span data-i18n="hosting.site">${getLanguage() === 'en' ? 'Site' : '站点'}</span>:</td>
                         <td>${device.site_name || '-'}</td>
                     </tr>
                     <tr>
-                        <td class="text-muted">${getLanguage() === 'en' ? 'Status' : '状态'}:</td>
-                        <td><span class="badge bg-${getStatusColor(device.status)}">${getStatusText(device.status)}</span></td>
+                        <td class="text-muted"><span data-i18n="hosting.status_label">${getLanguage() === 'en' ? 'Status' : '状态'}</span>:</td>
+                        <td><span class="badge bg-${getStatusColor(device.status)}" data-i18n="hosting.status.${device.status}">${getStatusText(device.status)}</span></td>
                     </tr>
                 </table>
             </div>
             <div class="col-md-6">
-                <h6 class="text-warning mb-3">${getLanguage() === 'en' ? 'Performance' : '性能指标'}</h6>
+                <h6 class="text-warning mb-3" data-i18n="hosting.performance">${getLanguage() === 'en' ? 'Performance' : '性能指标'}</h6>
                 <table class="table table-borderless">
                     <tr>
-                        <td class="text-muted">${getLanguage() === 'en' ? 'Hashrate' : '算力'}:</td>
+                        <td class="text-muted"><span data-i18n="hosting.hashrate">${getLanguage() === 'en' ? 'Hashrate' : '算力'}</span>:</td>
                         <td><strong>${device.hashrate || '-'} TH/s</strong></td>
                     </tr>
                     <tr>
-                        <td class="text-muted">${getLanguage() === 'en' ? 'Power' : '功耗'}:</td>
+                        <td class="text-muted"><span data-i18n="hosting.power">${getLanguage() === 'en' ? 'Power' : '功耗'}</span>:</td>
                         <td>${device.power_consumption || '-'} W</td>
                     </tr>
                     <tr>
-                        <td class="text-muted">${getLanguage() === 'en' ? 'Temperature' : '温度'}:</td>
+                        <td class="text-muted"><span data-i18n="hosting.temperature">${getLanguage() === 'en' ? 'Temperature' : '温度'}</span>:</td>
                         <td>${device.temperature || '-'} °C</td>
                     </tr>
                     <tr>
-                        <td class="text-muted">${getLanguage() === 'en' ? 'Uptime' : '在线时间'}:</td>
+                        <td class="text-muted"><span data-i18n="hosting.uptime">${getLanguage() === 'en' ? 'Uptime' : '在线时间'}</span>:</td>
                         <td>${device.uptime || '-'}</td>
                     </tr>
                 </table>
@@ -466,28 +473,32 @@ function displayDeviceDetail(device) {
         </div>
         <div class="row mt-4">
             <div class="col-12">
-                <h6 class="text-warning mb-3">${getLanguage() === 'en' ? 'Recent Revenue' : '最近收益'}</h6>
+                <h6 class="text-warning mb-3" data-i18n="hosting.recent_revenue">${getLanguage() === 'en' ? 'Recent Revenue' : '最近收益'}</h6>
                 <div class="row text-center">
                     <div class="col-md-3">
                         <div class="text-warning fw-bold">$${(device.daily_revenue || 0).toFixed(2)}</div>
-                        <small class="text-muted">${getLanguage() === 'en' ? 'Today' : '今日'}</small>
+                        <small class="text-muted" data-i18n="hosting.today">${getLanguage() === 'en' ? 'Today' : '今日'}</small>
                     </div>
                     <div class="col-md-3">
                         <div class="text-warning fw-bold">$${(device.weekly_revenue || 0).toFixed(2)}</div>
-                        <small class="text-muted">${getLanguage() === 'en' ? 'This Week' : '本周'}</small>
+                        <small class="text-muted" data-i18n="hosting.this_week">${getLanguage() === 'en' ? 'This Week' : '本周'}</small>
                     </div>
                     <div class="col-md-3">
                         <div class="text-warning fw-bold">$${(device.monthly_revenue || 0).toFixed(2)}</div>
-                        <small class="text-muted">${getLanguage() === 'en' ? 'This Month' : '本月'}</small>
+                        <small class="text-muted" data-i18n="hosting.this_month">${getLanguage() === 'en' ? 'This Month' : '本月'}</small>
                     </div>
                     <div class="col-md-3">
                         <div class="text-warning fw-bold">$${(device.total_revenue || 0).toFixed(2)}</div>
-                        <small class="text-muted">${getLanguage() === 'en' ? 'Total' : '总计'}</small>
+                        <small class="text-muted" data-i18n="hosting.total">${getLanguage() === 'en' ? 'Total' : '总计'}</small>
                     </div>
                 </div>
             </div>
         </div>
     `;
+    
+    if (window.I18n) {
+        I18n.updatePageTranslations();
+    }
 }
 
 function restartDevice(deviceId) {
@@ -523,6 +534,12 @@ function getStatusColor(status) {
 }
 
 function getStatusText(status) {
+    if (window.I18n && I18n.initialized) {
+        const translated = I18n.t('hosting.status.' + status);
+        if (translated !== 'hosting.status.' + status) {
+            return translated;
+        }
+    }
     const language = getLanguage();
     const statusMap = {
         'active': language === 'en' ? 'Running' : '运行中',
@@ -535,6 +552,9 @@ function getStatusText(status) {
 }
 
 function getLanguage() {
+    if (window.I18n && I18n.initialized) {
+        return I18n.getLang();
+    }
     return document.querySelector('meta[name="language"]').content;
 }
 

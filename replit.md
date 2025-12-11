@@ -18,9 +18,12 @@ HashInsight Enterprise is an enterprise-grade web application for mining farm ow
 - **Open Redirect Vulnerability Fix**: Language switcher (`/set_language`) now validates referrer URLs to prevent external redirect attacks. Only same-origin URLs are allowed.
 
 ### Language System Enhancements
-- **434+ Translation Keys**: Comprehensive bilingual support across all modules (homepage, CRM, hosting, calculator, etc.)
+- **859+ Translation Keys**: Comprehensive bilingual support across all modules (homepage, CRM, hosting, calculator, etc.)
+- **Instant No-Refresh Language Switching**: Client-side i18n.js engine updates all data-i18n elements without page reload
 - **Session-Based Persistence**: Language preference stored in Flask session with browser auto-detection fallback
 - **Security-Validated Switching**: Language endpoint validates redirect URLs against allowed domains
+- **Dynamic Content Translation**: All JavaScript-rendered content (tables, status badges, buttons) properly translated via onLangChange callbacks and I18n.updatePageTranslations() calls
+- **Race Condition Handling**: Dynamic content uses fallback text from meta tag language when I18n hasn't initialized yet
 
 ### CRM-Hosting Integration
 - **Deep Integration Architecture**: Customer.email ↔ UserAccess.email → UserMiner relationship enables mine owners to view customer mining operations directly in CRM
@@ -36,7 +39,7 @@ HashInsight Enterprise is an enterprise-grade web application for mining farm ow
 ## System Architecture
 
 ### UI/UX Decisions
-The front-end utilizes Jinja2 with Bootstrap 5 for a mobile-first, responsive, BTC-themed dark design. Chart.js and CountUp.js are used for data visualization and animations. Dynamic English and Chinese language switching is supported with 434+ translation keys.
+The front-end utilizes Jinja2 with Bootstrap 5 for a mobile-first, responsive, BTC-themed dark design. Chart.js and CountUp.js are used for data visualization and animations. Dynamic English and Chinese language switching is supported with 859+ translation keys and instant no-refresh updates via client-side i18n.js.
 
 ### Technical Implementations
 The system is built on a Flask backend using Blueprints for modularity. It features custom email authentication, session management, and an enterprise RBAC v2.0 system. SQLAlchemy with PostgreSQL handles data persistence, and Redis is used for caching and task queuing. Performance-critical routes use SQL aggregation to avoid N+1 query patterns.

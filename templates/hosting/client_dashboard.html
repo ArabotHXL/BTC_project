@@ -251,14 +251,17 @@ function displayRecentMiners(miners) {
             <tr>
                 <td colspan="6" class="text-center text-muted py-4">
                     <i class="bi bi-inbox fs-1 mb-2 d-block"></i>
-                    ${getLanguage() === 'en' ? 'No miners registered yet' : '暂未注册矿机'}
+                    <span data-i18n="hosting.no_miners_yet">${getLanguage() === 'en' ? 'No miners registered yet' : '暂未注册矿机'}</span>
                     <br>
                     <button class="btn btn-hosting-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#registerMinerModal">
-                        ${getLanguage() === 'en' ? 'Register Your First Miner' : '注册您的第一台矿机'}
+                        <span data-i18n="hosting.register_first_miner">${getLanguage() === 'en' ? 'Register Your First Miner' : '注册您的第一台矿机'}</span>
                     </button>
                 </td>
             </tr>
         `;
+        if (window.I18n) {
+            I18n.updatePageTranslations();
+        }
         return;
     }
     
@@ -269,12 +272,16 @@ function displayRecentMiners(miners) {
                 <td>${miner.miner_model}</td>
                 <td>${miner.site_name || '-'}</td>
                 <td>${miner.hashrate || '-'} TH/s</td>
-                <td><span class="badge bg-${getStatusColor(miner.status)}">${getStatusText(miner.status)}</span></td>
+                <td><span class="badge bg-${getStatusColor(miner.status)}" data-i18n="hosting.status.${miner.status}">${getStatusText(miner.status)}</span></td>
                 <td>$${(miner.daily_revenue || 0).toFixed(2)}</td>
             </tr>
         `;
         tbody.insertAdjacentHTML('beforeend', row);
     });
+    
+    if (window.I18n) {
+        I18n.updatePageTranslations();
+    }
 }
 
 function loadHostingSites() {
@@ -432,6 +439,12 @@ function getStatusColor(status) {
 }
 
 function getStatusText(status) {
+    if (window.I18n && I18n.initialized) {
+        const translated = I18n.t('hosting.status.' + status);
+        if (translated !== 'hosting.status.' + status) {
+            return translated;
+        }
+    }
     const language = getLanguage();
     const statusMap = {
         'active': language === 'en' ? 'Running' : '运行中',
@@ -444,6 +457,9 @@ function getStatusText(status) {
 }
 
 function getLanguage() {
+    if (window.I18n && I18n.initialized) {
+        return I18n.getLang();
+    }
     return document.querySelector('meta[name="language"]').content;
 }
 

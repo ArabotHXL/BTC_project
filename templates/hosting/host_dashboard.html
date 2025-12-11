@@ -116,6 +116,10 @@ function loadSitesOverview() {
             let totalDevices = 0;
             let totalRevenue = 0;
             
+            // Get current language for server-side fallback text
+            const currentLang = getLanguage();
+            const viewText = currentLang === 'en' ? 'View' : '查看';
+            
             data.sites.forEach(site => {
                 const row = sitesTable.insertRow();
                 row.innerHTML = `
@@ -127,7 +131,7 @@ function loadSitesOverview() {
                     <td><span class="badge bg-${site.status === 'active' ? 'success' : 'warning'}">${getStatusText(site.status)}</span></td>
                     <td>
                         <a href="/hosting/host/sites/${site.id}" class="btn btn-hosting-outline btn-sm">
-                            <i class="bi bi-eye"></i> <span data-i18n="hosting.view">${window.I18n ? I18n.t('hosting.view') : 'View'}</span>
+                            <i class="bi bi-eye"></i> <span data-i18n="hosting.view">${viewText}</span>
                         </a>
                     </td>
                 `;
@@ -143,6 +147,11 @@ function loadSitesOverview() {
             document.getElementById('total-devices').textContent = totalDevices;
             document.getElementById('total-capacity').textContent = totalCapacity.toFixed(1);
             document.getElementById('monthly-revenue').textContent = '$' + totalRevenue.toLocaleString();
+            
+            // Update translations for newly added elements (always attempt - i18n.js handles not-ready state)
+            if (window.I18n) {
+                I18n.updatePageTranslations();
+            }
         })
         .catch(error => {
             console.error('Error loading sites overview:', error);
@@ -160,7 +169,7 @@ function refreshSites() {
 }
 
 function getStatusText(status) {
-    if (window.I18n) {
+    if (window.I18n && I18n.initialized) {
         const statusMap = {
             'active': I18n.t('hosting.online'),
             'maintenance': I18n.t('hosting.maintenance'),
@@ -168,6 +177,7 @@ function getStatusText(status) {
         };
         return statusMap[status] || status;
     }
+    // Fallback using meta tag language
     const language = getLanguage();
     const statusMap = {
         'active': language === 'en' ? 'Online' : '在线',
@@ -178,10 +188,11 @@ function getStatusText(status) {
 }
 
 function getLanguage() {
-    if (window.I18n) {
-        return I18n.getCurrentLang();
+    if (window.I18n && I18n.initialized) {
+        return I18n.getLang();
     }
-    return document.querySelector('meta[name="language"]').content;
+    const meta = document.querySelector('meta[name="language"]');
+    return meta ? meta.content : 'en';
 }
 </script>
 {% endblock %}
