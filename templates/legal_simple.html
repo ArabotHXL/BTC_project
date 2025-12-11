@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -148,8 +148,17 @@
             <div class="navbar-nav ms-auto">
                 <a class="nav-link" href="/">
                     <i class="bi bi-house me-1"></i>
-                    主页 Home
+                    <span data-i18n="nav.home">{{ '首页' if current_lang == 'zh' else 'Home' }}</span>
                 </a>
+                <div class="nav-item dropdown ms-2">
+                    <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-globe2"></i> {{ 'EN' if current_lang == 'en' else '中文' }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><button class="dropdown-item" type="button" data-lang-switch="zh">中文</button></li>
+                        <li><button class="dropdown-item" type="button" data-lang-switch="en">English</button></li>
+                    </ul>
+                </div>
             </div>
         </div>
     </nav>
@@ -373,6 +382,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/i18n.js"></script>
     <script>
         // Auto-switch language based on browser language
         document.addEventListener('DOMContentLoaded', function() {

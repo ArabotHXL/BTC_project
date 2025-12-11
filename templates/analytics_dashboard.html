@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -126,11 +126,19 @@
         <div class="container-fluid">
             <span class="navbar-brand mb-0 h1">
                 <i class="bi bi-graph-up"></i>
-                Bitcoin 数据分析仪表盘
+                <span data-i18n="analytics_dashboard_title">{% if current_lang == 'en' %}Bitcoin Analytics Dashboard{% else %}Bitcoin 数据分析仪表盘{% endif %}</span>
             </span>
             <div class="d-flex align-items-center">
+                <button type="button" data-lang-switch="zh" data-lang="zh" 
+                        class="btn btn-sm btn-outline-light {{ 'active' if current_lang == 'zh' else '' }} lang-switch-btn me-1">
+                    中文
+                </button>
+                <button type="button" data-lang-switch="en" data-lang="en" 
+                        class="btn btn-sm btn-outline-light {{ 'active' if current_lang == 'en' else '' }} lang-switch-btn me-3">
+                    EN
+                </button>
                 <span class="status-indicator status-online" id="statusIndicator"></span>
-                <span id="statusText">实时监控中</span>
+                <span id="statusText" data-i18n="realtime_monitoring">{% if current_lang == 'en' %}Real-time Monitoring{% else %}实时监控中{% endif %}</span>
                 <span class="ms-3 text-muted" id="lastUpdate">--</span>
             </div>
         </div>
@@ -2513,5 +2521,6 @@
         });
         
     </script>
+    <script src="/static/js/i18n.js"></script>
 </body>
 </html>

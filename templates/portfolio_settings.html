@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ current_lang }}" data-bs-theme="dark">
+<html lang="{{ 'zh-CN' if current_lang == 'zh' else 'en' }}" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -57,8 +57,16 @@
                         <p class="mb-0">Configure your Bitcoin treasury management parameters</p>
                     </div>
                     <div class="col-auto">
+                        <button type="button" data-lang-switch="zh" data-lang="zh" 
+                                class="btn btn-sm btn-outline-light {{ 'active' if current_lang == 'zh' else '' }} lang-switch-btn me-1">
+                            中文
+                        </button>
+                        <button type="button" data-lang-switch="en" data-lang="en" 
+                                class="btn btn-sm btn-outline-light {{ 'active' if current_lang == 'en' else '' }} lang-switch-btn me-3">
+                            EN
+                        </button>
                         <a href="/analytics_dashboard" class="btn btn-outline-light">
-                            <i class="bi bi-arrow-left"></i> Back to Dashboard
+                            <i class="bi bi-arrow-left"></i> {% if current_lang == 'en' %}Back to Dashboard{% else %}返回仪表盘{% endif %}
                         </a>
                     </div>
                 </div>
@@ -343,5 +351,6 @@
         // Load current data on page load
         document.addEventListener('DOMContentLoaded', loadCurrentData);
     </script>
+    <script src="/static/js/i18n.js"></script>
 </body>
 </html>

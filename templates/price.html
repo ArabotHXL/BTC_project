@@ -15,6 +15,21 @@
     </style>
 </head>
 <body>
+    <nav class="navbar navbar-dark mb-3" style="background: #1a1a1a;">
+        <div class="container">
+            <a class="navbar-brand" href="/main">BTC Mining Calculator</a>
+            <div class="d-flex">
+                <button type="button" data-lang-switch="zh" data-lang="zh" 
+                        class="btn btn-sm btn-outline-light {{ 'active' if current_lang == 'zh' else '' }} lang-switch-btn me-1">
+                    中文
+                </button>
+                <button type="button" data-lang-switch="en" data-lang="en" 
+                        class="btn btn-sm btn-outline-light {{ 'active' if current_lang == 'en' else '' }} lang-switch-btn">
+                    EN
+                </button>
+            </div>
+        </div>
+    </nav>
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-8">
@@ -52,6 +67,7 @@
         </div>
     </div>
     
+    <script src="/static/js/i18n.js"></script>
     <script>
         // 自动刷新价格
         setTimeout(function() {

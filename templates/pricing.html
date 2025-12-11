@@ -186,7 +186,17 @@
             <a class="navbar-brand" href="{{ url_for('home') }}" style="color: #f8d000; font-weight: bold;">
                 <span style="font-size: 1.5rem;">₿</span> BTC Mining Calculator
             </a>
-            <div class="navbar-nav ms-auto">
+            <div class="navbar-nav ms-auto d-flex align-items-center">
+                <div class="me-3">
+                    <button type="button" data-lang-switch="zh" data-lang="zh" 
+                            class="btn btn-sm btn-outline-light {{ 'active' if current_lang == 'zh' else '' }} lang-switch-btn">
+                        中文
+                    </button>
+                    <button type="button" data-lang-switch="en" data-lang="en" 
+                            class="btn btn-sm btn-outline-light {{ 'active' if current_lang == 'en' else '' }} lang-switch-btn">
+                        EN
+                    </button>
+                </div>
                 <a href="{{ url_for('home') }}" class="nav-link back-button">
                     <i class="fas fa-arrow-left"></i> {% if current_lang == 'zh' %}返回首页{% else %}Back to Home{% endif %}
                 </a>
@@ -342,5 +352,6 @@
     </section>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/i18n.js"></script>
 </body>
 </html>
