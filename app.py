@@ -2110,31 +2110,30 @@ TRANSLATION_CACHE_TTL = 300  # 5 minutes
 
 @app.route('/api/i18n/translations')
 def api_get_translations():
-    """获取翻译数据 (JSON格式) - 性能优化版"""
+    """获取翻译数据 (JSON格式) - 返回双语翻译以支持无刷新切换"""
     from translations import TRANSLATIONS
     current_lang = session.get('language', g.get('language', 'zh'))
     
-    # Check if we have cached data for this language
+    # Check if we have cached data for both languages
     now = datetime.now()
-    cache_time = _translation_cache_time.get(current_lang)
-    cached_data = _translation_data_cache.get(current_lang)
+    translations_both = {}
     
-    if cached_data and cache_time and (now - cache_time).total_seconds() < TRANSLATION_CACHE_TTL:
-        # Use cached translation data
-        translations_for_lang = cached_data
-    else:
-        # Build and cache translation data
-        translations_for_lang = TRANSLATIONS.get(current_lang, {})
-        _translation_data_cache[current_lang] = translations_for_lang
-        _translation_cache_time[current_lang] = now
+    for lang in ['en', 'zh']:
+        cache_time = _translation_cache_time.get(lang)
+        cached_data = _translation_data_cache.get(lang)
+        
+        if cached_data and cache_time and (now - cache_time).total_seconds() < TRANSLATION_CACHE_TTL:
+            translations_both[lang] = cached_data
+        else:
+            translations_both[lang] = TRANSLATIONS.get(lang, {})
+            _translation_data_cache[lang] = translations_both[lang]
+            _translation_cache_time[lang] = now
     
-    # Always build fresh response (jsonify is fast)
+    # Return both languages for client-side instant switching
     return jsonify({
         'success': True,
         'current_lang': current_lang,
-        'translations': {
-            current_lang: translations_for_lang
-        }
+        'translations': translations_both
     })
 
 @app.route('/api/i18n/set-language', methods=['POST'])

@@ -1,16 +1,16 @@
 {% extends "hosting/hosting_base.html" %}
 
-{% block page_title %}{% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}{% endblock %}
-{% block page_subtitle %}{% if current_lang == 'en' %}Manage and monitor your hosted mining devices{% else %}管理和监控您的托管矿机设备{% endif %}{% endblock %}
+{% block page_title %}<span data-i18n="my_devices">{% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="manage_monitor_devices">{% if current_lang == 'en' %}Manage and monitor your hosted mining devices{% else %}管理和监控您的托管矿机设备{% endif %}</span>{% endblock %}
 
 {% block header_actions %}
 {{ super() }}
 <div class="btn-group ms-3" role="group">
     <button class="btn btn-hosting-primary btn-sm" data-bs-toggle="modal" data-bs-target="#registerMinerModal">
-        <i class="bi bi-plus-circle me-1"></i>{% if current_lang == 'en' %}Register Miner{% else %}注册矿机{% endif %}
+        <i class="bi bi-plus-circle me-1"></i><span data-i18n="register_miner">{% if current_lang == 'en' %}Register Miner{% else %}注册矿机{% endif %}</span>
     </button>
     <button class="btn btn-hosting-secondary btn-sm" onclick="refreshMiners()">
-        <i class="bi bi-arrow-clockwise me-1"></i>{% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}
+        <i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="refresh">{% if current_lang == 'en' %}Refresh{% else %}刷新{% endif %}</span>
     </button>
 </div>
 {% endblock %}
@@ -21,22 +21,22 @@
 <div class="hosting-stats-grid mb-4">
     <div class="hosting-stat-card">
         <div class="hosting-stat-value" id="total-devices">--</div>
-        <div class="hosting-stat-label">{% if current_lang == 'en' %}Total Devices{% else %}总设备数{% endif %}</div>
+        <div class="hosting-stat-label"><span data-i18n="total_devices">{% if current_lang == 'en' %}Total Devices{% else %}总设备数{% endif %}</span></div>
         <i class="bi bi-cpu hosting-stat-icon"></i>
     </div>
     <div class="hosting-stat-card">
         <div class="hosting-stat-value" id="active-devices">--</div>
-        <div class="hosting-stat-label">{% if current_lang == 'en' %}Running{% else %}运行中{% endif %}</div>
+        <div class="hosting-stat-label"><span data-i18n="running">{% if current_lang == 'en' %}Running{% else %}运行中{% endif %}</span></div>
         <i class="bi bi-play-circle hosting-stat-icon"></i>
     </div>
     <div class="hosting-stat-card">
         <div class="hosting-stat-value" id="pending-devices">--</div>
-        <div class="hosting-stat-label">{% if current_lang == 'en' %}Pending Approval{% else %}待审核{% endif %}</div>
+        <div class="hosting-stat-label"><span data-i18n="pending_approval">{% if current_lang == 'en' %}Pending Approval{% else %}待审核{% endif %}</span></div>
         <i class="bi bi-clock hosting-stat-icon"></i>
     </div>
     <div class="hosting-stat-card">
         <div class="hosting-stat-value" id="offline-devices">--</div>
-        <div class="hosting-stat-label">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</div>
+        <div class="hosting-stat-label"><span data-i18n="offline">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</span></div>
         <i class="bi bi-x-circle hosting-stat-icon"></i>
     </div>
 </div>
@@ -45,45 +45,46 @@
 <div class="hosting-card">
     <div class="hosting-card-header">
         <h6 class="hosting-card-title mb-0">
-            <i class="bi bi-search me-2"></i>{% if current_lang == 'en' %}Search & Filter{% else %}搜索和筛选{% endif %}
+            <i class="bi bi-search me-2"></i><span data-i18n="search_filter">{% if current_lang == 'en' %}Search & Filter{% else %}搜索和筛选{% endif %}</span>
         </h6>
     </div>
     <div class="hosting-card-body">
         <form class="row g-3" id="filter-form">
             <div class="col-md-4">
                 <label for="search-input" class="form-label">
-                    {% if current_lang == 'en' %}Search{% else %}搜索{% endif %}
+                    <span data-i18n="search">{% if current_lang == 'en' %}Search{% else %}搜索{% endif %}</span>
                 </label>
                 <input type="text" class="form-control" id="search-input" name="search" 
-                       placeholder="{% if current_lang == 'en' %}Serial number, model...{% else %}序列号、型号...{% endif %}">
+                       placeholder="{% if current_lang == 'en' %}Serial number, model...{% else %}序列号、型号...{% endif %}"
+                       data-i18n-placeholder="search_placeholder">
             </div>
             <div class="col-md-2">
                 <label for="status-filter" class="form-label">
-                    {% if current_lang == 'en' %}Status{% else %}状态{% endif %}
+                    <span data-i18n="status">{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</span>
                 </label>
                 <select class="form-select" id="status-filter" name="status">
-                    <option value="">{% if current_lang == 'en' %}All{% else %}全部{% endif %}</option>
-                    <option value="active">{% if current_lang == 'en' %}Running{% else %}运行中{% endif %}</option>
-                    <option value="offline">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</option>
-                    <option value="maintenance">{% if current_lang == 'en' %}Maintenance{% else %}维护中{% endif %}</option>
-                    <option value="pending_approval">{% if current_lang == 'en' %}Pending{% else %}待审核{% endif %}</option>
+                    <option value="" data-i18n="all">{% if current_lang == 'en' %}All{% else %}全部{% endif %}</option>
+                    <option value="active" data-i18n="running">{% if current_lang == 'en' %}Running{% else %}运行中{% endif %}</option>
+                    <option value="offline" data-i18n="offline">{% if current_lang == 'en' %}Offline{% else %}离线{% endif %}</option>
+                    <option value="maintenance" data-i18n="maintenance">{% if current_lang == 'en' %}Maintenance{% else %}维护中{% endif %}</option>
+                    <option value="pending_approval" data-i18n="pending">{% if current_lang == 'en' %}Pending{% else %}待审核{% endif %}</option>
                 </select>
             </div>
             <div class="col-md-2">
                 <label for="model-filter" class="form-label">
-                    {% if current_lang == 'en' %}Model{% else %}型号{% endif %}
+                    <span data-i18n="model">{% if current_lang == 'en' %}Model{% else %}型号{% endif %}</span>
                 </label>
                 <select class="form-select" id="model-filter" name="model">
-                    <option value="">{% if current_lang == 'en' %}All{% else %}全部{% endif %}</option>
+                    <option value="" data-i18n="all">{% if current_lang == 'en' %}All{% else %}全部{% endif %}</option>
                     <!-- 动态加载型号选项 -->
                 </select>
             </div>
             <div class="col-md-2">
                 <label for="site-filter" class="form-label">
-                    {% if current_lang == 'en' %}Site{% else %}站点{% endif %}
+                    <span data-i18n="site">{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</span>
                 </label>
                 <select class="form-select" id="site-filter" name="site">
-                    <option value="">{% if current_lang == 'en' %}All{% else %}全部{% endif %}</option>
+                    <option value="" data-i18n="all">{% if current_lang == 'en' %}All{% else %}全部{% endif %}</option>
                     <!-- 动态加载站点选项 -->
                 </select>
             </div>
@@ -91,7 +92,7 @@
                 <label class="form-label">&nbsp;</label>
                 <div class="d-grid">
                     <button type="submit" class="btn btn-hosting-primary">
-                        <i class="bi bi-search me-1"></i>{% if current_lang == 'en' %}Search{% else %}搜索{% endif %}
+                        <i class="bi bi-search me-1"></i><span data-i18n="search">{% if current_lang == 'en' %}Search{% else %}搜索{% endif %}</span>
                     </button>
                 </div>
             </div>
@@ -103,7 +104,7 @@
 <div class="hosting-card">
     <div class="hosting-card-header">
         <h5 class="hosting-card-title">
-            <i class="bi bi-list me-2"></i>{% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}
+            <i class="bi bi-list me-2"></i><span data-i18n="my_devices">{% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}</span>
         </h5>
         <div class="d-flex gap-2 flex-wrap">
             <span class="badge bg-info" id="result-count">{% if current_lang == 'en' %}Total: 0{% else %}共 0 台{% endif %}</span>
@@ -114,15 +115,15 @@
             <table class="table table-hover" id="miners-table">
                 <thead>
                     <tr>
-                        <th>{% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Model{% else %}型号{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Power{% else %}功耗{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Daily Revenue{% else %}日收益{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Uptime{% else %}在线时间{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</th>
+                        <th><span data-i18n="serial_number">{% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %}</span></th>
+                        <th><span data-i18n="model">{% if current_lang == 'en' %}Model{% else %}型号{% endif %}</span></th>
+                        <th><span data-i18n="site">{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</span></th>
+                        <th><span data-i18n="hashrate">{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</span></th>
+                        <th><span data-i18n="power">{% if current_lang == 'en' %}Power{% else %}功耗{% endif %}</span></th>
+                        <th><span data-i18n="status">{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</span></th>
+                        <th><span data-i18n="daily_revenue">{% if current_lang == 'en' %}Daily Revenue{% else %}日收益{% endif %}</span></th>
+                        <th><span data-i18n="uptime">{% if current_lang == 'en' %}Uptime{% else %}在线时间{% endif %}</span></th>
+                        <th><span data-i18n="actions">{% if current_lang == 'en' %}Actions{% else %}操作{% endif %}</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -147,30 +148,30 @@
             <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
                 <h5 class="modal-title" id="registerMinerModalLabel">
                     <i class="bi bi-plus-circle me-2"></i>
-                    {% if current_lang == 'en' %}Register New Miner{% else %}注册新矿机{% endif %}
+                    <span data-i18n="register_new_miner">{% if current_lang == 'en' %}Register New Miner{% else %}注册新矿机{% endif %}</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-info">
                     <i class="bi bi-info-circle me-2"></i>
-                    {% if current_lang == 'en' %}Your miner registration will be pending approval by the hosting provider.{% else %}您的矿机注册将等待托管商审核批准。{% endif %}
+                    <span data-i18n="pending_approval_notice">{% if current_lang == 'en' %}Your miner registration will be pending approval by the hosting provider.{% else %}您的矿机注册将等待托管商审核批准。{% endif %}</span>
                 </div>
                 
                 <form id="registerMinerForm">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label for="reg_serial_number" class="form-label">
-                                {% if current_lang == 'en' %}Serial Number{% else %}矿机序列号{% endif %} <span class="text-danger">*</span>
-                            </label>
+                            <label for="reg_serial_number" class="form-label" data-i18n="serial_number">
+                                {% if current_lang == 'en' %}Serial Number{% else %}矿机序列号{% endif %}
+                            </label> <span class="text-danger">*</span>
                             <input type="text" class="form-control" id="reg_serial_number" name="serial_number" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="reg_miner_model" class="form-label">
-                                {% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %} <span class="text-danger">*</span>
-                            </label>
+                            <label for="reg_miner_model" class="form-label" data-i18n="miner_model">
+                                {% if current_lang == 'en' %}Miner Model{% else %}矿机型号{% endif %}
+                            </label> <span class="text-danger">*</span>
                             <select class="form-select" id="reg_miner_model" name="miner_model" required>
-                                <option value="">{% if current_lang == 'en' %}Select Model{% else %}选择型号{% endif %}</option>
+                                <option value="" data-i18n="select_model">{% if current_lang == 'en' %}Select Model{% else %}选择型号{% endif %}</option>
                                 <option value="Antminer S19 Pro">Antminer S19 Pro</option>
                                 <option value="Antminer S19j Pro">Antminer S19j Pro</option>
                                 <option value="WhatsMiner M30S++">WhatsMiner M30S++</option>
@@ -179,22 +180,22 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label for="reg_hosting_site" class="form-label">
-                                {% if current_lang == 'en' %}Preferred Hosting Site{% else %}首选托管站点{% endif %} <span class="text-danger">*</span>
-                            </label>
+                            <label for="reg_hosting_site" class="form-label" data-i18n="hosting_site">
+                                {% if current_lang == 'en' %}Preferred Hosting Site{% else %}首选托管站点{% endif %}
+                            </label> <span class="text-danger">*</span>
                             <select class="form-select" id="reg_hosting_site" name="hosting_site" required>
-                                <option value="">{% if current_lang == 'en' %}Select Site{% else %}选择站点{% endif %}</option>
+                                <option value="" data-i18n="select_site">{% if current_lang == 'en' %}Select Site{% else %}选择站点{% endif %}</option>
                                 <!-- 动态加载站点选项 -->
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label for="reg_purchase_date" class="form-label">
+                            <label for="reg_purchase_date" class="form-label" data-i18n="purchase_date">
                                 {% if current_lang == 'en' %}Purchase Date{% else %}购买日期{% endif %}
                             </label>
                             <input type="date" class="form-control" id="reg_purchase_date" name="purchase_date">
                         </div>
                         <div class="col-12">
-                            <label for="reg_notes" class="form-label">
+                            <label for="reg_notes" class="form-label" data-i18n="additional_notes">
                                 {% if current_lang == 'en' %}Additional Notes{% else %}补充说明{% endif %}
                             </label>
                             <textarea class="form-control" id="reg_notes" name="notes" rows="3"></textarea>
@@ -204,10 +205,10 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-hosting-secondary" data-bs-dismiss="modal">
-                    {% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}
+                    <span data-i18n="cancel">{% if current_lang == 'en' %}Cancel{% else %}取消{% endif %}</span>
                 </button>
                 <button type="button" class="btn btn-hosting-primary" onclick="registerMiner()">
-                    {% if current_lang == 'en' %}Submit Registration{% else %}提交注册{% endif %}
+                    <span data-i18n="submit_registration">{% if current_lang == 'en' %}Submit Registration{% else %}提交注册{% endif %}</span>
                 </button>
             </div>
         </div>
@@ -221,7 +222,7 @@
             <div class="modal-header" style="background: linear-gradient(135deg, #f7931e, #ffc107); color: #000;">
                 <h5 class="modal-title" id="deviceDetailModalLabel">
                     <i class="bi bi-info-circle me-2"></i>
-                    {% if current_lang == 'en' %}Device Details{% else %}设备详情{% endif %}
+                    <span data-i18n="device_details">{% if current_lang == 'en' %}Device Details{% else %}设备详情{% endif %}</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -240,6 +241,15 @@ document.addEventListener('DOMContentLoaded', function() {
     loadMiners();
     setupFilters();
     loadDropdownOptions();
+    
+    // Update translations when modals are shown (for dynamic language switching)
+    document.querySelectorAll('.modal').forEach(function(modal) {
+        modal.addEventListener('shown.bs.modal', function() {
+            if (window.I18n) {
+                I18n.updatePageTranslations();
+            }
+        });
+    });
 });
 
 let currentPage = 1;

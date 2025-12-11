@@ -45,7 +45,11 @@
                         // Merge with existing translations
                         Object.assign(this.translations, data.translations);
                     }
-                    this.currentLang = data.current_lang || this.currentLang;
+                    // Only set currentLang on initial load, not when switching languages
+                    // This prevents race conditions where API returns old language value
+                    if (!this.initialized) {
+                        this.currentLang = data.current_lang || this.currentLang;
+                    }
                     console.log('[i18n] Loaded translations for', this.currentLang);
                 }
             } catch (error) {
@@ -73,6 +77,21 @@
             
             // 最后返回key本身
             return key;
+        },
+
+        /**
+         * Debug: Check if translations are loaded for a language
+         */
+        debugTranslations() {
+            console.log('[i18n DEBUG] currentLang:', this.currentLang);
+            console.log('[i18n DEBUG] translations keys:', Object.keys(this.translations));
+            if (this.translations['zh']) {
+                console.log('[i18n DEBUG] zh has', Object.keys(this.translations['zh']).length, 'keys');
+                console.log('[i18n DEBUG] zh.register_new_miner:', this.translations['zh']['register_new_miner']);
+            }
+            if (this.translations['en']) {
+                console.log('[i18n DEBUG] en has', Object.keys(this.translations['en']).length, 'keys');
+            }
         },
 
         /**
@@ -107,6 +126,9 @@
                     // Reload translations for new language (since API now returns single language)
                     await this.loadTranslations();
                     
+                    // Debug: check if translations are loaded correctly
+                    this.debugTranslations();
+                    
                     // 更新页面上的所有翻译元素
                     this.updatePageTranslations();
                     
@@ -140,20 +162,30 @@
          * 更新页面上所有带 data-i18n 属性的元素
          */
         updatePageTranslations() {
-            const elementCount = document.querySelectorAll('[data-i18n]').length;
+            const elements = document.querySelectorAll('[data-i18n]');
+            const elementCount = elements.length;
             let updatedCount = 0;
+            let skippedKeys = [];
             
             // 更新文本内容
-            document.querySelectorAll('[data-i18n]').forEach(el => {
+            elements.forEach(el => {
                 const key = el.dataset.i18n;
                 const translated = this.t(key);
                 if (translated && translated !== key) {
                     el.textContent = translated;
                     updatedCount++;
+                } else {
+                    // Track keys that were not updated (translation not found)
+                    if (!skippedKeys.includes(key)) {
+                        skippedKeys.push(key);
+                    }
                 }
             });
             
             console.log(`[i18n] Updated ${updatedCount}/${elementCount} elements for ${this.currentLang}`);
+            if (skippedKeys.length > 0 && skippedKeys.length <= 20) {
+                console.log('[i18n] Skipped keys (no translation found):', skippedKeys);
+            }
 
             // 更新placeholder
             document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
