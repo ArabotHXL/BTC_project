@@ -641,10 +641,10 @@ body {
 
     <!-- Hero Section -->
     <div class="dashboard-hero">
-        <h1 class="dashboard-title">
+        <h1 class="dashboard-title" data-i18n="dashboard_title">
             {% if current_lang == 'en' %}Bitcoin Mining Intelligence{% else %}Bitcoin挖矿智能平台{% endif %}
         </h1>
-        <p class="dashboard-subtitle">
+        <p class="dashboard-subtitle" data-i18n="dashboard_subtitle">
             {% if current_lang == 'en' %}
                 Advanced analytics and treasury management for institutional Bitcoin mining operations
             {% else %}
@@ -656,25 +656,25 @@ body {
         <div class="stats-bar">
             <div class="stat-item">
                 <span class="stat-value" id="btc-price">${{ "{:,}".format(btc_price) }}</span>
-                <span class="stat-label">
+                <span class="stat-label" data-i18n="btc_price">
                     {% if current_lang == 'en' %}BTC Price{% else %}BTC价格{% endif %}
                 </span>
             </div>
             <div class="stat-item">
                 <span class="stat-value" id="network-hashrate">{{ network_hashrate }}</span>
-                <span class="stat-label">
+                <span class="stat-label" data-i18n="network_hashrate">
                     {% if current_lang == 'en' %}Network Hashrate{% else %}全网算力{% endif %}
                 </span>
             </div>
             <div class="stat-item">
                 <span class="stat-value" id="active-users">{{ session.get('total_users', '12') }}</span>
-                <span class="stat-label">
+                <span class="stat-label" data-i18n="active_users">
                     {% if current_lang == 'en' %}Active Users{% else %}活跃用户{% endif %}
                 </span>
             </div>
             <div class="stat-item">
                 <span class="stat-value" id="system-status">Online</span>
-                <span class="stat-label">
+                <span class="stat-label" data-i18n="system_status">
                     {% if current_lang == 'en' %}System Status{% else %}系统状态{% endif %}
                 </span>
             </div>
@@ -688,10 +688,10 @@ body {
             <div class="card-stats">Core Tool</div>
             <div class="card-content">
                 <i class="bi bi-calculator card-icon"></i>
-                <h3 class="card-title">
+                <h3 class="card-title" data-i18n="mining_calculator">
                     {% if current_lang == 'en' %}Mining Calculator{% else %}挖矿计算器{% endif %}
                 </h3>
-                <p class="card-description">
+                <p class="card-description" data-i18n="mining_calculator_desc">
                     {% if current_lang == 'en' %}Real-time profitability analysis with 42+ ASIC miners and live market data{% else %}支持42+款ASIC矿机的实时收益分析{% endif %}
                 </p>
             </div>
@@ -702,10 +702,10 @@ body {
             <div class="card-stats">Pro Tool</div>
             <div class="card-content">
                 <i class="bi bi-table card-icon"></i>
-                <h3 class="card-title">
+                <h3 class="card-title" data-i18n="batch_calculator">
                     {% if current_lang == 'en' %}Batch Calculator{% else %}批量计算器{% endif %}
                 </h3>
-                <p class="card-description">
+                <p class="card-description" data-i18n="batch_calculator_desc">
                     {% if current_lang == 'en' %}Enterprise-grade bulk analysis for large-scale mining operations{% else %}大规模挖矿运营的企业级批量分析{% endif %}
                 </p>
             </div>
@@ -717,10 +717,10 @@ body {
             <div class="card-stats">CRM</div>
             <div class="card-content">
                 <i class="bi bi-people card-icon"></i>
-                <h3 class="card-title">
+                <h3 class="card-title" data-i18n="customer_management">
                     {% if current_lang == 'en' %}Customer Management{% else %}客户管理{% endif %}
                 </h3>
-                <p class="card-description">
+                <p class="card-description" data-i18n="customer_management_desc">
                     {% if current_lang == 'en' %}Full-featured CRM with lead tracking, deal management, and automated workflows{% else %}全功能CRM，包含客户跟踪、交易管理和自动化流程{% endif %}
                 </p>
             </div>
@@ -733,10 +733,10 @@ body {
             <div class="card-stats">AI-Powered</div>
             <div class="card-content">
                 <i class="bi bi-graph-up-arrow card-icon"></i>
-                <h3 class="card-title">
+                <h3 class="card-title" data-i18n="analytics_platform">
                     {% if current_lang == 'en' %}Analytics Platform{% else %}分析平台{% endif %}
                 </h3>
-                <p class="card-description">
+                <p class="card-description" data-i18n="analytics_platform_desc">
                     {% if current_lang == 'en' %}Advanced treasury management with 10-module AI trading algorithms and institutional-grade backtesting{% else %}高级资金管理，配备10模块AI交易算法和机构级回测{% endif %}
                 </p>
             </div>
@@ -749,10 +749,10 @@ body {
             <div class="card-stats">Professional</div>
             <div class="card-content">
                 <i class="bi bi-building card-icon"></i>
-                <h3 class="card-title">
+                <h3 class="card-title" data-i18n="hosting_management">
                     {% if current_lang == 'en' %}Hosting Management{% else %}托管管理{% endif %}
                 </h3>
-                <p class="card-description">
+                <p class="card-description" data-i18n="hosting_management_desc">
                     {% if current_lang == 'en' %}Comprehensive hosting platform with client management, device monitoring, and transparent reporting{% else %}全面的托管平台，包含客户管理、设备监控和透明报告{% endif %}
                 </p>
             </div>
@@ -765,10 +765,10 @@ body {
             <div class="card-stats">CRM</div>
             <div class="card-content">
                 <i class="bi bi-people card-icon" style="color: #3498db;"></i>
-                <h3 class="card-title">
+                <h3 class="card-title" data-i18n="crm">
                     {% if current_lang == 'en' %}CRM{% else %}客户管理{% endif %}
                 </h3>
-                <p class="card-description">
+                <p class="card-description" data-i18n="crm_desc">
                     {% if current_lang == 'en' %}Complete customer relationship management with lead tracking, deal pipeline, and commission calculation{% else %}完整的客户关系管理，包含线索跟踪、交易管道和佣金计算{% endif %}
                 </p>
             </div>
@@ -781,10 +781,10 @@ body {
             <div class="card-stats">Admin</div>
             <div class="card-content">
                 <i class="bi bi-person-gear card-icon"></i>
-                <h3 class="card-title">
+                <h3 class="card-title" data-i18n="user_management">
                     {% if current_lang == 'en' %}User Management{% else %}用户管理{% endif %}
                 </h3>
-                <p class="card-description">
+                <p class="card-description" data-i18n="user_management_desc">
                     {% if current_lang == 'en' %}Role-based access control with advanced security and audit logging{% else %}基于角色的访问控制，具备高级安全和审计日志{% endif %}
                 </p>
             </div>
@@ -797,10 +797,10 @@ body {
             <div class="card-stats">System</div>
             <div class="card-content">
                 <i class="bi bi-speedometer2 card-icon"></i>
-                <h3 class="card-title">
+                <h3 class="card-title" data-i18n="performance_monitoring">
                     {% if current_lang == 'en' %}Performance Monitoring{% else %}性能监控{% endif %}
                 </h3>
-                <p class="card-description">
+                <p class="card-description" data-i18n="performance_monitoring_desc">
                     {% if current_lang == 'en' %}Real-time system monitoring with advanced metrics and alerting capabilities{% else %}实时系统监控，具备高级指标和警报功能{% endif %}
                 </p>
             </div>
@@ -815,10 +815,10 @@ body {
             <div class="card-stats">Web3</div>
             <div class="card-content">
                 <i class="bi bi-grid-3x3-gap card-icon" style="color: #00d4ff;"></i>
-                <h3 class="card-title">
+                <h3 class="card-title" data-i18n="web3_dashboard">
                     {% if current_lang == 'en' %}Web3 Dashboard{% else %}Web3控制台{% endif %}
                 </h3>
-                <p class="card-description">
+                <p class="card-description" data-i18n="web3_dashboard_desc">
                     {% if current_lang == 'en' %}Blockchain verification, NFT management, and cryptocurrency payment systems{% else %}区块链验证、NFT管理和加密货币支付系统{% endif %}
                 </p>
             </div>
@@ -903,17 +903,12 @@ body {
             <div class="sla-nft-badge" id="sla-nft-count">Loading...</div>
             <div class="card-content">
                 <i class="bi bi-award card-icon" style="color: #9b59b6;"></i>
-                <h3 class="card-title">
+                <h3 class="card-title" data-i18n="sla_nft_certificates">
                     {% if current_lang == 'en' %}SLA NFT Certificates{% else %}SLA NFT证书{% endif %}
                 </h3>
                 <p class="card-description">
-                    {% if current_lang == 'en' %}
-                        <span class="sla-status-indicator sla-status-excellent" id="sla-status-indicator"></span>
-                        Blockchain-verified service level agreement certificates and monthly performance reports
-                    {% else %}
-                        <span class="sla-status-indicator sla-status-excellent" id="sla-status-indicator"></span>
-                        区块链验证的服务等级协议证书和月度性能报告
-                    {% endif %}
+                    <span class="sla-status-indicator sla-status-excellent" id="sla-status-indicator"></span>
+                    <span data-i18n="sla_nft_desc">{% if current_lang == 'en' %}Blockchain-verified service level agreement certificates and monthly performance reports{% else %}区块链验证的服务等级协议证书和月度性能报告{% endif %}</span>
                 </p>
             </div>
         </div>
