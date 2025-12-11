@@ -1,7 +1,7 @@
 {% extends "hosting/hosting_base.html" %}
 
-{% block page_title %}{% if current_lang == 'en' %}My Dashboard{% else %}我的资产{% endif %}{% endblock %}
-{% block page_subtitle %}{% if current_lang == 'en' %}Manage your hosted mining devices{% else %}管理您的托管矿机设备{% endif %}{% endblock %}
+{% block page_title %}<span data-i18n="my_dashboard">{% if current_lang == 'en' %}My Dashboard{% else %}我的资产{% endif %}</span>{% endblock %}
+{% block page_subtitle %}<span data-i18n="manage_hosted_devices">{% if current_lang == 'en' %}Manage your hosted mining devices{% else %}管理您的托管矿机设备{% endif %}</span>{% endblock %}
 
 {% block content %}
 
@@ -9,22 +9,22 @@
 <div class="hosting-stats-grid">
     <div class="hosting-stat-card">
         <div class="hosting-stat-value" id="total-miners">--</div>
-        <div class="hosting-stat-label">{% if current_lang == 'en' %}My Miners{% else %}我的矿机{% endif %}</div>
+        <div class="hosting-stat-label" data-i18n="my_miners">{% if current_lang == 'en' %}My Miners{% else %}我的矿机{% endif %}</div>
         <i class="bi bi-cpu hosting-stat-icon"></i>
     </div>
     <div class="hosting-stat-card">
         <div class="hosting-stat-value" id="active-miners">--</div>
-        <div class="hosting-stat-label">{% if current_lang == 'en' %}Running{% else %}运行中{% endif %}</div>
+        <div class="hosting-stat-label" data-i18n="running">{% if current_lang == 'en' %}Running{% else %}运行中{% endif %}</div>
         <i class="bi bi-play-circle hosting-stat-icon"></i>
     </div>
     <div class="hosting-stat-card">
         <div class="hosting-stat-value" id="total-hashrate">--</div>
-        <div class="hosting-stat-label">{% if current_lang == 'en' %}Total Hashrate{% else %}总算力{% endif %}</div>
+        <div class="hosting-stat-label" data-i18n="total_hashrate">{% if current_lang == 'en' %}Total Hashrate{% else %}总算力{% endif %}</div>
         <i class="bi bi-lightning hosting-stat-icon"></i>
     </div>
     <div class="hosting-stat-card">
         <div class="hosting-stat-value" id="monthly-revenue">--</div>
-        <div class="hosting-stat-label">{% if current_lang == 'en' %}Monthly Revenue{% else %}月收益估算{% endif %}</div>
+        <div class="hosting-stat-label" data-i18n="monthly_revenue">{% if current_lang == 'en' %}Monthly Revenue{% else %}月收益估算{% endif %}</div>
         <i class="bi bi-currency-bitcoin hosting-stat-icon"></i>
     </div>
 </div>
@@ -33,7 +33,7 @@
 <div class="hosting-card">
     <div class="hosting-card-header">
         <h5 class="hosting-card-title">
-            <i class="bi bi-lightning-charge me-2"></i>{% if current_lang == 'en' %}Quick Actions{% else %}快捷操作{% endif %}
+            <i class="bi bi-lightning-charge me-2"></i><span data-i18n="quick_actions">{% if current_lang == 'en' %}Quick Actions{% else %}快捷操作{% endif %}</span>
         </h5>
     </div>
     <div class="hosting-card-body">
@@ -41,25 +41,25 @@
             <div class="col-md-3">
                 <a href="/hosting/client/miners" class="btn btn-hosting-primary w-100 py-3">
                     <i class="bi bi-cpu fs-4 d-block mb-2"></i>
-                    {% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}
+                    <span data-i18n="my_devices">{% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}</span>
                 </a>
             </div>
             <div class="col-md-3">
                 <a href="/hosting/client/usage" class="btn btn-hosting-secondary w-100 py-3">
                     <i class="bi bi-activity fs-4 d-block mb-2"></i>
-                    {% if current_lang == 'en' %}Usage Tracking{% else %}使用记录{% endif %}
+                    <span data-i18n="usage_tracking">{% if current_lang == 'en' %}Usage Tracking{% else %}使用记录{% endif %}</span>
                 </a>
             </div>
             <div class="col-md-3">
                 <a href="/hosting/client/reports" class="btn btn-hosting-secondary w-100 py-3">
                     <i class="bi bi-graph-up fs-4 d-block mb-2"></i>
-                    {% if current_lang == 'en' %}Reports{% else %}收益报告{% endif %}
+                    <span data-i18n="reports">{% if current_lang == 'en' %}Reports{% else %}收益报告{% endif %}</span>
                 </a>
             </div>
             <div class="col-md-3">
                 <button class="btn btn-hosting-secondary w-100 py-3" data-bs-toggle="modal" data-bs-target="#registerMinerModal">
                     <i class="bi bi-plus-circle fs-4 d-block mb-2"></i>
-                    {% if current_lang == 'en' %}Register Miner{% else %}注册矿机{% endif %}
+                    <span data-i18n="register_miner">{% if current_lang == 'en' %}Register Miner{% else %}注册矿机{% endif %}</span>
                 </button>
             </div>
         </div>
@@ -70,10 +70,10 @@
 <div class="hosting-card">
     <div class="hosting-card-header">
         <h5 class="hosting-card-title">
-            <i class="bi bi-clock-history me-2"></i>{% if current_lang == 'en' %}Recent Miners{% else %}最近的矿机{% endif %}
+            <i class="bi bi-clock-history me-2"></i><span data-i18n="recent_miners">{% if current_lang == 'en' %}Recent Miners{% else %}最近的矿机{% endif %}</span>
         </h5>
         <a href="/hosting/client/miners" class="btn btn-hosting-primary btn-sm">
-            <i class="bi bi-list me-1"></i>{% if current_lang == 'en' %}View All{% else %}查看全部{% endif %}
+            <i class="bi bi-list me-1"></i><span data-i18n="view_all">{% if current_lang == 'en' %}View All{% else %}查看全部{% endif %}</span>
         </a>
     </div>
     <div class="hosting-card-body">
@@ -81,12 +81,12 @@
             <table class="table table-hover" id="recent-miners-table">
                 <thead>
                     <tr>
-                        <th>{% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Model{% else %}型号{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
-                        <th>{% if current_lang == 'en' %}Daily Revenue{% else %}日收益{% endif %}</th>
+                        <th data-i18n="serial_number">{% if current_lang == 'en' %}Serial Number{% else %}序列号{% endif %}</th>
+                        <th data-i18n="model">{% if current_lang == 'en' %}Model{% else %}型号{% endif %}</th>
+                        <th data-i18n="site">{% if current_lang == 'en' %}Site{% else %}站点{% endif %}</th>
+                        <th data-i18n="hashrate">{% if current_lang == 'en' %}Hashrate{% else %}算力{% endif %}</th>
+                        <th data-i18n="status">{% if current_lang == 'en' %}Status{% else %}状态{% endif %}</th>
+                        <th data-i18n="daily_revenue">{% if current_lang == 'en' %}Daily Revenue{% else %}日收益{% endif %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -103,12 +103,12 @@
         <div class="hosting-card">
             <div class="hosting-card-header">
                 <h5 class="hosting-card-title">
-                    <i class="bi bi-graph-up me-2"></i>{% if current_lang == 'en' %}Revenue Trend{% else %}收益趋势{% endif %}
+                    <i class="bi bi-graph-up me-2"></i><span data-i18n="revenue_trend">{% if current_lang == 'en' %}Revenue Trend{% else %}收益趋势{% endif %}</span>
                 </h5>
                 <div class="btn-group" role="group">
-                    <button class="btn btn-hosting-outline btn-sm active" onclick="switchPeriod('7d')">7{% if current_lang == 'en' %}D{% else %}天{% endif %}</button>
-                    <button class="btn btn-hosting-outline btn-sm" onclick="switchPeriod('30d')">30{% if current_lang == 'en' %}D{% else %}天{% endif %}</button>
-                    <button class="btn btn-hosting-outline btn-sm" onclick="switchPeriod('90d')">90{% if current_lang == 'en' %}D{% else %}天{% endif %}</button>
+                    <button class="btn btn-hosting-outline btn-sm active" onclick="switchPeriod('7d')">7<span data-i18n="days_short">{% if current_lang == 'en' %}D{% else %}天{% endif %}</span></button>
+                    <button class="btn btn-hosting-outline btn-sm" onclick="switchPeriod('30d')">30<span data-i18n="days_short">{% if current_lang == 'en' %}D{% else %}天{% endif %}</span></button>
+                    <button class="btn btn-hosting-outline btn-sm" onclick="switchPeriod('90d')">90<span data-i18n="days_short">{% if current_lang == 'en' %}D{% else %}天{% endif %}</span></button>
                 </div>
             </div>
             <div class="hosting-card-body">
@@ -121,7 +121,7 @@
         <div class="hosting-card">
             <div class="hosting-card-header">
                 <h5 class="hosting-card-title">
-                    <i class="bi bi-pie-chart me-2"></i>{% if current_lang == 'en' %}Miner Distribution{% else %}矿机分布{% endif %}
+                    <i class="bi bi-pie-chart me-2"></i><span data-i18n="miner_distribution">{% if current_lang == 'en' %}Miner Distribution{% else %}矿机分布{% endif %}</span>
                 </h5>
             </div>
             <div class="hosting-card-body text-center">
