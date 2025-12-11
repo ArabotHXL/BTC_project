@@ -579,45 +579,69 @@ def generate_collector_key(site_id: int, name: str) -> str:
 
 @collector_bp.route('/stats', methods=['GET'])
 def get_collector_stats():
-    """获取采集器总体统计"""
+    """获取采集器总体统计 - 优化版 (4 queries instead of 1+3N)"""
     from auth import login_required as auth_login_required
     
     try:
-        sites = HostingSite.query.all()
+        miner_stats = db.session.query(
+            MinerTelemetryLive.site_id,
+            func.count(MinerTelemetryLive.id).label('total'),
+            func.sum(db.case((MinerTelemetryLive.online == True, 1), else_=0)).label('online'),
+            func.sum(MinerTelemetryLive.hashrate_ghs).label('hashrate'),
+            func.avg(MinerTelemetryLive.temperature_avg).label('temp')
+        ).group_by(MinerTelemetryLive.site_id).all()
+        
+        miner_stats_map = {s.site_id: s for s in miner_stats}
+        
+        latest_upload_subq = db.session.query(
+            CollectorUploadLog.site_id,
+            func.max(CollectorUploadLog.upload_time).label('last_upload')
+        ).group_by(CollectorUploadLog.site_id).subquery()
+        
+        active_keys_stats = db.session.query(
+            CollectorKey.site_id,
+            func.count(CollectorKey.id).label('key_count')
+        ).filter(CollectorKey.is_active == True).group_by(CollectorKey.site_id).all()
+        
+        active_keys_map = {s.site_id: s.key_count for s in active_keys_stats}
+        
+        sites = db.session.query(
+            HostingSite.id,
+            HostingSite.name,
+            latest_upload_subq.c.last_upload
+        ).outerjoin(
+            latest_upload_subq,
+            HostingSite.id == latest_upload_subq.c.site_id
+        ).all()
+        
         site_stats = {}
         total_miners = 0
         total_online = 0
         active_collectors = 0
+        now = datetime.utcnow()
         
         for site in sites:
-            stats = db.session.query(
-                func.count(MinerTelemetryLive.id).label('total'),
-                func.sum(db.case((MinerTelemetryLive.online == True, 1), else_=0)).label('online'),
-                func.sum(MinerTelemetryLive.hashrate_ghs).label('hashrate'),
-                func.avg(MinerTelemetryLive.temperature_avg).label('temp')
-            ).filter(MinerTelemetryLive.site_id == site.id).first()
+            stats = miner_stats_map.get(site.id)
+            active_keys = active_keys_map.get(site.id, 0)
             
-            last_upload = CollectorUploadLog.query.filter_by(
-                site_id=site.id
-            ).order_by(CollectorUploadLog.upload_time.desc()).first()
+            miners_total = stats.total if stats else 0
+            miners_online = int(stats.online or 0) if stats else 0
+            hashrate = (stats.hashrate or 0) / 1000 if stats else 0
+            temp = round(stats.temp or 0, 1) if stats else 0
             
-            active_keys = CollectorKey.query.filter_by(
-                site_id=site.id, is_active=True
-            ).count()
-            
-            if active_keys > 0 and last_upload and (datetime.utcnow() - last_upload.upload_time).total_seconds() < 300:
+            if active_keys > 0 and site.last_upload and (now - site.last_upload).total_seconds() < 300:
                 active_collectors += 1
             
             site_stats[site.id] = {
-                'total_miners': stats.total or 0,
-                'online_miners': int(stats.online or 0),
-                'total_hashrate_ths': (stats.hashrate or 0) / 1000,
-                'avg_temperature': round(stats.temp or 0, 1),
-                'last_upload': last_upload.upload_time.strftime('%Y-%m-%d %H:%M') if last_upload else None
+                'total_miners': miners_total,
+                'online_miners': miners_online,
+                'total_hashrate_ths': hashrate,
+                'avg_temperature': temp,
+                'last_upload': site.last_upload.strftime('%Y-%m-%d %H:%M') if site.last_upload else None
             }
             
-            total_miners += stats.total or 0
-            total_online += int(stats.online or 0)
+            total_miners += miners_total
+            total_online += miners_online
         
         try:
             from services.alert_engine import MinerAlert

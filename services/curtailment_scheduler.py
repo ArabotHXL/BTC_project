@@ -280,6 +280,12 @@ class CurtailmentSchedulerService:
                 
                 logger.info(f"🔔 发现 {len(upcoming_plans)} 个即将执行的计划")
                 
+                creator_ids = [p.created_by_id for p in upcoming_plans if p.created_by_id]
+                creators_map = {}
+                if creator_ids:
+                    creators = User.query.filter(User.id.in_(creator_ids)).all()
+                    creators_map = {u.id: u for u in creators}
+                
                 for plan in upcoming_plans:
                     time_until_start = (plan.scheduled_start_time - now).total_seconds() / 60
                     logger.info(
@@ -292,7 +298,7 @@ class CurtailmentSchedulerService:
                     
                     if plan.created_by_id:
                         try:
-                            creator = User.query.get(plan.created_by_id)
+                            creator = creators_map.get(plan.created_by_id)
                             if creator and creator.email:
                                 success = send_curtailment_notification_email(
                                     to_email=creator.email,
