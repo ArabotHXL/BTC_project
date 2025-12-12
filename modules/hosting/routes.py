@@ -6284,7 +6284,7 @@ def site_settings(site_id):
         
         if not has_access:
             flash('没有访问权限', 'error')
-            return redirect(url_for('hosting.dashboard'))
+            return redirect(url_for('hosting_service_bp.dashboard'))
         
         site = HostingSite.query.get_or_404(site_id)
         
@@ -6319,7 +6319,7 @@ def site_settings(site_id):
     except Exception as e:
         logger.error(f"加载站点设置失败: {e}")
         flash('加载设置失败', 'error')
-        return redirect(url_for('hosting.dashboard'))
+        return redirect(url_for('hosting_service_bp.dashboard'))
 
 
 @hosting_bp.route('/branding')
