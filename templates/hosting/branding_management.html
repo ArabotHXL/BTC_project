@@ -1,0 +1,113 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block title %}
+    {% if current_lang == 'en' %}White Label Branding{% else %}白标品牌配置{% endif %} - HashInsight
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-warning mb-2">
+                <i class="bi bi-brush me-2"></i>
+                {% if current_lang == 'en' %}White Label Branding{% else %}白标品牌配置{% endif %}
+            </h2>
+            <p class="text-muted">
+                {% if current_lang == 'en' %}
+                    Customize your platform branding for each site. Upload logos, set colors, and configure social media links.
+                {% else %}
+                    为每个站点自定义平台品牌。上传Logo、设置颜色和配置社交媒体链接。
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    {% if sites_with_branding %}
+    <div class="row g-4">
+        {% for item in sites_with_branding %}
+        <div class="col-lg-4 col-md-6">
+            <div class="hosting-card h-100">
+                <div class="hosting-card-header d-flex justify-content-between align-items-center">
+                    <h5 class="hosting-card-title mb-0">
+                        <i class="bi bi-building me-2"></i>{{ item.site.name }}
+                    </h5>
+                    {% if item.branding and item.branding.company_name %}
+                    <span class="badge bg-success">
+                        {% if current_lang == 'en' %}Configured{% else %}已配置{% endif %}
+                    </span>
+                    {% else %}
+                    <span class="badge bg-secondary">
+                        {% if current_lang == 'en' %}Not Configured{% else %}未配置{% endif %}
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="hosting-card-body">
+                    <div class="text-center mb-4">
+                        {% if item.branding and item.branding.logo_url %}
+                        <img src="{{ item.branding.logo_url }}" alt="Logo" class="img-fluid" style="max-height: 80px; max-width: 200px;">
+                        {% else %}
+                        <div class="p-4 rounded" style="background: rgba(255,255,255,0.05);">
+                            <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                            <p class="text-muted mb-0 mt-2">
+                                {% if current_lang == 'en' %}No Logo{% else %}暂无Logo{% endif %}
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            {% if current_lang == 'en' %}Company Name{% else %}公司名称{% endif %}
+                        </small>
+                        <p class="mb-0">{{ item.branding.company_name if item.branding and item.branding.company_name else (item.site.operator_name or '-') }}</p>
+                    </div>
+                    
+                    {% if item.branding %}
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            {% if current_lang == 'en' %}Brand Colors{% else %}品牌颜色{% endif %}
+                        </small>
+                        <div class="d-flex gap-2 mt-1">
+                            <div class="rounded" style="width: 30px; height: 30px; background: {{ item.branding.primary_color or '#f7931a' }};"></div>
+                            <div class="rounded" style="width: 30px; height: 30px; background: {{ item.branding.secondary_color or '#1a1d2e' }};"></div>
+                            {% if item.branding.accent_color %}
+                            <div class="rounded" style="width: 30px; height: 30px; background: {{ item.branding.accent_color }};"></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-grid">
+                        <a href="/hosting/site/{{ item.site.id }}/settings" class="btn btn-warning">
+                            <i class="bi bi-gear me-2"></i>
+                            {% if current_lang == 'en' %}Configure Branding{% else %}配置品牌{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="hosting-card">
+        <div class="hosting-card-body text-center py-5">
+            <i class="bi bi-building text-muted" style="font-size: 4rem;"></i>
+            <h4 class="mt-3 text-muted">
+                {% if current_lang == 'en' %}No Sites Available{% else %}暂无站点{% endif %}
+            </h4>
+            <p class="text-muted mb-4">
+                {% if current_lang == 'en' %}
+                    Create a hosting site first to configure branding.
+                {% else %}
+                    请先创建托管站点以配置品牌。
+                {% endif %}
+            </p>
+            <a href="/hosting/host/sites" class="btn btn-warning">
+                <i class="bi bi-plus-circle me-2"></i>
+                {% if current_lang == 'en' %}Create Site{% else %}创建站点{% endif %}
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

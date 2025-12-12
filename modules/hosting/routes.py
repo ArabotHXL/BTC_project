@@ -6317,3 +6317,38 @@ def site_settings(site_id):
         logger.error(f"加载站点设置失败: {e}")
         flash('加载设置失败', 'error')
         return redirect(url_for('hosting.dashboard'))
+
+
+@hosting_bp.route('/branding')
+@login_required
+def branding_management():
+    """白标品牌管理页面 - 显示所有站点的品牌配置"""
+    from models import SiteBranding
+    
+    try:
+        user_role = normalize_role(session.get('role', 'guest'))
+        has_access = rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT)
+        
+        if not has_access:
+            flash('没有访问权限', 'error')
+            return redirect(url_for('hosting.dashboard'))
+        
+        sites = HostingSite.query.all()
+        
+        sites_with_branding = []
+        for site in sites:
+            branding = SiteBranding.query.filter_by(site_id=site.id).first()
+            sites_with_branding.append({
+                'site': site,
+                'branding': branding
+            })
+        
+        return render_template(
+            'hosting/branding_management.html',
+            sites_with_branding=sites_with_branding
+        )
+        
+    except Exception as e:
+        logger.error(f"加载品牌管理页面失败: {e}")
+        flash('加载失败', 'error')
+        return redirect(url_for('hosting.dashboard'))

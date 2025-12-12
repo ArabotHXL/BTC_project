@@ -660,6 +660,9 @@
                             <a href="/hosting/host/collectors" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/host/collectors') }}">
                                 <span class="hosting-nav-text" data-i18n="edge_collectors">{% if current_lang == 'en' %}Edge Collectors{% else %}边缘采集器{% endif %}</span>
                             </a>
+                            <a href="javascript:void(0)" class="hosting-nav-link hosting-nav-child {{ 'active' if '/settings' in request.path }}" onclick="showSiteSettingsSelector()">
+                                <span class="hosting-nav-text" data-i18n="site_settings">{% if current_lang == 'en' %}Site Settings{% else %}站点设置{% endif %}</span>
+                            </a>
                         </div>
                     </div>
                     
@@ -1015,7 +1018,8 @@
                 'serial_number': { zh: '序列号', en: 'Serial Number' },
                 'grade': { zh: '评级', en: 'Grade' },
                 'daily_profit': { zh: '日收益', en: 'Daily Profit' },
-                'fan': { zh: '风扇', en: 'Fan' }
+                'fan': { zh: '风扇', en: 'Fan' },
+                'site_settings': { zh: '站点设置', en: 'Site Settings' }
             };
             
             // 更新带有 data-i18n 属性的元素
@@ -1027,6 +1031,55 @@
             });
         }
     });
+    
+    function showSiteSettingsSelector() {
+        const lang = document.documentElement.lang || 'zh';
+        fetch('/hosting/api/sites')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.sites || data.sites.length === 0) {
+                    alert(lang === 'en' ? 'No sites available' : '没有可用的站点');
+                    return;
+                }
+                if (data.sites.length === 1) {
+                    window.location.href = `/hosting/site/${data.sites[0].id}/settings`;
+                    return;
+                }
+                let options = data.sites.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                let modalHtml = `
+                    <div class="modal fade" id="siteSettingsModal" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content" style="background: #1a1d2e; border: 1px solid #f7931a;">
+                                <div class="modal-header border-bottom border-secondary">
+                                    <h5 class="modal-title text-warning">${lang === 'en' ? 'Select Site' : '选择站点'}</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <select class="form-select" id="site-settings-select">${options}</select>
+                                </div>
+                                <div class="modal-footer border-top border-secondary">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${lang === 'en' ? 'Cancel' : '取消'}</button>
+                                    <button type="button" class="btn btn-warning" onclick="goToSiteSettings()">${lang === 'en' ? 'Go to Settings' : '进入设置'}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                document.getElementById('siteSettingsModal')?.remove();
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                new bootstrap.Modal(document.getElementById('siteSettingsModal')).show();
+            })
+            .catch(err => {
+                console.error('Failed to load sites:', err);
+                alert(lang === 'en' ? 'Failed to load sites' : '加载站点失败');
+            });
+    }
+    
+    function goToSiteSettings() {
+        const siteId = document.getElementById('site-settings-select').value;
+        if (siteId) {
+            window.location.href = `/hosting/site/${siteId}/settings`;
+        }
+    }
     </script>
 </body>
 </html>

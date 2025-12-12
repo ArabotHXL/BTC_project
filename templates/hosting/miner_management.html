@@ -228,9 +228,6 @@
         <button class="btn btn-success" onclick="exportCSV()">
             <i class="bi bi-download me-1"></i>{% if current_lang == 'en' %}Export CSV{% else %}导出CSV{% endif %}
         </button>
-        <button class="btn btn-outline-info" onclick="openSiteSettings()" id="site-settings-btn" title="{% if current_lang == 'en' %}Site Settings (Thermal Protection, Branding){% else %}站点设置（热保护、品牌配置）{% endif %}">
-            <i class="bi bi-gear me-1"></i>{% if current_lang == 'en' %}Site Settings{% else %}站点设置{% endif %}
-        </button>
     </div>
 </div>
 
@@ -2289,18 +2286,6 @@ function exportCSV() {
     if (search) params.append('search', search);
     
     window.location.href = `/hosting/api/miners/export?${params.toString()}`;
-}
-
-function openSiteSettings() {
-    const siteId = document.getElementById('site-filter').value;
-    const lang = document.documentElement.lang || 'zh';
-    
-    if (!siteId) {
-        alert(lang === 'en' ? 'Please select a site first' : '请先选择一个站点');
-        return;
-    }
-    
-    window.location.href = `/hosting/site/${siteId}/settings`;
 }
 
 // 初始化时加载KPI和设置事件
