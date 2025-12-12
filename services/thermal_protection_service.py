@@ -88,7 +88,7 @@ class ThermalProtectionService:
         """获取矿机当前温度"""
         telemetry = MinerTelemetry.query.filter_by(
             miner_id=miner_id
-        ).order_by(MinerTelemetry.timestamp.desc()).first()
+        ).order_by(MinerTelemetry.recorded_at.desc()).first()
         
         if telemetry and telemetry.temperature:
             return telemetry.temperature
