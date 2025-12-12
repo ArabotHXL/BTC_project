@@ -1364,7 +1364,7 @@ def branding_management():
             })
         
         return render_template(
-            'hosting/branding_management.html',
+            'branding_management.html',
             sites_with_branding=sites_with_branding
         )
         
