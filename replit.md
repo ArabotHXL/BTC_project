@@ -27,8 +27,11 @@ HashInsight Enterprise is an enterprise-grade web application for mining farm ow
 
 ### CRM-Hosting Integration
 - **Deep Integration Architecture**: Customer.email ↔ UserAccess.email → UserMiner relationship enables mine owners to view customer mining operations directly in CRM
-- **4 API Endpoints**: `/crm/api/hosting/customer-miners`, `/crm/api/hosting/customer-stats`, `/crm/api/hosting/customer-performance`, `/crm/api/hosting/customer-revenue`
+- **5 API Endpoints**: `/crm/api/customer/<id>/hosting-stats`, `/crm/api/customer/<id>/hosting-miners`, `/crm/api/customer/<id>/sync-hosting`, `/crm/api/sync-all-hosting`, `/crm/api/sync-status`
 - **Real-Time Data Display**: CRM customer detail pages show live miner status, hashrate, and revenue data
+- **Sync Status Monitoring**: Health check endpoint reports link rate, sync health, and integration issues
+- **Architecture Documentation**: Complete API specs in `architecture/integration/CRM-Flask-sync.md`
+- **Schema Definitions**: Python dataclasses for type validation in `common/schemas/crm_sync.py`
 
 ### Power Efficiency Metrics (Engineering-Focused)
 - **24h Hashrate & Efficiency Chart**: Replaced net revenue chart with dual-axis performance visualization
