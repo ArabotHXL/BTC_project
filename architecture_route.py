@@ -39,3 +39,14 @@ def system_architecture_complete():
         current_lang=current_lang,
         t=lambda key: key  # Simple passthrough since we're using inline translations
     )
+
+@app.route('/relationship-diagram')
+def relationship_diagram():
+    """Display the module relationship diagram / 显示模块关系图"""
+    current_lang = session.get('language', 'zh')
+    
+    return render_template(
+        'relationship_diagram.html',
+        current_lang=current_lang,
+        t=lambda key: key
+    )
