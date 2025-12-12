@@ -6305,12 +6305,15 @@ def site_settings(site_id):
         
         thermal_stats = thermal_protection_service.get_thermal_stats(site_id)
         
+        all_sites = HostingSite.query.order_by(HostingSite.name).all()
+        
         return render_template(
             'hosting/site_settings.html',
             site=site,
             thermal_config=thermal_config,
             branding=branding,
-            thermal_stats=thermal_stats
+            thermal_stats=thermal_stats,
+            all_sites=all_sites
         )
         
     except Exception as e:

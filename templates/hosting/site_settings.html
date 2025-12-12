@@ -5,11 +5,29 @@
 
 {% block header_actions %}
 {{ super() }}
-<div class="btn-group ms-3" role="group">
+<div class="d-flex align-items-center gap-3 ms-3">
+    <div class="site-selector-wrapper">
+        <select id="siteSelector" class="form-select form-select-sm" 
+                style="min-width: 200px; background: rgba(255,255,255,0.1); border-color: var(--hosting-primary); color: #fff;"
+                onchange="switchSite(this.value)">
+            {% for s in all_sites %}
+            <option value="{{ s.id }}" {{ 'selected' if s.id == site.id else '' }} style="background: #1a1d2e; color: #fff;">
+                {{ s.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
     <a href="/hosting/site/{{ site.id }}" class="btn btn-hosting-secondary btn-sm">
         <i class="bi bi-arrow-left me-1"></i><span data-i18n="common.back">返回</span>
     </a>
 </div>
+<script>
+function switchSite(siteId) {
+    if (siteId) {
+        window.location.href = '/hosting/site/' + siteId + '/settings';
+    }
+}
+</script>
 {% endblock %}
 
 {% block content %}
