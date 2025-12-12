@@ -1,7 +1,7 @@
 {% extends "hosting/hosting_base.html" %}
 
 {% block page_title %}{% if current_lang == 'en' %}Site Settings{% else %}站点设置{% endif %} - {{ site.name }}{% endblock %}
-{% block page_subtitle %}{% if current_lang == 'en' %}Thermal protection and branding configuration{% else %}热保护与品牌配置{% endif %}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}Thermal protection configuration{% else %}热保护配置{% endif %}{% endblock %}
 
 {% block header_actions %}
 {{ super() }}
@@ -20,11 +20,6 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="thermal-tab" data-bs-toggle="tab" data-bs-target="#thermal-panel" type="button">
                     <i class="bi bi-thermometer-high me-2"></i><span data-i18n="hosting.settings.thermal_protection">温度智能控频</span>
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="branding-tab" data-bs-toggle="tab" data-bs-target="#branding-panel" type="button">
-                    <i class="bi bi-palette me-2"></i><span data-i18n="hosting.settings.white_label">白标品牌</span>
                 </button>
             </li>
         </ul>
@@ -218,193 +213,6 @@
                         <div class="d-flex align-items-center">
                             <div class="badge bg-dark me-2" style="width: 60px;">> 90°C</div>
                             <small data-i18n="hosting.thermal.temp_critical">强制保护</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="tab-pane fade" id="branding-panel" role="tabpanel">
-        <div class="row">
-            <div class="col-lg-8">
-                <div class="hosting-card">
-                    <div class="hosting-card-header d-flex justify-content-between align-items-center">
-                        <h5 class="hosting-card-title mb-0">
-                            <i class="bi bi-palette me-2"></i><span data-i18n="hosting.branding.config">品牌配置</span>
-                        </h5>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="brandingEnabled" 
-                                   {{ 'checked' if branding.is_enabled else '' }}>
-                            <label class="form-check-label" for="brandingEnabled" data-i18n="common.enabled">启用</label>
-                        </div>
-                    </div>
-                    <div class="hosting-card-body">
-                        <form id="brandingForm" enctype="multipart/form-data">
-                            <div class="row g-4">
-                                <div class="col-md-6">
-                                    <h6 class="text-warning mb-3" data-i18n="hosting.branding.company_info">公司信息</h6>
-                                    <div class="mb-3">
-                                        <label class="form-label" data-i18n="hosting.branding.company_name">公司名称</label>
-                                        <input type="text" class="form-control" id="companyName" 
-                                               value="{{ branding.company_name or '' }}">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label" data-i18n="hosting.branding.slogan">公司标语</label>
-                                        <input type="text" class="form-control" id="companySlogan" 
-                                               value="{{ branding.company_slogan or '' }}">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label" data-i18n="hosting.branding.website">网站地址</label>
-                                        <input type="url" class="form-control" id="websiteUrl" 
-                                               value="{{ branding.website_url or '' }}" placeholder="https://">
-                                    </div>
-                                    
-                                    <h6 class="text-warning mb-3 mt-4" data-i18n="hosting.branding.contact">联系方式</h6>
-                                    <div class="mb-3">
-                                        <label class="form-label" data-i18n="hosting.branding.support_email">客服邮箱</label>
-                                        <input type="email" class="form-control" id="supportEmail" 
-                                               value="{{ branding.support_email or '' }}">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label" data-i18n="hosting.branding.support_phone">客服电话</label>
-                                        <input type="tel" class="form-control" id="supportPhone" 
-                                               value="{{ branding.support_phone or '' }}">
-                                    </div>
-                                </div>
-                                
-                                <div class="col-md-6">
-                                    <h6 class="text-warning mb-3" data-i18n="hosting.branding.colors">颜色配置</h6>
-                                    <div class="mb-3">
-                                        <label class="form-label" data-i18n="hosting.branding.primary_color">主色调</label>
-                                        <div class="input-group">
-                                            <input type="color" class="form-control form-control-color" id="primaryColor" 
-                                                   value="{{ branding.primary_color or '#f7931a' }}">
-                                            <input type="text" class="form-control" id="primaryColorText" 
-                                                   value="{{ branding.primary_color or '#f7931a' }}">
-                                        </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label" data-i18n="hosting.branding.secondary_color">次色调</label>
-                                        <div class="input-group">
-                                            <input type="color" class="form-control form-control-color" id="secondaryColor" 
-                                                   value="{{ branding.secondary_color or '#1a1d2e' }}">
-                                            <input type="text" class="form-control" id="secondaryColorText" 
-                                                   value="{{ branding.secondary_color or '#1a1d2e' }}">
-                                        </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label" data-i18n="hosting.branding.accent_color">强调色</label>
-                                        <div class="input-group">
-                                            <input type="color" class="form-control form-control-color" id="accentColor" 
-                                                   value="{{ branding.accent_color or '#ffc107' }}">
-                                            <input type="text" class="form-control" id="accentColorText" 
-                                                   value="{{ branding.accent_color or '#ffc107' }}">
-                                        </div>
-                                    </div>
-                                    
-                                    <h6 class="text-warning mb-3 mt-4" data-i18n="hosting.branding.logo">Logo 上传</h6>
-                                    <div class="mb-3">
-                                        <label class="form-label" data-i18n="hosting.branding.main_logo">主 Logo</label>
-                                        <input type="file" class="form-control" id="logoFile" accept="image/*">
-                                        {% if branding.logo_url %}
-                                        <div class="mt-2">
-                                            <img src="{{ branding.logo_url }}" alt="Logo" style="max-height: 50px;" class="rounded">
-                                        </div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label" data-i18n="hosting.branding.favicon">Favicon</label>
-                                        <input type="file" class="form-control" id="faviconFile" accept="image/*">
-                                        {% if branding.favicon_url %}
-                                        <div class="mt-2">
-                                            <img src="{{ branding.favicon_url }}" alt="Favicon" style="max-height: 32px;">
-                                        </div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="row mt-4">
-                                <div class="col-12">
-                                    <h6 class="text-warning mb-3" data-i18n="hosting.branding.social_media">社交媒体</h6>
-                                    <div class="row g-3">
-                                        <div class="col-md-4">
-                                            <div class="input-group">
-                                                <span class="input-group-text"><i class="bi bi-twitter-x"></i></span>
-                                                <input type="url" class="form-control" id="twitterUrl" 
-                                                       value="{{ branding.twitter_url or '' }}" placeholder="Twitter URL">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="input-group">
-                                                <span class="input-group-text"><i class="bi bi-telegram"></i></span>
-                                                <input type="url" class="form-control" id="telegramUrl" 
-                                                       value="{{ branding.telegram_url or '' }}" placeholder="Telegram URL">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="input-group">
-                                                <span class="input-group-text"><i class="bi bi-discord"></i></span>
-                                                <input type="url" class="form-control" id="discordUrl" 
-                                                       value="{{ branding.discord_url or '' }}" placeholder="Discord URL">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="row mt-4">
-                                <div class="col-12">
-                                    <h6 class="text-warning mb-3" data-i18n="hosting.branding.footer">自定义页脚</h6>
-                                    <textarea class="form-control" id="footerText" rows="3">{{ branding.footer_text or '' }}</textarea>
-                                </div>
-                            </div>
-                            
-                            <div class="mt-4">
-                                <button type="submit" class="btn btn-hosting-primary">
-                                    <i class="bi bi-check-circle me-2"></i><span data-i18n="common.save">保存配置</span>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-lg-4">
-                <div class="hosting-card">
-                    <div class="hosting-card-header">
-                        <h5 class="hosting-card-title mb-0">
-                            <i class="bi bi-eye me-2"></i><span data-i18n="hosting.branding.preview">品牌预览</span>
-                        </h5>
-                    </div>
-                    <div class="hosting-card-body" id="brandPreview">
-                        <div class="text-center mb-3">
-                            {% if branding.logo_url %}
-                            <img src="{{ branding.logo_url }}" alt="Logo" style="max-height: 60px;" class="mb-2">
-                            {% else %}
-                            <div class="h4 text-warning mb-2"><i class="bi bi-building"></i></div>
-                            {% endif %}
-                            <h5 id="previewCompanyName">{{ branding.company_name or site.operator_name }}</h5>
-                            <p class="text-muted small" id="previewSlogan">{{ branding.company_slogan or '' }}</p>
-                        </div>
-                        <hr>
-                        <div class="d-flex justify-content-center gap-2 mb-3">
-                            <div style="width: 40px; height: 40px; border-radius: 8px;" 
-                                 id="previewPrimary" class="d-flex align-items-center justify-content-center"
-                                 style="background-color: {{ branding.primary_color or '#f7931a' }};">
-                            </div>
-                            <div style="width: 40px; height: 40px; border-radius: 8px;" 
-                                 id="previewSecondary"
-                                 style="background-color: {{ branding.secondary_color or '#1a1d2e' }};">
-                            </div>
-                            <div style="width: 40px; height: 40px; border-radius: 8px;" 
-                                 id="previewAccent"
-                                 style="background-color: {{ branding.accent_color or '#ffc107' }};">
-                            </div>
-                        </div>
-                        <div class="text-center small text-muted">
-                            <span data-i18n="hosting.branding.color_scheme">配色方案</span>
                         </div>
                     </div>
                 </div>
