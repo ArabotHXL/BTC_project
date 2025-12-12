@@ -36,6 +36,24 @@ HashInsight Enterprise is an enterprise-grade web application for mining farm ow
 - **Dual Y-Axis**: Left axis (cyan): Hashrate in TH/s, Right axis (orange): Efficiency in TH/kW
 - **Bilingual Support**: Full English/Chinese translations for chart title, axis labels, legend, and tooltip notes
 
+### Temperature-Based Intelligent Frequency Control (温度智能控频)
+- **Data Models**: `ThermalProtectionConfig` for temperature thresholds and frequency settings, `ThermalEvent` for event logging
+- **ThermalProtectionService**: Monitors miner temperatures and auto-throttles frequency when overheating
+- **Temperature Thresholds**: Configurable warning (70°C), throttle (80°C), critical (90°C), and recovery (65°C) temperatures
+- **Auto-Recovery**: Automatically restores frequency when temperature drops below recovery threshold
+- **Event Logging**: All thermal protection events (warning/throttle/critical/recovery) logged with timestamps
+- **Notification System**: Configurable email alerts for each event type
+- **API Endpoints**: `/api/thermal/config`, `/api/thermal/check`, `/api/thermal/events`, `/api/thermal/stats`
+- **UI Configuration**: Site settings page with temperature threshold configuration and real-time stats
+
+### White Label Branding System (白标系统)
+- **Data Model**: `SiteBranding` stores company name, logo URLs, color schemes, and contact info per site
+- **Logo Upload**: Supports PNG, JPG, SVG, WebP with automatic file naming
+- **Color Configuration**: Primary, secondary, and accent colors with live preview
+- **Social Media Links**: Twitter, Telegram, Discord integration
+- **API Endpoints**: `/api/branding/<site_id>` for GET/PUT, `/api/branding/<site_id>/logo` for upload
+- **UI Configuration**: Site settings page with brand preview and color picker
+
 ## System Architecture
 
 ### UI/UX Decisions

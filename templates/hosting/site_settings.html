@@ -1,0 +1,628 @@
+{% extends "hosting/hosting_base.html" %}
+
+{% block page_title %}{% if current_lang == 'en' %}Site Settings{% else %}站点设置{% endif %} - {{ site.name }}{% endblock %}
+{% block page_subtitle %}{% if current_lang == 'en' %}Thermal protection and branding configuration{% else %}热保护与品牌配置{% endif %}{% endblock %}
+
+{% block header_actions %}
+{{ super() }}
+<div class="btn-group ms-3" role="group">
+    <a href="/hosting/site/{{ site.id }}" class="btn btn-hosting-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i><span data-i18n="common.back">返回</span>
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-12">
+        <ul class="nav nav-tabs nav-hosting mb-4" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="thermal-tab" data-bs-toggle="tab" data-bs-target="#thermal-panel" type="button">
+                    <i class="bi bi-thermometer-high me-2"></i><span data-i18n="hosting.settings.thermal_protection">温度智能控频</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="branding-tab" data-bs-toggle="tab" data-bs-target="#branding-panel" type="button">
+                    <i class="bi bi-palette me-2"></i><span data-i18n="hosting.settings.white_label">白标品牌</span>
+                </button>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="tab-content">
+    <div class="tab-pane fade show active" id="thermal-panel" role="tabpanel">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="hosting-card">
+                    <div class="hosting-card-header d-flex justify-content-between align-items-center">
+                        <h5 class="hosting-card-title mb-0">
+                            <i class="bi bi-thermometer-high me-2"></i><span data-i18n="hosting.thermal.config">热保护配置</span>
+                        </h5>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="thermalEnabled" 
+                                   {{ 'checked' if thermal_config.is_enabled else '' }}>
+                            <label class="form-check-label" for="thermalEnabled" data-i18n="common.enabled">启用</label>
+                        </div>
+                    </div>
+                    <div class="hosting-card-body">
+                        <form id="thermalConfigForm">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <h6 class="text-warning mb-3" data-i18n="hosting.thermal.thresholds">温度阈值 (°C)</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.thermal.warning_temp">预警温度</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="warningTemp" 
+                                                   value="{{ thermal_config.warning_temp }}" min="40" max="100" step="0.5">
+                                            <span class="input-group-text">°C</span>
+                                        </div>
+                                        <small class="text-muted" data-i18n="hosting.thermal.warning_temp_help">达到此温度时发送预警通知</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.thermal.throttle_temp">降频温度</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="throttleTemp" 
+                                                   value="{{ thermal_config.throttle_temp }}" min="50" max="100" step="0.5">
+                                            <span class="input-group-text">°C</span>
+                                        </div>
+                                        <small class="text-muted" data-i18n="hosting.thermal.throttle_temp_help">达到此温度时自动降低频率</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.thermal.critical_temp">临界温度</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="criticalTemp" 
+                                                   value="{{ thermal_config.critical_temp }}" min="60" max="110" step="0.5">
+                                            <span class="input-group-text">°C</span>
+                                        </div>
+                                        <small class="text-muted" data-i18n="hosting.thermal.critical_temp_help">达到此温度时强制关机保护</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.thermal.recovery_temp">恢复温度</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="recoveryTemp" 
+                                                   value="{{ thermal_config.recovery_temp }}" min="30" max="80" step="0.5">
+                                            <span class="input-group-text">°C</span>
+                                        </div>
+                                        <small class="text-muted" data-i18n="hosting.thermal.recovery_temp_help">降至此温度时恢复正常频率</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning mb-3" data-i18n="hosting.thermal.frequency_control">频率控制</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.thermal.throttle_percent">降频比例</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="throttlePercent" 
+                                                   value="{{ thermal_config.throttle_frequency_percent }}" min="30" max="100">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <small class="text-muted" data-i18n="hosting.thermal.throttle_percent_help">降频后的目标频率百分比</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.thermal.min_percent">最低频率</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="minPercent" 
+                                                   value="{{ thermal_config.min_frequency_percent }}" min="20" max="80">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <small class="text-muted" data-i18n="hosting.thermal.min_percent_help">频率降低的下限</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.thermal.cooldown_minutes">冷却等待时间</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="cooldownMinutes" 
+                                                   value="{{ thermal_config.cooldown_minutes }}" min="1" max="60">
+                                            <span class="input-group-text" data-i18n="common.minutes">分钟</span>
+                                        </div>
+                                        <small class="text-muted" data-i18n="hosting.thermal.cooldown_help">恢复频率前的等待时间</small>
+                                    </div>
+                                    
+                                    <h6 class="text-warning mb-3 mt-4" data-i18n="hosting.thermal.notifications">通知设置</h6>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="notifyWarning" 
+                                               {{ 'checked' if thermal_config.notify_on_warning else '' }}>
+                                        <label class="form-check-label" for="notifyWarning" data-i18n="hosting.thermal.notify_warning">预警时通知</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="notifyThrottle" 
+                                               {{ 'checked' if thermal_config.notify_on_throttle else '' }}>
+                                        <label class="form-check-label" for="notifyThrottle" data-i18n="hosting.thermal.notify_throttle">降频时通知</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="notifyCritical" 
+                                               {{ 'checked' if thermal_config.notify_on_critical else '' }}>
+                                        <label class="form-check-label" for="notifyCritical" data-i18n="hosting.thermal.notify_critical">临界时通知</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 d-flex gap-2">
+                                <button type="submit" class="btn btn-hosting-primary">
+                                    <i class="bi bi-check-circle me-2"></i><span data-i18n="common.save">保存配置</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-warning" id="runThermalCheck">
+                                    <i class="bi bi-play-circle me-2"></i><span data-i18n="hosting.thermal.run_check">立即检查</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="hosting-card mb-4">
+                    <div class="hosting-card-header">
+                        <h5 class="hosting-card-title mb-0">
+                            <i class="bi bi-activity me-2"></i><span data-i18n="hosting.thermal.today_stats">今日统计</span>
+                        </h5>
+                    </div>
+                    <div class="hosting-card-body">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="text-center p-3 bg-warning bg-opacity-10 rounded">
+                                    <div class="h3 text-warning mb-1">{{ thermal_stats.today_warnings }}</div>
+                                    <small class="text-muted" data-i18n="hosting.thermal.warnings">预警</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-3 bg-info bg-opacity-10 rounded">
+                                    <div class="h3 text-info mb-1">{{ thermal_stats.today_throttles }}</div>
+                                    <small class="text-muted" data-i18n="hosting.thermal.throttles">降频</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-3 bg-danger bg-opacity-10 rounded">
+                                    <div class="h3 text-danger mb-1">{{ thermal_stats.today_criticals }}</div>
+                                    <small class="text-muted" data-i18n="hosting.thermal.criticals">临界</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-3 bg-success bg-opacity-10 rounded">
+                                    <div class="h3 text-success mb-1">{{ thermal_stats.today_recoveries }}</div>
+                                    <small class="text-muted" data-i18n="hosting.thermal.recoveries">恢复</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-muted" data-i18n="hosting.thermal.currently_throttled">当前降频中</span>
+                                <span class="badge bg-info">{{ thermal_stats.currently_throttled }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted" data-i18n="hosting.thermal.high_temp_miners">高温矿机</span>
+                                <span class="badge bg-warning">{{ thermal_stats.high_temp_miners }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="hosting-card">
+                    <div class="hosting-card-header">
+                        <h5 class="hosting-card-title mb-0">
+                            <i class="bi bi-thermometer me-2"></i><span data-i18n="hosting.thermal.temp_guide">温度指南</span>
+                        </h5>
+                    </div>
+                    <div class="hosting-card-body">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="badge bg-success me-2" style="width: 60px;">< 65°C</div>
+                            <small data-i18n="hosting.thermal.temp_normal">正常运行</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="badge bg-warning me-2" style="width: 60px;">65-80°C</div>
+                            <small data-i18n="hosting.thermal.temp_caution">需注意</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="badge bg-danger me-2" style="width: 60px;">80-90°C</div>
+                            <small data-i18n="hosting.thermal.temp_warning">自动降频</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="badge bg-dark me-2" style="width: 60px;">> 90°C</div>
+                            <small data-i18n="hosting.thermal.temp_critical">强制保护</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tab-pane fade" id="branding-panel" role="tabpanel">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="hosting-card">
+                    <div class="hosting-card-header d-flex justify-content-between align-items-center">
+                        <h5 class="hosting-card-title mb-0">
+                            <i class="bi bi-palette me-2"></i><span data-i18n="hosting.branding.config">品牌配置</span>
+                        </h5>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="brandingEnabled" 
+                                   {{ 'checked' if branding.is_enabled else '' }}>
+                            <label class="form-check-label" for="brandingEnabled" data-i18n="common.enabled">启用</label>
+                        </div>
+                    </div>
+                    <div class="hosting-card-body">
+                        <form id="brandingForm" enctype="multipart/form-data">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <h6 class="text-warning mb-3" data-i18n="hosting.branding.company_info">公司信息</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.branding.company_name">公司名称</label>
+                                        <input type="text" class="form-control" id="companyName" 
+                                               value="{{ branding.company_name or '' }}">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.branding.slogan">公司标语</label>
+                                        <input type="text" class="form-control" id="companySlogan" 
+                                               value="{{ branding.company_slogan or '' }}">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.branding.website">网站地址</label>
+                                        <input type="url" class="form-control" id="websiteUrl" 
+                                               value="{{ branding.website_url or '' }}" placeholder="https://">
+                                    </div>
+                                    
+                                    <h6 class="text-warning mb-3 mt-4" data-i18n="hosting.branding.contact">联系方式</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.branding.support_email">客服邮箱</label>
+                                        <input type="email" class="form-control" id="supportEmail" 
+                                               value="{{ branding.support_email or '' }}">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.branding.support_phone">客服电话</label>
+                                        <input type="tel" class="form-control" id="supportPhone" 
+                                               value="{{ branding.support_phone or '' }}">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <h6 class="text-warning mb-3" data-i18n="hosting.branding.colors">颜色配置</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.branding.primary_color">主色调</label>
+                                        <div class="input-group">
+                                            <input type="color" class="form-control form-control-color" id="primaryColor" 
+                                                   value="{{ branding.primary_color or '#f7931a' }}">
+                                            <input type="text" class="form-control" id="primaryColorText" 
+                                                   value="{{ branding.primary_color or '#f7931a' }}">
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.branding.secondary_color">次色调</label>
+                                        <div class="input-group">
+                                            <input type="color" class="form-control form-control-color" id="secondaryColor" 
+                                                   value="{{ branding.secondary_color or '#1a1d2e' }}">
+                                            <input type="text" class="form-control" id="secondaryColorText" 
+                                                   value="{{ branding.secondary_color or '#1a1d2e' }}">
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.branding.accent_color">强调色</label>
+                                        <div class="input-group">
+                                            <input type="color" class="form-control form-control-color" id="accentColor" 
+                                                   value="{{ branding.accent_color or '#ffc107' }}">
+                                            <input type="text" class="form-control" id="accentColorText" 
+                                                   value="{{ branding.accent_color or '#ffc107' }}">
+                                        </div>
+                                    </div>
+                                    
+                                    <h6 class="text-warning mb-3 mt-4" data-i18n="hosting.branding.logo">Logo 上传</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.branding.main_logo">主 Logo</label>
+                                        <input type="file" class="form-control" id="logoFile" accept="image/*">
+                                        {% if branding.logo_url %}
+                                        <div class="mt-2">
+                                            <img src="{{ branding.logo_url }}" alt="Logo" style="max-height: 50px;" class="rounded">
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" data-i18n="hosting.branding.favicon">Favicon</label>
+                                        <input type="file" class="form-control" id="faviconFile" accept="image/*">
+                                        {% if branding.favicon_url %}
+                                        <div class="mt-2">
+                                            <img src="{{ branding.favicon_url }}" alt="Favicon" style="max-height: 32px;">
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h6 class="text-warning mb-3" data-i18n="hosting.branding.social_media">社交媒体</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-twitter-x"></i></span>
+                                                <input type="url" class="form-control" id="twitterUrl" 
+                                                       value="{{ branding.twitter_url or '' }}" placeholder="Twitter URL">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-telegram"></i></span>
+                                                <input type="url" class="form-control" id="telegramUrl" 
+                                                       value="{{ branding.telegram_url or '' }}" placeholder="Telegram URL">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-discord"></i></span>
+                                                <input type="url" class="form-control" id="discordUrl" 
+                                                       value="{{ branding.discord_url or '' }}" placeholder="Discord URL">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h6 class="text-warning mb-3" data-i18n="hosting.branding.footer">自定义页脚</h6>
+                                    <textarea class="form-control" id="footerText" rows="3">{{ branding.footer_text or '' }}</textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <button type="submit" class="btn btn-hosting-primary">
+                                    <i class="bi bi-check-circle me-2"></i><span data-i18n="common.save">保存配置</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="hosting-card">
+                    <div class="hosting-card-header">
+                        <h5 class="hosting-card-title mb-0">
+                            <i class="bi bi-eye me-2"></i><span data-i18n="hosting.branding.preview">品牌预览</span>
+                        </h5>
+                    </div>
+                    <div class="hosting-card-body" id="brandPreview">
+                        <div class="text-center mb-3">
+                            {% if branding.logo_url %}
+                            <img src="{{ branding.logo_url }}" alt="Logo" style="max-height: 60px;" class="mb-2">
+                            {% else %}
+                            <div class="h4 text-warning mb-2"><i class="bi bi-building"></i></div>
+                            {% endif %}
+                            <h5 id="previewCompanyName">{{ branding.company_name or site.operator_name }}</h5>
+                            <p class="text-muted small" id="previewSlogan">{{ branding.company_slogan or '' }}</p>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-center gap-2 mb-3">
+                            <div style="width: 40px; height: 40px; border-radius: 8px;" 
+                                 id="previewPrimary" class="d-flex align-items-center justify-content-center"
+                                 style="background-color: {{ branding.primary_color or '#f7931a' }};">
+                            </div>
+                            <div style="width: 40px; height: 40px; border-radius: 8px;" 
+                                 id="previewSecondary"
+                                 style="background-color: {{ branding.secondary_color or '#1a1d2e' }};">
+                            </div>
+                            <div style="width: 40px; height: 40px; border-radius: 8px;" 
+                                 id="previewAccent"
+                                 style="background-color: {{ branding.accent_color or '#ffc107' }};">
+                            </div>
+                        </div>
+                        <div class="text-center small text-muted">
+                            <span data-i18n="hosting.branding.color_scheme">配色方案</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const siteId = {{ site.id }};
+const configId = {{ thermal_config.id }};
+
+document.getElementById('thermalConfigForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const data = {
+        is_enabled: document.getElementById('thermalEnabled').checked,
+        warning_temp: parseFloat(document.getElementById('warningTemp').value),
+        throttle_temp: parseFloat(document.getElementById('throttleTemp').value),
+        critical_temp: parseFloat(document.getElementById('criticalTemp').value),
+        recovery_temp: parseFloat(document.getElementById('recoveryTemp').value),
+        throttle_frequency_percent: parseInt(document.getElementById('throttlePercent').value),
+        min_frequency_percent: parseInt(document.getElementById('minPercent').value),
+        cooldown_minutes: parseInt(document.getElementById('cooldownMinutes').value),
+        notify_on_warning: document.getElementById('notifyWarning').checked,
+        notify_on_throttle: document.getElementById('notifyThrottle').checked,
+        notify_on_critical: document.getElementById('notifyCritical').checked
+    };
+    
+    try {
+        const response = await fetch(`/hosting/api/thermal/config/${configId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            showToast('success', I18n.t('common.save_success') || '保存成功');
+        } else {
+            showToast('error', result.message || I18n.t('common.save_failed') || '保存失败');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('error', I18n.t('common.save_failed') || '保存失败');
+    }
+});
+
+document.getElementById('runThermalCheck').addEventListener('click', async function() {
+    try {
+        const response = await fetch(`/hosting/api/thermal/check/${siteId}`, {
+            method: 'POST'
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            const lang = document.documentElement.lang === 'en' ? 'en' : 'zh';
+            const msg = lang === 'en' ? result.message_en : result.message_zh;
+            showToast('success', msg);
+        } else {
+            showToast('error', result.message_zh || result.message_en || '检查失败');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('error', '检查失败');
+    }
+});
+
+document.getElementById('brandingForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const data = {
+        is_enabled: document.getElementById('brandingEnabled').checked,
+        company_name: document.getElementById('companyName').value,
+        company_slogan: document.getElementById('companySlogan').value,
+        website_url: document.getElementById('websiteUrl').value,
+        support_email: document.getElementById('supportEmail').value,
+        support_phone: document.getElementById('supportPhone').value,
+        primary_color: document.getElementById('primaryColor').value,
+        secondary_color: document.getElementById('secondaryColor').value,
+        accent_color: document.getElementById('accentColor').value,
+        twitter_url: document.getElementById('twitterUrl').value,
+        telegram_url: document.getElementById('telegramUrl').value,
+        discord_url: document.getElementById('discordUrl').value,
+        footer_text: document.getElementById('footerText').value
+    };
+    
+    try {
+        const response = await fetch(`/hosting/api/branding/${siteId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            showToast('success', I18n.t('common.save_success') || '保存成功');
+        } else {
+            showToast('error', result.message || I18n.t('common.save_failed') || '保存失败');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('error', I18n.t('common.save_failed') || '保存失败');
+    }
+});
+
+document.getElementById('logoFile').addEventListener('change', async function(e) {
+    if (e.target.files.length > 0) {
+        const formData = new FormData();
+        formData.append('logo', e.target.files[0]);
+        formData.append('logo_type', 'main');
+        
+        try {
+            const response = await fetch(`/hosting/api/branding/${siteId}/logo`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                showToast('success', 'Logo ' + (I18n.t('common.upload_success') || '上传成功'));
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('error', result.message_zh || result.message_en || 'Upload failed');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('error', '上传失败');
+        }
+    }
+});
+
+document.getElementById('faviconFile').addEventListener('change', async function(e) {
+    if (e.target.files.length > 0) {
+        const formData = new FormData();
+        formData.append('logo', e.target.files[0]);
+        formData.append('logo_type', 'favicon');
+        
+        try {
+            const response = await fetch(`/hosting/api/branding/${siteId}/logo`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                showToast('success', 'Favicon ' + (I18n.t('common.upload_success') || '上传成功'));
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('error', result.message_zh || result.message_en || 'Upload failed');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('error', '上传失败');
+        }
+    }
+});
+
+['primaryColor', 'secondaryColor', 'accentColor'].forEach(id => {
+    const colorPicker = document.getElementById(id);
+    const textInput = document.getElementById(id + 'Text');
+    
+    colorPicker.addEventListener('change', function() {
+        textInput.value = this.value;
+        updatePreviewColors();
+    });
+    
+    textInput.addEventListener('change', function() {
+        if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+            colorPicker.value = this.value;
+            updatePreviewColors();
+        }
+    });
+});
+
+function updatePreviewColors() {
+    document.getElementById('previewPrimary').style.backgroundColor = document.getElementById('primaryColor').value;
+    document.getElementById('previewSecondary').style.backgroundColor = document.getElementById('secondaryColor').value;
+    document.getElementById('previewAccent').style.backgroundColor = document.getElementById('accentColor').value;
+}
+
+document.getElementById('companyName').addEventListener('input', function() {
+    document.getElementById('previewCompanyName').textContent = this.value || '{{ site.operator_name }}';
+});
+
+document.getElementById('companySlogan').addEventListener('input', function() {
+    document.getElementById('previewSlogan').textContent = this.value;
+});
+
+function showToast(type, message) {
+    const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+    const toastEl = document.createElement('div');
+    toastEl.className = `toast align-items-center text-bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+    toastEl.setAttribute('role', 'alert');
+    toastEl.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    toastContainer.appendChild(toastEl);
+    const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+    toast.show();
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '9999';
+    document.body.appendChild(container);
+    return container;
+}
+
+updatePreviewColors();
+</script>
+{% endblock %}

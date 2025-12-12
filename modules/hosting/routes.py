@@ -5876,3 +5876,444 @@ def reset_miner_credentials(miner_id):
             'message_zh': '重置凭证失败',
             'error': str(e)
         }), 500
+
+
+# ==================== 温度智能控频 API ====================
+
+@hosting_bp.route('/api/thermal/config/<int:site_id>', methods=['GET'])
+@login_required
+def get_thermal_config(site_id):
+    """获取站点热保护配置"""
+    from models import ThermalProtectionConfig
+    from services.thermal_protection_service import thermal_protection_service
+    
+    try:
+        user_role = normalize_role(session.get('role', 'guest'))
+        has_access = rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT)
+        
+        if not has_access:
+            return jsonify({
+                'success': False,
+                'message_en': 'Access denied',
+                'message_zh': '没有访问权限'
+            }), 403
+        
+        config = thermal_protection_service.get_config(site_id)
+        if not config:
+            config = thermal_protection_service.create_default_config(site_id)
+        
+        return jsonify({
+            'success': True,
+            'config': config.to_dict()
+        })
+        
+    except Exception as e:
+        logger.error(f"获取热保护配置失败: {e}")
+        return jsonify({
+            'success': False,
+            'message_en': 'Failed to get thermal config',
+            'message_zh': '获取热保护配置失败',
+            'error': str(e)
+        }), 500
+
+
+@hosting_bp.route('/api/thermal/config/<int:config_id>', methods=['PUT'])
+@login_required
+def update_thermal_config(config_id):
+    """更新热保护配置"""
+    from services.thermal_protection_service import thermal_protection_service
+    
+    try:
+        user_role = normalize_role(session.get('role', 'guest'))
+        has_access = rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT)
+        
+        if not has_access:
+            return jsonify({
+                'success': False,
+                'message_en': 'Access denied',
+                'message_zh': '没有访问权限'
+            }), 403
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'message_en': 'Request body is required',
+                'message_zh': '请求体不能为空'
+            }), 400
+        
+        success, message = thermal_protection_service.update_config(config_id, data)
+        
+        return jsonify({
+            'success': success,
+            'message': message
+        }), 200 if success else 400
+        
+    except Exception as e:
+        logger.error(f"更新热保护配置失败: {e}")
+        return jsonify({
+            'success': False,
+            'message_en': 'Failed to update thermal config',
+            'message_zh': '更新热保护配置失败',
+            'error': str(e)
+        }), 500
+
+
+@hosting_bp.route('/api/thermal/check/<int:site_id>', methods=['POST'])
+@login_required
+def run_thermal_check(site_id):
+    """手动触发站点温度检查"""
+    from services.thermal_protection_service import thermal_protection_service
+    
+    try:
+        user_role = normalize_role(session.get('role', 'guest'))
+        has_access = rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT)
+        
+        if not has_access:
+            return jsonify({
+                'success': False,
+                'message_en': 'Access denied',
+                'message_zh': '没有访问权限'
+            }), 403
+        
+        results = thermal_protection_service.check_site(site_id)
+        
+        return jsonify({
+            'success': True,
+            'results': results,
+            'message_en': f'Checked {results["checked"]} miners, {results["actions"]} actions taken',
+            'message_zh': f'检查了 {results["checked"]} 台矿机，执行了 {results["actions"]} 个动作'
+        })
+        
+    except Exception as e:
+        logger.error(f"温度检查失败: {e}")
+        return jsonify({
+            'success': False,
+            'message_en': 'Thermal check failed',
+            'message_zh': '温度检查失败',
+            'error': str(e)
+        }), 500
+
+
+@hosting_bp.route('/api/thermal/events/<int:site_id>', methods=['GET'])
+@login_required
+def get_thermal_events(site_id):
+    """获取热保护事件历史"""
+    from services.thermal_protection_service import thermal_protection_service
+    
+    try:
+        user_role = normalize_role(session.get('role', 'guest'))
+        has_access = rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT)
+        
+        if not has_access:
+            return jsonify({
+                'success': False,
+                'message_en': 'Access denied',
+                'message_zh': '没有访问权限'
+            }), 403
+        
+        limit = request.args.get('limit', 50, type=int)
+        event_type = request.args.get('event_type')
+        miner_id = request.args.get('miner_id', type=int)
+        
+        events = thermal_protection_service.get_thermal_events(
+            site_id, limit=limit, event_type=event_type, miner_id=miner_id
+        )
+        
+        return jsonify({
+            'success': True,
+            'events': events
+        })
+        
+    except Exception as e:
+        logger.error(f"获取热保护事件失败: {e}")
+        return jsonify({
+            'success': False,
+            'message_en': 'Failed to get thermal events',
+            'message_zh': '获取热保护事件失败',
+            'error': str(e)
+        }), 500
+
+
+@hosting_bp.route('/api/thermal/stats/<int:site_id>', methods=['GET'])
+@login_required
+def get_thermal_stats(site_id):
+    """获取热保护统计数据"""
+    from services.thermal_protection_service import thermal_protection_service
+    
+    try:
+        user_role = normalize_role(session.get('role', 'guest'))
+        has_access = rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT)
+        
+        if not has_access:
+            return jsonify({
+                'success': False,
+                'message_en': 'Access denied',
+                'message_zh': '没有访问权限'
+            }), 403
+        
+        stats = thermal_protection_service.get_thermal_stats(site_id)
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+        
+    except Exception as e:
+        logger.error(f"获取热保护统计失败: {e}")
+        return jsonify({
+            'success': False,
+            'message_en': 'Failed to get thermal stats',
+            'message_zh': '获取热保护统计失败',
+            'error': str(e)
+        }), 500
+
+
+# ==================== 白标系统 API ====================
+
+@hosting_bp.route('/api/branding/<int:site_id>', methods=['GET'])
+@login_required
+def get_site_branding(site_id):
+    """获取站点品牌配置"""
+    from models import SiteBranding
+    
+    try:
+        user_role = normalize_role(session.get('role', 'guest'))
+        has_access = rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT)
+        
+        if not has_access:
+            return jsonify({
+                'success': False,
+                'message_en': 'Access denied',
+                'message_zh': '没有访问权限'
+            }), 403
+        
+        branding = SiteBranding.query.filter_by(site_id=site_id).first()
+        
+        if not branding:
+            site = HostingSite.query.get(site_id)
+            if not site:
+                return jsonify({
+                    'success': False,
+                    'message_en': 'Site not found',
+                    'message_zh': '站点不存在'
+                }), 404
+            
+            branding = SiteBranding(
+                site_id=site_id,
+                company_name=site.operator_name,
+                primary_color='#f7931a',
+                secondary_color='#1a1d2e'
+            )
+            db.session.add(branding)
+            db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'branding': branding.to_dict()
+        })
+        
+    except Exception as e:
+        logger.error(f"获取品牌配置失败: {e}")
+        return jsonify({
+            'success': False,
+            'message_en': 'Failed to get branding',
+            'message_zh': '获取品牌配置失败',
+            'error': str(e)
+        }), 500
+
+
+@hosting_bp.route('/api/branding/<int:site_id>', methods=['PUT'])
+@login_required
+def update_site_branding(site_id):
+    """更新站点品牌配置"""
+    from models import SiteBranding
+    
+    try:
+        user_role = normalize_role(session.get('role', 'guest'))
+        has_access = rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT)
+        
+        if not has_access:
+            return jsonify({
+                'success': False,
+                'message_en': 'Access denied',
+                'message_zh': '没有访问权限'
+            }), 403
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'message_en': 'Request body is required',
+                'message_zh': '请求体不能为空'
+            }), 400
+        
+        branding = SiteBranding.query.filter_by(site_id=site_id).first()
+        if not branding:
+            branding = SiteBranding(site_id=site_id)
+            db.session.add(branding)
+        
+        allowed_fields = [
+            'company_name', 'company_slogan', 'logo_url', 'logo_light_url',
+            'logo_dark_url', 'favicon_url', 'primary_color', 'secondary_color',
+            'accent_color', 'support_email', 'support_phone', 'website_url',
+            'twitter_url', 'telegram_url', 'discord_url', 'footer_text', 'is_enabled'
+        ]
+        
+        for field in allowed_fields:
+            if field in data:
+                setattr(branding, field, data[field])
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message_en': 'Branding updated successfully',
+            'message_zh': '品牌配置更新成功',
+            'branding': branding.to_dict()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"更新品牌配置失败: {e}")
+        return jsonify({
+            'success': False,
+            'message_en': 'Failed to update branding',
+            'message_zh': '更新品牌配置失败',
+            'error': str(e)
+        }), 500
+
+
+@hosting_bp.route('/api/branding/<int:site_id>/logo', methods=['POST'])
+@login_required
+def upload_site_logo(site_id):
+    """上传站点Logo"""
+    from models import SiteBranding
+    import os
+    from werkzeug.utils import secure_filename
+    
+    try:
+        user_role = normalize_role(session.get('role', 'guest'))
+        has_access = rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT)
+        
+        if not has_access:
+            return jsonify({
+                'success': False,
+                'message_en': 'Access denied',
+                'message_zh': '没有访问权限'
+            }), 403
+        
+        if 'logo' not in request.files:
+            return jsonify({
+                'success': False,
+                'message_en': 'No file uploaded',
+                'message_zh': '未上传文件'
+            }), 400
+        
+        file = request.files['logo']
+        if file.filename == '':
+            return jsonify({
+                'success': False,
+                'message_en': 'No file selected',
+                'message_zh': '未选择文件'
+            }), 400
+        
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'}
+        ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+        if ext not in allowed_extensions:
+            return jsonify({
+                'success': False,
+                'message_en': 'Invalid file type. Allowed: png, jpg, jpeg, gif, svg, webp',
+                'message_zh': '文件类型无效。允许: png, jpg, jpeg, gif, svg, webp'
+            }), 400
+        
+        upload_dir = os.path.join('static', 'uploads', 'logos')
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        filename = secure_filename(f'site_{site_id}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.{ext}')
+        filepath = os.path.join(upload_dir, filename)
+        file.save(filepath)
+        
+        logo_url = f'/static/uploads/logos/{filename}'
+        
+        branding = SiteBranding.query.filter_by(site_id=site_id).first()
+        if not branding:
+            branding = SiteBranding(site_id=site_id)
+            db.session.add(branding)
+        
+        logo_type = request.form.get('logo_type', 'main')
+        if logo_type == 'light':
+            branding.logo_light_url = logo_url
+        elif logo_type == 'dark':
+            branding.logo_dark_url = logo_url
+        elif logo_type == 'favicon':
+            branding.favicon_url = logo_url
+        else:
+            branding.logo_url = logo_url
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message_en': 'Logo uploaded successfully',
+            'message_zh': 'Logo上传成功',
+            'logo_url': logo_url
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"上传Logo失败: {e}")
+        return jsonify({
+            'success': False,
+            'message_en': 'Failed to upload logo',
+            'message_zh': '上传Logo失败',
+            'error': str(e)
+        }), 500
+
+
+@hosting_bp.route('/site/<int:site_id>/settings')
+@login_required
+def site_settings(site_id):
+    """站点设置页面 - 包含热保护和品牌配置"""
+    from models import ThermalProtectionConfig, SiteBranding
+    from services.thermal_protection_service import thermal_protection_service
+    
+    try:
+        user_role = normalize_role(session.get('role', 'guest'))
+        has_access = rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT)
+        
+        if not has_access:
+            flash('没有访问权限', 'error')
+            return redirect(url_for('hosting.dashboard'))
+        
+        site = HostingSite.query.get_or_404(site_id)
+        
+        thermal_config = thermal_protection_service.get_config(site_id)
+        if not thermal_config:
+            thermal_config = thermal_protection_service.create_default_config(site_id)
+        
+        branding = SiteBranding.query.filter_by(site_id=site_id).first()
+        if not branding:
+            branding = SiteBranding(
+                site_id=site_id,
+                company_name=site.operator_name,
+                primary_color='#f7931a',
+                secondary_color='#1a1d2e'
+            )
+            db.session.add(branding)
+            db.session.commit()
+        
+        thermal_stats = thermal_protection_service.get_thermal_stats(site_id)
+        
+        return render_template(
+            'hosting/site_settings.html',
+            site=site,
+            thermal_config=thermal_config,
+            branding=branding,
+            thermal_stats=thermal_stats
+        )
+        
+    except Exception as e:
+        logger.error(f"加载站点设置失败: {e}")
+        flash('加载设置失败', 'error')
+        return redirect(url_for('hosting.dashboard'))
