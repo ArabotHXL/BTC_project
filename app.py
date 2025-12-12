@@ -1314,7 +1314,7 @@ def index():
 # 根路径显示介绍页面
 @app.route('/')
 def home():
-    """项目介绍页面 - 动态统计数据"""
+    """项目介绍页面 - 动态统计数据 + 白标品牌支持"""
     try:
         # 获取矿机型号数量（活跃的）
         miner_count = MinerModel.query.filter_by(is_active=True).count()
@@ -1327,7 +1327,24 @@ def home():
         logging.warning(f"无法获取矿机数量: {e}")
         miner_count = 19
     
-    return render_template('landing.html', miner_count=miner_count)
+    # 白标品牌支持：通过URL参数或默认站点获取品牌配置
+    branding = None
+    try:
+        from models import SiteBranding
+        site_id = request.args.get('site_id', type=int)
+        
+        if site_id:
+            branding = SiteBranding.query.filter_by(site_id=site_id).first()
+        
+        # 如果没有指定站点，尝试获取第一个启用的品牌配置
+        if not branding:
+            branding = SiteBranding.query.filter_by(is_enabled=True).first()
+            
+    except Exception as e:
+        logging.warning(f"获取白标品牌失败: {e}")
+        branding = None
+    
+    return render_template('landing.html', miner_count=miner_count, branding=branding)
 
 
 
