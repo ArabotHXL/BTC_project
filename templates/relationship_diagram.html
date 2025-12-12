@@ -8,6 +8,10 @@
     <i class="bi bi-diagram-3 me-2"></i>Module Relationships / 模块关系图
 {% endblock %}
 
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+{% endblock %}
+
 {% block extra_css %}
 <style>
 body {
@@ -122,7 +126,6 @@ body {
     display: block;
 }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -400,71 +403,48 @@ flowchart LR
             <h4 class="section-title"><i class="bi bi-database me-2"></i>Database Entity Relationships</h4>
             <div class="mermaid-container">
                 <pre class="mermaid">
-erDiagram
-    User ||--o{ UserAccess : "has"
-    UserAccess ||--o{ UserMiner : "owns"
-    UserMiner }o--|| MinerModel : "is type"
-    UserMiner }o--|| HostingSite : "located at"
+graph TB
+    subgraph UserDomain[User Domain]
+        User[User<br/>id, email, role]
+        UserAccess[UserAccess<br/>id, user_id, email, site_id]
+        UserMiner[UserMiner<br/>id, user_id, model_id, hashrate]
+    end
     
-    Customer ||--o{ Deal : "has"
-    Customer ||--o{ Invoice : "receives"
-    Customer ||--o{ Activity : "generates"
+    subgraph HostingDomain[Hosting Domain]
+        HostingSite[HostingSite<br/>id, name, location, capacity]
+        MinerModel[MinerModel<br/>id, model_name, hashrate, power]
+        SiteBranding[SiteBranding<br/>id, site_id, company_name]
+    end
     
-    HostingSite ||--o{ SiteBranding : "has"
-    HostingSite ||--o{ ThermalProtectionConfig : "configures"
-    HostingSite ||--o{ CurtailmentPlan : "schedules"
+    subgraph CRMDomain[CRM Domain]
+        Customer[Customer<br/>id, name, email, company]
+        Deal[Deal<br/>id, customer_id, amount]
+        Invoice[Invoice<br/>id, customer_id, total]
+    end
     
-    UserMiner ||--o{ ThermalEvent : "triggers"
-    UserMiner ||--o{ MinerTelemetry : "produces"
+    subgraph OperationsDomain[Operations Domain]
+        ThermalEvent[ThermalEvent<br/>id, miner_id, temperature]
+        MinerTelemetry[MinerTelemetry<br/>id, miner_id, timestamp]
+        CurtailmentPlan[CurtailmentPlan<br/>id, site_id, schedule]
+    end
     
-    User {
-        int id PK
-        string email UK
-        string password_hash
-        string role
-    }
+    User -->|1:N| UserAccess
+    UserAccess -->|1:N| UserMiner
+    UserMiner -->|N:1| MinerModel
+    UserMiner -->|N:1| HostingSite
+    HostingSite -->|1:1| SiteBranding
+    HostingSite -->|1:N| CurtailmentPlan
+    Customer -->|1:N| Deal
+    Customer -->|1:N| Invoice
+    UserMiner -->|1:N| ThermalEvent
+    UserMiner -->|1:N| MinerTelemetry
     
-    UserAccess {
-        int id PK
-        int user_id FK
-        string email
-        int site_id FK
-        string role
-    }
+    Customer -.->|email match| UserAccess
     
-    UserMiner {
-        int id PK
-        int user_id FK
-        int model_id FK
-        int site_id FK
-        float actual_hashrate
-        int actual_power
-        string status
-        int quantity
-    }
-    
-    Customer {
-        int id PK
-        string name
-        string email
-        string company
-        int miners_count
-        string status
-    }
-    
-    HostingSite {
-        int id PK
-        string name
-        string location
-        float capacity_mw
-    }
-    
-    MinerModel {
-        int id PK
-        string model_name
-        float hashrate
-        int power
-    }
+    style UserDomain fill:#1a1d2e,stroke:#f7931a
+    style HostingDomain fill:#1a1d2e,stroke:#27ae60
+    style CRMDomain fill:#1a1d2e,stroke:#3498db
+    style OperationsDomain fill:#1a1d2e,stroke:#9b59b6
                 </pre>
             </div>
             
@@ -487,33 +467,56 @@ erDiagram
     </div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
 <script>
-    mermaid.initialize({
-        startOnLoad: true,
-        theme: 'dark',
-        themeVariables: {
-            primaryColor: '#f7931a',
-            primaryTextColor: '#fff',
-            primaryBorderColor: '#d4780f',
-            lineColor: '#4a5568',
-            secondaryColor: '#2c3e50',
-            tertiaryColor: '#1a1d2e',
-            background: '#0d0f1a',
-            mainBkg: '#1a1d2e',
-            fontFamily: 'Inter, system-ui, sans-serif',
-            fontSize: '13px',
-            clusterBkg: 'rgba(26,29,46,0.9)',
-            clusterBorder: '#f7931a'
-        },
-        flowchart: { curve: 'basis', padding: 15 },
-        er: { entityPadding: 12, fontSize: 11 }
+    var renderedSections = {};
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#f7931a',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#d4780f',
+                lineColor: '#4a5568',
+                secondaryColor: '#2c3e50',
+                tertiaryColor: '#1a1d2e',
+                background: '#0d0f1a',
+                mainBkg: '#1a1d2e',
+                fontFamily: 'Inter, system-ui, sans-serif',
+                fontSize: '13px',
+                clusterBkg: 'rgba(26,29,46,0.9)',
+                clusterBorder: '#f7931a'
+            },
+            flowchart: { curve: 'basis', padding: 15 }
+        });
+        
+        renderSection('overview');
     });
+    
+    function renderSection(name) {
+        if (renderedSections[name]) return;
+        var section = document.getElementById('section-' + name);
+        if (!section) return;
+        var diagrams = section.querySelectorAll('.mermaid:not([data-processed])');
+        if (diagrams.length > 0) {
+            mermaid.run({ nodes: diagrams });
+            renderedSections[name] = true;
+        }
+    }
     
     function showSection(name) {
         document.querySelectorAll('.diagram-section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('section-' + name).classList.add('active');
         event.target.classList.add('active');
+        
+        setTimeout(function() {
+            renderSection(name);
+        }, 50);
     }
 </script>
 {% endblock %}
