@@ -1338,6 +1338,41 @@ def dashboard():
     """重定向到首页仪表盘"""
     return redirect(url_for('index'))
 
+# 白标品牌管理页面 - 独立路由
+@app.route('/branding')
+@login_required
+def branding_management():
+    """白标品牌管理页面 - 显示所有站点的品牌配置"""
+    from models import SiteBranding, HostingSite
+    
+    try:
+        user_role = session.get('role', 'guest')
+        
+        # 检查访问权限
+        if user_role not in ['owner', 'admin', 'mining_site']:
+            flash('没有访问权限', 'error')
+            return redirect(url_for('index'))
+        
+        sites = HostingSite.query.all()
+        
+        sites_with_branding = []
+        for site in sites:
+            branding = SiteBranding.query.filter_by(site_id=site.id).first()
+            sites_with_branding.append({
+                'site': site,
+                'branding': branding
+            })
+        
+        return render_template(
+            'hosting/branding_management.html',
+            sites_with_branding=sites_with_branding
+        )
+        
+    except Exception as e:
+        logging.error(f"加载品牌管理页面失败: {e}")
+        flash('加载失败', 'error')
+        return redirect(url_for('index'))
+
 # Web3 Dashboard - 统一Web3功能界面
 @app.route('/web3-dashboard')
 @app.route('/web3_dashboard')
