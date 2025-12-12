@@ -355,4 +355,60 @@ class CRMHostingIntegrationService:
             return False
 
 
+    def get_sync_status(self) -> Dict[str, Any]:
+        """
+        获取CRM-Hosting同步状态
+        
+        Returns:
+            同步状态信息
+        """
+        from models import Customer, UserAccess
+        from sqlalchemy import func
+        
+        try:
+            total_customers = Customer.query.filter(Customer.email.isnot(None)).count()
+            
+            linked_count = 0
+            if total_customers > 0:
+                customer_emails = [c.email.lower() for c in Customer.query.filter(Customer.email.isnot(None)).all() if c.email]
+                user_emails = [u.email.lower() for u in UserAccess.query.filter(UserAccess.email.isnot(None)).all() if u.email]
+                linked_count = len(set(customer_emails) & set(user_emails))
+            
+            unlinked = total_customers - linked_count
+            link_rate = (linked_count / total_customers * 100) if total_customers > 0 else 0
+            
+            issues = []
+            sync_health = 'healthy'
+            
+            if link_rate < 10 and total_customers > 5:
+                issues.append('Low link rate: fewer than 10% of customers have linked hosting accounts')
+                sync_health = 'warning'
+            
+            if total_customers > 0 and linked_count == 0:
+                issues.append('No customers are linked to hosting accounts')
+                sync_health = 'critical'
+            
+            return {
+                'total_customers': total_customers,
+                'linked_customers': linked_count,
+                'unlinked_customers': unlinked,
+                'link_rate': round(link_rate, 2),
+                'last_sync': None,
+                'sync_health': sync_health,
+                'issues': issues,
+            }
+            
+        except Exception as e:
+            logger.error(f"获取同步状态失败: {e}")
+            return {
+                'total_customers': 0,
+                'linked_customers': 0,
+                'unlinked_customers': 0,
+                'link_rate': 0,
+                'last_sync': None,
+                'sync_health': 'error',
+                'issues': [str(e)],
+            }
+
+
 crm_hosting_service = CRMHostingIntegrationService()

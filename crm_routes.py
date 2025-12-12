@@ -4087,6 +4087,25 @@ def sync_all_hosting():
         logger.error(f"批量同步托管数据错误: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@crm_bp.route('/api/sync-status')
+def get_sync_status():
+    """获取CRM-Hosting同步状态"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        from crm_services.hosting_integration import crm_hosting_service
+        status = crm_hosting_service.get_sync_status()
+        
+        return jsonify({
+            'success': True,
+            'data': status
+        })
+        
+    except Exception as e:
+        logger.error(f"获取同步状态错误: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 def init_crm_routes(app):
     """初始化CRM路由到应用"""
     try:
