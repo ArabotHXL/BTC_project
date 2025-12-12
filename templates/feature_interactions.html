@@ -161,6 +161,9 @@ body {
             <button class="tab-btn" onclick="showSection('realtime')">
                 <i class="bi bi-broadcast me-1"></i>Real-time / 实时通信
             </button>
+            <button class="tab-btn" onclick="showSection('encryption')">
+                <i class="bi bi-shield-lock me-1"></i>Encryption / 加密系统
+            </button>
         </div>
         
         <div class="text-center mb-4">
@@ -183,6 +186,10 @@ body {
             <span class="legend-box">
                 <span class="legend-color" style="background: #e74c3c;"></span>
                 <span class="legend-text">Real-time 实时通信</span>
+            </span>
+            <span class="legend-box">
+                <span class="legend-color" style="background: #1abc9c;"></span>
+                <span class="legend-text">Security 安全层</span>
             </span>
         </div>
         
@@ -232,6 +239,12 @@ graph TB
         Redis[(Redis<br/>缓存/队列)]
     end
     
+    subgraph Security["🔐 Security Layer 安全层"]
+        E2EE[E2EE Module<br/>端到端加密]
+        PBKDF2[PBKDF2 Key Derivation<br/>密钥派生]
+        AES256[AES-256-GCM<br/>对称加密]
+    end
+    
     Dashboard --> HostingService
     Dashboard --> CRMService
     Dashboard --> AnalyticsEngine
@@ -274,12 +287,19 @@ graph TB
     
     CRMService -.->|email sync| HostingService
     
+    HostingUI -->|encrypt credentials| E2EE
+    E2EE --> PBKDF2
+    PBKDF2 --> AES256
+    AES256 -->|encrypted data| PostgreSQL
+    EdgeCollector -->|decrypt| E2EE
+    
     style UserInterface fill:#1a1d2e,stroke:#f7931a
     style CoreModules fill:#1a1d2e,stroke:#27ae60
     style DataServices fill:#1a1d2e,stroke:#3498db
     style Intelligence fill:#1a1d2e,stroke:#9b59b6
     style ExternalAPIs fill:#1a1d2e,stroke:#e74c3c
     style Database fill:#1a1d2e,stroke:#f39c12
+    style Security fill:#1a1d2e,stroke:#1abc9c
                 </pre>
             </div>
             
@@ -627,6 +647,154 @@ sequenceDiagram
                     <div class="interaction-card">
                         <h5><i class="bi bi-arrow-down-up me-2"></i>Bidirectional / 双向通信</h5>
                         <p>边缘采集器支持双向通信，既上报数据也接收云端控制命令</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="section-encryption" class="diagram-section">
+            <h4 class="section-title"><i class="bi bi-shield-lock me-2"></i>Owner-Level Encryption (E2EE) / 端到端加密系统</h4>
+            <div class="mermaid-container">
+                <pre class="mermaid">
+graph TB
+    subgraph Browser["🌐 Browser 浏览器端"]
+        OwnerUI[Site Owner UI<br/>矿场主界面]
+        PasswordInput[Owner Password<br/>主密码输入]
+        JSCrypto[Web Crypto API<br/>浏览器加密库]
+    end
+    
+    subgraph KeyDerivation["🔑 Key Derivation 密钥派生"]
+        PBKDF2[PBKDF2<br/>100,000 iterations]
+        Salt[Random Salt<br/>随机盐值]
+        DerivedKey[256-bit AES Key<br/>派生密钥]
+    end
+    
+    subgraph Encryption["🔒 Encryption 加密过程"]
+        Plaintext[Miner Credentials<br/>矿机连接凭证]
+        IV[Random IV<br/>随机初始向量]
+        AES256GCM[AES-256-GCM<br/>认证加密]
+        Ciphertext[Encrypted Blob<br/>加密数据]
+        AuthTag[Auth Tag<br/>认证标签]
+    end
+    
+    subgraph Storage["💾 Cloud Storage 云端存储"]
+        PostgreSQL[(PostgreSQL<br/>encrypted_credentials)]
+        SaltStore[(Salt Storage<br/>盐值存储)]
+        IVStore[(IV Storage<br/>IV存储)]
+    end
+    
+    subgraph EdgeDecryption["🏭 Edge Collector 边缘解密"]
+        EdgeAgent[Edge Collector<br/>边缘采集器]
+        PyCrypto[Python Cryptography<br/>加密库]
+        DecryptedCreds[Decrypted Credentials<br/>解密凭证]
+        MinerConnect[Connect to Miner<br/>连接矿机]
+    end
+    
+    OwnerUI --> PasswordInput
+    PasswordInput --> JSCrypto
+    JSCrypto --> PBKDF2
+    Salt --> PBKDF2
+    PBKDF2 --> DerivedKey
+    
+    Plaintext --> AES256GCM
+    DerivedKey --> AES256GCM
+    IV --> AES256GCM
+    AES256GCM --> Ciphertext
+    AES256GCM --> AuthTag
+    
+    Ciphertext --> PostgreSQL
+    Salt --> SaltStore
+    IV --> IVStore
+    AuthTag --> PostgreSQL
+    
+    PostgreSQL --> EdgeAgent
+    SaltStore --> EdgeAgent
+    IVStore --> EdgeAgent
+    EdgeAgent --> PyCrypto
+    PyCrypto --> DecryptedCreds
+    DecryptedCreds --> MinerConnect
+    
+    style Browser fill:#1a1d2e,stroke:#f7931a
+    style KeyDerivation fill:#1a1d2e,stroke:#9b59b6
+    style Encryption fill:#1a1d2e,stroke:#1abc9c
+    style Storage fill:#1a1d2e,stroke:#3498db
+    style EdgeDecryption fill:#1a1d2e,stroke:#e74c3c
+                </pre>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="interaction-card">
+                        <h5><i class="bi bi-info-circle me-2"></i>Zero-Knowledge Architecture / 零知识架构</h5>
+                        <p class="mb-2">服务器永远无法获知明文凭证 - 加密/解密仅在客户端(浏览器)和边缘采集器进行</p>
+                        <p class="arrow-flow mb-0">Browser Encrypt → Cloud Store (Encrypted) → Edge Decrypt → Miner Connect</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mermaid-container">
+                <pre class="mermaid">
+sequenceDiagram
+    participant Owner as 矿场主 Owner
+    participant Browser as 浏览器 Browser
+    participant Cloud as 云端 Cloud
+    participant Edge as 边缘采集器 Edge
+    participant Miner as 矿机 Miner
+    
+    Note over Owner,Miner: 凭证加密存储流程 Credential Encryption Flow
+    
+    Owner->>Browser: 输入矿机凭证 + 主密码
+    Browser->>Browser: PBKDF2 派生密钥
+    Browser->>Browser: AES-256-GCM 加密
+    Browser->>Cloud: 存储加密数据 + Salt + IV
+    Cloud-->>Browser: 存储成功
+    
+    Note over Owner,Miner: 凭证解密使用流程 Credential Decryption Flow
+    
+    Edge->>Cloud: 请求加密凭证
+    Cloud-->>Edge: 返回 Ciphertext + Salt + IV
+    Edge->>Edge: PBKDF2 派生密钥
+    Edge->>Edge: AES-256-GCM 解密
+    Edge->>Miner: 使用明文凭证连接
+    Miner-->>Edge: 连接成功
+    
+    Note over Owner,Miner: 密码变更流程 Password Change Flow
+    
+    Owner->>Browser: 输入旧密码 + 新密码
+    Browser->>Cloud: 获取加密数据
+    Browser->>Browser: 用旧密码解密
+    Browser->>Browser: 用新密码重新加密
+    Browser->>Cloud: 存储新加密数据
+                </pre>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="interaction-card">
+                        <h5><i class="bi bi-key me-2"></i>PBKDF2</h5>
+                        <p>Password-Based Key Derivation Function 2</p>
+                        <p class="arrow-flow">100,000 iterations<br/>SHA-256 hash</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="interaction-card">
+                        <h5><i class="bi bi-lock me-2"></i>AES-256-GCM</h5>
+                        <p>Authenticated Encryption with Associated Data</p>
+                        <p class="arrow-flow">256-bit key<br/>128-bit auth tag</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="interaction-card">
+                        <h5><i class="bi bi-shuffle me-2"></i>Random IV</h5>
+                        <p>每次加密使用唯一随机初始向量</p>
+                        <p class="arrow-flow">96-bit IV<br/>Unique per encryption</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="interaction-card">
+                        <h5><i class="bi bi-shield-check me-2"></i>Two-Tier Plans</h5>
+                        <p>支持两种加密方案</p>
+                        <p class="arrow-flow">Tier 1: 仅凭证加密<br/>Tier 2: 完整对象加密</p>
                     </div>
                 </div>
             </div>
