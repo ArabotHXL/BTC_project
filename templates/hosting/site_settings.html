@@ -6,20 +6,31 @@
 {% block header_actions %}
 {{ super() }}
 <div class="d-flex align-items-center gap-3 ms-3">
-    <div class="site-selector-wrapper">
-        <select id="siteSelector" class="form-select form-select-sm" 
-                style="min-width: 200px; background: rgba(255,255,255,0.1); border-color: var(--hosting-primary); color: #fff;"
-                onchange="switchSite(this.value)">
-            {% for s in all_sites %}
-            <option value="{{ s.id }}" {{ 'selected' if s.id == site.id else '' }} style="background: #1a1d2e; color: #fff;">
-                {{ s.name }}
-            </option>
-            {% endfor %}
-        </select>
-    </div>
     <a href="/hosting/site/{{ site.id }}" class="btn btn-hosting-secondary btn-sm">
         <i class="bi bi-arrow-left me-1"></i><span data-i18n="common.back">返回</span>
     </a>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex align-items-center gap-3">
+            <label class="text-muted mb-0" data-i18n="hosting.select_site">
+                {% if current_lang == 'en' %}Select Site:{% else %}选择站点:{% endif %}
+            </label>
+            <select id="siteSelector" class="form-select" 
+                    style="max-width: 280px; background: rgba(255,255,255,0.1); border-color: var(--hosting-primary); color: #fff;"
+                    onchange="switchSite(this.value)">
+                {% for s in all_sites %}
+                <option value="{{ s.id }}" {{ 'selected' if s.id == site.id else '' }} style="background: #1a1d2e; color: #fff;">
+                    {{ s.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
 </div>
 <script>
 function switchSite(siteId) {
@@ -28,24 +39,8 @@ function switchSite(siteId) {
     }
 }
 </script>
-{% endblock %}
 
-{% block content %}
-
-<div class="row">
-    <div class="col-12">
-        <ul class="nav nav-tabs nav-hosting mb-4" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="thermal-tab" data-bs-toggle="tab" data-bs-target="#thermal-panel" type="button">
-                    <i class="bi bi-thermometer-high me-2"></i><span data-i18n="hosting.settings.thermal_protection">温度智能控频</span>
-                </button>
-            </li>
-        </ul>
-    </div>
-</div>
-
-<div class="tab-content">
-    <div class="tab-pane fade show active" id="thermal-panel" role="tabpanel">
+<div>
         <div class="row">
             <div class="col-lg-8">
                 <div class="hosting-card">
@@ -237,7 +232,6 @@ function switchSite(siteId) {
             </div>
         </div>
     </div>
-</div>
 
 {% endblock %}
 
