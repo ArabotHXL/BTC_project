@@ -50,3 +50,14 @@ def relationship_diagram():
         current_lang=current_lang,
         t=lambda key: key
     )
+
+@app.route('/feature-interactions')
+def feature_interactions():
+    """Display how features talk to each other / 显示功能模块交互图"""
+    current_lang = session.get('language', 'zh')
+    
+    return render_template(
+        'feature_interactions.html',
+        current_lang=current_lang,
+        t=lambda key: key
+    )

@@ -1,0 +1,693 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Feature Interactions / 功能交互图 - HashInsight Enterprise
+{% endblock %}
+
+{% block header_title %}
+    <i class="bi bi-arrow-left-right me-2"></i>Feature Interactions / 功能交互图
+{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+body {
+    background: linear-gradient(135deg, #1a1d2e 0%, #0d0f1a 100%);
+    min-height: 100vh;
+}
+.diagram-container {
+    background: rgba(26, 29, 46, 0.95);
+    border-radius: 16px;
+    border: 1px solid rgba(247, 147, 26, 0.2);
+    padding: 30px;
+    margin: 20px auto;
+}
+.diagram-title {
+    color: #f7931a;
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 1.6rem;
+    font-weight: 600;
+}
+.diagram-subtitle {
+    color: #8a8fa8;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 0.95rem;
+}
+
+.section-title {
+    color: #f7931a;
+    font-size: 1.1rem;
+    margin: 25px 0 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(247, 147, 26, 0.3);
+}
+
+.mermaid-container {
+    background: rgba(13, 15, 26, 0.8);
+    border-radius: 12px;
+    padding: 25px;
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.back-btn {
+    color: #f7931a;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+}
+.back-btn:hover {
+    color: #d4780f;
+}
+
+.tab-btn {
+    background: rgba(26, 29, 46, 0.9);
+    border: 1px solid rgba(247, 147, 26, 0.3);
+    color: #8a8fa8;
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin: 0 5px 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.tab-btn:hover, .tab-btn.active {
+    background: rgba(247, 147, 26, 0.2);
+    border-color: #f7931a;
+    color: #f7931a;
+}
+
+.diagram-section {
+    display: none;
+}
+.diagram-section.active {
+    display: block;
+}
+
+.interaction-card {
+    background: rgba(26, 29, 46, 0.8);
+    border: 1px solid rgba(247, 147, 26, 0.2);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+.interaction-card h5 {
+    color: #f7931a;
+    font-size: 1rem;
+    margin-bottom: 10px;
+}
+.interaction-card p {
+    color: #8a8fa8;
+    font-size: 0.85rem;
+    margin-bottom: 0;
+}
+.arrow-flow {
+    color: #27ae60;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.legend-box {
+    display: inline-flex;
+    align-items: center;
+    margin: 5px 15px 5px 0;
+}
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    margin-right: 8px;
+}
+.legend-text {
+    color: #8a8fa8;
+    font-size: 0.8rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <a href="{{ url_for('relationship_diagram') }}" class="back-btn">
+        <i class="bi bi-arrow-left me-2"></i>
+        返回系统关系图 / Back to System Diagram
+    </a>
+    
+    <div class="diagram-container">
+        <h2 class="diagram-title">
+            <i class="bi bi-arrow-left-right me-2"></i>
+            功能模块交互图 / Feature Interaction Map
+        </h2>
+        <p class="diagram-subtitle">How each feature talks to each other / 每个功能模块如何相互通信</p>
+        
+        <div class="text-center mb-4">
+            <button class="tab-btn active" onclick="showSection('full')">
+                <i class="bi bi-diagram-3 me-1"></i>Full System / 完整系统
+            </button>
+            <button class="tab-btn" onclick="showSection('hosting')">
+                <i class="bi bi-cpu me-1"></i>Hosting Core / 托管核心
+            </button>
+            <button class="tab-btn" onclick="showSection('data')">
+                <i class="bi bi-database me-1"></i>Data Flow / 数据流
+            </button>
+            <button class="tab-btn" onclick="showSection('api')">
+                <i class="bi bi-plug me-1"></i>API Integrations / API集成
+            </button>
+            <button class="tab-btn" onclick="showSection('realtime')">
+                <i class="bi bi-broadcast me-1"></i>Real-time / 实时通信
+            </button>
+        </div>
+        
+        <div class="text-center mb-4">
+            <span class="legend-box">
+                <span class="legend-color" style="background: #f7931a;"></span>
+                <span class="legend-text">Core Module 核心模块</span>
+            </span>
+            <span class="legend-box">
+                <span class="legend-color" style="background: #27ae60;"></span>
+                <span class="legend-text">Service 服务层</span>
+            </span>
+            <span class="legend-box">
+                <span class="legend-color" style="background: #3498db;"></span>
+                <span class="legend-text">Data/API 数据层</span>
+            </span>
+            <span class="legend-box">
+                <span class="legend-color" style="background: #9b59b6;"></span>
+                <span class="legend-text">External 外部集成</span>
+            </span>
+            <span class="legend-box">
+                <span class="legend-color" style="background: #e74c3c;"></span>
+                <span class="legend-text">Real-time 实时通信</span>
+            </span>
+        </div>
+        
+        <div id="section-full" class="diagram-section active">
+            <h4 class="section-title"><i class="bi bi-diagram-3 me-2"></i>Complete Feature Interaction Map / 完整功能交互图</h4>
+            <div class="mermaid-container">
+                <pre class="mermaid">
+graph TB
+    subgraph UserInterface["🖥️ User Interface 用户界面"]
+        Dashboard[Dashboard<br/>仪表盘]
+        Calculator[Calculator<br/>挖矿计算器]
+        HostingUI[Hosting UI<br/>托管界面]
+        CRMUI[CRM UI<br/>客户管理界面]
+        ClientPortal[Client Portal<br/>客户门户]
+    end
+    
+    subgraph CoreModules["⚙️ Core Modules 核心模块"]
+        HostingService[Hosting Service<br/>托管服务]
+        MinerMgmt[Miner Management<br/>矿机管理]
+        CRMService[CRM Service<br/>客户关系服务]
+        ThermalProtection[Thermal Protection<br/>温控保护]
+        Curtailment[Curtailment Scheduler<br/>限电调度]
+    end
+    
+    subgraph DataServices["📊 Data Services 数据服务"]
+        CGMinerCollector[CGMiner Collector<br/>CGMiner采集器]
+        EdgeCollector[Edge Collector<br/>边缘采集器]
+        TelemetryService[Telemetry Service<br/>遥测服务]
+        AnalyticsEngine[Analytics Engine<br/>分析引擎]
+    end
+    
+    subgraph Intelligence["🧠 Intelligence Layer 智能层"]
+        Forecast[Price/Difficulty Forecast<br/>价格/难度预测]
+        PowerOptimize[Power Optimization<br/>电力优化]
+        AnomalyDetect[Anomaly Detection<br/>异常检测]
+        ROIExplain[ROI Explanation<br/>收益解释]
+    end
+    
+    subgraph ExternalAPIs["🌐 External APIs 外部接口"]
+        CoinGecko[CoinGecko API<br/>价格数据]
+        Blockchain[Blockchain API<br/>网络数据]
+        Exchanges[Exchange APIs<br/>交易所数据]
+    end
+    
+    subgraph Database["💾 Database 数据库"]
+        PostgreSQL[(PostgreSQL<br/>主数据库)]
+        Redis[(Redis<br/>缓存/队列)]
+    end
+    
+    Dashboard --> HostingService
+    Dashboard --> CRMService
+    Dashboard --> AnalyticsEngine
+    Calculator --> Forecast
+    Calculator --> AnalyticsEngine
+    HostingUI --> HostingService
+    HostingUI --> MinerMgmt
+    CRMUI --> CRMService
+    ClientPortal --> HostingService
+    
+    HostingService --> MinerMgmt
+    HostingService --> ThermalProtection
+    HostingService --> Curtailment
+    MinerMgmt --> CGMinerCollector
+    MinerMgmt --> EdgeCollector
+    ThermalProtection --> MinerMgmt
+    Curtailment --> MinerMgmt
+    
+    CGMinerCollector --> TelemetryService
+    EdgeCollector --> TelemetryService
+    TelemetryService --> AnalyticsEngine
+    AnalyticsEngine --> Forecast
+    AnalyticsEngine --> AnomalyDetect
+    
+    Forecast --> PowerOptimize
+    AnomalyDetect --> ThermalProtection
+    PowerOptimize --> Curtailment
+    ROIExplain --> Calculator
+    
+    CoinGecko --> AnalyticsEngine
+    Blockchain --> AnalyticsEngine
+    Exchanges --> AnalyticsEngine
+    
+    HostingService --> PostgreSQL
+    CRMService --> PostgreSQL
+    MinerMgmt --> PostgreSQL
+    TelemetryService --> PostgreSQL
+    AnalyticsEngine --> Redis
+    CGMinerCollector --> Redis
+    
+    CRMService -.->|email sync| HostingService
+    
+    style UserInterface fill:#1a1d2e,stroke:#f7931a
+    style CoreModules fill:#1a1d2e,stroke:#27ae60
+    style DataServices fill:#1a1d2e,stroke:#3498db
+    style Intelligence fill:#1a1d2e,stroke:#9b59b6
+    style ExternalAPIs fill:#1a1d2e,stroke:#e74c3c
+    style Database fill:#1a1d2e,stroke:#f39c12
+                </pre>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="interaction-card">
+                        <h5><i class="bi bi-arrow-repeat me-2"></i>CRM ↔ Hosting Sync</h5>
+                        <p class="arrow-flow">Customer.email → UserAccess.email → UserMiner</p>
+                        <p>CRM客户通过邮箱匹配关联到托管矿机数据，实现跨模块数据同步</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="interaction-card">
+                        <h5><i class="bi bi-thermometer-half me-2"></i>Thermal → Miner Control</h5>
+                        <p class="arrow-flow">Temperature Event → Frequency Throttle → CGMiner Command</p>
+                        <p>温控服务检测到高温时自动降频，通过CGMiner API发送控制命令</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="interaction-card">
+                        <h5><i class="bi bi-lightning me-2"></i>Curtailment → Miner</h5>
+                        <p class="arrow-flow">Schedule Plan → Miner Selection → Stop/Start Command</p>
+                        <p>限电调度按计划自动停止/启动矿机，支持优先级策略和自动恢复</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="section-hosting" class="diagram-section">
+            <h4 class="section-title"><i class="bi bi-cpu me-2"></i>Hosting Core Interactions / 托管核心交互</h4>
+            <div class="mermaid-container">
+                <pre class="mermaid">
+graph LR
+    subgraph MinerLayer["矿机层 Miner Layer"]
+        Miner1[Miner 1]
+        Miner2[Miner 2]
+        MinerN[Miner N...]
+    end
+    
+    subgraph CollectorLayer["采集层 Collector Layer"]
+        CGMiner[CGMiner API<br/>端口4028]
+        EdgeAgent[Edge Agent<br/>边缘代理]
+    end
+    
+    subgraph ProcessLayer["处理层 Process Layer"]
+        Scheduler[CGMiner Scheduler<br/>采集调度器]
+        CommandQueue[Command Queue<br/>命令队列]
+        TelemetryDB[Telemetry Storage<br/>遥测存储]
+    end
+    
+    subgraph ControlLayer["控制层 Control Layer"]
+        ThermalCtrl[Thermal Controller<br/>温控器]
+        CurtailCtrl[Curtailment Controller<br/>限电控制器]
+        ManualCtrl[Manual Control<br/>手动控制]
+    end
+    
+    subgraph MonitorLayer["监控层 Monitor Layer"]
+        StatusDash[Status Dashboard<br/>状态仪表盘]
+        AlertSystem[Alert System<br/>告警系统]
+        ReportGen[Report Generator<br/>报表生成]
+    end
+    
+    Miner1 --> CGMiner
+    Miner2 --> CGMiner
+    MinerN --> CGMiner
+    Miner1 --> EdgeAgent
+    Miner2 --> EdgeAgent
+    MinerN --> EdgeAgent
+    
+    CGMiner --> Scheduler
+    EdgeAgent --> Scheduler
+    Scheduler --> TelemetryDB
+    Scheduler --> CommandQueue
+    
+    TelemetryDB --> ThermalCtrl
+    TelemetryDB --> CurtailCtrl
+    TelemetryDB --> StatusDash
+    TelemetryDB --> AlertSystem
+    TelemetryDB --> ReportGen
+    
+    ThermalCtrl --> CommandQueue
+    CurtailCtrl --> CommandQueue
+    ManualCtrl --> CommandQueue
+    
+    CommandQueue --> CGMiner
+    CommandQueue --> EdgeAgent
+    
+    style MinerLayer fill:#1a1d2e,stroke:#f7931a
+    style CollectorLayer fill:#1a1d2e,stroke:#e74c3c
+    style ProcessLayer fill:#1a1d2e,stroke:#3498db
+    style ControlLayer fill:#1a1d2e,stroke:#27ae60
+    style MonitorLayer fill:#1a1d2e,stroke:#9b59b6
+                </pre>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="interaction-card">
+                        <h5><i class="bi bi-arrow-down-up me-2"></i>Bidirectional Communication / 双向通信</h5>
+                        <p class="arrow-flow">Cloud ⟷ Edge Collector ⟷ CGMiner API ⟷ Miner</p>
+                        <p>云端可以通过边缘采集器向矿机发送控制命令，同时接收实时遥测数据</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="interaction-card">
+                        <h5><i class="bi bi-clock-history me-2"></i>Scheduled Collection / 定时采集</h5>
+                        <p class="arrow-flow">APScheduler → CGMiner Collector → Database → Cache</p>
+                        <p>每60秒自动采集所有矿机数据，更新数据库和Redis缓存</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="section-data" class="diagram-section">
+            <h4 class="section-title"><i class="bi bi-database me-2"></i>Data Flow Architecture / 数据流架构</h4>
+            <div class="mermaid-container">
+                <pre class="mermaid">
+graph TB
+    subgraph Sources["📥 Data Sources 数据源"]
+        MinerAPI[Miner CGMiner API]
+        PriceAPI[Price APIs<br/>CoinGecko/Exchanges]
+        NetworkAPI[Network APIs<br/>Blockchain.info/Mempool]
+        UserInput[User Input<br/>用户输入]
+    end
+    
+    subgraph Collectors["🔄 Data Collectors 数据采集"]
+        CGCollector[CGMiner Collector<br/>矿机采集器]
+        MarketCollector[Market Collector<br/>市场采集器]
+        ExchangeCollector[Multi-Exchange Collector<br/>多交易所采集器]
+    end
+    
+    subgraph Processing["⚙️ Data Processing 数据处理"]
+        Aggregation[Data Aggregation<br/>数据聚合]
+        Validation[Data Validation<br/>数据验证]
+        Transform[Data Transform<br/>数据转换]
+    end
+    
+    subgraph Storage["💾 Data Storage 数据存储"]
+        PG[(PostgreSQL<br/>持久化存储)]
+        RedisCache[(Redis Cache<br/>热数据缓存)]
+        TimeSeries[Time Series Data<br/>时序数据表]
+    end
+    
+    subgraph Analytics["📊 Analytics 数据分析"]
+        TechIndicators[Technical Indicators<br/>技术指标]
+        ProfitCalc[Profitability Calc<br/>收益计算]
+        TrendAnalysis[Trend Analysis<br/>趋势分析]
+    end
+    
+    subgraph Output["📤 Data Output 数据输出"]
+        Dashboard[Dashboard Display<br/>仪表盘展示]
+        Reports[Report Generation<br/>报表生成]
+        Alerts[Alert Notifications<br/>告警通知]
+        APIResponse[API Responses<br/>API响应]
+    end
+    
+    MinerAPI --> CGCollector
+    PriceAPI --> MarketCollector
+    NetworkAPI --> MarketCollector
+    PriceAPI --> ExchangeCollector
+    UserInput --> Validation
+    
+    CGCollector --> Aggregation
+    MarketCollector --> Aggregation
+    ExchangeCollector --> Aggregation
+    
+    Aggregation --> Validation
+    Validation --> Transform
+    
+    Transform --> PG
+    Transform --> RedisCache
+    Transform --> TimeSeries
+    
+    PG --> TechIndicators
+    PG --> ProfitCalc
+    TimeSeries --> TrendAnalysis
+    RedisCache --> Dashboard
+    
+    TechIndicators --> Dashboard
+    ProfitCalc --> Dashboard
+    TrendAnalysis --> Reports
+    PG --> Reports
+    TechIndicators --> Alerts
+    RedisCache --> APIResponse
+    
+    style Sources fill:#1a1d2e,stroke:#e74c3c
+    style Collectors fill:#1a1d2e,stroke:#f39c12
+    style Processing fill:#1a1d2e,stroke:#27ae60
+    style Storage fill:#1a1d2e,stroke:#3498db
+    style Analytics fill:#1a1d2e,stroke:#9b59b6
+    style Output fill:#1a1d2e,stroke:#f7931a
+                </pre>
+            </div>
+        </div>
+        
+        <div id="section-api" class="diagram-section">
+            <h4 class="section-title"><i class="bi bi-plug me-2"></i>API Integration Map / API集成图</h4>
+            <div class="mermaid-container">
+                <pre class="mermaid">
+graph LR
+    subgraph InternalAPIs["🏠 Internal APIs 内部API"]
+        HostingAPI[/api/hosting/*<br/>托管API/]
+        ClientAPI[/api/client/*<br/>客户API/]
+        CRMAPI[/crm/api/*<br/>CRM API/]
+        AnalyticsAPI[/api/analytics/*<br/>分析API/]
+        IntelligenceAPI[/api/intelligence/*<br/>智能API/]
+        CollectorAPI[/api/collector/*<br/>采集器API/]
+    end
+    
+    subgraph ExternalAPIs["🌐 External APIs 外部API"]
+        CoinGecko[CoinGecko<br/>价格/历史数据]
+        BlockchainInfo[Blockchain.info<br/>网络统计]
+        Mempool[Mempool.space<br/>交易费/难度]
+        Deribit[Deribit API<br/>期权数据]
+        Binance[Binance API<br/>现货/合约]
+        OKX[OKX API<br/>交易数据]
+    end
+    
+    subgraph MinerAPIs["⛏️ Miner APIs 矿机API"]
+        CGMinerAPI[CGMiner API<br/>:4028]
+        BraiinsAPI[Braiins API<br/>:8080]
+        EdgeAPI[Edge Collector API<br/>本地采集]
+    end
+    
+    subgraph Services["⚙️ Backend Services"]
+        FlaskApp[Flask Application]
+        Redis[Redis Cache]
+        Scheduler[APScheduler]
+    end
+    
+    HostingAPI --> FlaskApp
+    ClientAPI --> FlaskApp
+    CRMAPI --> FlaskApp
+    AnalyticsAPI --> FlaskApp
+    IntelligenceAPI --> FlaskApp
+    CollectorAPI --> FlaskApp
+    
+    FlaskApp --> CoinGecko
+    FlaskApp --> BlockchainInfo
+    FlaskApp --> Mempool
+    FlaskApp --> Deribit
+    FlaskApp --> Binance
+    FlaskApp --> OKX
+    
+    FlaskApp --> CGMinerAPI
+    FlaskApp --> BraiinsAPI
+    EdgeAPI --> FlaskApp
+    
+    FlaskApp --> Redis
+    Scheduler --> FlaskApp
+    
+    style InternalAPIs fill:#1a1d2e,stroke:#27ae60
+    style ExternalAPIs fill:#1a1d2e,stroke:#9b59b6
+    style MinerAPIs fill:#1a1d2e,stroke:#e74c3c
+    style Services fill:#1a1d2e,stroke:#f7931a
+                </pre>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="interaction-card">
+                        <h5>Hosting API</h5>
+                        <p>/api/sites<br/>/api/miners<br/>/api/telemetry<br/>/api/thermal</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="interaction-card">
+                        <h5>CRM API</h5>
+                        <p>/crm/api/customers<br/>/crm/api/deals<br/>/crm/api/sync-hosting<br/>/crm/api/sync-status</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="interaction-card">
+                        <h5>Intelligence API</h5>
+                        <p>/api/intelligence/forecast<br/>/api/intelligence/optimize<br/>/api/intelligence/explain</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="interaction-card">
+                        <h5>Collector API</h5>
+                        <p>/api/collector/register<br/>/api/collector/telemetry<br/>/api/collector/command</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="section-realtime" class="diagram-section">
+            <h4 class="section-title"><i class="bi bi-broadcast me-2"></i>Real-time Communication / 实时通信</h4>
+            <div class="mermaid-container">
+                <pre class="mermaid">
+sequenceDiagram
+    participant Miner as 矿机 Miner
+    participant Edge as 边缘采集器 Edge
+    participant Cloud as 云端 Cloud
+    participant DB as 数据库 Database
+    participant User as 用户 User
+    
+    Note over Miner,User: 数据采集流程 Data Collection Flow
+    
+    loop 每60秒 Every 60s
+        Cloud->>Edge: 采集请求 Collection Request
+        Edge->>Miner: CGMiner API Call
+        Miner-->>Edge: 状态数据 Status Data
+        Edge-->>Cloud: 遥测上报 Telemetry Report
+        Cloud->>DB: 存储数据 Store Data
+    end
+    
+    Note over Miner,User: 温度告警流程 Thermal Alert Flow
+    
+    Miner->>Edge: 温度数据 Temperature
+    Edge->>Cloud: 遥测上报 Telemetry
+    Cloud->>Cloud: 检测异常 Detect Anomaly
+    alt 温度过高 Temperature High
+        Cloud->>Edge: 降频命令 Throttle Command
+        Edge->>Miner: 调整频率 Adjust Frequency
+        Cloud->>User: 告警通知 Alert
+    end
+    
+    Note over Miner,User: 限电调度流程 Curtailment Flow
+    
+    Cloud->>Cloud: 检查计划 Check Schedule
+    alt 到达限电时间 Curtailment Time
+        Cloud->>Edge: 停机命令 Stop Command
+        Edge->>Miner: 停止挖矿 Stop Mining
+        Cloud->>DB: 记录事件 Log Event
+        Cloud->>User: 执行通知 Execution Notice
+    end
+                </pre>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="interaction-card">
+                        <h5><i class="bi bi-arrow-repeat me-2"></i>Polling Model / 轮询模式</h5>
+                        <p>CGMiner调度器每60秒轮询所有矿机，采集状态、算力、温度等数据</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="interaction-card">
+                        <h5><i class="bi bi-exclamation-triangle me-2"></i>Event-Driven / 事件驱动</h5>
+                        <p>温控保护和限电调度采用事件驱动模式，触发条件时立即执行</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="interaction-card">
+                        <h5><i class="bi bi-arrow-down-up me-2"></i>Bidirectional / 双向通信</h5>
+                        <p>边缘采集器支持双向通信，既上报数据也接收云端控制命令</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var renderedSections = {};
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#f7931a',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#d4780f',
+                lineColor: '#4a5568',
+                secondaryColor: '#2c3e50',
+                tertiaryColor: '#1a1d2e',
+                background: '#0d0f1a',
+                mainBkg: '#1a1d2e',
+                fontFamily: 'Inter, system-ui, sans-serif',
+                fontSize: '12px',
+                clusterBkg: 'rgba(26,29,46,0.9)',
+                clusterBorder: '#f7931a'
+            },
+            flowchart: { curve: 'basis', padding: 15 },
+            sequence: { 
+                actorMargin: 50,
+                messageMargin: 40,
+                mirrorActors: false
+            }
+        });
+        
+        renderSection('full');
+    });
+    
+    function renderSection(name) {
+        if (renderedSections[name]) return;
+        var section = document.getElementById('section-' + name);
+        if (!section) return;
+        var diagrams = section.querySelectorAll('.mermaid:not([data-processed])');
+        if (diagrams.length > 0) {
+            mermaid.run({ nodes: diagrams });
+            renderedSections[name] = true;
+        }
+    }
+    
+    function showSection(name) {
+        document.querySelectorAll('.diagram-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('section-' + name).classList.add('active');
+        event.target.classList.add('active');
+        
+        setTimeout(function() {
+            renderSection(name);
+        }, 50);
+    }
+</script>
+{% endblock %}
