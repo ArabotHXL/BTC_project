@@ -3100,3 +3100,236 @@ class PowerPriceConfig(db.Model):
         return f"<PowerPriceConfig {self.config_name} ({self.price_mode.value})>"
 
 
+# ==================== 温度智能控频模型 ====================
+
+class ThermalProtectionConfig(db.Model):
+    """热保护配置 - 温度阈值和频率控制设置"""
+    __tablename__ = 'thermal_protection_configs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False, index=True)
+    
+    # 配置名称
+    config_name = db.Column(db.String(100), nullable=False, default='默认热保护配置')
+    
+    # 温度阈值 (°C)
+    warning_temp = db.Column(db.Float, nullable=False, default=70.0)  # 预警温度
+    throttle_temp = db.Column(db.Float, nullable=False, default=80.0)  # 开始降频温度
+    critical_temp = db.Column(db.Float, nullable=False, default=90.0)  # 临界温度(强制关机)
+    recovery_temp = db.Column(db.Float, nullable=False, default=65.0)  # 恢复温度(恢复正常频率)
+    
+    # 频率控制
+    throttle_frequency_percent = db.Column(db.Integer, nullable=False, default=80)  # 降频比例(%)
+    min_frequency_percent = db.Column(db.Integer, nullable=False, default=50)  # 最低频率(%)
+    
+    # 冷却等待时间
+    cooldown_minutes = db.Column(db.Integer, nullable=False, default=10)  # 降频后等待时间(分钟)
+    
+    # 启用状态
+    is_enabled = db.Column(db.Boolean, nullable=False, default=True)
+    
+    # 通知设置
+    notify_on_warning = db.Column(db.Boolean, nullable=False, default=True)
+    notify_on_throttle = db.Column(db.Boolean, nullable=False, default=True)
+    notify_on_critical = db.Column(db.Boolean, nullable=False, default=True)
+    notification_email = db.Column(db.String(256), nullable=True)
+    
+    # 时间戳
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 关联关系
+    site = db.relationship('HostingSite', backref='thermal_configs', foreign_keys=[site_id])
+    
+    def __init__(self, site_id, **kwargs):
+        self.site_id = site_id
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'site_id': self.site_id,
+            'config_name': self.config_name,
+            'warning_temp': self.warning_temp,
+            'throttle_temp': self.throttle_temp,
+            'critical_temp': self.critical_temp,
+            'recovery_temp': self.recovery_temp,
+            'throttle_frequency_percent': self.throttle_frequency_percent,
+            'min_frequency_percent': self.min_frequency_percent,
+            'cooldown_minutes': self.cooldown_minutes,
+            'is_enabled': self.is_enabled,
+            'notify_on_warning': self.notify_on_warning,
+            'notify_on_throttle': self.notify_on_throttle,
+            'notify_on_critical': self.notify_on_critical,
+            'notification_email': self.notification_email,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+    
+    def __repr__(self):
+        return f"<ThermalProtectionConfig {self.config_name} (site={self.site_id})>"
+
+
+class ThermalEventType:
+    """热保护事件类型"""
+    WARNING = 'warning'  # 温度预警
+    THROTTLE = 'throttle'  # 降频
+    CRITICAL = 'critical'  # 临界(强制关机)
+    RECOVERY = 'recovery'  # 恢复正常
+
+
+class ThermalEvent(db.Model):
+    """热保护事件日志 - 记录所有温度保护事件"""
+    __tablename__ = 'thermal_events'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False, index=True)
+    miner_id = db.Column(db.Integer, db.ForeignKey('hosting_miners.id'), nullable=False, index=True)
+    
+    # 事件信息
+    event_type = db.Column(db.String(20), nullable=False, index=True)  # warning/throttle/critical/recovery
+    temperature = db.Column(db.Float, nullable=False)  # 触发时温度
+    threshold = db.Column(db.Float, nullable=False)  # 触发阈值
+    
+    # 动作信息
+    action_taken = db.Column(db.String(50), nullable=True)  # 采取的动作
+    frequency_before = db.Column(db.Float, nullable=True)  # 降频前频率(MHz)
+    frequency_after = db.Column(db.Float, nullable=True)  # 降频后频率(MHz)
+    
+    # 结果
+    success = db.Column(db.Boolean, nullable=False, default=True)
+    error_message = db.Column(db.Text, nullable=True)
+    
+    # 通知状态
+    notification_sent = db.Column(db.Boolean, nullable=False, default=False)
+    
+    # 时间戳
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+    resolved_at = db.Column(db.DateTime, nullable=True)  # 事件解决时间
+    
+    # 关联关系
+    site = db.relationship('HostingSite', backref='thermal_events', foreign_keys=[site_id])
+    miner = db.relationship('HostingMiner', backref='thermal_events', foreign_keys=[miner_id])
+    
+    # 索引优化
+    __table_args__ = (
+        db.Index('idx_thermal_event_site_type', 'site_id', 'event_type'),
+        db.Index('idx_thermal_event_miner_created', 'miner_id', 'created_at'),
+    )
+    
+    def __init__(self, site_id, miner_id, event_type, temperature, threshold, **kwargs):
+        self.site_id = site_id
+        self.miner_id = miner_id
+        self.event_type = event_type
+        self.temperature = temperature
+        self.threshold = threshold
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'site_id': self.site_id,
+            'miner_id': self.miner_id,
+            'event_type': self.event_type,
+            'temperature': self.temperature,
+            'threshold': self.threshold,
+            'action_taken': self.action_taken,
+            'frequency_before': self.frequency_before,
+            'frequency_after': self.frequency_after,
+            'success': self.success,
+            'error_message': self.error_message,
+            'notification_sent': self.notification_sent,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'resolved_at': self.resolved_at.isoformat() if self.resolved_at else None
+        }
+    
+    def __repr__(self):
+        return f"<ThermalEvent {self.event_type} miner={self.miner_id} temp={self.temperature}°C>"
+
+
+# ==================== 白标品牌系统模型 ====================
+
+class SiteBranding(db.Model):
+    """站点品牌配置 - 白标系统"""
+    __tablename__ = 'site_branding'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    site_id = db.Column(db.Integer, db.ForeignKey('hosting_sites.id'), nullable=False, unique=True, index=True)
+    
+    # 品牌信息
+    company_name = db.Column(db.String(200), nullable=True)  # 公司名称
+    company_slogan = db.Column(db.String(500), nullable=True)  # 公司标语
+    
+    # Logo 配置
+    logo_url = db.Column(db.String(500), nullable=True)  # Logo URL
+    logo_light_url = db.Column(db.String(500), nullable=True)  # 浅色背景 Logo
+    logo_dark_url = db.Column(db.String(500), nullable=True)  # 深色背景 Logo
+    favicon_url = db.Column(db.String(500), nullable=True)  # Favicon URL
+    
+    # 颜色配置
+    primary_color = db.Column(db.String(7), nullable=True, default='#f7931a')  # 主色 (BTC金)
+    secondary_color = db.Column(db.String(7), nullable=True, default='#1a1d2e')  # 次色 (深蓝)
+    accent_color = db.Column(db.String(7), nullable=True, default='#ffc107')  # 强调色
+    
+    # 联系信息
+    support_email = db.Column(db.String(256), nullable=True)
+    support_phone = db.Column(db.String(50), nullable=True)
+    website_url = db.Column(db.String(500), nullable=True)
+    
+    # 社交媒体
+    twitter_url = db.Column(db.String(500), nullable=True)
+    telegram_url = db.Column(db.String(500), nullable=True)
+    discord_url = db.Column(db.String(500), nullable=True)
+    
+    # 自定义页脚
+    footer_text = db.Column(db.Text, nullable=True)
+    
+    # 启用状态
+    is_enabled = db.Column(db.Boolean, nullable=False, default=True)
+    
+    # 时间戳
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 关联关系
+    site = db.relationship('HostingSite', backref=db.backref('branding', uselist=False), foreign_keys=[site_id])
+    
+    def __init__(self, site_id, **kwargs):
+        self.site_id = site_id
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'site_id': self.site_id,
+            'company_name': self.company_name,
+            'company_slogan': self.company_slogan,
+            'logo_url': self.logo_url,
+            'logo_light_url': self.logo_light_url,
+            'logo_dark_url': self.logo_dark_url,
+            'favicon_url': self.favicon_url,
+            'primary_color': self.primary_color,
+            'secondary_color': self.secondary_color,
+            'accent_color': self.accent_color,
+            'support_email': self.support_email,
+            'support_phone': self.support_phone,
+            'website_url': self.website_url,
+            'twitter_url': self.twitter_url,
+            'telegram_url': self.telegram_url,
+            'discord_url': self.discord_url,
+            'footer_text': self.footer_text,
+            'is_enabled': self.is_enabled,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+    
+    def __repr__(self):
+        return f"<SiteBranding {self.company_name or 'Unnamed'} (site={self.site_id})>"
+
+
