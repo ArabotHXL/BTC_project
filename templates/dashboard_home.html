@@ -759,6 +759,22 @@ body {
         </div>
         {% endif %}
 
+        <!-- 白标品牌配置 -->
+        {% if session.role in ['owner', 'admin', 'mining_site'] %}
+        <div class="dashboard-card branding-item" onclick="location.href='/hosting/branding'">
+            <div class="card-stats">Branding</div>
+            <div class="card-content">
+                <i class="bi bi-brush card-icon" style="color: #9b59b6;"></i>
+                <h3 class="card-title" data-i18n="white_label_branding">
+                    {% if current_lang == 'en' %}White Label Branding{% else %}白标品牌配置{% endif %}
+                </h3>
+                <p class="card-description" data-i18n="white_label_desc">
+                    {% if current_lang == 'en' %}Customize your platform with your own logo, colors, and branding{% else %}自定义平台Logo、颜色和品牌元素{% endif %}
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- CRM客户管理 -->
         {% if session.role in ['owner', 'admin', 'mining_site'] %}
         <div class="dashboard-card crm-item" onclick="location.href='/crm/'">
