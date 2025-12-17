@@ -64,6 +64,20 @@ HashInsight Enterprise is an enterprise-grade web application for mining farm ow
 - **API Endpoints**: `/api/branding/<site_id>` for GET/PUT, `/api/branding/<site_id>/logo` for upload
 - **UI Configuration**: Site settings page with brand preview and color picker
 
+### Enterprise RBAC v2.0 Permission Matrix (企业级权限矩阵)
+- **6 User Roles**: Owner, Admin, Mining_Site_Owner, Client, Customer, Guest
+- **40+ Modules**: Granular permission control across all system features
+- **3 Access Levels**: FULL (完全访问), READ (只读), NONE (无权限)
+- **Module-Based Decorators**: `@requires_module_access(Module.XXX)` for consistent enforcement
+- **Auth Layering**: `@login_required` + `@requires_module_access` for proper authentication → authorization flow
+- **Key Permissions**:
+  - User Delete: Only Owner (Admin cannot)
+  - Remote Control Execute: Owner/Admin/Mining_Site_Owner only
+  - Client/Customer: READ access to hosting status, curtailment history, financial data
+  - Guest: Calculator and technical analysis only
+- **Routes Protected**: 100+ API and HTML routes with module-level RBAC enforcement
+- **Core File**: `common/rbac.py` defines the complete permission matrix
+
 ### Device Envelope Encryption (设备信封加密)
 - **Zero-Knowledge Architecture**: End-to-end encryption for miner credentials between browser and Edge Collector, server never sees plaintext
 - **Cryptography**: X25519 Sealed Box for DEK wrapping + AES-256-GCM for credential encryption
