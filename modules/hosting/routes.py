@@ -199,8 +199,8 @@ def client_view(subpath='dashboard'):
     try:
         if subpath == 'dashboard':
             return render_template('hosting/client_dashboard.html')
-        elif subpath == 'assets':
-            return render_template('hosting/client_dashboard.html')
+        elif subpath == 'miners':
+            return render_template('hosting/client_miners.html')
         elif subpath == 'usage':
             return render_template('hosting/client_usage.html')
         elif subpath == 'reports':
