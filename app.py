@@ -581,6 +581,40 @@ def has_role(required_roles):
 # Health check routes moved to routes/health_routes.py (system_health_bp)
 # Endpoints: /health, /health/deep, /api/health, /status, /ready, /alive
 
+# Debug endpoint to diagnose permission issues
+@app.route('/api/debug-session')
+def debug_session():
+    """Debug endpoint to check session and permission state"""
+    email = session.get('email')
+    authenticated = session.get('authenticated')
+    session_role = session.get('role')
+    
+    user = None
+    db_role = None
+    has_access_val = None
+    subscription_plan = None
+    
+    if email:
+        try:
+            user = UserAccess.query.filter_by(email=email).first()
+            if user:
+                db_role = user.role
+                has_access_val = user.has_access
+                subscription_plan = user.subscription_plan
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    
+    return jsonify({
+        'session_email': email,
+        'session_authenticated': authenticated,
+        'session_role': session_role,
+        'db_user_found': user is not None,
+        'db_role': db_role,
+        'db_has_access': has_access_val,
+        'db_subscription_plan': subscription_plan,
+        'has_role_result': has_role(['owner', 'admin', 'manager', 'mining_site_owner']) if email else False
+    })
+
 # 添加自定义过滤器
 @app.template_filter('nl2br')
 def nl2br_filter(s):
