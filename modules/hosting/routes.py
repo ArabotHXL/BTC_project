@@ -535,7 +535,8 @@ def create_site():
                 'error': '站点标识已存在'
             }), 400
         
-        # 创建新站点
+        # 创建新站点 - 自动关联当前用户邮箱
+        user_email = current_user.email if hasattr(current_user, 'email') else ''
         site = HostingSite(
             name=data['name'],
             slug=data['slug'],
@@ -543,6 +544,7 @@ def create_site():
             capacity_mw=float(data['capacity_mw']),
             electricity_rate=float(data.get('electricity_rate', 0.05)),
             operator_name=data.get('operator_name', ''),
+            contact_email=data.get('contact_email', user_email),  # 自动使用当前用户邮箱
             description=data.get('description', ''),
             status='offline'  # 默认新站点是离线状态
         )
