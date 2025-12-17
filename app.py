@@ -23,6 +23,9 @@ from rate_limiting import rate_limit
 from security_enhancements import SecurityManager
 from models import UserAccess, LoginRecord
 
+# RBAC权限控制导入
+from common.rbac import requires_module_access, Module, AccessLevel, normalize_role
+
 # 延迟导入，避免循环导入 - 统一Flask应用实例
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 
@@ -739,10 +742,17 @@ def home():
 
 
 # 重定向旧的dashboard路由到新的首页
+# RBAC: BASIC_DASHBOARD - Guest=READ, 其他角色=FULL
 @app.route('/dashboard')
-@login_required
+@requires_module_access(Module.BASIC_DASHBOARD)
 def dashboard():
-    """重定向到首页仪表盘"""
+    """重定向到首页仪表盘
+    
+    RBAC权限:
+    - Guest: READ (只读访问，显示公共看板)
+    - 其他已登录角色: FULL (完整仪表盘功能)
+    """
+    # g.access_level 由RBAC装饰器设置，可用于模板区分权限
     return redirect(url_for('index'))
 
 # 白标品牌管理页面 - 独立路由
@@ -3375,14 +3385,14 @@ def analytics_market_data():
 @app.route('/api/analytics/latest-report')
 @app.route('/analytics/latest-report')
 @login_required
+@requires_module_access(Module.REPORT_PDF)
 def analytics_latest_report():
-    """获取最新分析报告"""
-    # Check analytics access permission
-    if not user_has_analytics_access():
-        return jsonify({
-            'success': False,
-            'error': 'Access denied. Analytics API requires Owner privileges or Pro subscription.'
-        }), 403
+    """获取最新分析报告
+    
+    RBAC权限 (REPORT_PDF):
+    - All except Guest: FULL
+    - Guest: READ (demo only)
+    """
     
     try:
         import psycopg2
@@ -3922,12 +3932,16 @@ def api_generate_detailed_report():
 
 @app.route('/api/professional-report/generate', methods=['POST'])
 @login_required
+@requires_module_access(Module.REPORT_PDF, require_full=True)
 def generate_professional_report():
-    """生成专业5步报告"""
+    """生成专业5步报告
+    
+    RBAC权限 (REPORT_PDF):
+    - All except Guest: FULL
+    - Guest: READ (demo only)
+    """
     try:
-        # 验证用户权限 (仅限拥有者)
-        if get_user_role(session.get('email')) != 'owner':
-            return jsonify({'error': '权限不足，仅限拥有者使用'}), 403
+        # RBAC检查已由装饰器处理
             
         try:
             from modules.analytics.reports.professional_report_generator import ProfessionalReportGenerator as Professional5StepReportGenerator
@@ -3990,12 +4004,21 @@ def generate_professional_report():
 
 @app.route('/api/professional-report/download/<file_type>', methods=['GET', 'POST'])
 @login_required
+@requires_module_access(Module.REPORT_PDF, require_full=True)
 def download_professional_report(file_type):
-    """下载专业报告文件"""
+    """下载专业报告文件
+    
+    RBAC权限:
+    - REPORT_PDF (PDF): All except Guest = FULL, Guest = READ (demo)
+    - REPORT_PPT (PPTX): All except Guest = FULL, Guest = NONE
+    """
     try:
-        # 验证用户权限
-        if get_user_role(session.get('email')) != 'owner':
-            return jsonify({'error': '权限不足'}), 403
+        # 如果是PPT文件，额外检查PPT权限
+        if file_type == 'pptx':
+            from common.rbac import rbac_manager, normalize_role
+            user_role = normalize_role(session.get('role', 'guest'))
+            if not rbac_manager.has_access(user_role, Module.REPORT_PPT, require_full=True):
+                return jsonify({'error': '权限不足 - PPT导出需要更高权限'}), 403
             
         from flask import send_file
         from datetime import datetime
@@ -4097,63 +4120,58 @@ def analytics_main():
 @app.route('/technical-analysis')
 @app.route('/technical_analysis')
 @app.route('/analytics/technical')
-@login_required
+@requires_module_access(Module.ANALYTICS_TECHNICAL)
 @log_access_attempt('技术分析')
 def technical_analysis():
-    """Technical Analysis page - Renders interactive technical indicators dashboard"""
-    # Debug logging for permission issues
-    email = session.get('email')
-    user_role = get_user_role(email)
-    logging.info(f"[DEBUG] technical-analysis: email={email}, user_role={user_role}, session_role={session.get('role')}")
+    """Technical Analysis page - Renders interactive technical indicators dashboard
     
-    if not has_role(['owner', 'admin', 'manager', 'mining_site_owner']):
-        current_lang = session.get('language', 'zh')
-        if current_lang == 'en':
-            flash('You do not have permission to access this page', 'danger')
-        else:
-            flash('您没有权限访问此页面', 'danger')
-        return redirect(url_for('index'))
-    
+    RBAC权限:
+    - Owner/Admin/Mining_Site_Owner: FULL (完整访问)
+    - Client/Customer/Guest: READ (只读访问)
+    """
     current_lang = session.get('language', 'zh')
     return render_template('technical_analysis.html', current_lang=current_lang)
 
 @app.route('/analytics/network')
-@login_required
+@requires_module_access(Module.ANALYTICS_NETWORK)
 @log_access_attempt('网络分析')
 def analytics_network():
-    """Network Analysis page - Alias for network_history with analytics URL pattern"""
-    if not has_role(['owner', 'admin', 'mining_site_owner']):
-        current_lang = session.get('language', 'zh')
-        if current_lang == 'en':
-            flash('You do not have permission to access this page', 'danger')
-        else:
-            flash('您没有权限访问此页面', 'danger')
-        return redirect(url_for('index'))
+    """Network Analysis page - Alias for network_history with analytics URL pattern
     
+    RBAC权限:
+    - Owner/Admin/Mining_Site_Owner: FULL (完整访问)
+    - Client/Customer: READ (只读访问)
+    - Guest: NONE (无权限)
+    """
     return network_history()
 
 @app.route('/reports')
 @login_required
+@requires_module_access(Module.REPORT_PDF)
 @log_access_attempt('报告管理')
 def reports_page():
-    """Reports management page - Download PDF, Excel, PowerPoint reports"""
-    if not has_role(['owner', 'admin', 'manager', 'mining_site_owner']):
-        current_lang = session.get('language', 'zh')
-        if current_lang == 'en':
-            flash('You do not have permission to access reports', 'danger')
-        else:
-            flash('您没有权限访问报告', 'danger')
-        return redirect(url_for('index'))
+    """Reports management page - Download PDF, Excel, PowerPoint reports
+    
+    RBAC权限 (REPORT_PDF):
+    - All except Guest: FULL
+    - Guest: READ (demo only)
+    """
     
     current_lang = session.get('language', 'zh')
     user_role = get_user_role(session.get('email'))
     return render_template('reports.html', current_lang=current_lang, user_role=user_role)
 
+# RBAC: BASIC_SETTINGS - Guest=NONE (blocked), 其他角色=FULL
 @app.route('/settings')
-@login_required
+@requires_module_access(Module.BASIC_SETTINGS)
 @log_access_attempt('用户设置')
 def settings_page():
-    """User settings page - Language, notifications, display preferences"""
+    """User settings page - Language, notifications, display preferences
+    
+    RBAC权限:
+    - Guest: NONE (无权限访问，需要登录)
+    - 其他已登录角色: FULL (完整设置功能)
+    """
     current_lang = session.get('language', 'zh')
     user_email = session.get('email')
     user_role = get_user_role(user_email)
@@ -4173,8 +4191,9 @@ def settings_page():
                          user_settings=user_settings,
                          user_email=user_email)
 
+# RBAC: BASIC_SETTINGS - Guest=NONE (blocked), 其他角色=FULL
 @app.route('/settings/save', methods=['POST'])
-@login_required
+@requires_module_access(Module.BASIC_SETTINGS, require_full=True)
 def save_settings():
     """Save user settings to session"""
     try:
@@ -4205,11 +4224,14 @@ def save_settings():
 # 修复专业报告路由
 @app.route('/api/professional-report')
 @login_required
+@requires_module_access(Module.REPORT_PDF)
 def api_professional_report():
-    """专业报告API"""
-    if not has_role(['owner']):
-        return jsonify({'error': '需要拥有者权限'}), 403
+    """专业报告API
     
+    RBAC权限 (REPORT_PDF):
+    - All except Guest: FULL
+    - Guest: READ (demo only)
+    """
     return jsonify({
         'success': True,
         'accuracy_score': 89.5,

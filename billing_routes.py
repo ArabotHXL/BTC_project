@@ -31,6 +31,9 @@ from crypto_payment_service import crypto_payment_service
 from models import User
 from db import db
 
+# RBAC权限控制导入
+from common.rbac import requires_module_access, Module, AccessLevel
+
 logger = logging.getLogger(__name__)
 
 # 创建Blueprint
@@ -71,8 +74,15 @@ def plans():
 
 @billing_bp.route('/subscribe/<int:plan_id>')
 @login_required
+@requires_module_access(Module.FINANCE_BILLING)
 def subscribe(plan_id):
-    """订阅页面 - 显示支付选项"""
+    """订阅页面 - 显示支付选项
+    
+    RBAC权限 (FINANCE_BILLING):
+    - Owner/Admin/Mining_Site_Owner: FULL
+    - Client/Customer: READ
+    - Guest: NONE
+    """
     try:
         # 获取订阅计划
         plan = SubscriptionPlan.query.get_or_404(plan_id)
@@ -113,8 +123,14 @@ def subscribe(plan_id):
 
 @billing_bp.route('/process-payment', methods=['POST'])
 @login_required
+@requires_module_access(Module.FINANCE_CRYPTO_PAY, require_full=True)
 def process_payment():
-    """处理支付请求"""
+    """处理支付请求
+    
+    RBAC权限 (FINANCE_CRYPTO_PAY):
+    - All except Guest: FULL
+    - Guest: NONE
+    """
     try:
         data = request.get_json()
         
@@ -199,8 +215,15 @@ def process_payment():
 
 @billing_bp.route('/payment-status/<int:payment_id>')
 @login_required
+@requires_module_access(Module.FINANCE_BILLING)
 def payment_status(payment_id):
-    """检查支付状态"""
+    """检查支付状态
+    
+    RBAC权限 (FINANCE_BILLING):
+    - Owner/Admin/Mining_Site_Owner: FULL
+    - Client/Customer: READ
+    - Guest: NONE
+    """
     try:
         # 获取支付记录
         payment = Payment.query.get_or_404(payment_id)
@@ -226,8 +249,15 @@ def payment_status(payment_id):
 
 @billing_bp.route('/payment/<int:payment_id>')
 @login_required
+@requires_module_access(Module.FINANCE_BILLING)
 def payment_details(payment_id):
-    """支付详情页面"""
+    """支付详情页面
+    
+    RBAC权限 (FINANCE_BILLING):
+    - Owner/Admin/Mining_Site_Owner: FULL
+    - Client/Customer: READ
+    - Guest: NONE
+    """
     try:
         # 获取支付记录
         payment = Payment.query.get_or_404(payment_id)
@@ -259,8 +289,15 @@ def payment_details(payment_id):
 
 @billing_bp.route('/manage')
 @login_required
+@requires_module_access(Module.FINANCE_BILLING)
 def manage():
-    """订阅管理页面"""
+    """订阅管理页面
+    
+    RBAC权限 (FINANCE_BILLING):
+    - Owner/Admin/Mining_Site_Owner: FULL
+    - Client/Customer: READ
+    - Guest: NONE
+    """
     try:
         # 获取当前用户
         user_email = session.get('email')
@@ -292,8 +329,15 @@ def manage():
 
 @billing_bp.route('/cancel-subscription/<int:subscription_id>', methods=['POST'])
 @login_required
+@requires_module_access(Module.FINANCE_BILLING, require_full=True)
 def cancel_subscription(subscription_id):
-    """取消订阅"""
+    """取消订阅
+    
+    RBAC权限 (FINANCE_BILLING - require_full):
+    - Owner/Admin/Mining_Site_Owner: FULL (可取消)
+    - Client/Customer: READ (无权取消)
+    - Guest: NONE
+    """
     try:
         # 获取订阅记录
         subscription = UserSubscription.query.get_or_404(subscription_id)
@@ -322,8 +366,15 @@ def cancel_subscription(subscription_id):
 
 @billing_bp.route('/invoice/<int:payment_id>')
 @login_required
+@requires_module_access(Module.FINANCE_BILLING)
 def invoice(payment_id):
-    """生成支付发票"""
+    """生成支付发票
+    
+    RBAC权限 (FINANCE_BILLING):
+    - Owner/Admin/Mining_Site_Owner: FULL
+    - Client/Customer: READ (可下载自己发票)
+    - Guest: NONE
+    """
     try:
         # 获取支付记录
         payment = Payment.query.get_or_404(payment_id)
@@ -457,8 +508,14 @@ def create_default_plans():
 
 @billing_bp.route('/payment-options')
 @login_required
+@requires_module_access(Module.FINANCE_CRYPTO_PAY)
 def payment_options():
-    """支付方式页面 - 显示和管理支付方式"""
+    """支付方式页面 - 显示和管理支付方式
+    
+    RBAC权限 (FINANCE_CRYPTO_PAY):
+    - All except Guest: FULL
+    - Guest: NONE
+    """
     try:
         user_email = session.get('email')
         user = User.query.filter_by(email=user_email).first()
@@ -510,8 +567,15 @@ def payment_options():
 
 @billing_bp.route('/payment-history')
 @login_required
+@requires_module_access(Module.FINANCE_BILLING)
 def payment_history():
-    """支付历史页面"""
+    """支付历史页面
+    
+    RBAC权限 (FINANCE_BILLING):
+    - Owner/Admin/Mining_Site_Owner: FULL
+    - Client/Customer: READ
+    - Guest: NONE
+    """
     try:
         user_email = session.get('email')
         user = User.query.filter_by(email=user_email).first()

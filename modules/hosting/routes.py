@@ -109,12 +109,13 @@ def get_miner_alerts(miner, lang='zh'):
 
 @hosting_bp.route('/')
 @login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR, require_full=False)
 def dashboard():
     """托管功能主仪表板
     
     RBAC: 根据用户模块权限展示不同视图
     - HOSTING_SITE_MGMT 完全访问 → 托管商视角
-    - HOSTING_STATUS_MONITOR 只读 → 客户视角
+    - HOSTING_STATUS_MONITOR 只读 → 客户视角 (Client/Customer get READ access)
     """
     user_role = normalize_role(session.get('role', 'guest'))
     
@@ -221,6 +222,7 @@ def client_view(subpath='dashboard'):
 
 @hosting_bp.route('/api/overview', methods=['GET'])
 @login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_hosting_overview():
     """获取托管商总览数据（性能优化 + 权限过滤版）
     
@@ -346,6 +348,7 @@ def get_hosting_overview():
 
 @hosting_bp.route('/api/sites', methods=['GET'])
 @login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT)
 def get_sites():
     """获取托管站点列表（性能优化版 + 权限过滤）
     
@@ -409,6 +412,7 @@ def get_sites():
 
 @hosting_bp.route('/api/customers', methods=['GET'])
 @login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_customers():
     """获取有托管矿机的客户列表（用于下拉筛选）
     
@@ -462,6 +466,7 @@ def get_customers():
 
 @hosting_bp.route('/api/sites', methods=['POST'])
 @login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
 def create_site():
     """创建新站点"""
     try:
@@ -512,7 +517,8 @@ def create_site():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/sites/<int:site_id>', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT)
 def get_site_detail(site_id):
     """获取站点详情"""
     try:
@@ -558,7 +564,8 @@ def get_site_detail(site_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/tickets', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_TICKET)
 def get_tickets():
     """获取工单列表"""
     try:
@@ -598,6 +605,7 @@ def get_tickets():
 
 @hosting_bp.route('/api/tickets', methods=['POST'])
 @login_required
+@requires_module_access(Module.HOSTING_TICKET, require_full=True)
 def create_ticket():
     """创建新工单"""
     try:
@@ -630,6 +638,7 @@ def create_ticket():
 
 @hosting_bp.route('/api/client/assets', methods=['GET'])
 @login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_client_assets():
     """获取客户资产概览"""
     try:
@@ -690,6 +699,7 @@ def get_client_assets():
 
 @hosting_bp.route('/api/client/miners', methods=['GET'])
 @login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_client_miners():
     """获取客户矿机列表"""
     try:
@@ -726,6 +736,7 @@ def get_client_miners():
 
 @hosting_bp.route('/api/client/dashboard', methods=['GET'])
 @login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_client_dashboard():
     """获取客户仪表板数据（性能优化版）"""
     try:
@@ -830,6 +841,7 @@ def get_client_dashboard():
 
 @hosting_bp.route('/api/client/revenue-chart', methods=['GET'])
 @login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_client_revenue_chart():
     """获取客户收益图表数据"""
     try:
@@ -870,6 +882,7 @@ def get_client_revenue_chart():
 
 @hosting_bp.route('/api/client/miner-distribution', methods=['GET'])
 @login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_client_miner_distribution():
     """获取客户矿机分布数据（性能优化版）"""
     try:
@@ -929,6 +942,7 @@ def get_client_miner_distribution():
 
 @hosting_bp.route('/api/client/usage', methods=['GET'])
 @login_required
+@requires_module_access(Module.HOSTING_USAGE_TRACKING)
 def get_client_usage():
     """获取客户使用情况数据"""
     try:
@@ -1095,6 +1109,7 @@ def get_client_usage():
 
 @hosting_bp.route('/api/client/usage/generate-report', methods=['POST'])
 @login_required
+@requires_module_access(Module.HOSTING_USAGE_TRACKING, require_full=True)
 def generate_usage_report():
     """生成使用报告"""
     try:
@@ -1134,6 +1149,7 @@ def generate_usage_report():
 
 @hosting_bp.route('/api/client/reports', methods=['GET'])
 @login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_client_reports():
     """获取客户报告列表和统计数据"""
     try:
@@ -1188,6 +1204,7 @@ def get_client_reports():
 
 @hosting_bp.route('/api/client/reports/chart', methods=['GET'])
 @login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_client_reports_chart():
     """获取客户报告性能图表数据"""
     try:
@@ -1262,6 +1279,7 @@ def get_client_reports_chart():
 
 @hosting_bp.route('/api/client/reports/generate', methods=['POST'])
 @login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR, require_full=True)
 def generate_client_report():
     """生成客户报告"""
     try:
@@ -1297,6 +1315,7 @@ def generate_client_report():
 
 @hosting_bp.route('/api/client/usage/alerts', methods=['POST'])
 @login_required
+@requires_module_access(Module.HOSTING_USAGE_TRACKING, require_full=True)
 def save_usage_alerts():
     """保存使用提醒设置"""
     try:
@@ -1337,6 +1356,7 @@ def save_usage_alerts():
 
 @hosting_bp.route('/api/miners', methods=['GET'])
 @login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_miners():
     """获取矿机列表（支持筛选和分页）"""
     try:
@@ -1551,6 +1571,7 @@ def get_miners():
 
 @hosting_bp.route('/api/miners/create', methods=['POST'])
 @login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR, require_full=True)
 def create_miner():
     """创建新矿机"""
     try:
@@ -1631,7 +1652,8 @@ def create_miner():
         }), 500
 
 @hosting_bp.route('/api/miners/batch', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_BATCH_CREATE, require_full=True)
 def batch_create_miners():
     """批量创建矿机"""
     try:
@@ -1710,7 +1732,8 @@ def batch_create_miners():
         }), 500
 
 @hosting_bp.route('/api/miners/<int:miner_id>/approve', methods=['PUT'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
 def approve_miner(miner_id):
     """审核通过矿机"""
     try:
@@ -1749,7 +1772,8 @@ def approve_miner(miner_id):
         }), 500
 
 @hosting_bp.route('/api/miners/<int:miner_id>/reject', methods=['PUT'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
 def reject_miner(miner_id):
     """拒绝矿机申请"""
     try:
@@ -1789,6 +1813,7 @@ def reject_miner(miner_id):
 
 @hosting_bp.route('/api/miners/<int:miner_id>', methods=['GET'])
 @login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_miner_detail(miner_id):
     """获取单个矿机详情"""
     try:
@@ -1836,6 +1861,7 @@ def get_miner_detail(miner_id):
 
 @hosting_bp.route('/api/miners/<int:miner_id>/telemetry-history', methods=['GET'])
 @login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_miner_telemetry_history(miner_id):
     """获取矿机遥测历史数据（优先24小时，回退到最近可用数据）"""
     try:
@@ -1885,6 +1911,7 @@ def get_miner_telemetry_history(miner_id):
 
 @hosting_bp.route('/miner/<int:miner_id>/detail')
 @login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def miner_detail_page(miner_id):
     """矿机详情页面"""
     try:
@@ -1906,6 +1933,7 @@ def miner_detail_page(miner_id):
 
 @hosting_bp.route('/api/miners/<int:miner_id>', methods=['PUT'])
 @login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR, require_full=True)
 def update_miner(miner_id):
     """更新矿机信息"""
     try:
@@ -1960,6 +1988,7 @@ def update_miner(miner_id):
 
 @hosting_bp.route('/api/miners/<int:miner_id>/encrypted-network', methods=['GET'])
 @login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_encrypted_network(miner_id):
     """获取矿机加密的网络信息 (IP/MAC)"""
     try:
@@ -2006,6 +2035,7 @@ def get_encrypted_network(miner_id):
 
 @hosting_bp.route('/api/encryption/owner-key', methods=['GET'])
 @login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT)
 def get_owner_encryption_status():
     """获取矿场主加密状态 - 严格按用户范围过滤"""
     try:
@@ -2050,6 +2080,7 @@ def get_owner_encryption_status():
 
 @hosting_bp.route('/api/encryption/owner-key', methods=['POST'])
 @login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
 def set_owner_encryption_key():
     """设置矿场主加密密钥"""
     try:
@@ -2101,6 +2132,7 @@ def set_owner_encryption_key():
 
 @hosting_bp.route('/api/encryption/owner-key/verify', methods=['POST'])
 @login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
 def verify_owner_encryption_key():
     """验证矿场主加密密钥（获取加密的数据密钥用于解密）"""
     try:
@@ -2137,6 +2169,7 @@ def verify_owner_encryption_key():
 
 @hosting_bp.route('/api/encryption/bulk-network', methods=['GET'])
 @login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT)
 def get_bulk_encrypted_network():
     """批量获取加密的网络数据 - 严格按用户范围过滤"""
     try:
@@ -2196,6 +2229,7 @@ def get_bulk_encrypted_network():
 
 @hosting_bp.route('/api/encryption/bulk-encrypt', methods=['POST'])
 @login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
 def bulk_encrypt_miners():
     """批量加密矿机网络数据 - 严格按用户范围过滤"""
     try:
@@ -2259,7 +2293,8 @@ def bulk_encrypt_miners():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/miners/<int:miner_id>', methods=['DELETE'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR, require_full=True)
 def delete_miner(miner_id):
     """删除矿机"""
     try:
@@ -2513,7 +2548,8 @@ def global_status():
 # ==================== 使用记录和对账系统 ====================
 
 @hosting_bp.route('/api/usage/preview', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_USAGE_TRACKING, require_full=True)
 def generate_usage_preview():
     """生成使用情况预估"""
     try:
@@ -2593,7 +2629,8 @@ def generate_usage_preview():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/usage/create', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_USAGE_TRACKING, require_full=True)
 def create_usage_record():
     """根据预估创建正式使用记录"""
     try:
@@ -2644,7 +2681,8 @@ def create_usage_record():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/reconcile/upload', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_RECONCILIATION, require_full=True)
 def upload_reconcile_data():
     """上传对账数据（CSV文件）"""
     try:
@@ -2723,7 +2761,8 @@ def upload_reconcile_data():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/reconcile/analyze', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_RECONCILIATION, require_full=True)
 def analyze_reconciliation():
     """分析对账差异"""
     try:
@@ -2815,7 +2854,8 @@ def health_check():
 # ==================== 监控API路由 ====================
 
 @hosting_bp.route('/api/monitoring/overview', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_monitoring_overview():
     """获取监控概览数据"""
     try:
@@ -2890,7 +2930,8 @@ def get_monitoring_overview():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/monitoring/incidents', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_monitoring_incidents():
     """获取事件管理数据"""
     try:
@@ -2963,7 +3004,8 @@ def get_monitoring_incidents():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/monitoring/incidents', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR, require_full=True)
 def create_monitoring_incident():
     """创建新的监控事件"""
     try:
@@ -2995,7 +3037,8 @@ def create_monitoring_incident():
 # ==================== 限电管理API Curtailment Management API ====================
 
 @hosting_bp.route('/api/curtailment/calculate', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.CURTAILMENT_STRATEGY)
 def calculate_curtailment():
     """
     计算限电方案 Calculate curtailment plan
@@ -3172,7 +3215,8 @@ def calculate_curtailment():
         }), 500
 
 @hosting_bp.route('/api/curtailment/execute', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.CURTAILMENT_EXECUTE, require_full=True)
 def execute_curtailment():
     """
     执行限电计划 Execute curtailment plan
@@ -3308,7 +3352,8 @@ def execute_curtailment():
         }), 500
 
 @hosting_bp.route('/api/curtailment/cancel', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.CURTAILMENT_EXECUTE, require_full=True)
 def cancel_curtailment():
     """
     取消限电计划 Cancel curtailment plan
@@ -3397,7 +3442,8 @@ def cancel_curtailment():
         }), 500
 
 @hosting_bp.route('/api/curtailment/emergency-restore', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.CURTAILMENT_EMERGENCY, require_full=True)
 def emergency_restore():
     """
     紧急恢复所有矿机 Emergency restore all miners
@@ -3518,7 +3564,8 @@ def emergency_restore():
 # ==================== 限电前端支持API ====================
 
 @hosting_bp.route('/api/sites/list', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT)
 def get_sites_list():
     """获取站点列表（简化版，用于下拉选择）"""
     try:
@@ -3530,7 +3577,8 @@ def get_sites_list():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/curtailment/strategies', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.CURTAILMENT_STRATEGY)
 def get_curtailment_strategies():
     """获取限电策略列表"""
     try:
@@ -3560,7 +3608,8 @@ def get_curtailment_strategies():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/curtailment/kpis', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.CURTAILMENT_STRATEGY)
 def get_curtailment_kpis():
     """获取限电KPI统计数据"""
     try:
@@ -3598,7 +3647,8 @@ def get_curtailment_kpis():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/curtailment/history', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.CURTAILMENT_HISTORY)
 def get_curtailment_history():
     """获取限电执行历史"""
     try:
@@ -3656,7 +3706,8 @@ def get_curtailment_history():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @hosting_bp.route('/api/curtailment/predict', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.CURTAILMENT_AI_PREDICT, require_full=True)
 def predict_curtailment_schedule():
     """
     AI预测未来24小时最佳限电策略
@@ -3710,7 +3761,8 @@ def predict_curtailment_schedule():
 # ==================== 限电计划管理 API ====================
 
 @hosting_bp.route('/api/curtailment/schedules', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.CURTAILMENT_EXECUTE, require_full=True)
 def create_curtailment_schedule():
     """
     创建限电计划
@@ -3803,7 +3855,8 @@ def create_curtailment_schedule():
 
 
 @hosting_bp.route('/api/curtailment/schedules', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site_owner', 'customer'])
+@login_required
+@requires_module_access(Module.CURTAILMENT_HISTORY)
 def get_curtailment_schedules():
     """
     获取限电计划列表
@@ -3884,7 +3937,8 @@ def get_curtailment_schedules():
 
 
 @hosting_bp.route('/api/curtailment/schedules/<int:schedule_id>/execute', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.CURTAILMENT_EXECUTE, require_full=True)
 def execute_curtailment_schedule(schedule_id):
     """
     手动执行限电计划
@@ -3932,7 +3986,8 @@ def execute_curtailment_schedule(schedule_id):
 
 
 @hosting_bp.route('/api/curtailment/schedules/<int:schedule_id>', methods=['DELETE'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.CURTAILMENT_EXECUTE, require_full=True)
 def cancel_curtailment_schedule(schedule_id):
     """
     取消限电计划
@@ -3984,7 +4039,8 @@ def cancel_curtailment_schedule(schedule_id):
 
 
 @hosting_bp.route('/api/curtailment/schedules/<int:schedule_id>/recover', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.CURTAILMENT_EMERGENCY, require_full=True)
 def recover_curtailment_schedule(schedule_id):
     """
     恢复限电计划的所有矿机
@@ -4034,7 +4090,8 @@ def recover_curtailment_schedule(schedule_id):
 # ==================== CGMiner 实时监控 API ====================
 
 @hosting_bp.route('/api/miners/<int:miner_id>/telemetry', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR, require_full=True)
 def update_miner_telemetry(miner_id):
     """
     更新矿机CGMiner遥测数据
@@ -4160,7 +4217,8 @@ def update_miner_telemetry(miner_id):
 
 
 @hosting_bp.route('/api/miners/<int:miner_id>/test-connection', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR, require_full=True)
 def test_miner_connection(miner_id):
     """
     测试矿机CGMiner连接
@@ -4223,7 +4281,8 @@ def test_miner_connection(miner_id):
 # ==================== 设备管理升级API (Phase 1) ====================
 
 @hosting_bp.route('/api/miners/stats', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_miners_stats():
     """
     KPI统计API - 返回矿机综合统计数据
@@ -4358,7 +4417,8 @@ def get_miners_stats():
 
 
 @hosting_bp.route('/api/miners/batch-approve', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_BATCH_CREATE, require_full=True)
 def batch_approve_miners():
     """批量审核通过矿机"""
     try:
@@ -4408,7 +4468,8 @@ def batch_approve_miners():
 
 
 @hosting_bp.route('/api/miners/batch-status', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_BATCH_CREATE, require_full=True)
 def batch_change_status():
     """批量修改矿机状态"""
     try:
@@ -4455,7 +4516,8 @@ def batch_change_status():
 
 
 @hosting_bp.route('/api/miners/batch-delete', methods=['POST'])
-@requires_role(['owner', 'admin'])
+@login_required
+@requires_module_access(Module.HOSTING_BATCH_CREATE, require_full=True)
 def batch_delete_miners():
     """批量删除矿机"""
     try:
@@ -4500,7 +4562,8 @@ def batch_delete_miners():
 
 
 @hosting_bp.route('/api/miners/batch-start', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_BATCH_CREATE, require_full=True)
 def batch_start_miners():
     """批量启动矿机 - 发送控制命令到边缘采集器
     
@@ -4588,7 +4651,8 @@ def batch_start_miners():
 
 
 @hosting_bp.route('/api/miners/batch-shutdown', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_BATCH_CREATE, require_full=True)
 def batch_shutdown_miners():
     """批量关闭矿机 - 发送控制命令到边缘采集器
     
@@ -4676,7 +4740,8 @@ def batch_shutdown_miners():
 
 
 @hosting_bp.route('/api/miners/<int:miner_id>/start', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR, require_full=True)
 def start_single_miner(miner_id):
     """启动单个矿机 - 发送控制命令到边缘采集器"""
     try:
@@ -4747,7 +4812,8 @@ def start_single_miner(miner_id):
 
 
 @hosting_bp.route('/api/miners/<int:miner_id>/shutdown', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR, require_full=True)
 def shutdown_single_miner(miner_id):
     """关闭单个矿机 - 发送控制命令到边缘采集器"""
     try:
@@ -4818,7 +4884,8 @@ def shutdown_single_miner(miner_id):
 
 
 @hosting_bp.route('/api/miners/<int:miner_id>/restart', methods=['POST'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR, require_full=True)
 def restart_single_miner(miner_id):
     """重启单个矿机 - 发送控制命令到边缘采集器"""
     try:
@@ -4899,7 +4966,8 @@ def restart_single_miner(miner_id):
 
 
 @hosting_bp.route('/api/miners/<int:miner_id>/logs', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_miner_operation_logs(miner_id):
     """获取矿机操作日志（分页）"""
     try:
@@ -4933,7 +5001,8 @@ def get_miner_operation_logs(miner_id):
 
 
 @hosting_bp.route('/api/miners/export', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def export_miners_csv():
     """导出矿机数据为CSV（支持筛选）"""
     try:
@@ -5008,9 +5077,12 @@ def export_miners_csv():
 
 @hosting_bp.route('/miner-setup-guide')
 @login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=False)
 def miner_setup_guide():
     """
     矿机连接设置指南页面（中英双语）
+    
+    RBAC: 需要 HOSTING_SITE_MGMT 模块权限 (Owner/Admin/Mining_Site_Owner only)
     
     为矿场管理员提供完整的矿机连接操作手册，包括：
     - CGMiner API配置
@@ -5026,9 +5098,12 @@ def miner_setup_guide():
 
 @hosting_bp.route('/miner-setup-guide/pdf')
 @login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=False)
 def miner_setup_guide_pdf():
     """
     生成矿机连接设置指南PDF文件（中英双语）
+    
+    RBAC: 需要 HOSTING_SITE_MGMT 模块权限 (Owner/Admin/Mining_Site_Owner only)
     
     使用ReportLab生成专业的PDF文档，包含所有章节和图片
     """
@@ -5267,7 +5342,8 @@ def miner_setup_guide_pdf():
 
 
 @hosting_bp.route('/api/revenue/summary', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_revenue_summary():
     """
     获取收益预测汇总
@@ -5301,7 +5377,8 @@ def get_revenue_summary():
 
 
 @hosting_bp.route('/api/revenue/miners', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_miners_revenue():
     """
     获取所有矿机的收益预测列表
@@ -5341,7 +5418,8 @@ def get_miners_revenue():
 
 
 @hosting_bp.route('/api/revenue/miners/<int:miner_id>/projection', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site_owner', 'customer'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_miner_projection(miner_id):
     """
     获取单个矿机的24小时收益预测
@@ -5369,7 +5447,8 @@ def get_miner_projection(miner_id):
 
 
 @hosting_bp.route('/api/evaluation/site/<int:site_id>', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_site_evaluation(site_id):
     """
     获取站点所有矿机的评估汇总
@@ -5403,7 +5482,8 @@ def get_site_evaluation(site_id):
 
 
 @hosting_bp.route('/api/evaluation/miners', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site_owner'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_miners_evaluation():
     """
     获取所有矿机的评估列表
@@ -5441,7 +5521,8 @@ def get_miners_evaluation():
 
 
 @hosting_bp.route('/api/evaluation/miner/<int:miner_id>', methods=['GET'])
-@requires_role(['owner', 'admin', 'mining_site_owner', 'customer'])
+@login_required
+@requires_module_access(Module.HOSTING_STATUS_MONITOR)
 def get_single_miner_evaluation(miner_id):
     """
     获取单个矿机的详细评估
@@ -6273,19 +6354,16 @@ def upload_site_logo(site_id):
 
 @hosting_bp.route('/site/<int:site_id>/settings')
 @login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
 def site_settings(site_id):
-    """站点设置页面 - 包含热保护和品牌配置"""
+    """站点设置页面 - 包含热保护和品牌配置
+    
+    RBAC: 需要 HOSTING_SITE_MGMT 完全访问权限 (Owner/Admin/Mining_Site_Owner only)
+    """
     from models import ThermalProtectionConfig, SiteBranding
     from services.thermal_protection_service import thermal_protection_service
     
     try:
-        user_role = normalize_role(session.get('role', 'guest'))
-        has_access = rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT)
-        
-        if not has_access:
-            flash('没有访问权限', 'error')
-            return redirect(url_for('hosting_service_bp.dashboard'))
-        
         site = HostingSite.query.get_or_404(site_id)
         
         thermal_config = thermal_protection_service.get_config(site_id)
@@ -6324,18 +6402,15 @@ def site_settings(site_id):
 
 @hosting_bp.route('/branding')
 @login_required
+@requires_module_access(Module.HOSTING_SITE_MGMT, require_full=True)
 def branding_management():
-    """白标品牌管理页面 - 显示所有站点的品牌配置"""
+    """白标品牌管理页面 - 显示所有站点的品牌配置
+    
+    RBAC: 需要 HOSTING_SITE_MGMT 完全访问权限 (Owner/Admin/Mining_Site_Owner only)
+    """
     from models import SiteBranding
     
     try:
-        user_role = normalize_role(session.get('role', 'guest'))
-        has_access = rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT)
-        
-        if not has_access:
-            flash('没有访问权限', 'error')
-            return redirect(url_for('hosting.dashboard'))
-        
         sites = HostingSite.query.all()
         
         sites_with_branding = []

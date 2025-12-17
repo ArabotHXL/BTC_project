@@ -4,6 +4,7 @@ Batch calculator routes for handling multiple miner calculations.
 from flask import Blueprint, request, jsonify, render_template, session, render_template_string, send_file, make_response, Response
 from auth import login_required
 from decorators import check_miner_limit, get_user_plan, UpgradeRequired, require_feature
+from common.rbac import requires_module_access, Module, AccessLevel
 from mining_calculator import calculate_mining_profitability, MINER_DATA
 from api_client import get_btc_price_with_fallback, get_network_stats_with_fallback
 from optimized_batch_processor import batch_processor
@@ -27,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 @batch_calculator_bp.route('/batch-calculator')
 @login_required
+@requires_module_access(Module.ANALYTICS_BATCH_CALC)
 @require_feature('batch_calculator')
 def batch_calculator():
     """Display the batch calculator interface."""
@@ -197,6 +199,8 @@ def batch_calculator():
 
 
 @batch_calculator_bp.route('/api/batch-calculate', methods=['POST'])
+@login_required
+@requires_module_access(Module.ANALYTICS_BATCH_CALC)
 def batch_calculate():
     """Process batch mining calculations with optimized performance for large datasets."""
     try:
@@ -456,8 +460,15 @@ def batch_calculate():
 
 
 @batch_calculator_bp.route('/api/export/batch-csv', methods=['POST'])
+@login_required
+@requires_module_access(Module.REPORT_EXCEL)
 def export_batch_csv():
-    """Export batch calculation results to CSV."""
+    """Export batch calculation results to CSV.
+    
+    RBAC权限 (REPORT_EXCEL):
+    - All except Guest: FULL
+    - Guest: NONE
+    """
     try:
         data = request.get_json()
         results = data.get('results', [])
@@ -506,8 +517,15 @@ def export_batch_csv():
 
 
 @batch_calculator_bp.route('/api/export/batch-excel', methods=['POST'])
+@login_required
+@requires_module_access(Module.REPORT_EXCEL)
 def export_batch_excel():
-    """Export batch calculation results to Excel (Basic+ plans only)."""
+    """Export batch calculation results to Excel (Basic+ plans only).
+    
+    RBAC权限 (REPORT_EXCEL):
+    - All except Guest: FULL
+    - Guest: NONE
+    """
     try:
         user_id = session.get('user_id')
         plan = get_user_plan(user_id)
@@ -634,8 +652,15 @@ def export_batch_excel():
 
 
 @batch_calculator_bp.route('/api/export/batch-pdf', methods=['POST'])
+@login_required
+@requires_module_access(Module.REPORT_PDF)
 def export_batch_pdf():
-    """Export batch calculation results to PDF (Pro+ plans only)."""
+    """Export batch calculation results to PDF (Pro+ plans only).
+    
+    RBAC权限 (REPORT_PDF):
+    - All except Guest: FULL
+    - Guest: READ (demo only)
+    """
     try:
         user_id = session.get('user_id')
         plan = get_user_plan(user_id)
@@ -780,6 +805,8 @@ def export_batch_pdf():
 
 
 @batch_calculator_bp.route('/api/batch-calculate-optimized', methods=['POST'])
+@login_required
+@requires_module_access(Module.ANALYTICS_BATCH_CALC)
 def batch_calculate_optimized():
     """优化的批量计算接口，专门处理大量数据 (5000+ miners)"""
     try:

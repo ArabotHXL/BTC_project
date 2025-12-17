@@ -3,27 +3,46 @@ HashInsight Enterprise - Admin Routes Blueprint
 管理员路由
 
 提供以下端点:
-- /database-admin - 数据库管理中心
-- /api-management - API集成管理中心
-- /security-center - 安全中心
-- /backup-recovery - 备份恢复中心
-- /admin/login_records, /login-records - 登录记录
-- /admin/login_dashboard, /login-dashboard - 登录数据分析仪表盘
-- /admin/user_access, /user-access - 用户访问管理
-- /admin/user_access/add - 添加用户访问权限
-- /admin/user_access/extend/<int:user_id>/<int:days> - 延长用户访问权限
-- /admin/user_access/view/<int:user_id> - 查看用户详情
-- /admin/user_access/edit/<int:user_id> - 编辑用户信息
-- /admin/user_access/revoke/<int:user_id> - 撤销用户访问权限
-- /admin/migrate_to_crm - 迁移用户数据到CRM
-- /admin/create-user - 管理员创建用户
-- /admin/users - 用户列表
-- /admin/verify-user/<int:user_id> - 验证用户邮箱
-- /admin/extend-access/<int:user_id> - 延长用户访问时间
+- /database-admin - 数据库管理中心 (SYSTEM_HEALTH)
+- /api-management - API集成管理中心 (SYSTEM_PERFORMANCE)
+- /security-center - 安全中心 (SYSTEM_HEALTH)
+- /backup-recovery - 备份恢复中心 (SYSTEM_HEALTH)
+- /admin/login_records, /login-records - 登录记录 (SYSTEM_EVENT)
+- /admin/login_dashboard, /login-dashboard - 登录数据分析仪表盘 (SYSTEM_EVENT)
+- /admin/user_access, /user-access - 用户访问管理 (USER_LIST_VIEW)
+- /admin/user_access/add - 添加用户访问权限 (USER_CREATE)
+- /admin/user_access/extend/<int:user_id>/<int:days> - 延长用户访问权限 (USER_EDIT)
+- /admin/user_access/view/<int:user_id> - 查看用户详情 (USER_LIST_VIEW)
+- /admin/user_access/edit/<int:user_id> - 编辑用户信息 (USER_EDIT)
+- /admin/user_access/revoke/<int:user_id> - 撤销用户访问权限 (USER_DISABLE)
+- /admin/user_access/delete/<int:user_id> - 永久删除用户 (USER_DELETE - Owner only!)
+- /admin/migrate_to_crm - 迁移用户数据到CRM (SYSTEM_HEALTH)
+- /admin/create-user - 管理员创建用户 (USER_CREATE)
+- /admin/users - 用户列表 (USER_LIST_VIEW)
+- /admin/verify-user/<int:user_id> - 验证用户邮箱 (USER_EDIT)
+- /admin/extend-access/<int:user_id> - 延长用户访问时间 (USER_EDIT)
+
+RBAC Permission Matrix Applied (via @requires_module_access decorator):
+- SYSTEM_HEALTH: Owner/Admin = FULL, others = NONE (database-admin, security-center, backup-recovery, migrate_to_crm)
+- SYSTEM_PERFORMANCE: Owner/Admin = FULL, others = NONE (api-management)
+- SYSTEM_EVENT: Owner/Admin = FULL, Mining_Site_Owner = READ, others = NONE (login_records, login_dashboard)
+- USER_CREATE: Owner/Admin = FULL
+- USER_EDIT: Owner/Admin = FULL  
+- USER_DISABLE: Owner/Admin = FULL
+- USER_DELETE: ONLY Owner = FULL (Admin cannot delete!)
+- USER_ROLE_ASSIGN: Owner/Admin = FULL
+- USER_LIST_VIEW: Owner/Admin = FULL, Mining_Site_Owner/Client/Customer = READ
+
+Decorator Layering (correct order, outermost first):
+1. @admin_bp.route() - Route registration
+2. @login_required - Authentication check
+3. @requires_module_access() - RBAC permission check
+4. Other decorators (rate_limit, csrf_protect, log_access_attempt)
 
 Code Organization:
 - Extracted helper functions for lazy loading models
 - Centralized user list query in get_user_list() function
+- All routes use proper RBAC decorators instead of ad-hoc session role checks
 """
 
 import os
@@ -31,6 +50,8 @@ import logging
 from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, request, session, g, render_template, redirect, url_for, flash, render_template_string
+
+from common.rbac import requires_module_access, Module
 
 logger = logging.getLogger(__name__)
 
@@ -143,12 +164,9 @@ except ImportError:
 
 @admin_bp.route('/database-admin')
 @login_required
+@requires_module_access(Module.SYSTEM_HEALTH, require_full=True)
 def database_admin():
-    """数据库管理中心"""
-    if not session.get('role') == 'owner':
-        flash('Access denied. Owner privileges required.', 'danger')
-        return redirect(url_for('index'))
-        
+    """数据库管理中心 - SYSTEM_HEALTH权限 (Owner/Admin only)"""
     try:
         db = get_db()
         from sqlalchemy import text
@@ -183,13 +201,10 @@ def database_admin():
 
 
 @admin_bp.route('/api-management')
-@login_required  
+@login_required
+@requires_module_access(Module.SYSTEM_PERFORMANCE, require_full=True)
 def api_management():
-    """API集成管理中心"""
-    if not session.get('role') == 'owner':
-        flash('Access denied. Owner privileges required.', 'danger')
-        return redirect(url_for('index'))
-        
+    """API集成管理中心 - SYSTEM_PERFORMANCE权限 (Owner/Admin only)"""
     try:
         api_status = {
             'coingecko': {'status': 'active', 'last_call': '2 minutes ago', 'rate_limit': '100/min'},
@@ -216,12 +231,9 @@ def api_management():
 
 @admin_bp.route('/security-center')
 @login_required
+@requires_module_access(Module.SYSTEM_HEALTH, require_full=True)
 def security_center():
-    """安全中心 - 集成区块链安全功能"""
-    if not session.get('role') == 'owner':
-        flash('Access denied. Owner privileges required.', 'danger')
-        return redirect(url_for('index'))
-        
+    """安全中心 - 集成区块链安全功能 - SYSTEM_HEALTH权限 (Owner/Admin only)"""
     try:
         security_status = {
             'encryption_enabled': bool(os.environ.get('ENCRYPTION_PASSWORD')),
@@ -249,12 +261,9 @@ def security_center():
 
 @admin_bp.route('/backup-recovery')
 @login_required
+@requires_module_access(Module.SYSTEM_HEALTH, require_full=True)
 def backup_recovery():
-    """备份恢复中心"""
-    if not session.get('role') == 'owner':
-        flash('Access denied. Owner privileges required.', 'danger')
-        return redirect(url_for('index'))
-        
+    """备份恢复中心 - SYSTEM_HEALTH权限 (Owner/Admin only)"""
     try:
         backup_status = {
             'last_backup': 'Never',
@@ -278,12 +287,9 @@ def backup_recovery():
 @admin_bp.route('/admin/login_records')
 @admin_bp.route('/login-records')
 @login_required
+@requires_module_access(Module.SYSTEM_EVENT, require_full=True)
 def login_records():
-    """拥有者查看登录记录"""
-    if not has_role(['owner']):
-        flash('您没有权限访问此页面，需要拥有者权限', 'danger')
-        return redirect(url_for('index'))
-    
+    """拥有者查看登录记录 - SYSTEM_EVENT权限 (Owner/Admin only)"""
     LoginRecord = get_login_record_model()
     records = LoginRecord.query.order_by(LoginRecord.login_time.desc()).limit(100).all()
     return render_template('login_records.html', records=records)
@@ -292,15 +298,9 @@ def login_records():
 @admin_bp.route('/admin/login_dashboard')
 @admin_bp.route('/login-dashboard')
 @login_required
+@requires_module_access(Module.SYSTEM_EVENT, require_full=True)
 def login_dashboard():
-    """拥有者查看登录数据分析仪表盘 - 需要Pro订阅"""
-    if not has_role(['owner']):
-        if g.language == 'en':
-            flash('Access denied. Owner privileges required.', 'danger')
-        else:
-            flash('您没有权限访问此页面，需要拥有者权限', 'danger')
-        return redirect(url_for('index'))
-    
+    """拥有者查看登录数据分析仪表盘 - SYSTEM_EVENT权限 (Owner/Admin only) - 需要Pro订阅"""
     current_role = session.get('role', 'guest')
     if current_role != 'owner':
         try:
@@ -440,7 +440,8 @@ def login_dashboard():
 
 @admin_bp.route('/admin/user_access')
 @admin_bp.route('/user-access')
-@requires_admin_or_owner
+@login_required
+@requires_module_access(Module.USER_LIST_VIEW)
 @log_access_attempt('用户访问管理')
 def user_access():
     """管理员管理用户访问权限 - 需要Pro订阅"""
@@ -466,9 +467,10 @@ def user_access():
 
 
 @admin_bp.route('/admin/user_access/add', methods=['POST'])
+@login_required
 @rate_limit(max_requests=10, window_minutes=60, feature_name="admin_user_add")
 @SecurityManager.csrf_protect
-@requires_admin_or_owner
+@requires_module_access(Module.USER_CREATE, require_full=True)
 @log_access_attempt('添加用户访问权限')
 def add_user_access():
     """添加新用户访问权限"""
@@ -536,11 +538,9 @@ def add_user_access():
 
 @admin_bp.route('/admin/user_access/extend/<int:user_id>/<int:days>', methods=['POST'])
 @login_required
+@requires_module_access(Module.USER_EDIT, require_full=True)
 def extend_user_access(user_id, days):
     """延长用户访问权限"""
-    if not has_role(['owner', 'admin']):
-        flash('您没有权限访问此页面，需要管理员或拥有者权限', 'danger')
-        return redirect(url_for('index'))
     
     db = get_db()
     UserAccess = get_user_access_model()
@@ -563,10 +563,9 @@ def extend_user_access(user_id, days):
 
 @admin_bp.route('/admin/user_access/view/<int:user_id>', methods=['GET'])
 @login_required
+@requires_module_access(Module.USER_LIST_VIEW)
 def view_user_details(user_id):
     """查看用户详细信息"""
-    if not has_role(['owner', 'admin']):
-        return jsonify({'success': False, 'message': '您没有权限访问此页面'})
     
     UserAccess = get_user_access_model()
     
@@ -685,11 +684,9 @@ def view_user_details(user_id):
 
 @admin_bp.route('/admin/user_access/edit/<int:user_id>', methods=['GET', 'POST'])
 @login_required
+@requires_module_access(Module.USER_EDIT, require_full=True)
 def edit_user_access(user_id):
     """编辑用户信息"""
-    if not has_role(['owner', 'admin']):
-        flash('您没有权限访问此页面，需要管理员或拥有者权限', 'danger')
-        return redirect(url_for('index'))
     
     db = get_db()
     UserAccess = get_user_access_model()
@@ -713,11 +710,16 @@ def edit_user_access(user_id):
                 user.access_days = int(access_days)
                 user.calculate_expiry()
             
-            if has_role(['owner']):
+            if has_role(['owner', 'admin']):
                 new_role = request.form.get('role')
                 if new_role in ['owner', 'admin', 'mining_site_owner', 'guest']:
-                    user.role = new_role
-                
+                    current_user_role = get_user_role(session.get('email'))
+                    if current_user_role == 'admin' and new_role == 'owner':
+                        flash('管理员不能将用户角色设置为拥有者', 'warning')
+                    else:
+                        user.role = new_role
+            
+            if has_role(['owner']):
                 subscription_plan = request.form.get('subscription_plan')
                 if subscription_plan in ['free', 'basic', 'pro']:
                     user.subscription_plan = subscription_plan
@@ -745,11 +747,9 @@ def edit_user_access(user_id):
 
 @admin_bp.route('/admin/user_access/revoke/<int:user_id>', methods=['POST'])
 @login_required
+@requires_module_access(Module.USER_DISABLE, require_full=True)
 def revoke_user_access(user_id):
     """撤销用户访问权限"""
-    if not has_role(['owner', 'admin']):
-        flash('您没有权限访问此页面，需要管理员或拥有者权限', 'danger')
-        return redirect(url_for('index'))
     
     db = get_db()
     UserAccess = get_user_access_model()
@@ -770,14 +770,41 @@ def revoke_user_access(user_id):
     return redirect(url_for('admin.user_access'))
 
 
+@admin_bp.route('/admin/user_access/delete/<int:user_id>', methods=['POST', 'DELETE'])
+@login_required
+@requires_module_access(Module.USER_DELETE, require_full=True)
+def delete_user(user_id):
+    """永久删除用户 - 仅限Owner角色
+    
+    CRITICAL: This operation permanently deletes the user from the database.
+    Only Owner role can perform this action per RBAC matrix.
+    """
+    db = get_db()
+    UserAccess = get_user_access_model()
+    
+    try:
+        user = UserAccess.query.get_or_404(user_id)
+        user_name = user.name
+        user_email = user.email
+        
+        db.session.delete(user)
+        db.session.commit()
+        
+        logger.info(f"用户 {user_name} ({user_email}) 已被永久删除")
+        flash(f'用户 {user_name} ({user_email}) 已被永久删除', 'success')
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"删除用户时出错: {str(e)}")
+        flash(f'删除用户失败: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin.user_access'))
+
+
 @admin_bp.route('/admin/migrate_to_crm')
 @login_required
+@requires_module_access(Module.SYSTEM_HEALTH, require_full=True)
 def migrate_to_crm():
-    """将用户访问权限数据迁移到CRM系统中"""
-    if not has_role(['owner']):
-        flash('您没有权限访问此页面，需要拥有者权限', 'danger')
-        return redirect(url_for('index'))
-    
+    """将用户访问权限数据迁移到CRM系统中 - SYSTEM_HEALTH权限 (Owner/Admin only)"""
     db = get_db()
     UserAccess = get_user_access_model()
     
@@ -873,11 +900,9 @@ def migrate_to_crm():
 
 @admin_bp.route('/admin/create-user', methods=['GET', 'POST'])
 @login_required
+@requires_module_access(Module.USER_CREATE, require_full=True)
 def admin_create_user():
     """管理员创建测试用户"""
-    if not has_role(['owner', 'admin']):
-        flash('需要管理员权限才能创建用户', 'error')
-        return redirect(url_for('index'))
     
     db = get_db()
     UserAccess = get_user_access_model()
@@ -936,12 +961,10 @@ def admin_create_user():
 
 
 @admin_bp.route('/admin/users')
-@login_required  
+@login_required
+@requires_module_access(Module.USER_LIST_VIEW)
 def admin_user_list():
     """管理员查看用户列表"""
-    if not has_role(['owner', 'admin']):
-        flash('需要管理员权限', 'error')
-        return redirect(url_for('index'))
     
     users = get_user_list()
     return render_template('admin/user_list.html', users=users)
@@ -949,10 +972,9 @@ def admin_user_list():
 
 @admin_bp.route('/admin/verify-user/<int:user_id>', methods=['POST'])
 @login_required
+@requires_module_access(Module.USER_EDIT, require_full=True)
 def admin_verify_user(user_id):
     """管理员验证用户邮箱"""
-    if not has_role(['owner', 'admin']):
-        return jsonify({'error': '权限不足'}), 403
     
     db = get_db()
     UserAccess = get_user_access_model()
@@ -967,10 +989,9 @@ def admin_verify_user(user_id):
 
 @admin_bp.route('/admin/extend-access/<int:user_id>', methods=['POST'])
 @login_required
+@requires_module_access(Module.USER_EDIT, require_full=True)
 def admin_extend_access(user_id):
     """管理员延长用户访问时间"""
-    if not has_role(['owner', 'admin']):
-        return jsonify({'error': '权限不足'}), 403
     
     db = get_db()
     UserAccess = get_user_access_model()

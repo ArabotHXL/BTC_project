@@ -1,13 +1,18 @@
 """
 Deribit Analysis Web Routes
 提供衍生品数据分析和可视化界面
+
+RBAC权限矩阵:
+- ANALYTICS_DERIBIT: Owner/Admin/Mining_Site_Owner = FULL, Client = READ, Customer/Guest = NONE
 """
 
 from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for
+from auth import login_required
 import logging
 import requests
 from datetime import datetime, timedelta
 import json
+from common.rbac import requires_module_access, Module, AccessLevel
 
 logger = logging.getLogger(__name__)
 
@@ -15,14 +20,17 @@ logger = logging.getLogger(__name__)
 deribit_bp = Blueprint('deribit', __name__)
 
 @deribit_bp.route('/deribit')
+@login_required
+@requires_module_access(Module.ANALYTICS_DERIBIT)
 def deribit_analysis():
-    """Deribit分析主页"""
+    """Deribit分析主页
+    
+    RBAC权限:
+    - Owner/Admin/Mining_Site_Owner: FULL (完整访问)
+    - Client: READ (只读访问)
+    - Customer/Guest: NONE (无权限)
+    """
     try:
-        # 检查用户权限
-        user_id = session.get('user_id')
-        if not user_id:
-            return redirect(url_for('auth.login'))
-        
         return render_template('deribit_analysis.html',
                              title='Deribit Analysis',
                              page='deribit')
@@ -31,6 +39,8 @@ def deribit_analysis():
         return redirect(url_for('analytics_dashboard') + '?tab=deribit')
 
 @deribit_bp.route('/api/deribit/options-data')
+@login_required
+@requires_module_access(Module.ANALYTICS_DERIBIT)
 def get_options_data():
     """获取期权数据"""
     try:
@@ -78,6 +88,8 @@ def get_options_data():
         }), 500
 
 @deribit_bp.route('/api/deribit/volatility-surface')
+@login_required
+@requires_module_access(Module.ANALYTICS_DERIBIT)
 def get_volatility_surface():
     """获取波动率曲面数据"""
     try:
@@ -107,6 +119,8 @@ def get_volatility_surface():
         }), 500
 
 @deribit_bp.route('/api/deribit/orderbook/<instrument>')
+@login_required
+@requires_module_access(Module.ANALYTICS_DERIBIT)
 def get_orderbook(instrument):
     """获取订单簿数据"""
     try:
@@ -144,15 +158,11 @@ def get_orderbook(instrument):
         }), 500
 
 @deribit_bp.route('/api/deribit/trade-history')
+@login_required
+@requires_module_access(Module.ANALYTICS_DERIBIT)
 def get_trade_history():
     """获取交易历史"""
     try:
-        user_id = session.get('user_id')
-        if not user_id:
-            return jsonify({
-                'success': False,
-                'error': '未登录'
-            }), 401
         
         # 模拟交易历史数据
         trade_history = {

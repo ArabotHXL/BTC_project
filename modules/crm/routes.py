@@ -8,6 +8,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy import func, case
 from . import crm_bp
 from models import Customer, Deal, db
+from common.rbac import requires_module_access, Module
 import logging
 from datetime import datetime
 
@@ -15,12 +16,14 @@ logger = logging.getLogger(__name__)
 
 @crm_bp.route('/')
 @login_required
+@requires_module_access(Module.CRM_CUSTOMER_VIEW)
 def index():
     """CRM主页面"""
     return render_template('crm/dashboard.html')
 
 @crm_bp.route('/api/customers')
 @login_required
+@requires_module_access(Module.CRM_CUSTOMER_VIEW)
 def get_customers():
     """获取客户列表API - 支持分页"""
     try:
@@ -65,6 +68,7 @@ def get_customers():
 
 @crm_bp.route('/api/customer', methods=['POST'])
 @login_required
+@requires_module_access(Module.CRM_CUSTOMER_MGMT, require_full=True)
 def create_customer():
     """创建新客户"""
     try:
@@ -95,6 +99,7 @@ def create_customer():
 
 @crm_bp.route('/api/deals')
 @login_required
+@requires_module_access(Module.CRM_TRANSACTION)
 def get_deals():
     """获取交易列表 - 支持分页，使用eager loading避免N+1"""
     try:
@@ -140,6 +145,7 @@ def get_deals():
 
 @crm_bp.route('/api/stats')
 @login_required
+@requires_module_access(Module.CRM_CUSTOMER_VIEW)
 def get_stats():
     """获取CRM统计数据 - 优化为单次查询"""
     try:

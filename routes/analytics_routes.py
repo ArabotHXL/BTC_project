@@ -8,6 +8,7 @@ from flask import Blueprint, request, jsonify, render_template
 from datetime import datetime, timedelta
 from auth import login_required
 from analytics.roi_heatmap_generator import ROIHeatmapGenerator
+from common.rbac import requires_module_access, Module
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +75,7 @@ def historical_replay():
 
 @analytics_bp.route('/curtailment-simulation', methods=['POST'])
 @login_required
+@requires_module_access(Module.CURTAILMENT_STRATEGY)
 def curtailment_simulation():
     """限电策略模拟"""
     try:

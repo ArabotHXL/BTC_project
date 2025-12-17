@@ -2,16 +2,21 @@
 Remote Miner Control API
 远程矿机控制 - Cloud Control Plane
 
+RBAC权限矩阵:
+- REMOTE_CONTROL_REQUEST: Owner/Admin/Mining_Site_Owner/Client = FULL, Customer/Guest = NONE
+- REMOTE_CONTROL_AUDIT: Owner/Admin/Mining_Site_Owner = FULL, Client/Customer = READ, Guest = NONE
+- REMOTE_CONTROL_EXECUTE: Owner/Admin/Mining_Site_Owner = FULL, others NONE
+
 Endpoints:
-    POST /api/sites/<site_id>/commands - Create remote command
-    GET /api/sites/<site_id>/commands - List commands for site
-    GET /api/commands/<command_id> - Get command details
-    POST /api/commands/<command_id>/cancel - Cancel command
-    POST /api/commands/<command_id>/approve - Approve pending command (admin only)
+    POST /api/sites/<site_id>/commands - Create remote command (REMOTE_CONTROL_REQUEST)
+    GET /api/sites/<site_id>/commands - List commands for site (REMOTE_CONTROL_AUDIT)
+    GET /api/commands/<command_id> - Get command details (REMOTE_CONTROL_AUDIT)
+    POST /api/commands/<command_id>/cancel - Cancel command (REMOTE_CONTROL_REQUEST)
+    POST /api/commands/<command_id>/approve - Approve pending command (REMOTE_CONTROL_EXECUTE)
     
 Edge-facing endpoints:
-    GET /api/edge/v1/commands/poll - Poll for queued commands
-    POST /api/edge/v1/commands/<command_id>/ack - Acknowledge command completion
+    GET /api/edge/v1/commands/poll - Poll for queued commands (device auth)
+    POST /api/edge/v1/commands/<command_id>/ack - Acknowledge command completion (device auth)
 """
 
 import os
@@ -29,6 +34,7 @@ from models_remote_control import (
     CommandType, CommandStatus, ResultStatus,
     COMMAND_PAYLOAD_SCHEMAS
 )
+from common.rbac import requires_module_access, Module, AccessLevel
 
 logger = logging.getLogger(__name__)
 
@@ -141,9 +147,14 @@ def log_command_event(command: RemoteCommand, action: str, extra_data: dict = No
 
 
 @remote_control_bp.route('/api/sites/<int:site_id>/commands', methods=['POST'])
-@require_user_auth
+@requires_module_access(Module.REMOTE_CONTROL_REQUEST, require_full=True)
 def create_command(site_id):
-    """Create a new remote control command"""
+    """Create a new remote control command
+    
+    RBAC权限: REMOTE_CONTROL_REQUEST
+    - Owner/Admin/Mining_Site_Owner/Client: FULL (可以提交命令)
+    - Customer/Guest: NONE (无权限)
+    """
     if not REMOTE_CONTROL_ENABLED:
         return jsonify({'error': 'Remote control is disabled'}), 503
     
@@ -229,9 +240,15 @@ def create_command(site_id):
 
 
 @remote_control_bp.route('/api/sites/<int:site_id>/commands', methods=['GET'])
-@require_user_auth
+@requires_module_access(Module.REMOTE_CONTROL_AUDIT)
 def list_commands(site_id):
-    """List commands for a site"""
+    """List commands for a site
+    
+    RBAC权限: REMOTE_CONTROL_AUDIT
+    - Owner/Admin/Mining_Site_Owner: FULL (完整访问)
+    - Client/Customer: READ (只读访问)
+    - Guest: NONE (无权限)
+    """
     site = HostingSite.query.get(site_id)
     if not site:
         return jsonify({'error': 'Site not found'}), 404
@@ -257,9 +274,15 @@ def list_commands(site_id):
 
 
 @remote_control_bp.route('/api/commands/<command_id>', methods=['GET'])
-@require_user_auth
+@requires_module_access(Module.REMOTE_CONTROL_AUDIT)
 def get_command(command_id):
-    """Get command details"""
+    """Get command details
+    
+    RBAC权限: REMOTE_CONTROL_AUDIT
+    - Owner/Admin/Mining_Site_Owner: FULL (完整访问)
+    - Client/Customer: READ (只读访问)
+    - Guest: NONE (无权限)
+    """
     command = RemoteCommand.query.get(command_id)
     if not command:
         return jsonify({'error': 'Command not found'}), 404
@@ -268,9 +291,14 @@ def get_command(command_id):
 
 
 @remote_control_bp.route('/api/commands/<command_id>/cancel', methods=['POST'])
-@require_user_auth
+@requires_module_access(Module.REMOTE_CONTROL_REQUEST, require_full=True)
 def cancel_command(command_id):
-    """Cancel a pending command"""
+    """Cancel a pending command
+    
+    RBAC权限: REMOTE_CONTROL_REQUEST
+    - Owner/Admin/Mining_Site_Owner/Client: FULL (可以取消命令)
+    - Customer/Guest: NONE (无权限)
+    """
     command = RemoteCommand.query.get(command_id)
     if not command:
         return jsonify({'error': 'Command not found'}), 404
@@ -297,11 +325,14 @@ def cancel_command(command_id):
 
 
 @remote_control_bp.route('/api/commands/<command_id>/approve', methods=['POST'])
-@require_user_auth
+@requires_module_access(Module.REMOTE_CONTROL_EXECUTE, require_full=True)
 def approve_command(command_id):
-    """Approve a pending command (admin only)"""
-    if g.user_role not in ('admin', 'owner'):
-        return jsonify({'error': 'Admin permission required'}), 403
+    """Approve a pending command (admin only)
+    
+    RBAC权限: REMOTE_CONTROL_EXECUTE
+    - Owner/Admin/Mining_Site_Owner: FULL (可以批准执行)
+    - 其他角色: NONE (无权限)
+    """
     
     command = RemoteCommand.query.get(command_id)
     if not command:

@@ -24,6 +24,10 @@ from crm_services.geo import (
     get_city_coordinates, get_all_cities, is_city_supported, get_region_cities
 )
 
+# RBAC权限控制导入
+from common.rbac import requires_module_access, Module, AccessLevel
+from auth import login_required
+
 logger = logging.getLogger(__name__)
 
 # 创建蓝图
@@ -1599,7 +1603,16 @@ def broker_commissions_trend():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @crm_bp.route('/api/broker/commissions/settlement-status')
+@login_required
+@requires_module_access(Module.FINANCE_BTC_SETTLE)
 def broker_commissions_settlement_status():
+    """佣金结算状态查询
+    
+    RBAC权限 (FINANCE_BTC_SETTLE):
+    - Owner/Admin/Mining_Site_Owner: FULL
+    - Client/Customer: READ
+    - Guest: NONE
+    """
     try:
         if 'user_id' not in session:
             return jsonify({'success': False, 'error': 'Not authenticated'}), 401
