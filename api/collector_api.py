@@ -1493,6 +1493,89 @@ def get_miner_history_24h(site_id: int, miner_id: str) -> list:
         return []
 
 
+@collector_bp.route('/manual')
+def deployment_manual():
+    """显示 Edge Collector 部署手册"""
+    from flask import render_template
+    return render_template('collector/deployment_manual.html')
+
+
+@collector_bp.route('/download-package')
+def download_package():
+    """下载 Edge Collector 部署包"""
+    import io
+    import zipfile
+    from flask import send_file
+    
+    buffer = io.BytesIO()
+    
+    with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        try:
+            with open('edge_collector/cgminer_collector.py', 'r') as f:
+                zf.writestr('edge_collector/cgminer_collector.py', f.read())
+        except:
+            zf.writestr('edge_collector/cgminer_collector.py', '# Edge Collector - See README for full version')
+        
+        try:
+            with open('edge_collector/README.md', 'r') as f:
+                zf.writestr('edge_collector/README.md', f.read())
+        except:
+            zf.writestr('edge_collector/README.md', '''# HashInsight Edge Collector
+
+## Quick Start
+
+1. Install dependencies: `pip install requests`
+2. Edit `collector_config.json` with your API key and site ID
+3. Run: `python cgminer_collector.py`
+
+For full documentation, visit: https://calc.hashinsight.net/api/collector/manual
+''')
+        
+        zf.writestr('edge_collector/collector_config.json', '''{
+    "api_url": "https://calc.hashinsight.net",
+    "api_key": "hsc_your_api_key_here",
+    "site_id": "site_001",
+    "collection_interval": 30,
+    "max_workers": 50,
+    "retry_attempts": 3,
+    "cache_dir": "./cache",
+    "log_level": "INFO",
+    "miners": [],
+    "ip_ranges": [
+        {
+            "range": "192.168.1.100-192.168.1.199",
+            "prefix": "S19_",
+            "type": "antminer"
+        }
+    ]
+}''')
+        
+        zf.writestr('edge_collector/requirements.txt', '''# HashInsight Edge Collector Dependencies
+requests>=2.28.0
+''')
+        
+        zf.writestr('edge_collector/Dockerfile', '''FROM python:3.10-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+CMD ["python", "cgminer_collector.py"]
+''')
+    
+    buffer.seek(0)
+    
+    return send_file(
+        buffer,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name='edge_collector.zip'
+    )
+
+
 def register_collector_routes(app):
     """注册采集器路由"""
     app.register_blueprint(collector_bp)
