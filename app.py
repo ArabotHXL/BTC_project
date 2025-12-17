@@ -722,7 +722,7 @@ def branding_management():
         user_role = session.get('role', 'guest')
         
         # 检查访问权限
-        if user_role not in ['owner', 'admin', 'mining_site']:
+        if user_role not in ['owner', 'admin', 'mining_site_owner']:
             flash('没有访问权限', 'error')
             return redirect(url_for('index'))
         
@@ -1484,7 +1484,7 @@ def get_profit_chart_data():
 def mine_customer_management():
     """矿场主管理自己的客户"""
     # 只允许mining_site角色访问
-    if not has_role(['mining_site']):
+    if not has_role(['mining_site_owner']):
         flash('您没有权限访问此页面，需要矿场主权限', 'danger')
         return redirect(url_for('index'))
     
@@ -1504,7 +1504,7 @@ def mine_customer_management():
 def add_mine_customer():
     """矿场主添加新客户"""
     # 只允许mining_site角色访问
-    if not has_role(['mining_site']):
+    if not has_role(['mining_site_owner']):
         flash('您没有权限访问此页面，需要矿场主权限', 'danger')
         return redirect(url_for('index'))
     
@@ -1643,7 +1643,7 @@ def add_mine_customer():
 def view_customer_crm(user_id):
     """在CRM中查看客户详情"""
     # 只允许mining_site角色访问
-    if not has_role(['mining_site']):
+    if not has_role(['mining_site_owner']):
         flash('您没有权限访问此页面，需要矿场主权限', 'danger')
         return redirect(url_for('index'))
     
@@ -1702,7 +1702,7 @@ def api_network_snapshots():
 @login_required
 def network_history():
     """网络历史数据分析页面"""
-    if not has_role(['owner', 'admin', 'mining_site']):
+    if not has_role(['owner', 'admin', 'mining_site_owner']):
         flash('您没有权限访问此页面', 'danger')
         return redirect(url_for('index'))
     
@@ -1957,7 +1957,7 @@ def debug_info():
 def curtailment_calculator():
     """月度电力削减(Curtailment)计算器页面"""
     # 检查是否有权限访问
-    if not has_role(['owner', 'admin', 'mining_site']):
+    if not has_role(['owner', 'admin', 'mining_site_owner']):
         flash('您没有权限访问此页面', 'danger')
         return redirect(url_for('index'))
         
@@ -1987,7 +1987,7 @@ def calculate_curtailment():
     """计算月度电力削减的影响"""
     try:
         # 检查是否有权限
-        if not has_role(['owner', 'admin', 'mining_site']):
+        if not has_role(['owner', 'admin', 'mining_site_owner']):
             return jsonify({
                 'success': False,
                 'error': '您没有权限执行此操作'
@@ -2190,7 +2190,7 @@ def inject_nav_menu():
         if not session.get('authenticated'):
             return False
         role = session.get('role')
-        return role in ['owner', 'admin', 'mining_site']
+        return role in ['owner', 'admin', 'mining_site_owner']
     
     def user_has_analytics_access():
         """检查用户是否有访问数据分析的权限 - 支持Pro订阅用户"""
@@ -2244,7 +2244,7 @@ def inject_nav_menu():
         if not session.get('authenticated'):
             return False
         role = session.get('role')
-        return role in ['owner', 'admin', 'mining_site']
+        return role in ['owner', 'admin', 'mining_site_owner']
     
     def user_has_usage_access():
         """检查用户是否有访问使用记录管理的权限"""
@@ -2266,7 +2266,7 @@ def inject_nav_menu():
         if not session.get('authenticated'):
             return False
         role = session.get('role')
-        return role in ['owner', 'admin', 'mining_site']
+        return role in ['owner', 'admin', 'mining_site_owner']
         
     return {
         'user_has_crm_access': user_has_crm_access,
@@ -3105,7 +3105,7 @@ def analytics_technical_indicators():
         return jsonify({'success': False, 'error': '用户未登录'}), 401
     
     user_role = get_user_role(session.get('email'))
-    if user_role not in ['owner', 'manager', 'mining_site']:
+    if user_role not in ['owner', 'manager', 'mining_site_owner']:
         return jsonify({'success': False, 'error': '权限不足'}), 403
     
     try:
@@ -3495,7 +3495,7 @@ def crm_current_user():
         user_role = get_user_role(email)
         
         # 检查是否有CRM访问权限
-        if user_role not in ['owner', 'admin', 'mining_site']:
+        if user_role not in ['owner', 'admin', 'mining_site_owner']:
             return jsonify({'error': 'No CRM access'}), 403
         
         # 返回用户信息
@@ -3559,7 +3559,7 @@ def crm_current_user():
 # def crm_dashboard_redirect():
 #     """CRM系统仪表盘重定向 - 已废弃，使用React CRM"""
 #     user_role = get_user_role(session.get('email'))
-#     if user_role not in ['owner', 'admin', 'mining_site']:
+#     if user_role not in ['owner', 'admin', 'mining_site_owner']:
 #         flash('您没有权限访问CRM系统', 'danger')
 #         return redirect(url_for('index'))
 #     return redirect(url_for('crm.crm_dashboard'))
@@ -4067,7 +4067,7 @@ def analytics_main():
 @log_access_attempt('技术分析')
 def technical_analysis():
     """Technical Analysis page - Renders interactive technical indicators dashboard"""
-    if not has_role(['owner', 'manager', 'mining_site']):
+    if not has_role(['owner', 'manager', 'mining_site_owner']):
         current_lang = session.get('language', 'zh')
         if current_lang == 'en':
             flash('You do not have permission to access this page', 'danger')
@@ -4083,7 +4083,7 @@ def technical_analysis():
 @log_access_attempt('网络分析')
 def analytics_network():
     """Network Analysis page - Alias for network_history with analytics URL pattern"""
-    if not has_role(['owner', 'admin', 'mining_site']):
+    if not has_role(['owner', 'admin', 'mining_site_owner']):
         current_lang = session.get('language', 'zh')
         if current_lang == 'en':
             flash('You do not have permission to access this page', 'danger')
@@ -4098,7 +4098,7 @@ def analytics_network():
 @log_access_attempt('报告管理')
 def reports_page():
     """Reports management page - Download PDF, Excel, PowerPoint reports"""
-    if not has_role(['owner', 'admin', 'manager', 'mining_site']):
+    if not has_role(['owner', 'admin', 'manager', 'mining_site_owner']):
         current_lang = session.get('language', 'zh')
         if current_lang == 'en':
             flash('You do not have permission to access reports', 'danger')
