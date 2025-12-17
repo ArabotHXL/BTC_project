@@ -4067,7 +4067,12 @@ def analytics_main():
 @log_access_attempt('技术分析')
 def technical_analysis():
     """Technical Analysis page - Renders interactive technical indicators dashboard"""
-    if not has_role(['owner', 'manager', 'mining_site_owner']):
+    # Debug logging for permission issues
+    email = session.get('email')
+    user_role = get_user_role(email)
+    logging.info(f"[DEBUG] technical-analysis: email={email}, user_role={user_role}, session_role={session.get('role')}")
+    
+    if not has_role(['owner', 'admin', 'manager', 'mining_site_owner']):
         current_lang = session.get('language', 'zh')
         if current_lang == 'en':
             flash('You do not have permission to access this page', 'danger')
