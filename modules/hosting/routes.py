@@ -111,11 +111,11 @@ def get_miner_alerts(miner, lang='zh'):
 @login_required
 @requires_module_access(Module.HOSTING_STATUS_MONITOR, require_full=False)
 def dashboard():
-    """托管功能主仪表板
+    """托管功能主仪表板 - 重定向到仪表盘
     
-    RBAC: 根据用户模块权限展示不同视图
-    - HOSTING_SITE_MGMT 完全访问 → 托管商视角
-    - HOSTING_STATUS_MONITOR 只读 → 客户视角 (Client/Customer get READ access)
+    RBAC: 根据用户模块权限重定向到不同视图
+    - HOSTING_SITE_MGMT 完全访问 → 托管商仪表盘 (/hosting/host)
+    - HOSTING_STATUS_MONITOR 只读 → 客户视角 (/hosting/client)
     """
     user_role = normalize_role(session.get('role', 'guest'))
     
@@ -123,11 +123,11 @@ def dashboard():
     has_host_access = rbac_manager.has_full_access(user_role, Module.HOSTING_SITE_MGMT)
     
     if has_host_access:
-        # 托管商视角
-        return render_template('hosting/host_dashboard.html')
+        # 托管商视角 - 重定向到运营仪表盘
+        return redirect(url_for('hosting_service_bp.host_view', subpath='dashboard'))
     else:
-        # 客户视角
-        return render_template('hosting/client_dashboard.html')
+        # 客户视角 - 重定向到资产概览
+        return redirect(url_for('hosting_service_bp.client_view'))
 
 @hosting_bp.route('/host/sites/<int:site_id>')
 @login_required
