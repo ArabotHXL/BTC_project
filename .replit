@@ -21,3 +21,7 @@ author = 42135109
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python3 main.py"
+
+[deployment]
+run = ["sh", "-c", "gunicorn --bind 0.0.0.0:5000 main:app"]
+deploymentTarget = "cloudrun"
