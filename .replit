@@ -9,3 +9,14 @@ packages = ["cairo", "cargo", "ffmpeg-full", "fontconfig", "freetype", "ghostscr
 
 [agent]
 integrations = ["flask_stripe:1.0.0"]
+
+[workflows]
+
+[[workflows.workflow]]
+name = "python3 main.py"
+mode = "sequential"
+author = 42135109
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python3 main.py"
