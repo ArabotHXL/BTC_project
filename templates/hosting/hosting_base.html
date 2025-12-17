@@ -698,7 +698,7 @@
                             <a href="/hosting/client" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path == '/hosting/client' or request.path == '/hosting/' }}">
                                 <span class="hosting-nav-text" data-i18n="asset_overview">{% if current_lang == 'en' %}Overview{% else %}资产概览{% endif %}</span>
                             </a>
-                            <a href="/hosting/client/assets" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/client/assets') }}">
+                            <a href="/hosting/client/miners" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/client/miners') }}">
                                 <span class="hosting-nav-text" data-i18n="my_devices">{% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}</span>
                             </a>
                             <a href="/hosting/client/usage" class="hosting-nav-link hosting-nav-child {{ 'active' if request.path.startswith('/hosting/client/usage') }}">
@@ -723,7 +723,7 @@
                         </a>
                     </div>
                     <div class="hosting-nav-item">
-                        <a href="/hosting/client/assets" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/assets') }}">
+                        <a href="/hosting/client/miners" class="hosting-nav-link {{ 'active' if request.path.startswith('/hosting/client/miners') }}">
                             <i class="bi bi-cpu hosting-nav-icon"></i>
                             <span class="hosting-nav-text" data-i18n="my_devices">{% if current_lang == 'en' %}My Devices{% else %}我的设备{% endif %}</span>
                         </a>
