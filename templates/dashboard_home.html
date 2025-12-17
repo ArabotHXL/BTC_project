@@ -566,7 +566,7 @@ body {
                     <li><span class="dropdown-item-text text-light">{{ session.email }}</span></li>
                     
                     <!-- 根据角色显示管理员选项 -->
-                    {% if session.role in ['owner', 'admin', 'mining_site'] %}
+                    {% if session.role in ['owner', 'admin', 'mining_site', 'mining_site_owner'] %}
                         <li><hr class="dropdown-divider border-warning"></li>
                         <li><h6 class="dropdown-header text-warning">
                             <i class="bi bi-gear me-2"></i>
@@ -616,8 +616,8 @@ body {
                                 <span class="badge bg-danger">{{ t('owner') }}</span>
                             {% elif session.role == 'admin' %}
                                 <span class="badge bg-warning">{{ t('admin') }}</span>
-                            {% elif session.role == 'mining_site' %}
-                                <span class="badge bg-info">{{ t('mining_site') }}</span>
+                            {% elif session.role in ['mining_site', 'mining_site_owner'] %}
+                                <span class="badge bg-info">{{ t('mining_site_owner') }}</span>
                             {% else %}
                                 <span class="badge bg-primary">{{ t('customer') }}</span>
                             {% endif %}
@@ -744,7 +744,7 @@ body {
         {% endif %}
 
         <!-- 托管管理 -->
-        {% if session.role in ['owner', 'admin', 'mining_site'] %}
+        {% if session.role in ['owner', 'admin', 'mining_site', 'mining_site_owner'] %}
         <div class="dashboard-card hosting-item" onclick="location.href='{{ url_for('hosting_service_bp.dashboard') }}'">
             <div class="card-stats">Professional</div>
             <div class="card-content">
@@ -760,7 +760,7 @@ body {
         {% endif %}
 
         <!-- 白标品牌配置 -->
-        {% if session.role in ['owner', 'admin', 'mining_site'] %}
+        {% if session.role in ['owner', 'admin', 'mining_site', 'mining_site_owner'] %}
         <div class="dashboard-card branding-item" onclick="location.href='/branding'">
             <div class="card-stats">Branding</div>
             <div class="card-content">
@@ -776,7 +776,7 @@ body {
         {% endif %}
 
         <!-- CRM客户管理 -->
-        {% if session.role in ['owner', 'admin', 'mining_site'] %}
+        {% if session.role in ['owner', 'admin', 'mining_site', 'mining_site_owner'] %}
         <div class="dashboard-card crm-item" onclick="location.href='/crm/'">
             <div class="card-stats">CRM</div>
             <div class="card-content">
